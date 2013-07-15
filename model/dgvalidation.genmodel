@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/MDK/src/main/java"
+    modelPluginID="MDK" modelName="Dgvalidation" importerID="org.eclipse.emf.importer.ecore"
+    complianceLevel="6.0" copyrightFields="false">
+  <foreignModel>dgvalidation.ecore</foreignModel>
+  <genPackages prefix="Dgvalidation" basePackage="gov.nasa.jpl.mgss.mbee.docgen" disposableProviderFactory="true"
+      ecorePackage="dgvalidation.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="dgvalidation.ecore#//Severity">
+      <genEnumLiterals ecoreEnumLiteral="dgvalidation.ecore#//Severity/DEBUG"/>
+      <genEnumLiterals ecoreEnumLiteral="dgvalidation.ecore#//Severity/INFO"/>
+      <genEnumLiterals ecoreEnumLiteral="dgvalidation.ecore#//Severity/WARNING"/>
+      <genEnumLiterals ecoreEnumLiteral="dgvalidation.ecore#//Severity/ERROR"/>
+      <genEnumLiterals ecoreEnumLiteral="dgvalidation.ecore#//Severity/FATAL"/>
+    </genEnums>
+    <genClasses ecoreClass="dgvalidation.ecore#//Rule">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Rule/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Rule/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Rule/severity"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference dgvalidation.ecore#//Rule/violations"/>
+    </genClasses>
+    <genClasses ecoreClass="dgvalidation.ecore#//Violation">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Violation/elementId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Violation/comment"/>
+    </genClasses>
+    <genClasses ecoreClass="dgvalidation.ecore#//Suite">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Suite/showDetail"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Suite/showSummary"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Suite/ownSection"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dgvalidation.ecore#//Suite/name"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference dgvalidation.ecore#//Suite/rules"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

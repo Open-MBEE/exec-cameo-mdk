@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resourceDescriptor critical="false" 
+	date="@release.date@" 
+	description="DocGen and common profiles" 
+	id="91110" 
+	mdVersionMax="higher" 
+	mdVersionMin="17.0.2" 
+	name="Model Development Kit" 
+	product="JPL Model Development Kit" 
+	type="Plugin">
+  <version human="@release.version@" resource="@release.version.internal@" internal="@release.version.internal@"/>
+  <provider name="NASA / Jet Propulsion Laboratory / Caltech"/>
+  <edition>Standard</edition>
+  <edition>Enterprise</edition>
+  <edition>Architect</edition>
+  <edition>Professional Java</edition>
+  <edition>Professional C++</edition>
+  <edition>Professional C#</edition>
+  <edition>Professional ArcStyler</edition>
+  <edition>Professional EFFS ArcStyler</edition>
+  <edition>OptimalJ</edition>
+  <edition>Reader</edition>
+  <installation>
+    @installation@
+  </installation>
+</resourceDescriptor>

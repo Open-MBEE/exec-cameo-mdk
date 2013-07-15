@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Template Version 3.0 -->
+<book xmlns="http://docbook.org/ns/docbook" xmlns:xl="http://www.w3.org/1999/xlink" version="5.0">
+<!--Sample info output for docgen 3-->
+<info>
+    <!-- JPL Document ID-->
+    <productnumber>DOCUMENT#</productnumber> 
+    
+    <!-- Current Document Version-->
+    <releaseinfo>Version</releaseinfo> 
+    
+<!-- This block if it exists will post the referenced image to the first page of the 
+    document independant of other document elements-->
+ <!--<cover>
+        
+        <mediaobject>
+              <imageobject>
+                  <imagedata align="center" fileref="images/SSS.jpg"/>
+              </imageobject>             
+        </mediaobject>
+    </cover>-->
+    
+    <!--This is the project logo which should be saved in the same directory as the output-->
+    <mediaobject>
+        <imageobject>
+            <imagedata align="left" fileref="images/ProjectLogo.png"/>
+        </imageobject>  
+    </mediaobject>
+    
+    <publisher>
+        <publishername>Docgen Template</publishername> <!-- Abbreviated project name -->
+        <address>http://docusharelink.yourproject.doc</address> <!-- this is the link to the docgen site or docushare-->      
+    </publisher>
+    
+    <!-- This is the generated date -->
+    <pubdate>Thu Apr 11 17:37:07 PDT 2013</pubdate> 
+    
+    <!--Full project name-->
+    <title>Docgen Template Project</title>
+    
+    <!--Subtitle is the name of the document ie System Requirements Document-->
+    <subtitle>Document Generator Output Template</subtitle>
+    
+    <!--Abbreviated Title for Header-->
+    <titleabbrev>DocGen Template</titleabbrev>
+    
+    <!--Legal Notice for footer "Do not distribute etc..." can be customized here-->
+    <legalnotice>
+        <!--This is the main titlepage notice-->
+        <title>
+        This document has NOT been reviewed for export control. Not for distribution to or access by foreign persons.   
+        </title>
+        <!--This is the footer legal notice-->
+        <para>
+        Paper copies of this document may not be current and should not be relied on for official purposes. 
+        JPL/Caltech proprietary.  Not for public release.
+        </para>
+    </legalnotice>
+    
+    <!--Author is "Preparing Engineer(s)" -->
+    <author>
+        <personname>
+            <firstname>John Q.</firstname>
+            <surname>Public</surname>
+        </personname>
+        <affiliation>
+            <jobtitle>Systems Engineer</jobtitle>
+            <org>
+                <orgname>JPL</orgname>
+                <orgdiv>313</orgdiv>
+            </org>
+        </affiliation>
+    </author> 
+    
+    <!--Editor denotes "Approving Engineer(s)"-->
+    <editor>
+        <personname>
+            <firstname>Tom</firstname>
+            <surname>Bombadil</surname>
+        </personname>
+        <affiliation>
+            <jobtitle>Project Manager</jobtitle>
+            <org>
+                <orgname>JPL</orgname>
+            </org>
+        </affiliation>
+    </editor>
+    
+    <!--Other Credit Denotes "Concuring Engineer(s)"-->
+    <othercredit>
+        <personname>
+            <firstname>Dick</firstname>
+            <surname>Moby</surname>
+            <surname></surname>
+        </personname>
+        <affiliation>
+            <jobtitle>Project Manager</jobtitle>
+            <org>
+                <orgname>JPL</orgname>
+            </org>
+        </affiliation>
+    </othercredit>
+    
+    <othercredit>
+        <personname>
+            <firstname>Harry</firstname>
+            <surname>Potter</surname>
+        </personname>
+        <affiliation>
+            <jobtitle>Project Manager</jobtitle>
+            <org>
+                <orgname>JPL</orgname>
+            </org>
+        </affiliation>
+    </othercredit>
+    
+    <!--Each Revision Should have its own "Block" within revhistory-->    
+    <revhistory>      
+        <revision>
+            <revnumber>Draft</revnumber>
+            <date>4/12/13</date>
+            <author>
+                <personname>
+                    <firstname>John Q</firstname>
+                    <surname>Public</surname>
+                </personname>
+            </author>
+            <revremark>Document Created</revremark>          
+        </revision>
+        
+        <revision>
+            <revnumber>Preliminary</revnumber>
+            <date>4/16/13</date>
+            <author>
+                <personname>
+                    <firstname>John Q</firstname>
+                    <surname>Public</surname>
+                </personname>
+            </author>
+            <revremark>Section 1 added to reflect reviewer remarks</revremark>          
+        </revision>
+    </revhistory>
+    
+    <!-- E-mails of distribution list-->   
+    <address>
+        <email>collaborator1@email.net</email>
+    </address>
+    
+    <address>
+        <email>collaborator2@email.net</email>
+    </address>
+    
+    <!--Comment out or delete this tag to remove blank pages before TOC -->
+    <keywordset/>
+    
+</info>
+    
+<chapter xml:id="_17_0_2_3_8660276_1365725590542_499305_39668">
+    <info><title>Section 1</title></info>
+    <para>BLAH BLAH BLAH</para>
+</chapter>
+</book>

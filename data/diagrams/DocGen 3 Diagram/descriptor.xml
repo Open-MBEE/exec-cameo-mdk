@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<diagram abbreviation="DocGen3" baseType="Activity Diagram" category="MBEE DocGen" type="DocGen 3 Diagram" version="7">
+    <toolbarConfiguration>
+        <baseCategory expandedByDefault="true" id="COMMON_ELEMENTS_DYNAMIC" parentCategoryID="COMMON_ELEMENTS_DYNAMIC"/>
+        <category expandedByDefault="true" id="action_category_1326673754018_667011_1" name="DocGen 3 Common">
+            <actions>
+                <standard action="ADD_INITIAL_NODE" shortcut="pressed T "/>
+                <standard action="ADD_FINAL_NODE" shortcut="pressed D "/>
+                <standard action="ADD_FLOW_FINAL_NODE_" shortcut="pressed L "/>
+                <custom description="StructuredQuery" id="IDaction_1326673811877_323585_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode">
+                    <stereotype id="_17_0_1_244d03ea_1319512564304_251824_28229"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326674039615_227913_16224</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+            </actions>
+        </category>
+        <category expandedByDefault="true" id="action_category_1326671921803_43207_0" name="DocGen 3 Collect and Filter">
+            <actions>
+                <custom description="CollectOwnedElements" id="IDaction_1326672341991_219226_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490805237_397889_23292"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CollectThingsOnDiagram" id="IDaction_1326672435951_19107_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_22b603cd_1319577320837_597116_24044"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370475_341756_16193</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CollectOwners" id="IDaction_1326672366651_399395_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319491813759_405316_23859"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CollectByStereotypeProperties" id="IDaction_1326672385889_921799_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490856319_735016_23345"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370476_414963_16195</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CollectByDirectedRelationshipMetaclasses" id="IDaction_1326672288677_273976_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490696098_585884_23244"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370477_194305_16196</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CollectByDirectedRelationshipStereotypes" id="IDaction_1326672318197_950605_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490675924_494597_23220"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370477_153155_16197</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CollectByAssociation" id="IDaction_1326672404969_65545_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490838789_76536_23321"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370477_499488_16198</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CollectTypes" id="IDaction_1326672472277_656618_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490870282_714178_23369"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CollectClassifierAttributes" id="IDaction_1346954947889_19209_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_5_407019f_1346952773459_128964_11915"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="FilterByDiagramType" id="IDaction_1326672049545_427478_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490921274_829705_23417"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370478_258826_16200</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="FilterByNames" id="IDaction_1326672167852_128180_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490607459_890787_23148"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370478_57771_16201</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="FilterByMetaclasses" id="IDaction_1326672207925_643654_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490658057_783239_23196"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370479_571288_16202</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="FilterByStereotypes" id="IDaction_1326672241831_404844_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490639053_446661_23172"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370479_350723_16203</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="SortByName" id="IDaction_1337971710848_465098_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_5_407019f_1337970852079_693660_12393"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="RemoveDuplicates" id="IDaction_1326672820748_528408_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319490880431_889010_23393"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370479_705556_16204</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Collect/Filter UserScript" id="IDaction_1336585445662_130383_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Parallel" id="IDaction_1326672524770_974726_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ForkNode">
+                    <stereotype id="_17_0_1_244d03ea_1319490721410_468874_23268"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370479_99496_16205</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Intersection" id="IDaction_1326672552704_532622_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.JoinNode">
+                    <stereotype id="_17_0_1_24c603f9_1318965749289_636288_15241"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370480_245933_16206</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Union" id="IDaction_1326672581257_447572_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.MergeNode">
+                    <stereotype id="_17_0_1_24c603f9_1318965764947_847626_15265"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326673370480_823110_16207</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="XOR" id="IDaction_1358446281260_731052_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.DecisionNode">
+                    <stereotype id="_17_0_2_1_407019f_1358445062164_196970_12977"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+            </actions>
+        </category>
+        <category expandedByDefault="true" id="action_category_1326673608860_693478_0" name="DocGen 3 Templates">
+            <actions>
+                <custom description="Paragraph" id="IDaction_1326673837268_353562_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319496280368_246829_25514"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326674039621_930791_16225</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Image" id="IDaction_1326673855887_679994_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319496302084_771803_25570"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326674039621_571449_16226</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="BulletedList" id="IDaction_1326673869813_242529_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319496225382_275996_25443"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326674039621_354029_16227</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="CombinedMatrix" id="IDaction_1326673898547_833383_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319497133286_670328_26584"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326674039622_684494_16228</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="GenericTable" id="IDaction_1326673915972_347362_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_244d03ea_1319498258297_961829_27083"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326674039622_404237_16229</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="PropertiesTableByAttributes" id="IDaction_1326673932826_551943_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_1_407019f_1326235066484_404532_2489"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326674039622_366865_16230</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Other (like UserScripts)" id="IDaction_1326673971333_365712_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager">
+                                <propertyManagerID>_17_0_3_244d03ea_1326674039623_393506_16231</propertyManagerID>
+                            </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+            </actions>
+        </category>
+    </toolbarConfiguration>
+    <module location="/Applications/MagicDraw UML 17.0.2/profiles/Document Profile.mdxml" name="SysML Extensions.mdxml">
+        <root id="_17_0_3_407019f_1326696912197_760676_2016"/>
+        <root id="_17_0_1_22b603cd_1319570201689_23377_22193"/>
+        <root id="_17_0_5_407019f_1348077490251_262720_12434"/>
+        <root id="_17_0_1_22da03d3_1302543968799_119774_11911"/>
+    </module>
+    <module location="/Applications/MagicDraw UML 17.0.2/profiles/UML_Standard_Profile.mdzip" name="UML_Standard_Profile.mdzip">
+        <root id="magicdraw_uml_standard_profile_v_0001"/>
+    </module>
+    <manipulators>
+        <element>com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction</element>
+        <path action="ADD_CONTROL_FLOW">
+            <target>ADD_CALL_BEHAVIOR_ACTION</target>
+            <target>ADD_DECISION_NODE</target>
+            <target>ADD_MERGE_NODE</target>
+            <target>ADD_JOIN_NODE_HORIZONTAL</target>
+            <target>ADD_FORK_NODE_HORIZONTAL</target>
+            <target>ADD_CALL_OPERATION_ACTION</target>
+            <target>ADD_FINAL_NODE</target>
+            <target>ADD_FLOW_FINAL_NODE_</target>
+            <target>ADD_STRUCTURED_ACTIVITY_NODE</target>
+        </path>
+        <path action="ADD_DEPENDENCY"/>
+        <path action="ADD_NOTE_ANCHOR">
+            <target>ADD_NOTE</target>
+            <target>ADD_HTML_NOTE</target>
+            <target>ADD_COMMENT</target>
+            <target>ADD_HTML_COMMENT</target>
+        </path>
+    </manipulators>
+    <manipulators>
+        <element>com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ForkNode</element>
+        <path action="ADD_CONTROL_FLOW">
+            <target>ADD_CALL_BEHAVIOR_ACTION</target>
+            <target>ADD_DECISION_NODE</target>
+            <target>ADD_MERGE_NODE</target>
+            <target>ADD_JOIN_NODE_HORIZONTAL</target>
+            <target>ADD_FORK_NODE_HORIZONTAL</target>
+            <target>ADD_CALL_OPERATION_ACTION</target>
+            <target>ADD_FINAL_NODE</target>
+            <target>ADD_FLOW_FINAL_NODE_</target>
+            <target>ADD_STRUCTURED_ACTIVITY_NODE</target>
+        </path>
+        <path action="ADD_NOTE_ANCHOR">
+            <target>ADD_NOTE</target>
+            <target>ADD_HTML_NOTE</target>
+        </path>
+    </manipulators>
+    <manipulators>
+        <element>com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.JoinNode</element>
+        <path action="ADD_CONTROL_FLOW">
+            <target>ADD_CALL_BEHAVIOR_ACTION</target>
+            <target>ADD_DECISION_NODE</target>
+            <target>ADD_MERGE_NODE</target>
+            <target>ADD_JOIN_NODE_HORIZONTAL</target>
+            <target>ADD_FORK_NODE_HORIZONTAL</target>
+            <target>ADD_CALL_OPERATION_ACTION</target>
+            <target>ADD_FINAL_NODE</target>
+            <target>ADD_FLOW_FINAL_NODE_</target>
+            <target>ADD_STRUCTURED_ACTIVITY_NODE</target>
+        </path>
+        <path action="ADD_NOTE_ANCHOR">
+            <target>ADD_NOTE</target>
+            <target>ADD_HTML_NOTE</target>
+        </path>
+    </manipulators>
+    <manipulators>
+        <element>com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.MergeNode</element>
+        <path action="ADD_CONTROL_FLOW">
+            <target>ADD_CALL_BEHAVIOR_ACTION</target>
+            <target>ADD_DECISION_NODE</target>
+            <target>ADD_MERGE_NODE</target>
+            <target>ADD_JOIN_NODE_HORIZONTAL</target>
+            <target>ADD_FORK_NODE_HORIZONTAL</target>
+            <target>ADD_CALL_OPERATION_ACTION</target>
+            <target>ADD_FINAL_NODE</target>
+            <target>ADD_FLOW_FINAL_NODE_</target>
+            <target>ADD_STRUCTURED_ACTIVITY_NODE</target>
+        </path>
+        <path action="ADD_NOTE_ANCHOR">
+            <target>ADD_NOTE</target>
+            <target>ADD_HTML_NOTE</target>
+            <target>ADD_COMMENT</target>
+            <target>ADD_HTML_COMMENT</target>
+        </path>
+    </manipulators>
+    <manipulators>
+        <element>com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode</element>
+        <path action="ADD_DEPENDENCY"/>
+        <path action="ADD_CONTROL_FLOW">
+            <target>ADD_CALL_BEHAVIOR_ACTION</target>
+            <target>ADD_DECISION_NODE</target>
+            <target>ADD_MERGE_NODE</target>
+            <target>ADD_JOIN_NODE_HORIZONTAL</target>
+            <target>ADD_FORK_NODE_HORIZONTAL</target>
+            <target>ADD_CALL_OPERATION_ACTION</target>
+            <target>ADD_FINAL_NODE</target>
+            <target>ADD_FLOW_FINAL_NODE_</target>
+            <target>ADD_STRUCTURED_ACTIVITY_NODE</target>
+        </path>
+        <path action="ADD_NOTE_ANCHOR">
+            <target>ADD_NOTE</target>
+            <target>ADD_HTML_NOTE</target>
+            <target>ADD_COMMENT</target>
+            <target>ADD_HTML_COMMENT</target>
+        </path>
+    </manipulators>
+</diagram>
+
