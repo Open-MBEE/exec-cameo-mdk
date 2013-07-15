@@ -1,4 +1,4 @@
-build
-dist
-javadoc
-bin
+/build
+/dist
+/javadoc
+/bin
