@@ -750,26 +750,21 @@ public class DocumentGenerator {
 			List<String> columns = null;
 			Object columnsO = StereotypesHelper.getStereotypePropertyFirst(cba, DocGen3Profile.customTableStereotype, "columns");
 	    	
-			if (columnsO != null && columnsO instanceof List<?>)
+			if (columnsO != null && columnsO instanceof List)
 	    		columns = (List<String>)columnsO;
 	    	
-	    	if (a != null) {
-	    		if (columns == null) {
-	    			columnsO = StereotypesHelper.getStereotypePropertyFirst(a, DocGen3Profile.customTableStereotype, "nameColumn");
-	    	    	if (columnsO != null && columnsO instanceof List<?>)
-	    	    		columns = (List<String>)columnsO;
-	    		}
-	    		
-	    	}
+    	if (a != null) {
+    		if (columns == null) {
+    			columnsO = StereotypesHelper.getStereotypePropertyFirst(a, DocGen3Profile.customTableStereotype, "nameColumn");
+    	    	if (columnsO != null && columnsO instanceof List)
+    	    		columns = (List<String>)columnsO;
+    		}
+    	}
 	    	
 			((CustomTable)dge).setHeaders(headers);
 			((CustomTable)dge).setCaptions(captions);
 			((CustomTable)dge).setShowCaptions(showCaptions);
-			((CustomTable)dge).setStereotypeProperties(stereotypeProperties);
-			((CustomTable)dge).setOutgoing(outgoing);
-			((CustomTable)dge).setIncoming(incoming);
-			((CustomTable)dge).setIncludeDoc(showDoc);
-			((CustomTable)dge).setSkipIfNoDoc(skipIfNoDoc);
+//			((CustomTable)dge).setStereotypeProperties(stereotypeProperties);
 			((CustomTable)dge).setStyle(style);
 			((CustomTable)dge).setColumns(columns);
 			((CustomTable)dge).setColwidths(colwidths);

@@ -17,6 +17,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.actions.InstanceViewpointAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.MapLibraryAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.MapMissionAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.NumberDependencyAction;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.OclQueryAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.OrganizeDocumentAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.OrganizeViewEditorAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.PublishDocWebAction;
@@ -126,6 +127,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 			NMAction act = manager.getActionFor(GenerateDocumentAction.actionid);
 			if (act == null)
 				c.addAction(new GenerateDocumentAction(e));
+      act = manager.getActionFor(OclQueryAction.actionid);
+      if (act == null)
+        c.addAction(new OclQueryAction(e));
 			act = manager.getActionFor(ValidateDocument3Action.actionid);
 			if (act == null)
 				c.addAction(new ValidateDocument3Action(e));

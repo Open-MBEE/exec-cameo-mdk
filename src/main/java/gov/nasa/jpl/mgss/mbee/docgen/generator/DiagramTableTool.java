@@ -175,6 +175,7 @@ public class DiagramTableTool {
 	        if (i + 1 >= cellValues.length)
 	          continue;
 	        stringValues.append("\n");
+	        System.out.println("cellValues[" + i + "] = " + cellValues[i]);
 	      }
 
 	      return stringValues.toString();

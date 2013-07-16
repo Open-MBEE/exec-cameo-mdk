@@ -1,52 +1,35 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.ocl.OclEvaluator;
+
 import java.util.List;
+
+import org.eclipse.emf.ecore.EObject;
 
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class CustomTable extends Table {
 
-	//TODO decide tag options
-	//"cMatSpec" means this variable/method was specific to CustomMatrix3
-	
 	private List<String> headers;
-	private List<Stereotype> outgoing;
-	private List<Stereotype> incoming;
-	private boolean skipIfNoDoc;
 	private List<String> columns;
+	protected boolean oclEvaluationVerbose = false;
 	
-	public void setSkipIfNoDoc(boolean b) {
-		skipIfNoDoc = b;
+	public CustomTable() {
+	  setSortElementsByName( true );
+	}
+	
+	public Object evaluateOcl( EObject o, String expression ) {
+	  return OclEvaluator.evaluateQuery( o, expression, isOclEvaluationVerbose() );
 	}
 	
 	public void setHeaders(List<String> d) {
 		headers = d;
 	}
 	
-	public void setOutgoing(List<Stereotype> s) {
-		outgoing = s;
-	}
-	
-	public void setIncoming(List<Stereotype> s) {
-		incoming = s;
-	}
-
 	public List<String> getHeaders() {
 		return headers;
 	}
 
-	public List<Stereotype> getOutgoing() {
-		return outgoing;
-	}
-
-	public List<Stereotype> getIncoming() {
-		return incoming;
-	}
-
-	public boolean isSkipIfNoDoc() {
-		return skipIfNoDoc;
-	}
-	
 	public List<String> getColumns() {
 		return this.columns;
 	}
@@ -55,7 +38,21 @@ public class CustomTable extends Table {
 		this.columns = c;
 	}
 	
-	@Override
+  /**
+   * @return the verboseEvaluation
+   */
+  public boolean isOclEvaluationVerbose() {
+    return oclEvaluationVerbose;
+  }
+
+  /**
+   * @param verboseEvaluation the verboseEvaluation to set
+   */
+  public void setOclEvaluationVerbose( boolean oclEvaluationVerbose ) {
+    this.oclEvaluationVerbose = oclEvaluationVerbose;
+  }
+
+  @Override
 	public void accept(IModelVisitor v) {
 		v.visit(this);
 		

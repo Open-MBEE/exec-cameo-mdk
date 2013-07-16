@@ -18,6 +18,9 @@ import java.util.Map;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+
 public class DBEditTableVisitor extends DBEditDocwebVisitor {
 	
 	private JSONObject tablejson;
@@ -25,6 +28,8 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 	private JSONArray tableelements;
 	private int rowspan;
 	private int colspan;
+	
+	//private GUILog gl = Application.getInstance().getGUILog();
 	
 	public DBEditTableVisitor(boolean recurse, Map<String, JSONObject> elements) {
 		super(recurse);
@@ -71,6 +76,7 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 		tablejson.put("title", table.getTitle());
 		tablejson.put("type", "Table");
 		tablejson.put("sources", tableelements);
+		//gl.log( "tablejson =\n" + tablejson );
 	}
 
 	@SuppressWarnings("unchecked")

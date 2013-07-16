@@ -24,7 +24,7 @@ import com.nomagic.magicdraw.plugins.Plugin;
 public class DocGenPlugin extends Plugin {
 	// Variables for running embedded web server for exposing services
 	private DocGenEmbeddedServer	embeddedServer;
-	private boolean					runEmbeddedServer = false;
+	private boolean					runEmbeddedServer = true;
 	
 	@Override
 	public boolean close() {
@@ -40,6 +40,8 @@ public class DocGenPlugin extends Plugin {
 
 	@Override
 	public void init() {
+    System.err.println("initializing DocGenPlugin!");
+    System.out.println("initializing DocGenPlugin!");
 		ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
 		DocGenConfigurator dgc = new DocGenConfigurator();
 		acm.addContainmentBrowserContextConfigurator(dgc);

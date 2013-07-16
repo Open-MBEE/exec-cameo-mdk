@@ -4,6 +4,7 @@ import gov.nasa.jpl.ocl.CallOperation;
 import gov.nasa.jpl.ocl.DgEnvironmentFactory;
 import gov.nasa.jpl.ocl.DgOperationInstance;
 import gov.nasa.jpl.ocl.OclEvaluator;
+import gov.nasa.jpl.ocl.TestOcl;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -109,81 +110,36 @@ public class ModelServlet extends HttpServlet {
 			}
 		}
 
-		// if no mdId specified, root is project model
-		if (mdId.length() == 0) {
-			rootEObject = project.getModel();
-		} else {
-			rootEObject = (EObject)project.getElementByID(mdId);
-		}
+    if ( project != null ) {
 
-		if (isSpecification) {
-			renderSpecification();
-		} else {
-			renderContainment();
-		}
+      // if no mdId specified, root is project model
+      if ( mdId.length() == 0 ) {
+        rootEObject = project.getModel();
+      } else {
+        rootEObject = (EObject)project.getElementByID( mdId );
+      }
+
+      if ( rootEObject != null ) {
+
+        if ( isSpecification ) {
+          renderSpecification();
+        } else {
+          renderContainment();
+        }
+
+      }
+    }
 		
 		// wrap response with html tags
 		sb.insert(0, "<html><body>\n");
 		sb.append("</body></html>\n");
 
-		// lets play with OCL
-		// TODO: need to move this out into its own test class
-		boolean verbose = true;
-
-		// set up the customized environment
-  		// create custom environment factory
-  		DgEnvironmentFactory	envFactory 	= new DgEnvironmentFactory();
-  		
-  		// create custom operation
-		DgOperationInstance		doi 		= new DgOperationInstance();
-		doi.setName("regexMatch");
-		doi.setAnnotationName("DocGenEnvironment");
-		EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
-		parm.setName("pattern");
-		doi.addParameter(parm);
-		
-		// essentially set the actual operation as function pointer
-		doi.setOperation(new CallOperation() {
-			@Override
-			public Object callOperation(Object source, Object[] args) {
-				Pattern pattern = Pattern.compile((String) args[0]);
-				Matcher matcher = pattern.matcher((String) source);
-	
-				return matcher.matches() ? matcher.group() : null;
-			}
-		});
-		
-		// add custom operation to environment and evaluation environment
-		envFactory.getDgEnvironment().addDgOperation(doi);
-		envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
-				
-		// create the ocl evaluator
-		OclEvaluator.createOclInstance(envFactory);
-
-		// create query and evaluate
-		String oclquery = "name.regexMatch('DocGen Templating') <> null";
-//		oclquery = "name <> 'DocGen Templating'"; //"ownedType->asSet()";
-//		oclquery = "self.appliedStereotypeInstance.slot";
-//		oclquery = "self.appliedStereotypeInstance.classifier.attribute";
-//		oclquery = "name.regexMatch('DocGen Templating') <> null";
-
-		Object result = OclEvaluator.evaluateQuery(rootEObject, oclquery, verbose);
-		if (result != null) {
-			System.out.println(result.getClass() + ": " + result.toString());
-			if (result instanceof Set) {
-				for (Stereotype key: (Set<Stereotype>)result) {
-					System.out.println("\t" + key.getHumanName());
-				}
-			} else if (result instanceof List) {
-				for (Property prop: (List<Property>) result) {
-					System.out.println("\t" + prop.getHumanName());
-				}
-			}
-		}
+    // lets play with OCL
+		TestOcl.testOcl(project, rootEObject);
 	}
 	
 	
-	/**
+  /**
 	 * Render containment hierarchy one level deep 
 	 */
 	private void renderContainment() {
