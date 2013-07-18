@@ -1,7 +1,9 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.ModelLib;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.tree.Node;
 import gov.nasa.jpl.mgss.mbee.docgen.DgvalidationDBSwitch;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
@@ -217,6 +219,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 
 	@Override
 	public void visit(CombinedMatrix cm) {
+    Debug.outln("entering visit(CombinedMatrix): " + cm);
 		if (cm.getIgnore())
 			return;
 		DBTable dbTable = new DBTable();
@@ -330,46 +333,71 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		parent.peek().addElement(dbTable);
 	}
 
-	//TODO in progress
 	@Override
-	public void visit(CustomTable cm) {
-		if (cm.getIgnore())
-			return;
+	public void visit(CustomTable customTable) {
+	  Debug.outln("entering visit(CustomTable): " + customTable);
+    if (customTable==null) {
+      Debug.errln( "Can't create DocBook table from null CustomTable!" );
+      return;
+    }
+    if (customTable.getIgnore()) {
+      return;
+    }
+    if (Utils2.isNullOrEmpty(customTable.getColumns())) {
+      Debug.errln( "No columns specified for CustomTable! "
+                   + customTable.getColumns() );
+      return;
+    }
+    if (Utils2.isNullOrEmpty(customTable.getTargets())) {
+      Debug.errln( "No targets specified for CustomTable! "
+                   + customTable.getTargets() );
+      return;
+    }
+    Debug.outln( "visiting custom table " + customTable );
 		DBTable dbTable = new DBTable();
 		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
-		if (!cm.getHeaders().isEmpty()) {
+		if (!customTable.getHeaders().isEmpty()) {
 			List<DocumentElement> first = new ArrayList<DocumentElement>();
 			hs.add(first);
-			for (String h: cm.getHeaders())
+			for (String h: customTable.getHeaders())
 				first.add(new DBText(h));
 			dbTable.setCols(first.size());
 		} else {
 			List<DocumentElement> first = new ArrayList<DocumentElement>();
 			hs.add(first);
-      for (String oclExpr: cm.getColumns()) {
-        first.add(new DBText(oclExpr) );
-      }
+			
+	    if (Utils2.isNullOrEmpty(customTable.getColumns())) {
+        Debug.errln( "No columns specified for CustomTable! "
+                     + customTable.getColumns() );
+	    } else {
+	      for (String oclExpr: customTable.getColumns()) {
+	        first.add(new DBText(oclExpr) );
+	      }
+	    }
 //			for (Property p: cm.getStereotypeProperties()) 
 //				first.add(new DBText(p.getName()));
 			dbTable.setCols(first.size());
 		}
 		dbTable.setHeaders(hs);
 		String title = "";
-		if (cm.getTitles() != null && cm.getTitles().size() > 0)
-			title = cm.getTitles().get(0);
-		title = cm.getTitlePrefix() + title + cm.getTitleSuffix();
+		if (customTable.getTitles() != null && customTable.getTitles().size() > 0)
+			title = customTable.getTitles().get(0);
+		title = customTable.getTitlePrefix() + title + customTable.getTitleSuffix();
 		dbTable.setTitle(title);
-		if (cm.getCaptions() != null && cm.getCaptions().size() > 0 && cm.isShowCaptions())
-			dbTable.setCaption(cm.getCaptions().get(0));
+    if ( customTable.getCaptions() != null
+         && customTable.getCaptions().size() > 0
+         && customTable.isShowCaptions() ) {
+      dbTable.setCaption( customTable.getCaptions().get( 0 ) );
+    }
 		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
     List< Element > targets =
-        cm.isSortElementsByName() ? Utils.sortByName( cm.getTargets() )
-                                 : cm.getTargets();
+        customTable.isSortElementsByName() ? Utils.sortByName( customTable.getTargets() )
+                                 : customTable.getTargets();
 		for (Element e: targets) {
 			List<DocumentElement> row = new ArrayList<DocumentElement>();
-      for (String oclExpr: cm.getColumns()) {
-        Object result = cm.evaluateOcl( e, oclExpr );
-        Common.getEntryFromObject( result, true, forViewEditor );
+      for (String oclExpr: customTable.getColumns()) {
+        Object result = customTable.evaluateOcl( e, oclExpr );
+        row.add(Common.getEntryFromObject( result, true, forViewEditor ));
       }
 //			for (Property p: cm.getStereotypeProperties()) 
 //				row.add(Common.getStereotypePropertyEntry(e, p, forViewEditor));
@@ -378,9 +406,9 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		}
 		dbTable.setBody(body);
 		List<DBColSpec> cslist = new ArrayList<DBColSpec>();
-		if (cm.getColwidths() != null && !cm.getColwidths().isEmpty()) {
+		if (customTable.getColwidths() != null && !customTable.getColwidths().isEmpty()) {
 			int i = 1;
-			for (String s: cm.getColwidths()) {
+			for (String s: customTable.getColwidths()) {
 				DBColSpec cs = new DBColSpec(i);
 				cs.setColwidth(s);
 				cslist.add(cs);
@@ -392,8 +420,9 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			cslist.add(cs);
 		}
 		dbTable.setColspecs(cslist);
-		dbTable.setStyle(cm.getStyle());
+		dbTable.setStyle(customTable.getStyle());
 		parent.peek().addElement(dbTable);
+    Debug.outln( "got custom DBTable " + dbTable );
 	}
 	
 	@Override

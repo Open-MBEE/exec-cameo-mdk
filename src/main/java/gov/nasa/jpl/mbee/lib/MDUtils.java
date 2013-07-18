@@ -32,6 +32,14 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 public class MDUtils {
 
   /**
+   * @return true iff MD was started with the DEVELOPER option at the command
+   *         line.
+   */
+  public static boolean isDeveloperMode() {
+    return Boolean.getBoolean( "DEVELOPER" );
+  }
+  
+  /**
    * @param event 
    * @return the {@link Element}s selected in MD's GUI.
    */
@@ -49,6 +57,12 @@ public class MDUtils {
     return coll;
   }
   
+  /**
+   * @param complain
+   *          if true, any Throwable will be caught and printed with the stack
+   *          trace to stderr (or the MD message window)
+   * @return the browser (e.g., containment tree) currently active in the MD GUI
+   */
   public static BrowserTabTree getActiveBrowser( boolean complain ) {
     try {
       return Application.getInstance().getMainFrame().getBrowser().getActiveTree();
@@ -58,6 +72,12 @@ public class MDUtils {
     return null;
   }
 
+  /**
+   * @param complain
+   *          if true, any Throwable will be caught and printed with the stack
+   *          trace to stderr (or the MD message window)
+   * @return the diagram currently active in the MD GUI
+   */
   public static DiagramPresentationElement getActiveDiagram( boolean complain ) {
     try {
       Project project = Application.getInstance().getProject();
@@ -73,6 +93,10 @@ public class MDUtils {
     return null;
   }
 
+  /**
+   * @return the {@link Element}s selected in the containment tree browser of
+   *         MD's GUI.
+   */
   public static Collection< Element > getSelectionInContainmentBrowser() {
     Collection< Element > coll = Utils2.getEmptyList();
     BrowserTabTree tree = getActiveBrowser(false);
@@ -89,6 +113,9 @@ public class MDUtils {
     return coll;
   }
   
+  /**
+   * @return the {@link Element}s selected in the active diagram of MD's GUI.
+   */
   public static Collection< Element > getSelectionInDiagram() {
     DiagramPresentationElement diagram = getActiveDiagram( false );
     List< PresentationElement > selectedList = null;

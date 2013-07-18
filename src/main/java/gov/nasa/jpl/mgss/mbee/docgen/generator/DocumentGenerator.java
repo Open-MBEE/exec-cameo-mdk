@@ -747,19 +747,11 @@ public class DocumentGenerator {
 			((CombinedMatrix)dge).setColwidths(colwidths);
 		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.customTableStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.customTableStereotype))) { //TODO columns added, name/docCol removed
 			dge = new CustomTable();
+			// Get "columns" slot -- should be a list of strings (e.g., OCL expressions)
 			List<String> columns = null;
-			Object columnsO = StereotypesHelper.getStereotypePropertyFirst(cba, DocGen3Profile.customTableStereotype, "columns");
-	    	
+			Object columnsO = StereotypesHelper.getStereotypePropertyValue(cba, DocGen3Profile.customTableStereotype, "columns");
 			if (columnsO != null && columnsO instanceof List)
 	    		columns = (List<String>)columnsO;
-	    	
-    	if (a != null) {
-    		if (columns == null) {
-    			columnsO = StereotypesHelper.getStereotypePropertyFirst(a, DocGen3Profile.customTableStereotype, "nameColumn");
-    	    	if (columnsO != null && columnsO instanceof List)
-    	    		columns = (List<String>)columnsO;
-    		}
-    	}
 	    	
 			((CustomTable)dge).setHeaders(headers);
 			((CustomTable)dge).setCaptions(captions);

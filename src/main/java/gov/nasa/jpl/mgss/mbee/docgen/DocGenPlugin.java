@@ -24,7 +24,7 @@ import com.nomagic.magicdraw.plugins.Plugin;
 public class DocGenPlugin extends Plugin {
 	// Variables for running embedded web server for exposing services
 	private DocGenEmbeddedServer	embeddedServer;
-	private boolean					runEmbeddedServer = true;
+	private boolean					runEmbeddedServer = false;
 	
 	@Override
 	public boolean close() {
