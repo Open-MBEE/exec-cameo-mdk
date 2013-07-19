@@ -232,7 +232,7 @@ public class DocumentValidator {
 		if (!viewpoints.isEmpty()) { 
 			List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, ElementImport.class, 1, 1);
 			List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, PackageImport.class, 1, 1);
-			List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, "Queries", 1, false, 1);
+			List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.queriesStereotype, 1, false, 1);
 			elementImports.addAll(packageImports);
 			elementImports.addAll(queries);
 			if (elementImports.isEmpty()) {
