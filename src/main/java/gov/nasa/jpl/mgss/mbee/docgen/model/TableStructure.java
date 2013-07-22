@@ -54,7 +54,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	
 	// Table Stuff
 
-	private Object nullEntry = new String("No Entry");
+	private Object nullEntry = new String("no entry");
 	private int cLen;
 	
 	public TableStructure() {
@@ -130,19 +130,20 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	@SuppressWarnings("unchecked")
 	public void addSumRow() {
 		List<Object> sumRow = new ArrayList<Object>();
-		float f;
+		double f;
 		boolean foundSumable = false;
 		for (List<Object> c: table) {
 			f = 0;
 			for (Object l: c)
 				for (Object item: (List<Object>)l) {
-					if (item instanceof Float || item instanceof Integer) {
+					if (item instanceof Float || item instanceof Double || item instanceof Integer) {
 						foundSumable = true;
-						f += (Float)item;
+						f += (Double)item;
 					}
 				}
 			if (foundSumable) sumRow.add(f);
 			else sumRow.add(nullEntry);
+			foundSumable = false;
 		}
 		addRow(sumRow);
 	}
