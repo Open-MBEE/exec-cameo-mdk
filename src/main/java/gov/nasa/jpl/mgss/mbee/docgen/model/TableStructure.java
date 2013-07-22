@@ -126,6 +126,8 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	}
 	
 	// Fancy table operations
+
+	String irrelevantEntry = new String("--");
 	
 	@SuppressWarnings("unchecked")
 	public void addSumRow() {
@@ -141,8 +143,10 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 						f += (Double)item;
 					}
 				}
-			if (foundSumable) sumRow.add(f);
-			else sumRow.add(nullEntry);
+			ArrayList bucket = new ArrayList<Object>();
+			if (foundSumable) bucket.add(f);
+			else bucket.add(irrelevantEntry);
+			sumRow.add(bucket);
 			foundSumable = false;
 		}
 		addRow(sumRow);
