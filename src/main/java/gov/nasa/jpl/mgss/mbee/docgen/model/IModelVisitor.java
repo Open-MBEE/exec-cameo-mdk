@@ -11,6 +11,7 @@ public interface IModelVisitor {
 	public void visit(GenericTable gt);
 	public void visit(PropertiesTableByAttributes pt);
 	public void visit(Paragraph para);
+	public void visit(TableStructure ts);
 	public void visit(UserScript us);
 	public void visit(WorkpackageAssemblyTable wat);
 	public void visit(Image image);
