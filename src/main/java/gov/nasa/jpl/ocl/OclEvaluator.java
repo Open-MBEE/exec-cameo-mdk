@@ -7,6 +7,7 @@ import org.eclipse.ocl.OCL;
 import org.eclipse.ocl.ParserException;
 import org.eclipse.ocl.Query;
 import org.eclipse.ocl.ecore.Constraint;
+import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
 import org.eclipse.ocl.expressions.OCLExpression;
 import org.eclipse.ocl.helper.OCLHelper;
 
@@ -76,6 +77,7 @@ public class OclEvaluator {
 	 * @return				Object of the result whose type should be known by the caller
 	 */
 	public static Object evaluateQuery(EObject context, String queryString, boolean verbose) {
+	  if ( ocl == null ) ocl = OCL.newInstance(EcoreEnvironmentFactory.INSTANCE);
 		setOclTracingEnabled(verbose);
 		queryStatus = QueryStatus.VALID_OCL;
 

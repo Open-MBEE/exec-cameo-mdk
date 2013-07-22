@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
 import gov.nasa.jpl.mbee.docweb.TeamworkProfile;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteDocumentAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteProjectAction;
@@ -17,6 +18,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.actions.InstanceViewpointAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.MapLibraryAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.MapMissionAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.NumberDependencyAction;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.OclQueryAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.OrganizeDocumentAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.OrganizeViewEditorAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.PublishDocWebAction;
@@ -53,7 +55,10 @@ import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
 import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.properties.DefaultPropertyResourceProvider;
+import com.nomagic.magicdraw.properties.PropertyID;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
@@ -126,6 +131,13 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 			NMAction act = manager.getActionFor(GenerateDocumentAction.actionid);
 			if (act == null)
 				c.addAction(new GenerateDocumentAction(e));
+			DefaultPropertyResourceProvider pp = new DefaultPropertyResourceProvider();
+			// Only expose the OCL evaluator plugin when in developer mode.
+			if ( MDUtils.isDeveloperMode() ) {
+  			act = manager.getActionFor(OclQueryAction.actionid);
+        if (act == null)
+          c.addAction(new OclQueryAction(e));
+			}
 			act = manager.getActionFor(ValidateDocument3Action.actionid);
 			if (act == null)
 				c.addAction(new ValidateDocument3Action(e));

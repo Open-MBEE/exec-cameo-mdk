@@ -76,15 +76,7 @@ public class EditableTableModel extends AbstractTableModel {
 		if (element instanceof Property && what == PropertyEnum.VALUE)
 			return Utils.floatTruncate(((Property)element).getDefault(), precision);
     if (element instanceof Slot && what == PropertyEnum.VALUE) {
-      List< ValueSpecification > list = ((Slot)element).getValue();
-      String s = list.toString();
-      // If there is only one element in the list, just use that element instead
-      // of the list.
-      if ( list != null && !list.isEmpty() ) {
-        if ( list.size() == 1 ) {
-          s = RepresentationTextCreator.getRepresentedText( list.get( 0 ) );
-        }
-      }
+      String s = Utils.slotValueToString((Slot)element);
       return Utils.floatTruncate(s, precision);
     }
 		if (element instanceof Element && what == PropertyEnum.DOC)

@@ -20,6 +20,7 @@ public class BulletedList extends Table {
 		orderedList = false;
 		showTargets = true;
 		showStereotypePropertyNames = true;
+		setSortElementsByName(false);
 	}
 	
 	public void setOrderedList(boolean b) {
