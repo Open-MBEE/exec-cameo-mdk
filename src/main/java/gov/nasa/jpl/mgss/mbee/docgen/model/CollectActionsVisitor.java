@@ -18,6 +18,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 public class CollectActionsVisitor extends AbstractModelVisitor {
 
 	private List<UserScript> userEditableTables;
+	private List<TableStructure> tableStructures;
 	private List<UserScript> userScripts;
 	private List<UserScript> userValidationScripts;
 	private List<WorkpackageTable> workpackageTables;
@@ -27,6 +28,7 @@ public class CollectActionsVisitor extends AbstractModelVisitor {
 	
 	public CollectActionsVisitor() {
 		userEditableTables = new ArrayList<UserScript>();
+		tableStructures = new ArrayList<TableStructure>();
 		userScripts = new ArrayList<UserScript>();
 		userValidationScripts = new ArrayList<UserScript>();
 		workpackageTables = new ArrayList<WorkpackageTable>();
@@ -50,6 +52,10 @@ public class CollectActionsVisitor extends AbstractModelVisitor {
 		workpackageTables.add(dt);
 	}
 	
+	@Override
+	public void visit(TableStructure ts) {
+		tableStructures.add(ts);
+	}
 	@Override
 	public void visit(UserScript us) {
 		Element action = us.getDgElement();

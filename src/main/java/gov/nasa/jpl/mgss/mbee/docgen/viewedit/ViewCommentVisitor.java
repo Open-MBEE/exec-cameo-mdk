@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.model.AbstractModelVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
+import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -105,5 +106,11 @@ public class ViewCommentVisitor extends AbstractModelVisitor {
 			username = System.getProperty("user.name", "");
 		}
 		return username;
+	}
+
+	@Override
+	public void visit(TableStructure ts) {
+		// TODO Auto-generated method stub
+		
 	}
 }

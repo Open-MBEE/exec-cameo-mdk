@@ -30,6 +30,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Paragraph;
 import gov.nasa.jpl.mgss.mbee.docgen.model.PropertiesTableByAttributes;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Query;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
+import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
 import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageAssemblyTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageTable;
@@ -45,12 +46,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Stack;
 
+import javax.lang.model.util.Elements;
 import javax.script.ScriptException;
 
 import com.nomagic.magicdraw.core.Application;
@@ -79,6 +82,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -451,6 +455,9 @@ public class DocumentGenerator {
 					pushed++;
 					next2 = current;
 				}
+			} else if (next instanceof StructuredActivityNode && (StereotypesHelper.hasStereotype(next, DocGen3Profile.tableStructureStereotype))) {
+				// Get all the variables or whatever
+				parseTableStructure((StructuredActivityNode)next, parent);
 			} else if (next instanceof StructuredActivityNode) {
 				Boolean loop = (Boolean)getObjectProperty(next, DocGen3Profile.templateStereotype, "loop", false);
 				Boolean ignore = (Boolean)getObjectProperty(next, DocGen3Profile.templateStereotype, "ignore", false);
@@ -850,6 +857,69 @@ public class DocumentGenerator {
 			dge = new LibraryMapping();
 		}
 		return dge;
+	}
+	
+	/**
+	 * traverses elements contained in a TableStructure (here on: tStruct) and accordingly extracts relevant properties/elements/etc
+	 * @param cba a StructuredActivityNode w/tStruct stereotype 
+	 * @param parent wherever we're adding the table
+	 */
+	private void parseTableStructure(StructuredActivityNode san, Container parent) {
+		GUILog parseTS = Application.getInstance().getGUILog();
+		// ^ DEBUG ^ STUFF ^
+		TableStructure ts = new TableStructure();
+		List<Element> rows = targets.peek().isEmpty()?new ArrayList<Element>():targets.peek();
+		List<String> hs = new ArrayList();
+
+		// WHAT ARE TARGETS?!!?!?!??!?
+		// take all those slots and print put them in the column
+		List<String> FUUU = new ArrayList<String>();
+		for (Element r: rows)
+			FUUU.add(r.getHumanName());
+		parseTS.log("ROWS/TARGETS\n" + FUUU.toString());
+		
+		if (rows == null) return;
+		ActivityNode curNode = findInitialNode(san);
+		if (curNode == null) return;
+		Collection<ActivityEdge> outs = curNode.getOutgoing();
+		while (outs != null && outs.size() == 1) {
+			curNode = outs.iterator().next().getTarget();
+			if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype)) {
+				List<Object> curCol = new ArrayList<Object>();
+				// determine value of 'desiredProperty' in current tableColumn
+				Object dProp = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+				if (dProp != null) {
+					parseTS.log("DESIRED PROPERTY\n" + dProp.toString());
+					hs.add((String)dProp); // Not sure if want to have this be customizable (i.e. col-heading tag)
+				} else 
+					hs.add(new String());
+				for (Element r: rows) {
+					// find r's stereotypes:
+					List<Stereotype> rStereos = new ArrayList<Stereotype>();
+					for (Stereotype s: StereotypesHelper.getAllStereotypes(Application.getInstance().getProject()))
+						if (StereotypesHelper.hasStereotype(r, s))
+							rStereos.add(s);
+					// find out if any of those stereotypes has the property dProp
+					List<Object> rSlots = new ArrayList<Object>();
+					// special term handling!
+					if (((String)dProp).equals("Name"))
+						rSlots.add(((NamedElement)r).getName());
+					if (((String)dProp).equals("Documentation"))
+						rSlots.add(ModelHelper.getComment(r));
+					for (Stereotype s: rStereos)
+						for (Object o: StereotypesHelper.getStereotypePropertyValue(r, s, (String)dProp)) 
+							rSlots.add(o);
+					curCol.add(rSlots);
+				}
+				parseTS.log("CUR COL\n" + curCol.toString());
+				ts.addColumn(curCol);
+			} else if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype)) {
+				ts.addSumRow();
+			}
+			outs = curNode.getOutgoing();
+		}
+		ts.setHeaders(hs);
+		parent.addElement(ts);
 	}
 	
 	/**

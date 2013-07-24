@@ -1,0 +1,198 @@
+package gov.nasa.jpl.mgss.mbee.docgen.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
+
+import org.kohsuke.rngom.binary.visitor.ChildElementFinder.Element;
+
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+
+public class TableStructure extends Table implements Iterator<List<Object>>{
+
+	//TODO decide tag options
+	
+	private List<String> headers;
+	private List<Stereotype> outgoing;
+	private List<Stereotype> incoming;
+	private boolean skipIfNoDoc;
+	private List<List<Object>> table;
+	
+	public void setSkipIfNoDoc(boolean b) {
+		skipIfNoDoc = b;
+	}
+	
+	public void setHeaders(List<String> d) {
+		headers = d;
+	}
+	
+	public void setOutgoing(List<Stereotype> s) {
+		outgoing = s;
+	}
+	
+	public void setIncoming(List<Stereotype> s) {
+		incoming = s;
+	}
+
+	public List<String> getHeaders() {
+		return headers;
+	}
+
+	public List<Stereotype> getOutgoing() {
+		return outgoing;
+	}
+
+	public List<Stereotype> getIncoming() {
+		return incoming;
+	}
+
+	public boolean isSkipIfNoDoc() {
+		return skipIfNoDoc;
+	}
+	
+	// Table Stuff
+
+	private Object nullEntry = new String("no entry");
+	private int cLen;
+	
+	public TableStructure() {
+		cLen = 0;
+		table = new ArrayList<List<Object>>();
+	}
+	
+	public int getColumNum() {
+		return cLen;
+	}
+	
+	public List<List<Object>> getTable() {
+		return table;
+	}
+
+	// Doesn't account for column length differences
+	public void setTable(List<List<Object>> t) {
+		table = t;
+	}
+	
+	// Equalizes column lengths
+	public void addColumn(List<Object> c) {
+		if (c != null) {
+			table.add(c);
+			if (c.size() > cLen) 
+				cLen = c.size();
+			for (List<Object> x: table)
+				while (x.size() < cLen)
+					x.add(nullEntry);
+		} else {
+			table.add(new ArrayList<Object>());
+		}
+	}
+	
+	public List<Object> getColumn(int n) {
+		if (n < table.size() && n >= 0) 
+			return table.get(n); 
+		else
+			return null;
+	}
+	
+	// IMPORTANT INVARIANT: Assumes all columns given are equally sized
+	public void addRow(List<Object> r) {
+		if (table.size() < r.size()) {
+			List<Object> empty = new ArrayList<Object>();
+			if (table.size() > 0)  						
+				for (int i = 0; i < table.get(0).size(); i++)
+					empty.add(nullEntry);
+			for (int i = table.size(); i < r.size(); i++) 
+				table.add(empty);
+			
+		} else if (r.size() < table.size()) {
+			for (int i = r.size(); i < table.size(); i++) 
+				r.add(0, nullEntry);
+		}
+		for (int i = 0; i < r.size(); i++) 
+			table.get(i).add(r.get(i)); //?
+		cLen++;
+	}
+
+	// Makes same assumption as addRow
+	public List<Object> getRow(int n) {
+		if (table.get(0) == null || n >= table.get(0).size())
+			return null;
+		List<Object> output = new ArrayList<Object>();
+		for (int i = 0; i < table.size(); i++)
+			output.add(table.get(i).get(n));
+		return output;
+	}
+	
+	// Fancy table operations
+	
+	@SuppressWarnings("unchecked")
+	public void addSumRow() {
+		List<Object> sumRow = new ArrayList<Object>();
+		double f;
+		boolean foundSumable = false;
+		for (List<Object> c: table) {
+			f = 0;
+			for (Object l: c)
+				for (Object item: (List<Object>)l) {
+					if (item instanceof Float || item instanceof Double || item instanceof Integer) {
+						foundSumable = true;
+						f += (Double)item;
+					}
+				}
+			if (foundSumable) sumRow.add(f);
+			else sumRow.add(nullEntry);
+			foundSumable = false;
+		}
+		addRow(sumRow);
+	}
+	
+	// Iterator Stuff
+
+	private int itercount = 0;
+	
+	public boolean hasNext() {
+		return table.size()>0?(table.get(0).size() > itercount):false;
+	}
+	
+	public List<Object> next() {
+		List<Object> out = getRow(itercount);
+		itercount++;
+		return out;
+	}
+	
+	public void remove() {
+		return;
+	}
+	
+	// Debugging relevant stuff
+	
+	public String toString() {
+		//determine longest row
+		int biggest=0;
+		if (table != null)
+			for (List<Object> c: table)
+				biggest = (c.size() > biggest) ? c.size() : biggest;
+		//add lines to the string
+		String output = new String();
+		for (int n = 0; n < biggest; n++) {
+			for (List<Object> c: table) {
+				if (c.size() <= n)
+					output.concat("| null\t");
+				else
+					output.concat("| " + c.toString() + "\t");
+			}
+			output.concat("||\n");
+		}	
+		return output;
+	}
+	
+	// For DocBookOutputVisitor Stuff
+	
+	@Override
+	public void accept(IModelVisitor v) {
+		v.visit(this);
+		
+	}
+}
