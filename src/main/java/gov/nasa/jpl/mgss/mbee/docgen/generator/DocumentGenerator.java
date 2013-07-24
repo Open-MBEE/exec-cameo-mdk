@@ -867,10 +867,10 @@ public class DocumentGenerator {
 	 * @param cba a StructuredActivityNode w/tStruct stereotype 
 	 * @param parent wherever we're adding the table
 	 */
-	private boolean debug = true;
+	private boolean debug = true; // debug! TODO: remove
 	
 	private void parseTableStructure(StructuredActivityNode san, Container parent) {
-		GUILog parseTS = Application.getInstance().getGUILog();
+		GUILog parseTS = Application.getInstance().getGUILog(); // debug! TODO: remove
 		
 		TableStructure ts = new TableStructure();
 		List<Element> rows = targets.peek().isEmpty()?new ArrayList<Element>():targets.peek();
@@ -891,7 +891,7 @@ public class DocumentGenerator {
 			curNode = outs.iterator().next().getTarget();
 			if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype)) {
 				List<Object> curCol = new ArrayList<Object>();
-				// determine value of 'desiredProperty' in current tableColumn
+				// TablePropertyColumn tags
 				Object dProp = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
 				Object heading = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "columnHeading", null);
 				String cName = ((NamedElement)curNode).getName();
@@ -907,14 +907,11 @@ public class DocumentGenerator {
 				if (debug) parseTS.log("DESIRED PROPERTY\n" + dProp!=null?dProp.toString():"dProp is null!?");
 				
 				for (Element r: rows) {
-					// find r's stereotypes:
 					List<Stereotype> rStereos = new ArrayList<Stereotype>();
 					for (Stereotype s: StereotypesHelper.getAllStereotypes(Application.getInstance().getProject()))
 						if (StereotypesHelper.hasStereotype(r, s))
 							rStereos.add(s);
-					// find r's owned elements:
 					Collection<Element> rOwned = r.getOwnedElement();
-					// find out if any of those stereotypes has the property dProp
 					Collection<Object> rSlots = new HashSet<Object>();
 					// special term handling!
 					if (((String)dProp).equals("Name"))
@@ -937,13 +934,10 @@ public class DocumentGenerator {
 						if (pSlotValue != null && !pSlotValue.toString().equals("")) {
 							if (rSlots.contains(pDefault.getDefaultValue())) rSlots.remove(pDefault.getDefaultValue());
 							rSlots.add(pSlotValue);
-							parseTS.log("CATPOWER: " + pSlotValue);
 						} else if (pDefault != null && pDefault.getDefaultValue() != null && rSlots.size() < 1) {
 							rSlots.add(pDefault.getDefaultValue());
 						}
-						parseTS.log("LOLCANNON: " + rSlots.size());
 						String derp = (String) (pDefault!=null?pDefault.getName():pDefault);
-						parseTS.log("POOPTANK: " + derp);
 					}
 					for (Object o: rOwned)
 						if (((Element)o) instanceof Property && ((Property)o).getName().equals((String)dProp))
@@ -952,7 +946,9 @@ public class DocumentGenerator {
 					for (Object o: rSlots.toArray()) slotOut.add(o);
 					curCol.add(slotOut);
 				}
+				
 				if (debug) parseTS.log("CUR COL\n" + curCol.toString());
+				
 				ts.addColumn(curCol);
 			} else if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype)) {
 				ts.addSumRow();
