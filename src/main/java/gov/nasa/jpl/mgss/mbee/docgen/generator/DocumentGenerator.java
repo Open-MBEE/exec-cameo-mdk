@@ -56,6 +56,8 @@ import java.util.Stack;
 import javax.lang.model.util.Elements;
 import javax.script.ScriptException;
 
+import org.jboss.util.property.PropertyManager;
+
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
@@ -76,6 +78,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementImport;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
@@ -864,19 +867,21 @@ public class DocumentGenerator {
 	 * @param cba a StructuredActivityNode w/tStruct stereotype 
 	 * @param parent wherever we're adding the table
 	 */
+	private boolean debug = true;
+	
 	private void parseTableStructure(StructuredActivityNode san, Container parent) {
 		GUILog parseTS = Application.getInstance().getGUILog();
-		// ^ DEBUG ^ STUFF ^
+		
 		TableStructure ts = new TableStructure();
 		List<Element> rows = targets.peek().isEmpty()?new ArrayList<Element>():targets.peek();
 		List<String> hs = new ArrayList();
 
-		// WHAT ARE TARGETS?!!?!?!??!?
-		// take all those slots and print put them in the column
-		List<String> FUUU = new ArrayList<String>();
-		for (Element r: rows)
-			FUUU.add(r.getHumanName());
-		parseTS.log("ROWS/TARGETS\n" + FUUU.toString());
+		if (debug) {
+			List<String> FUUU = new ArrayList<String>();
+			for (Element r: rows)
+				FUUU.add(r.getHumanName());
+			parseTS.log("ROWS/TARGETS\n" + FUUU.toString());
+		}
 		
 		if (rows == null) return;
 		ActivityNode curNode = findInitialNode(san);
@@ -888,30 +893,66 @@ public class DocumentGenerator {
 				List<Object> curCol = new ArrayList<Object>();
 				// determine value of 'desiredProperty' in current tableColumn
 				Object dProp = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
-				if (dProp != null) {
-					parseTS.log("DESIRED PROPERTY\n" + dProp.toString());
-					hs.add((String)dProp); // Not sure if want to have this be customizable (i.e. col-heading tag)
-				} else 
+				Object heading = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "columnHeading", null);
+				String cName = ((NamedElement)curNode).getName();
+				if (heading != null)
+					hs.add((String)heading);
+				else if (!cName.equals(""))
+					hs.add(cName);
+				else if (dProp != null)
+					hs.add((String)dProp);
+				else 
 					hs.add(new String());
+				
+				if (debug) parseTS.log("DESIRED PROPERTY\n" + dProp!=null?dProp.toString():"dProp is null!?");
+				
 				for (Element r: rows) {
 					// find r's stereotypes:
 					List<Stereotype> rStereos = new ArrayList<Stereotype>();
 					for (Stereotype s: StereotypesHelper.getAllStereotypes(Application.getInstance().getProject()))
 						if (StereotypesHelper.hasStereotype(r, s))
 							rStereos.add(s);
+					// find r's owned elements:
+					Collection<Element> rOwned = r.getOwnedElement();
 					// find out if any of those stereotypes has the property dProp
-					List<Object> rSlots = new ArrayList<Object>();
+					Collection<Object> rSlots = new HashSet<Object>();
 					// special term handling!
 					if (((String)dProp).equals("Name"))
 						rSlots.add(((NamedElement)r).getName());
 					if (((String)dProp).equals("Documentation"))
 						rSlots.add(ModelHelper.getComment(r));
-					for (Stereotype s: rStereos)
-						for (Object o: StereotypesHelper.getStereotypePropertyValue(r, s, (String)dProp)) 
-							rSlots.add(o);
-					curCol.add(rSlots);
+					// these don't work yet
+//					if (((String)dProp).equals("Outgoing Relationships"))
+//						for (Object o: r.get_directedRelationshipOfSource())
+//							if (o instanceof DirectedRelationship && ((DirectedRelationship)o).getSource().contains((Element)o))
+//								rSlots.add(o);
+//					if (((String)dProp).equals("Incoming Relationships"))
+//						for (Object o:  r.get_directedRelationshipOfTarget())
+//							if (o instanceof DirectedRelationship && ((DirectedRelationship)o).getTarget().contains((Element)o))
+//								rSlots.add(o);
+					// Get all the properties or the default value
+					for (Stereotype s: rStereos) {
+						Object pSlotValue = StereotypesHelper.getStereotypePropertyFirst(r, s, (String)dProp);
+						Property pDefault = StereotypesHelper.findStereotypePropertyFor(curNode, (String)dProp);
+						if (pSlotValue != null && !pSlotValue.toString().equals("")) {
+							if (rSlots.contains(pDefault.getDefaultValue())) rSlots.remove(pDefault.getDefaultValue());
+							rSlots.add(pSlotValue);
+							parseTS.log("CATPOWER: " + pSlotValue);
+						} else if (pDefault != null && pDefault.getDefaultValue() != null && rSlots.size() < 1) {
+							rSlots.add(pDefault.getDefaultValue());
+						}
+						parseTS.log("LOLCANNON: " + rSlots.size());
+						String derp = (String) (pDefault!=null?pDefault.getName():pDefault);
+						parseTS.log("POOPTANK: " + derp);
+					}
+					for (Object o: rOwned)
+						if (((Element)o) instanceof Property && ((Property)o).getName().equals((String)dProp))
+							rSlots.add((Object)((Property)o).getDefaultValue());
+					List<Object> slotOut = new ArrayList<Object>();
+					for (Object o: rSlots.toArray()) slotOut.add(o);
+					curCol.add(slotOut);
 				}
-				parseTS.log("CUR COL\n" + curCol.toString());
+				if (debug) parseTS.log("CUR COL\n" + curCol.toString());
 				ts.addColumn(curCol);
 			} else if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype)) {
 				ts.addSumRow();

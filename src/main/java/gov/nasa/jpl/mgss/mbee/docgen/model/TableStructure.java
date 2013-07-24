@@ -1,13 +1,24 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Iterator;
 
 import org.kohsuke.rngom.binary.visitor.ChildElementFinder.Element;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class TableStructure extends Table implements Iterator<List<Object>>{
@@ -55,10 +66,12 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	// Table Stuff
 
 	private Object nullEntry = new String("no entry");
+	private int sortCol; // column index+1, neg means inv. order, 0 is no sort
 	private int cLen;
 	
 	public TableStructure() {
 		cLen = 0;
+		sortCol = 0;
 		table = new ArrayList<List<Object>>();
 	}
 	
@@ -124,8 +137,8 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 			output.add(table.get(i).get(n));
 		return output;
 	}
-	
-	// Fancy table operations
+
+	// FANCY TABLE OPERATIONS
 
 	String irrelevantEntry = new String("--");
 	
@@ -141,6 +154,9 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 					if (item instanceof Float || item instanceof Double || item instanceof Integer) {
 						foundSumable = true;
 						f += (Double)item;
+					} else if (item instanceof LiteralInteger) {
+						foundSumable = true;
+						f += new Double(ModelHelper.getValueString((ValueSpecification)item));
 					}
 				}
 			ArrayList bucket = new ArrayList<Object>();
@@ -151,6 +167,8 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 		}
 		addRow(sumRow);
 	}
+	
+//	public void addSortColumn()
 	
 	// Iterator Stuff
 
