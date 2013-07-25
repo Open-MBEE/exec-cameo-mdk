@@ -12,6 +12,7 @@ import java.util.Map;
 import javax.script.ScriptException;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -39,6 +40,12 @@ public class UserScript extends Query {
 				inputs2.put("DocGenTargets", new ArrayList<Element>());
 			if (inputs != null)
 				inputs2.putAll(inputs);
+			if (!inputs2.containsKey("md_install_dir"))
+				inputs2.put("md_install_dir", ApplicationEnvironment.getInstallRoot());
+			if (!inputs2.containsKey("docgen_output_dir"))
+				inputs2.put("docgen_output_dir", ApplicationEnvironment.getInstallRoot());
+			if (!inputs2.containsKey("ForViewEditor"))
+				inputs2.put("ForViewEditor", false);
 			Element e = this.dgElement;
 			if (!StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype))
 				if (e instanceof CallBehaviorAction && ((CallBehaviorAction)e).getBehavior() != null && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)e).getBehavior(), DocGen3Profile.userScriptStereotype))

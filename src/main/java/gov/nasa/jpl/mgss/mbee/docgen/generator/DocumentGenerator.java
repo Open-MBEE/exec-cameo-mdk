@@ -178,7 +178,7 @@ public class DocumentGenerator {
 	 */
 	public Document parseDocument(boolean singleView, boolean recurse) {
 		if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
-			if (StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype)) {
+			if (StereotypesHelper.hasStereotypeOrDerived(start, DocGen3Profile.documentViewStereotype)) {
 				doc.setDgElement(start); //only set the DgElement if this is actually a document view, this affects processing down the line for various things (like docweb visitors)
 				Element first = findStereotypedRelationship(start, DocGen3Profile.firstStereotype);
 				if (first != null)
@@ -743,6 +743,8 @@ public class DocumentGenerator {
 			dge = new CombinedMatrix();
 			Integer nameColumn = (Integer)getObjectProperty(cba, DocGen3Profile.combinedMatrixStereotype, "nameColumn", 1);
 			Integer docColumn = (Integer)getObjectProperty(cba, DocGen3Profile.combinedMatrixStereotype, "docColumn", 2);
+			nameColumn = nameColumn < 1 ? 1 : nameColumn;
+			docColumn = docColumn < 1 ? 2 : docColumn;
 			((CombinedMatrix)dge).setHeaders(headers);
 			((CombinedMatrix)dge).setCaptions(captions);
 			((CombinedMatrix)dge).setShowCaptions(showCaptions);

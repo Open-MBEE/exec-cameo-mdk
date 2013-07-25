@@ -159,7 +159,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 						f += new Double(ModelHelper.getValueString((ValueSpecification)item));
 					}
 				}
-			ArrayList bucket = new ArrayList<Object>();
+			List<Object> bucket = new ArrayList<Object>();
 			if (foundSumable) bucket.add(f);
 			else bucket.add(irrelevantEntry);
 			sumRow.add(bucket);

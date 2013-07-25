@@ -42,6 +42,7 @@ import java.util.Stack;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -649,7 +650,8 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		inputs.put("ForViewEditor", forViewEditor);
 		inputs.put("DocGenTitles", us.getTitles());
 		if (this.outputDir != null)
-			inputs.put("OutputDir", this.outputDir);
+			inputs.put("docgen_output_dir", this.outputDir);
+		inputs.put("md_install_dir", ApplicationEnvironment.getInstallRoot());
 		Map<?,?> o = us.getScriptOutput(inputs);
 		if (o != null && o.containsKey("DocGenOutput")) {
 			Object l = o.get("DocGenOutput");

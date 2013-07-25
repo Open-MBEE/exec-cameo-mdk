@@ -144,7 +144,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 			act = manager.getActionFor(ViewDocument3Action.actionid);
 			if (act == null)
 				c.addAction(new ViewDocument3Action(e));
-			if (StereotypesHelper.hasStereotype(e, DocGen3Profile.documentViewStereotype)) {
+			if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentViewStereotype)) {
 				act = manager.getActionFor(PublishDocWebAction.actionid);
 				if (act == null)
 					c.addAction(new PublishDocWebAction((NamedElement)e));
