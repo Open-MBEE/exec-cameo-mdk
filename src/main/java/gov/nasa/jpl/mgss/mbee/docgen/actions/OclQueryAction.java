@@ -4,6 +4,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.RepeatInputComboBoxDialog;
@@ -39,6 +40,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.jdesktop.swingx.action.BoundAction;
+import org.junit.Assert;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -94,9 +96,10 @@ public class OclQueryAction extends MDAction {
       String oclString = input == null ? null : input.toString();
       ArrayList<String> outputList = new ArrayList< String >(); 
       for ( Element elem : getContext() ) {
+        Object result = null;
         String output = null;
         try {
-          Object result = OclEvaluator.evaluateQuery( elem, oclString, true );
+          result = OclEvaluator.evaluateQuery( elem, oclString, true );
           output = toString(result);
           output =
               "evaluated \"" + oclString + "\" for element "
@@ -110,7 +113,7 @@ public class OclQueryAction extends MDAction {
           outputList.add( errorStr );
         }
         try {
-          Object result = eval2( oclString, elem );
+          result = eval2( oclString, elem );
           output = "eval2 \"" + oclString + "\" for element "
                        + toString(elem) 
                        + "    result = " + toString(result) + "\n";
@@ -121,8 +124,10 @@ public class OclQueryAction extends MDAction {
           Debug.outln( errorStr );
           outputList.add( errorStr );
         }
+        System.out.println( spew(result) );
+        //outputList.add( "\nSPEW\n" + spew( result ) );
       }
-      Debug.outln( outputList.toString() );
+      //Debug.outln( outputList.toString() );
       return outputList;
     }
 
@@ -150,11 +155,57 @@ public class OclQueryAction extends MDAction {
       if ( Utils2.isNullOrEmpty( s ) && result != null ) {
         s = result.toString();
       }
+
       if ( s == null ) s = "null";
       return s;
     }
+    
+    private String propertiesToString( EObject eObject ) {
+      StringBuffer sb = new StringBuffer();
+      // TODO
+      Assert.assertFalse( true );
+      return sb.toString();
+    }
+    
+    private String spew( Object result ) {
+      String s = null;
+      if ( result instanceof Collection ) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("(");
+        boolean first = true;
+        for ( Object r : (Collection<?>)result ) {
+          if ( first ) first = false;
+          else sb.append(",");
+          sb.append(spew(r));
+        }
+        sb.append(")");
+        s = sb.toString();
+      }
+      if ( Utils2.isNullOrEmpty( s ) && result instanceof BaseElement ) {
+        BaseElement be = ( (BaseElement)result );
+        s = be.getHumanName();
+      }
+      if ( Utils2.isNullOrEmpty( s ) && result instanceof ModelObject ) {
+        s = ( (ModelObject)result ).get_representationText();
+      }
+      if ( result instanceof EObject ) { 
+        if ( Utils2.isNullOrEmpty( s ) ) {
+          s = "";
+        } else {
+          s = s + ": ";
+        }
+        s = s + EmfUtils.spew( result );
+      }
+      if ( Utils2.isNullOrEmpty( s ) && result != null ) {
+        s = result.toString();
+      }
+      if ( s == null ) s = "null";
+      return s;
+    }
+
   }
   
+
   public void actionPerformed(ActionEvent e) {
     GUILog gl = Application.getInstance().getGUILog();
     

@@ -10,7 +10,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.ItemSelectable;
+import java.awt.ScrollPane;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.Arrays;
@@ -21,12 +23,19 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JWindow;
 import javax.swing.ListCellRenderer;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
@@ -74,7 +83,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
    */
   protected Processor processor = null;
   
-  protected EditableListPanel editableListPanel = null;
+  protected static EditableListPanel editableListPanel = null;
   
   protected boolean cancelSelected = false;
   
@@ -257,7 +266,11 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
     // private JTextField value;
     public JComboBox jcb = null;
-    public JPanel resultPanel = new JPanel( new BorderLayout( 5, 5 ) );
+    //public JPanel resultPanel = new JPanel( new BorderLayout( 5, 5 ) );
+    public JComponent resultPane = null;
+    public JScrollPane resultScrollPane = null;
+//        new JScrollPane( resultPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+//                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
 
     private boolean focusSet = false;
 
@@ -266,11 +279,34 @@ public class RepeatInputComboBoxDialog implements Runnable {
       setItems( items );
       add( new JLabel( msg ), BorderLayout.NORTH );
       add( jcb, BorderLayout.CENTER );
-      add( resultPanel, BorderLayout.SOUTH );
+      
+      resultPane = createEditorPane(" ");
+      resultScrollPane =
+          new JScrollPane( resultPane,
+                           JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                           JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
+//      resultScrollPanel.setVerticalScrollBarPolicy(
+//                      JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+      resultScrollPane.setPreferredSize(new Dimension(250, 145));
+      resultScrollPane.setMinimumSize(new Dimension(10, 10));
+    
+      
+      add( resultScrollPane, BorderLayout.SOUTH );
+//      resultPanel.setSize( 400, 400 );
+//      resultScrollPanel.setBounds( 100, 100, 300, 300 );
+//      resultPanel.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
+//      resultPanel.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS );
       addAncestorListener( new RequestFocusListener() );
       //jcb.getEditor().selectAll(); // TODO -- This isn't working. WHy?
     }
 
+    private JEditorPane createEditorPane(String html) {
+      JEditorPane editorPane = new JEditorPane();
+      editorPane.setEditable(false);
+      editorPane.setText(html);
+      return editorPane;
+    }
+    
     public void setItems( Object[] items ) {
       getJcb().setModel( new DefaultComboBoxModel( items ) );
     }
@@ -301,27 +337,59 @@ public class RepeatInputComboBoxDialog implements Runnable {
     }
 
     public String toHtml( String s ) {
-      return "<html>" + s.replaceAll( "\\n", "<br>" ) + "</html>";
+      if ( s.contains( "<html>" ) ) return s;
+      return "<html>" + s.replaceAll( "\\n", "<br>\\n" ) + "</html>";
     }
     
-    public Component makeComponent( Object result ) {
-      if ( result instanceof Component ) {
-        return (Component)result;
-      }
-      if ( result instanceof Icon ) {
-        return new JLabel( (Icon)result );
-      }
-      return new JLabel( toHtml(result.toString()) );
-    }
+//    private Component makeComponent( Object result ) {
+//      if ( result instanceof Component ) {
+//        return (Component)result;
+//      }
+//      if ( result instanceof Icon ) {
+//        return new JLabel( (Icon)result );
+//      }
+//      return new JTextArea( toHtml(result.toString()) );
+//    }
 
     public void setResultPanel( Object result ) {
-      Component c = makeComponent( result );
-      if ( resultPanel.getComponentCount() == 1 ) {
-        resultPanel.remove( 0 );
+      System.out.println("setResultPanel(" + result + ")" );
+      if ( resultPane instanceof JEditorPane ) {
+        if ( result == null ) result = "null";
+        ( (JEditorPane)resultPane ).setText( toHtml( result.toString() ) );
+      } else {
+      JComponent newResultPane = null;
+      if ( result instanceof JComponent ) {
+        newResultPane = (JComponent)result;
+      } else if ( result instanceof Icon ) {
+        newResultPane = new JLabel( (Icon)result );
+      } else { //if ( result instanceof String ) {
+        newResultPane =
+            createEditorPane( toHtml( result == null ? "null"
+                                                    : result.toString() ) );
+        //resultPane.setText( toHtml( (String)result ) );
       }
-      if ( resultPanel.getComponentCount() == 0 ) {
-        resultPanel.add( c );
+      if ( newResultPane != null ) {
+        resultScrollPane.remove( resultPane );
+        resultPane = newResultPane;
+        System.out.println("Hello!!!");
+        resultScrollPane.add( resultPane );
       }
+      }
+      if ( this.isVisible() ) {
+        System.out.println("IS visible");
+        setVisible( false );
+        setVisible( true );
+      } else {
+        System.out.println("is NOT visible");
+      }
+      resultScrollPane.update(getGraphics());
+//      Component c = makeComponent( result );
+//      if ( resultPane.getComponentCount() == 1 ) {
+//        resultPane.remove( 0 );
+//      }
+//      if ( resultPane.getComponentCount() == 0 ) {
+//        resultPane.add( c );
+//      }
     }
     
     public String getValue() {
@@ -428,17 +496,29 @@ public class RepeatInputComboBoxDialog implements Runnable {
     public RequestFocusListener(boolean removeListener)
     {
       this.removeListener = removeListener;
+      System.out.println( "zowie!" );
     }
 
     @Override
     public void ancestorAdded(AncestorEvent e)
     {
+      System.out.println( "ancestorAdded(" + e + ")" );
       JComponent component = e.getComponent();
       component.requestFocusInWindow();
       if ( component instanceof JTextField ) {
         ( (JTextField)component ).selectAll();
       }
 
+      //JRootPane rootPane = component.getRootPane();
+      //rootPane
+      //rootPane.setLocation( 100, 100 );
+      JWindow top = getTopComponentOfType( component, JWindow.class );
+      //top.setSize( new Dimension( 300, 300 ) );
+      top.setMaximumSize( new Dimension(500,500) );
+      System.out.println( "rootPane = " + component.getRootPane().toString() );
+      System.out.println( "top = " + top.toString() );
+      System.out.println( "wow!" );
+      
       if (removeListener)
         component.removeAncestorListener( this );
     }
@@ -468,6 +548,25 @@ public class RepeatInputComboBoxDialog implements Runnable {
     RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog( "Enter an OCL expression:",
                                                              "OCL Evaluation",
                                                              processor );
+  }
+
+  /**
+   * @param component
+   * @return the highest [grand]parent of component that is a JComponent or, if
+   *         no such parent exists, component
+   */
+  public static < T extends Component > T
+      getTopComponentOfType( Component component, Class< T > type ) {
+    if ( component == null ) return null;
+    if ( type == null ) type = (Class< T >)JComponent.class;
+    Container parent = component.getParent();
+    while ( parent != null ) {//&& !( type.isInstance( parent ) ) ) {
+      if ( type.isInstance( parent ) ) {
+        return getTopComponentOfType( (JComponent)parent, type );
+      }
+      parent = parent.getParent();
+    }
+    return (T)( type.isInstance( component ) ? component : null );
   }
 
 }
