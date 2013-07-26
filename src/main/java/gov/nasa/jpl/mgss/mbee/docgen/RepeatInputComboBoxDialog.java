@@ -304,6 +304,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
       JEditorPane editorPane = new JEditorPane();
       editorPane.setEditable(false);
       editorPane.setText(html);
+      editorPane.setContentType("text/html");
       return editorPane;
     }
     
@@ -355,7 +356,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
       System.out.println("setResultPanel(" + result + ")" );
       if ( resultPane instanceof JEditorPane ) {
         if ( result == null ) result = "null";
-        ( (JEditorPane)resultPane ).setText( toHtml( result.toString() ) );
+        ( (JEditorPane)resultPane ).setText( //toHtml( 
+        		result.toString() );
       } else {
       JComponent newResultPane = null;
       if ( result instanceof JComponent ) {
@@ -364,8 +366,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
         newResultPane = new JLabel( (Icon)result );
       } else { //if ( result instanceof String ) {
         newResultPane =
-            createEditorPane( toHtml( result == null ? "null"
-                                                    : result.toString() ) );
+            createEditorPane( //toHtml(
+            		result == null ? "null" : result.toString() );
         //resultPane.setText( toHtml( (String)result ) );
       }
       if ( newResultPane != null ) {
@@ -382,7 +384,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
       } else {
         System.out.println("is NOT visible");
       }
-      resultScrollPane.update(getGraphics());
+      //resultScrollPane.update(getGraphics());
 //      Component c = makeComponent( result );
 //      if ( resultPane.getComponentCount() == 1 ) {
 //        resultPane.remove( 0 );
