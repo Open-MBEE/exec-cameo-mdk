@@ -934,7 +934,7 @@ public class DocumentGenerator {
 						Object pSlotValue = StereotypesHelper.getStereotypePropertyFirst(r, s, (String)dProp);
 						Property pDefault = StereotypesHelper.findStereotypePropertyFor(curNode, (String)dProp);
 						if (pSlotValue != null && !pSlotValue.toString().equals("")) {
-							if (rSlots.contains(pDefault.getDefaultValue())) rSlots.remove(pDefault.getDefaultValue());
+							if (pDefault != null && rSlots.contains(pDefault.getDefaultValue())) rSlots.remove(pDefault.getDefaultValue());
 							rSlots.add(pSlotValue);
 						} else if (pDefault != null && pDefault.getDefaultValue() != null && rSlots.size() < 1) {
 							rSlots.add(pDefault.getDefaultValue());
