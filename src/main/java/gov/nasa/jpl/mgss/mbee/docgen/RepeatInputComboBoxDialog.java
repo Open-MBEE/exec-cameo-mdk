@@ -516,9 +516,11 @@ public class RepeatInputComboBoxDialog implements Runnable {
       //rootPane.setLocation( 100, 100 );
       JWindow top = getTopComponentOfType( component, JWindow.class );
       //top.setSize( new Dimension( 300, 300 ) );
-      top.setMaximumSize( new Dimension(500,500) );
-      System.out.println( "rootPane = " + component.getRootPane().toString() );
-      System.out.println( "top = " + top.toString() );
+      if ( top != null ) {
+        top.setMaximumSize( new Dimension(500,500) );
+        System.out.println( "rootPane = " + component.getRootPane().toString() );
+        System.out.println( "top = " + top.toString() );
+      }
       System.out.println( "wow!" );
       
       if (removeListener)
