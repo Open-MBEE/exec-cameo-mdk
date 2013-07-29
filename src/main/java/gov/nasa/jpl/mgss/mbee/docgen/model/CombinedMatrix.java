@@ -13,6 +13,10 @@ public class CombinedMatrix extends Table {
 	private int nameColumn = 1;
 	private int docColumn = 2;
 	
+  public CombinedMatrix() {
+    setSortElementsByName( true );
+  }
+  
 	public void setSkipIfNoDoc(boolean b) {
 		skipIfNoDoc = b;
 	}

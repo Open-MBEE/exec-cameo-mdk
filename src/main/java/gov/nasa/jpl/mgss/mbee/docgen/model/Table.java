@@ -13,7 +13,7 @@ public abstract class Table extends Query {
 	protected String style;
 	protected List<String> colwidths;
 	
-	public void setIncludeDoc(boolean d) {
+  public void setIncludeDoc(boolean d) {
 		includeDoc = d;
 	}
 	
