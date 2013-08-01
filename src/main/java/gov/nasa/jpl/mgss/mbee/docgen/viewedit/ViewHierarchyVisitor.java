@@ -8,6 +8,7 @@ import org.json.simple.JSONObject;
 import gov.nasa.jpl.mgss.mbee.docgen.model.AbstractModelVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
+import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 
 public class ViewHierarchyVisitor extends AbstractModelVisitor {
 
@@ -52,5 +53,11 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
 		if (sec.isView()) {
 			result.put(sec.getDgElement().getID(), curChildren.pop());
 		}
+	}
+
+	@Override
+	public void visit(TableStructure ts) {
+		// TODO Auto-generated method stub
+		
 	}
 }

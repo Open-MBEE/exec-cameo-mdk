@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+
 public class DocGen3Profile {
 	public static final String sectionStereotype = "Section3";
 	public static final String paragraphStereotype = "Paragraph3";
@@ -22,6 +24,9 @@ public class DocGen3Profile {
 	public static final String combinedMatrixStereotype = "CombinedMatrix3";
 	
 	public static final String customTableStereotype = "CustomTable";
+	public static final String tableStructureStereotype = "TableStructure";					// TODO: Add to MD Prof
+	public static final String tablePropertyColumnStereotype = "TablePropertyColumn";		// TODO: Add to MD Prof
+	public static final String tableSumRowStereotype = "TableSumRow";						// TODO: Add to MD Prof
 	
 	public static final String dependencyMatrixStereotype = "DependencyMatrix3";
 	public static final String genericTableStereotype = "GenericTable3";

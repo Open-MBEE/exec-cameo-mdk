@@ -1,7 +1,9 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.ModelLib;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.tree.Node;
 import gov.nasa.jpl.mgss.mbee.docgen.DgvalidationDBSwitch;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
@@ -16,6 +18,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSection;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
@@ -38,6 +41,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -79,8 +83,12 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			DBList l = new DBList();
 			parent.peek().addElement(l);
 			l.setOrdered(bl.isOrderedList());
+      List< Element > targets =
+          bl.isSortElementsByName() ? Utils.sortByName( bl.getTargets() )
+                                   : bl.getTargets();
 			if (bl.isShowTargets() || bl.isIncludeDoc()) {
-				for (Element e: bl.getTargets()) {
+
+				for (Element e: targets) {
 					DBListItem li = new DBListItem();
 					l.addElement(li);
 					if (bl.isShowTargets() && e instanceof NamedElement) {
@@ -114,7 +122,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 					}
 				}
 			} else {
-				for (Element e: bl.getTargets()) {
+				for (Element e: targets) {
 					if (bl.getStereotypeProperties() != null && !bl.getStereotypeProperties().isEmpty()) {
 						if (bl.isShowStereotypePropertyNames()) {
 							for (Property p: bl.getStereotypeProperties()) {
@@ -143,7 +151,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		if (!(bom.getWorkpackage() instanceof NamedElement))
 			return;
 		int i = 0;
-		for (Element t: bom.getTargets()) {
+    List< Element > targets =
+        bom.isSortElementsByName() ? Utils.sortByName( bom.getTargets() )
+                                   : bom.getTargets();
+		for (Element t: targets) {
 			if (!(t instanceof Class) || ModelLib.isWorkPackage(t)) {
 				continue;
 			}
@@ -211,6 +222,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 
 	@Override
 	public void visit(CombinedMatrix cm) {
+    Debug.outln("entering visit(CombinedMatrix): " + cm);
 		if (cm.getIgnore())
 			return;
 		DBTable dbTable = new DBTable();
@@ -254,7 +266,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		if (cm.getCaptions() != null && cm.getCaptions().size() > 0 && cm.isShowCaptions())
 			dbTable.setCaption(cm.getCaptions().get(0));
 		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-		for (Element e: Utils.sortByName(cm.getTargets())) {
+    List< Element > targets =
+        cm.isSortElementsByName() ? Utils.sortByName( cm.getTargets() )
+                                 : cm.getTargets();
+		for (Element e: targets) {
 			if (cm.isSkipIfNoDoc() && ModelHelper.getComment(e).trim().equals(""))
 				continue;
 			List<DocumentElement> row = new ArrayList<DocumentElement>();
@@ -321,108 +336,82 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		parent.peek().addElement(dbTable);
 	}
 
-	//TODO in progress
 	@Override
-	public void visit(CustomTable cm) {
-		if (cm.getIgnore())
-			return;
-		DBTable t = new DBTable();
+	public void visit(CustomTable customTable) {
+	  Debug.outln("entering visit(CustomTable): " + customTable);
+    if (customTable==null) {
+      Debug.errln( "Can't create DocBook table from null CustomTable!" );
+      return;
+    }
+    if (customTable.getIgnore()) {
+      return;
+    }
+    if (Utils2.isNullOrEmpty(customTable.getColumns())) {
+      Debug.errln( "No columns specified for CustomTable! "
+                   + customTable.getColumns() );
+      return;
+    }
+    if (Utils2.isNullOrEmpty(customTable.getTargets())) {
+      Debug.errln( "No targets specified for CustomTable! "
+                   + customTable.getTargets() );
+      return;
+    }
+    Debug.outln( "visiting custom table " + customTable );
+		DBTable dbTable = new DBTable();
 		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
-		if (!cm.getHeaders().isEmpty()) {
+		if (!customTable.getHeaders().isEmpty()) {
 			List<DocumentElement> first = new ArrayList<DocumentElement>();
 			hs.add(first);
-			for (String h: cm.getHeaders())
+			for (String h: customTable.getHeaders())
 				first.add(new DBText(h));
-			t.setCols(first.size());
+			dbTable.setCols(first.size());
 		} else {
 			List<DocumentElement> first = new ArrayList<DocumentElement>();
 			hs.add(first);
-			/*first.add(new DBText("Name"));
-			if (cm.isIncludeDoc())
-				first.add(new DBText("Description"));*/
-			for (Property p: cm.getStereotypeProperties()) 
-				first.add(new DBText(p.getName()));
-			for (Stereotype s: cm.getOutgoing())
-				first.add(new DBText(s.getName()));
-			for (Stereotype s: cm.getIncoming())
-				first.add(new DBText(s.getName()));
-			/*
-			if (cm.getNameColumn() < cm.getDocColumn()) {
-				first.add(cm.getNameColumn()-1, new DBText("Name"));
-				if (cm.isIncludeDoc())
-					first.add(cm.getDocColumn()-1, new DBText("Description"));
-			}
-			else {
-				if (cm.isIncludeDoc())
-					first.add(cm.getDocColumn()-1, new DBText("Description"));
-				first.add(cm.getNameColumn()-1, new DBText("Name"));
-			}
-			*/
-			t.setCols(first.size());
+			
+	    if (Utils2.isNullOrEmpty(customTable.getColumns())) {
+        Debug.errln( "No columns specified for CustomTable! "
+                     + customTable.getColumns() );
+	    } else {
+	      for (String oclExpr: customTable.getColumns()) {
+	        first.add(new DBText(oclExpr) );
+	      }
+	    }
+//			for (Property p: cm.getStereotypeProperties()) 
+//				first.add(new DBText(p.getName()));
+			dbTable.setCols(first.size());
 		}
-		t.setHeaders(hs);
+		dbTable.setHeaders(hs);
 		String title = "";
-		if (cm.getTitles() != null && cm.getTitles().size() > 0)
-			title = cm.getTitles().get(0);
-		title = cm.getTitlePrefix() + title + cm.getTitleSuffix();
-		t.setTitle(title);
-		if (cm.getCaptions() != null && cm.getCaptions().size() > 0 && cm.isShowCaptions())
-			t.setCaption(cm.getCaptions().get(0));
+		if (customTable.getTitles() != null && customTable.getTitles().size() > 0)
+			title = customTable.getTitles().get(0);
+		title = customTable.getTitlePrefix() + title + customTable.getTitleSuffix();
+		dbTable.setTitle(title);
+    if ( customTable.getCaptions() != null
+         && customTable.getCaptions().size() > 0
+         && customTable.isShowCaptions() ) {
+      dbTable.setCaption( customTable.getCaptions().get( 0 ) );
+    }
 		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-		for (Element e: Utils.sortByName(cm.getTargets())) {
-			if (cm.isSkipIfNoDoc() && ModelHelper.getComment(e).trim().equals(""))
-				continue;
+    List< Element > targets =
+        customTable.isSortElementsByName() ? Utils.sortByName( customTable.getTargets() )
+                                 : customTable.getTargets();
+		for (Element e: targets) {
 			List<DocumentElement> row = new ArrayList<DocumentElement>();
-		/*	if (e instanceof NamedElement) {
-				if (!forViewEditor)
-					row.add(new DBText(DocGenUtils.addInvisibleSpace(DocGenUtils.fixString(((NamedElement)e).getName()))));
-				else
-					row.add(new DBParagraph(((NamedElement)e).getName(), e, From.NAME));
-			} else
-				row.add(new DBParagraph(e.getHumanName())); 
-			if (cm.isIncludeDoc())
-				row.add(new DBParagraph(ModelHelper.getComment(e), e, From.DOCUMENTATION)); */
-			for (Property p: cm.getStereotypeProperties()) 
-				row.add(Common.getStereotypePropertyEntry(e, p, forViewEditor));
-			for (Stereotype s: cm.getOutgoing()) {
-				List<Object> blah = new ArrayList<Object>();
-				blah.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, s, 1, true, 1));
-				row.add(Common.getEntryFromList(blah, true, forViewEditor));
-			}
-			for (Stereotype s: cm.getIncoming()) {
-				List<Object> blah = new ArrayList<Object>();
-				blah.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, s, 2, true, 1));
-				row.add(Common.getEntryFromList(blah, true, forViewEditor));
-			}
-			DocumentElement name = null;
-			DocumentElement doc = null;
-			if (e instanceof NamedElement) {
-				if (!forViewEditor)
-					name = new DBText(DocGenUtils.addInvisibleSpace(DocGenUtils.fixString(((NamedElement)e).getName())));
-				else
-					name = new DBParagraph(((NamedElement)e).getName(), e, From.NAME);
-			} else
-				name = new DBParagraph(e.getHumanName());
-			doc = new DBParagraph(ModelHelper.getComment(e), e, From.DOCUMENTATION);
-			/* TODO 
-			if (cm.getNameColumn() < cm.getDocColumn()) {
-				row.add(cm.getNameColumn()-1, name);
-				if (cm.isIncludeDoc())
-					row.add(cm.getDocColumn()-1, doc);
-			}
-			else {
-				if (cm.isIncludeDoc())
-					row.add(cm.getDocColumn()-1, doc);
-				row.add(cm.getNameColumn()-1, name);
-			}
-			*/
+      for (String oclExpr: customTable.getColumns()) {
+        Object result = customTable.evaluateOcl( e, oclExpr );
+        row.add(Common.getEntryFromObject( result, true, forViewEditor ));
+      }
+//			for (Property p: cm.getStereotypeProperties()) 
+//				row.add(Common.getStereotypePropertyEntry(e, p, forViewEditor));
+			
 			body.add(row);
 		}
-		t.setBody(body);
+		dbTable.setBody(body);
 		List<DBColSpec> cslist = new ArrayList<DBColSpec>();
-		if (cm.getColwidths() != null && !cm.getColwidths().isEmpty()) {
+		if (customTable.getColwidths() != null && !customTable.getColwidths().isEmpty()) {
 			int i = 1;
-			for (String s: cm.getColwidths()) {
+			for (String s: customTable.getColwidths()) {
 				DBColSpec cs = new DBColSpec(i);
 				cs.setColwidth(s);
 				cslist.add(cs);
@@ -433,9 +422,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			cs.setColwidth(".4*");
 			cslist.add(cs);
 		}
-		t.setColspecs(cslist);
-		t.setStyle(cm.getStyle());
-		parent.peek().addElement(t);
+		dbTable.setColspecs(cslist);
+		dbTable.setStyle(customTable.getStyle());
+		parent.peek().addElement(dbTable);
+    Debug.outln( "got custom DBTable " + dbTable );
 	}
 	
 	@Override
@@ -445,7 +435,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 	@Override
 	public void visit(DeploymentTable dt) {
 		int i = 0;
-		for (Element t: dt.getTargets()) {
+    List< Element > targets =
+        dt.isSortElementsByName() ? Utils.sortByName( dt.getTargets() )
+                                 : dt.getTargets();
+    for (Element t: targets) {
 			if (!(t instanceof Class)) {
 				continue;
 			}
@@ -498,7 +491,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		if (gt.getIgnore())
 			return;
 		int tableCount = 0;
-		for (Element e: gt.getTargets()) {
+    List< Element > targets =
+        gt.isSortElementsByName() ? Utils.sortByName( gt.getTargets() )
+                                  : gt.getTargets();
+    for (Element e: targets) {
 			if (e instanceof Diagram) {
 				if (Application.getInstance().getProject().getDiagram((Diagram)e).getDiagramType().getType().equals("Generic Table")) {
 					DBTable t = new DBTable();
@@ -554,7 +550,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			if (forViewEditor || !para.getText().trim().equals("")) 
 				parent.peek().addElement(new DBParagraph(para.getText(), para.getDgElement(), para.getFrom()));
 		} else if (para.getTargets() != null) {
-			for (Element e: para.getTargets()) {
+	    List< Element > targets =
+	        para.isSortElementsByName() ? Utils.sortByName( para.getTargets() )
+	                                 : para.getTargets();
+	    for (Element e: targets) {
 				if (para.getStereotypeProperties() != null && !para.getStereotypeProperties().isEmpty()) {
 					for (Property p: para.getStereotypeProperties()) {
 						List<Object> ob = Utils.getStereotypePropertyValues(e, p);
@@ -569,6 +568,79 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		}
 	}
 
+	public void visit(TableStructure ts) {
+		if (ts.getIgnore())
+			return;
+		if (true) { //DEBUG
+			GUILog visitLog = Application.getInstance().getGUILog();
+			visitLog.log("Visiting TableStructure:");
+		}
+		DBTable t = new DBTable();
+		
+		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
+		GUILog dBoV = Application.getInstance().getGUILog();
+		// want to add things to body by rows
+		while (ts.hasNext()) {
+			List<Object> tsRow = ts.next();
+			if (tsRow == null)
+				continue;
+			dBoV.log(tsRow.toString());
+			List<DocumentElement> row = new ArrayList<DocumentElement>();
+			for (Object e: tsRow) {
+				// TODO: Think about any problem that could arise from the following casting...
+				// Note assumption that all Objects in TS are either Lists of Properties or empty list
+				DBTableEntry item = new DBTableEntry();
+				if (e instanceof List<?>)
+					for (Object f: (List<?>)e)
+						if (forViewEditor) item.addElement(new DBText(DocGenUtils.fixString(f, false)));
+						else item.addElement(new DBText(DocGenUtils.addDocbook(DocGenUtils.fixString(f))));
+				else
+					if (forViewEditor) item.addElement(new DBText(DocGenUtils.fixString(e, false)));
+					else item.addElement(new DBText(DocGenUtils.addDocbook(DocGenUtils.fixString(e))));
+				row.add(item);
+			}
+			body.add(row);
+		}
+		// set DBTable headers
+		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
+		if (!ts.getHeaders().isEmpty()) {
+			List<DocumentElement> first = new ArrayList<DocumentElement>();
+			hs.add(first);
+			for (String h: ts.getHeaders())
+				first.add(new DBText(h));
+			t.setCols(first.size());
+		} 
+		// otherwise, take the names of each element, in which case this would
+		// parseTableStructure loop to automatcally add the name of columns to the headers variable in 
+		// TableStructure.j
+		else {
+			List<DocumentElement> first = new ArrayList<DocumentElement>();
+			hs.add(first);
+			for (int i = 0; i < ts.getColumNum(); i++)
+				first.add(new DBText());
+		}
+		t.setHeaders(hs);
+		// set DBTable and add column specification stuff
+		t.setBody(body);
+		List<DBColSpec> cslist = new ArrayList<DBColSpec>();
+		if (ts.getColwidths() != null && !ts.getColwidths().isEmpty()) {
+			int i = 1;
+			for (String s: ts.getColwidths()) {
+				DBColSpec cs = new DBColSpec(i);
+				cs.setColwidth(s);
+				cslist.add(cs);
+				i++;
+			}
+		} else {
+			DBColSpec cs = new DBColSpec(1);
+			cs.setColwidth(".4*");
+			cslist.add(cs);
+		}
+		t.setColspecs(cslist);
+		t.setStyle(ts.getStyle());
+		parent.peek().addElement(t);
+	}
+	
 	@Override
 	public void visit(UserScript us) {
 		if (us.getIgnore())
@@ -625,8 +697,11 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 
 	@Override
 	public void visit(WorkpackageAssemblyTable wat) {
+    List< Element > targets =
+        wat.isSortElementsByName() ? Utils.sortByName( wat.getTargets() )
+                                 : wat.getTargets();
 		if (wat.getWorkpackage() == null) {
-			for (Element t: wat.getTargets()) {
+      for (Element t: targets) {
 				if (ModelLib.isWorkPackage(t)) {
 					wat.setWorkpackage((NamedElement) t);
 				}
@@ -635,7 +710,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		if (!(ModelLib.isWorkPackage(wat.getWorkpackage())))
 			return;
 		int i = 0;
-		for (Element t: wat.getTargets()) {
+		for (Element t: targets) {
 			if (!(t instanceof Class) || ModelLib.isWorkPackage(t)) {
 				continue;
 			}
@@ -730,8 +805,11 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		if (image.getIgnore())
 			return;
 		if (image.getTargets() != null) {
-			for (int i = 0; i < image.getTargets().size(); i++) {
-				Element e = image.getTargets().get(i);
+	    List< Element > targets =
+	        image.isSortElementsByName() ? Utils.sortByName( image.getTargets() )
+	                                 : image.getTargets();
+			for (int i = 0; i < targets.size(); i++) {
+				Element e = targets.get(i);
 				if (e instanceof Diagram) {
 					DBImage im = new DBImage();
 					im.setDiagram((Diagram)e);

@@ -21,7 +21,7 @@ package gov.nasa.jpl.ocl;
  */
 public interface CallOperation {
 	/**
-	 * The implmentation of this methodshould specify the logic for the custom logic 
+	 * The implementation of this method should specify the logic for the custom logic 
 	 * @param source	Source object that is calling the operation
 	 * @param args		Arguments to the calling operation
 	 * @return			Result of the callOperation

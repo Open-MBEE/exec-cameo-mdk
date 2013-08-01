@@ -40,6 +40,8 @@ public class DocGenPlugin extends Plugin {
 
 	@Override
 	public void init() {
+    System.err.println("initializing DocGenPlugin!");
+    System.out.println("initializing DocGenPlugin!");
 		ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
 		DocGenConfigurator dgc = new DocGenConfigurator();
 		acm.addContainmentBrowserContextConfigurator(dgc);

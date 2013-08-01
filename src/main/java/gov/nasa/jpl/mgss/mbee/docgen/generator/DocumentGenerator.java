@@ -30,6 +30,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Paragraph;
 import gov.nasa.jpl.mgss.mbee.docgen.model.PropertiesTableByAttributes;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Query;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
+import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
 import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageAssemblyTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageTable;
@@ -45,13 +46,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Stack;
 
+import javax.lang.model.util.Elements;
 import javax.script.ScriptException;
+
+import org.jboss.util.property.PropertyManager;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -73,12 +78,14 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementImport;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -451,6 +458,9 @@ public class DocumentGenerator {
 					pushed++;
 					next2 = current;
 				}
+			} else if (next instanceof StructuredActivityNode && (StereotypesHelper.hasStereotype(next, DocGen3Profile.tableStructureStereotype))) {
+				// Get all the variables or whatever
+				parseTableStructure((StructuredActivityNode)next, parent);
 			} else if (next instanceof StructuredActivityNode) {
 				Boolean loop = (Boolean)getObjectProperty(next, DocGen3Profile.templateStereotype, "loop", false);
 				Boolean ignore = (Boolean)getObjectProperty(next, DocGen3Profile.templateStereotype, "ignore", false);
@@ -749,29 +759,16 @@ public class DocumentGenerator {
 			((CombinedMatrix)dge).setColwidths(colwidths);
 		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.customTableStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.customTableStereotype))) { //TODO columns added, name/docCol removed
 			dge = new CustomTable();
+			// Get "columns" slot -- should be a list of strings (e.g., OCL expressions)
 			List<String> columns = null;
-			Object columnsO = StereotypesHelper.getStereotypePropertyFirst(cba, DocGen3Profile.customTableStereotype, "columns");
-	    	
-			if (columnsO != null && columnsO instanceof List<?>)
+			Object columnsO = StereotypesHelper.getStereotypePropertyValue(cba, DocGen3Profile.customTableStereotype, "columns");
+			if (columnsO != null && columnsO instanceof List)
 	    		columns = (List<String>)columnsO;
-	    	
-	    	if (a != null) {
-	    		if (columns == null) {
-	    			columnsO = StereotypesHelper.getStereotypePropertyFirst(a, DocGen3Profile.customTableStereotype, "nameColumn");
-	    	    	if (columnsO != null && columnsO instanceof List<?>)
-	    	    		columns = (List<String>)columnsO;
-	    		}
-	    		
-	    	}
 	    	
 			((CustomTable)dge).setHeaders(headers);
 			((CustomTable)dge).setCaptions(captions);
 			((CustomTable)dge).setShowCaptions(showCaptions);
-			((CustomTable)dge).setStereotypeProperties(stereotypeProperties);
-			((CustomTable)dge).setOutgoing(outgoing);
-			((CustomTable)dge).setIncoming(incoming);
-			((CustomTable)dge).setIncludeDoc(showDoc);
-			((CustomTable)dge).setSkipIfNoDoc(skipIfNoDoc);
+//			((CustomTable)dge).setStereotypeProperties(stereotypeProperties);
 			((CustomTable)dge).setStyle(style);
 			((CustomTable)dge).setColumns(columns);
 			((CustomTable)dge).setColwidths(colwidths);
@@ -865,6 +862,103 @@ public class DocumentGenerator {
 			dge = new LibraryMapping();
 		}
 		return dge;
+	}
+	
+	/**
+	 * traverses elements contained in a TableStructure (here on: tStruct) and accordingly extracts relevant properties/elements/etc
+	 * @param cba a StructuredActivityNode w/tStruct stereotype 
+	 * @param parent wherever we're adding the table
+	 */
+	private boolean debug = true; // debug! TODO: remove
+	
+	private void parseTableStructure(StructuredActivityNode san, Container parent) {
+		GUILog parseTS = Application.getInstance().getGUILog(); // debug! TODO: remove
+		
+		TableStructure ts = new TableStructure();
+		List<Element> rows = targets.peek().isEmpty()?new ArrayList<Element>():targets.peek();
+		List<String> hs = new ArrayList();
+
+		if (debug) {
+			List<String> FUUU = new ArrayList<String>();
+			for (Element r: rows)
+				FUUU.add(r.getHumanName());
+			parseTS.log("ROWS/TARGETS\n" + FUUU.toString());
+		}
+		
+		if (rows == null) return;
+		ActivityNode curNode = findInitialNode(san);
+		if (curNode == null) return;
+		Collection<ActivityEdge> outs = curNode.getOutgoing();
+		while (outs != null && outs.size() == 1) {
+			curNode = outs.iterator().next().getTarget();
+			if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype)) {
+				List<Object> curCol = new ArrayList<Object>();
+				// TablePropertyColumn tags
+				Object dProp = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+				Object heading = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "columnHeading", null);
+				String cName = ((NamedElement)curNode).getName();
+				if (heading != null)
+					hs.add((String)heading);
+				else if (!cName.equals(""))
+					hs.add(cName);
+				else if (dProp != null)
+					hs.add((String)dProp);
+				else 
+					hs.add(new String());
+				
+				if (debug) parseTS.log("DESIRED PROPERTY\n" + dProp!=null?dProp.toString():"dProp is null!?");
+				
+				for (Element r: rows) {
+					List<Stereotype> rStereos = new ArrayList<Stereotype>();
+					for (Stereotype s: StereotypesHelper.getAllStereotypes(Application.getInstance().getProject()))
+						if (StereotypesHelper.hasStereotype(r, s))
+							rStereos.add(s);
+					Collection<Element> rOwned = r.getOwnedElement();
+					Collection<Object> rSlots = new HashSet<Object>();
+					// special term handling!
+					if (((String)dProp).equals("Name"))
+						rSlots.add(((NamedElement)r).getName());
+					if (((String)dProp).equals("Documentation"))
+						rSlots.add(ModelHelper.getComment(r));
+					// these don't work yet
+//					if (((String)dProp).equals("Outgoing Relationships"))
+//						for (Object o: r.get_directedRelationshipOfSource())
+//							if (o instanceof DirectedRelationship && ((DirectedRelationship)o).getSource().contains((Element)o))
+//								rSlots.add(o);
+//					if (((String)dProp).equals("Incoming Relationships"))
+//						for (Object o:  r.get_directedRelationshipOfTarget())
+//							if (o instanceof DirectedRelationship && ((DirectedRelationship)o).getTarget().contains((Element)o))
+//								rSlots.add(o);
+					// Get all the properties or the default value
+					for (Stereotype s: rStereos) {
+						Object pSlotValue = StereotypesHelper.getStereotypePropertyFirst(r, s, (String)dProp);
+						Property pDefault = StereotypesHelper.findStereotypePropertyFor(curNode, (String)dProp);
+						if (pSlotValue != null && !pSlotValue.toString().equals("")) {
+							if (pDefault != null && rSlots.contains(pDefault.getDefaultValue())) rSlots.remove(pDefault.getDefaultValue());
+							rSlots.add(pSlotValue);
+						} else if (pDefault != null && pDefault.getDefaultValue() != null && rSlots.size() < 1) {
+							rSlots.add(pDefault.getDefaultValue());
+						}
+						String derp = (String) (pDefault!=null?pDefault.getName():pDefault);
+					}
+					for (Object o: rOwned)
+						if (((Element)o) instanceof Property && ((Property)o).getName().equals((String)dProp))
+							rSlots.add((Object)((Property)o).getDefaultValue());
+					List<Object> slotOut = new ArrayList<Object>();
+					for (Object o: rSlots.toArray()) slotOut.add(o);
+					curCol.add(slotOut);
+				}
+				
+				if (debug) parseTS.log("CUR COL\n" + curCol.toString());
+				
+				ts.addColumn(curCol);
+			} else if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype)) {
+				ts.addSumRow();
+			}
+			outs = curNode.getOutgoing();
+		}
+		ts.setHeaders(hs);
+		parent.addElement(ts);
 	}
 	
 	/**
