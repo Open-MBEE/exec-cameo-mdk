@@ -24,8 +24,9 @@ public class DocGen3Profile {
 	public static final String combinedMatrixStereotype = "CombinedMatrix3";
 	
 	public static final String customTableStereotype = "CustomTable";
-	public static final String tableStructureStereotype = "TableStructure";					// TODO: Add to MD Prof
-	public static final String tablePropertyColumnStereotype = "TablePropertyColumn";		// TODO: Add to MD Prof
+	public static final String tableStructureStereotype = "TableStructure";					
+	public static final String tablePropertyColumnStereotype = "TablePropertyColumn";		// TODO: Change in MD Prof
+	public static final String tableAttributeColumnStereotype = "TableAttributeColumn";		// TODO: Add to MD Prof
 	public static final String tableSumRowStereotype = "TableSumRow";						// TODO: Add to MD Prof
 	
 	public static final String dependencyMatrixStereotype = "DependencyMatrix3";
