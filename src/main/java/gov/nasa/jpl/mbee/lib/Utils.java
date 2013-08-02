@@ -778,14 +778,14 @@ public class Utils {
      * @param displays what to display to user (the size of this must match the size of elements argument)
      * @return
      */
-    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays, String initial) {
+    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays) {
     	String[] strings = new String[elements.size()];
     	int i = 0;
     	for (String e: displays) {
     		strings[i] = e;
     		i++;
     	}
-    	Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null, strings, initial);
+    	Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null, strings, null);
     	if (input != null) {
     		for (int j = 0; j < strings.length; j++) {
     			if (((String)input).equals(strings[j]))
@@ -793,10 +793,6 @@ public class Utils {
     		}
     	}
     	return null;
-    }
-    
-    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays) {
-    	return getUserDropdownSelectionForString(title, message, elements, displays, null);
     }
     
     /**
