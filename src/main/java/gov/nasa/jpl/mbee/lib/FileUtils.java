@@ -198,9 +198,14 @@ public final class FileUtils {
   }
 
   public static void stringToFile( String s, String fileName ) {
+    File file = new File( fileName );
+    stringToFile( s, file );
+  }
+
+  public static void stringToFile( String s, File file ) {
     FileWriter outFile = null;
     try {
-      outFile = new FileWriter(fileName);
+      outFile = new FileWriter(file);
       PrintWriter out = new PrintWriter(outFile);
       out.print( s );
       out.close();
@@ -209,5 +214,4 @@ public final class FileUtils {
       e.printStackTrace();
     }
   }
-
 }
