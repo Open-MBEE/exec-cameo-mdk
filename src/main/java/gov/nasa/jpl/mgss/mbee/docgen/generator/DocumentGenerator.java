@@ -81,11 +81,12 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
+
 
 /**
  * <p>Given the document head or a view, generates the document element model classes and structure in gov.nasa.jpl.mgss.mbee.docgen.model.</p>
