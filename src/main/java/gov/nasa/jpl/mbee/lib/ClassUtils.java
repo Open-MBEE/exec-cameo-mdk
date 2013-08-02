@@ -1245,7 +1245,7 @@ public class ClassUtils {
         errors.add( e );
       }
     }
-    if ( !p.first && isStatic( method ) ) {
+    if ( !p.first && isStatic( method ) && o != null ) {
       List< Object > l = Utils2.newList( o );
       l.addAll( Arrays.asList( args ) );
       p = runMethod( true, null, method, l.toArray() );
@@ -1608,7 +1608,7 @@ public class ClassUtils {
     if ( superFields != null ) fieldList.addAll( superFields );
     return fieldList;
   }
-
+  
   /**
    * Try to convert an object into one of the specified class.
    * 
@@ -1788,8 +1788,8 @@ public class ClassUtils {
       v2 = evaluate( o2, cls2, propagate, allowWrapping );      
     }
     return Utils.valuesEqual( v1, v2 );
-    */
+    */ 
   }
-
+  
   
 }
