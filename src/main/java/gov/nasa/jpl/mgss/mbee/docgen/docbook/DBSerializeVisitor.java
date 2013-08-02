@@ -104,6 +104,39 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
 			out.append("\n<titleabbrev>"+ book.getAbbreviatedTitle()+"</titleabbrev>");
 		}
 		out.append("\n<legalnotice><title>" +book.getTitlePageLegalNotice()+"</title><para>"+book.getFooterLegalNotice()+"</para></legalnotice>");
+		
+		if (book.getInstTxt1() != null){
+			out.append("\n<collab><org>\n<orgname>" + book.getInstTxt1() + "</orgname>" );
+		
+		}
+		else {
+			out.append("\n<collab><org>\n<orgname>Jet Propulsion Laboratory</orgname>" );
+		}
+
+		if (book.getInstTxt2() != null){
+			out.append("\n<orgdiv>" + book.getInstTxt2() + "</orgdiv>");
+		
+		}
+		else {
+			out.append("\n<orgdiv>California Institute of Technology</orgdiv>" );
+		}
+		
+		if (book.getInstLogo() != null){
+			out.append("\n<uri>" + book.getInstLogo() + "</uri>");
+		
+		}
+		else {
+			out.append("\n<uri>http://sec274.jpl.nasa.gov/img/logos/jpl_logo(220x67).gif</uri>" );
+		}
+		if (book.getInstLogoSize() != null){
+			out.append("\n<address><alt>" + book.getInstLogoSize() + "</alt></address>\n</org></collab>");
+		
+		}
+		else {
+			out.append("\n<address><alt>36px</alt></address>\n</org></collab>" );
+		}
+		
+		
 		for(int index =0; index<book.getAuthor().size();index++){
 			if(book.getAuthor().get(index) != null && !book.getAuthor().get(index).equals("")){
 				String[] tokens= book.getAuthor().get(index).split(delims);

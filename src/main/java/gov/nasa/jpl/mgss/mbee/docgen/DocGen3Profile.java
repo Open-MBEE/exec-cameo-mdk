@@ -45,6 +45,11 @@ public class DocGen3Profile {
 	public static final String collectionStereotype = "CollectionAndFilterGroup";
 	public static final String documentMetaStereotype = "DocumentMeta";
 	public static final String documentViewStereotype = "DocumentView";
+	public static final String accountableForStereotype = "accountableFor";
+	public static final String approvesStereotype = "approves";
+	public static final String concursStereotype = "concurs";
+	public static final String projectStaffStereotype = "ProjectStaff";
+	public static final String roleStereotype = "Role";
 	
 	public static final String filterDiagramTypeStereotype = "FilterByDiagramType";
 	public static final String filterNameStereotype = "FilterByNames";
