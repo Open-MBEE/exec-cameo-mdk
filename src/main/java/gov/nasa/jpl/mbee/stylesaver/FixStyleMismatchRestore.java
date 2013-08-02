@@ -1,0 +1,118 @@
+package gov.nasa.jpl.mbee.stylesaver;
+
+import com.nomagic.actions.NMAction;
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.magicdraw.uml.symbols.PresentationElement;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.ui.BaseProgressMonitor;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+
+import java.awt.event.ActionEvent;
+import java.util.Collection;
+import java.util.List;
+
+import javax.swing.JOptionPane;
+
+/**
+ * Class for fixing a mismatch between the view style tag and the styling currently
+ * on the active diagram. Restores the active diagram with styling from the view style tag.
+ * 
+ * @author Benjamin Inada, JPL/Caltech
+ */
+public class FixStyleMismatchRestore extends NMAction implements AnnotationAction {
+	private static final long serialVersionUID = 1L;
+	private DiagramPresentationElement diagToFix;
+
+	/**
+	 * Initializes this instance and adds a description to the fix.
+	 * 
+	 * @param diag the diagram to fix.
+	 */
+    public FixStyleMismatchRestore(DiagramPresentationElement diag) {
+        super("FIX_STYLE_MISMATCH_RESTORE", "Fix Style Mismatch: Load styling from previous save to diagram", 0);
+        
+        this.diagToFix = diag;
+    }
+
+    /**
+     * Executes the action.
+     *
+     * @param e event caused execution.
+     */
+    @Override
+	public void actionPerformed(ActionEvent e) {
+        SessionManager sm = SessionManager.getInstance();
+        
+        sm.createSession("Fixing mismatch");
+        performLoad();
+        sm.closeSession();
+    }
+
+    /**
+     * Executes the action on specified targets.
+     *
+     * @param annotations action targets.
+     */
+    @Override
+	public void execute(Collection<Annotation> annotations) {
+        if(annotations == null || annotations.isEmpty()) {
+            return;
+        }
+        
+        SessionManager sm = SessionManager.getInstance();
+        
+        sm.createSession("Fixing mismatch");
+        performLoad();
+        sm.closeSession();
+    }
+
+    /**
+     * Checks if possible to execute action together on all specified annotations.
+     * 
+     * @param annotations target annotations.
+     * @return true if the action can be executed.
+     */
+    @Override
+	public boolean canExecute(Collection<Annotation> annotations) {
+        return true;
+    }
+    
+    /**
+     * Performs the actual load on the diagram.
+     */
+    private void performLoad() {
+        Project project = Application.getInstance().getProject();
+        
+    	// get the main style string from the view stereotype tag "style"
+    	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StylerUtils.getWorkingStereotype(project), "style");
+    	final String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
+    	
+    	// get the elements on the diagram to load styles into
+    	final List<PresentationElement> list = this.diagToFix.getPresentationElements();
+    	
+    	if((style != null) && (!style.equals(""))) {
+    		RunnableWithProgress runnable = null;
+    		try {
+	    		runnable = new RunnableWithProgress() {
+	    			public void run(ProgressStatus progressStatus) {
+	    				progressStatus.init("Loading styles...", 0, list.size());
+	    				ViewLoader.load(list, style, progressStatus);
+	    			}
+	    		};
+    		} catch(NoSuchMethodError ex) {
+    			ex.printStackTrace();
+    			return;
+    		}
+    		
+    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+    	}
+    	
+		JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+    }
+}
