@@ -890,7 +890,7 @@ public class DocumentGenerator {
 			if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
 				bNode = findInitialNode(((CallBehaviorAction)curNode).getBehavior());
 				hasBehavior = true;
-				parseTS.log("INIT BEHAVIOR NODE?: " + bNode.getName()); //debug! TODO: remove
+//				parseTS.log("INIT BEHAVIOR NODE?: " + bNode.getName()); //debug! TODO: remove
 			}
 			if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype)) {
 				// TablePropertyColumn tags
@@ -947,6 +947,7 @@ public class DocumentGenerator {
 		for (Element r: rowsIn) {
 			List<Element> rAsTargets = new ArrayList<Element>();
 			rAsTargets.add(r);
+			targets.push(rAsTargets);
 			rowsOut.addAll(startCollectAndFilterSequence(bNode, rAsTargets));
 		}
 		

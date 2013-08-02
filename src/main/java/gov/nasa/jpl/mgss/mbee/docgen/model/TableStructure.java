@@ -18,10 +18,10 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
@@ -151,7 +151,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	
 	@SuppressWarnings("unchecked")
 	public void parsePropertyColumn(ActivityNode curNode, Property dProp, List<?> rows) {
-		if (dProp != null && debug) parseTS.log("CUR PROP\n" + dProp!=null?dProp.getName():""); // debug! TODO: remove
+//		if (dProp != null && debug) parseTS.log("CUR PROP\n" + dProp!=null?dProp.getName():""); // debug! TODO: remove
 	
 		List<Object> curCol = new ArrayList<Object>();
 		
@@ -163,7 +163,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 					if (c instanceof Element)
 						curCol.add(handlePropertyCell(curNode, dProp, (Element)c));
 		
-		if (debug) parseTS.log("CUR COL\n" + curCol.toString()); // debug! TODO: remove
+//		if (debug) parseTS.log("CUR COL\n" + curCol.toString()); // debug! TODO: remove
 		addColumn(curCol);
 	}
 	
@@ -215,7 +215,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 				curCol.add(r.toString());
 					
 		
-		if (debug) parseTS.log("CUR COL\n" + curCol.toString()); // debug! TODO: remove
+//		if (debug) parseTS.log("CUR COL\n" + curCol.toString()); // debug! TODO: remove
 		addColumn(curCol);
 	}
 	

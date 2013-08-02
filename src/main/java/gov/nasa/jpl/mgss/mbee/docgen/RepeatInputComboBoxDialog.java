@@ -23,6 +23,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -287,8 +288,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
                            JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
 //      resultScrollPanel.setVerticalScrollBarPolicy(
 //                      JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-      resultScrollPane.setPreferredSize(new Dimension(250, 145));
-      resultScrollPane.setMinimumSize(new Dimension(10, 10));
+      //resultScrollPane.setPreferredSize(new Dimension(400, 150));
+      resultScrollPane.setMinimumSize(new Dimension(100, 50));
     
       
       add( resultScrollPane, BorderLayout.SOUTH );
@@ -515,10 +516,21 @@ public class RepeatInputComboBoxDialog implements Runnable {
       //rootPane
       //rootPane.setLocation( 100, 100 );
       JWindow top = getTopComponentOfType( component, JWindow.class );
+      JDialog dialog = getTopComponentOfType( component, JDialog.class );
       //top.setSize( new Dimension( 300, 300 ) );
-      top.setMaximumSize( new Dimension(500,500) );
-      System.out.println( "rootPane = " + component.getRootPane().toString() );
-      System.out.println( "top = " + top.toString() );
+      if ( dialog != null ) {
+        dialog.setResizable( true );
+        dialog.setMaximumSize( new Dimension(1024,768) );
+        dialog.setPreferredSize( new Dimension(500,300) );
+        dialog.setMinimumSize( new Dimension(200,100) );
+        System.out.println( "dialog = " + dialog.toString() );
+      } else if ( top != null ) {
+        top.setMaximumSize( new Dimension(1024,768) );
+        top.setPreferredSize( new Dimension(500,300) );
+        top.setMinimumSize( new Dimension(200,100) );
+        System.out.println( "rootPane = " + component.getRootPane().toString() );
+        System.out.println( "top = " + top.toString() );
+      }
       System.out.println( "wow!" );
       
       if (removeListener)
@@ -560,11 +572,11 @@ public class RepeatInputComboBoxDialog implements Runnable {
   public static < T extends Component > T
       getTopComponentOfType( Component component, Class< T > type ) {
     if ( component == null ) return null;
-    if ( type == null ) type = (Class< T >)JComponent.class;
+    if ( type == null ) type = (Class< T >)Component.class;
     Container parent = component.getParent();
     while ( parent != null ) {//&& !( type.isInstance( parent ) ) ) {
       if ( type.isInstance( parent ) ) {
-        return getTopComponentOfType( (JComponent)parent, type );
+        return getTopComponentOfType( (Component)parent, type );
       }
       parent = parent.getParent();
     }

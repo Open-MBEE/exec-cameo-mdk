@@ -133,7 +133,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 				c.addAction(new GenerateDocumentAction(e));
 			DefaultPropertyResourceProvider pp = new DefaultPropertyResourceProvider();
 			// Only expose the OCL evaluator plugin when in developer mode.
-			if ( MDUtils.isDeveloperMode() ) {
+			if ( false && MDUtils.isDeveloperMode() ) { // implemented separate plugin -- TODO -- delete after testing
   			act = manager.getActionFor(OclQueryAction.actionid);
         if (act == null)
           c.addAction(new OclQueryAction(e));

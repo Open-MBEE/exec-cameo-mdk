@@ -91,6 +91,28 @@ public class OclQueryAction extends MDAction {
   
   private class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
 
+    public Object parseAndProcess( Object input ) {
+      String oclString = input == null ? null : input.toString();
+      ArrayList<Object> outputList = new ArrayList< Object >(); 
+      ArrayList<Object> localContext =  new ArrayList< Object >();
+      localContext.addAll( getContext() );
+      String[] split = oclString.split( "[.]|([-][>])" );
+      ArrayList<String> tokens = new ArrayList< String >();
+      int insideExpression = 0; 
+      for ( String s : split ) {
+        if (Utils2.count("\"", s) % 2 != insideExpression ) {
+          // expression is still open
+        }
+      }
+      while (true) {
+        for ( Object o : localContext ) {
+          
+        }
+        if ( true && false ) break;
+      }
+      return outputList;
+    }    
+    
     @Override
     public Object process( Object input ) {
       String oclString = input == null ? null : input.toString();
@@ -112,19 +134,22 @@ public class OclQueryAction extends MDAction {
           Debug.outln( errorStr );
           outputList.add( errorStr );
         }
-        try {
-          result = eval2( oclString, elem );
-          output = "eval2 \"" + oclString + "\" for element "
-                       + toString(elem) 
-                       + "    result = " + toString(result) + "\n";
-          Debug.outln( output );
-          outputList.add( output );
-        } catch ( Exception ex ) {
-          String errorStr = getStackTrace( ex );
-          Debug.outln( errorStr );
-          outputList.add( errorStr );
-        }
-        System.out.println( spew(result) );
+//        try {
+//          result = eval2( oclString, elem );
+//          output = "eval2 \"" + oclString + "\" for element "
+//                       + toString(elem) 
+//                       + "    result = " + toString(result) + "\n";
+//          Debug.outln( output );
+//          outputList.add( output );
+//        } catch ( Exception ex ) {
+//          String errorStr = getStackTrace( ex );
+//          Debug.outln( errorStr );
+//          outputList.add( errorStr );
+//        }
+        Debug.outln( spew(result) );
+//        Debug.outln( OclEvaluator.commandCompletionChoiceStrings( null, elem,
+//                                                                  oclString )//, 3 )
+//                                 .toString() );
         //outputList.add( "\nSPEW\n" + spew( result ) );
       }
       //Debug.outln( outputList.toString() );

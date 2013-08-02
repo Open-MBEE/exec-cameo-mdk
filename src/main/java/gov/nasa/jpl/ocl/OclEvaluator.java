@@ -1,5 +1,12 @@
 package gov.nasa.jpl.ocl;
 
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.Utils2;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
@@ -9,6 +16,8 @@ import org.eclipse.ocl.Query;
 import org.eclipse.ocl.ecore.Constraint;
 import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
 import org.eclipse.ocl.expressions.OCLExpression;
+import org.eclipse.ocl.helper.Choice;
+import org.eclipse.ocl.helper.ConstraintKind;
 import org.eclipse.ocl.helper.OCLHelper;
 
 /**
@@ -76,7 +85,8 @@ public class OclEvaluator {
 	 * @param verbose		Turns on OCL debugging if true, off if false 
 	 * @return				Object of the result whose type should be known by the caller
 	 */
-	public static Object evaluateQuery(EObject context, String queryString, boolean verbose) {
+	public static Object evaluateQuery(EObject context, String queryString,
+	                                   boolean verbose) {
 	  if ( ocl == null ) ocl = OCL.newInstance(EcoreEnvironmentFactory.INSTANCE);
 		setOclTracingEnabled(verbose);
 		queryStatus = QueryStatus.VALID_OCL;
@@ -89,9 +99,11 @@ public class OclEvaluator {
 
 		try {
 			query = helper.createQuery(queryString);
+			//query.
 		} catch (ParserException e) {
 			queryStatus = QueryStatus.PARSE_EXCEPTION;
 			e.printStackTrace();
+			helper.getProblems();
 		}
 		
 		if (query != null) {
@@ -103,6 +115,81 @@ public class OclEvaluator {
 
 		return result;
 	}
+
+  public static List< Choice >
+      commandCompletionChoices( OCLHelper< EClassifier, ?, ?, Constraint > helper,
+                                EObject context, String oclInput ) {
+    if ( helper == null ) {
+      helper = ocl.createOCLHelper();
+      helper.setContext( context.eClass() );
+    }
+    List< Choice > choices =
+        helper.getSyntaxHelp( ConstraintKind.INVARIANT, oclInput );
+    Debug.outln( "Completion choices for OCL expression \"" + oclInput
+                 + "\" = " + choices );
+    return choices;
+  }
+
+
+  public static List< String >
+  commandCompletionChoiceStrings( OCLHelper< EClassifier, ?, ?, Constraint > helper,
+                                  EObject context, String oclInput, int depth ) {
+    Object result = evaluateQuery( context, oclInput, Debug.isOn() );
+    if ( result == null ) return Collections.emptyList();
+    List< Choice > choiceList = commandCompletionChoices( helper, context, oclInput );
+    List< String > newChoiceStringList = new ArrayList< String >();
+    boolean canExtend = depth > 0;
+    for ( Choice c : choiceList ) {
+      String newChoiceString = oclInput;
+      if ( canExtend ) {
+        newChoiceString += "." + c.getName();
+      }
+      newChoiceStringList.add(newChoiceString);
+      List< String > extensions = null;  
+      if ( depth > 1 ) {
+        extensions = commandCompletionChoiceStrings( helper, context, newChoiceString, depth-1 );
+      }
+      canExtend = !Utils2.isNullOrEmpty( extensions );
+      if ( !canExtend ) {
+        newChoiceStringList.add( newChoiceString );
+      } else {
+        newChoiceStringList.addAll( extensions );
+      }
+    }
+    return newChoiceStringList;
+  }
+  
+  public static List< String >
+      commandCompletionChoiceStrings( OCLHelper< EClassifier, ?, ?, Constraint > helper,
+                                      EObject context, String oclInput ) {
+    boolean wasOn = Debug.isOn();
+    Debug.turnOn();
+    List< String > choiceList = new ArrayList< String >();
+    List< Choice > choices = commandCompletionChoices( helper, context, oclInput );
+    for ( Choice next : choices ) {
+      choiceList.add( next.getName() );
+      switch ( next.getKind() ) {
+        case OPERATION:
+        case SIGNAL:
+          // the description is already complete
+          Debug.outln( next.getDescription() );
+//          break;
+        case PROPERTY:
+        case ENUMERATION_LITERAL:
+        case VARIABLE:
+          Debug.outln( next.getName() + " : " + next.getDescription() );
+          //choiceList.add( next.getName() );
+          break;
+        default:
+          //choiceList.add( next.getName() );
+          Debug.outln( next.getName() );
+          break;
+      }
+    }
+    if ( !wasOn ) Debug.turnOff();
+    Debug.outln( "choices = " + choiceList.toString() );
+    return choiceList;
+  }
 	
 	/**
 	 * Evaluates the specified invariant (constraint given a particular context)
