@@ -3,12 +3,9 @@
  */
 package gov.nasa.jpl.mbee.lib;
 
+import gov.nasa.jpl.mbee.lib.CompareUtils;
 import java.util.Comparator;
 
-/**
- * @author bclement
- *
- */
 public class MostAbstractFirst implements Comparator< Class<?> > {
 
   public static MostAbstractFirst instance = instance();
