@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
@@ -103,7 +104,8 @@ public class OclEvaluator {
 		} catch (ParserException e) {
 			queryStatus = QueryStatus.PARSE_EXCEPTION;
 			e.printStackTrace();
-			helper.getProblems();
+			Diagnostic diag = helper.getProblems();
+			// TODO -- HERE!!
 		}
 		
 		if (query != null) {
@@ -132,8 +134,8 @@ public class OclEvaluator {
 
 
   public static List< String >
-  commandCompletionChoiceStrings( OCLHelper< EClassifier, ?, ?, Constraint > helper,
-                                  EObject context, String oclInput, int depth ) {
+      commandCompletionChoiceStrings( OCLHelper< EClassifier, ?, ?, Constraint > helper,
+                                      EObject context, String oclInput, int depth ) {
     Object result = evaluateQuery( context, oclInput, Debug.isOn() );
     if ( result == null ) return Collections.emptyList();
     List< Choice > choiceList = commandCompletionChoices( helper, context, oclInput );
