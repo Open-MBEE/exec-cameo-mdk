@@ -179,8 +179,12 @@ public class DocGenUtils {
 	 * @param s
 	 * @return
 	 */
-	public static String slot2String(Slot s) {
-		String string = s.getDefiningFeature().getName() + " = ";
+  public static String slot2String(Slot s) {
+    return slot2String( s, false );
+  }
+	public static String slot2String(Slot s, boolean includeName ) {
+    String string =
+        ( includeName ? s.getDefiningFeature().getName() + " = " : "" );
 		List<String> values = new ArrayList<String>();
 		for (ValueSpecification vs: s.getValue()) {
 			values.add(fixString(vs));
