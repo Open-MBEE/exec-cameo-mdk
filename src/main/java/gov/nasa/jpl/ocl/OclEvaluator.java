@@ -72,12 +72,23 @@ public class OclEvaluator {
 	}
 	private static OCL<?, EClassifier, ?, ?, ?, ?, ?, ?, ?, Constraint, EClass, EObject>	ocl;
 	private static QueryStatus																queryStatus = QueryStatus.NO_QUERY;
-	
+	public static boolean isVerboseDefault = false;
 	
 	public static void createOclInstance(DgEnvironmentFactory envFactory) {
 		ocl = OCL.newInstance(envFactory);
 	}
 
+  /**
+   * Evaluates the specified query given a particular context
+   * 
+   * @param context   EObject of the context that the query should be run against (e.g., self)
+   * @param queryString Valid OCL string that to be evaluated in the context
+   * @return        Object of the result whose type should be known by the caller
+   */
+  public static Object evaluateQuery(EObject context, String queryString) {
+    return evaluateQuery( context, queryString, isVerboseDefault );
+  }
+  
 	/**
 	 * Evaluates the specified query given a particular context
 	 * 
