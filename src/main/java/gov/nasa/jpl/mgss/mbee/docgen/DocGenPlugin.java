@@ -13,6 +13,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
+import gov.nasa.jpl.mbee.patternsaver.PatternSaverMenuUtils;
 import gov.nasa.jpl.mbee.stylesaver.Configurator;
 import gov.nasa.jpl.mbee.stylesaver.DiagramUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.DgvalidationPackage;
@@ -53,8 +54,13 @@ public class DocGenPlugin extends Plugin {
 		acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
 		
-		Configurator styleConfigurator = getStyleConfigurator();
-		acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, styleConfigurator);
+		// configure the style saver menu
+		Configurator styleSaverConfigurator = getStyleSaverConfigurator();
+		acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, styleSaverConfigurator);
+	
+		// configure the pattern saver menu
+		Configurator patternSaverConfigurator = getPatternSaverConfigurator();
+		acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, patternSaverConfigurator);
 		
 		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 		
@@ -98,7 +104,7 @@ public class DocGenPlugin extends Plugin {
 	 * 
 	 * @return the configurator for the saver/loader.
 	 */
-	private Configurator getStyleConfigurator() {
+	private Configurator getStyleSaverConfigurator() {
 		Configurator c = new Configurator();
 		
 		Method addSaveMethod = DiagramUtils.class.getDeclaredMethods()[0];
@@ -107,6 +113,21 @@ public class DocGenPlugin extends Plugin {
 		c.addConfiguration("BaseDiagramContext", "", "Save styling on diagram", "Style Saver/Loader", addSaveMethod);
 		c.addConfiguration("BaseDiagramContext", "", "Load saved styling onto diagram", "Style Saver/Loader", addLoadMethod);
 
+		return c;
+	}
+
+	/**
+	 * Gets the configurator for the pattern saver/loader
+	 * 
+	 * @return the configurator for the saver/loader.
+	 */
+	private Configurator getPatternSaverConfigurator() {
+		Configurator c = new Configurator();
+		
+		Method addSavePatternMethod = PatternSaverMenuUtils.class.getDeclaredMethods()[0];
+		
+		c.addConfiguration("BaseDiagramContext", "", "Save pattern", "Pattern Saver/Loader", addSavePatternMethod);
+		
 		return c;
 	}
 }
