@@ -601,7 +601,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			for (Object e: tsRow) {
 				// TODO: Think about any problem that could arise from the following casting...
 				// Note assumption that all Objects in TS are either Lists of Properties or empty list
-				DBTableEntry item = Common.getTableEntryFromObject( e, true, forViewEditor );
+				DBTableEntry item = Common.getTableEntryFromObject( e, false, forViewEditor );
 				row.add(item);
 			}
 			body.add(row);
