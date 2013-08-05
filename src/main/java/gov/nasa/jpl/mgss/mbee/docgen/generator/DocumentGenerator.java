@@ -984,12 +984,12 @@ public class DocumentGenerator {
 	private boolean debug = true; // debug! TODO: remove
 	
 	private void parseTableStructure(StructuredActivityNode san, Container parent) {
-		
+
 		TableStructure ts = new TableStructure();
 		List<Element> rows = targets.peek().isEmpty()?new ArrayList<Element>():targets.peek();
 		List<String> hs = new ArrayList();
 		boolean hasBehavior = false;
-		
+
 		if (rows == null) return;
 		ActivityNode curNode = findInitialNode(san);
 		ActivityNode bNode = null;
@@ -1001,42 +1001,42 @@ public class DocumentGenerator {
 			if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
 				bNode = findInitialNode(((CallBehaviorAction)curNode).getBehavior());
 				hasBehavior = true;
-//				parseTS.log("INIT BEHAVIOR NODE?: " + bNode.getName()); //debug! TODO: remove
+				//				parseTS.log("INIT BEHAVIOR NODE?: " + bNode.getName()); //debug! TODO: remove
 			}
-      boolean hasTablePropColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype );
-      boolean hasTableExprColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableExpressionColumnStereotype);
-      boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableAttributeColumnStereotype);
-      boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype);
-      if (hasTablePropColStereoType||hasTableExprColStereoType) {
+			boolean hasTablePropColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype );
+			boolean hasTableExprColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableExpressionColumnStereotype);
+			boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableAttributeColumnStereotype);
+			boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype);
+			if (hasTablePropColStereoType||hasTableExprColStereoType) {
 				// TablePropertyColumn tags
 				Object dProp = null;
 				if (hasTablePropColStereoType) {
-				  dProp = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+					dProp = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
 				} else if (hasTableExprColStereoType) {
-          dProp = getObjectProperty(curNode, DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
-        }
+					dProp = getObjectProperty(curNode, DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
+				}
 				// Headings
 				hs.add(parseTableHeadings(curNode));
 				// Parse stuff
 				if ( hasTableExprColStereoType ) {
-				  ts.parseExpressionColumn(curNode, dProp, rows);
+					ts.parseExpressionColumn(curNode, dProp, rows);
 				} else {
-				  if ( dProp instanceof Property ) {
-				    if (hasBehavior) ts.parsePropertyColumn(curNode, (Property)dProp, handleTableBehavior(bNode, rows));
-				    else ts.parsePropertyColumn(curNode, (Property)dProp, rows);
-				  } else if (dProp == null) {
-            if (hasBehavior) ts.parsePropertyColumn(curNode, (Property)dProp, handleTableBehavior(bNode, rows));
-            else {
-              Debug.error( false, "Expected Property but got null" );
-            }
-				  } else {
-            Debug.error( false, "Expected Property but got: "
-                                + dProp
-                                + ( dProp == null ? "" : " of type "
-                                                         + dProp.getClass()
-                                                                .getName() ) );
-            
-				  }
+					if ( dProp instanceof Property ) {
+						if (hasBehavior) ts.parseColumn((Property)dProp, handleTableBehavior(bNode, rows), TableStructure.propertyColumn);
+						else ts.parseColumn((Property)dProp, rows, TableStructure.propertyColumn);
+					} else if (dProp == null) {
+						if (hasBehavior) ts.parseColumn((Property)dProp, handleTableBehavior(bNode, rows), TableStructure.propertyColumn);
+						else {
+							Debug.error( false, "Expected Property but got null" );
+						}
+					} else {
+						Debug.error( false, "Expected Property but got: "
+								+ dProp
+								+ ( dProp == null ? "" : " of type "
+										+ dProp.getClass()
+										.getName() ) );
+
+					}
 				}
 			} else if (hasTableAttrColStereoType) {
 				// TableAttributeColumn tags
@@ -1044,8 +1044,8 @@ public class DocumentGenerator {
 				// Headings
 				hs.add(parseTableHeadings(curNode));
 				// Parse stuff
-				if (hasBehavior) ts.parseAttributeColumn(curNode, (Object)dAttr, handleTableBehavior(bNode, rows));
-				else ts.parseAttributeColumn(curNode, dAttr, rows);
+				if (hasBehavior) ts.parseColumn((Object)dAttr, handleTableBehavior(bNode, rows), TableStructure.attributeColumn);
+				else ts.parseColumn(dAttr, rows, TableStructure.attributeColumn);
 			} else if (hasTableSumRowStereoType) {
 				ts.addSumRow();
 			}
@@ -1053,7 +1053,7 @@ public class DocumentGenerator {
 				hasBehavior = false;
 			outs = curNode.getOutgoing();
 		}
-		
+
 		ts.setHeaders(hs);
 		parent.addElement(ts);
 	}
@@ -1067,36 +1067,27 @@ public class DocumentGenerator {
 			return new String();
 	}
 	
-  private List< Object > handleTableBehavior( ActivityNode bNode,
-                                              List< Element > rowsIn ) {
-    List< Object > rowsOut = new ArrayList< Object >();
-
-    System.out.println( "this.targets = " + this.targets.toString() );
-    System.out.println( "rowsIn = " + rowsIn.toString() );
-    this.targets.push( rowsIn );
-    System.out.println( "this.targets = " + this.targets.toString() );
-    Section section = new Section();
-    parseActivityOrStructuredNode( bNode, section );
-    System.out.println( "this.targets = " + this.targets.toString() );
-    List< Element > newTargets = this.targets.pop();
-    System.out.println( "newTargets = " + newTargets.toString() );
-    if ( !Utils2.isNullOrEmpty( section.getChildren() ) ) {
-      System.out.println( "section.getChildren() = "
-                          + section.getChildren().toString() );
-      rowsOut.addAll( section.getChildren() );
-    } else {
-      rowsOut.addAll( newTargets );
-    }
-    System.out.println( "this.targets = " + this.targets.toString() );
-    System.out.println( "rowsOut = " + rowsOut.toString() );
-//		// Loop through row elements, passing each one as a target to the startCollectandFilter thing
-//		for (Element r: rowsIn) {
-//			List<Element> rAsTargets = new ArrayList<Element>();
-//			rAsTargets.add(r);
-//			rowsOut.addAll(startCollectAndFilterSequence(bNode, rAsTargets));			
-//		}
+	private List<Object> handleTableBehavior(ActivityNode bNode, List<Element> rowsIn) {
+		List<Object> rowsOut = new ArrayList<Object>();
 		
-		return rowsOut;
+		// Find the first collect/filter activitynode in the behavior
+		// IMPORTANT INVARIANT: assumes the activity whose initial node is passed as bNode ONLY
+		//   contains collect or filter action first!
+		if (bNode != null) {
+			if (bNode.getOutgoing() != null) {
+				bNode = bNode.getOutgoing().iterator().next().getTarget();
+			}
+		} 
+	
+		// Loop through row elements, passing each one as a target to the startCollectandFilter thing
+		for (Element r: rowsIn) {
+			List<Element> rAsTargets = new ArrayList<Element>();
+			rAsTargets.add(r);
+//			targets.push(rAsTargets);
+			rowsOut.add(startCollectAndFilterSequence(bNode, rAsTargets));
+		}
+		
+		return rowsOut; // TODO: for some reason, this is always an empty list. Why?
 	}
 		
 	/**
@@ -1303,6 +1294,7 @@ public class DocumentGenerator {
 		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.sortByName) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.sortByName))) {
 			res.addAll(Utils.sortByName(in));
 		} 
+		Object derp = res;
 		return res;
 	}
 	
