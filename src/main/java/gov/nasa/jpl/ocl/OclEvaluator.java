@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
@@ -71,12 +72,23 @@ public class OclEvaluator {
 	}
 	private static OCL<?, EClassifier, ?, ?, ?, ?, ?, ?, ?, Constraint, EClass, EObject>	ocl;
 	private static QueryStatus																queryStatus = QueryStatus.NO_QUERY;
-	
+	public static boolean isVerboseDefault = false;
 	
 	public static void createOclInstance(DgEnvironmentFactory envFactory) {
 		ocl = OCL.newInstance(envFactory);
 	}
 
+  /**
+   * Evaluates the specified query given a particular context
+   * 
+   * @param context   EObject of the context that the query should be run against (e.g., self)
+   * @param queryString Valid OCL string that to be evaluated in the context
+   * @return        Object of the result whose type should be known by the caller
+   */
+  public static Object evaluateQuery(EObject context, String queryString) {
+    return evaluateQuery( context, queryString, isVerboseDefault );
+  }
+  
 	/**
 	 * Evaluates the specified query given a particular context
 	 * 
@@ -103,7 +115,8 @@ public class OclEvaluator {
 		} catch (ParserException e) {
 			queryStatus = QueryStatus.PARSE_EXCEPTION;
 			e.printStackTrace();
-			helper.getProblems();
+			Diagnostic diag = helper.getProblems();
+			// TODO -- HERE!!
 		}
 		
 		if (query != null) {
@@ -132,8 +145,8 @@ public class OclEvaluator {
 
 
   public static List< String >
-  commandCompletionChoiceStrings( OCLHelper< EClassifier, ?, ?, Constraint > helper,
-                                  EObject context, String oclInput, int depth ) {
+      commandCompletionChoiceStrings( OCLHelper< EClassifier, ?, ?, Constraint > helper,
+                                      EObject context, String oclInput, int depth ) {
     Object result = evaluateQuery( context, oclInput, Debug.isOn() );
     if ( result == null ) return Collections.emptyList();
     List< Choice > choiceList = commandCompletionChoices( helper, context, oclInput );

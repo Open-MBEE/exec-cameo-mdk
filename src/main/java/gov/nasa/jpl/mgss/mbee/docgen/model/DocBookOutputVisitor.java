@@ -358,6 +358,8 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
     }
     Debug.outln( "visiting custom table " + customTable );
 		DBTable dbTable = new DBTable();
+		
+		// get column headings
 		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
 		if (!customTable.getHeaders().isEmpty()) {
 			List<DocumentElement> first = new ArrayList<DocumentElement>();
@@ -382,32 +384,39 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			dbTable.setCols(first.size());
 		}
 		dbTable.setHeaders(hs);
+		
+		// get title
 		String title = "";
 		if (customTable.getTitles() != null && customTable.getTitles().size() > 0)
 			title = customTable.getTitles().get(0);
 		title = customTable.getTitlePrefix() + title + customTable.getTitleSuffix();
 		dbTable.setTitle(title);
+		
+		// get caption
     if ( customTable.getCaptions() != null
          && customTable.getCaptions().size() > 0
          && customTable.isShowCaptions() ) {
       dbTable.setCaption( customTable.getCaptions().get( 0 ) );
     }
+    
+    // construct the main body of the table
 		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
     List< Element > targets =
         customTable.isSortElementsByName() ? Utils.sortByName( customTable.getTargets() )
                                  : customTable.getTargets();
+    // construct row for each target
 		for (Element e: targets) {
 			List<DocumentElement> row = new ArrayList<DocumentElement>();
+			// construct cell for each column
       for (String oclExpr: customTable.getColumns()) {
         Object result = customTable.evaluateOcl( e, oclExpr );
         row.add(Common.getEntryFromObject( result, true, forViewEditor ));
       }
-//			for (Property p: cm.getStereotypeProperties()) 
-//				row.add(Common.getStereotypePropertyEntry(e, p, forViewEditor));
-			
 			body.add(row);
 		}
 		dbTable.setBody(body);
+		
+		// set column widths
 		List<DBColSpec> cslist = new ArrayList<DBColSpec>();
 		if (customTable.getColwidths() != null && !customTable.getColwidths().isEmpty()) {
 			int i = 1;
@@ -423,7 +432,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			cslist.add(cs);
 		}
 		dbTable.setColspecs(cslist);
+
+		// set style
 		dbTable.setStyle(customTable.getStyle());
+		
 		parent.peek().addElement(dbTable);
     Debug.outln( "got custom DBTable " + dbTable );
 	}
@@ -589,14 +601,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			for (Object e: tsRow) {
 				// TODO: Think about any problem that could arise from the following casting...
 				// Note assumption that all Objects in TS are either Lists of Properties or empty list
-				DBTableEntry item = new DBTableEntry();
-				if (e instanceof List<?>) // TODO: use Common.getEntryFromList()!!!
-					for (Object f: (List<?>)e)
-						if (forViewEditor) item.addElement(new DBText(DocGenUtils.fixString(f, false)));
-						else item.addElement(new DBText(DocGenUtils.addDocbook(DocGenUtils.fixString(f))));
-				else
-					if (forViewEditor) item.addElement(new DBText(DocGenUtils.fixString(e, false)));
-					else item.addElement(new DBText(DocGenUtils.addDocbook(DocGenUtils.fixString(e))));
+				DBTableEntry item = Common.getEntryFromObject( e, true, forViewEditor );
 				row.add(item);
 			}
 			body.add(row);

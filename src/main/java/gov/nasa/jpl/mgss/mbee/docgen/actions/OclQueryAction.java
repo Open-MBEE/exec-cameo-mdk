@@ -13,49 +13,28 @@ import gov.nasa.jpl.ocl.DgEnvironmentFactory;
 import gov.nasa.jpl.ocl.DgOperationInstance;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
-import java.awt.Component;
-import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.ComboBoxModel;
-import javax.swing.Icon;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.emf.ecore.EcoreFactory;
-import org.jdesktop.swingx.action.BoundAction;
 import org.junit.Assert;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.ui.browser.BrowserTabTree;
-import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.uml.BaseElement;
-import com.nomagic.magicdraw.uml.p;
-import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
-import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.base.ModelObject;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class OclQueryAction extends MDAction {
 
@@ -91,25 +70,82 @@ public class OclQueryAction extends MDAction {
   
   private class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
 
+    /**
+     * Parse and evaluate OCL and additional helper syntax:
+     * <ol>
+     * <li>Parse as OCL.
+     * <li>If the parse succeeds, return the result.
+     * <li>Get the evaluation result up to the point where parse failed.
+     * <li>Try to parse using additional syntax where the parse failed in the
+     * context of the result from the previous step.
+     * <li>If the parse fails, return with failure.
+     * <li>If there is more to parse, continue at step 1 in the context of the
+     * new result with the remaining unparsed input string.
+     * <li>TODO -- How does this work when expressions are nested and not just
+     * chained?
+     * </ol>
+     * 
+     * @param input
+     * @return the result of the evaluation of the input expression
+     */
     public Object parseAndProcess( Object input ) {
       String oclString = input == null ? null : input.toString();
       ArrayList<Object> outputList = new ArrayList< Object >(); 
       ArrayList<Object> localContext =  new ArrayList< Object >();
       localContext.addAll( getContext() );
-      String[] split = oclString.split( "[.]|([-][>])" );
-      ArrayList<String> tokens = new ArrayList< String >();
-      int insideExpression = 0; 
-      for ( String s : split ) {
-        if (Utils2.count("\"", s) % 2 != insideExpression ) {
-          // expression is still open
-        }
+      
+      // TODO -- How does this work when expressions are nested and not just chained?
+      // Parse as OCL.
+      // TODO
+      
+      // If the parse succeeds, return the result.
+      // TODO
+      
+      // Get the evaluation result up to the point where parse failed.
+      // TODO
+      
+      // Try to parse using additional syntax where the parse failed in the
+      // context of the result from the previous step.
+      // TODO
+      
+      // If the parse fails, return with failure.
+      // TODO
+      
+      // If there is more to parse, continue at step 1 in the context of the new
+      // result with the remaining unparsed input string.
+      // TODO
+
+      // try to parse as OCL
+      // TODO
+      // try to parse 
+      
+      
+      // ALTERNATIVE APPROACH
+      // Try to parse in pieces using "." and "->" as delimiters. 
+      int pos = 0;
+      boolean found = true;
+      while (found) {
+        int nextPos1 = oclString.indexOf( '.', pos );
+        int nextPos2 = oclString.indexOf( "->", pos );
+        // TODO -- HERE!!
       }
-      while (true) {
-        for ( Object o : localContext ) {
-          
-        }
-        if ( true && false ) break;
-      }
+      
+      
+//      String[] split = oclString.split( "[.]|([-][>])" );
+//      ArrayList<String> tokens = new ArrayList< String >();
+//      int insideExpression = 0; 
+//      for ( String s : split ) {
+//        if (Utils2.count("\"", s) % 2 != insideExpression ) {
+//          // expression is still open
+//        }
+//      }
+
+//      while (true) {
+//        for ( Object o : localContext ) {
+//          
+//        }
+//        if ( true && false ) break;
+//      }
       return outputList;
     }    
     

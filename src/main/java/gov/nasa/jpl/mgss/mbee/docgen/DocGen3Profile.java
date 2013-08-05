@@ -26,6 +26,7 @@ public class DocGen3Profile {
 	public static final String customTableStereotype = "CustomTable";
 	public static final String tableStructureStereotype = "TableStructure";					
 	public static final String tablePropertyColumnStereotype = "TablePropertyColumn";		// TODO: Change in MD Prof
+  public static final String tableExpressionColumnStereotype = "TableExpressionColumn";
 	public static final String tableAttributeColumnStereotype = "TableAttributeColumn";		// TODO: Add to MD Prof
 	public static final String tableSumRowStereotype = "TableSumRow";						// TODO: Add to MD Prof
 	
@@ -46,6 +47,11 @@ public class DocGen3Profile {
 	public static final String collectionStereotype = "CollectionAndFilterGroup";
 	public static final String documentMetaStereotype = "DocumentMeta";
 	public static final String documentViewStereotype = "DocumentView";
+	public static final String accountableForStereotype = "accountableFor";
+	public static final String approvesStereotype = "approves";
+	public static final String concursStereotype = "concurs";
+	public static final String projectStaffStereotype = "ProjectStaff";
+	public static final String roleStereotype = "Role";
 	
 	public static final String filterDiagramTypeStereotype = "FilterByDiagramType";
 	public static final String filterNameStereotype = "FilterByNames";

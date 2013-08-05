@@ -59,7 +59,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -778,14 +781,14 @@ public class Utils {
      * @param displays what to display to user (the size of this must match the size of elements argument)
      * @return
      */
-    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays) {
+    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays, String initial) {
     	String[] strings = new String[elements.size()];
     	int i = 0;
     	for (String e: displays) {
     		strings[i] = e;
     		i++;
     	}
-    	Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null, strings, null);
+    	Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null, strings, initial);
     	if (input != null) {
     		for (int j = 0; j < strings.length; j++) {
     			if (((String)input).equals(strings[j]))
@@ -793,6 +796,10 @@ public class Utils {
     		}
     	}
     	return null;
+    }
+    
+    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays) {
+    	return getUserDropdownSelectionForString(title, message, elements, displays, null);
     }
     
     /**
@@ -995,6 +1002,35 @@ public class Utils {
     	return res;
     }
 
+  /**
+   * Get the list of slot values after digging Elements and
+   * InstanceSpecifications out of ElementValues and InstanceValues,
+   * respectively, and leaving other ValueSpecifications as is.
+   * 
+   * @param slot
+   * @return the list of values
+   */
+    public static List<Object> getSlotValues( Slot slot ) {
+      List< ValueSpecification > list = slot.getValue();
+      List< Object > sList = new ArrayList<Object>();
+      // If there is only one element in the list, just use that element instead
+      // of the list.
+      for ( ValueSpecification vs : list ) {
+        if ( vs instanceof ElementValue ) {
+          sList.add( ( (ElementValue)vs ).getElement() );
+        } else if ( vs instanceof InstanceValue ) {
+          sList.add( ( (InstanceValue)vs ).getInstance() );
+        } else {
+          sList.add( vs );
+        }
+      }
+      return sList;
+    }
+      
+  /**
+   * @param slot
+   * @return the "represented text" for the slot values as a single String
+   */
   public static String slotValueToString( Slot slot ) {
     List< ValueSpecification > list = slot.getValue();
     List< String > sList = new ArrayList<String>();
