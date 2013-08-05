@@ -60,10 +60,10 @@ public class DocGenPlugin extends Plugin {
 		acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
 		
-		Configurator styleConfigurator = getStyleConfigurator();
-		acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, styleConfigurator);
-		
-		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
+    Configurator styleConfigurator = getStyleConfigurator();
+    acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, styleConfigurator);
+
+    EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 		
 		ApplicationSyncEventSubscriber.subscribe();
 		
