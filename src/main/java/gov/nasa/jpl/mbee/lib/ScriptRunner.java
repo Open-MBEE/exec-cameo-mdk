@@ -48,7 +48,23 @@ public class ScriptRunner {
 		return runScriptFromStereotype(e, s, new HashMap<String, Object>());		
 	}
 	
-	/**
+  static String userScriptDirectoryName = null;
+  public static String getUserScriptDirectoryName() {
+    if ( userScriptDirectoryName == null ) {
+      userScriptDirectoryName = ApplicationEnvironment.getInstallRoot() + File.separator + "DocGenUserScripts";
+    }
+    return userScriptDirectoryName;
+  }
+
+	static File userScriptDirectory = null;
+	public static File getUserScriptDirectory() {
+	  if ( userScriptDirectory == null ) {
+	    userScriptDirectory = new File(getUserScriptDirectoryName());
+	  }
+	  return userScriptDirectory;
+	}
+	
+  /**
 	 * runs the script with stereotype tag values plus additional inputs to scriptInput
 	 * @param e
 	 * @param s
@@ -75,12 +91,12 @@ public class ScriptRunner {
 		
 		inputs.put("inputElement", e);
 		File[] binDirs = new File[2];
-		File binDir = new File(ApplicationEnvironment.getInstallRoot() + File.separator + "DocGenUserScripts");
+		File binDir = getUserScriptDirectory();
 		binDirs[0] = binDir;
 		
 		String sname = s.getName();
 		String[] spaces = sname.split("\\.");
-		String scriptFile = ApplicationEnvironment.getInstallRoot() + File.separator + "DocGenUserScripts";
+		String scriptFile = getUserScriptDirectoryName();
 		for (String namespace: spaces) 
 			scriptFile += File.separator + namespace;
 		
