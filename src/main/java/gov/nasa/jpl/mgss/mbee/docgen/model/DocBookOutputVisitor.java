@@ -287,12 +287,12 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			for (Stereotype s: cm.getOutgoing()) {
 				List<Object> blah = new ArrayList<Object>();
 				blah.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, s, 1, true, 1));
-				row.add(Common.getEntryFromList(blah, true, forViewEditor));
+				row.add(Common.getTableEntryFromList(blah, true, forViewEditor));
 			}
 			for (Stereotype s: cm.getIncoming()) {
 				List<Object> blah = new ArrayList<Object>();
 				blah.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, s, 2, true, 1));
-				row.add(Common.getEntryFromList(blah, true, forViewEditor));
+				row.add(Common.getTableEntryFromList(blah, true, forViewEditor));
 			}
 			DocumentElement name = null;
 			DocumentElement doc = null;
@@ -410,7 +410,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			// construct cell for each column
       for (String oclExpr: customTable.getColumns()) {
         Object result = customTable.evaluateOcl( e, oclExpr );
-        row.add(Common.getEntryFromObject( result, true, forViewEditor ));
+        row.add(Common.getTableEntryFromObject( result, true, forViewEditor ));
       }
 			body.add(row);
 		}
@@ -601,7 +601,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			for (Object e: tsRow) {
 				// TODO: Think about any problem that could arise from the following casting...
 				// Note assumption that all Objects in TS are either Lists of Properties or empty list
-				DBTableEntry item = Common.getEntryFromObject( e, true, forViewEditor );
+				DBTableEntry item = Common.getTableEntryFromObject( e, true, forViewEditor );
 //        DBTableEntry item = new DBTableEntry();
 //				if (e instanceof List<?>)
 //					for (Object f: (List<?>)e)
