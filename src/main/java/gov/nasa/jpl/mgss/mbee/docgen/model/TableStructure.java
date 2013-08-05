@@ -205,26 +205,35 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
   @SuppressWarnings("unchecked")
 	public void parseColumn(Object dThing, List<?> rows, String colType) {
 		List<Object> curCol = new ArrayList<Object>();
-		if (dThing == null || colType == null) 
+		if (dThing == null || colType == null) {
 			curCol.addAll(rows); // REVIEW -- does this need to be a list of lists?
-		else
-			for (Object r: rows) 
-				if (r instanceof Element)
-					if (colType.equals(propertyColumn)) curCol.add(handlePropertyCell((Property)dThing, (Element)r));
-					else if (colType.equals(attributeColumn)) curCol.add(handleAttributeCell(dThing, (Element)r));
-				else if (r instanceof List<?>) {
+		} else {
+			for (Object r: rows) {
+				if (r instanceof Element) {
+					if (colType.equals(propertyColumn)) {
+						curCol.add(handlePropertyCell((Property)dThing, (Element)r));
+					} else if (colType.equals(attributeColumn)) {
+						curCol.add(handleAttributeCell(dThing, (Element)r));
+					}
+				} else if (r instanceof List<?>) {
 					List<Object> superCell = new ArrayList<Object>();
-					for (Object c: (List<Object>)r)
-						if (c instanceof Element)
-							if (colType.equals(propertyColumn)) superCell.addAll(handlePropertyCell((Property)dThing, (Element)c));
-							else if (colType.equals(attributeColumn)) superCell.addAll(handleAttributeCell(dThing, (Element)c));
-						else 
+					for (Object c: (List<Object>)r) {
+						if (c instanceof Element) { 
+							if (colType.equals(propertyColumn)) {
+								superCell.addAll(handlePropertyCell((Property)dThing, (Element)c));
+							} else if (colType.equals(attributeColumn)) {
+								superCell.addAll(handleAttributeCell(dThing, (Element)c));
+							}
+						} else {
 							superCell.addAll( Utils2.newList( c ) );
+						}
+					}	
 					curCol.add(superCell);
 				} else {
 					curCol.add( Utils2.newList( r ) );
 				}
-		
+			}
+		}
 		addColumn(curCol);
 	}
 	
@@ -237,31 +246,39 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 				rSlots.addAll(StereotypesHelper.getStereotypePropertyValue(cell, (Stereotype)myOwner, (Property)dProp));
 				pDefault = dProp.getDefaultValue();
 			}
-			if (rSlots.size() < 1 && pDefault != null) 
-				rSlots.add(pDefault);
+			if (rSlots.size() < 1 && pDefault != null) {
+				rSlots.add(pDefault); 
+			}
 			return rSlots;
 		}
 		Collection<Element> rOwned = cell.getOwnedElement();
-		for (Object o: rOwned)
-			if (((Element)o) instanceof Property && ((Property)o).getName().equals(dProp.getName()))
+		for (Object o: rOwned) {
+			if (((Element)o) instanceof Property && ((Property)o).getName().equals(dProp.getName())) {
 				rSlots.add((Object)((Property)o).getDefaultValue());
+			}
+		}
 		return rSlots;
 	}
 	
 	public List<Object> handleAttributeCell(Object dAttr, Element cell) { 
 		List<Object> rSlots = new ArrayList<Object>();
-		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Name"))
-			if (cell instanceof NamedElement)
+		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Name")) {
+			if (cell instanceof NamedElement) {
 				rSlots.add(((NamedElement)cell).getName());
-			else
-				rSlots.add(cell.getHumanName());
-		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Documentation"))
+			} else {
+				rSlots.add(cell.getHumanName()); 
+			}
+		}
+		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Documentation")) {
 			rSlots.add(ModelHelper.getComment(cell));
-		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Value"))
-			if (cell instanceof Property)
+		}
+		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Value")) {
+			if (cell instanceof Property) {
 				rSlots.add(((Property)cell).getDefaultValue());
-			else if (cell instanceof Slot)
-				rSlots.add(((Slot)cell).getValue());
+			} else if (cell instanceof Slot) { 
+				rSlots.add(((Slot)cell).getValue()); 
+			} 
+		}
 		// these don't work yet
 //		if (((String)dProp).equals("Outgoing Relationships"))
 //			for (Object o: cell.get_directedRelationshipOfSource())
@@ -282,8 +299,8 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 		boolean foundSumable = false;
 		for (List<Object> c: table) {
 			f = 0;
-			for (Object l: c)
-				if (l instanceof List<?>)
+			for (Object l: c) {
+				if (l instanceof List<?>) {
 					for (Object item: (List<Object>)l) {
 						if (item instanceof Float || item instanceof Double || item instanceof Integer) {
 							foundSumable = true;
@@ -293,9 +310,14 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 							f += new Double(ModelHelper.getValueString((ValueSpecification)item));
 						}
 					}
+				}
+			}
 			List<Object> bucket = new ArrayList<Object>();
-			if (foundSumable) bucket.add(f);
-			else bucket.add(irrelevantEntry);
+			if (foundSumable) {
+				bucket.add(f);
+			} else {
+				bucket.add(irrelevantEntry);
+			}
 			sumRow.add(bucket);
 			foundSumable = false;
 		}
