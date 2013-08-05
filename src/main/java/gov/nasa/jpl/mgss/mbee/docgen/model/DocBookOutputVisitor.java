@@ -410,7 +410,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			// construct cell for each column
       for (String oclExpr: customTable.getColumns()) {
         Object result = customTable.evaluateOcl( e, oclExpr );
-        row.add(Common.getTableEntryFromObject( result, true, forViewEditor ));
+        row.add(Common.getTableEntryFromObject( result, false, forViewEditor ));
       }
 			body.add(row);
 		}
