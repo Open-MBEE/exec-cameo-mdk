@@ -234,10 +234,10 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 		if (myOwner instanceof Stereotype) {
 			ValueSpecification pDefault = null;
 			if (dProp != null) {
-				rSlots = StereotypesHelper.getStereotypePropertyValue(cell, (Stereotype)myOwner, (Property)dProp);
+				rSlots.addAll(StereotypesHelper.getStereotypePropertyValue(cell, (Stereotype)myOwner, (Property)dProp));
 				pDefault = dProp.getDefaultValue();
 			}
-			if (rSlots.isEmpty() && pDefault != null) 
+			if (rSlots.size() < 1 && pDefault != null) 
 				rSlots.add(pDefault);
 			return rSlots;
 		}
