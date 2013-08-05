@@ -3,6 +3,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.generator;
 import gov.nasa.jpl.graphs.DirectedEdgeVector;
 import gov.nasa.jpl.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.ScriptRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
@@ -892,15 +893,36 @@ public class DocumentGenerator {
 				hasBehavior = true;
 //				parseTS.log("INIT BEHAVIOR NODE?: " + bNode.getName()); //debug! TODO: remove
 			}
-			if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype)) {
+      boolean hasTablePropColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype );
+      boolean hasTableExprColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableExpressionColumnStereotype);
+      boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableAttributeColumnStereotype);
+      boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype);
+      if (hasTablePropColStereoType||hasTableExprColStereoType) {
 				// TablePropertyColumn tags
-				Object dProp = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+				Object dProp = null;
+				if (hasTablePropColStereoType) {
+				  dProp = getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+				} else if (hasTableExprColStereoType) {
+          dProp = getObjectProperty(curNode, DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
+        }
 				// Headings
 				hs.add(parseTableHeadings(curNode));
 				// Parse stuff
-				if (hasBehavior) ts.parsePropertyColumn(curNode, (Property)dProp, handleTableBehavior(bNode, rows));
-				else ts.parsePropertyColumn(curNode, (Property)dProp, rows);
-			} else if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableAttributeColumnStereotype)) {
+				if ( hasTableExprColStereoType ) {
+				  ts.parseExpressionColumn(curNode, dProp, rows);
+				} else {
+				  if ( dProp instanceof Property ) {
+				    if (hasBehavior) ts.parsePropertyColumn(curNode, (Property)dProp, handleTableBehavior(bNode, rows));
+				    else ts.parsePropertyColumn(curNode, (Property)dProp, rows);
+				  } else {
+            Debug.error( false, "Expected Property but got: "
+                                + dProp
+                                + ( dProp == null ? "" : " of type "
+                                                         + dProp.getClass()
+                                                                .getName() ) );
+				  }
+				}
+			} else if (hasTableAttrColStereoType) {
 				// TableAttributeColumn tags
 				Object dAttr = getObjectProperty(curNode, DocGen3Profile.tableAttributeColumnStereotype, "desiredAttribute", null);
 				// Headings
@@ -908,7 +930,7 @@ public class DocumentGenerator {
 				// Parse stuff
 				if (hasBehavior) ts.parseAttributeColumn(curNode, (Object)dAttr, handleTableBehavior(bNode, rows));
 				else ts.parseAttributeColumn(curNode, dAttr, rows);
-			} else if (StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype)) {
+			} else if (hasTableSumRowStereoType) {
 				ts.addSumRow();
 			}
 			if (hasBehavior)

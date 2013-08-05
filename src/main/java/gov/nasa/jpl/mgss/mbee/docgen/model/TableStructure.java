@@ -1,7 +1,8 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
-import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,18 +10,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Iterator;
 
+import org.eclipse.emf.ecore.EObject;
+
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
-import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -149,19 +150,78 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	GUILog parseTS = Application.getInstance().getGUILog(); // debug! TODO: remove
 	boolean debug = true;
 	
-	@SuppressWarnings("unchecked")
+  // TODO -- REVIEW -- Should parse*Column() and handle*Cell() methods not
+  // evaluate expressions or find property values and do this in
+  // DocBookOutputVisitor like other tables?
+	
+  public void parseExpressionColumn( ActivityNode curNode, Object expression,
+                                     List< Element > rows ) {
+    String exprString = null;
+    if ( expression instanceof String ) {
+      exprString = (String)expression;
+    } else if ( expression instanceof List ) {
+      List expList = (List)expression;
+      if ( expList.size() == 1 ) {
+        parseExpressionColumn( curNode, expList.get(0), rows );
+        return;
+      } else {
+        Debug.error( "Error! TableExpressionColumn expression cannot be a list of multiple elements!" );
+      }
+    } else {
+      exprString = (String)expression.toString();
+    }
+    
+    List<Object> curCol = new ArrayList<Object>();
+    
+    for (Object r: rows) {
+      if (r instanceof EObject) {
+        curCol.add(OclEvaluator.evaluateQuery( (EObject)r, exprString ) );
+      } else if (r instanceof List<?>) {
+        for (Object c: (List<Object>)r) {
+          Object result = c;
+          if (c instanceof EObject) {
+            result = OclEvaluator.evaluateQuery( (EObject)c, exprString );
+          } else {
+            // REVIEW -- TODO -- should be able to apply query to any object!
+            Debug.error( "Error! TableExpressionColumn requires an EObject!" );
+            result = c.toString();
+          }
+          if ( result instanceof List ) {
+            curCol.add( result );
+          } else {
+            curCol.add( Utils2.newList( result ) );
+          }
+        }
+      } else {
+        curCol.add( Utils2.newList( r.toString() ) );
+      }
+    }
+    addColumn(curCol);
+  }
+
+  @SuppressWarnings("unchecked")
 	public void parsePropertyColumn(ActivityNode curNode, Property dProp, List<?> rows) {
-//		if (dProp != null && debug) parseTS.log("CUR PROP\n" + dProp!=null?dProp.getName():""); // debug! TODO: remove
+//		if (debug) parseTS.log("CUR PROP\n" + dProp!=null?dProp.getName():"null"); // debug! TODO: remove
 	
 		List<Object> curCol = new ArrayList<Object>();
 		
-		for (Object r: rows) 
-			if (r instanceof Element)
+		for (Object r: rows) {
+			if (r instanceof Element) {
 				curCol.add(handlePropertyCell(curNode, dProp, (Element)r));
-			else if (r instanceof List<?>)
-				for (Object c: (List<Object>)r)
-					if (c instanceof Element)
+			} else if (r instanceof List<?>) {
+				for (Object c: (List<Object>)r) {
+					if (c instanceof Element) {
 						curCol.add(handlePropertyCell(curNode, dProp, (Element)c));
+					} else {
+					  // TODO -- REVIEW -- Brad added this else case--should an error be posted?
+            curCol.add( Utils2.newList( c.toString() ) );
+					}
+				}
+      } else {
+        // TODO -- REVIEW -- Brad added this else case--should an error be posted?
+        curCol.add( Utils2.newList( r.toString() ) );
+			}
+		}
 		
 //		if (debug) parseTS.log("CUR COL\n" + curCol.toString()); // debug! TODO: remove
 		addColumn(curCol);
