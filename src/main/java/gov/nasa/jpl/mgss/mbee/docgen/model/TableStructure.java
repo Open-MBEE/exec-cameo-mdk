@@ -201,12 +201,17 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 
   @SuppressWarnings("unchecked")
 	public void parsePropertyColumn(ActivityNode curNode, Property dProp, List<?> rows) {
-//		if (debug) parseTS.log("CUR PROP\n" + dProp!=null?dProp.getName():"null"); // debug! TODO: remove
+		//if (debug) parseTS.log("CUR PROP\n" + (dProp!=null?dProp.getName():"null")); // debug! TODO: remove
 	
+    //System.out.println("PARSEPROPERTYCOLUMN " + curNode + " " + dProp + " " + rows );
+    
 		List<Object> curCol = new ArrayList<Object>();
 		
+    if ( dProp == null ) {
+      curCol.addAll(rows); // REVIEW -- does this need to be a list of lists?
+    } else
 		for (Object r: rows) {
-			if (r instanceof Element) {
+ 			if (r instanceof Element) {
 				curCol.add(handlePropertyCell(curNode, dProp, (Element)r));
 			} else if (r instanceof List<?>) {
 				for (Object c: (List<Object>)r) {
@@ -214,12 +219,14 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 						curCol.add(handlePropertyCell(curNode, dProp, (Element)c));
 					} else {
 					  // TODO -- REVIEW -- Brad added this else case--should an error be posted?
-            curCol.add( Utils2.newList( c.toString() ) );
+            //curCol.add( Utils2.newList( c.toString() ) );
+            curCol.add( Utils2.newList( c ) );
 					}
 				}
       } else {
         // TODO -- REVIEW -- Brad added this else case--should an error be posted?
-        curCol.add( Utils2.newList( r.toString() ) );
+        //curCol.add( Utils2.newList( r.toString() ) );
+        curCol.add( Utils2.newList( r ) );
 			}
 		}
 		
