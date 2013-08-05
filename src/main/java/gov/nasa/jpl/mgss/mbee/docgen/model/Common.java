@@ -71,7 +71,11 @@ public class Common {
       // If there's only one object in the collection, forget that it's a list,
       // and create the entry for the one object.
       if (c.size() == 1) {
-        result = c.iterator().next();
+        Object newResult = c.iterator().next();
+        seen.add( result );
+        DBTableEntry entry = getEntryFromObject( newResult, simple, forViewEditor );
+        seen.remove( result );
+        return entry;
       } else if ( !saw ) {
         // Get a list entry.
         seen.add( result );
