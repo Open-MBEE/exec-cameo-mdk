@@ -59,7 +59,9 @@ public class DocGenPlugin extends Plugin {
 		acm.addBaseDiagramContextConfigurator("Class Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
-		
+
+    getOclPlugin().init();
+
     Configurator styleConfigurator = getStyleConfigurator();
     acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, styleConfigurator);
 
@@ -79,8 +81,6 @@ public class DocGenPlugin extends Plugin {
 		QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
 		QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
 		//QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore", "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
-		
-		getOclPlugin().init();
 	}
 
 	public OclEvaluatorPlugin getOclPlugin() {
