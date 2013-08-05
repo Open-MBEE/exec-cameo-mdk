@@ -180,7 +180,7 @@ public class DocGenUtils {
 	 * @return
 	 */
   public static String slot2String(Slot s) {
-    return slot2String( s, false );
+    return slot2String( s, true );
   }
 	public static String slot2String(Slot s, boolean includeName ) {
     String string =
