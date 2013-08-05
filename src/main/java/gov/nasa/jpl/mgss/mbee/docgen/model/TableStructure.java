@@ -20,6 +20,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
@@ -157,70 +158,57 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 		
 		for (Object r: rows) 
 			if (r instanceof Element)
-				curCol.add(handlePropertyCell(curNode, dProp, (Element)r));
+				curCol.add(handlePropertyCell(dProp, (Element)r));
 			else if (r instanceof List<?>)
 				for (Object c: (List<Object>)r)
 					if (c instanceof Element)
-						curCol.add(handlePropertyCell(curNode, dProp, (Element)c));
+						curCol.add(handlePropertyCell(dProp, (Element)c));
 		
 //		if (debug) parseTS.log("CUR COL\n" + curCol.toString()); // debug! TODO: remove
 		addColumn(curCol);
 	}
 	
-	private List<Object> handlePropertyCell(Element curNode, Property dProp, Element cell) {
-		List<Stereotype> rStereos = new ArrayList<Stereotype>();
-		for (Stereotype s: StereotypesHelper.getAllStereotypes(Application.getInstance().getProject()))
-			if (StereotypesHelper.hasStereotype(cell, s))
-				rStereos.add(s);
-
+	private List<Object> handlePropertyCell(Property dProp, Element cell) {
+		Element myOwner = dProp.getOwner();
 		List<Object> rSlots = new ArrayList<Object>();
-		for (Stereotype s: rStereos) {
-			List<Object> curSlots = null;
-			Property pDefault = null;
+		if (myOwner instanceof Stereotype) {
+			ValueSpecification pDefault = null;
 			if (dProp != null) {
-				curSlots = StereotypesHelper.getStereotypePropertyValue(cell, s, (Property)dProp);
-				pDefault = StereotypesHelper.findStereotypePropertyFor(curNode, (String)((Property)dProp).getName());
+				rSlots = StereotypesHelper.getStereotypePropertyValue(cell, (Stereotype)myOwner, (Property)dProp);
+				pDefault = dProp.getDefaultValue();
 			}
-			if (curSlots != null && !curSlots.equals(new ArrayList<Object>())) {
-				if (pDefault != null && rSlots.contains(pDefault.getDefaultValue())) rSlots.remove(pDefault.getDefaultValue());
-				rSlots = curSlots;
-			} else if (pDefault != null && pDefault.getDefaultValue() != null && rSlots != null && rSlots.size() < 1) {
-				rSlots.add(pDefault.getDefaultValue());
-			}
+			if (rSlots.isEmpty() && pDefault != null) 
+				rSlots.add(pDefault);
+			return rSlots;
 		}
-
 		Collection<Element> rOwned = cell.getOwnedElement();
 		for (Object o: rOwned)
-			if (((Element)o) instanceof Property && ((Property)o).equals((Property)dProp))
+			if (((Element)o) instanceof Property && ((Property)o).getName().equals(dProp.getName()))
 				rSlots.add((Object)((Property)o).getDefaultValue());
-
 		return rSlots;
 	}
 	
 	public void parseAttributeColumn(ActivityNode curNode, Object dAttr, List<?> rows) {
 		GUILog parseTS = Application.getInstance().getGUILog(); // debug! TODO: remove
 		boolean debug = true;
-		
 		List<Object> curCol = new ArrayList<Object>();
-		
 		for (Object r: rows) 
 			if (r instanceof Element)
-				curCol.add(handleAttributeCell(curNode, dAttr, (Element)r));
+				curCol.add(handleAttributeCell(dAttr, (Element)r));
 			else if (r instanceof List<?>)
 				for (Object c: (List<?>)r) {
 					if (c instanceof Element)
-						curCol.add(handleAttributeCell(curNode, dAttr, (Element)c));
+						curCol.add(handleAttributeCell(dAttr, (Element)c));
 				}
+			else if (r.equals(new ArrayList<Object>()))
+				curCol.add(new ArrayList<Element>());
 			else 
-				curCol.add(r.toString());
-					
-		
-//		if (debug) parseTS.log("CUR COL\n" + curCol.toString()); // debug! TODO: remove
+				curCol.add(new ArrayList<Element>());
 		addColumn(curCol);
 	}
 	
-	public List<Object> handleAttributeCell(Element curNode, Object dAttr, Element cell) { 
-		Collection<Object> rSlots = new HashSet<Object>();
+	public List<Object> handleAttributeCell(Object dAttr, Element cell) { 
+		List<Object> rSlots = new ArrayList<Object>();
 		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Name"))
 			if (cell instanceof NamedElement)
 				rSlots.add(((NamedElement)cell).getName());
@@ -228,6 +216,11 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 				rSlots.add(cell.getHumanName());
 		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Documentation"))
 			rSlots.add(ModelHelper.getComment(cell));
+		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Value"))
+			if (cell instanceof Property)
+				rSlots.add(((Property)cell).getDefaultValue());
+			else if (cell instanceof Slot)
+				rSlots.add(((Slot)cell).getValue());
 		// these don't work yet
 //		if (((String)dProp).equals("Outgoing Relationships"))
 //			for (Object o: cell.get_directedRelationshipOfSource())
@@ -238,9 +231,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 //				if (o instanceof DirectedRelationship && ((DirectedRelationship)o).getTarget().contains((Element)o))
 //					rSlots.add(o);
 		// Get all the properties or the default value
-		List<Object> slotOut = new ArrayList<Object>();
-		for (Object o: rSlots.toArray()) slotOut.add(o);
-		return slotOut;
+		return rSlots;
 	}
 	
 	@SuppressWarnings("unchecked")

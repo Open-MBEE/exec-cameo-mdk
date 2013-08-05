@@ -933,49 +933,23 @@ public class DocumentGenerator {
 		List<Object> rowsOut = new ArrayList<Object>();
 		
 		// Find the first collect/filter activitynode in the behavior
-//		if (bNode != null) {
-//			Collection<ActivityEdge> bOuts = bNode.getOutgoing();
-//			while (bOuts != null && bOuts.size() == 1) {
-//				bNode = bOuts.iterator().hasNext()?bOuts.iterator().next().getTarget():null;
-//				if (bNode == null) break;
-//				else if (StereotypesHelper.hasStereotypeOrDerived(bNode, DocGen3Profile.collectFilterStereotype)) break;
-//				bOuts = bNode.getOutgoing();
-//			}	
-//		} 
+		// IMPORTANT INVARIANT: assumes the activity whose initial node is passed as bNode ONLY
+		//   contains collect or filter action first!
+		if (bNode != null) {
+			if (bNode.getOutgoing() != null) {
+				bNode = bNode.getOutgoing().iterator().next().getTarget();
+			}
+		} 
 	
 		// Loop through row elements, passing each one as a target to the startCollectandFilter thing
 		for (Element r: rowsIn) {
 			List<Element> rAsTargets = new ArrayList<Element>();
 			rAsTargets.add(r);
-			targets.push(rAsTargets);
-			rowsOut.addAll(startCollectAndFilterSequence(bNode, rAsTargets));
+//			targets.push(rAsTargets);
+			rowsOut.add(startCollectAndFilterSequence(bNode, rAsTargets));
 		}
 		
-//		boolean foundCFinB = false;
-//		for (Element r: rowsIn) {
-//			List<Element> rAsTargets = new ArrayList<Element>();
-//			rAsTargets.add(r);
-//			if (bNode != null) {
-//				Collection<ActivityEdge> bOuts = bNode.getOutgoing();
-//				while (bOuts != null && bOuts.size() == 1) {
-//					bNode = bOuts.iterator().hasNext()?bOuts.iterator().next().getTarget():null;
-//					parseTS.log("START BEH: " + bNode.getName());
-//					if (bNode == null) break;
-//					else if (StereotypesHelper.hasStereotypeOrDerived(bNode, DocGen3Profile.collectFilterStereotype)) {
-//						foundCFinB = true;
-//						break;
-//					}
-//					bOuts = bNode.getOutgoing();
-//				}	
-//			} 
-//			if (foundCFinB) {
-//				List<Element> rowFromBehavior = startCollectAndFilterSequence(bNode, rAsTargets);
-//				rowsOut.add(rowFromBehavior);
-//			}
-//			else rowsOut.add(r);
-//			foundCFinB = false;
-//		}
-		return rowsOut;
+		return rowsOut; // TODO: for some reason, this is always an empty list. Why?
 	}
 		
 	/**
@@ -1182,6 +1156,7 @@ public class DocumentGenerator {
 		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.sortByName) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.sortByName))) {
 			res.addAll(Utils.sortByName(in));
 		} 
+		Object derp = res;
 		return res;
 	}
 	

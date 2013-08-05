@@ -590,7 +590,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 				// TODO: Think about any problem that could arise from the following casting...
 				// Note assumption that all Objects in TS are either Lists of Properties or empty list
 				DBTableEntry item = new DBTableEntry();
-				if (e instanceof List<?>)
+				if (e instanceof List<?>) // TODO: use Common.getEntryFromList()!!!
 					for (Object f: (List<?>)e)
 						if (forViewEditor) item.addElement(new DBText(DocGenUtils.fixString(f, false)));
 						else item.addElement(new DBText(DocGenUtils.addDocbook(DocGenUtils.fixString(f))));
