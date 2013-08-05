@@ -22,10 +22,10 @@ public class Common {
 
 	public static DBTableEntry getStereotypePropertyEntry(Element e, Property p, boolean forViewEditor) {
 		List<Object> results = Utils.getStereotypePropertyValues(e, p);
-		return getEntryFromList(results, false, forViewEditor);
+		return getTableEntryFromList(results, false, forViewEditor);
 	}
 	
-	public static DBTableEntry getEntryFromList(List<Object> results, boolean simple, boolean forViewEditor) {
+	public static DBTableEntry getTableEntryFromList(List<Object> results, boolean simple, boolean forViewEditor) {
 		DBTableEntry entry = new DBTableEntry();
 		if (simple) {
 			DBSimpleList sl = new DBSimpleList();
@@ -34,17 +34,7 @@ public class Common {
 		} else {
 			DBList parent = new DBList();
 			for (Object o: results) {
-        if ( o instanceof DocumentElement ) {
-          parent.addElement( (DocumentElement)o ); 
-        } else {
-  				if (forViewEditor) {
-  				  // avoid recursion for view editor if it cannot support nested lists
-  					parent.addElement(new DBText(DocGenUtils.fixString(o, false)));
-  				} else {
-  				  // recursive call
-  	        parent.addElement( getEntryFromObject( o, simple, forViewEditor ) );
-  				}
-        }
+			  parent.addElement( getDBTextFromObject( o, simple, forViewEditor ) );
 			}
 			entry.addElement(parent);
 		}
@@ -52,8 +42,20 @@ public class Common {
 		return entry;
 		
 	}
+
+  public static DBText getDBTextFromObject( Object result, boolean simple,
+                                            boolean forViewEditor ) {
+    if ( simple && false ) { // TODO -- make always false since simple case is
+                             // not implemented
+      // TODO -- REVIEW -- Should we do something different here for simple ==
+      // true?
+    }
+    if ( forViewEditor ) return new DBText( DocGenUtils.fixString( result,
+                                                                   false ) );
+    else return new DBText( DocGenUtils.addDocbook( DocGenUtils.fixString( result ) ) );
+  }
 	
-  public static DBTableEntry getEntryFromObject( Object result, boolean simple,
+  public static DBTableEntry getTableEntryFromObject( Object result, boolean simple,
                                                  boolean forViewEditor ) {
     // TODO -- REVIEW -- could make this recursive to get lists of lists by
     // having getEntryFromList() above call this method for each list element.
@@ -73,14 +75,14 @@ public class Common {
       if (c.size() == 1) {
         Object newResult = c.iterator().next();
         seen.add( result );
-        DBTableEntry entry = getEntryFromObject( newResult, simple, forViewEditor );
+        DBTableEntry entry = getTableEntryFromObject( newResult, simple, forViewEditor );
         seen.remove( result );
         return entry;
       } else if ( !saw ) {
         // Get a list entry.
         seen.add( result );
         ArrayList<Object> results = new ArrayList< Object >(c);
-        DBTableEntry entry = getEntryFromList( results, simple, forViewEditor );
+        DBTableEntry entry = getTableEntryFromList( results, simple, forViewEditor );
         seen.remove( result );
         return entry;
       }
@@ -91,6 +93,8 @@ public class Common {
     DBTableEntry entry = new DBTableEntry();
     if ( result instanceof DocumentElement ) {
       entry.addElement( (DocumentElement)result ); 
+    } else if ( result instanceof DocGenElement && false) { // TODO -- remove false
+      // TODO -- need to push a table entry && call docBookOutputVisitor.visit(result);
     } else {
       if ( simple && false ) { // TODO -- make always false since simple case is
                                // not implemented
