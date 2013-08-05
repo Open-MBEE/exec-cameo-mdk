@@ -6,6 +6,7 @@ import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.ScriptRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
@@ -1023,12 +1024,18 @@ public class DocumentGenerator {
 				  if ( dProp instanceof Property ) {
 				    if (hasBehavior) ts.parsePropertyColumn(curNode, (Property)dProp, handleTableBehavior(bNode, rows));
 				    else ts.parsePropertyColumn(curNode, (Property)dProp, rows);
+				  } else if (dProp == null) {
+            if (hasBehavior) ts.parsePropertyColumn(curNode, (Property)dProp, handleTableBehavior(bNode, rows));
+            else {
+              Debug.error( false, "Expected Property but got null" );
+            }
 				  } else {
             Debug.error( false, "Expected Property but got: "
                                 + dProp
                                 + ( dProp == null ? "" : " of type "
                                                          + dProp.getClass()
                                                                 .getName() ) );
+            
 				  }
 				}
 			} else if (hasTableAttrColStereoType) {
@@ -1060,52 +1067,35 @@ public class DocumentGenerator {
 			return new String();
 	}
 	
-	private List<Object> handleTableBehavior(ActivityNode bNode, List<Element> rowsIn) {
-		List<Object> rowsOut = new ArrayList<Object>();
-		
-		// Find the first collect/filter activitynode in the behavior
-//		if (bNode != null) {
-//			Collection<ActivityEdge> bOuts = bNode.getOutgoing();
-//			while (bOuts != null && bOuts.size() == 1) {
-//				bNode = bOuts.iterator().hasNext()?bOuts.iterator().next().getTarget():null;
-//				if (bNode == null) break;
-//				else if (StereotypesHelper.hasStereotypeOrDerived(bNode, DocGen3Profile.collectFilterStereotype)) break;
-//				bOuts = bNode.getOutgoing();
-//			}	
-//		} 
-	
-		// Loop through row elements, passing each one as a target to the startCollectandFilter thing
-		for (Element r: rowsIn) {
-			List<Element> rAsTargets = new ArrayList<Element>();
-			rAsTargets.add(r);
-			targets.push(rAsTargets);
-			rowsOut.addAll(startCollectAndFilterSequence(bNode, rAsTargets));
-		}
-		
-//		boolean foundCFinB = false;
+  private List< Object > handleTableBehavior( ActivityNode bNode,
+                                              List< Element > rowsIn ) {
+    List< Object > rowsOut = new ArrayList< Object >();
+
+    System.out.println( "this.targets = " + this.targets.toString() );
+    System.out.println( "rowsIn = " + rowsIn.toString() );
+    this.targets.push( rowsIn );
+    System.out.println( "this.targets = " + this.targets.toString() );
+    Section section = new Section();
+    parseActivityOrStructuredNode( bNode, section );
+    System.out.println( "this.targets = " + this.targets.toString() );
+    List< Element > newTargets = this.targets.pop();
+    System.out.println( "newTargets = " + newTargets.toString() );
+    if ( !Utils2.isNullOrEmpty( section.getChildren() ) ) {
+      System.out.println( "section.getChildren() = "
+                          + section.getChildren().toString() );
+      rowsOut.addAll( section.getChildren() );
+    } else {
+      rowsOut.addAll( newTargets );
+    }
+    System.out.println( "this.targets = " + this.targets.toString() );
+    System.out.println( "rowsOut = " + rowsOut.toString() );
+//		// Loop through row elements, passing each one as a target to the startCollectandFilter thing
 //		for (Element r: rowsIn) {
 //			List<Element> rAsTargets = new ArrayList<Element>();
 //			rAsTargets.add(r);
-//			if (bNode != null) {
-//				Collection<ActivityEdge> bOuts = bNode.getOutgoing();
-//				while (bOuts != null && bOuts.size() == 1) {
-//					bNode = bOuts.iterator().hasNext()?bOuts.iterator().next().getTarget():null;
-//					parseTS.log("START BEH: " + bNode.getName());
-//					if (bNode == null) break;
-//					else if (StereotypesHelper.hasStereotypeOrDerived(bNode, DocGen3Profile.collectFilterStereotype)) {
-//						foundCFinB = true;
-//						break;
-//					}
-//					bOuts = bNode.getOutgoing();
-//				}	
-//			} 
-//			if (foundCFinB) {
-//				List<Element> rowFromBehavior = startCollectAndFilterSequence(bNode, rAsTargets);
-//				rowsOut.add(rowFromBehavior);
-//			}
-//			else rowsOut.add(r);
-//			foundCFinB = false;
+//			rowsOut.addAll(startCollectAndFilterSequence(bNode, rAsTargets));			
 //		}
+		
 		return rowsOut;
 	}
 		
