@@ -1,10 +1,10 @@
-package gov.nasa.jpl.mbee.patternsaver;
+package gov.nasa.jpl.mbee.patternloader;
 
 import java.awt.event.ActionEvent;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class PatternSaverMenuUtils {
+public class PatternLoaderMenuUtils {
 	/**
 	 * Adds the "Load pattern..." menu action.
 	 * 

@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.patternsaver;
+package gov.nasa.jpl.mbee.patternloader;
 
 import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
 

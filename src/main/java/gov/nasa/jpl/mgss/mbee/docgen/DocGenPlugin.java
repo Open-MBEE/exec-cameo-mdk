@@ -13,7 +13,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
-import gov.nasa.jpl.mbee.patternsaver.PatternSaverMenuUtils;
+import gov.nasa.jpl.mbee.patternloader.PatternLoaderMenuUtils;
 import gov.nasa.jpl.mbee.stylesaver.Configurator;
 import gov.nasa.jpl.mbee.stylesaver.DiagramUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.DgvalidationPackage;
@@ -59,8 +59,8 @@ public class DocGenPlugin extends Plugin {
 		acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, styleSaverConfigurator);
 	
 		// configure the pattern saver menu
-		Configurator patternSaverConfigurator = getPatternSaverConfigurator();
-		acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, patternSaverConfigurator);
+		Configurator patternLoaderConfigurator = getPatternLoaderConfigurator();
+		acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, patternLoaderConfigurator);
 		
 		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 		
@@ -117,16 +117,16 @@ public class DocGenPlugin extends Plugin {
 	}
 
 	/**
-	 * Gets the configurator for the pattern saver/loader
+	 * Gets the configurator for the pattern loader
 	 * 
-	 * @return the configurator for the saver/loader.
+	 * @return the configurator for the pattern loader.
 	 */
-	private Configurator getPatternSaverConfigurator() {
+	private Configurator getPatternLoaderConfigurator() {
 		Configurator c = new Configurator();
 		
-		Method addSavePatternMethod = PatternSaverMenuUtils.class.getDeclaredMethods()[0];
+		Method addLoadPatternMethod = PatternLoaderMenuUtils.class.getDeclaredMethods()[0];
 		
-		c.addConfiguration("BaseDiagramContext", "", "Save pattern", "Pattern Saver/Loader", addSavePatternMethod);
+		c.addConfiguration("BaseDiagramContext", "", "Load pattern...", "Pattern Loader", addLoadPatternMethod);
 		
 		return c;
 	}
