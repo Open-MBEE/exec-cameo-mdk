@@ -297,6 +297,13 @@ public class ViewLoaderHelper {
 		}
 	}
 	
+	/**
+	 * Parses a JSONObject containing Point information and gets a new Point.
+	 * 
+	 * @param jsonObj	the JSONObject with Point information to parse.
+	 * @param pointName	the name of the Point in the corresponding JSON string e.g. break_point_1
+	 * @return			the Point represented by this JSONObject.
+	 */
 	private static Point getBreakPoint(JSONObject jsonObj, String pointName) {
 		String breakPtStr = (String) jsonObj.get(pointName);
 		

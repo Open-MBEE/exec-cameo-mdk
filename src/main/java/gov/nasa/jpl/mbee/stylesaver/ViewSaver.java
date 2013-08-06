@@ -277,12 +277,13 @@ public class ViewSaver extends MDAction {
 				entry.put("break_point_" + i, breakPoints.get(i).toString());
 			}
 			
+			entry.put("num_break_points", breakPoints.size());
+			
 			Point supplierPt = ((PathElement) elem).getSupplierPoint();
 			Point clientPt = ((PathElement) elem).getClientPoint();
 			
 			entry.put("supplier_point", supplierPt.toString());
 			entry.put("client_point", clientPt.toString());
-			entry.put("num_break_points", breakPoints.size());
 		}
 		
 		// convert the main entry store to a JSON string
