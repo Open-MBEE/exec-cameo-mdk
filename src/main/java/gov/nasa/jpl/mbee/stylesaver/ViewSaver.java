@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.stylesaver;
 
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.Application;
@@ -13,6 +14,7 @@ import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 
@@ -266,6 +268,22 @@ public class ViewSaver extends MDAction {
 		entry.put("rect_y", rect.getY());
 		entry.put("rect_height", rect.getHeight());
 		entry.put("rect_width", rect.getWidth());
+		
+		// save break points if the element is a PathElement
+		if(elem instanceof PathElement) {
+			List<Point> breakPoints = ((PathElement) elem).getAllBreakPoints();
+			
+			for(int i = 0; i < breakPoints.size(); i++) {
+				entry.put("break_point_" + i, breakPoints.get(i).toString());
+			}
+			
+			Point supplierPt = ((PathElement) elem).getSupplierPoint();
+			Point clientPt = ((PathElement) elem).getClientPoint();
+			
+			entry.put("supplier_point", supplierPt.toString());
+			entry.put("client_point", clientPt.toString());
+			entry.put("num_break_points", breakPoints.size());
+		}
 		
 		// convert the main entry store to a JSON string
 		String JSONStr = entry.toJSONString();

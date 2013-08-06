@@ -2,7 +2,10 @@ package gov.nasa.jpl.mbee.stylesaver;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.simple.JSONObject;
 
@@ -10,11 +13,13 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.PresentationElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.properties.BooleanProperty;
+import com.nomagic.magicdraw.properties.ChoiceProperty;
 import com.nomagic.magicdraw.properties.ColorProperty;
 import com.nomagic.magicdraw.properties.FontProperty;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyManager;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
+import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
 import com.nomagic.magicdraw.uml.symbols.shapes.ShapeElement;
 
 /**
@@ -156,7 +161,6 @@ public class ViewLoaderHelper {
 	 */
 	public static void setBoolean(Property prop, String value, PresentationElement elem) {
 		if(value == null) {
-			Application.getInstance().getGUILog().log(elem.getName());
 			return;
 		}
 		
@@ -193,6 +197,124 @@ public class ViewLoaderHelper {
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 		}
+	}
+	
+	/**
+	 * Helper function that should be used to parse various choice properties of elements.
+	 * 
+	 * @param prop	the property to load choice property information into.
+	 * @param value	the string to parse.
+	 * @param elem	the element to load style into.
+	 */	
+	public static void setChoice(Property prop, String value, PresentationElement elem) {
+		String origValue = value;
+		
+		// go to the letter after the second ' ', this is where the type of choice is located
+		int firstSpace = value.indexOf(' ');
+		value = value.substring(firstSpace + 1);
+		int secondSpace = value.indexOf(' ');
+		value = value.substring(secondSpace + 1);
+		
+		// find the third space - cut off here
+		int thirdSpace = value.indexOf(' ');
+		value = value.substring(0, thirdSpace);
+		
+		if(value.equals("LINK_LINE_STYLE")) {
+			setPathStyle(prop, origValue, elem);
+		}
+	}
+	
+	/**
+	 * Helper function that should be used to parse path style information of an element.
+	 * 
+	 * @param prop	the property to load path style information into.
+	 * @param value	the string to parse.
+	 * @param elem	the element to load style into.
+	 */
+	public static void setPathStyle(Property prop, String value, PresentationElement elem) {
+		// go to the letter after the third ' ', this is where the line style string is located
+		int firstSpace = value.indexOf(' ');
+		value = value.substring(firstSpace + 1);
+		int secondSpace = value.indexOf(' ');
+		value = value.substring(secondSpace + 1);
+		int thirdSpace = value.indexOf(' ');
+		value = value.substring(thirdSpace + 1);
+
+		// find the fourth space - cut off here
+		int fourthSpace = value.indexOf(' ');
+		value = value.substring(0, fourthSpace);
+		
+		// set the property
+		PropertyManager properties = new PropertyManager();
+		
+		if(value.equals(PathElement.RECTILINEAR)) {
+			properties.addProperty(new ChoiceProperty(prop.getID(), PathElement.RECTILINEAR, PathElement.LINE_STYLE));
+		} else if(value.equals(PathElement.OBLIQUE)) {
+			properties.addProperty(new ChoiceProperty(prop.getID(), PathElement.OBLIQUE, PathElement.LINE_STYLE));
+		} else if(value.equals(PathElement.BEZIER)) {
+			properties.addProperty(new ChoiceProperty(prop.getID(), PathElement.BEZIER, PathElement.LINE_STYLE));
+		} else {
+			// some error in parsing
+			Application.getInstance().getGUILog().log("The path style property failed to load.");
+			return;
+		}
+		
+		try {
+			PresentationElementsManager.getInstance().setPresentationElementProperties(elem, properties);
+		} catch (ReadOnlyElementException e) {
+			e.printStackTrace();
+		} catch (ClassCastException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+		}
+	}
+	
+	/**
+	 * Helper function that should be used to parse break point information.
+	 * 
+	 * @param elem		the element to reshape.
+	 * @param jsonObj	the JSON object to parse.
+	 */	
+	public static void setBreakPoints(PathElement elem, JSONObject jsonObj) {
+		// get the break points in the saved style
+		Long numBreakPts = (Long) jsonObj.get("num_break_points");
+		List<Point> breakPoints = new ArrayList<Point>(numBreakPts.intValue());
+		
+		// add each of the break points to a list
+		for(int i = 0; i < numBreakPts.intValue(); i++) {
+			Point breakPt = getBreakPoint(jsonObj, "break_point_" + i);
+			breakPoints.add(breakPt);
+		}
+			
+		Point supplierPoint = getBreakPoint(jsonObj, "supplier_point");
+		Point clientPoint = getBreakPoint(jsonObj, "client_point");
+			
+		try {
+			PresentationElementsManager.getInstance().changePathPoints(elem, supplierPoint, clientPoint, breakPoints);
+		} catch (ReadOnlyElementException e) {
+			Application.getInstance().getGUILog().log("Break points failed to load");
+			return;
+		}
+	}
+	
+	private static Point getBreakPoint(JSONObject jsonObj, String pointName) {
+		String breakPtStr = (String) jsonObj.get(pointName);
+		
+		int firstEquals = breakPtStr.indexOf('=');
+		breakPtStr = breakPtStr.substring(firstEquals + 1);
+		int firstComma = breakPtStr.indexOf(',');
+		
+		String xStr = breakPtStr.substring(0, firstComma);
+		
+		int secondEquals = breakPtStr.indexOf('=');
+		breakPtStr = breakPtStr.substring(secondEquals + 1);
+		int bracket = breakPtStr.indexOf(']');
+		
+		String yStr = breakPtStr.substring(0, bracket);
+		
+		Point newPoint = new Point(Integer.parseInt(xStr), Integer.parseInt(yStr));
+		
+		return newPoint;
 	}
 	
 	/**
