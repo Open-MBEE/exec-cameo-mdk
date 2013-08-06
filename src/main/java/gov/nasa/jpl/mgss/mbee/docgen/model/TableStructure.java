@@ -19,6 +19,7 @@ import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
@@ -240,7 +241,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	private List<Object> handlePropertyCell(Property dProp, Element cell) {
 		Element myOwner = dProp.getOwner();
 		List<Object> rSlots = new ArrayList<Object>();
-		if (myOwner instanceof Stereotype) {
+		if (myOwner instanceof Stereotype && StereotypesHelper.hasStereotype(cell, (Stereotype)myOwner)) {
 			ValueSpecification pDefault = null;
 			if (dProp != null) {
 				rSlots.addAll(StereotypesHelper.getStereotypePropertyValue(cell, (Stereotype)myOwner, (Property)dProp));
@@ -276,7 +277,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 			if (cell instanceof Property) {
 				rSlots.add(((Property)cell).getDefaultValue());
 			} else if (cell instanceof Slot) { 
-				rSlots.add(((Slot)cell).getValue()); 
+				rSlots.addAll(((Slot)cell).getValue()); 
 			} 
 		}
 		// these don't work yet
@@ -305,7 +306,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 						if (item instanceof Float || item instanceof Double || item instanceof Integer) {
 							foundSumable = true;
 							f += (Double)item;
-						} else if (item instanceof LiteralInteger) {
+						} else if (item instanceof LiteralInteger || item instanceof LiteralReal) {
 							foundSumable = true;
 							f += new Double(ModelHelper.getValueString((ValueSpecification)item));
 						}
