@@ -2,6 +2,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
@@ -306,7 +307,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 						if (item instanceof Float || item instanceof Double || item instanceof Integer) {
 							foundSumable = true;
 							f += (Double)item;
-						} else if (item instanceof LiteralInteger || item instanceof LiteralReal) {
+						} else if (Utils2.toDouble(DocGenUtils.fixString(item, false)) != null) {
 							foundSumable = true;
 							f += new Double(ModelHelper.getValueString((ValueSpecification)item));
 						}
