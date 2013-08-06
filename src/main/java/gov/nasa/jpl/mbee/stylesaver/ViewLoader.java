@@ -20,6 +20,7 @@ import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
+import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
 import com.nomagic.magicdraw.uml.symbols.shapes.ShapeElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
@@ -302,7 +303,15 @@ public class ViewLoader extends MDAction {
 				ViewLoaderHelper.setFont(currProp, newPropValue, elem);
 			} else if(currProp.getValue() instanceof java.lang.Boolean) {
 				ViewLoaderHelper.setBoolean(currProp, newPropValue, elem);
+			} else if(currProp instanceof com.nomagic.magicdraw.properties.ChoiceProperty) {
+				ViewLoaderHelper.setChoice(currProp, newPropValue, elem);
 			}
+		}
+		
+		// deal with break points if the element is a PathElement
+		if(elem instanceof PathElement) {
+			ViewLoaderHelper.setBreakPoints((PathElement) elem, jsonObj);
+			ViewLoaderHelper.setLineWidth((PathElement) elem, jsonObj);
 		}
 		
 		// deal with bounds if the element is a ShapeElement
