@@ -311,6 +311,7 @@ public class ViewLoader extends MDAction {
 		// deal with break points if the element is a PathElement
 		if(elem instanceof PathElement) {
 			ViewLoaderHelper.setBreakPoints((PathElement) elem, jsonObj);
+			ViewLoaderHelper.setLineWidth((PathElement) elem, jsonObj);
 		}
 		
 		// deal with bounds if the element is a ShapeElement

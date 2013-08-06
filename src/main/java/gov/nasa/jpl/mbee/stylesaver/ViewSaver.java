@@ -273,17 +273,24 @@ public class ViewSaver extends MDAction {
 		if(elem instanceof PathElement) {
 			List<Point> breakPoints = ((PathElement) elem).getAllBreakPoints();
 			
+			// add in the break points
 			for(int i = 0; i < breakPoints.size(); i++) {
 				entry.put("break_point_" + i, breakPoints.get(i).toString());
 			}
 			
+			// add in the number of break points
 			entry.put("num_break_points", breakPoints.size());
 			
 			Point supplierPt = ((PathElement) elem).getSupplierPoint();
 			Point clientPt = ((PathElement) elem).getClientPoint();
 			
+			// add in the supplier and client points
 			entry.put("supplier_point", supplierPt.toString());
 			entry.put("client_point", clientPt.toString());
+			
+			int lineWidth = ((PathElement) elem).getLineWidth();
+			
+			entry.put("path_line_width", Integer.toString(lineWidth));
 		}
 		
 		// convert the main entry store to a JSON string

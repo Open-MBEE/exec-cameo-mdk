@@ -325,6 +325,18 @@ public class ViewLoaderHelper {
 	}
 	
 	/**
+	 * Helper function that should be used to parse path line width information.
+	 * 
+	 * @param elem		the PathElement to load with saved line width.
+	 * @param jsonObj	the JSONObject with line width information to parse.
+	 */
+	public static void setLineWidth(PathElement elem, JSONObject jsonObj) {
+		String widthStr = (String) jsonObj.get("path_line_width");
+		
+		elem.setLineWidth(Integer.parseInt(widthStr));
+	}
+	
+	/**
 	 * Helper function that should be used to parse bounds information to reshape
 	 * an element.
 	 * 
