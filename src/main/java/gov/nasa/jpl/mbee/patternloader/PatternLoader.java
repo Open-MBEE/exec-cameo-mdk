@@ -69,11 +69,6 @@ public class PatternLoader extends MDAction {
 	 * @param pattern	the pattern to load.
 	 */
 	private static void loadPattern(List<PresentationElement> elemList, JSONObject pattern) {
-		try {
-			SessionManager.getInstance().checkSessionExistance();
-		} catch(IllegalStateException ex) {
-	        SessionManager.getInstance().createSession("Loading pattern...");
-		}
 		
 		for(PresentationElement elem : elemList) {
 			String elemStyle = (String) pattern.get(elem.getHumanType());
@@ -84,6 +79,11 @@ public class PatternLoader extends MDAction {
 				continue;
 			}
 			
+			try {
+				SessionManager.getInstance().checkSessionExistance();
+			} catch(IllegalStateException ex) {
+		        SessionManager.getInstance().createSession("Loading pattern...");
+			}
 			// load the style of the diagram element re-using the ViewLoader.setStyle() method
 			ViewLoader.setStyle(elem, elemStyle);
 			
@@ -91,6 +91,12 @@ public class PatternLoader extends MDAction {
 			setStyleChildren(elem, pattern);
 			
 			elem.getDiagramSurface().repaint();
+		}
+		
+		try {
+			SessionManager.getInstance().checkSessionExistance();
+			SessionManager.getInstance().closeSession();
+		} catch(IllegalStateException ex) {
 		}
 	}
 	
