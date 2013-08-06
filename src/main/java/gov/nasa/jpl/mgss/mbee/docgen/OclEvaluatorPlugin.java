@@ -50,13 +50,13 @@ public class OclEvaluatorPlugin extends MDPlugin {
     // method argument in addConfiguration calls below.
     Method method = getNmActionMethod();
 
-    addConfiguration( "MainMenu", "", "do ocl",//OclQueryAction.actionText, 
-                      "DocGen", method, this );
+    addConfiguration( "MainMenu", "", OclQueryAction.actionText, "DocGen", method, this );
     addConfiguration( "ContainmentBrowserContext", "", OclQueryAction.actionText, "DocGen", method, this );
     addConfiguration( "BaseDiagramContext", "Class Diagram", OclQueryAction.actionText, "DocGen", method, this );
     addConfiguration( "BaseDiagramContext", "Activity Diagram", OclQueryAction.actionText, "DocGen", method, this );
     addConfiguration( "BaseDiagramContext", "SysML Block Definition Diagram", OclQueryAction.actionText, "DocGen", method, this );
     addConfiguration( "BaseDiagramContext", "SysML Internal Block Diagram", OclQueryAction.actionText, "DocGen", method, this );
+    //addConfiguration( "BaseDiagramContext", "DocumentView", OclQueryAction.actionText, "DocGen", method, this );
 
     Debug.outln("finished initializing TestPlugin!");
   }
