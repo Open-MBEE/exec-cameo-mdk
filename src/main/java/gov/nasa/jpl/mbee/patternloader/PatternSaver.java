@@ -14,12 +14,24 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 
+/**
+ * A class used to store a JSON style pattern of a diagram.
+ * 
+ * @author Benjamin Inada, JPL/Caltech
+ */
 public class PatternSaver {
 	private JSONObject pattern;
 
+	/**
+	 * Sets the pattern property by getting a style string representing
+	 * the styles on the parameter diagram.
+	 * 
+	 * @param proj the project that the diagram is stored in.
+	 * @param diag the diagram to save.
+	 */
 	public void savePattern(Project proj, DiagramPresentationElement diag) {
     	// get the style string
-		String styleStr = ViewSaver.save(proj, diag, false);
+		String styleStr = ViewSaver.save(proj, diag, true);
 		if(styleStr == null) {
 			return;
 		}
@@ -27,6 +39,12 @@ public class PatternSaver {
 		setPattern(diag, styleStr);
 	}
 	
+	/**
+	 * A helper for parsing the pattern style string and loading the pattern property.
+	 * 
+	 * @param diag		the diagram to save.
+	 * @param styleStr	the JSON style pattern string.
+	 */
 	@SuppressWarnings("unchecked")
 	private void setPattern(DiagramPresentationElement diag, String styleStr) {
 		List<PresentationElement> elemList = diag.getPresentationElements();
@@ -64,10 +82,23 @@ public class PatternSaver {
 		}
 	}
 	
+	/**
+	 * Getter for the pattern property.
+	 * 
+	 * @return the pattern property.
+	 */
 	public JSONObject getPattern() {
 		return pattern;
 	}
 	
+	/**
+	 * Gets the pattern string for a specific presentation element.
+	 * 
+	 * @param elem		the element to get the pattern string for.
+	 * @param styleObj	the JSON style pattern object.
+	 * 
+	 * @return			the pattern string for the parameter element, null if not found
+	 */
 	private static String getElementPatternString(PresentationElement elem, JSONObject styleObj) {
 		// get the value associated with the element's ID
 		String elemStyleStr;

@@ -2,8 +2,14 @@ package gov.nasa.jpl.mbee.patternloader;
 
 import gov.nasa.jpl.mbee.stylesaver.ViewLoader;
 
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.PriorityQueue;
+
+import javax.swing.JOptionPane;
 
 import org.json.simple.JSONObject;
 
@@ -13,11 +19,14 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.ui.BaseProgressMonitor;
 
 /**
  * A class used to load patterns onto the active diagram from other project diagrams.
  * 
- * @author Benjamin Inada JPL/Caltech
+ * @author Benjamin Inada, JPL/Caltech
  */
 public class PatternLoader extends MDAction {
 	private static final long serialVersionUID = 1L;
@@ -41,27 +50,125 @@ public class PatternLoader extends MDAction {
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
-    	Project proj = Application.getInstance().getProject();
+        SessionManager.getInstance().createSession("Loading Pattern...");
+		
+		// try to load the pattern
+		try {
+			runLoadPattern();
+		} catch(RuntimeException ex) {
+			SessionManager.getInstance().cancelSession();
+			return;
+		}
+		
+		// print completion message once the load finishes
+		JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+	
+		SessionManager.getInstance().closeSession();
+	}
+	
+	/**
+	 * Runs the Pattern Loader with a progress bar.
+	 * 
+	 * @throws RuntimeException if a problem with loading is encountered.
+	 */
+	private void runLoadPattern() throws RuntimeException {
+    	final Project proj = Application.getInstance().getProject();
     	
     	// try to load the active diagram
-    	DiagramPresentationElement activeDiag;
+    	final DiagramPresentationElement activeDiag;
     	try {
         	activeDiag = proj.getActiveDiagram();
     	} catch (NullPointerException ex) {
-    		Application.getInstance().getGUILog().log("There is no diagram open. The pattern saver is now exiting.");
-			return;
+    		Application.getInstance().getGUILog().log("There is no diagram open. The Pattern Loader is now exiting.");
+    		throw new RuntimeException();
     	}
     	
     	// get all of the diagram's elements
-    	List<PresentationElement> elemList = activeDiag.getPresentationElements();
+       	final List<PresentationElement> elemList = activeDiag.getPresentationElements();
     	
-		// save the pattern
-		PatternSaver ps  = new PatternSaver();
-		ps.savePattern(proj, activeDiag);
+       	// get the pattern diagram with style pattern to load
+		final DiagramPresentationElement patternDiagram = getPatternDiagram();
+		if(patternDiagram == null) {
+    		throw new RuntimeException();
+		}
+    		
+		RunnableWithProgress runnable = null;
+		try {
+    		runnable = new RunnableWithProgress() {
+    			public void run(ProgressStatus progressStatus) {
+    				progressStatus.init("Loading pattern...", 0, elemList.size());
+    				
+					// save the pattern in the pattern diagram
+					PatternSaver ps  = new PatternSaver();
+					ps.savePattern(proj, patternDiagram);
+					
+					// load the pattern in the active diagram
+			    	loadPattern(elemList, ps.getPattern(), progressStatus);
+    			}
+    		};
+		} catch(NoSuchMethodError ex) {
+    		Application.getInstance().getGUILog().log("There was a problem starting the Pattern Loader. The Pattern Loader is now exiting.");
+    		throw new RuntimeException();
+		}
 		
-		SessionManager.getInstance().createSession("Loading pattern...");
-    	loadPattern(elemList, ps.getPattern());
-		SessionManager.getInstance().closeSession();
+		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+	}
+	
+	/**
+	 * Provides an input dialog for the user to pick a diagram to load a pattern from.
+	 * 
+	 * @return the user-selected pattern diagram.
+	 */
+	private DiagramPresentationElement getPatternDiagram() {
+		// get all of the diagrams in the project for the user to choose from
+		Collection<DiagramPresentationElement> diagCollection = Application.getInstance().getProject().getDiagrams();
+		Iterator<DiagramPresentationElement> diagIter = diagCollection.iterator();
+		
+		// store the diagram names into a priority queue to order them alphabetically
+		PriorityQueue<String> namePQ = new PriorityQueue<String>();
+		while(diagIter.hasNext()) {
+			namePQ.add(diagIter.next().getName());
+		}
+		
+		// now load them into an Object array to feed the selection menu with
+		int numNames = namePQ.size();
+		Object[] diagramNames = new Object[numNames];
+
+		for(int i = 0; i < numNames; i++) {
+			diagramNames[i] = namePQ.poll();
+		}
+	
+		String userInput;
+		try {
+			userInput = (String) JOptionPane.showInputDialog(null,
+										                     "Choose a diagram to load a pattern from:",
+										                     "Pattern Loader",
+										                     JOptionPane.DEFAULT_OPTION,
+										                     null,
+										                     diagramNames,
+										                     diagramNames[0]);
+		} catch(HeadlessException e) {
+			Application.getInstance().getGUILog().log("The Pattern Loader must be run in a graphical interface");
+			return null;
+		}
+		
+		// user cancelled input - return safely
+		if(userInput == null) {
+			return null;
+		}
+		
+		// find and return the pattern diagram
+		diagIter = diagCollection.iterator();
+		while(diagIter.hasNext()) {
+			DiagramPresentationElement currDiag = diagIter.next();
+			
+			if(currDiag.getName().equals(userInput)) {
+				return currDiag;
+			}
+		}
+		
+		Application.getInstance().getGUILog().log("There was a problem starting the Pattern Loader. The Pattern Loader is now exiting.");
+		return null;
 	}
 	
 	/**
@@ -70,7 +177,7 @@ public class PatternLoader extends MDAction {
 	 * @param elemList	the list of elements to load styles into.
 	 * @param pattern	the pattern to load.
 	 */
-	private static void loadPattern(List<PresentationElement> elemList, JSONObject pattern) {
+	private static void loadPattern(List<PresentationElement> elemList, JSONObject pattern, ProgressStatus progressStatus) {
 		for(PresentationElement elem : elemList) {
 			String elemStyle = (String) pattern.get(elem.getHumanType());
 			
@@ -87,6 +194,10 @@ public class PatternLoader extends MDAction {
 			setStyleChildren(elem, pattern);
 			
 			elem.getDiagramSurface().repaint();
+			
+			if(progressStatus != null) {
+				progressStatus.increase();
+			}
 		}
 	}
 	
@@ -105,60 +216,6 @@ public class PatternLoader extends MDAction {
 		}
 		
 		// recursively load the style of the diagram element's children
-		loadPattern(children, pattern);
+		loadPattern(children, pattern, null);
 	}
-
-	
-	/**
-	 * Loads the style of elements on the diagram by gathering relevant style information from the JSON style string.
-	 * Monitors progress.
-	 * 
-	 * @param elemList			the list of elements to load styles into.
-	 * @param style				the style string.
-	 * @param progressStatus	the status of the program status bar.
-	 */
-	/*
-	public static void load(List<PresentationElement> elemList, String style, ProgressStatus progressStatus) {
-    	for(PresentationElement elem : elemList) {
-    		// parse the style string for the correct style of each element
-    		String elemStyle = getStyleStringForElement(elem, style);
-    		
-    		if(elemStyle == null) {
-    			// there was no style string found for this element, load children and then continue
-				setStyleChildren(elem, style);
-				continue;
-    		}
-    		
-    		// load the style of the diagram element
-    		setStyle(elem, elemStyle);
-    		
-    		// then load the style of its children recursively
-    		setStyleChildren(elem, style);
-    		
-    		elem.getDiagramSurface().repaint();
-    		
-    		progressStatus.increase();
-       	}
-	}
-	*/
-
-	/**
-	 * Recursively loads style information of owned elements.
-	 * 
-	 * @param parent	the parent element to recurse on.
-	 * @param style		the central style string holding all style properties.
-	 */
-	/*
-	private static void setStyleChildren(PresentationElement parent, String style) {
-		List<PresentationElement> children = parent.getPresentationElements();
-		
-		// base case -- no children
-		if(children.isEmpty()) {
-			return;
-		}
-		
-		// recursively load the style of the diagram element's children
-		load(children, style);
-	}
-	*/
 }

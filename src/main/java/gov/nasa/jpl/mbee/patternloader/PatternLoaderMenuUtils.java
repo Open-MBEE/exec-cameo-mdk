@@ -4,6 +4,11 @@ import java.awt.event.ActionEvent;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+/**
+ * Utility class for adding menu actions for the Pattern Loader.
+ * 
+ * @author Benjamin Inada, JPL/Caltech
+ */
 public class PatternLoaderMenuUtils {
 	/**
 	 * Adds the "Load pattern..." menu action.
