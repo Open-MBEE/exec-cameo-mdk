@@ -41,7 +41,7 @@ public class PatternSaver {
 	}
 	
 	/**
-	 * A helper for parsing the pattern style string and loading the pattern property.
+	 * A method for parsing the pattern style string and loading the pattern property.
 	 * 
 	 * @param diag		the diagram to save.
 	 * @param styleStr	the JSON style pattern string.
@@ -71,10 +71,16 @@ public class PatternSaver {
 		}
 	}
 	
+	/**
+	 * A helper method for setting the style of a single element into the pattern property.
+	 * 
+	 * @param elem		the element to set.
+	 * @param styleObj	the JSON style pattern object.
+	 */
 	@SuppressWarnings("unchecked")
 	private void setPatternHelper(PresentationElement elem, JSONObject styleObj) {
 		// recursively set the pattern property 
-		savePatternChildren(elem, styleObj);
+		setPatternHelperChildren(elem, styleObj);
 		
 		String typeKey = elem.getHumanType();
 		
@@ -96,41 +102,12 @@ public class PatternSaver {
 	}
 	
 	/**
-	 * Getter for the pattern property.
-	 * 
-	 * @return the pattern property.
-	 */
-	public JSONObject getPattern() {
-		return pattern;
-	}
-	
-	/**
-	 * Gets the pattern string for a specific presentation element.
-	 * 
-	 * @param elem		the element to get the pattern string for.
-	 * @param styleObj	the JSON style pattern object.
-	 * 
-	 * @return			the pattern string for the parameter element, null if not found
-	 */
-	private static String getElementPatternString(PresentationElement elem, JSONObject styleObj) {
-		// get the value associated with the element's ID
-		String elemStyleStr;
-		try {
-			elemStyleStr = (String) styleObj.get(elem.getID());
-		} catch(NullPointerException e) {
-			return null;
-		}
-		
-		return elemStyleStr;
-	}
-	
-	/**
-	 * Saves the style pattern to the pattern property recursively.
+	 * Recursive helper method to assist the setPatternHelper() method.
 	 * 
 	 * @param parent	the parent of the possibly nested owned elements to save.
 	 * @param styleObj	the JSON style pattern object.
 	 */
-	private void savePatternChildren(PresentationElement parent, JSONObject styleObj) {
+	private void setPatternHelperChildren(PresentationElement parent, JSONObject styleObj) {
 		// get the parent element's children
 		List<PresentationElement> children = parent.getPresentationElements();
 		
@@ -143,5 +120,52 @@ public class PatternSaver {
 		for(PresentationElement child : children) {
 			setPatternHelper(child, styleObj);
 		}
+	}
+	
+	/**
+	 * Gets the pattern string for a specific presentation element.
+	 * 
+	 * @param elem		the element to get the pattern string for.
+	 * @param styleObj	the JSON style pattern object.
+	 * 
+	 * @return			the pattern string for the parameter element, null if not found
+	 */
+	private static String getElementPatternString(PresentationElement elem, JSONObject styleObj) {
+		// get the style string associated with the element's ID
+		String elemStyleStr;
+		try {
+			elemStyleStr = styleObj.get(elem.getID()).toString();
+		} catch(NullPointerException e) {
+			return null;
+		}
+		
+		// parse the style string
+		JSONParser parser = new JSONParser();
+		Object parsedElemStyleStr = null;
+		try {
+			parsedElemStyleStr = parser.parse(elemStyleStr);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		// remove properties we don't want to restore
+		JSONObject parsedElemStyleObj = (JSONObject) parsedElemStyleStr;
+		parsedElemStyleObj.remove("rect_x");
+		parsedElemStyleObj.remove("rect_y");
+		parsedElemStyleObj.remove("rect_height");
+		parsedElemStyleObj.remove("rect_width");
+		parsedElemStyleObj.remove("num_break_points");
+
+		return parsedElemStyleObj.toJSONString();
+	}
+
+	/**
+	 * Getter for the pattern property.
+	 * 
+	 * @return the pattern property.
+	 */
+	public JSONObject getPattern() {
+		return pattern;
 	}
 }
