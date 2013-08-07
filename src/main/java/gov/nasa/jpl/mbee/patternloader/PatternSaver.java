@@ -66,6 +66,7 @@ public class PatternSaver {
 		HashSet<String> typesSaved = new HashSet<String>();		// a Set to store the type names saved throughout the process
 		pattern = new JSONObject();								// a HashMap that will store the style pattern of the diagram
 		
+		// TODO THIS MUST BE DONE RECURSIVELY SO THAT THE LOADER LOADS ALL ELEMENTS INCLUDING CHILDREN
 		for(PresentationElement elem : elemList) {
 			String typeKey = elem.getHumanType();
 			

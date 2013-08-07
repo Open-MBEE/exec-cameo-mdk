@@ -4,10 +4,10 @@ import gov.nasa.jpl.mbee.stylesaver.ViewLoader;
 
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.PriorityQueue;
 
 import javax.swing.JOptionPane;
 
@@ -61,7 +61,7 @@ public class PatternLoader extends MDAction {
 		}
 		
 		// print completion message once the load finishes
-		JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(null, "Pattern load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
 	
 		SessionManager.getInstance().closeSession();
 	}
@@ -124,20 +124,18 @@ public class PatternLoader extends MDAction {
 		Collection<DiagramPresentationElement> diagCollection = Application.getInstance().getProject().getDiagrams();
 		Iterator<DiagramPresentationElement> diagIter = diagCollection.iterator();
 		
-		// store the diagram names into a priority queue to order them alphabetically
-		PriorityQueue<String> namePQ = new PriorityQueue<String>();
-		while(diagIter.hasNext()) {
-			namePQ.add(diagIter.next().getName());
+		int numNames = diagCollection.size();
+		String[] diagramNames = new String[numNames];
+		
+		for(int i = 0; diagIter.hasNext(); i++) {
+			DiagramPresentationElement currDiag = diagIter.next();
+			diagramNames[i] = currDiag.getName() + "  [" + currDiag.getHumanType() + "]";
 		}
 		
-		// now load them into an Object array to feed the selection menu with
-		int numNames = namePQ.size();
-		Object[] diagramNames = new Object[numNames];
-
-		for(int i = 0; i < numNames; i++) {
-			diagramNames[i] = namePQ.poll();
-		}
-	
+		// sort the diagram names for better UI
+		Arrays.sort(diagramNames, String.CASE_INSENSITIVE_ORDER);
+		String[] sortedNames = Arrays.copyOfRange(diagramNames, 1, diagramNames.length);
+		
 		String userInput;
 		try {
 			userInput = (String) JOptionPane.showInputDialog(null,
@@ -145,8 +143,8 @@ public class PatternLoader extends MDAction {
 										                     "Pattern Loader",
 										                     JOptionPane.DEFAULT_OPTION,
 										                     null,
-										                     diagramNames,
-										                     diagramNames[0]);
+										                     sortedNames,
+										                     sortedNames[0]);
 		} catch(HeadlessException e) {
 			Application.getInstance().getGUILog().log("The Pattern Loader must be run in a graphical interface");
 			return null;
@@ -162,7 +160,9 @@ public class PatternLoader extends MDAction {
 		while(diagIter.hasNext()) {
 			DiagramPresentationElement currDiag = diagIter.next();
 			
-			if(currDiag.getName().equals(userInput)) {
+			String currDiagDescriptor = currDiag.getName() + "  [" + currDiag.getHumanType() + "]";
+			
+			if(currDiagDescriptor.equals(userInput)) {
 				return currDiag;
 			}
 		}
