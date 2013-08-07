@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.patternloader;
 import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 import org.json.simple.JSONObject;
@@ -21,6 +22,7 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
  */
 public class PatternSaver {
 	private JSONObject pattern;
+	private HashSet<String> typesSaved;
 
 	/**
 	 * Sets the pattern property by getting a style string representing
@@ -63,22 +65,24 @@ public class PatternSaver {
 
 		JSONObject styleObj = (JSONObject) parsedStyle;
 		
-		HashSet<String> typesSaved = new HashSet<String>();		// a Set to store the type names saved throughout the process
-		pattern = new JSONObject();								// a HashMap that will store the style pattern of the diagram
+		pattern = new JSONObject();				// a HashMap that will store the style pattern of the diagram
+		typesSaved = new HashSet<String>();		// a Set to store the type names saved throughout the process
 		
-		// TODO THIS MUST BE DONE RECURSIVELY SO THAT THE LOADER LOADS ALL ELEMENTS INCLUDING CHILDREN
-		for(PresentationElement elem : elemList) {
-			String typeKey = elem.getHumanType();
+		for(PresentationElement parent : elemList) {
+			// recursively set the pattern property 
+			savePatternChildren(parent, styleObj);
+			
+			String typeKey = parent.getHumanType();
 			
 			// check that the type style hasn't been saved yet
 			if(!typesSaved.contains(typeKey)) {
-				String typeValue = getElementPatternString(elem, styleObj);
+				String typeValue = getElementPatternString(parent, styleObj);
 				
 				// add the key/value style pair to the JSON object
 				pattern.put(typeKey, typeValue);
 				
-				typesSaved.add(elem.getHumanType());
-				styleObj.remove(elem.getID());
+				typesSaved.add(parent.getHumanType());
+				styleObj.remove(parent.getID());
 			}
 		}
 	}
@@ -109,11 +113,44 @@ public class PatternSaver {
 			return null;
 		}
 		
-		// element has not had its style saved
-		if(elemStyleStr == null) {
-			return null;
+		return elemStyleStr;
+	}
+	
+	/**
+	 * Saves the style pattern to the pattern property recursively.
+	 * 
+	 * @param parent	the parent of the possibly nested owned elements to save.
+	 * @param styleObj	the JSON style pattern object.
+	 */
+	@SuppressWarnings("unchecked")
+	private void savePatternChildren(PresentationElement parent, JSONObject styleObj) {
+		// get the parent element's children
+		List<PresentationElement> children = parent.getPresentationElements();
+		
+		// base case -- no children
+		if(children.isEmpty()) {
+			return;
 		}
 		
-		return elemStyleStr;
+		Iterator<PresentationElement> iter = children.iterator();
+		
+		// iterate over each element storing style properties
+		while(iter.hasNext()) {
+			PresentationElement child = iter.next();
+			savePatternChildren(child, styleObj);
+			
+			String typeKey = child.getHumanType();
+			
+			// check that the type style hasn't been saved yet
+			if(!typesSaved.contains(typeKey)) {
+				String typeValue = getElementPatternString(child, styleObj);
+				
+				// add the key/value style pair to the JSON object
+				pattern.put(typeKey, typeValue);
+				
+				typesSaved.add(child.getHumanType());
+				styleObj.remove(child.getID());
+			}
+		}
 	}
 }
