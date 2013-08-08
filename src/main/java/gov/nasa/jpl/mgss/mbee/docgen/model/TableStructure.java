@@ -1,8 +1,12 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
@@ -17,7 +21,9 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -28,7 +34,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
-public class TableStructure extends Table implements Iterator<List<Object>>{
+public class TableStructure extends Table implements Iterator<List<Object>>, Generatable{
 
 	//TODO decide tag options
 	
@@ -73,7 +79,6 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	// Table Stuff
 
 	private Object nullEntry = new String("no entry");
-	private int sortCol; // column index+1, neg means inv. order, 0 is no sort
 	private int cLen;
 	
 	public TableStructure() {
@@ -145,67 +150,192 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 		return output;
 	}
 
-	// Fancy Table Operations
+	// GENERATABLE INTERFACE CLASSES
+	// ><><><><><><><><><><><><><><>
+	
+	private StructuredActivityNode san;
+	private List<Element> rows;
+	
+	public void initialize(ActivityNode an, List<Element> in) {
+		if (an instanceof StructuredActivityNode) {
+			san = (StructuredActivityNode)an;
+		} else {
+			san = null;
+		}
+		rows = in;
+	}
+
+	// TODO: Does this already handle CBAs? 
+	public void parse() {
+		if (san == null) return;
+		
+		List<String> hs = new ArrayList<String>();
+		boolean hasBehavior = false;
+
+		if (rows == null) return;
+		ActivityNode curNode = GeneratorUtils.findInitialNode(san);
+		ActivityNode bNode = null;
+		if (curNode == null) return;
+		Collection<ActivityEdge> outs = curNode.getOutgoing();
+		while (outs != null && outs.size() == 1) {
+			curNode = outs.iterator().next().getTarget();
+			// Find out if have a behavior
+			if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
+				bNode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
+				hasBehavior = true;
+			}
+			boolean hasTablePropColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype );
+			boolean hasTableExprColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableExpressionColumnStereotype);
+			boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableAttributeColumnStereotype);
+			boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype);
+			if (hasTablePropColStereoType||hasTableExprColStereoType) {
+				// TablePropertyColumn tags
+				Object dProp = null;
+				if (hasTablePropColStereoType) {
+					dProp = GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+				} else if (hasTableExprColStereoType) {
+					dProp = GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
+				}
+				// Headings
+				hs.add(parseTableHeadings(curNode));
+				// Parse stuff
+				if ( hasTableExprColStereoType ) {
+					parseExpressionColumn(curNode, dProp, rows);
+				} else {
+					if ( dProp instanceof Property ) {
+						if (hasBehavior)parseColumn((Property)dProp, handleTableBehavior(bNode, rows), TableStructure.propertyColumn);
+						else parseColumn((Property)dProp, rows, TableStructure.propertyColumn);
+					} else if (dProp == null) {
+						if (hasBehavior)parseColumn((Property)dProp, handleTableBehavior(bNode, rows), TableStructure.propertyColumn);
+						else {
+							Debug.error( false, "Expected Property but got null" );
+						}
+					} else {
+						Debug.error( false, "Expected Property but got: "
+								+ dProp
+								+ ( dProp == null ? "" : " of type "
+										+ dProp.getClass()
+										.getName() ) );
+
+					}
+				}
+			} else if (hasTableAttrColStereoType) {
+				// TableAttributeColumn tags
+				Object dAttr = GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableAttributeColumnStereotype, "desiredAttribute", null);
+				// Headings
+				hs.add(parseTableHeadings(curNode));
+				// Parse stuff
+				if (hasBehavior)parseColumn((Object)dAttr, handleTableBehavior(bNode, rows), TableStructure.attributeColumn);
+				else parseColumn(dAttr, rows, TableStructure.attributeColumn);
+			} else if (hasTableSumRowStereoType) {
+				addSumRow();
+			}
+			if (hasBehavior)
+				hasBehavior = false;
+			outs = curNode.getOutgoing();
+		}
+
+		setHeaders(hs);
+	}
+	
+	public void visit(boolean forViewEditor) {
+		
+	}
+	
+	// PARSING HELPERS
+	// ><><><><><><><>
+	
+	private String parseTableHeadings(ActivityNode curNode) {
+		String cName = ((NamedElement)curNode).getName();
+		// Heading choice branch
+		if (cName != null && !cName.equals(""))
+			return cName;
+		else 
+			return new String();
+	}
+	
+	private List<Object> handleTableBehavior(ActivityNode bNode, List<Element> rowsIn) {
+		List<Object> rowsOut = new ArrayList<Object>();
+		
+		// Find the first collect/filter activitynode in the behavior
+		// IMPORTANT INVARIANT: assumes the activity whose initial node is passed as bNode ONLY
+		//   contains collect or filter action first!
+		if (bNode != null) {
+			if (bNode.getOutgoing() != null) {
+				bNode = bNode.getOutgoing().iterator().next().getTarget();
+			}
+		} 
+	
+		// Loop through row elements, passing each one as a target to the startCollectandFilter thing
+		for (Element r: rowsIn) {
+			List<Element> rAsTargets = new ArrayList<Element>();
+			rAsTargets.add(r);
+//			targets.push(rAsTargets);
+			rowsOut.add(CollectFilterParser.startCollectAndFilterSequence(bNode, rAsTargets));
+		}
+		
+		return rowsOut; // TODO: for some reason, this is always an empty list. Why?
+	}
 
 	String irrelevantEntry = new String("--");
 
 	GUILog parseTS = Application.getInstance().getGUILog(); // debug! TODO: remove
 	boolean debug = true;
 	
-  // TODO -- REVIEW -- Should parse*Column() and handle*Cell() methods not
-  // evaluate expressions or find property values and do this in
-  // DocBookOutputVisitor like other tables?
-	
-  public void parseExpressionColumn( ActivityNode curNode, Object expression,
-                                     List< Element > rows ) {
-    String exprString = null;
-    if ( expression instanceof String ) {
-      exprString = (String)expression;
-    } else if ( expression instanceof List ) {
-      List expList = (List)expression;
-      if ( expList.size() == 1 ) {
-        parseExpressionColumn( curNode, expList.get(0), rows );
-        return;
-      } else {
-        Debug.error( "Error! TableExpressionColumn expression cannot be a list of multiple elements!" );
-      }
-    } else {
-      exprString = (String)expression.toString();
-    }
-    
-    List<Object> curCol = new ArrayList<Object>();
-    
-    for (Object r: rows) {
-      if (r instanceof EObject) {
-        curCol.add(OclEvaluator.evaluateQuery( (EObject)r, exprString ) );
-      } else if (r instanceof List<?>) {
-        for (Object c: (List<Object>)r) {
-          Object result = c;
-          if (c instanceof EObject) {
-            result = OclEvaluator.evaluateQuery( (EObject)c, exprString );
-          } else {
-            // REVIEW -- TODO -- should be able to apply query to any object!
-            Debug.error( "Error! TableExpressionColumn requires an EObject!" );
-            result = c.toString();
-          }
-          if ( result instanceof List ) {
-            curCol.add( result );
-          } else {
-            curCol.add( Utils2.newList( result ) );
-          }
-        }
-      } else {
-        curCol.add( Utils2.newList( r.toString() ) );
-      }
-    }
-    addColumn(curCol);
-  }
+	// TODO -- REVIEW -- Should parse*Column() and handle*Cell() methods not
+	// evaluate expressions or find property values and do this in
+	// DocBookOutputVisitor like other tables?
 
-  public static final String propertyColumn = "PROPERTY";
-  public static final String attributeColumn = "ATTRIBUTE";
-  
-  @SuppressWarnings("unchecked")
-	public void parseColumn(Object dThing, List<?> rows, String colType) {
+	private void parseExpressionColumn( ActivityNode curNode, Object expression,
+			List< Element > rows ) {
+		String exprString = null;
+		if ( expression instanceof String ) {
+			exprString = (String)expression;
+		} else if ( expression instanceof List ) {
+			List expList = (List)expression;
+			if ( expList.size() == 1 ) {
+				parseExpressionColumn( curNode, expList.get(0), rows );
+				return;
+			} else {
+				Debug.error( "Error! TableExpressionColumn expression cannot be a list of multiple elements!" );
+			}
+		} else {
+			exprString = (String)expression.toString();
+		}
+
+		List<Object> curCol = new ArrayList<Object>();
+
+		for (Object r: rows) {
+			if (r instanceof EObject) {
+				curCol.add(OclEvaluator.evaluateQuery( (EObject)r, exprString ) );
+			} else if (r instanceof List<?>) {
+				for (Object c: (List<Object>)r) {
+					Object result = c;
+					if (c instanceof EObject) {
+						result = OclEvaluator.evaluateQuery( (EObject)c, exprString );
+					} else {
+						// REVIEW -- TODO -- should be able to apply query to any object!
+						Debug.error( "Error! TableExpressionColumn requires an EObject!" );
+						result = c.toString();
+					}
+					if ( result instanceof List ) {
+						curCol.add( result );
+					} else {
+						curCol.add( Utils2.newList( result ) );
+					}
+				}
+			} else {
+				curCol.add( Utils2.newList( r.toString() ) );
+			}
+		}
+		addColumn(curCol);
+	}
+
+	public static final String propertyColumn = "PROPERTY";
+	public static final String attributeColumn = "ATTRIBUTE";
+
+	@SuppressWarnings("unchecked")
+	private void parseColumn(Object dThing, List<?> rows, String colType) {
 		List<Object> curCol = new ArrayList<Object>();
 		if (dThing == null || colType == null) {
 			curCol.addAll(rows); // REVIEW -- does this need to be a list of lists?
@@ -238,7 +368,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 		}
 		addColumn(curCol);
 	}
-	
+
 	private List<Object> handlePropertyCell(Property dProp, Element cell) {
 		Element myOwner = dProp.getOwner();
 		List<Object> rSlots = new ArrayList<Object>();
@@ -326,9 +456,17 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 		addRow(sumRow);
 	}
 	
-//	public void addSortColumn()	
+	// SORTING STUFF
+	// ><><><><><><>
 	
-	// Iterator Stuff
+	private int sortCol; // column index+1, neg means inv. order, 0 is no sort
+
+	private void setSort() {
+		
+	}
+	
+	// ITERATOR STUFF
+	// ><><><><><><><
 
 	private int itercount = 0;
 	
@@ -345,20 +483,9 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 	public void remove() {
 		return;
 	}
-	
-	// Utility Stuff
-	
-	private Object getObjectProperty(Element e, String stereotype, String property, Object defaultt) {
-		Object value = StereotypesHelper.getStereotypePropertyFirst(e, stereotype, property);
-		if (value == null && e instanceof CallBehaviorAction && ((CallBehaviorAction)e).getBehavior() != null) {
-			value = StereotypesHelper.getStereotypePropertyFirst(((CallBehaviorAction)e).getBehavior(), stereotype, property);
-		}
-		if (value == null)
-			value = defaultt;
-		return value;
-	}
-	
-	// Debugging relevant stuff
+		
+	// DEBUGGING STUFF TODO: REMOVE
+	// ><>><><><><><><><><><><><><>
 	
 	public String toString() {
 		//determine longest row
@@ -380,7 +507,8 @@ public class TableStructure extends Table implements Iterator<List<Object>>{
 		return output;
 	}
 	
-	// For DocBookOutputVisitor Stuff
+	// FOR DOCBOOKOUTPUTVISITOR STUFF
+	// ><><><><><><><><><><><><><><><
 	
 	@Override
 	public void accept(IModelVisitor v) {
