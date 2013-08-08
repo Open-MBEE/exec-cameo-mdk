@@ -23,18 +23,18 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
  */
 public class PatternLoaderUtils {
 	/**
-	 * Checks that the requestor and its relationships/targets are correctly formatted.
+	 * Checks that the requester and its relationships/targets are correctly formatted.
 	 * 
-	 * @param requestor	the requestor to check.
+	 * @param requester	the requester to check.
 	 * @return			true if formatting is good, false otherwise.
 	 */
-	public static boolean isGoodRequestor(PresentationElement requestor) {
+	public static boolean isGoodRequester(PresentationElement requester) {
 		// check the stereotype
 		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(Application.getInstance().getProject());
 		boolean goodStereotype = false;
 		
 		try{
-			goodStereotype = StereotypesHelper.hasStereotypeOrDerived(requestor.getElement(), workingStereotype);
+			goodStereotype = StereotypesHelper.hasStereotypeOrDerived(requester.getElement(), workingStereotype);
 		} catch(IllegalArgumentException e) {
 			return false;
 		}
@@ -44,7 +44,7 @@ public class PatternLoaderUtils {
 		}
 		
 		// check if it has a single conform relationship
-		Collection<DirectedRelationship> relationships = requestor.getElement().get_directedRelationshipOfSource();
+		Collection<DirectedRelationship> relationships = requester.getElement().get_directedRelationshipOfSource();
 		DirectedRelationship conform = (DirectedRelationship) getNextElement(relationships, "Conform", false);
 		
 		if(conform == null) {
@@ -99,11 +99,11 @@ public class PatternLoaderUtils {
 	/**
 	 * Gets the pattern diagrams stored in symbol's corresponding package holding pattern diagrams.
 	 * 
-	 * @param requestor
+	 * @param requester
 	 * @return
 	 */
-	public static Collection<DiagramPresentationElement> getPatternDiagrams(PresentationElement requestor) {
-		Collection<DirectedRelationship> relationships = requestor.getElement().get_directedRelationshipOfSource();
+	public static Collection<DiagramPresentationElement> getPatternDiagrams(PresentationElement requester) {
+		Collection<DirectedRelationship> relationships = requester.getElement().get_directedRelationshipOfSource();
 		DirectedRelationship conform = (DirectedRelationship) getNextElement(relationships, "Conform", false);
 		
 		Collection<Element> targets = conform.getTarget();

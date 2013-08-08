@@ -14,6 +14,7 @@ import javax.swing.JOptionPane;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -32,20 +33,20 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  */
 public class PatternLoader extends MDAction {
 	private static final long serialVersionUID = 1L;
-	private PresentationElement requestor;
+	private PresentationElement requester;
 
 	/**
-	 * Initializes the PatternLoader.
+	 * Initializes the Pattern Loader.
 	 * 
 	 * @param id 		the ID of the action.
 	 * @param value 	the name of the action.
 	 * @param mnemonic	the mnemonic key of the action.
 	 * @param group		the name of the related commands group.
 	 */
-	public PatternLoader(String id, String value, int mnemonic, String group, PresentationElement requestor) {
+	public PatternLoader(String id, String value, int mnemonic, String group, PresentationElement requester) {
 		super(id, value, mnemonic, group);
 		
-		this.requestor = requestor;
+		this.requester = requester;
 	}
 
 	/**
@@ -57,18 +58,55 @@ public class PatternLoader extends MDAction {
 	public void actionPerformed(ActionEvent e) {
         SessionManager.getInstance().createSession("Loading Pattern...");
 		
-		// try to load the pattern
+		// allow user to pick load or stamp operation
 		try {
-			runLoadPattern();
+			delegateOperation();
 		} catch(RuntimeException ex) {
+			ex.printStackTrace();
 			SessionManager.getInstance().cancelSession();
 			return;
 		}
 		
-		// print completion message once the load finishes
-		JOptionPane.showMessageDialog(null, "Pattern load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-	
 		SessionManager.getInstance().closeSession();
+	}
+	
+	/**
+	 * Allows the user to pick the load or stamp operation.
+	 * 
+	 * @throws RuntimeException if a problem with loading or stamping occurs.
+	 */
+	private void delegateOperation() throws RuntimeException {
+		Object[] options = { "Load pattern", "Stamp pattern" };
+
+		int opt = JOptionPane.showOptionDialog(null,
+                                               "Would you like to load or stamp a pattern onto the diagram?\n",
+			                                   null,
+			                                   JOptionPane.YES_NO_OPTION,
+			                                   JOptionPane.QUESTION_MESSAGE,
+			                                   null,
+			                                   options,
+			                                   options[0]);
+	
+		// if user presses no or closes the dialog, exit the program. else, add view stereotype to diagram 
+		if((opt == JOptionPane.CANCEL_OPTION) || (opt == JOptionPane.CLOSED_OPTION)) {
+			throw new RuntimeException();
+		}
+		
+		if((opt == JOptionPane.YES_OPTION)) {
+			try {
+				runLoadPattern();
+			} catch(RuntimeException e) {
+				e.printStackTrace();
+				throw new RuntimeException();
+			}
+		} else if((opt == JOptionPane.NO_OPTION)) {
+			try {
+				runStampPattern();
+			} catch(RuntimeException e) {
+				e.printStackTrace();
+				throw new RuntimeException();
+			}
+		}
 	}
 	
 	/**
@@ -79,12 +117,10 @@ public class PatternLoader extends MDAction {
 	private void runLoadPattern() throws RuntimeException {
     	final Project proj = Application.getInstance().getProject();
         
-    	// get the presentation elements of the requestor - there should only be one (the diagram)
-    	Element requestorElem = requestor.getElement();
-    	
-    	Diagram targetDiagram = (Diagram) Application.getInstance().getProject().getElementByID(requestorElem.getID());
-    	
-    	final List<PresentationElement> elemList = Application.getInstance().getProject().getDiagram(targetDiagram).getPresentationElements();
+    	// get the presentation elements of the requester - there should only be one (the diagram)
+    	Element requesterElem = requester.getElement();
+    	Diagram targetDiagram = (Diagram) proj.getElementByID(requesterElem.getID());
+    	final List<PresentationElement> elemList = proj.getDiagram(targetDiagram).getPresentationElements();
        	
        	// get the pattern diagram with style pattern to load
 		final DiagramPresentationElement patternDiagram = getPatternDiagram();
@@ -112,6 +148,43 @@ public class PatternLoader extends MDAction {
 		}
 		
 		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+		JOptionPane.showMessageDialog(null, "Pattern load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+	}
+	
+	/**
+	 * Runs the Pattern Stamper.
+	 * 
+	 * @throws RuntimeException if a problem with loading is encountered.
+	 */
+	private void runStampPattern() throws RuntimeException {
+    	final Project proj = Application.getInstance().getProject();
+    	
+    	// get the presentation elements of the requester - there should only be one (the diagram)
+    	Element requesterElem = requester.getElement();
+    	final Diagram targetDiagram = (Diagram) proj.getElementByID(requesterElem.getID());
+
+		final DiagramPresentationElement patternDiagram = getPatternDiagram();
+		if(patternDiagram == null) {
+    		throw new RuntimeException();
+		}
+		
+		final List<PresentationElement> patternElements = patternDiagram.getPresentationElements();
+		
+		RunnableWithProgress runnable = null;
+		try {
+    		runnable = new RunnableWithProgress() {
+    			public void run(ProgressStatus progressStatus) {
+    				progressStatus.init("Stamping pattern...", 0, 100);
+    				CopyPasting.copyPasteElements(patternElements, patternDiagram.getElement(), proj.getDiagram(targetDiagram), true, false);
+    			}
+    		};
+		} catch(NoSuchMethodError ex) {
+    		Application.getInstance().getGUILog().log("There was a problem starting the Pattern Stamper. The Pattern Stamper is now exiting.");
+    		throw new RuntimeException();
+		}
+		
+		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+		JOptionPane.showMessageDialog(null, "Pattern stamp complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
 	/**
@@ -121,7 +194,7 @@ public class PatternLoader extends MDAction {
 	 */
 	private DiagramPresentationElement getPatternDiagram() {
 		// get all of the diagrams in the package for the user to pick from
-		Collection<DiagramPresentationElement> diagCollection = PatternLoaderUtils.getPatternDiagrams(requestor);
+		Collection<DiagramPresentationElement> diagCollection = PatternLoaderUtils.getPatternDiagrams(requester);
 		Iterator<DiagramPresentationElement> diagIter = diagCollection.iterator();
 		
 		int numNames = diagCollection.size();
@@ -139,8 +212,8 @@ public class PatternLoader extends MDAction {
 		String userInput;
 		try {
 			userInput = (String) JOptionPane.showInputDialog(null,
-										                     "Choose a diagram to load a pattern from:",
-										                     "Pattern Loader",
+										                     "Choose a diagram to get a pattern from:",
+										                     null,
 										                     JOptionPane.DEFAULT_OPTION,
 										                     null,
 										                     sortedNames,

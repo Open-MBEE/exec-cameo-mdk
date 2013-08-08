@@ -19,23 +19,21 @@ public class PatternLoaderConfigurator implements DiagramContextAMConfigurator {
 	 * @param manager	the actions manager to add the category to.
 	 * @param diagram	the diagram to configurate.
 	 * @param selected	the selected elements.
-	 * @param requestor	the element that was right-clicked
+	 * @param requester	the element that was right-clicked
 	 */
-	public void configure(ActionsManager manager, DiagramPresentationElement diagram, PresentationElement[] selected, PresentationElement requestor) {
+	public void configure(ActionsManager manager, DiagramPresentationElement diagram, PresentationElement[] selected, PresentationElement requester) {
 		// check to see if the category was already added to the manager
 		if(manager.getActionFor("PatternLoader") == null) {
-			if(requestor == null) {
+			if(requester == null) {
 				return;
 			}
 			
-			if(!PatternLoaderUtils.isGoodRequestor(requestor)) {
+			if(!PatternLoaderUtils.isGoodRequester(requester)) {
 				return;
 			}
 			
 			ActionsCategory category = new ActionsCategory("Pattern Loader", "Pattern Loader");
-	
-			category.setNested(true);
-			category.addAction(new PatternLoader("PatternLoader", "Load pattern...", 0, null, requestor));
+			category.addAction(new PatternLoader("PatternLoader", "Pattern Loader", 0, null, requester));
 			
 			manager.addCategory(1, category);
 		}
