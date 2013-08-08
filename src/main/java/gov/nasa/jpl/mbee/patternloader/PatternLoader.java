@@ -119,14 +119,16 @@ public class PatternLoader extends MDAction {
         
     	// get the presentation elements of the requester - there should only be one (the diagram)
     	Element requesterElem = requester.getElement();
-    	Diagram targetDiagram = (Diagram) proj.getElementByID(requesterElem.getID());
-    	final List<PresentationElement> elemList = proj.getDiagram(targetDiagram).getPresentationElements();
+    	Diagram requesterDiagramElem = (Diagram) proj.getElementByID(requesterElem.getID());
        	
-       	// get the pattern diagram with style pattern to load
 		final DiagramPresentationElement patternDiagram = getPatternDiagram();
-		if(patternDiagram == null) {
+    	DiagramPresentationElement targetDiagram = proj.getDiagram(requesterDiagramElem);
+		
+		if((patternDiagram == null) || (targetDiagram == null)) {
     		throw new RuntimeException();
 		}
+		
+    	final List<PresentationElement> elemList = targetDiagram.getPresentationElements();
     		
 		RunnableWithProgress runnable = null;
 		try {
@@ -148,6 +150,7 @@ public class PatternLoader extends MDAction {
 		}
 		
 		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+		
 		JOptionPane.showMessageDialog(null, "Pattern load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
@@ -161,12 +164,18 @@ public class PatternLoader extends MDAction {
     	
     	// get the presentation elements of the requester - there should only be one (the diagram)
     	Element requesterElem = requester.getElement();
-    	final Diagram targetDiagram = (Diagram) proj.getElementByID(requesterElem.getID());
-
+    	final Diagram requesterDiagramElem = (Diagram) proj.getElementByID(requesterElem.getID());
+    	
 		final DiagramPresentationElement patternDiagram = getPatternDiagram();
-		if(patternDiagram == null) {
+		final DiagramPresentationElement targetDiagram = proj.getDiagram(requesterDiagramElem);
+		
+		if((patternDiagram == null) || (targetDiagram == null)) {
     		throw new RuntimeException();
 		}
+		
+		// need to ensure that both diagrams are loaded before operating on them
+		patternDiagram.ensureLoaded();
+		targetDiagram.ensureLoaded();
 		
 		final List<PresentationElement> patternElements = patternDiagram.getPresentationElements();
 		
@@ -175,7 +184,7 @@ public class PatternLoader extends MDAction {
     		runnable = new RunnableWithProgress() {
     			public void run(ProgressStatus progressStatus) {
     				progressStatus.init("Stamping pattern...", 0, 100);
-    				CopyPasting.copyPasteElements(patternElements, patternDiagram.getElement(), proj.getDiagram(targetDiagram), true, false);
+    				CopyPasting.copyPasteElements(patternElements, targetDiagram.getObjectParent(), targetDiagram, true, false);
     			}
     		};
 		} catch(NoSuchMethodError ex) {
@@ -184,6 +193,7 @@ public class PatternLoader extends MDAction {
 		}
 		
 		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+		
 		JOptionPane.showMessageDialog(null, "Pattern stamp complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
