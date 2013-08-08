@@ -22,6 +22,8 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.BaseProgressMonitor;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  * A class used to load patterns onto the active diagram from other project diagrams.
@@ -30,6 +32,7 @@ import com.nomagic.ui.BaseProgressMonitor;
  */
 public class PatternLoader extends MDAction {
 	private static final long serialVersionUID = 1L;
+	private PresentationElement requestor;
 
 	/**
 	 * Initializes the PatternLoader.
@@ -39,8 +42,10 @@ public class PatternLoader extends MDAction {
 	 * @param mnemonic	the mnemonic key of the action.
 	 * @param group		the name of the related commands group.
 	 */
-	public PatternLoader(String id, String value, int mnemonic, String group) {
+	public PatternLoader(String id, String value, int mnemonic, String group, PresentationElement requestor) {
 		super(id, value, mnemonic, group);
+		
+		this.requestor = requestor;
 	}
 
 	/**
@@ -73,19 +78,14 @@ public class PatternLoader extends MDAction {
 	 */
 	private void runLoadPattern() throws RuntimeException {
     	final Project proj = Application.getInstance().getProject();
+        
+    	// get the presentation elements of the requestor - there should only be one (the diagram)
+    	Element requestorElem = requestor.getElement();
     	
-    	// try to load the active diagram
-    	final DiagramPresentationElement activeDiag;
-    	try {
-        	activeDiag = proj.getActiveDiagram();
-    	} catch (NullPointerException ex) {
-    		Application.getInstance().getGUILog().log("There is no diagram open. The Pattern Loader is now exiting.");
-    		throw new RuntimeException();
-    	}
+    	Diagram targetDiagram = (Diagram) Application.getInstance().getProject().getElementByID(requestorElem.getID());
     	
-    	// get all of the diagram's elements
-       	final List<PresentationElement> elemList = activeDiag.getPresentationElements();
-    	
+    	final List<PresentationElement> elemList = Application.getInstance().getProject().getDiagram(targetDiagram).getPresentationElements();
+       	
        	// get the pattern diagram with style pattern to load
 		final DiagramPresentationElement patternDiagram = getPatternDiagram();
 		if(patternDiagram == null) {
@@ -120,8 +120,8 @@ public class PatternLoader extends MDAction {
 	 * @return the user-selected pattern diagram.
 	 */
 	private DiagramPresentationElement getPatternDiagram() {
-		// get all of the diagrams in the project for the user to choose from
-		Collection<DiagramPresentationElement> diagCollection = Application.getInstance().getProject().getDiagrams();
+		// get all of the diagrams in the package for the user to pick from
+		Collection<DiagramPresentationElement> diagCollection = PatternLoaderUtils.getPatternDiagrams(requestor);
 		Iterator<DiagramPresentationElement> diagIter = diagCollection.iterator();
 		
 		int numNames = diagCollection.size();
@@ -134,7 +134,7 @@ public class PatternLoader extends MDAction {
 		
 		// sort the diagram names for better UI
 		Arrays.sort(diagramNames, String.CASE_INSENSITIVE_ORDER);
-		String[] sortedNames = Arrays.copyOfRange(diagramNames, 1, diagramNames.length);
+		String[] sortedNames = Arrays.copyOfRange(diagramNames, 0, diagramNames.length);
 		
 		String userInput;
 		try {

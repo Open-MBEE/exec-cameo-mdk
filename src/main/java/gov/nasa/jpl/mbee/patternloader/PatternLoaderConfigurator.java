@@ -35,7 +35,7 @@ public class PatternLoaderConfigurator implements DiagramContextAMConfigurator {
 			ActionsCategory category = new ActionsCategory("Pattern Loader", "Pattern Loader");
 	
 			category.setNested(true);
-			category.addAction(new PatternLoader("PatternLoader", "Load pattern...", 0, null));
+			category.addAction(new PatternLoader("PatternLoader", "Load pattern...", 0, null, requestor));
 			
 			manager.addCategory(1, category);
 		}
