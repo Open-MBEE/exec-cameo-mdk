@@ -558,13 +558,13 @@ public class DocumentGenerator {
 		while (outs != null && outs.size() == 1) {
 			ActivityNode next = outs.iterator().next().getTarget();
 			next2 = null;
-			if (next instanceof CallBehaviorAction) {
-				Behavior b = ((CallBehaviorAction)next).getBehavior();
+			if (next instanceof CallBehaviorAction || next instanceof StructuredActivityNode && StereotypesHelper.hasStereotype(next, DocGen3Profile.tableStructureStereotype)) {
+				Behavior b = (next instanceof CallBehaviorAction)?((CallBehaviorAction)next).getBehavior():null;
 				if (StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.sectionStereotype) || b != null && StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.sectionStereotype)) {
 					parseSection((CallBehaviorAction)next, parent);
 					next2 = next;
 				} else if (StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.templateStereotype) || b != null && StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.templateStereotype)) {
-					parseQuery((CallBehaviorAction)next, parent);
+					parseQuery(next, parent);
 					next2 = next;
 				} else if (StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.collectFilterStereotype) || b != null && StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.collectFilterStereotype)) {
 					CollectFilterParser.setContext(context);
@@ -573,13 +573,13 @@ public class DocumentGenerator {
 					pushed++;
 					next2 = context.getCurrentNode();
 				}
-			} else if (next instanceof StructuredActivityNode && StereotypesHelper.hasStereotype(next, DocGen3Profile.tableStructureStereotype)) {
-				// TODO: THIS IS A DERP. Can't get it to work exactly as a template yet.
-				// The first three lines were yanked from where they should be in parseTemplate
-				TableStructure ts = new TableStructure();
-				((TableStructure)ts).initialize(next, context.peekTargets().isEmpty()?new ArrayList<Element>():context.peekTargets());
-				((TableStructure)ts).parse();
-				parent.addElement(ts);
+//			} else if (StereotypesHelper.hasStereotype(next, DocGen3Profile.tableStructureStereotype)) {
+//				// TODO: Talk to doris about treating TS differently than the templates because 
+//				// it (and its constituents) because it can be a CBA or SAN.
+//				TableStructure ts = new TableStructure();
+//				((TableStructure)ts).initialize(next, context.peekTargets().isEmpty()?new ArrayList<Element>():context.peekTargets());
+//				((TableStructure)ts).parse();
+//				parent.addElement(ts);
 			} else if (next instanceof StructuredActivityNode) {
 				Boolean loop = (Boolean)GeneratorUtils.getObjectProperty(next, DocGen3Profile.templateStereotype, "loop", false);
 				Boolean ignore = (Boolean)GeneratorUtils.getObjectProperty(next, DocGen3Profile.templateStereotype, "ignore", false);
@@ -717,33 +717,33 @@ public class DocumentGenerator {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void parseQuery(CallBehaviorAction cba, Container parent) {
-		String titlePrefix = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.templateStereotype, "titlePrefix", "");
-		String titleSuffix = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.templateStereotype, "titleSuffix", "");
-		Boolean useContextNameAsTitle = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.templateStereotype, "useSectionNameAsTitle", false);
-		Boolean ignore = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.templateStereotype, "ignore", false);
-		Boolean loop = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.templateStereotype, "loop", false);
-		List<String> titles = (List<String>)GeneratorUtils.getListProperty(cba, DocGen3Profile.templateStereotype, "titles", new ArrayList<String>());
+	private void parseQuery(ActivityNode an, Container parent) {
+		String titlePrefix = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "titlePrefix", "");
+		String titleSuffix = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "titleSuffix", "");
+		Boolean useContextNameAsTitle = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "useSectionNameAsTitle", false);
+		Boolean ignore = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "ignore", false);
+		Boolean loop = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "loop", false);
+		List<String> titles = (List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.templateStereotype, "titles", new ArrayList<String>());
 		boolean structured = false;
-		if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.structuredQueryStereotype) || (cba.getBehavior() != null && StereotypesHelper.hasStereotype(cba.getBehavior(), DocGen3Profile.structuredQueryStereotype)))
+		if (StereotypesHelper.hasStereotype(an, DocGen3Profile.structuredQueryStereotype) || (an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null && StereotypesHelper.hasStereotype(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.structuredQueryStereotype)))
 			structured = true;
-		List<Element> targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(cba, DocGen3Profile.templateStereotype, "targets");
+		List<Element> targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(an, DocGen3Profile.templateStereotype, "targets");
 		if (targets == null || context.targetsEmpty()) {
-			targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(cba, DocGen3Profile.queriesStereotype, 1, false, 1);
-			targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(cba, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
+			targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(an, DocGen3Profile.queriesStereotype, 1, false, 1);
+			targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(an, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
 		}
-		if ((targets == null || context.targetsEmpty()) && cba.getBehavior() != null) {
-			targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(cba.getBehavior(), DocGen3Profile.templateStereotype, "targets");
+		if ((targets == null || context.targetsEmpty()) && an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null) {
+			targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.templateStereotype, "targets");
 			if (targets == null || context.targetsEmpty()) {
-				targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(cba.getBehavior(), DocGen3Profile.queriesStereotype, 1, false, 1);
-				targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(cba.getBehavior(), DocGen3Profile.oldQueriesStereotype, 1, false, 1));
+				targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.queriesStereotype, 1, false, 1);
+				targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.oldQueriesStereotype, 1, false, 1));
 			}
 		}
 		if (context.targetsEmpty() && !this.context.targetsEmpty()) {
 			targets = this.context.peekTargets();
 		}		
-		if (structured && !ignore) {
-			Boolean createSections = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.structuredQueryStereotype, "createSections", false);
+		if (structured && !ignore && an instanceof CallBehaviorAction) {
+			Boolean createSections = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.structuredQueryStereotype, "createSections", false);
 			if (loop) {
 				int count = 0;
 				for (Element e: targets) {
@@ -759,11 +759,11 @@ public class DocumentGenerator {
 							sec.setTitle(((NamedElement)e).getName());
 						sec.setTitlePrefix(titlePrefix);
 						sec.setTitleSuffix(titleSuffix);
-						sec.setDgElement(cba);
+						sec.setDgElement(an);
 						parent.addElement(sec);
 						con = sec;
 					}
-					parseActivityOrStructuredNode(cba.getBehavior(), con);
+					parseActivityOrStructuredNode(((CallBehaviorAction)an).getBehavior(), con);
 					this.context.popTargets();
 				}
 			} else {
@@ -773,24 +773,24 @@ public class DocumentGenerator {
 					Section sec = new Section();
 					if (titles.size() > 0)
 						sec.setTitle(titles.get(0));
-					else if (!cba.getName().equals(""))
-						sec.setTitle(cba.getName());
-					else if (!cba.getBehavior().getName().equals(""))
-						sec.setTitle(cba.getBehavior().getName());
+					else if (!an.getName().equals(""))
+						sec.setTitle(an.getName());
+					else if (!((CallBehaviorAction)an).getBehavior().getName().equals(""))
+						sec.setTitle(((CallBehaviorAction)an).getBehavior().getName());
 					sec.setUseContextNameAsTitle(useContextNameAsTitle);
-					sec.setDgElement(cba);
+					sec.setDgElement(an);
 					sec.setTitlePrefix(titlePrefix);
 					sec.setTitleSuffix(titleSuffix);
 					parent.addElement(sec);
 					con = sec;
 				}
-				parseActivityOrStructuredNode(cba.getBehavior(), con);
+				parseActivityOrStructuredNode(((CallBehaviorAction)an).getBehavior(), con);
 				this.context.popTargets();
 			}
 		} else {
-			Query dge = parseTemplate(cba);
+			Query dge = parseTemplate(an);
 			if (dge != null) {
-				dge.setDgElement(cba);
+				dge.setDgElement(an);
 				dge.setTargets(targets);
 				dge.setTitles(titles);
 				dge.setTitlePrefix(titlePrefix);
@@ -808,66 +808,66 @@ public class DocumentGenerator {
 	/**
 	 * parses query actions into classes in gov.nasa.jpl.mgss.mbee.docgen.model - creates class representation of the queries
 	 * There's gotta be a way to make this less ugly
-	 * @param cba
+	 * @param an
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Query parseTemplate(CallBehaviorAction cba) {
-		Element a = cba.getBehavior();
-		List<Property> stereotypeProperties = (List<Property>)GeneratorUtils.getListProperty(cba, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>());
-		List<String> captions = (List<String>)GeneratorUtils.getListProperty(cba, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>());
-		Boolean showDoc = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.documentationChoosable, "includeDoc", false);
-		List<Stereotype> outgoing = (List<Stereotype>)GeneratorUtils.getListProperty(cba, DocGen3Profile.stereotypedRelChoosable, "outgoingStereotypedRelationships", new ArrayList<Stereotype>());
-		List<Stereotype> incoming = (List<Stereotype>)GeneratorUtils.getListProperty(cba, DocGen3Profile.stereotypedRelChoosable, "incomingStereotypedRelationships", new ArrayList<Stereotype>());
-		List<String> headers = (List<String>)GeneratorUtils.getListProperty(cba, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>());
-		Boolean skipIfNoDoc = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.docSkippable, "skipIfNoDoc", false);
-		Integer floatingPrecision = (Integer)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.precisionChoosable, "floatingPrecision", -1);
-		Boolean showCaptions = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.hasCaptions, "showCaptions", true);
-		Boolean includeInherited = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.inheritedChoosable, "includeInherited", false);
-		String style = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.tableStereotype, "style", null);
-		List<String> colwidths = (List<String>)GeneratorUtils.getListProperty(cba, DocGen3Profile.tableStereotype, "colwidths", new ArrayList<String>());
+	private Query parseTemplate(ActivityNode an) {
+		Element a = (an instanceof CallBehaviorAction)?((CallBehaviorAction)an).getBehavior():null;
+		List<Property> stereotypeProperties = (List<Property>)GeneratorUtils.getListProperty(an, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>());
+		List<String> captions = (List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>());
+		Boolean showDoc = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.documentationChoosable, "includeDoc", false);
+		List<Stereotype> outgoing = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.stereotypedRelChoosable, "outgoingStereotypedRelationships", new ArrayList<Stereotype>());
+		List<Stereotype> incoming = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.stereotypedRelChoosable, "incomingStereotypedRelationships", new ArrayList<Stereotype>());
+		List<String> headers = (List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>());
+		Boolean skipIfNoDoc = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.docSkippable, "skipIfNoDoc", false);
+		Integer floatingPrecision = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.precisionChoosable, "floatingPrecision", -1);
+		Boolean showCaptions = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hasCaptions, "showCaptions", true);
+		Boolean includeInherited = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.inheritedChoosable, "includeInherited", false);
+		String style = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.tableStereotype, "style", null);
+		List<String> colwidths = (List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.tableStereotype, "colwidths", new ArrayList<String>());
 		
 		Query dge = null;
-		if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.imageStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.imageStereotype))) {
+		if (StereotypesHelper.hasStereotype(an, DocGen3Profile.imageStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.imageStereotype))) {
 			dge = new Image();
-			Boolean doNotShow = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.imageStereotype, "doNotShow", false);
+			Boolean doNotShow = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.imageStereotype, "doNotShow", false);
 			((Image)dge).setCaptions(captions);
 			((Image)dge).setShowCaptions(showCaptions);
 			((Image)dge).setDoNotShow(doNotShow);
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.paragraphStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.paragraphStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.paragraphStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.paragraphStereotype))) {
 			dge = new Paragraph();
-			dge.setDgElement(cba);
-			String body = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.paragraphStereotype, "body", "");
+			dge.setDgElement(an);
+			String body = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.paragraphStereotype, "body", "");
 			((Paragraph)dge).setText(body);
 			((Paragraph)dge).setStereotypeProperties(stereotypeProperties);
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.bulletedListStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.bulletedListStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.bulletedListStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.bulletedListStereotype))) {
 			dge = new BulletedList();
-			Boolean showTargets = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.bulletedListStereotype, "showTargets", false);
-			Boolean showSPN = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.bulletedListStereotype, "showStereotypePropertyNames", false);
-			Boolean ordered = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.bulletedListStereotype, "orderedList", false);
+			Boolean showTargets = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.bulletedListStereotype, "showTargets", false);
+			Boolean showSPN = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.bulletedListStereotype, "showStereotypePropertyNames", false);
+			Boolean ordered = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.bulletedListStereotype, "orderedList", false);
 			((BulletedList)dge).setShowTargets(showTargets);
 			((BulletedList)dge).setShowStereotypePropertyNames(showSPN);
 			((BulletedList)dge).setOrderedList(ordered);
 			((BulletedList)dge).setIncludeDoc(showDoc);
 			((BulletedList)dge).setStereotypeProperties(stereotypeProperties);
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.dependencyMatrixStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.dependencyMatrixStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.dependencyMatrixStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.dependencyMatrixStereotype))) {
 			dge = new DependencyMatrix();
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.genericTableStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.genericTableStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.genericTableStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.genericTableStereotype))) {
 			dge = new GenericTable();
 			((GenericTable)dge).setCaptions(captions);
 			((GenericTable)dge).setShowCaptions(showCaptions);
 			((GenericTable)dge).setHeaders(headers);
 			((GenericTable)dge).setSkipIfNoDoc(skipIfNoDoc);
 			((GenericTable)dge).setStyle(style);
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.tableStructureStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.tableStructureStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.tableStructureStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.tableStructureStereotype))) {
 			// Get all the variables or whatever
 			dge = new TableStructure();
-			((TableStructure)dge).initialize(cba, context.peekTargets().isEmpty()?new ArrayList<Element>():context.peekTargets());
+			((TableStructure)dge).initialize(an, context.peekTargets().isEmpty()?new ArrayList<Element>():context.peekTargets());
 			((TableStructure)dge).parse(); // TODO: Put this in the DocBookOutputVistor
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.combinedMatrixStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.combinedMatrixStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.combinedMatrixStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.combinedMatrixStereotype))) {
 			dge = new CombinedMatrix();
-			Integer nameColumn = (Integer)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.combinedMatrixStereotype, "nameColumn", 1);
-			Integer docColumn = (Integer)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.combinedMatrixStereotype, "docColumn", 2);
+			Integer nameColumn = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.combinedMatrixStereotype, "nameColumn", 1);
+			Integer docColumn = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.combinedMatrixStereotype, "docColumn", 2);
 			nameColumn = nameColumn < 1 ? 1 : nameColumn;
 			docColumn = docColumn < 1 ? 2 : docColumn;
 			((CombinedMatrix)dge).setHeaders(headers);
@@ -882,11 +882,11 @@ public class DocumentGenerator {
 			((CombinedMatrix)dge).setNameColumn(nameColumn);
 			((CombinedMatrix)dge).setDocColumn(docColumn);
 			((CombinedMatrix)dge).setColwidths(colwidths);
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.customTableStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.customTableStereotype))) { 
+		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.customTableStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.customTableStereotype))) { 
 			dge = new CustomTable();
 			// Get "columns" slot -- should be a list of strings (e.g., OCL expressions)
 			List<String> columns = null;
-			Object columnsO = StereotypesHelper.getStereotypePropertyValue(cba, DocGen3Profile.customTableStereotype, "columns");
+			Object columnsO = StereotypesHelper.getStereotypePropertyValue(an, DocGen3Profile.customTableStereotype, "columns");
 			if (columnsO != null && columnsO instanceof List)
 	    		columns = (List<String>)columnsO;
 	    	
@@ -897,33 +897,33 @@ public class DocumentGenerator {
 			((CustomTable)dge).setStyle(style);
 			((CustomTable)dge).setColumns(columns);
 			((CustomTable)dge).setColwidths(colwidths);
-		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.userScriptStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.userScriptStereotype))) {
+		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.userScriptStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.userScriptStereotype))) {
 			dge = new UserScript();
-		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.hierarchicalPropertiesTableStereotype))) {
-			Integer maxDepth = (Integer)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "maxDepth", 0);
-			List<String> topIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeTypeName", new ArrayList<Property>()));
-			List<String> topExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeTypeName", new ArrayList<Property>()));
-			List<Stereotype> topIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeStereotype", new ArrayList<Stereotype>());
-			List<Stereotype> topExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeStereotype", new ArrayList<Stereotype>());
-			List<String> topIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeName", new ArrayList<Property>()));
-			List<String> topExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeName", new ArrayList<Property>()));
-			Integer topAssociationType = (Integer)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topAssociationType", 0);
-			List<String> topOrder = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topOrder", new ArrayList<Property>()));
+		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.hierarchicalPropertiesTableStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.hierarchicalPropertiesTableStereotype))) {
+			Integer maxDepth = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "maxDepth", 0);
+			List<String> topIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeTypeName", new ArrayList<Property>()));
+			List<String> topExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeTypeName", new ArrayList<Property>()));
+			List<Stereotype> topIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeStereotype", new ArrayList<Stereotype>());
+			List<Stereotype> topExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeStereotype", new ArrayList<Stereotype>());
+			List<String> topIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeName", new ArrayList<Property>()));
+			List<String> topExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeName", new ArrayList<Property>()));
+			Integer topAssociationType = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topAssociationType", 0);
+			List<String> topOrder = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topOrder", new ArrayList<Property>()));
 	    	if (!topIncludeName.isEmpty() && topOrder.isEmpty())
 	    		topOrder = topIncludeName;
-			if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.propertiesTableByAttributesStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.propertiesTableByAttributesStereotype))) {
-				List<Stereotype> splitStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "splitStereotype", new ArrayList<Stereotype>());
-				List<Stereotype> systemIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeStereotype", new ArrayList<Stereotype>());
-				List<Stereotype> systemExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeStereotype", new ArrayList<Stereotype>());
-				List<String> systemIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeTypeName", new ArrayList<Property>()));
-				List<String> systemExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeTypeName", new ArrayList<Property>()));
-				List<String> systemIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeName", new ArrayList<Property>()));
-				List<String> systemExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeName", new ArrayList<Property>()));
-				Integer systemAssociationType = (Integer)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "systemAssociationType", 0);
-				Boolean consolidateTypes = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "consolidateTypes", false);
-				Boolean showMultiplicity = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "showMultiplicity", false);
-				Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "doRollup", false);
-				List<String> rollupProperty = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(cba, DocGen3Profile.propertiesTableByAttributesStereotype, "rollupProperty", new ArrayList<Property>()));
+			if (StereotypesHelper.hasStereotype(an, DocGen3Profile.propertiesTableByAttributesStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.propertiesTableByAttributesStereotype))) {
+				List<Stereotype> splitStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "splitStereotype", new ArrayList<Stereotype>());
+				List<Stereotype> systemIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeStereotype", new ArrayList<Stereotype>());
+				List<Stereotype> systemExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeStereotype", new ArrayList<Stereotype>());
+				List<String> systemIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeTypeName", new ArrayList<Property>()));
+				List<String> systemExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeTypeName", new ArrayList<Property>()));
+				List<String> systemIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeName", new ArrayList<Property>()));
+				List<String> systemExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeName", new ArrayList<Property>()));
+				Integer systemAssociationType = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemAssociationType", 0);
+				Boolean consolidateTypes = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "consolidateTypes", false);
+				Boolean showMultiplicity = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "showMultiplicity", false);
+				Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "doRollup", false);
+				List<String> rollupProperty = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "rollupProperty", new ArrayList<Property>()));
 				dge = new PropertiesTableByAttributes();
 				((PropertiesTableByAttributes)dge).setSplitStereotype(splitStereotype);
 				((PropertiesTableByAttributes)dge).setSystemIncludeStereotype(systemIncludeStereotype);
@@ -954,19 +954,19 @@ public class DocumentGenerator {
 			((HierarchicalPropertiesTable)dge).setIncludeDoc(showDoc);
 			((HierarchicalPropertiesTable)dge).setIncludeInherited(includeInherited);
 			((HierarchicalPropertiesTable)dge).setStyle(style);
-		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.workpackageTablesStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.workpackageTablesStereotype))) {
-			Element workpackage = (Element)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.workpackageTablesStereotype, "workpackage", null);
-			Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.workpackageTablesStereotype, "doRollup", false);
-			Boolean suppliesAsso = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.workpackageTablesStereotype, "suppliesAsso", false);
-			Boolean authorizesAsso = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.workpackageTablesStereotype, "authorizesAsso", false);
-			Boolean sortByName = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.workpackageTablesStereotype, "sortDeploymentByName", false);
-			Boolean showProducts = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.workpackageTablesStereotype, "showProducts", true);
-			Boolean showMassMargin = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.workpackageTablesStereotype, "showMassMargin", false);
-			if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.billOfMaterialsStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.billOfMaterialsStereotype))) {
+		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.workpackageTablesStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.workpackageTablesStereotype))) {
+			Element workpackage = (Element)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "workpackage", null);
+			Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "doRollup", false);
+			Boolean suppliesAsso = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "suppliesAsso", false);
+			Boolean authorizesAsso = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "authorizesAsso", false);
+			Boolean sortByName = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "sortDeploymentByName", false);
+			Boolean showProducts = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "showProducts", true);
+			Boolean showMassMargin = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "showMassMargin", false);
+			if (StereotypesHelper.hasStereotype(an, DocGen3Profile.billOfMaterialsStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.billOfMaterialsStereotype))) {
 				dge = new BillOfMaterialsTable();
-			} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.deploymentStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.deploymentStereotype))) {
+			} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.deploymentStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.deploymentStereotype))) {
 				dge = new DeploymentTable();
-			} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.workpakcageAssemblyStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.workpakcageAssemblyStereotype))) {
+			} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.workpakcageAssemblyStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.workpakcageAssemblyStereotype))) {
 				dge = new WorkpackageAssemblyTable();
 			}
 			((WorkpackageTable)dge).setCaptions(captions);
@@ -981,9 +981,9 @@ public class DocumentGenerator {
 			((WorkpackageTable)dge).setShowProducts(showProducts);
 			((WorkpackageTable)dge).setStyle(style);
 			((WorkpackageTable)dge).setShowMassMargin(showMassMargin);
-		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.missionMappingStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.missionMappingStereotype))) {
+		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.missionMappingStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.missionMappingStereotype))) {
 			dge = new MissionMapping();
-		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.libraryChooserStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.libraryChooserStereotype))) {
+		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.libraryChooserStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.libraryChooserStereotype))) {
 			dge = new LibraryMapping();
 		}
 		return dge;

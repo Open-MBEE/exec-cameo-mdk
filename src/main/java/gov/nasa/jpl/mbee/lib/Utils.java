@@ -933,6 +933,45 @@ public class Utils {
     }
     
     /**
+     * Takes a list of value objects of a certain type (strings, numbers, lists),
+     * sorts them by the desired criteria ( (first letter, length), (value, proximity to value), (size) ),
+     * in a particular order (ascending, descending)
+     * @param values
+     * @param criteria
+     * @param isAscending
+     * @return
+     */
+    
+    public static List<Element> sortByX(Collection<? extends Object> values, String criteria, boolean isAscending) {
+    	// ensure uniformity of values
+    		// if not, separate sortable (majority) from non-sortable values TODO: decide if should specify type as param
+    	// selectSortCriteria
+    	// sort values and build up swap list
+    	// return the swap list
+    	return null;
+    }
+    
+    private static enum sortCriteria { 	STRING_ALPHABETICAL,
+    									STRING_LENGTH,
+    									NUM_VALUE,
+    									NUM_PROXIMITY,
+    									LIST_SIZE };
+    
+    private static Comparator<Object> selectSortCriterion(sortCriteria choice) {
+    	switch (choice) {
+    	case STRING_ALPHABETICAL: return new Comparator<Object>() {
+    		public int compare(Object o1, Object o2) {
+				if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
+					return ((NamedElement)o1).compareTo((NamedElement)o2);
+				}
+				return 0;
+    		}
+    	};
+    	default: return null;
+    	}
+    }
+    
+    /**
      * Get the things that have t has the type
      * @param t
      * @return

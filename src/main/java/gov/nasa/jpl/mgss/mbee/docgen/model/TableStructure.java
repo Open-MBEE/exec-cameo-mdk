@@ -153,27 +153,29 @@ public class TableStructure extends Table implements Iterator<List<Object>>, Gen
 	// GENERATABLE INTERFACE CLASSES
 	// ><><><><><><><><><><><><><><>
 	
-	private StructuredActivityNode san;
+	private Element ts;
 	private List<Element> rows;
 	
 	public void initialize(ActivityNode an, List<Element> in) {
 		if (an instanceof StructuredActivityNode) {
-			san = (StructuredActivityNode)an;
+			ts = (StructuredActivityNode)an;
+		} else if (an instanceof CallBehaviorAction) {
+			ts = ((CallBehaviorAction)an).getBehavior();
 		} else {
-			san = null;
+			ts = null;
 		}
 		rows = in;
 	}
 
 	// TODO: Does this already handle CBAs? 
 	public void parse() {
-		if (san == null) return;
+		if (ts == null) return;
 		
 		List<String> hs = new ArrayList<String>();
 		boolean hasBehavior = false;
 
 		if (rows == null) return;
-		ActivityNode curNode = GeneratorUtils.findInitialNode(san);
+		ActivityNode curNode = GeneratorUtils.findInitialNode(ts);
 		ActivityNode bNode = null;
 		if (curNode == null) return;
 		Collection<ActivityEdge> outs = curNode.getOutgoing();
@@ -182,6 +184,9 @@ public class TableStructure extends Table implements Iterator<List<Object>>, Gen
 			// Find out if have a behavior
 			if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
 				bNode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
+				hasBehavior = true;
+			} else if (curNode instanceof StructuredActivityNode) {
+				bNode = GeneratorUtils.findInitialNode(curNode);
 				hasBehavior = true;
 			}
 			boolean hasTablePropColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype );
