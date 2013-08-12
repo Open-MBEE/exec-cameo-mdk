@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.generator;
 
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+
 import java.util.List;
 
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -10,6 +12,6 @@ public interface Generatable {
 	
 	public void initialize(ActivityNode an, List<Element> in);
 	public void parse();
-	public void visit(boolean forViewEditor);
+	public DocumentElement visit(boolean forViewEditor);
 	
 }

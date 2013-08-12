@@ -5,6 +5,11 @@ import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
 import gov.nasa.jpl.ocl.OclEvaluator;
@@ -243,8 +248,63 @@ public class TableStructure extends Table implements Iterator<List<Object>>, Gen
 		setHeaders(hs);
 	}
 	
-	public void visit(boolean forViewEditor) {
+	public DocumentElement visit(boolean forViewEditor) {
+		DBTable t = new DBTable();
 		
+		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
+		// want to add things to body by rows
+		while (hasNext()) {
+			List<Object> tsRow = next();
+			if (tsRow == null)
+				continue;
+			List<DocumentElement> row = new ArrayList<DocumentElement>();
+			for (Object e: tsRow) {
+				// TODO: Think about any problem that could arise from the following casting...
+				// Note assumption that all Objects in TS are either Lists of Properties or empty list
+				DBTableEntry item = Common.getTableEntryFromObject( e, false, forViewEditor );
+				row.add(item);
+			}
+			body.add(row);
+		}
+		// set DBTable headers
+		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
+		if (!getHeaders().isEmpty()) {
+			List<DocumentElement> first = new ArrayList<DocumentElement>();
+			hs.add(first);
+			for (String h: getHeaders())
+				first.add(new DBText(h));
+			t.setCols(first.size());
+		} 
+		// otherwise, take the names of each element, in which case this would
+		// parseTableStructure loop to automatcally add the name of columns to the headers variable in 
+		// TableStructure.j
+		else {
+			List<DocumentElement> first = new ArrayList<DocumentElement>();
+			hs.add(first);
+			for (int i = 0; i < getColumNum(); i++)
+				first.add(new DBText());
+		}
+		t.setHeaders(hs);
+		// set DBTable and add column specification stuff
+		t.setBody(body);
+		List<DBColSpec> cslist = new ArrayList<DBColSpec>();
+		if (getColwidths() != null && !getColwidths().isEmpty()) {
+			int i = 1;
+			for (String s: getColwidths()) {
+				DBColSpec cs = new DBColSpec(i);
+				cs.setColwidth(s);
+				cslist.add(cs);
+				i++;
+			}
+		} else {
+			DBColSpec cs = new DBColSpec(1);
+			cs.setColwidth(".4*");
+			cslist.add(cs);
+		}
+		t.setColspecs(cslist);
+		t.setStyle(getStyle());
+		
+		return t;
 	}
 	
 	// PARSING HELPERS
