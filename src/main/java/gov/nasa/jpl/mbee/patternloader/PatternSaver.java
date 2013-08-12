@@ -20,7 +20,14 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
  * @author Benjamin Inada, JPL/Caltech
  */
 public class PatternSaver {
+	/**
+	 * Stores the style pattern of a diagram in JSON object form.
+	 */
 	private JSONObject pattern;
+	
+	/**
+	 * Stores the types saved in the pattern.
+	 */
 	private HashSet<String> typesSaved;
 
 	/**
@@ -139,25 +146,9 @@ public class PatternSaver {
 			return null;
 		}
 		
-		// parse the style string
-		JSONParser parser = new JSONParser();
-		Object parsedElemStyleStr = null;
-		try {
-			parsedElemStyleStr = parser.parse(elemStyleStr);
-		} catch(Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+		String patternString = PatternLoaderUtils.removeUnnecessaryProperties(elemStyleStr);
 		
-		// remove properties we don't want to restore
-		JSONObject parsedElemStyleObj = (JSONObject) parsedElemStyleStr;
-		parsedElemStyleObj.remove("rect_x");
-		parsedElemStyleObj.remove("rect_y");
-		parsedElemStyleObj.remove("rect_height");
-		parsedElemStyleObj.remove("rect_width");
-		parsedElemStyleObj.remove("num_break_points");
-
-		return parsedElemStyleObj.toJSONString();
+		return patternString;
 	}
 
 	/**

@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import gov.nasa.jpl.mbee.stylesaver.StylerUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
@@ -13,7 +15,6 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
 /**
@@ -29,17 +30,7 @@ public class PatternLoaderUtils {
 	 * @return			true if formatting is good, false otherwise.
 	 */
 	public static boolean isGoodRequester(PresentationElement requester) {
-		// check the stereotype
-		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(Application.getInstance().getProject());
-		boolean goodStereotype = false;
-		
-		try{
-			goodStereotype = StereotypesHelper.hasStereotypeOrDerived(requester.getElement(), workingStereotype);
-		} catch(IllegalArgumentException e) {
-			return false;
-		}
-		
-		if(!goodStereotype) {
+		if(requester.getElement() == null) {
 			return false;
 		}
 		
@@ -169,5 +160,27 @@ public class PatternLoaderUtils {
 		}
 		
 		return nextElement;
+	}
+	
+	public static String removeUnnecessaryProperties(String pattern) {
+		// parse the style string
+		JSONParser parser = new JSONParser();
+		Object parsedElemStyleStr = null;
+		try {
+			parsedElemStyleStr = parser.parse(pattern);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		// remove properties we don't want to restore
+		JSONObject parsedElemStyleObj = (JSONObject) parsedElemStyleStr;
+		parsedElemStyleObj.remove("rect_x");
+		parsedElemStyleObj.remove("rect_y");
+		parsedElemStyleObj.remove("rect_height");
+		parsedElemStyleObj.remove("rect_width");
+		parsedElemStyleObj.remove("num_break_points");
+		
+		return parsedElemStyleObj.toJSONString();
 	}
 }

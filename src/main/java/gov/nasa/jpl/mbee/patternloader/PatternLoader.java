@@ -260,7 +260,7 @@ public class PatternLoader extends MDAction {
 	 * @param elemList	the list of elements to load styles into.
 	 * @param pattern	the pattern to load.
 	 */
-	private static void loadPattern(List<PresentationElement> elemList, JSONObject pattern, ProgressStatus progressStatus) {
+	public static void loadPattern(List<PresentationElement> elemList, JSONObject pattern, ProgressStatus progressStatus) {
 		for(PresentationElement elem : elemList) {
 			String elemStyle = (String) pattern.get(elem.getHumanType());
 			
