@@ -31,7 +31,7 @@ public class FixPatternMismatchAll extends NMAction implements AnnotationAction 
 	 * @param pattern	the pattern to load.
 	 */
 	public FixPatternMismatchAll(DiagramPresentationElement diag, JSONObject pattern) {
-		super("FIX_PATTERN_MISMATCH_ALL", "Fix Pattern Mismatch: Load pattern onto diagram", 0);
+		super("FIX_PATTERN_MISMATCH_ALL", "Fix Pattern Mismatch: Automatically load pattern onto diagram", 0);
 		
 		this.diagToFix = diag;
 		this.pattern = pattern;

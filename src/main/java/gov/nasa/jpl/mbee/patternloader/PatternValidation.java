@@ -135,12 +135,14 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
 			
 			if(!badElemTypes.isEmpty()) {
 				// add a fix for the mismatch - user select repairs for styles per element type
-				NMAction patternMismatchAll = new FixPatternMismatchAll(requesterDiag, pattern);
+				NMAction patternMismatchSelect = new FixPatternMismatchSelect(requesterDiag, pattern, badElemTypes);
 				
 				// add a fix for the mismatch - automatically sync styles on all element types
+				NMAction patternMismatchAll = new FixPatternMismatchAll(requesterDiag, pattern);
 				
 				List<NMAction> actionList = new ArrayList<NMAction>();
 				actionList.add(patternMismatchAll);
+				actionList.add(patternMismatchSelect);
 				
 				// create the annotation
 				Annotation annotation = new Annotation(requesterDiag, constraint, actionList);
