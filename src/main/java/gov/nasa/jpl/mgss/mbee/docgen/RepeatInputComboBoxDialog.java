@@ -7,15 +7,19 @@ import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.ItemSelectable;
-import java.awt.ScrollPane;
-import java.awt.event.ComponentAdapter;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.ComponentEvent;
-import java.util.Arrays;
+import java.awt.event.ComponentListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.HashSet;
 import java.util.LinkedList;
 import javax.swing.ComboBoxEditor;
@@ -25,24 +29,15 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JWindow;
-import javax.swing.ListCellRenderer;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
-import javax.swing.plaf.metal.MetalComboBoxEditor;
-import javax.swing.text.JTextComponent;
 
 public class RepeatInputComboBoxDialog implements Runnable {
 
@@ -145,8 +140,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
     this.optionType = optionType;
     this.messageType = messageType;
     this.icon = icon;
-    this.choices = choices;
-    this.maxChoices = maxChoices;
+    RepeatInputComboBoxDialog.choices = choices;
+    RepeatInputComboBoxDialog.maxChoices = maxChoices;
     this.processor = processor;
   }
 
@@ -183,8 +178,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
     while ( selectedItem != null ) {
       if ( editableListPanel == null ) {
-        editableListPanel = new EditableListPanel( (String)message, choices.toArray() );//,
-        //processButtonLabel, processButonIcon );
+        editableListPanel = new EditableListPanel( (String)message, choices.toArray() );
         message = editableListPanel;
       } else {
         editableListPanel.setItems( choices.toArray() );
@@ -265,15 +259,9 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
     private static final long serialVersionUID = 8166263196543269359L;
 
-    // private JTextField value;
     public JComboBox jcb = null;
-    //public JPanel resultPanel = new JPanel( new BorderLayout( 5, 5 ) );
     public JComponent resultPane = null;
     public JScrollPane resultScrollPane = null;
-//        new JScrollPane( resultPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-//                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
-
-    private boolean focusSet = false;
 
     public EditableListPanel( String msg, Object[] items ) { //, String processButtonLabel, Icon processButtonIcon ) {
       super( new BorderLayout( 5, 5 ) );
@@ -286,19 +274,11 @@ public class RepeatInputComboBoxDialog implements Runnable {
           new JScrollPane( resultPane,
                            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                            JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
-//      resultScrollPanel.setVerticalScrollBarPolicy(
-//                      JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-      //resultScrollPane.setPreferredSize(new Dimension(400, 150));
       resultScrollPane.setMinimumSize(new Dimension(100, 50));
     
       
       add( resultScrollPane, BorderLayout.SOUTH );
-//      resultPanel.setSize( 400, 400 );
-//      resultScrollPanel.setBounds( 100, 100, 300, 300 );
-//      resultPanel.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
-//      resultPanel.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS );
       addAncestorListener( new RequestFocusListener() );
-      //jcb.getEditor().selectAll(); // TODO -- This isn't working. WHy?
     }
 
     private JEditorPane createEditorPane(String html) {
@@ -324,24 +304,14 @@ public class RepeatInputComboBoxDialog implements Runnable {
           field.addAncestorListener( new RequestFocusListener() );
         }
         jcb.addAncestorListener( new RequestFocusListener() );
-//        //setUpFocus();
-//        jcb.addComponentListener(new ComponentAdapter(){  
-//          public void componentShown(ComponentEvent ce){  
-//            jcb.requestFocusInWindow();
-//          }  
-//        });
       }
       return jcb;
     }
 
-    protected boolean isFocusSet() {
-      return focusSet;
-    }
-
-    public String toHtml( String s ) {
-      if ( s.contains( "<html>" ) ) return s;
-      return "<html>" + s.replaceAll( "\\n", "<br>\\n" ) + "</html>";
-    }
+//    public String toHtml( String s ) {
+//      if ( s.contains( "<html>" ) ) return s;
+//      return "<html>" + s.replaceAll( "\\n", "<br>\\n" ) + "</html>";
+//    }
     
 //    private Component makeComponent( Object result ) {
 //      if ( result instanceof Component ) {
@@ -365,11 +335,9 @@ public class RepeatInputComboBoxDialog implements Runnable {
         newResultPane = (JComponent)result;
       } else if ( result instanceof Icon ) {
         newResultPane = new JLabel( (Icon)result );
-      } else { //if ( result instanceof String ) {
+      } else {
         newResultPane =
-            createEditorPane( //toHtml(
-            		result == null ? "null" : result.toString() );
-        //resultPane.setText( toHtml( (String)result ) );
+            createEditorPane( result == null ? "null" : result.toString() );
       }
       if ( newResultPane != null ) {
         resultScrollPane.remove( resultPane );
@@ -385,78 +353,19 @@ public class RepeatInputComboBoxDialog implements Runnable {
       } else {
         System.out.println("is NOT visible");
       }
-      //resultScrollPane.update(getGraphics());
-//      Component c = makeComponent( result );
-//      if ( resultPane.getComponentCount() == 1 ) {
-//        resultPane.remove( 0 );
-//      }
-//      if ( resultPane.getComponentCount() == 0 ) {
-//        resultPane.add( c );
-//      }
     }
     
     public String getValue() {
       return (String)jcb.getSelectedItem();
     }
 
+    @SuppressWarnings( "unused" )
     public ComboBoxEditor getEditor() {
       return jcb.getEditor();
     }
 
-//    protected void setUpFocus() {
-//      ComboBoxEditor editor = getEditor();
-//      if ( editor == null ) {
-//        Debug.outln("DOH!");
-//        return;
-//      }
-//      Object item = editor.getEditorComponent();
-//      final JTextComponent tf = (JTextComponent)( item instanceof JTextComponent ? item : null );
-//      if ( tf == null ) {
-//        Debug.outln("BUMMER!");
-//      } else {
-//        tf.selectAll();
-//        tf.requestFocusInWindow();
-//        //tf.requestFocus();
-//        if ( !Arrays.asList( tf.getComponentListeners()).contains( shownListener ) ) {
-//          tf.addComponentListener(shownListener);
-//        }
-//        if ( !Arrays.asList( tf.getComponentListeners()).contains( hiddenListener ) ) {
-//          tf.addComponentListener(hiddenListener);
-//        }
-//        focusSet = true;
-//      }
-//    }
-    
-//    @Override
-//    public void setVisible( boolean aFlag ) {
-//      //jcb.getEditor().selectAll(); // TODO -- This isn't working. WHy?
-//      super.setVisible( aFlag );
-//      //setUpFocus();
-//    }
-
   }
  
-//  private class MyCellRenderer extends BasicComboBoxRenderer.UIResource implements ListCellRenderer {
-//    public MyCellRenderer() {
-//        setOpaque(true);
-//    }
-//
-//    @Override
-//    public Component getListCellRendererComponent(JList list,
-//                                                  Object value,
-//                                                  int index,
-//                                                  boolean isSelected,
-//                                                  boolean cellHasFocus) {
-//      if ( !isSelected && RepeatInputComboBoxDialog.this.message instanceof EditableListPanel ) {
-//        //( (EditableListPanel)message ).getEditor().selectAll();
-//        //isSelected = true;
-//      }
-//      super.getListCellRendererComponent( list, value, index, isSelected, cellHasFocus );
-//
-//      return this;
-//    }
-//  }
-
   /**
    * http://tips4java.wordpress.com/2010/03/14/dialog-focus/
    * 
@@ -479,6 +388,99 @@ public class RepeatInputComboBoxDialog implements Runnable {
   public static class RequestFocusListener implements AncestorListener
   {
     private boolean removeListener;
+    Dimension size = new Dimension( 500, 300 );
+    Point location = null;
+
+    public class WinListener implements WindowListener  {
+
+      @Override
+      public void windowOpened( WindowEvent e ) {
+        Debug.outln( "windowOpened, size = " + size + ", location = " + location );
+        if ( e.getComponent() instanceof Dialog ) {
+          if ( !( (Dialog)e.getComponent() ).isResizable() ) {
+            ( (Dialog)e.getComponent() ).setResizable( true );
+          }
+        }
+      }
+
+      @Override
+      public void windowClosing( WindowEvent e ) {
+        Debug.outln( "before windowClosing, size = " + size + ", location = " + location );
+        size = e.getComponent().getSize();
+        location = e.getComponent().getLocation();
+        Debug.outln( "windowClosing, size = " + size + ", location = " + location );
+      }
+
+      @Override
+      public void windowClosed( WindowEvent e ) {
+        Debug.outln( "windowClosed, size = " + size + ", location = " + location );
+      }
+
+      @Override
+      public void windowIconified( WindowEvent e ) {
+        Debug.outln( "windowIconified, size = " + size + ", location = " + location );
+      }
+
+      @Override
+      public void windowDeiconified( WindowEvent e ) {
+        Debug.outln( "windowDeiconified, size = " + size + ", location = " + location );
+      }
+
+      @Override
+      public void windowActivated( WindowEvent e ) {
+        Debug.outln( "windowActivated, size = " + size + ", location = " + location );
+      }
+
+      @Override
+      public void windowDeactivated( WindowEvent e ) {
+        Debug.outln( "windowDeactivated, size = " + size + ", location = " + location );
+      }
+      
+    }
+    public class SizeListener implements ComponentListener {
+      @Override
+      public void componentResized( ComponentEvent e ) {
+        Debug.outln( "before componentResized, size = " + size + ", location = " + location  );
+        size = e.getComponent().getSize();
+        location = e.getComponent().getLocation();
+        Debug.outln( "componentResized, size = " + size + ", location = " + location  );
+      }
+
+      @Override
+      public void componentMoved( ComponentEvent e ) {
+        Debug.outln( "before componentMoved, size = " + size + ", location = " + location  );
+        size = e.getComponent().getSize();
+        location = e.getComponent().getLocation();
+        Debug.outln( "componentMoved, size = " + size + ", location = " + location  );
+        if ( e.getComponent() instanceof Dialog ) {
+          if ( !( (Dialog)e.getComponent() ).isResizable() ) {
+            ( (Dialog)e.getComponent() ).setResizable( true );
+          }
+        }
+      }
+
+      @Override
+      public void componentShown( ComponentEvent e ) {
+        Debug.outln( "componentShown, size = " + size + ", location = " + location );
+        if ( e.getComponent() instanceof Dialog ) {
+          if ( !( (Dialog)e.getComponent() ).isResizable() ) {
+            ( (Dialog)e.getComponent() ).setResizable( true );
+          }
+        }
+      }
+
+      @Override
+      public void componentHidden( ComponentEvent e ) {
+        Debug.outln( "componentHidden, size = " + size + ", location = " + location );
+//        size = e.getComponent().getSize();
+//        location = e.getComponent().getLocation();
+        if ( e.getComponent() instanceof Dialog ) {
+          if ( !( (Dialog)e.getComponent() ).isResizable() ) {
+            ( (Dialog)e.getComponent() ).setResizable( true );
+          }
+        }
+      }
+    }
 
     /*
      *  Convenience constructor. The listener is only used once and then it is
@@ -499,39 +501,66 @@ public class RepeatInputComboBoxDialog implements Runnable {
     public RequestFocusListener(boolean removeListener)
     {
       this.removeListener = removeListener;
-      System.out.println( "zowie!" );
     }
 
     @Override
     public void ancestorAdded(AncestorEvent e)
     {
-      System.out.println( "ancestorAdded(" + e + ")" );
+      Debug.outln( "ancestorAdded(" + e + ")" );
       JComponent component = e.getComponent();
       component.requestFocusInWindow();
       if ( component instanceof JTextField ) {
         ( (JTextField)component ).selectAll();
       }
 
-      //JRootPane rootPane = component.getRootPane();
-      //rootPane
-      //rootPane.setLocation( 100, 100 );
       JWindow top = getTopComponentOfType( component, JWindow.class );
       JDialog dialog = getTopComponentOfType( component, JDialog.class );
-      //top.setSize( new Dimension( 300, 300 ) );
-      if ( dialog != null ) {
-        dialog.setResizable( true );
-        dialog.setMaximumSize( new Dimension(1024,768) );
-        dialog.setPreferredSize( new Dimension(500,300) );
-        dialog.setMinimumSize( new Dimension(200,100) );
-        System.out.println( "dialog = " + dialog.toString() );
-      } else if ( top != null ) {
-        top.setMaximumSize( new Dimension(1024,768) );
-        top.setPreferredSize( new Dimension(500,300) );
-        top.setMinimumSize( new Dimension(200,100) );
-        System.out.println( "rootPane = " + component.getRootPane().toString() );
-        System.out.println( "top = " + top.toString() );
+      Window win = (dialog == null ? top : dialog );
+      try{
+      if ( win != null ) {
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        //Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension screenSize = new Dimension( gd.getDisplayMode().getWidth(), gd.getDisplayMode().getHeight() ); 
+        if ( !win.getMaximumSize().equals( screenSize ) ) {
+          win.setMaximumSize( screenSize );
+        }
+        if ( !win.getPreferredSize().equals( size ) ) {
+          win.setPreferredSize( size );
+        }
+        if ( location != null && !win.getLocation().equals( location ) ) {
+          win.setLocation( location );
+        }
+        win.setMinimumSize( new Dimension(200,100) );
+        
+        // add listeners
+        boolean found = false;
+        for ( WindowListener wl : win.getWindowListeners() ) {
+          if ( wl.getClass().equals( WinListener.class ) ) {
+            found = true;
+            break;
+          }
+        }
+        if ( !found ) win.addWindowListener( new WinListener() );
+        for ( ComponentListener wl : win.getComponentListeners() ) {
+          if ( wl.getClass().equals( SizeListener.class ) ) {
+            found = true;
+            break;
+          }
+        }
+        if ( !found ) win.addComponentListener( new SizeListener() );
+
+        found = false;
+        if ( dialog != null ) {
+          dialog.setResizable( true );
+          Debug.outln( "dialog = " + dialog.toString() );
+        } else if ( top != null ) {
+          Debug.outln( "rootPane = " + component.getRootPane().toString() );
+          System.out.println( "top = " + top.toString() );
+        }
       }
-      System.out.println( "wow!" );
+      } catch ( NullPointerException npe ) {
+        Debug.errln( npe.getMessage() );
+      }
       
       if (removeListener)
         component.removeAncestorListener( this );
@@ -550,7 +579,6 @@ public class RepeatInputComboBoxDialog implements Runnable {
    */
   public static void main( String[] args ) {
     Debug.turnOn();
-    String[] items = { "Apple", "Banana", "Grape", "Cherry" };
     RepeatInputComboBoxDialog.Processor processor =
         new RepeatInputComboBoxDialog.Processor() {
           @Override
