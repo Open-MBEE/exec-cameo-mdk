@@ -65,24 +65,21 @@ public class ViewLoader extends MDAction {
 
 		Project proj = Application.getInstance().getProject();	// get the project
 
-    	DiagramPresentationElement diagram;
-    	
     	// try to load the active diagram
+    	DiagramPresentationElement diagram;
     	try {
         	diagram = proj.getActiveDiagram();
+        	diagram.ensureLoaded();
     	} catch (NullPointerException ex) {
-    		JOptionPane.showMessageDialog(null, "Please open a project first.", "Error", JOptionPane.ERROR_MESSAGE);
+    		JOptionPane.showMessageDialog(null, "Exiting - there was an error loading the diagram.", "Error", JOptionPane.ERROR_MESSAGE);
             SessionManager.getInstance().cancelSession();
 			return;
     	}
     	
-    	// sanity check -- ensure diagram is open
-    	if(diagram == null) {
-    		JOptionPane.showMessageDialog(null, "Please open a diagram first.", "Error", JOptionPane.ERROR_MESSAGE);
-            SessionManager.getInstance().cancelSession();
+    	if(!StylerUtils.isDiagramLocked(proj, diagram.getElement())) {
+			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+			SessionManager.getInstance().cancelSession();
     		return;
-    	} else {
-    		diagram.ensureLoaded();
     	}
     	
 		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(proj);

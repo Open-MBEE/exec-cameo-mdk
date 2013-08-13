@@ -63,11 +63,17 @@ public class ViewSaver extends MDAction {
     	DiagramPresentationElement diagram;
     	try {
         	diagram = proj.getActiveDiagram();
+        	diagram.ensureLoaded();
     	} catch (NullPointerException ex) {
     		if(!suppressOutput) {
-    			JOptionPane.showMessageDialog(null, "Please open a project first.", "Error", JOptionPane.ERROR_MESSAGE);
+	    		JOptionPane.showMessageDialog(null, "Exiting - there was an error loading the diagram.", "Error", JOptionPane.ERROR_MESSAGE);
     		}
 			return;
+    	}
+    	
+    	if(!StylerUtils.isDiagramLocked(proj, diagram.getElement())) {
+			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+    		return;
     	}
     	
     	// perform the save operation
