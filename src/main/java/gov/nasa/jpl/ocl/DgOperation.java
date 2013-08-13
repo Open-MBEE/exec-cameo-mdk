@@ -2,6 +2,7 @@ package gov.nasa.jpl.ocl;
 
 import java.util.List;
 
+import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EParameter;
 
 /**
@@ -10,15 +11,16 @@ import org.eclipse.emf.ecore.EParameter;
  * @author cinyoung
  *
  */
-public interface DgOperation {
+public interface DgOperation extends Comparable<DgOperation> {
 	/**
 	 * Add a parameter argument to the custom operation
 	 * @param parameter
 	 */
-	public void addParameter(EParameter parameter);
+  public void addParameter(EParameter parameter, EClassifier type);
+  public void addParameter(EParameter parameter);
 	
 	/**
-	 * Executes the oepration
+	 * Executes the operation
 	 * @param source
 	 * @param args
 	 * @return
@@ -43,4 +45,7 @@ public interface DgOperation {
 	public void setName(String name); 
 
 	public void setOperation(CallOperation operation);
+	
+	public EClassifier getReturnType();
+  public EClassifier getCallerType();
 }

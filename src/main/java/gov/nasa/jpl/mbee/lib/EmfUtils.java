@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -24,17 +23,10 @@ import junit.framework.Assert;
 //import javax.measure.quantity.Duration;
 //import javax.measure.unit.SI;
 
-import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
-import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.ENamedElement;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
-import org.eclipse.emf.ecore.ETypedElement;
-import org.eclipse.emf.ecore.impl.EClassifierImpl;
-import org.eclipse.emf.ecore.impl.ENamedElementImpl;
-
-import com.io_software.jmi.util.Util;
 
 public final class EmfUtils {
 
@@ -443,7 +435,7 @@ public final class EmfUtils {
     return Utils2.asList( results );
   }
   
-  private static String getTypeName( Object o ) {
+  public static String getTypeName( Object o ) {
     if ( o == null ) return null;
     EObject eo = (EObject)( o instanceof EObject ? o : null );
     Class< ? > c = ( eo != null ? getType( eo ) : o.getClass() );
@@ -452,25 +444,30 @@ public final class EmfUtils {
   }
 
   public static String getName(Object o) {
+    String name = null;
     // for the fancy EObject
     EObject eo = (EObject)( o instanceof EObject ? o : null );
     if ( eo != null ) {
       if ( o instanceof EClassifier ) {
-        return ( (EClassifier)o ).getInstanceClassName();
+        name = ( (EClassifier)o ).getInstanceClassName();
       }; 
-      if ( eo instanceof ENamedElement ) {
-        return ( (ENamedElement)eo ).getName();
+      if ( Utils2.isNullOrEmpty( name ) && eo instanceof ENamedElement ) {
+        name = ( (ENamedElement)eo ).getName();
       }
-      EStructuralFeature nameFeature =
-          eo.eClass().getEStructuralFeature( "name" );
-      if ( nameFeature != null ) {
-        return (String)eo.eGet( nameFeature );
+      if ( Utils2.isNullOrEmpty( name ) ) {
+        EStructuralFeature nameFeature =
+            eo.eClass().getEStructuralFeature( "name" );
+        if ( nameFeature != null ) {
+          name = (String)eo.eGet( nameFeature );
+        }
       }
     }
-    // for the vanilla object
-    Object n = getMemberValue( o, "name", true, false );
-    if ( n != null ) return n.toString();
-    return null;
+    if ( Utils2.isNullOrEmpty( name ) ) {
+      // for the vanilla object
+      Object n = getMemberValue( o, "name", true, false );
+      if ( n != null ) name = n.toString();
+    }
+    return name;
   }
 
   public static String getId(EObject o) {
@@ -533,8 +530,11 @@ public final class EmfUtils {
     if (eObj == null)
       return null;
     if (includeSelf) {
-      if (cls.isInstance(eObj))
-        return (T) eObj;
+      if (cls.isInstance(eObj)) {
+        @SuppressWarnings( "unchecked" )
+        T t = (T) eObj;
+        return t;
+      }
     }
     return getContainerOfEType(eObj.eContainer(), cls, true);
   }
@@ -670,7 +670,7 @@ public final class EmfUtils {
       // get results for contents
       for ( EObject eo : eObj.eContents() ) {
         // check if contained object's name matches
-        boolean found = false;
+//        boolean found = false;
         String myName = getName( eo );
         boolean noName = Utils2.isNullOrEmpty( myName );
         if ( !noName && list.contains( myName ) ) {
@@ -679,7 +679,7 @@ public final class EmfUtils {
           if ( trueOrNotNull( p ) ) {
             results.add( p.second );
             if ( justFirst ) return results;
-            found = true;
+//            found = true;
           }
         } if ( !noName && !strictThisTime ) {
           // non-strict name check
@@ -690,7 +690,7 @@ public final class EmfUtils {
               if ( trueOrNotNull( p ) ) {
                 results.add( p.second );
                 if ( justFirst ) return results;
-                found = true;
+//                found = true;
                 break;
               }
             }
@@ -1051,7 +1051,7 @@ public final class EmfUtils {
     }
     if ( s ) return String.class;
     boolean c = lower.equals( "char" );
-    Class<?> cls = boolean.class;
+    Class<?> cls = boolean.class; // REVIEW -- Why c and cls?  Is this not complete? 
     return ClassUtils.getClassForName( sysMLType, null, false );
   }
 
@@ -1074,6 +1074,7 @@ public final class EmfUtils {
           ClassUtils.evaluate( obj, Class.class, true ); //, false );
     }
     if ( cls == null ) {
+      @SuppressWarnings( "rawtypes" )
       List<Class> values = getValues( obj, Class.class, true, true, true,
                                       false, seen );
       if ( !Utils2.isNullOrEmpty( values ) ) {
