@@ -3,17 +3,10 @@ package gov.nasa.jpl.ocl;
 import gov.nasa.jpl.mbee.lib.CompareUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EParameter;
-import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.ocl.ecore.internal.OCLStandardLibraryImpl;
-
-import sferyx.administration.editors.HTMLEditor.newParagraphAction;
 
 public class DgOperationInstance implements DgOperation {
 	private String name;
