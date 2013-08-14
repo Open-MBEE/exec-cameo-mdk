@@ -2,6 +2,7 @@ package gov.nasa.jpl.ocl;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EAnnotation;
@@ -13,16 +14,20 @@ import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.resource.Resource;
 
 import org.eclipse.ocl.Environment;
 import org.eclipse.ocl.EnvironmentFactory;
 import org.eclipse.ocl.ecore.CallOperationAction;
 import org.eclipse.ocl.ecore.Constraint;
 import org.eclipse.ocl.ecore.EcoreEnvironment;
+import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
 import org.eclipse.ocl.ecore.SendSignalAction;
+import org.eclipse.ocl.ecore.internal.OCLStandardLibraryImpl;
 
 public class DgEnvironment extends EcoreEnvironment {
 	Set<String> operationNames = new HashSet<String>();
+	Set<DgOperation> operations = new TreeSet<DgOperation>();
 	
 	// this constructor is used to initialize the root environment
 	@SuppressWarnings("deprecation")
@@ -30,7 +35,11 @@ public class DgEnvironment extends EcoreEnvironment {
 		super(registry);
 	}
 
-	// this constructor is used to initialize child environments
+	public DgEnvironment( EcoreEnvironmentFactory fac, Resource resource ) {
+    super( fac, resource );
+  }
+
+  // this constructor is used to initialize child environments
 	DgEnvironment(DgEnvironment parent) {
 		super(parent);
 	}
@@ -41,25 +50,32 @@ public class DgEnvironment extends EcoreEnvironment {
 	}
 
 	// override this to provide visibility of the inherited protected method
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void setFactory(
 			EnvironmentFactory<EPackage, EClassifier, EOperation, EStructuralFeature, EEnumLiteral, EParameter, EObject, CallOperationAction, SendSignalAction, Constraint, EClass, EObject> factory) {
 		super.setFactory(factory);
 	}
 
+  // override this to provide visibility of the inherited protected method
+  @Override
+  public EnvironmentFactory<EPackage, EClassifier, EOperation, EStructuralFeature, EEnumLiteral, EParameter, EObject, CallOperationAction, SendSignalAction, Constraint, EClass, EObject>
+    getFactory() {
+    return super.getFactory();
+  }
+
 
 	/**
 	 * Utility for adding custom OCL operations (defined by a DgOperation)
 	 * @param dgOperation
 	 */
-	@SuppressWarnings("deprecation")
 	public void addDgOperation(DgOperation dgOperation) {
 		// check that the operation has not already been added
-		if (!operationNames.contains(dgOperation.getName())) {
+    if ( !operations.contains( dgOperation ) ) {
 			EOperation eoperation = EcoreFactory.eINSTANCE.createEOperation();
 			eoperation.setName(dgOperation.getName());
-			eoperation.setEType(getOCLStandardLibrary().getString());
+			EClassifier type = dgOperation.getReturnType();
+			if ( type == null ) type = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+			eoperation.setEType(type);
 			for (EParameter parm: dgOperation.getParameters()) {
 				eoperation.getEParameters().add(parm);
 			}
@@ -67,9 +83,12 @@ public class DgEnvironment extends EcoreEnvironment {
 			annotation.setSource(dgOperation.getAnnotationName());
 			eoperation.getEAnnotations().add(annotation);
 			
-			addOperation(getOCLStandardLibrary().getString(), eoperation);
+      type = dgOperation.getCallerType();
+      if ( type == null ) type = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+			addHelperOperation( dgOperation.getCallerType(), eoperation );
 			
 			operationNames.add(dgOperation.getName());
+			operations.add( dgOperation );
 		}
 	}
 }
