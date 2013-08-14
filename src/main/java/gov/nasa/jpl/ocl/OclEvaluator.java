@@ -1,17 +1,12 @@
 package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import lpg.runtime.ParseTable;
 
 import org.eclipse.emf.common.util.BasicDiagnostic;
@@ -33,10 +28,7 @@ import org.eclipse.ocl.helper.OCLHelper;
 import org.eclipse.ocl.lpg.AbstractLexer;
 import org.eclipse.ocl.lpg.AbstractParser;
 import org.eclipse.ocl.lpg.ProblemHandler;
-import org.eclipse.ocl.util.CollectionUtil;
 import org.eclipse.ocl.util.OCLUtil;
-
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  * Utility class for encapsulating the OCL query and constraint evaluations.

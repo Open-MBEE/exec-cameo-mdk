@@ -6,12 +6,8 @@ package gov.nasa.jpl.mgss.mbee.docgen.actions;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.MDUtils;
-import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.RepeatInputComboBoxDialog;
-import gov.nasa.jpl.ocl.CallOperation;
-import gov.nasa.jpl.ocl.DgEnvironmentFactory;
-import gov.nasa.jpl.ocl.DgOperationInstance;
 import gov.nasa.jpl.ocl.OCLSyntaxHelper;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
@@ -23,20 +19,11 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EParameter;
-import org.eclipse.emf.ecore.EcoreFactory;
-import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
 import org.eclipse.ocl.helper.ConstraintKind;
 import org.junit.Assert;
 
 import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.magicreport.ui.jide.ValueSpecificationProperty;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.base.ModelObject;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
