@@ -12,6 +12,7 @@ import org.eclipse.emf.ecore.EEnumLiteral;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EPackage.Registry;
 import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.ocl.Environment;
@@ -21,43 +22,78 @@ import org.eclipse.ocl.ecore.Constraint;
 import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
 import org.eclipse.ocl.ecore.SendSignalAction;
 
+import gov.nasa.jpl.ocl.DgEnvironmentFactory;
+
 public class DgEnvironmentFactory extends EcoreEnvironmentFactory {
-	private static DgEnvironment			env = new DgEnvironment(EcoreEnvironmentFactory.INSTANCE.createEnvironment());
-	private static DgEvaluationEnvironment	evalEnv = new DgEvaluationEnvironment();
+	private static DgEnvironment env;
+	private static DgEvaluationEnvironment	evalEnv;
 	
-	public Environment<EPackage, EClassifier, EOperation, EStructuralFeature, EEnumLiteral, EParameter, EObject, CallOperationAction, SendSignalAction, Constraint, EClass, EObject> createEnvironment() {
-		DgEnvironment result = new DgEnvironment(getEPackageRegistry());
-		result.setFactory(this);
-		return result;
+  /**
+   * 
+   */
+  public DgEnvironmentFactory() {
+    super();
+  }
+
+  /**
+   * @param reg
+   */
+  public DgEnvironmentFactory( Registry reg ) {
+    super( reg );
+  }
+
+  public Environment<EPackage, EClassifier, EOperation, EStructuralFeature, EEnumLiteral, EParameter, EObject, CallOperationAction, SendSignalAction, Constraint, EClass, EObject> 
+  createEnvironment() {
+    if ( env == null ) {
+      env = new DgEnvironment(getEPackageRegistry());
+      env.setFactory(this);
+    }
+		return env;
 	}
 
-	public Environment<EPackage, EClassifier, EOperation, EStructuralFeature, EEnumLiteral, EParameter, EObject, CallOperationAction, SendSignalAction, Constraint, EClass, EObject> createEnvironment(
-			Environment<EPackage, EClassifier, EOperation, EStructuralFeature, EEnumLiteral, EParameter, EObject, CallOperationAction, SendSignalAction, Constraint, EClass, EObject> parent) {
+	public Environment<EPackage, EClassifier, EOperation, EStructuralFeature, EEnumLiteral, EParameter, EObject, CallOperationAction, SendSignalAction, Constraint, EClass, EObject>
+	  createEnvironment(Environment<EPackage, EClassifier, EOperation, EStructuralFeature, EEnumLiteral, EParameter, EObject, CallOperationAction, SendSignalAction, Constraint, EClass, EObject> parent) {
 		if (!(parent instanceof DgEnvironment)) {
 			throw new IllegalArgumentException(
 					"Parent environment must be DG environment: " + parent);
 		}
 
 		// just use the default environment
-//		env = new DgEnvironment((DgEnvironment) parent);
+    if ( env == null ) {
+      env = new DgEnvironment((DgEnvironment) parent);
+    }
 		env.setFactory(this);
 		return env;
 	}
 
-	public EvaluationEnvironment<EClassifier, EOperation, EStructuralFeature, EClass, EObject> createEvaluationEnvironment() {
+	public EvaluationEnvironment<EClassifier, EOperation, EStructuralFeature, EClass, EObject>
+	createEvaluationEnvironment() {
+	  if ( evalEnv == null ) {
+	    evalEnv = new DgEvaluationEnvironment(this);
+	  }
 		return evalEnv;
 	}
 
-	public EvaluationEnvironment<EClassifier, EOperation, EStructuralFeature, EClass, EObject> createEvaluationEnvironment(
-			EvaluationEnvironment<EClassifier, EOperation, EStructuralFeature, EClass, EObject> parent) {
-		return new DgEvaluationEnvironment(parent);
+	public EvaluationEnvironment<EClassifier, EOperation, EStructuralFeature, EClass, EObject>
+	createEvaluationEnvironment( EvaluationEnvironment<EClassifier, EOperation, EStructuralFeature, EClass, EObject> parent ) {
+    if ( evalEnv == null ) {
+      evalEnv = new DgEvaluationEnvironment(parent);
+    }
+    return evalEnv;
 	}
 	
 	public DgEnvironment getDgEnvironment() {
+	  if ( env == null ) env = (DgEnvironment)createEnvironment();
 		return env;
 	}
 	
 	public DgEvaluationEnvironment getDgEvaluationEnvironment() {
+	  if ( evalEnv == null ) evalEnv = (DgEvaluationEnvironment)createEvaluationEnvironment();
 		return evalEnv;
 	}
+
+  public static void reset() {
+    env = null;
+    evalEnv = null;
+  }
 }
