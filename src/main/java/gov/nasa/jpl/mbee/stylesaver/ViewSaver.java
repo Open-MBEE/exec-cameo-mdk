@@ -184,16 +184,28 @@ public class ViewSaver extends MDAction {
     	}
 	}
 	
+	/**
+	 * Inner class contains a run method for the save operation.
+	 * Updates progress bar dynamically.
+	 */
 	class RunnableSaverWithProgress implements RunnableWithProgress {
 		private JSONObject mainStore;
 		private List<PresentationElement> elemList;
 		private boolean success;
 		
+		/**
+		 * @param mainStore the main style store for this diagram.
+		 * @param elemList	the elements to save.
+		 */
 		public RunnableSaverWithProgress(JSONObject mainStore, List<PresentationElement> elemList) {
 			this.mainStore = mainStore;
 			this.elemList = elemList;
 		}
 		
+		/**
+		 * Runs the save operation.
+		 * @param progressStatus the status of the operation so far.
+		 */
 		@SuppressWarnings("unchecked")
 		@Override
 		public void run(ProgressStatus progressStatus) {
@@ -228,6 +240,10 @@ public class ViewSaver extends MDAction {
 			success = true;
 		}
 		
+		/**
+		 * Gets the value of the success property.
+		 * @return the value of the success property.
+		 */
 		public boolean getSuccess() {
 			return success;
 		}
