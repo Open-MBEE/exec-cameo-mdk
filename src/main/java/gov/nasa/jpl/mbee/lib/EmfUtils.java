@@ -28,6 +28,10 @@ import org.eclipse.emf.ecore.ENamedElement;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+
 public final class EmfUtils {
 
   public static String spewIndentCharacters = "-> ";
@@ -383,6 +387,34 @@ public final class EmfUtils {
     return Utils2.asList( results );
   }
   
+  public static < T extends Object > List< T > getFieldValues( Object o,
+                                                               boolean includeStatic ) {
+    List< T > results = new ArrayList< T >();
+    for ( Field f : o.getClass().getFields() ) {
+      if ( !includeStatic && ClassUtils.isStatic(f) ) continue;
+      f.setAccessible( true );
+      T t = null;
+      try {
+        t = (T)f.get( o );
+      } catch ( IllegalArgumentException e ) {
+      } catch ( IllegalAccessException e ) {
+      }
+      results.add( t );
+    }
+    return results;
+  }
+  
+  public static List< String > getFieldNames( Object o, boolean includeStatic ) {
+    List< String > results = new ArrayList< String >();
+    for ( Field f : o.getClass().getFields() ) {
+      if ( !includeStatic && ClassUtils.isStatic(f) ) continue;
+      f.setAccessible( true );
+      results.add(f.getName());
+    }
+    return results;
+  }
+  
+  
   /**
    * Get the value of the object's field with the specified name (or some close
    * variation). Or, if the field does not exist, find a method whose name is a
@@ -435,12 +467,33 @@ public final class EmfUtils {
     return Utils2.asList( results );
   }
   
+  public static Collection<Class<?>> getTypes( Object o ) {
+    if ( o == null ) return null;
+    EObject eo = (EObject)( o instanceof EObject ? o : null );
+    
+    Collection<Class<?>> results = new HashSet< Class<?> >();
+    if ( eo != null ) results.addAll( getTypes( eo, true, true, true, true, null ) );
+    //results.add( o.getClass() );
+    results.addAll( ClassUtils.getAllClasses( o ) );
+    return results;
+  }
+
   public static String getTypeName( Object o ) {
     if ( o == null ) return null;
     EObject eo = (EObject)( o instanceof EObject ? o : null );
     Class< ? > c = ( eo != null ? getType( eo ) : o.getClass() );
     if ( c == null ) return null;
     return c.getSimpleName();
+  }
+
+  public static Collection<String> getTypeNames( Object o ) {
+    Collection<Class<?>> types = getTypes( o );
+    if ( types == null ) return null;
+    Collection< String > results = new TreeSet< String >();
+    for ( Class< ? > t : types ) {
+      results.add( t.getSimpleName() );
+    }
+    return results;
   }
 
   public static String getName(Object o) {
@@ -890,7 +943,7 @@ public final class EmfUtils {
     // Don't combine using Utils2.addAll(), which is unordered!
     results.addAll( resList );
 
-//    Object v = null;
+//    Object) v = null;
 //    for ( String word : wordsForValue ) {
 ////      try {
 ////        ModelReference< TT > mr =
@@ -1226,5 +1279,199 @@ public final class EmfUtils {
 
       "TimeExpression", "TimeInterval", "Duration", "DurationInterval",
       "Interval" };
+
+  public static List<Element> getRelationships( Element elem ) {
+    HashSet< Element > elements = new HashSet< Element >();
+    elements.addAll( elem.get_relationshipOfRelatedElement() );
+    elements.addAll( elem.get_directedRelationshipOfSource() );
+    elements.addAll( elem.get_directedRelationshipOfTarget() );
+    return Utils2.toList( elements );
+  }
+
+
+  public static boolean matches( String s, String pattern ) {
+    if ( s == pattern ) return true;
+    if ( pattern == null ) return false;
+    if ( s == null ) return false;
+    if ( s.equalsIgnoreCase( pattern ) ) return true;
+    if ( s.matches( pattern ) ) return true;
+    List< String > list = getPossibleFieldNames( s );
+    list.remove(0);
+    for ( String os : list ) {
+      if ( os.equalsIgnoreCase( pattern ) ) return true;
+      if ( os.matches( pattern ) ) return true;
+    }
+    return false;
+  }
+
+
+  /**
+   * Determine 
+   * @param obj
+   * @param pattern
+   * @return
+   */
+  public static boolean matches( Object obj, Object pattern ) {
+    return matches( obj, pattern, true, true );
+  }
+
+  public static boolean matches( Object obj, boolean useName,
+                                 boolean useType, Object[] patterns ) {
+    
+    for ( Object pattern : patterns ) {
+      if ( matches( obj, pattern, useName, useType ) ) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  public static boolean matches( Object obj, Object pattern, boolean useName,
+                                 boolean useType ) {
+    if ( obj == pattern ) return true;
+    if ( pattern == null ) return false;
+    if ( obj == null ) return false;
+  
+    String oName = null; // obj's name
+    String oStr = null;  // obj as String
+    Collection< Class< ? > > oTypes = null; // obj's type's
+    String pStr = null;  // pattern as String
+    String pName = null; // pattern's name
+    // don't use pType
+  
+    if ( obj.getClass().equals( String.class )
+         && pattern.getClass().equals( String.class ) ) {
+      boolean m = matches( (String)obj, (String)pattern );
+      if ( m || !useType ) return m;
+    } else {
+      pStr = pattern.toString();
+      if ( useName ) {
+        oName = getName( obj );
+        if ( Utils2.isNullOrEmpty( oName ) ) {
+          if ( oName != null && oName.equals( pStr ) ) return true;
+        } else {
+          if ( matches( oName, pStr ) ) return true;
+        }
+      }
+      
+      if ( useName ) {
+        pName = getName( pattern );
+        if ( Utils2.isNullOrEmpty( oName ) ) {
+          if ( oName != null && oName.equals( pName ) ) return true;
+        } else {
+          if ( matches( oName, pName ) ) return true;
+        }
+      }
+      
+      oStr = obj.toString();
+      if ( Utils2.isNullOrEmpty( oStr ) ) {
+        if ( oStr != null && oStr.equals( pStr ) ) return true;
+      } else {
+        if ( matches( oStr, pStr ) ) return true;
+        if ( useName && matches( oStr, pName ) ) return true;
+      }
+    }
+    
+    if ( useType ) {
+      oTypes = getTypes( obj );
+      for ( Class<?> t : oTypes ) {
+        for ( String oType : new String[]{t.getSimpleName(), t.getName()} ) {
+          if ( Utils2.isNullOrEmpty( oType ) ) {
+            if ( oType != null && oType.equals( pStr ) ) return true;
+          } else {
+            if ( matches( oType, pStr ) ) return true;
+            if ( useName && matches( oType, pName ) ) return true;
+          }
+        }
+      }
+      if ( obj instanceof Element ) {
+        Set< Stereotype > set =
+            StereotypesHelper.getAllAssignedStereotypes( Utils2.newList( (Element)obj ) );
+        for ( Stereotype sType : set ) {
+          String sName = sType.getName();
+          if ( matches( sName, pStr ) ) return true;
+          if ( useName && matches( sName, pName ) ) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+  public static List< Object > collect( Collection< Object > elements,
+                                        Object... filters ) {
+    return collectOrFilter( elements, true, true, false, true, true, true, filters );
+  }
+
+  public static List< Object > filter( Collection< Object > elements,
+                                                Object... filters ) {
+    return collectOrFilter( elements, false, true, false, true, true, true, filters );
+  }
+
+  public static List< Object > collectOrFilter( Collection< Object > elements,
+                                                boolean collect, Object... filters ) {
+    return collectOrFilter( elements, collect, true, false, true, true, true, filters );
+  }
+
+
+  public static Object collectOrFilter( CollectionAdder adder, Object obj, boolean collect,
+                                        boolean onlyOne, boolean useName,
+                                        boolean useType, boolean useValue,
+                                        boolean searchJava, Object... filters ) {
+    if ( obj instanceof Collection ) {
+      return collectOrFilter( adder, (Collection< Object >)obj, collect, onlyOne,
+                              useName, useType, useValue, searchJava, filters );
+    }
+    if ( matches( obj, useName, useType, filters ) ) {
+      return obj;
+    }
+    return null;
+  }
+  
+  public static List< Object > collectOrFilter( Collection< Object > elements,
+                                                boolean collect, boolean onlyOne,
+                                                boolean useName,
+                                                boolean useType, boolean useValue,
+                                                boolean searchJava,
+                                                Object... filters ) {
+    CollectionAdder adder = new CollectionAdder();
+    adder.onlyAddOne = onlyOne;
+    return collectOrFilter( adder, elements, collect, onlyOne, useName, useType, useValue, searchJava, filters );
+  }
+
+  public static List< Object > collectOrFilter( CollectionAdder adder,
+                                                Collection< Object > elements,
+                                                boolean collect, boolean onlyOne,
+                                                boolean useName,
+                                                boolean useType, boolean useValue,
+                                                boolean searchJava,
+                                                Object... filters ) {
+    ArrayList< Object > resultList = new ArrayList< Object >();
+    if ( filters == null || filters.length == 0 || ( filters.length == 1 && filters[0] == null ) ) {
+      return Utils2.newList( elements.toArray() );
+    }
+    for ( Object elem : elements ) {
+      for ( Object filter : filters ) {
+        if ( matches( elem, filter, useName, useType ) ) {
+          if ( adder.add( elem, resultList ) ) {
+            break;
+          }
+        }
+      }
+      if ( collect && elem instanceof Collection ) {
+        --adder.defaultFlattenDepth;
+        List< Object > childRes =
+            collectOrFilter( adder, (Collection< Object >)elem, collect, onlyOne, useName, useType, useValue, searchJava, filters );
+//            collectOrFilter( (Collection< Object >)elem, collect,
+//                             useName, useType, filters );
+        ++adder.defaultFlattenDepth;
+        if ( childRes != null ) {
+          boolean added = adder.add( childRes, resultList );
+          if ( added && onlyOne ) break; 
+        }
+      }
+    }
+    return resultList;
+  }
 
 }

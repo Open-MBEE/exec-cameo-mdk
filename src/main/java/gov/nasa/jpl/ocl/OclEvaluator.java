@@ -3,13 +3,12 @@ package gov.nasa.jpl.ocl;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,9 +36,7 @@ import org.eclipse.ocl.lpg.ProblemHandler;
 import org.eclipse.ocl.util.CollectionUtil;
 import org.eclipse.ocl.util.OCLUtil;
 
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 /**
  * Utility class for encapsulating the OCL query and constraint evaluations.
@@ -181,223 +178,98 @@ public class OclEvaluator {
 		return result;
 	}
 
-	protected static void addRegexMatchOperation(DgEnvironmentFactory envFactory) {
-	  
-    // create custom operation
-    // essentially set the actual operation as function pointer
-    CallOperation callOp =
-        new CallOperation() {
-          @Override
-          public Object callOperation( Object source, Object[] args ) {
-            Pattern pattern = Pattern.compile( (String)args[ 0 ] );
-            Matcher matcher = pattern.matcher( (String)source );
+	public static void addOperation(String[] names, EClassifier callerType,
+	                                EClassifier returnType, EClassifier parmType,
+	                                String parmName,
+	                                boolean zeroArgToo, CallReturnType opType,
+	                                DgEnvironmentFactory envFactory) {
+    GetCallOperation op = new GetCallOperation();
+    op.resultType = opType;
     
-            return matcher.matches() ? matcher.group() : null;
-          }
-        };
-
-    EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
-    parm.setName( "pattern" );
-    parm.setEType(OCLStandardLibraryImpl.INSTANCE.getString());
-
-    EClassifier callerAndReturnType = OCLStandardLibraryImpl.INSTANCE.getString();
-    DgOperationInstance.addOperation( "regexMatch", "DocGenEnvironment",
-                                      envFactory, callerAndReturnType,
-                                      callerAndReturnType, callOp, parm );
-	}
-	
-  protected static void addROperation(DgEnvironmentFactory envFactory) {
-    
-    // create custom operation
-    // essentially set the actual operation as function pointer
-    CallOperation callOp1 =
-       new CallOperation() {
-            @Override
-            public Object callOperation( Object source, Object[] args ) {
-              List< Object > resultList = new ArrayList< Object >();
-              if ( source instanceof Element ) {
-                Element elem = (Element)source;
-                resultList.addAll(getRelationships( elem ));
-                if ( args != null ) {
-                  for ( Object filter : args ) {
-                    resultList = collectOrFilter( resultList, false, filter );
-                  }
-                }
-              } else if ( source instanceof Collection ) {
-                for ( Object child : (Collection< ? >)source ) {
-                  Object childRes = callOperation( child, args );
-                  if ( childRes != null ) {
-                    resultList.add( childRes );
-                  }
-                }
-              }
-              return CollectionUtil.asSequence( resultList );
-            }
-          };
-
     // Create the one parameter for the operation
     EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
-    parm.setName( "relationship" );
-    parm.setEType(OCLStandardLibraryImpl.INSTANCE.getString());
-    
-    // Create the one-parameter operation
+    parm.setName( parmName );
+    parm.setEType( parmType );
+
+    for ( String name : names ) {
+      // Create the one-parameter operation
+      DgOperationInstance.addOperation( name, "DocGenEnvironment",
+                                        envFactory, callerType, returnType, op,
+                                        parm );
+      if ( zeroArgToo ) {
+        // Create the zero-parameter operation
+        DgOperationInstance.addOperation( name, "DocGenEnvironment", envFactory,
+                                          callerType, returnType, op );
+      }
+    }
+	}
+	
+	private static boolean newWay = true;
+	
+	protected static void addRegexMatchOperation(DgEnvironmentFactory envFactory) {
+	  
+    EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+
+    if ( newWay ) {
+      addOperation( new String[] { "regexMatch", "match" }, stringType,
+                    stringType, stringType, "pattern", false,
+                    CallReturnType.SELF, envFactory );
+	    return;
+	  }
+	}
+	
+	protected static void addROperation(DgEnvironmentFactory envFactory) {
+	  
     EClassifier callerType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
     EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
-    DgOperationInstance.addOperation( "r", "DocGenEnvironment",
-                                      envFactory, callerType, returnType,
-                                      callOp1, parm );
-    
-    // Create the zero-parameter operation
-    DgOperationInstance.addOperation( "r", "DocGenEnvironment", envFactory,
-                                      callerType, returnType, callOp1 );
+    EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+    if ( newWay ) {
+      addOperation( new String[] { "relationship", "relationships", "r" },
+                    callerType, returnType, stringType, "relationship", true,
+                    CallReturnType.RELATIONSHIP, envFactory );
+      return;
+    }    
   }
   
   protected static void addMOperation(DgEnvironmentFactory envFactory) {
     
-    // create custom operation
-    // essentially set the actual operation as function pointer
-    CallOperation callOp1 =
-       new CallOperation() {
-            @Override
-            public Object callOperation( Object source, Object[] args ) {
-              List< Object > resultList = new ArrayList< Object >();
-              if ( source == null ) return resultList;
-              if ( source instanceof Element ) {
-                Element elem = (Element)source;
-                resultList.addAll(elem.getOwnedElement());
-                if ( args != null ) {
-                  resultList = collectOrFilter( resultList, false, args );
-                }
-              } else if ( source instanceof Collection ) {
-                for ( Object child : (Collection< ? >)source ) {
-                  Object childRes = callOperation( child, args );
-                  if ( childRes != null ) {
-                    resultList.add( childRes );
-                  }
-                }
-              }
-              return CollectionUtil.asSequence( resultList );
-            }
-          };
-
-    // Create the one parameter for the operation
-    EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
-    parm.setName( "member" );
-    parm.setEType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
-
-    // Create the one-parameter operation
     EClassifier callerType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
     EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
-    DgOperationInstance.addOperation( "m", "DocGenEnvironment",
-                                      envFactory, callerType, returnType,
-                                      callOp1, parm );
+    EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+    if ( newWay ) {
+      addOperation( new String[] { "member", "members", "m" },
+                    callerType, returnType, stringType, "member", true,
+                    CallReturnType.MEMBER, envFactory );
+      return;
+    }
+  }
+
+  protected static void addTOperation(DgEnvironmentFactory envFactory) {
     
-    // Create the zero-parameter operation
-    DgOperationInstance.addOperation( "m", "DocGenEnvironment", envFactory,
-                                      callerType, returnType, callOp1 );
-
-  }
-
-  protected static List<Element> getRelationships( Element elem ) {
-    HashSet< Element > elements = new HashSet< Element >();
-    elements.addAll( elem.get_relationshipOfRelatedElement() );
-    elements.addAll( elem.get_directedRelationshipOfSource() );
-    elements.addAll( elem.get_directedRelationshipOfTarget() );
-    return Utils2.toList( elements );
-  }
-  
-  public static boolean matches( String s, String pattern ) {
-    if ( s == pattern ) return true;
-    if ( pattern == null ) return false;
-    if ( s == null ) return false;
-    if ( s.equalsIgnoreCase( pattern ) ) return true;
-    if ( s.matches( pattern ) ) return true;
-    List< String > list = EmfUtils.getPossibleFieldNames( s );
-    list.remove(0);
-    for ( String os : list ) {
-      if ( os.equalsIgnoreCase( pattern ) ) return true;
-      if ( os.matches( pattern ) ) return true;
+    EClassifier callerType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+    EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
+    EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+    if ( newWay ) {
+      addOperation( new String[] { "type", "types", "t" },
+                    callerType, returnType, stringType, "type", true,
+                    CallReturnType.TYPE, envFactory );
+      return;
     }
-    return false;
   }
-  
-  /**
-   * Determine 
-   * @param obj
-   * @param pattern
-   * @return
-   */
-  public static boolean matches( Object obj, Object pattern ) {
-    if ( obj == pattern ) return true;
-    if ( pattern == null ) return false;
-    if ( obj == null ) return false;
 
-    String oName = EmfUtils.getName( obj );
-    String pStr = pattern.toString();
-    if ( Utils2.isNullOrEmpty( oName ) ) {
-      if ( oName != null && oName.equals( pStr ) ) return true;
-    } else {
-      if ( matches( oName, pStr ) ) return true;
-    }
+  protected static void addNOperation(DgEnvironmentFactory envFactory) {
     
-    String pName = EmfUtils.getName( pattern );
-    if ( Utils2.isNullOrEmpty( oName ) ) {
-      if ( oName != null && oName.equals( pName ) ) return true;
-    } else {
-      if ( matches( oName, pName ) ) return true;
+    EClassifier callerType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+    EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
+    EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+    if ( newWay ) {
+      addOperation( new String[] { "name", "n" },
+                    callerType, returnType, stringType, "name", true,
+                    CallReturnType.NAME, envFactory );
+      return;
     }
-    
-    String oStr = obj.toString();
-    if ( Utils2.isNullOrEmpty( oStr ) ) {
-      if ( oStr != null && oStr.equals( pStr ) ) return true;
-    } else {
-      if ( matches( oStr, pStr ) ) return true;
-      if ( matches( oStr, pName ) ) return true;
-    }
-
-    String oType = EmfUtils.getTypeName( obj );
-    if ( Utils2.isNullOrEmpty( oType ) ) {
-      if ( oType != null && oType.equals( pStr ) ) return true;
-    } else {
-      if ( matches( oType, pStr ) ) return true;
-      if ( matches( oType, pName ) ) return true;
-    }
-
-    if ( obj instanceof Element ) {
-      Set< Stereotype > set =
-          StereotypesHelper.getAllAssignedStereotypes( Utils2.newList( (Element)obj ) );
-      for ( Stereotype sType : set ) {
-        String sName = sType.getName();
-        if ( matches( sName, pStr ) ) return true;
-        if ( matches( sName, pName ) ) return true;
-      }
-    }
-    return false;
   }
-  
-  protected static List< Object > collectOrFilter( Collection< Object > elements,
-                                                   boolean collect, Object... filters ) {
-    ArrayList< Object > resultList = new ArrayList< Object >();
-    if ( filters == null || filters.length == 0 || ( filters.length == 1 && filters[0] == null ) ) {
-      return Utils2.newList( elements.toArray() );
-    }
-    for ( Object elem : elements ) {
-      for ( Object filter : filters ) {
-        if ( matches( elem, filter ) ) {
-          resultList.add( elem ); // REVIEW -- weird case?!
-          break;
-        }
-      }
-      if ( collect && elem instanceof Collection ) {
-        List< Object > childRes = collectOrFilter( (Collection< Object >)elem, collect, filters );
-        if ( childRes != null ) {
-          resultList.add( childRes );
-        }
-      }
-    }
-    return resultList;
-  }
-  
+
   protected static DgEnvironmentFactory setupEnvironment() {
     // set up the customized environment
     // create custom environment factory
@@ -406,6 +278,8 @@ public class OclEvaluator {
 	  addRegexMatchOperation( envFactory );
     addROperation( envFactory );
     addMOperation( envFactory );
+    addTOperation( envFactory );
+    addNOperation( envFactory );
     
     return envFactory;
   }
