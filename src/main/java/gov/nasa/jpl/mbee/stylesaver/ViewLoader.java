@@ -57,13 +57,9 @@ public class ViewLoader extends MDAction {
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		try {
-			SessionManager.getInstance().checkSessionExistance();
-		} catch(IllegalStateException ex) {
-	        SessionManager.getInstance().createSession("Load");
-		}
-
-		Project proj = Application.getInstance().getProject();	// get the project
+		SessionManager.getInstance().createSession("Loading styles...");
+		
+		Project proj = Application.getInstance().getProject();
 
     	// try to load the active diagram
     	DiagramPresentationElement diagram;
@@ -84,6 +80,7 @@ public class ViewLoader extends MDAction {
     	
 		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(proj);
 		if(workingStereotype == null) {
+			SessionManager.getInstance().cancelSession();
 			return;
 		}
     	
@@ -118,27 +115,52 @@ public class ViewLoader extends MDAction {
        	
     	// get the main style string from the view stereotype tag "style"
     	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(diagram.getElement(), workingStereotype, "style");
-    	final String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
+    	String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
     	
+    	// run the loader with a progress bar
     	if((style != null) && (!style.equals(""))) {
-    		RunnableWithProgress runnable = null;
+    		RunnableLoaderWithProgress runnable;
     		try {
-	    		runnable = new RunnableWithProgress() {
-	    			public void run(ProgressStatus progressStatus) {
-	    				progressStatus.init("Loading styles...", 0, list.size());
-	    				load(list, style, progressStatus);
-	    			}
-	    		};
+	    		runnable = new RunnableLoaderWithProgress(list, style);
     		} catch(NoSuchMethodError ex) {
-    			ex.printStackTrace();
+    			SessionManager.getInstance().cancelSession();
     			return;
     		}
     		
-    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
+    		
+    		if(runnable.getSuccess()) {
+    			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+    		}
     	}
-    	
-		JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-        SessionManager.getInstance().closeSession();
+	}
+	
+	class RunnableLoaderWithProgress implements RunnableWithProgress {
+		private List<PresentationElement> list;
+		private String style;
+		private boolean success;
+
+		public RunnableLoaderWithProgress(List<PresentationElement> list, String style) {
+			this.list = list;
+			this.style = style;
+		}
+		
+		@Override
+		public void run(ProgressStatus progressStatus) {
+			progressStatus.init("Loading styles...", 0, list.size());
+			 success = load(list, style, progressStatus);
+			
+			if(success) {
+				SessionManager.getInstance().closeSession();
+			} else {
+				SessionManager.getInstance().cancelSession();
+				return;
+			}
+		}
+		
+		public boolean getSuccess() {
+			return success;
+		}
 	}
 	
 	/**
@@ -175,9 +197,15 @@ public class ViewLoader extends MDAction {
 	 * @param elemList			the list of elements to load styles into.
 	 * @param style				the style string.
 	 * @param progressStatus	the status of the program status bar.
+	 * @return					true if successful, false if the user cancelled load
 	 */
-	public static void load(List<PresentationElement> elemList, String style, ProgressStatus progressStatus) {
-    	for(PresentationElement elem : elemList) {
+	public static boolean load(List<PresentationElement> elemList, String style, ProgressStatus progressStatus) {
+    	for(PresentationElement elem : elemList) {    		
+    		// check to see if the user cancelled
+    		if(progressStatus.isCancel()) {
+    			return false;
+    		}
+    		
     		// parse the style string for the correct style of each element
     		String elemStyle = getStyleStringForElement(elem, style);
     		
@@ -197,6 +225,8 @@ public class ViewLoader extends MDAction {
     		
     		progressStatus.increase();
        	}
+    	
+    	return true;
 	}
 
 	/**

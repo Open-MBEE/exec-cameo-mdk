@@ -6,6 +6,7 @@ import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyManager;
 import com.nomagic.task.ProgressStatus;
@@ -57,6 +58,8 @@ public class ViewSaver extends MDAction {
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		SessionManager.getInstance().createSession("Saving styles...");
+		
     	Project proj = Application.getInstance().getProject();
     	
     	// try to load the active diagram
@@ -71,6 +74,7 @@ public class ViewSaver extends MDAction {
 			return;
     	}
     	
+    	// ensure the diagram is locked for edit
     	if(!StylerUtils.isDiagramLocked(proj, diagram.getElement())) {
 			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
     		return;
@@ -79,18 +83,11 @@ public class ViewSaver extends MDAction {
     	// perform the save operation
 		String JSONStr = save(proj, diagram, false);
 		if(JSONStr == null) {
+			SessionManager.getInstance().cancelSession();
 			return;
 		}
 		
-		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(proj);
-
-		// set the style string into the view "style" tag
-		StereotypesHelper.setStereotypePropertyValue(diagram.getElement(), workingStereotype, "style", JSONStr);
-		
-		// success -- alert the user
-		if(!suppressOutput) {
-			JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-		}
+		SessionManager.getInstance().closeSession();
 	}
 	
 	/**
@@ -101,7 +98,6 @@ public class ViewSaver extends MDAction {
 	 * @param suppress	set to true to suppress swing dialog boxes.
 	 * @return 			null on error or the JSON style string for this diagram.
 	 */
-	@SuppressWarnings("unchecked") // for JSONObject put() method
 	public static String save(Project proj, DiagramPresentationElement diagram, boolean suppress) {
 		suppressOutput = suppress;
 				
@@ -147,7 +143,7 @@ public class ViewSaver extends MDAction {
     	}
 
     	// get all the elements in the diagram and store them into a list
-    	final List<PresentationElement> elemList;
+    	List<PresentationElement> elemList;
     	try {
     		elemList = diagram.getPresentationElements();
     	} catch(NullPointerException e) {
@@ -159,51 +155,82 @@ public class ViewSaver extends MDAction {
     	}
     	
     	// get a JSON style string from each element and store them into a main store for this diagram
-    	final JSONObject mainStore = new JSONObject();
+    	JSONObject mainStore = new JSONObject();
     	
-    	// display a progress bar if output is not being suppressed
+    	// display a progress bar if output is not being suppressed, otherwise just execute the save
     	if(!suppressOutput) {
-			RunnableWithProgress runnable = null;
+    		RunnableSaverWithProgress runnable;
 			try {
-	    		runnable = new RunnableWithProgress() {
-	    			public void run(ProgressStatus progressStatus) {
-	    				progressStatus.init("Saving styles...", 0, elemList.size());
-	    				
-	    		       	for(PresentationElement elem : elemList) {
-	    		       		// save the element's style properties
-	    					try {
-	    		    			String styleStr = getStyle(elem);
-	    		    			
-	    		    			// if there is no style to save, continue to next element
-	    		    			if(styleStr == null) {
-	    		    				continue;
-	    		    			}
-	    		    			
-	    		    			mainStore.put(elem.getID(), styleStr);
-	    					} catch(ClassCastException e) {
-	    						e.printStackTrace();
-	    					} catch(MissingResourceException e) {
-	    						e.printStackTrace();
-	    					}
-	    					
-	    		       		// recursively save child elements' style properties (e.g. ports)
-	    		       		getStyleChildren(elem, mainStore);
-	    		       		
-	    		       		progressStatus.increase();
-	    		       	}		
-	    			}
-	    		};
+		    	ViewSaver vs = new ViewSaver(null, null, 0, null, true);
+	    		runnable = vs.new RunnableSaverWithProgress(mainStore, elemList);
 			} catch(NoSuchMethodError ex) {
 				ex.printStackTrace();
 				return null;
 			}
 			
-			BaseProgressMonitor.executeWithProgress(runnable, "Save Progress", false);
-
-			return mainStore.toJSONString();
+			BaseProgressMonitor.executeWithProgress(runnable, "Save Progress", true);
+			
+			// set the style string into the view "style" tag
+			String finalStyleString = mainStore.toJSONString();
+			StereotypesHelper.setStereotypePropertyValue(diagram.getElement(), workingStereotype, "style", finalStyleString);
+			
+			if(runnable.getSuccess()) {
+				JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			}
+			
+			return finalStyleString;
     	} else {
     		return executeSave(elemList, mainStore);
     	}
+	}
+	
+	class RunnableSaverWithProgress implements RunnableWithProgress {
+		private JSONObject mainStore;
+		private List<PresentationElement> elemList;
+		private boolean success;
+		
+		public RunnableSaverWithProgress(JSONObject mainStore, List<PresentationElement> elemList) {
+			this.mainStore = mainStore;
+			this.elemList = elemList;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public void run(ProgressStatus progressStatus) {
+			for(PresentationElement elem : elemList) {
+				if(progressStatus.isCancel()) {
+					success = false;
+					return;
+				}
+				
+	       		// save the element's style properties
+				try {
+	    			String styleStr = getStyle(elem);
+	    			
+	    			// if there is no style to save, continue to next element
+	    			if(styleStr == null) {
+	    				continue;
+	    			}
+	    			
+	    			mainStore.put(elem.getID(), styleStr);
+				} catch(ClassCastException e) {
+					e.printStackTrace();
+				} catch(MissingResourceException e) {
+					e.printStackTrace();
+				}
+				
+	       		// recursively save child elements' style properties (e.g. ports)
+	       		getStyleChildren(elem, mainStore, progressStatus);
+	       		
+	       		progressStatus.increase();
+	       	}
+			
+			success = true;
+		}
+		
+		public boolean getSuccess() {
+			return success;
+		}
 	}
 	
 	/**
@@ -233,7 +260,7 @@ public class ViewSaver extends MDAction {
 			}
 			
        		// recursively save child elements' style properties (e.g. ports)
-       		getStyleChildren(elem, mainStore);
+       		getStyleChildren(elem, mainStore, null);
 		}
        	
        	return mainStore.toJSONString();
@@ -313,13 +340,20 @@ public class ViewSaver extends MDAction {
 	 * @param mainStore	the JSONObject to store style information into.
 	 */
 	@SuppressWarnings("unchecked") // for JSONObject put() method
-	private static void getStyleChildren(PresentationElement parent, JSONObject mainStore) {
+	private static void getStyleChildren(PresentationElement parent, JSONObject mainStore, ProgressStatus progressStatus) {
 		// get the parent element's children
 		List<PresentationElement> children = parent.getPresentationElements();
 		
 		// base case -- no children
 		if(children.isEmpty()) {
 			return;
+		}
+
+		// check to see if the user cancelled
+		if(progressStatus != null) {
+			if(progressStatus.isCancel()) {
+				return;
+			}
 		}
 		
 		Iterator<PresentationElement> iter = children.iterator();
@@ -329,7 +363,7 @@ public class ViewSaver extends MDAction {
 			PresentationElement currElem = iter.next();
 			
 			// recursively call on the current element
-			getStyleChildren(currElem, mainStore);
+			getStyleChildren(currElem, mainStore, progressStatus);
 			
 			try {
     			String styleStr = getStyle(currElem);
