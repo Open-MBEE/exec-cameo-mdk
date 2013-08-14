@@ -29,8 +29,7 @@ public class GetCallOperation implements CallOperation {
   public int defaultFlattenDepth = 1;
   public boolean nullOk = true;
 
-  public Class<? extends Collection<?>> unflattenedCollectionType =
-      (Class< ? extends Collection< ? >>)ArrayList.class;
+  public Class<?> unflattenedCollectionType = (Class< ? >)ArrayList.class;
   
   public boolean asElement = true;
   public boolean asEObject = true;
