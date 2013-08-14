@@ -2,7 +2,6 @@ package gov.nasa.jpl.mbee.lib;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Manages additions to nested collections based on policy of several attributes.
@@ -17,7 +16,7 @@ public class CollectionAdder {
   public int defaultFlattenDepth = 1;
   public boolean nullOk = true;
   public boolean onlyAddOne = false;
-  public Class<? extends Collection<?>> unflattenedCollectionType = (Class< ? extends Collection< ? >>)ArrayList.class;
+  public Class<?> unflattenedCollectionType = ArrayList.class;
 
   /**
    * @param mustFlatten
@@ -34,7 +33,7 @@ public class CollectionAdder {
                           int defaultFlattenDepth,
                           boolean nullOk,
                           boolean onlyAddOne,
-                          Class< ? extends Collection< ? > > unflattenedCollectionType ) {
+                          Class<?> unflattenedCollectionType ) {
     this.mustFlatten = mustFlatten;
     this.mayFlatten = mayFlatten;
     this.flattenIfSizeOne = flattenIfSizeOne;
@@ -107,12 +106,15 @@ public class CollectionAdder {
       if ( unflattenedCollectionType != null && !unflattenedCollectionType.isInstance( result ) ) {
         Collection< Object > newColl = null;
         try {
-          newColl = (Collection< Object >)unflattenedCollectionType.newInstance();
+          Object o = unflattenedCollectionType.newInstance();
+          if ( o instanceof Collection ) {
+            newColl = (Collection< Object >)o;
+          }
         } catch ( InstantiationException e ) {
         } catch ( IllegalAccessException e ) {
         }
         if ( newColl != null ) {
-          newColl.addAll( (Collection< ? >)result );
+          newColl.addAll( (Collection< ? extends Object >)result );
           result = newColl;
         }
       }
