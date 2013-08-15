@@ -60,7 +60,7 @@ public class GenericTable extends Table {
 					count++;
 					continue;
 				}
-				row.add(Common.getEntryFromList(getTableValues(dtt.getCellValue(d, e, cid)), false, forViewEditor));
+				row.add(Common.getTableEntryFromList(getTableValues(dtt.getCellValue(d, e, cid)), false, forViewEditor));
 			}
 			res.add(row);
 		}

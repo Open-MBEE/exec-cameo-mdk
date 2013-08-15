@@ -13,6 +13,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewPackage;
 import gov.nasa.jpl.mgss.mbee.docgen.sync.ApplicationSyncEventSubscriber;
@@ -25,6 +26,12 @@ public class DocGenPlugin extends Plugin {
 	// Variables for running embedded web server for exposing services
 	private DocGenEmbeddedServer	embeddedServer;
 	private boolean					runEmbeddedServer = false;
+	protected OclEvaluatorPlugin oclPlugin = null;
+	
+	public DocGenPlugin() {
+	  super();
+	  Debug.outln( "constructed DocGenPlugin!" );
+	}
 	
 	@Override
 	public boolean close() {
@@ -47,9 +54,11 @@ public class DocGenPlugin extends Plugin {
 		acm.addBaseDiagramContextConfigurator("Class Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
-		
+
 		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
-		
+
+    getOclPlugin().init();
+
 		ApplicationSyncEventSubscriber.subscribe();
 		
 		getEmbeddedSystemProperty();
@@ -66,6 +75,13 @@ public class DocGenPlugin extends Plugin {
 		//QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore", "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
 	}
 
+	public OclEvaluatorPlugin getOclPlugin() {
+	  if ( oclPlugin == null ) {
+	    oclPlugin = new OclEvaluatorPlugin();
+	  }
+	  return oclPlugin;
+	}
+	
 	@Override
 	public boolean isSupported() {
 		return true;

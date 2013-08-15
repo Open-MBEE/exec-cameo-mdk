@@ -3,8 +3,6 @@
  */
 package gov.nasa.jpl.ocl;
 
-import static org.junit.Assert.*;
-
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -41,7 +39,7 @@ public class TestOcl {
     doi.setAnnotationName( "DocGenEnvironment" );
     EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
     parm.setName( "pattern" );
-    doi.addParameter( parm );
+    doi.addStringParameter( parm );
 
     // essentially set the actual operation as function pointer
     doi.setOperation( new CallOperation() {
@@ -65,7 +63,6 @@ public class TestOcl {
 
       // create the ocl evaluator
       OclEvaluator.createOclInstance( envFactory );
-      //Assert.assertNotNull( OclEvaluator.ocl );
 
       // create query and evaluate
       String oclquery = "name.regexMatch('DocGen Templating') <> null";

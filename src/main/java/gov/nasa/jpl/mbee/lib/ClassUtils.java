@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1264,12 +1265,12 @@ public class ClassUtils {
     return p;
   }
   
-  private static boolean isStatic( Class method ) {
+  public static boolean isStatic( Class method ) {
     if ( method == null ) return false;
     return ( Modifier.isStatic( method.getModifiers() ) );
   }
 
-  private static boolean isStatic( Member method ) {
+  public static boolean isStatic( Member method ) {
     if ( method == null ) return false;
     return ( Modifier.isStatic( method.getModifiers() ) );
   }
@@ -1790,6 +1791,28 @@ public class ClassUtils {
     return Utils.valuesEqual( v1, v2 );
     */ 
   }
-  
+
+  /**
+   * @param o
+   * @return a collection of o's Class, superclasses, and interfaces
+   */
+  public static List< Class< ? > > getAllClasses( Object o ) {
+    Class< ? > cls = (Class< ? >)(o instanceof Class ? o : o.getClass() );
+    HashSet< Class< ? > > set = new HashSet< Class< ? > >();
+    List< Class< ? > > classes = new ArrayList< Class< ? > >();
+    List<Class<?>> queue = new ArrayList< Class<?> >();
+    queue.add( cls );
+    while ( !queue.isEmpty() ) { // REVIEW -- could probably use iterator and use classes as the queue
+      Class< ? > c = queue.get( 0 );
+      queue.remove( 0 );
+      if ( set.contains( c ) ) continue;
+      Class< ? > parent = cls.getSuperclass();
+      if ( parent != null && !set.contains( parent ) ) queue.add( parent );
+      queue.addAll( Arrays.asList( cls.getInterfaces() ) );
+      classes.add( 0, c );
+      set.add( c );
+    }
+    return classes;
+  }  
   
 }
