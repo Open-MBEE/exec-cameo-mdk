@@ -13,6 +13,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 import java.awt.Point;
@@ -82,12 +83,13 @@ public class ViewSaver extends MDAction {
     	
     	// perform the save operation
 		String JSONStr = save(proj, diagram, false);
-		if(JSONStr == null) {
+		if(JSONStr != null) {
+			SessionManager.getInstance().closeSession();
+			JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		} else {
 			SessionManager.getInstance().cancelSession();
-			return;
+			JOptionPane.showMessageDialog(null, "Save cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
 		}
-		
-		SessionManager.getInstance().closeSession();
 	}
 	
 	/**
@@ -159,56 +161,53 @@ public class ViewSaver extends MDAction {
     	
     	// display a progress bar if output is not being suppressed, otherwise just execute the save
     	if(!suppressOutput) {
-    		RunnableSaverWithProgress runnable;
-			try {
-		    	ViewSaver vs = new ViewSaver(null, null, 0, null, true);
-	    		runnable = vs.new RunnableSaverWithProgress(mainStore, elemList);
-			} catch(NoSuchMethodError ex) {
-				ex.printStackTrace();
-				return null;
-			}
+    		RunnableSaverWithProgress runnable = new RunnableSaverWithProgress(mainStore, elemList, diagram.getElement(), workingStereotype);
 			
 			BaseProgressMonitor.executeWithProgress(runnable, "Save Progress", true);
 			
-			// set the style string into the view "style" tag
-			String finalStyleString = mainStore.toJSONString();
-			StereotypesHelper.setStereotypePropertyValue(diagram.getElement(), workingStereotype, "style", finalStyleString);
-			
 			if(runnable.getSuccess()) {
-				JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+				return runnable.getStyleString();
+			} else {
+				return null;
 			}
-			
-			return finalStyleString;
     	} else {
     		return executeSave(elemList, mainStore);
     	}
 	}
 	
 	/**
-	 * Inner class contains a run method for the save operation.
+	 * Nested class contains a run method for the save operation.
 	 * Updates progress bar dynamically.
 	 */
-	class RunnableSaverWithProgress implements RunnableWithProgress {
+	static class RunnableSaverWithProgress implements RunnableWithProgress {
 		private JSONObject mainStore;
 		private List<PresentationElement> elemList;
+		private String styleString;
+		private Element diagram;
+		private Stereotype workingStereotype;
 		private boolean success;
 		
 		/**
 		 * @param mainStore the main style store for this diagram.
 		 * @param elemList	the elements to save.
 		 */
-		public RunnableSaverWithProgress(JSONObject mainStore, List<PresentationElement> elemList) {
+		public RunnableSaverWithProgress(JSONObject mainStore, List<PresentationElement> elemList, Element diagram, Stereotype workingStereotype) {
 			this.mainStore = mainStore;
 			this.elemList = elemList;
+			this.diagram = diagram;
+			this.workingStereotype = workingStereotype;
 		}
 		
 		/**
 		 * Runs the save operation.
+		 * 
 		 * @param progressStatus the status of the operation so far.
 		 */
 		@SuppressWarnings("unchecked")
 		@Override
 		public void run(ProgressStatus progressStatus) {
+			progressStatus.init("Saving styles...", 0, elemList.size() + 1);
+			
 			for(PresentationElement elem : elemList) {
 				if(progressStatus.isCancel()) {
 					success = false;
@@ -221,6 +220,7 @@ public class ViewSaver extends MDAction {
 	    			
 	    			// if there is no style to save, continue to next element
 	    			if(styleStr == null) {
+	    				progressStatus.increase();
 	    				continue;
 	    			}
 	    			
@@ -237,15 +237,37 @@ public class ViewSaver extends MDAction {
 	       		progressStatus.increase();
 	       	}
 			
+			// convert to JSON - this takes a while
+			styleString = mainStore.toJSONString();
+			
+			if(progressStatus.isCancel()) {
+				success = false;
+				return;
+			}
+			
+			// set the style string into the view "style" tag
+			StereotypesHelper.setStereotypePropertyValue(diagram, workingStereotype, "style", styleString);
+			
+			progressStatus.increase();
 			success = true;
 		}
 		
 		/**
 		 * Gets the value of the success property.
+		 * 
 		 * @return the value of the success property.
 		 */
 		public boolean getSuccess() {
 			return success;
+		}
+		
+		/**
+		 * Gets the value of the styleString property.
+		 * 
+		 * @return the value of the styleString property.
+		 */
+		public String getStyleString() {
+			return styleString;
 		}
 	}
 	

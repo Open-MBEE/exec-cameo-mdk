@@ -130,7 +130,11 @@ public class ViewLoader extends MDAction {
     		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
     		
     		if(runnable.getSuccess()) {
+				SessionManager.getInstance().closeSession();
     			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+    		} else {
+    			SessionManager.getInstance().cancelSession();
+    			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
     		}
     	}
 	}
@@ -155,23 +159,22 @@ public class ViewLoader extends MDAction {
 		
 		/**
 		 * Runs the load operation.
+		 * 
 		 * @param progressStatus the status of the operation so far.
 		 */
 		@Override
 		public void run(ProgressStatus progressStatus) {
 			progressStatus.init("Loading styles...", 0, list.size());
-			 success = load(list, style, progressStatus);
+			success = load(list, style, progressStatus);
 			
-			if(success) {
-				SessionManager.getInstance().closeSession();
-			} else {
-				SessionManager.getInstance().cancelSession();
+			if(!success) {
 				return;
 			}
 		}
 		
 		/**
 		 * Gets the value of the success property.
+		 * 
 		 * @return the value of the success property.
 		 */
 		public boolean getSuccess() {
