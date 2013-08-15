@@ -8,8 +8,6 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
-import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 
@@ -47,11 +45,7 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
      */
     @Override
 	public void actionPerformed(ActionEvent e) {
-        SessionManager sm = SessionManager.getInstance();
-        
-        sm.createSession("Fixing mismatch");
         performLoad();
-        sm.closeSession();
     }
 
     /**
@@ -65,11 +59,7 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
             return;
         }
         
-        SessionManager sm = SessionManager.getInstance();
-        
-        sm.createSession("Fixing mismatch");
         performLoad();
-        sm.closeSession();
     }
 
     /**
@@ -87,32 +77,30 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
      * Performs the actual load on the diagram.
      */
     private void performLoad() {
+    	SessionManager.getInstance().createSession("Loading...");
+    	
         Project project = Application.getInstance().getProject();
         
     	// get the main style string from the view stereotype tag "style"
     	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StylerUtils.getWorkingStereotype(project), "style");
-    	final String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
+    	String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
     	
     	// get the elements on the diagram to load styles into
-    	final List<PresentationElement> list = this.diagToFix.getPresentationElements();
+    	List<PresentationElement> list = this.diagToFix.getPresentationElements();
     	
+    	// run the loader with a progress bar
     	if((style != null) && (!style.equals(""))) {
-    		RunnableWithProgress runnable = null;
-    		try {
-	    		runnable = new RunnableWithProgress() {
-	    			public void run(ProgressStatus progressStatus) {
-	    				progressStatus.init("Loading styles...", 0, list.size());
-	    				ViewLoader.load(list, style, progressStatus);
-	    			}
-	    		};
-    		} catch(NoSuchMethodError ex) {
-    			ex.printStackTrace();
-    			return;
-    		}
+    		RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(list, style);
     		
-    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
+    		
+    		if(runnable.getSuccess()) {
+				SessionManager.getInstance().closeSession();
+    			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+    		} else {
+    			SessionManager.getInstance().cancelSession();
+    			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+    		}
     	}
-    	
-		JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
     }
 }

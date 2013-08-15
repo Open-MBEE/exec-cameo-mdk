@@ -23,7 +23,6 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
 import com.nomagic.magicdraw.uml.symbols.shapes.ShapeElement;
 import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -119,13 +118,7 @@ public class ViewLoader extends MDAction {
     	
     	// run the loader with a progress bar
     	if((style != null) && (!style.equals(""))) {
-    		RunnableLoaderWithProgress runnable;
-    		try {
-	    		runnable = new RunnableLoaderWithProgress(list, style);
-    		} catch(NoSuchMethodError ex) {
-    			SessionManager.getInstance().cancelSession();
-    			return;
-    		}
+    		RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(list, style);
     		
     		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
     		
@@ -137,49 +130,6 @@ public class ViewLoader extends MDAction {
     			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
     		}
     	}
-	}
-	
-	/**
-	 * Inner class contains a run method for the load operation.
-	 * Updates progress bar dynamically.
-	 */
-	class RunnableLoaderWithProgress implements RunnableWithProgress {
-		private List<PresentationElement> list;
-		private String style;
-		private boolean success;
-
-		/**
-		 * @param list	the list of elements to load styles into.
-		 * @param style	the style string to reference.
-		 */
-		public RunnableLoaderWithProgress(List<PresentationElement> list, String style) {
-			this.list = list;
-			this.style = style;
-		}
-		
-		/**
-		 * Runs the load operation.
-		 * 
-		 * @param progressStatus the status of the operation so far.
-		 */
-		@Override
-		public void run(ProgressStatus progressStatus) {
-			progressStatus.init("Loading styles...", 0, list.size());
-			success = load(list, style, progressStatus);
-			
-			if(!success) {
-				return;
-			}
-		}
-		
-		/**
-		 * Gets the value of the success property.
-		 * 
-		 * @return the value of the success property.
-		 */
-		public boolean getSuccess() {
-			return success;
-		}
 	}
 	
 	/**

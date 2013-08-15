@@ -10,10 +10,8 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyManager;
 import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 import java.awt.Point;
@@ -176,102 +174,6 @@ public class ViewSaver extends MDAction {
 	}
 	
 	/**
-	 * Nested class contains a run method for the save operation.
-	 * Updates progress bar dynamically.
-	 */
-	static class RunnableSaverWithProgress implements RunnableWithProgress {
-		private JSONObject mainStore;
-		private List<PresentationElement> elemList;
-		private String styleString;
-		private Element diagram;
-		private Stereotype workingStereotype;
-		private boolean success;
-		
-		/**
-		 * @param mainStore the main style store for this diagram.
-		 * @param elemList	the elements to save.
-		 */
-		public RunnableSaverWithProgress(JSONObject mainStore, List<PresentationElement> elemList, Element diagram, Stereotype workingStereotype) {
-			this.mainStore = mainStore;
-			this.elemList = elemList;
-			this.diagram = diagram;
-			this.workingStereotype = workingStereotype;
-		}
-		
-		/**
-		 * Runs the save operation.
-		 * 
-		 * @param progressStatus the status of the operation so far.
-		 */
-		@SuppressWarnings("unchecked")
-		@Override
-		public void run(ProgressStatus progressStatus) {
-			progressStatus.init("Saving styles...", 0, elemList.size() + 1);
-			
-			for(PresentationElement elem : elemList) {
-				if(progressStatus.isCancel()) {
-					success = false;
-					return;
-				}
-				
-	       		// save the element's style properties
-				try {
-	    			String styleStr = getStyle(elem);
-	    			
-	    			// if there is no style to save, continue to next element
-	    			if(styleStr == null) {
-	    				progressStatus.increase();
-	    				continue;
-	    			}
-	    			
-	    			mainStore.put(elem.getID(), styleStr);
-				} catch(ClassCastException e) {
-					e.printStackTrace();
-				} catch(MissingResourceException e) {
-					e.printStackTrace();
-				}
-				
-	       		// recursively save child elements' style properties (e.g. ports)
-	       		getStyleChildren(elem, mainStore, progressStatus);
-	       		
-	       		progressStatus.increase();
-	       	}
-			
-			// convert to JSON - this takes a while
-			styleString = mainStore.toJSONString();
-			
-			if(progressStatus.isCancel()) {
-				success = false;
-				return;
-			}
-			
-			// set the style string into the view "style" tag
-			StereotypesHelper.setStereotypePropertyValue(diagram, workingStereotype, "style", styleString);
-			
-			progressStatus.increase();
-			success = true;
-		}
-		
-		/**
-		 * Gets the value of the success property.
-		 * 
-		 * @return the value of the success property.
-		 */
-		public boolean getSuccess() {
-			return success;
-		}
-		
-		/**
-		 * Gets the value of the styleString property.
-		 * 
-		 * @return the value of the styleString property.
-		 */
-		public String getStyleString() {
-			return styleString;
-		}
-	}
-	
-	/**
 	 * Generates the style string for the presentation elements on the diagram.
 	 * 
 	 * @param elemList	the list of presentation elements on the diagram.
@@ -312,7 +214,7 @@ public class ViewSaver extends MDAction {
 	 * @return		the element's respective JSON style string.
 	 */
 	@SuppressWarnings("unchecked") // for JSONObject put() method
-	private static String getStyle(PresentationElement elem) {
+	public static String getStyle(PresentationElement elem) {
     	PropertyManager propMan;
     	JSONObject entry = new JSONObject();
 
@@ -378,7 +280,7 @@ public class ViewSaver extends MDAction {
 	 * @param mainStore	the JSONObject to store style information into.
 	 */
 	@SuppressWarnings("unchecked") // for JSONObject put() method
-	private static void getStyleChildren(PresentationElement parent, JSONObject mainStore, ProgressStatus progressStatus) {
+	public static void getStyleChildren(PresentationElement parent, JSONObject mainStore, ProgressStatus progressStatus) {
 		// get the parent element's children
 		List<PresentationElement> children = parent.getPresentationElements();
 		
