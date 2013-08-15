@@ -23,7 +23,6 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
 import com.nomagic.magicdraw.uml.symbols.shapes.ShapeElement;
 import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -57,36 +56,30 @@ public class ViewLoader extends MDAction {
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		try {
-			SessionManager.getInstance().checkSessionExistance();
-		} catch(IllegalStateException ex) {
-	        SessionManager.getInstance().createSession("Load");
-		}
+		SessionManager.getInstance().createSession("Loading styles...");
+		
+		Project proj = Application.getInstance().getProject();
 
-		Project proj = Application.getInstance().getProject();	// get the project
-
-    	DiagramPresentationElement diagram;
-    	
     	// try to load the active diagram
+    	DiagramPresentationElement diagram;
     	try {
         	diagram = proj.getActiveDiagram();
+        	diagram.ensureLoaded();
     	} catch (NullPointerException ex) {
-    		JOptionPane.showMessageDialog(null, "Please open a project first.", "Error", JOptionPane.ERROR_MESSAGE);
+    		JOptionPane.showMessageDialog(null, "Exiting - there was an error loading the diagram.", "Error", JOptionPane.ERROR_MESSAGE);
             SessionManager.getInstance().cancelSession();
 			return;
     	}
     	
-    	// sanity check -- ensure diagram is open
-    	if(diagram == null) {
-    		JOptionPane.showMessageDialog(null, "Please open a diagram first.", "Error", JOptionPane.ERROR_MESSAGE);
-            SessionManager.getInstance().cancelSession();
+    	if(!StylerUtils.isDiagramLocked(proj, diagram.getElement())) {
+			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+			SessionManager.getInstance().cancelSession();
     		return;
-    	} else {
-    		diagram.ensureLoaded();
     	}
     	
 		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(proj);
 		if(workingStereotype == null) {
+			SessionManager.getInstance().cancelSession();
 			return;
 		}
     	
@@ -121,27 +114,22 @@ public class ViewLoader extends MDAction {
        	
     	// get the main style string from the view stereotype tag "style"
     	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(diagram.getElement(), workingStereotype, "style");
-    	final String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
+    	String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
     	
+    	// run the loader with a progress bar
     	if((style != null) && (!style.equals(""))) {
-    		RunnableWithProgress runnable = null;
-    		try {
-	    		runnable = new RunnableWithProgress() {
-	    			public void run(ProgressStatus progressStatus) {
-	    				progressStatus.init("Loading styles...", 0, list.size());
-	    				load(list, style, progressStatus);
-	    			}
-	    		};
-    		} catch(NoSuchMethodError ex) {
-    			ex.printStackTrace();
-    			return;
-    		}
+    		RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(list, style);
     		
-    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
+    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
+    		
+    		if(runnable.getSuccess()) {
+				SessionManager.getInstance().closeSession();
+    			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+    		} else {
+    			SessionManager.getInstance().cancelSession();
+    			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+    		}
     	}
-    	
-		JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-        SessionManager.getInstance().closeSession();
 	}
 	
 	/**
@@ -178,9 +166,15 @@ public class ViewLoader extends MDAction {
 	 * @param elemList			the list of elements to load styles into.
 	 * @param style				the style string.
 	 * @param progressStatus	the status of the program status bar.
+	 * @return					true if successful, false if the user cancelled load
 	 */
-	public static void load(List<PresentationElement> elemList, String style, ProgressStatus progressStatus) {
-    	for(PresentationElement elem : elemList) {
+	public static boolean load(List<PresentationElement> elemList, String style, ProgressStatus progressStatus) {
+    	for(PresentationElement elem : elemList) {    		
+    		// check to see if the user cancelled
+    		if(progressStatus.isCancel()) {
+    			return false;
+    		}
+    		
     		// parse the style string for the correct style of each element
     		String elemStyle = getStyleStringForElement(elem, style);
     		
@@ -200,6 +194,8 @@ public class ViewLoader extends MDAction {
     		
     		progressStatus.increase();
        	}
+    	
+    	return true;
 	}
 
 	/**

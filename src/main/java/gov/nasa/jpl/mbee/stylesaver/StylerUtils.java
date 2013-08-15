@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.stylesaver;
 import java.util.Collection;
 
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -78,5 +79,32 @@ public class StylerUtils {
 		boolean hasSlot = StereotypesHelper.getPropertyByName(workingStereotype, "style") != null;
 		
 		return hasStereotype && hasSlot;
+	}
+	
+	/**
+	 * Checks if the diagram is a locked Teamwork project.
+	 * 
+	 * @param project	the project that contains the diagram.
+	 * @param diagram	the diagram to check
+	 * @return			true if the diagram is locked, false otherwise
+	 */
+	public static boolean isDiagramLocked(Project project, Element diagram) {
+		// get all the locked elements in the project
+		Collection<Element> lockedElems;
+		try {
+			lockedElems = TeamworkUtils.getLockedElement(project, null);
+		} catch(NullPointerException e) {
+			// looks like this is just a local project
+			return true;
+		}
+		
+		// try to find the diagram in the collection of locked project elements
+		for(Element elem : lockedElems) {
+			if(elem.getID().equals(diagram.getID())) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 }
