@@ -90,7 +90,10 @@ public class DocGen3Profile {
 	public static final String intersection = "Intersection";
 	public static final String union = "Union";
 	public static final String removeDuplicates = "RemoveDuplicates";
+	
 	public static final String sortByName = "SortByName";
+	public static final String sortByAttribute = "SortByAttribute";
+	public static final String sortByProperty = "SortByProperty";
 	
 	public static final String conformStereotype = "Conform";
 	
