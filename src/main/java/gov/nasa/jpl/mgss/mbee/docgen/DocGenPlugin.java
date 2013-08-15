@@ -14,8 +14,6 @@ package gov.nasa.jpl.mgss.mbee.docgen;
 
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.stylesaver.Configurator;
-import gov.nasa.jpl.mbee.stylesaver.DiagramUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewPackage;
 import gov.nasa.jpl.mgss.mbee.docgen.sync.ApplicationSyncEventSubscriber;
@@ -23,9 +21,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.sync.ApplicationSyncEventSubscriber;
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
-import com.nomagic.magicdraw.uml.DiagramTypeConstants;
-
-import java.lang.reflect.*;
 
 public class DocGenPlugin extends Plugin {
 	// Variables for running embedded web server for exposing services
@@ -60,13 +55,10 @@ public class DocGenPlugin extends Plugin {
 		acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
 
+		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
+
     getOclPlugin().init();
 
-    Configurator styleConfigurator = getStyleConfigurator();
-    acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, styleConfigurator);
-
-    EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
-		
 		ApplicationSyncEventSubscriber.subscribe();
 		
 		getEmbeddedSystemProperty();
@@ -107,22 +99,5 @@ public class DocGenPlugin extends Plugin {
 				runEmbeddedServer = false;
 			}
 		}
-	}
-	
-	/**
-	 * Gets the configurator for the style saver/loader.
-	 * 
-	 * @return the configurator for the saver/loader.
-	 */
-	private Configurator getStyleConfigurator() {
-		Configurator c = new Configurator();
-		
-		Method addSaveMethod = DiagramUtils.class.getDeclaredMethods()[0];
-		Method addLoadMethod = DiagramUtils.class.getDeclaredMethods()[1];
-		
-		c.addConfiguration("BaseDiagramContext", "", "Save styling on diagram", "Style Saver/Loader", addSaveMethod);
-		c.addConfiguration("BaseDiagramContext", "", "Load saved styling onto diagram", "Style Saver/Loader", addLoadMethod);
-
-		return c;
 	}
 }

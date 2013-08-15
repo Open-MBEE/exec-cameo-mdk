@@ -7,7 +7,6 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -42,11 +41,7 @@ public class FixNotSaved extends NMAction implements AnnotationAction {
      */
     @Override
 	public void actionPerformed(ActionEvent e) {
-        SessionManager sm = SessionManager.getInstance();
-        
-        sm.createSession("Fixing not saved");
         performSave();
-        sm.closeSession();
     }
 
     /**
@@ -60,11 +55,7 @@ public class FixNotSaved extends NMAction implements AnnotationAction {
             return;
         }
         
-        SessionManager sm = SessionManager.getInstance();
-        
-        sm.createSession("Fixing not saved");
         performSave();
-        sm.closeSession();
     }
 
     /**
@@ -82,14 +73,18 @@ public class FixNotSaved extends NMAction implements AnnotationAction {
      * Performs the actual save on the diagram. 
      */
     private void performSave() {
+    	SessionManager.getInstance().createSession("Saving...");
+    	
         Project project = Application.getInstance().getProject();
         
-        // get the style currently on the diagram
-        String currStyle = ViewSaver.save(project, this.diagToFix, false);
+        String JSONStr = ViewSaver.save(project, this.diagToFix, false);
         
-        // save that style into the tag
-		StereotypesHelper.setStereotypePropertyValue(this.diagToFix.getElement(), StylerUtils.getWorkingStereotype(project), "style", currStyle, false);
-		
-		JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		if(JSONStr != null) {
+			SessionManager.getInstance().closeSession();
+			JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			SessionManager.getInstance().cancelSession();
+			JOptionPane.showMessageDialog(null, "Save cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		}
     }
 }
