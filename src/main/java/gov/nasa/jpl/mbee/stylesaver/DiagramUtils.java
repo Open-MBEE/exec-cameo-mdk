@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.stylesaver;
 
 import java.awt.event.ActionEvent;
+import java.lang.reflect.Method;
+
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
@@ -42,5 +44,22 @@ public class DiagramUtils {
 			Loader l = new Loader(null, "Load saved styling onto diagram", 0, null);
 			l.actionPerformed(event);
 		}
+	}
+	
+	/**
+	 * Gets the configurator for the style saver/loader.
+	 * 
+	 * @return the configurator for the saver/loader.
+	 */
+	public static Configurator getStyleConfigurator() {
+		Configurator c = new Configurator();
+		
+		Method addSaveMethod = DiagramUtils.class.getDeclaredMethods()[0];
+		Method addLoadMethod = DiagramUtils.class.getDeclaredMethods()[1];
+		
+		c.addConfiguration("BaseDiagramContext", "", "Save styling on diagram", "Style Saver/Loader", addSaveMethod);
+		c.addConfiguration("BaseDiagramContext", "", "Load saved styling onto diagram", "Style Saver/Loader", addLoadMethod);
+
+		return c;
 	}
 }
