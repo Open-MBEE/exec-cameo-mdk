@@ -26,6 +26,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
+
+import org.eclipse.m2m.qvt.oml.ecore.ImperativeOCL.ReturnExp;
+import org.jboss.aop.advice.annotation.Return;
+import org.python.antlr.PythonParser.return_stmt_return;
+
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -930,6 +935,99 @@ public class Utils {
 			}
     	});
     	return n;
+    }
+    
+    /**
+     * Takes a list of value objects of a certain type (strings, numbers, lists),
+     * sorts them by the desired criteria ( (first letter, length), (value, proximity to value), (size) ),
+     * in a particular order (ascending, descending)
+     * @param attr
+     * @param values
+     * @param criteria
+     * @param isAscending
+     * @return
+     */
+    
+    public static List<Element> sortByAttribute(String attr, Collection<? extends Element> values, String criteria, boolean isAscending) {
+    	List<Object> v = new ArrayList<Object>();
+    	for (Element e: values) {
+    		
+    	}
+    	// selectSortCriteria
+    	// sort values and build up swap list
+    	// return the swap list
+    	return null;
+    }
+    
+    private static enum sortAttributes {	NAME,
+    										DOC,
+    										VALUE };
+    										
+    private Object getAttribute(String attr, Element e) {
+    	sortAttributes at = sortAttributes.valueOf(attr);
+    	switch (at) {
+    	case NAME: 
+    		if (e instanceof NamedElement) {
+    			return ((NamedElement)e).getName();
+    		}; 
+    		break;
+    	case DOC: 
+    		return ModelHelper.getComment(e);
+    	case VALUE: 
+    		if (e instanceof Property) {
+    			return ((Property)e).getDefaultValue();
+    		} else if (e instanceof Slot) {
+    			return ((Slot)e).getValue();
+    		}; 
+    		break;
+    	default:
+    		return null;
+    	}
+    	return null;
+    }
+    
+    private static enum sortCriteria { 	STRING_ALPHABETICAL,
+    									STRING_LENGTH,
+    									NUM_VALUE,
+//    									NUM_PROXIMITY,
+    									LIST_SIZE };
+    
+    private static Comparator<Object> selectSortCriterion(sortCriteria choice) {
+    	switch (choice) {
+    	case STRING_ALPHABETICAL: return new Comparator<Object>() {
+    		public int compare(Object o1, Object o2) {
+				if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
+					return ((NamedElement)o1).getName().compareTo(((NamedElement)o2).getName());
+				}
+				return 0;
+    		}
+    	};
+    	case STRING_LENGTH: return new Comparator<Object>() {
+    		public int compare(Object o1, Object o2) {
+				if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
+					return ((String)o1).length() - ((String)o2).length();
+				}
+				return 0;
+    		}
+    	};
+    	case NUM_VALUE: return new Comparator<Object>() {
+    		public int compare(Object o1, Object o2) {
+    			if (Utils2.isNumber(o1.toString()) && Utils2.isNumber(o2.toString())) {
+    				return new Integer(o1.toString()) - new Integer(o2.toString());
+    			}
+    			return 0;
+    		}
+    	};
+    	case LIST_SIZE: return new Comparator<Object>() {
+    		public int compare(Object o1, Object o2) {
+    			if (o1 instanceof List && o2 instanceof List) {
+    				return ((List)o1).size() - ((List)o2).size();
+    			}
+    			return 0;
+    		}
+    	};
+    	default: return null;
+    	}
     }
     
     /**

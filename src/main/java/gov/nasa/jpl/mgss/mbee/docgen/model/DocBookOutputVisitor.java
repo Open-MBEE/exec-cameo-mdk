@@ -583,67 +583,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 	public void visit(TableStructure ts) {
 		if (ts.getIgnore())
 			return;
-		if (true) { //DEBUG
-			GUILog visitLog = Application.getInstance().getGUILog();
-			visitLog.log("Visiting TableStructure:");
-		}
-		DBTable t = new DBTable();
-		
-		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-		GUILog dBoV = Application.getInstance().getGUILog();
-		// want to add things to body by rows
-		while (ts.hasNext()) {
-			List<Object> tsRow = ts.next();
-			if (tsRow == null)
-				continue;
-			dBoV.log(tsRow.toString());
-			List<DocumentElement> row = new ArrayList<DocumentElement>();
-			for (Object e: tsRow) {
-				// TODO: Think about any problem that could arise from the following casting...
-				// Note assumption that all Objects in TS are either Lists of Properties or empty list
-				DBTableEntry item = Common.getTableEntryFromObject( e, false, forViewEditor );
-				row.add(item);
-			}
-			body.add(row);
-		}
-		// set DBTable headers
-		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
-		if (!ts.getHeaders().isEmpty()) {
-			List<DocumentElement> first = new ArrayList<DocumentElement>();
-			hs.add(first);
-			for (String h: ts.getHeaders())
-				first.add(new DBText(h));
-			t.setCols(first.size());
-		} 
-		// otherwise, take the names of each element, in which case this would
-		// parseTableStructure loop to automatcally add the name of columns to the headers variable in 
-		// TableStructure.j
-		else {
-			List<DocumentElement> first = new ArrayList<DocumentElement>();
-			hs.add(first);
-			for (int i = 0; i < ts.getColumNum(); i++)
-				first.add(new DBText());
-		}
-		t.setHeaders(hs);
-		// set DBTable and add column specification stuff
-		t.setBody(body);
-		List<DBColSpec> cslist = new ArrayList<DBColSpec>();
-		if (ts.getColwidths() != null && !ts.getColwidths().isEmpty()) {
-			int i = 1;
-			for (String s: ts.getColwidths()) {
-				DBColSpec cs = new DBColSpec(i);
-				cs.setColwidth(s);
-				cslist.add(cs);
-				i++;
-			}
-		} else {
-			DBColSpec cs = new DBColSpec(1);
-			cs.setColwidth(".4*");
-			cslist.add(cs);
-		}
-		t.setColspecs(cslist);
-		t.setStyle(ts.getStyle());
-		parent.peek().addElement(t);
+		parent.peek().addElement(ts.visit(forViewEditor));
 	}
 	
 	@Override
