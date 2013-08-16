@@ -864,7 +864,9 @@ public class Configurator implements ConfiguratorWithPriority,
     if (category == null) {
       category = new MDActionsCategory(id, name);
       category.setNested(true);
-      manager.addCategory(0, category);
+//      manager.addCategory(category);
+      manager.addCategory(category);
+//      manager.addCategory(manager.getCategories().size()-1, category);
     }
     return category;
   }

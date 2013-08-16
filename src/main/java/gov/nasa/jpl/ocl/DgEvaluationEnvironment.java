@@ -9,6 +9,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.ocl.EvaluationEnvironment;
+import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
 import org.eclipse.ocl.ecore.EcoreEvaluationEnvironment;
 
 /**
@@ -25,28 +26,31 @@ public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
 		super();
 	}
 
-	DgEvaluationEnvironment(
+	/**
+   * @param factory
+   */
+  public DgEvaluationEnvironment( EcoreEnvironmentFactory factory ) {
+    super( factory );
+  }
+
+  DgEvaluationEnvironment(
 			EvaluationEnvironment<EClassifier, EOperation, EStructuralFeature, EClass, EObject> parent) {
 		super(parent);
 	}
 
 	public Object callOperation(EOperation operation, int opcode,
 			Object source, Object[] args) {
-		boolean isAnnotationFound = false;
 
 		for (DgOperation op: dgOperations) {
 			if (operation.getEAnnotation(op.getAnnotationName()) != null) {
-				if (op.getName().equals(operation.getName())) {
+        if ( op.getName().equals( operation.getName() )
+             && op.getParameters().size() == ( args == null ? 0 : args.length ) ) {
 					return op.callOperation(source, args);
 				}
 			}
 		}
 		
-		if (!isAnnotationFound) {
-			return super.callOperation(operation, opcode, source, args);
-		}
-		
-		throw new UnsupportedOperationException(); // unknown operation
+		return super.callOperation(operation, opcode, source, args);
 	}
 	
 	public void addDgOperation(DgOperation dgOperation) {

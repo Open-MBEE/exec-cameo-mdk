@@ -6,10 +6,10 @@ import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyManager;
 import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -57,6 +57,8 @@ public class ViewSaver extends MDAction {
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		SessionManager.getInstance().createSession("Saving styles...");
+		
     	Project proj = Application.getInstance().getProject();
     	
     	// try to load the active diagram
@@ -71,6 +73,7 @@ public class ViewSaver extends MDAction {
 			return;
     	}
     	
+    	// ensure the diagram is locked for edit
     	if(!StylerUtils.isDiagramLocked(proj, diagram.getElement())) {
 			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
     		return;
@@ -78,18 +81,12 @@ public class ViewSaver extends MDAction {
     	
     	// perform the save operation
 		String JSONStr = save(proj, diagram, false);
-		if(JSONStr == null) {
-			return;
-		}
-		
-		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(proj);
-
-		// set the style string into the view "style" tag
-		StereotypesHelper.setStereotypePropertyValue(diagram.getElement(), workingStereotype, "style", JSONStr);
-		
-		// success -- alert the user
-		if(!suppressOutput) {
+		if(JSONStr != null) {
+			SessionManager.getInstance().closeSession();
 			JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			SessionManager.getInstance().cancelSession();
+			JOptionPane.showMessageDialog(null, "Save cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 	
@@ -101,7 +98,6 @@ public class ViewSaver extends MDAction {
 	 * @param suppress	set to true to suppress swing dialog boxes.
 	 * @return 			null on error or the JSON style string for this diagram.
 	 */
-	@SuppressWarnings("unchecked") // for JSONObject put() method
 	public static String save(Project proj, DiagramPresentationElement diagram, boolean suppress) {
 		suppressOutput = suppress;
 				
@@ -147,7 +143,7 @@ public class ViewSaver extends MDAction {
     	}
 
     	// get all the elements in the diagram and store them into a list
-    	final List<PresentationElement> elemList;
+    	List<PresentationElement> elemList;
     	try {
     		elemList = diagram.getPresentationElements();
     	} catch(NullPointerException e) {
@@ -159,48 +155,19 @@ public class ViewSaver extends MDAction {
     	}
     	
     	// get a JSON style string from each element and store them into a main store for this diagram
-    	final JSONObject mainStore = new JSONObject();
+    	JSONObject mainStore = new JSONObject();
     	
-    	// display a progress bar if output is not being suppressed
+    	// display a progress bar if output is not being suppressed, otherwise just execute the save
     	if(!suppressOutput) {
-			RunnableWithProgress runnable = null;
-			try {
-	    		runnable = new RunnableWithProgress() {
-	    			public void run(ProgressStatus progressStatus) {
-	    				progressStatus.init("Saving styles...", 0, elemList.size());
-	    				
-	    		       	for(PresentationElement elem : elemList) {
-	    		       		// save the element's style properties
-	    					try {
-	    		    			String styleStr = getStyle(elem);
-	    		    			
-	    		    			// if there is no style to save, continue to next element
-	    		    			if(styleStr == null) {
-	    		    				continue;
-	    		    			}
-	    		    			
-	    		    			mainStore.put(elem.getID(), styleStr);
-	    					} catch(ClassCastException e) {
-	    						e.printStackTrace();
-	    					} catch(MissingResourceException e) {
-	    						e.printStackTrace();
-	    					}
-	    					
-	    		       		// recursively save child elements' style properties (e.g. ports)
-	    		       		getStyleChildren(elem, mainStore);
-	    		       		
-	    		       		progressStatus.increase();
-	    		       	}		
-	    			}
-	    		};
-			} catch(NoSuchMethodError ex) {
-				ex.printStackTrace();
+    		RunnableSaverWithProgress runnable = new RunnableSaverWithProgress(mainStore, elemList, diagram.getElement(), workingStereotype);
+			
+			BaseProgressMonitor.executeWithProgress(runnable, "Save Progress", true);
+			
+			if(runnable.getSuccess()) {
+				return runnable.getStyleString();
+			} else {
 				return null;
 			}
-			
-			BaseProgressMonitor.executeWithProgress(runnable, "Save Progress", false);
-
-			return mainStore.toJSONString();
     	} else {
     		return executeSave(elemList, mainStore);
     	}
@@ -233,7 +200,7 @@ public class ViewSaver extends MDAction {
 			}
 			
        		// recursively save child elements' style properties (e.g. ports)
-       		getStyleChildren(elem, mainStore);
+       		getStyleChildren(elem, mainStore, null);
 		}
        	
        	return mainStore.toJSONString();
@@ -247,7 +214,7 @@ public class ViewSaver extends MDAction {
 	 * @return		the element's respective JSON style string.
 	 */
 	@SuppressWarnings("unchecked") // for JSONObject put() method
-	private static String getStyle(PresentationElement elem) {
+	public static String getStyle(PresentationElement elem) {
     	PropertyManager propMan;
     	JSONObject entry = new JSONObject();
 
@@ -313,13 +280,20 @@ public class ViewSaver extends MDAction {
 	 * @param mainStore	the JSONObject to store style information into.
 	 */
 	@SuppressWarnings("unchecked") // for JSONObject put() method
-	private static void getStyleChildren(PresentationElement parent, JSONObject mainStore) {
+	public static void getStyleChildren(PresentationElement parent, JSONObject mainStore, ProgressStatus progressStatus) {
 		// get the parent element's children
 		List<PresentationElement> children = parent.getPresentationElements();
 		
 		// base case -- no children
 		if(children.isEmpty()) {
 			return;
+		}
+
+		// check to see if the user cancelled
+		if(progressStatus != null) {
+			if(progressStatus.isCancel()) {
+				return;
+			}
 		}
 		
 		Iterator<PresentationElement> iter = children.iterator();
@@ -329,7 +303,7 @@ public class ViewSaver extends MDAction {
 			PresentationElement currElem = iter.next();
 			
 			// recursively call on the current element
-			getStyleChildren(currElem, mainStore);
+			getStyleChildren(currElem, mainStore, progressStatus);
 			
 			try {
     			String styleStr = getStyle(currElem);

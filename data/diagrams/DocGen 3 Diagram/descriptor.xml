@@ -242,6 +242,14 @@
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
+                <custom description="TableSumRow" id="IDaction_1375743174451_578714_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_2_3_eac0346_1374702221597_704771_29348"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
             </actions>
         </category>
         <category expandedByDefault="true" id="action_category_1326673608860_693478_0" name="DocGen 3 Templates">

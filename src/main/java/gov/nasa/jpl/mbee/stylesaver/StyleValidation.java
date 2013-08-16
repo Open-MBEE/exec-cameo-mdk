@@ -68,7 +68,6 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
 		Collection<DiagramPresentationElement> diagCollection = project.getDiagrams();
 		
 		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(project);
-		int badStereotype = 0;
 		
 		// iterate over each diagram checking for matched tag styling and actual styling
 		for(DiagramPresentationElement diag : diagCollection) {
@@ -100,14 +99,7 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
 					Annotation annotation = new Annotation(diag, constraint, actionList);
 			        result.add(annotation);
 		        }
-			} else {
-				badStereotype++;
 			}
-		}
-		
-		if(badStereotype > 0) {
-			Application.getInstance().getGUILog().log("WARNING: The style-tagged " + workingStereotype.getName() + " stereotype is not applied" +
-													  " to one or more diagrams in this project. Style validation cannot validate such diagrams.");
 		}
 		
 		Application.getInstance().getGUILog().log("Style validation done.");
