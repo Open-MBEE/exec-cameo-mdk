@@ -2,6 +2,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
@@ -39,7 +40,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
-public class TableStructure extends Table implements Iterator<List<Object>>, Generatable{
+public class TableStructure extends Table implements Iterator<List<Object>> {
 
 	//TODO decide tag options
 	
@@ -344,9 +345,6 @@ public class TableStructure extends Table implements Iterator<List<Object>>, Gen
 
 	String irrelevantEntry = new String("--");
 
-	GUILog parseTS = Application.getInstance().getGUILog(); // debug! TODO: remove
-	boolean debug = true;
-	
 	// TODO -- REVIEW -- Should parse*Column() and handle*Cell() methods not
 	// evaluate expressions or find property values and do this in
 	// DocBookOutputVisitor like other tables?
@@ -408,7 +406,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>, Gen
 			for (Object r: rows) {
 				if (r instanceof Element) {
 					if (colType.equals(propertyColumn)) {
-						curCol.add(handlePropertyCell((Property)dThing, (Element)r));
+						curCol.add(Utils.getElementProperty((Element)r, (Property)dThing));
 					} else if (colType.equals(attributeColumn)) {
 						curCol.add(handleAttributeCell(dThing, (Element)r));
 					}
@@ -417,7 +415,7 @@ public class TableStructure extends Table implements Iterator<List<Object>>, Gen
 					for (Object c: (List<Object>)r) {
 						if (c instanceof Element) { 
 							if (colType.equals(propertyColumn)) {
-								superCell.addAll(handlePropertyCell((Property)dThing, (Element)c));
+								superCell.addAll(Utils.getElementProperty((Element)c, (Property)dThing));
 							} else if (colType.equals(attributeColumn)) {
 								superCell.addAll(handleAttributeCell(dThing, (Element)c));
 							}
@@ -434,58 +432,19 @@ public class TableStructure extends Table implements Iterator<List<Object>>, Gen
 		addColumn(curCol);
 	}
 
-	private List<Object> handlePropertyCell(Property dProp, Element cell) {
-		Element myOwner = dProp.getOwner();
-		List<Object> rSlots = new ArrayList<Object>();
-		if (myOwner instanceof Stereotype && StereotypesHelper.hasStereotype(cell, (Stereotype)myOwner)) {
-			ValueSpecification pDefault = null;
-			if (dProp != null) {
-				rSlots.addAll(StereotypesHelper.getStereotypePropertyValue(cell, (Stereotype)myOwner, (Property)dProp));
-				pDefault = dProp.getDefaultValue();
-			}
-			if (rSlots.size() < 1 && pDefault != null) {
-				rSlots.add(pDefault); 
-			}
-			return rSlots;
-		}
-		Collection<Element> rOwned = cell.getOwnedElement();
-		for (Object o: rOwned) {
-			if (((Element)o) instanceof Property && ((Property)o).getName().equals(dProp.getName())) {
-				rSlots.add((Object)((Property)o).getDefaultValue());
-			}
-		}
-		return rSlots;
-	}
 	
 	public List<Object> handleAttributeCell(Object dAttr, Element cell) { 
 		List<Object> rSlots = new ArrayList<Object>();
-		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Name")) {
-			if (cell instanceof NamedElement) {
-				rSlots.add(((NamedElement)cell).getName());
-			} else {
-				rSlots.add(cell.getHumanName()); 
+		if (dAttr != null) {
+			Object cellAttr = Utils.getElementAttribute(cell, ((EnumerationLiteral)dAttr).getName());
+			if (cellAttr != null) {
+				if (cellAttr instanceof Collection<?>) {
+					rSlots.addAll((Collection<? extends Object>)cellAttr);
+				} else {
+					rSlots.add(cellAttr);
+				}
 			}
 		}
-		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Documentation")) {
-			rSlots.add(ModelHelper.getComment(cell));
-		}
-		if (dAttr != null && ((EnumerationLiteral)dAttr).getName().equals("Value")) {
-			if (cell instanceof Property) {
-				rSlots.add(((Property)cell).getDefaultValue());
-			} else if (cell instanceof Slot) { 
-				rSlots.addAll(((Slot)cell).getValue()); 
-			} 
-		}
-		// these don't work yet
-//		if (((String)dProp).equals("Outgoing Relationships"))
-//			for (Object o: cell.get_directedRelationshipOfSource())
-//				if (o instanceof DirectedRelationship && ((DirectedRelationship)o).getSource().contains((Element)o))
-//					rSlots.add(o);
-//		if (((String)dProp).equals("Incoming Relationships"))
-//			for (Object o:  cell.get_directedRelationshipOfTarget())
-//				if (o instanceof DirectedRelationship && ((DirectedRelationship)o).getTarget().contains((Element)o))
-//					rSlots.add(o);
-		// Get all the properties or the default value
 		return rSlots;
 	}
 	

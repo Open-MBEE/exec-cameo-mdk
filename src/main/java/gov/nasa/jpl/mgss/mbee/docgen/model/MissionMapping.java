@@ -2,6 +2,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.tree.Node;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.CharacterizationChooserUI;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.LibraryComponent;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.MissionCharacterization;
@@ -12,6 +13,7 @@ import java.io.StringWriter;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,6 +25,7 @@ import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
@@ -464,5 +467,22 @@ public class MissionMapping extends Query {
 	
 	public Set<NamedElement> getLibraryCharacterizations() {
 		return chars;
+	}
+
+	@Override
+	public void initialize(ActivityNode an, List<Element> in) {
+		
+	}
+
+	@Override
+	public void parse() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public DocumentElement visit(boolean forViewEditor) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

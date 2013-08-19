@@ -89,4 +89,16 @@ public class BillOfMaterialsTable extends WorkpackageTable {
 	public void accept(IModelVisitor v) {
 		v.visit(this);
 	}
+
+	@Override
+	public void parse() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public DocumentElement visit(boolean forViewEditor) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

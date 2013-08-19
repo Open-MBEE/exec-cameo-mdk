@@ -7,6 +7,13 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+/**
+ * <p>A more OO way to pass around targets, current node, and whatever other variables might
+ * be added to track generation in DocumentGenerator, which has been refactored to be more
+ * modular.</p>
+ * @author bcompane
+ *
+ */
 public class GenerationContext {
 	
 	private Stack<List<Element>> targets;

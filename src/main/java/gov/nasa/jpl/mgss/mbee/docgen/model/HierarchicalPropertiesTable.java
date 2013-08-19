@@ -1,7 +1,18 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public abstract class HierarchicalPropertiesTable extends Table {
@@ -91,5 +102,34 @@ public abstract class HierarchicalPropertiesTable extends Table {
 		return showType;
 	}
 	
-
+	public void initialize(ActivityNode an, List<Element> in) {
+		Integer maxDepth = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "maxDepth", 0);
+		List<String> topIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeTypeName", new ArrayList<Property>()));
+		List<String> topExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeTypeName", new ArrayList<Property>()));
+		List<Stereotype> topIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeStereotype", new ArrayList<Stereotype>());
+		List<Stereotype> topExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeStereotype", new ArrayList<Stereotype>());
+		List<String> topIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeName", new ArrayList<Property>()));
+		List<String> topExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeName", new ArrayList<Property>()));
+		Integer topAssociationType = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topAssociationType", 0);
+		List<String> topOrder = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topOrder", new ArrayList<Property>()));
+		if (!topIncludeName.isEmpty() && topOrder.isEmpty())
+			topOrder = topIncludeName;
+		
+		setFloatingPrecision((Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.precisionChoosable, "floatingPrecision", -1));
+		setMaxDepth(maxDepth);
+		setTopIncludeTypeName(topIncludeTypeName);
+		setTopExcludeTypeName(topExcludeTypeName);
+		setTopIncludeStereotype(topIncludeStereotype);
+		setTopExcludeStereotype(topExcludeStereotype);
+		setTopIncludeName(topIncludeName);
+		setTopExcludeName(topExcludeName);
+		setTopAssociationType(topAssociationType);
+		setTopOrder(topOrder);
+		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hasCaptions, "showCaptions", true));
+		setCaptions((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
+		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(an, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
+		setIncludeDoc((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.documentationChoosable, "includeDoc", false));
+		setIncludeInherited((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.inheritedChoosable, "includeInherited", false));
+		setStyle((String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.tableStereotype, "style", null));
+	}
 }

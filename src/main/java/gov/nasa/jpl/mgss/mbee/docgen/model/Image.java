@@ -1,6 +1,15 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
+
+import java.util.ArrayList;
 import java.util.List;
+
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class Image extends Query {
 
@@ -35,5 +44,26 @@ public class Image extends Query {
 	public void accept(IModelVisitor v) {
 		v.visit(this);
 		
+	}
+
+	@Override
+	public void initialize(ActivityNode an, List<Element> in) {
+		// TODO Auto-generated method stub
+		Boolean doNotShow = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.imageStereotype, "doNotShow", false);
+		setCaptions((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
+		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hasCaptions, "showCaptions", true));
+		setDoNotShow(doNotShow);
+	}
+
+	@Override
+	public void parse() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public DocumentElement visit(boolean forViewEditor) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

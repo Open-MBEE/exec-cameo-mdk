@@ -1,10 +1,12 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
+
 import java.util.List;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public abstract class Query extends DocGenElement {
+public abstract class Query extends DocGenElement implements Generatable {
 	protected List<Element> targets;
 	protected List<String> titles;
   protected boolean sortElementsByName = false;	

@@ -236,7 +236,21 @@ public class CollectFilterParser {
 			res.addAll(getUserScriptCF(in, cba));
 		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.sortByName) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.sortByName))) {
 			res.addAll(Utils.sortByName(in));
-		} 
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.sortByAttribute) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.sortByAttribute))) {
+			String attribute = ((EnumerationLiteral)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "desiredAttribute", null)).getName();
+			List ordered = Utils.sortByAttribute(in, attribute);
+			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "invertOrder", false)) {
+				Collections.reverse(ordered);
+			}
+			res.addAll(ordered);
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.sortByProperty) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.sortByProperty))) {
+			Property property = (Property)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByProperty, "desiredProperty", null);
+			List ordered = Utils.sortByProperty(in, property);
+			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByProperty, "invertOrder", false)) {
+				Collections.reverse(ordered);
+			}
+			res.addAll(ordered);
+		}
 		return res;
 	}
 	
