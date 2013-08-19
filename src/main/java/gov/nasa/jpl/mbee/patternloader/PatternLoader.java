@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.patternloader;
 
+import gov.nasa.jpl.mbee.stylesaver.StylerUtils;
 import gov.nasa.jpl.mbee.stylesaver.ViewLoader;
 
 import java.awt.HeadlessException;
@@ -58,11 +59,12 @@ public class PatternLoader extends MDAction {
 	public void actionPerformed(ActionEvent e) {
         SessionManager.getInstance().createSession("Loading Pattern...");
 		
+		if(requester == null) {
+			this.requester = Application.getInstance().getProject().getActiveDiagram();
+    	}
+    	
 		// allow user to pick load or stamp operation
 		try {
-			if(requester == null) {
-				this.requester = Application.getInstance().getProject().getActiveDiagram();
-			}
 			delegateOperation();
 		} catch(RuntimeException ex) {
 			ex.printStackTrace();
@@ -122,6 +124,13 @@ public class PatternLoader extends MDAction {
         
     	// get the presentation elements of the requester - there should only be one (the diagram)
     	Element requesterElem = requester.getElement();
+    	
+		// ensure the diagram is locked for edit
+    	if(!StylerUtils.isDiagramLocked(proj, requester.getElement())) {
+			JOptionPane.showMessageDialog(null, "The target diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+    		return;
+    	}
+    	
     	Diagram requesterDiagramElem = (Diagram) proj.getElementByID(requesterElem.getID());
        	
 		final DiagramPresentationElement patternDiagram = getPatternDiagram();
@@ -167,6 +176,13 @@ public class PatternLoader extends MDAction {
     	
     	// get the presentation elements of the requester - there should only be one (the diagram)
     	Element requesterElem = requester.getElement();
+
+		// ensure the diagram is locked for edit
+    	if(!StylerUtils.isDiagramLocked(proj, requester.getElement())) {
+			JOptionPane.showMessageDialog(null, "The target diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+    		return;
+    	}
+
     	final Diagram requesterDiagramElem = (Diagram) proj.getElementByID(requesterElem.getID());
     	
 		final DiagramPresentationElement patternDiagram = getPatternDiagram();
