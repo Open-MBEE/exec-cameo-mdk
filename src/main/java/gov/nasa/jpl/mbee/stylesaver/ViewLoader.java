@@ -260,7 +260,7 @@ public class ViewLoader extends MDAction {
 	 * @param elem	the element to set style properties in.
 	 * @param style	the JSON style string for the element.
 	 */
-	private static void setStyle(PresentationElement elem, String style) {
+	public static void setStyle(PresentationElement elem, String style) {
 		PropertyManager propMan = elem.getPropertyManager();
 		JSONParser parser = new JSONParser();
 

@@ -14,6 +14,7 @@ package gov.nasa.jpl.mgss.mbee.docgen;
 
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
 import gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewPackage;
 import gov.nasa.jpl.mgss.mbee.docgen.sync.ApplicationSyncEventSubscriber;
@@ -21,6 +22,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.sync.ApplicationSyncEventSubscriber;
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
+import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 
 public class DocGenPlugin extends Plugin {
 	// Variables for running embedded web server for exposing services
@@ -54,7 +56,10 @@ public class DocGenPlugin extends Plugin {
 		acm.addBaseDiagramContextConfigurator("Class Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
 		acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
-
+		
+		PatternLoaderConfigurator plc = new PatternLoaderConfigurator();
+		acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, plc);
+		
 		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 
     getOclPlugin().init();
