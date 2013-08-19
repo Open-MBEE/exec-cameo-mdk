@@ -34,7 +34,7 @@ public class DeleteDocumentAction extends MDAction {
 		String url = ViewEditUtils.getUrl();
 		if (url == null || url.equals(""))
 			return;
-		url += "/rest/projects/document/" + proj.getID() + "/delete";
+		url += "/rest/projects/document/" + docid + "/delete";
 		PostMethod pm = new PostMethod(url);
 		try {
 			//pm.setRequestHeader("Content-Type", "text/json");
