@@ -168,7 +168,7 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
 		
 		// iterate over each diagram element checking to see if it's a good requester
 		for(PresentationElement requesterCand : diagElems) {
-			if(PatternLoaderUtils.isGoodRequester(requesterCand)) {
+			if(PatternLoaderUtils.isGoodElementRequester(requesterCand)) {
 				requester = requesterCand;
 			}
 		}

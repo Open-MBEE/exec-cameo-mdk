@@ -60,6 +60,9 @@ public class PatternLoader extends MDAction {
 		
 		// allow user to pick load or stamp operation
 		try {
+			if(requester == null) {
+				this.requester = Application.getInstance().getProject().getActiveDiagram();
+			}
 			delegateOperation();
 		} catch(RuntimeException ex) {
 			ex.printStackTrace();

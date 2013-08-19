@@ -22,16 +22,18 @@ public class PatternLoaderConfigurator implements DiagramContextAMConfigurator {
 	 * @param requester	the element that was right-clicked
 	 */
 	public void configure(ActionsManager manager, DiagramPresentationElement diagram, PresentationElement[] selected, PresentationElement requester) {
-		// check to see if the category was already added to the manager
-		if(manager.getActionFor("PatternLoader") == null) {
-			if(requester == null) {
-				return;
-			}
+		// check if the category was already added to the manager
+		if(manager.getActionFor("PatternLoader") != null) {
+			return;
+		}
+	
+		// check that the requester is good for either an element or diagram
+		if(PatternLoaderUtils.isGoodElementRequester(requester)) {
+			ActionsCategory category = new ActionsCategory("Pattern Loader", "Pattern Loader");
+			category.addAction(new PatternLoader("PatternLoader", "Pattern Loader", 0, null, requester));
 			
-			if(!PatternLoaderUtils.isGoodRequester(requester)) {
-				return;
-			}
-			
+			manager.addCategory(1, category);
+		} else if((requester == null) && (PatternLoaderUtils.isGoodElementRequester(diagram))) {
 			ActionsCategory category = new ActionsCategory("Pattern Loader", "Pattern Loader");
 			category.addAction(new PatternLoader("PatternLoader", "Pattern Loader", 0, null, requester));
 			

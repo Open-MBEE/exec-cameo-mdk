@@ -29,7 +29,11 @@ public class PatternLoaderUtils {
 	 * @param requester	the requester to check.
 	 * @return			true if formatting is good, false otherwise.
 	 */
-	public static boolean isGoodRequester(PresentationElement requester) {
+	public static boolean isGoodElementRequester(PresentationElement requester) {
+		if(requester == null) {
+			return false;
+		}
+
 		if(requester.getElement() == null) {
 			return false;
 		}
@@ -81,6 +85,14 @@ public class PatternLoaderUtils {
 		}
 		
 		if(diagramCtr == 0) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public static boolean isGoodDiagramRequester(PresentationElement requester) {
+		if(requester.getElement() == null) {
 			return false;
 		}
 		
