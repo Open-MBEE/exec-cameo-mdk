@@ -109,6 +109,7 @@ public class ViewExporter implements RunnableWithProgress{
 			pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
 			pm.setRequestEntity(JsonRequestEntity.create(json));
 			HttpClient client = new HttpClient();
+			ViewEditUtils.setCredentials(client);
 			gl.log("[INFO] Sending...");
 			client.executeMethod(pm);
 			String response = pm.getResponseBodyAsString();
@@ -149,7 +150,7 @@ public class ViewExporter implements RunnableWithProgress{
 		} finally {
 			pm.releaseConnection();
 		}
-
+/*
 		// Upload images to view editor (JSON keys are specified in DBEditDocwebVisitor
 		gl.log("[INFO] Updating Images...");
 		Map<String, JSONObject> images = v.getImages();
@@ -166,6 +167,7 @@ public class ViewExporter implements RunnableWithProgress{
 			int status = 0;
 			try {
 				HttpClient client = new HttpClient();
+				ViewEditUtils.setCredentials(client);
 				gl.log("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
 				client.executeMethod(get);
 				
@@ -200,7 +202,7 @@ public class ViewExporter implements RunnableWithProgress{
 		
 		// clean up the local images
 		v.removeImages();
-		
+		*/
 		//if synchronizing views
 		if (!force) {
 			ImportViewAction.doImportView(doc, true, recurse, url);
