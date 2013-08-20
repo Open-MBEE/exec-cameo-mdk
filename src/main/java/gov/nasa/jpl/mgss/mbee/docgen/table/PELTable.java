@@ -54,7 +54,7 @@ public class PELTable {
 	protected NamedElement workpackage;
 	protected boolean authorizesAsso;
 	protected boolean suppliesAsso;
-	
+
 	protected int productDepth; 				//depth of product tree, root is depth 1
 	protected int wpDepth; 						//depth of workpackage tree, root is depth 1
 	protected Map<Class, List<Class>> deployment; //product hierarchy
@@ -66,16 +66,16 @@ public class PELTable {
 	protected Map<NamedElement, List<Class>> wp2plc; //workpackage to power load characterizations
 	protected Map<NamedElement, NamedElement> wp2pwp; //workpackage to parent workpackage
 	protected Map<NamedElement, NamedElement> wp2swp;
-	
+
 	//for mode tables
 	protected Map<Class, List<Property>> p2p; //product to parts with product as type
 	protected Map<Property, Map<Property, Integer>> scopedUnits;
 	protected Map<Class, Map<String, Interaction>> p2i; //product to interactions for each mode
 	protected List<String> modes;
 	protected List<Interaction> importedModes;
-	
+
 	protected Map<Class, List<Property>> propcache;
-	
+
 	protected Map<Property, Integer> totalUnits;
 
 	protected boolean includeInherited;
@@ -89,21 +89,21 @@ public class PELTable {
 	public PELTable(Class product, NamedElement workpackage, List<Interaction> imodes, boolean suppliesAsso, boolean authorizesAsso, boolean includeInherited) {
 		init(product, workpackage, imodes, suppliesAsso, authorizesAsso, includeInherited);
 	}
-	
+
 	public PELTable(Class product, NamedElement workpackage, boolean suppliesAsso, boolean authorizesAsso, boolean includeInherited) {
 		init(product, workpackage, new ArrayList<Interaction>(), suppliesAsso, authorizesAsso, includeInherited);
 
 	}
-	
+
 	private void init(Class product, NamedElement workpackage, List<Interaction> imodes, boolean suppliesAsso, boolean authorizesAsso, boolean includeInherited) {
 		this.product = product;
 		this.suppliesAsso = suppliesAsso;
 		this.authorizesAsso = authorizesAsso;
 		this.workpackage = workpackage;
-		
+
 		wpDeployment = new HashMap<NamedElement, List<NamedElement>>();
 		deployment = new HashMap<Class, List<Class>>();
-		
+
 		p2wp = new HashMap<Class, NamedElement>();
 		wp2p = new HashMap<NamedElement, List<Class>>();
 		wp2lp = new HashMap<NamedElement, List<Class>>();
@@ -121,7 +121,7 @@ public class PELTable {
 		propcache = new HashMap<Class, List<Property>>();
 		log = Application.getInstance().getGUILog();
 	}
-	
+
 	/**
 	 * calculate and fill out bunch of stuff, call this before any get*** calls
 	 */
@@ -151,8 +151,8 @@ public class PELTable {
 			modes = realmodes;
 		}
 	}
-	
-	  
+
+
 	private int fillDeploymentTree(Class cur, Property p, Set<Class> done, int curdepth) {
 		int maxdepth = curdepth;
 		if (!deployment.containsKey(cur)) {
@@ -161,20 +161,20 @@ public class PELTable {
 		}
 		if (!p2p.containsKey(cur))
 			p2p.put((Class)cur, new ArrayList<Property>());
-		
+
 		List<Class> children = deployment.get(cur);
 		List<Property> iterate = new ArrayList<Property>(cur.getOwnedAttribute());
-    	if (includeInherited)
-    		iterate.addAll(PropertiesTable.getInheritedProperties(cur));
-    	Map<Property, Integer> props = null;
-    	if (p != null) {
-    		if (!scopedUnits.containsKey(p))
-    			 scopedUnits.put(p, new HashMap<Property, Integer>());
-    		props = scopedUnits.get(p);
-    	} else {
-    		props = this.totalUnits;
-    	}
-    	List<Property> iterate2 = new ArrayList<Property>();
+		if (includeInherited)
+			iterate.addAll(PropertiesTable.getInheritedProperties(cur));
+		Map<Property, Integer> props = null;
+		if (p != null) {
+			if (!scopedUnits.containsKey(p))
+				scopedUnits.put(p, new HashMap<Property, Integer>());
+			props = scopedUnits.get(p);
+		} else {
+			props = this.totalUnits;
+		}
+		List<Property> iterate2 = new ArrayList<Property>();
 		for (Property prop: iterate) {
 			if (Utils.getMultiplicity(prop)  == 0)
 				continue;
@@ -210,7 +210,7 @@ public class PELTable {
 		propcache.put(cur, iterate2);
 		return maxdepth;
 	}
-	
+
 	private void fillTotalUnits(Property p, Map<Property, Integer> realUnits, int multiplier) {
 		int total = 0;
 		if (realUnits != null) {
@@ -226,7 +226,7 @@ public class PELTable {
 		for (Property c: scopedUnits.get(p).keySet())
 			fillTotalUnits(c, scopedUnits.get(p), total);
 	}
-	
+
 	private void fillWorkPackage(Set<Class> products) {
 		if (!suppliesAsso) {
 			for (Class c: products) {	
@@ -245,7 +245,7 @@ public class PELTable {
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void fixInheritingWorkPackages() {
 		Collection<NamedElement> wps = p2wp.values();
@@ -256,7 +256,7 @@ public class PELTable {
 				}
 			}
 		}
-		
+
 		for (Class p: p2wp.keySet()) {
 			NamedElement wp = p2wp.get(p);
 			if (wp2swp.containsKey(wp)) {
@@ -264,7 +264,7 @@ public class PELTable {
 			}
 		}
 	}
-	
+
 	private int getAuthorizedWorkPackages(NamedElement cur, Set<NamedElement> done, int curdepth) {
 		int maxdepth = curdepth;
 		if (!wpDeployment.containsKey(cur)) {
@@ -299,32 +299,32 @@ public class PELTable {
 					}
 				}
 			}
-			
+
 			if (includeInherited) {
-			for (Element parent: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(cur, Generalization.class, 1, 1)) {
-				if (StereotypesHelper.hasStereotypeOrDerived(parent, "Work Package")) {
-					for (Element target: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(parent, "authorizes", 1, true, 1)) {
-						if (StereotypesHelper.hasStereotypeOrDerived(target, "Work Package")) {
-							boolean look = true;
-							for (Element specialized: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(target, Generalization.class, 2, 1)) {
-								if (children.contains(specialized))
-									look = false;
-							}
-							if (!look)
-								continue;
-							if (!children.contains(target)) {
-								children.add((Class)target);
-								wp2pwp.put((Class)target, cur);
-							}
-							if (!done.contains((Class)target)) {
-								int tempdepth = getAuthorizedWorkPackages((Class)target, done, curdepth + 1);
-								if (tempdepth > maxdepth)
-									maxdepth = tempdepth;
+				for (Element parent: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(cur, Generalization.class, 1, 1)) {
+					if (StereotypesHelper.hasStereotypeOrDerived(parent, "Work Package")) {
+						for (Element target: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(parent, "authorizes", 1, true, 1)) {
+							if (StereotypesHelper.hasStereotypeOrDerived(target, "Work Package")) {
+								boolean look = true;
+								for (Element specialized: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(target, Generalization.class, 2, 1)) {
+									if (children.contains(specialized))
+										look = false;
+								}
+								if (!look)
+									continue;
+								if (!children.contains(target)) {
+									children.add((Class)target);
+									wp2pwp.put((Class)target, cur);
+								}
+								if (!done.contains((Class)target)) {
+									int tempdepth = getAuthorizedWorkPackages((Class)target, done, curdepth + 1);
+									if (tempdepth > maxdepth)
+										maxdepth = tempdepth;
+								}
 							}
 						}
 					}
 				}
-			}
 			}
 		} else if (ModelLib.isOriginalWorkPackage(cur)){
 			for (Property p: ((Class) cur).getOwnedAttribute()){
@@ -342,7 +342,7 @@ public class PELTable {
 		}
 		return maxdepth;
 	}
-	
+
 	private void getWorkPackageProductMapping(Set<Class> products, Set<NamedElement> wps) {
 		/*if (!suppliesAsso) {
 			for (Class wp: wps) {
@@ -370,7 +370,7 @@ public class PELTable {
 			NamedElement wp = p2wp.get(product);
 			if (wp == null)
 				continue;
-		/*	//kludge for allowing multiple supplies relationship to one product from different workpackage trees
+			/*	//kludge for allowing multiple supplies relationship to one product from different workpackage trees
 			if (!wps.contains(wp)) {
 				for (Element pwp: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(product, "supplies", 2, false, 1)) {
 					if (wps.contains(pwp)) {
@@ -405,8 +405,8 @@ public class PELTable {
 				wp2p.put(wp, new ArrayList<Class>());
 		}
 	}
-	
-	
+
+
 	private void removeEmptyWorkpackagesFromTree() {
 		for (NamedElement w: new HashSet<NamedElement>(wpDeployment.keySet())) {
 			if (wpDeployment.get(w).isEmpty() && wp2p.get(w).isEmpty()) {
@@ -420,7 +420,7 @@ public class PELTable {
 			}
 		}
 	}
-	
+
 	private boolean isLeafPoweredHardwareProduct(Class p) {
 		if (!ModelLib.isPLProduct(p))
 			return false;
@@ -434,7 +434,7 @@ public class PELTable {
 		}
 		return true;
 	}
-	
+
 	private void fillWp2lp() {
 		for (NamedElement wp: wp2p.keySet()) {
 			List<Class> ps = new ArrayList<Class>();
@@ -445,7 +445,7 @@ public class PELTable {
 			wp2lp.put(wp, ps);
 		}
 	}
-	
+
 	private void fillP2plc() {
 		for (Class p: deployment.keySet()) {
 			List<Class> cs = new ArrayList<Class>();
@@ -462,7 +462,7 @@ public class PELTable {
 			p2plc.put(p, cs);
 		}
 	}
-	
+
 	private void fillWp2plc() {
 		for (NamedElement wp: wpDeployment.keySet()) {
 			List<Class> cs = new ArrayList<Class>();
@@ -480,28 +480,35 @@ public class PELTable {
 				}
 			} else {
 				List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
-				if (characterizes.size() > 1){
-					throw new NullPointerException(); 
+
+				Class characterization = null;
+
+				for (Element charact : characterizes){
+					if (ModelLib.isMassCharacterization(charact))
+						continue;
+					if (charact instanceof Class){
+						characterization = (Class) charact;
+					}
 				}
-				Element charact = characterizes.get(0);
-				if (charact instanceof Class){
-					for (Property prop: ((Class)charact).getOwnedAttribute()) {
-						Type t = prop.getType();
-						if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, "Power Load Characterization")) {
-							for (Element e: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(t, Generalization.class, 2, 1)) {
-								if (e instanceof Class && StereotypesHelper.hasStereotypeOrDerived(e, "Power Load Characterization")) {
-									cs.add((Class)e);
-								}
+
+
+				for (Property prop: (characterization).getOwnedAttribute()) {
+					Type t = prop.getType();
+					if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, "Power Load Characterization")) {
+						for (Element e: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(t, Generalization.class, 2, 1)) {
+							if (e instanceof Class && StereotypesHelper.hasStereotypeOrDerived(e, "Power Load Characterization")) {
+								cs.add((Class)e);
 							}
 						}
-					}				
+					}
+
 				}
-		}
-			
+			}
+
 			wp2plc.put(wp, cs);
 		}
 	}
-	
+
 	private void fillP2i() {
 		for (Class p: deployment.keySet()) {
 			Map<String, Interaction> is = new HashMap<String, Interaction>();
@@ -517,16 +524,16 @@ public class PELTable {
 				}
 			}
 			if (includeInherited) {
-			for (Element parent: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(p, Generalization.class, 1, 1)) {
-				for (Element e: parent.getOwnedElement()) {
-					if (e instanceof Interaction && StereotypesHelper.hasStereotype(e, "Mode Scenario") && !redefined.contains(e)) {
-						String mode = ((Interaction)e).getName();
-						is.put(mode, (Interaction)e);
-						if (!modes.contains(mode))
-							modes.add(mode);
+				for (Element parent: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(p, Generalization.class, 1, 1)) {
+					for (Element e: parent.getOwnedElement()) {
+						if (e instanceof Interaction && StereotypesHelper.hasStereotype(e, "Mode Scenario") && !redefined.contains(e)) {
+							String mode = ((Interaction)e).getName();
+							is.put(mode, (Interaction)e);
+							if (!modes.contains(mode))
+								modes.add(mode);
+						}
 					}
 				}
-			}
 			}
 			/*for (Property prop: p.getOwnedAttribute()) {
 				Type t = prop.getType();
@@ -551,7 +558,7 @@ public class PELTable {
 			}*/
 		}
 	}
-	
+
 	/**
 	 * product hierarchy depth
 	 * @return
@@ -575,7 +582,7 @@ public class PELTable {
 	public Map<Class, NamedElement> getP2wp() {
 		return p2wp;
 	}
-	
+
 	/**
 	 * workpackage hierarchy
 	 * @return
@@ -599,7 +606,7 @@ public class PELTable {
 	public Map<NamedElement, List<Class>> getWp2p() {
 		return wp2p;
 	}
-	
+
 	/**
 	 * workpackage to list of leaf products mapping
 	 * @return
@@ -607,7 +614,7 @@ public class PELTable {
 	public Map<NamedElement, List<Class>> getWp2LeafP() {
 		return wp2lp;
 	}
-	
+
 	/**
 	 * product to list of power load characterizations
 	 * @return
@@ -615,19 +622,19 @@ public class PELTable {
 	public Map<Class, List<Class>> getP2plc() {
 		return p2plc;
 	}
-	
+
 	public Map<NamedElement, List<Class>> getWp2plc() {
 		return wp2plc;
 	}
-	
+
 	public Map<Class, Map<String, Interaction>> getP2i() {
 		return p2i;
 	}
-	
+
 	public List<String> getModes() {
 		return modes;
 	}
-	
+
 	public Map<Class, List<Property>> getP2p() {
 		return p2p;
 	}
@@ -635,5 +642,5 @@ public class PELTable {
 	public Map<Property, Integer> getTotalUnits() {
 		return totalUnits;
 	}
-	
+
 }

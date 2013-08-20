@@ -58,7 +58,7 @@ public class ModelLib {
 		return (StereotypesHelper.hasStereotypeOrDerived(e, "analysis:Characterization") && extendsFromMass((Classifier) e));
 	
 	}
-	
+		
 	public static boolean isCharacterizes(Relationship r){
 		return (StereotypesHelper.hasStereotypeOrDerived(r, "analysis:characterizes"));
 	}
