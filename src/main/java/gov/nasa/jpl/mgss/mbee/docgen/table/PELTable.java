@@ -491,7 +491,6 @@ public class PELTable {
 					}
 				}
 
-
 				for (Property prop: (characterization).getOwnedAttribute()) {
 					Type t = prop.getType();
 					if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, "Power Load Characterization")) {
