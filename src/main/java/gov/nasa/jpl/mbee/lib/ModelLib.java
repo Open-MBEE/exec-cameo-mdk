@@ -1,8 +1,10 @@
 package gov.nasa.jpl.mbee.lib;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Relationship;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
@@ -36,7 +38,6 @@ public class ModelLib {
 	public static boolean isSupplies(Element e){
 		return StereotypesHelper.hasStereotypeOrDerived(e, "supplies") || StereotypesHelper.hasStereotypeOrDerived(e, "project:supplies");
 	}
-	//public boolean is
 	
 	public static boolean isIMCE(){
 		return isIMCE;
@@ -48,5 +49,28 @@ public class ModelLib {
 	
 	public static boolean isPLProduct(Element p){
 		return (StereotypesHelper.hasStereotypeOrDerived(p, "Power Load Product") || StereotypesHelper.hasStereotypeOrDerived(p, "Power Load Component") || StereotypesHelper.hasStereotypeOrDerived(p,  "europa:PowerLoadComponent"));
+	}
+	
+	public static boolean isMassCharacterization(Element e){
+		if (!(e instanceof Classifier))
+			return false;
+
+		return (StereotypesHelper.hasStereotypeOrDerived(e, "analysis:Characterization") && extendsFromMass((Classifier) e));
+	
+	}
+	
+	public static boolean isCharacterizes(Relationship r){
+		return (StereotypesHelper.hasStereotypeOrDerived(r, "analysis:characterizes"));
+	}
+	
+	public static boolean extendsFromMass(Classifier e){
+		for (Classifier g : e.getGeneral()){
+			if (g.getName().equals("Launch Mass"))
+				return true;
+				
+			extendsFromMass(g);
+		}
+		
+		return false;
 	}
 }
