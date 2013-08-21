@@ -60,7 +60,7 @@ public class ProjectExporter {
 		url += "/rest/projects/" + project.getID();
 		PostMethod pm = new PostMethod(url);
 		try {
-			pm.setRequestHeader("Content-Type", "text/json");
+			pm.setRequestHeader("Content-Type", "application/json");
 			pm.setRequestEntity(JsonRequestEntity.create(post));
 			//Protocol easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
 			//Protocol.registerProtocol("https", easyhttps);

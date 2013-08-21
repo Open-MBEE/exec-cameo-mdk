@@ -54,7 +54,7 @@ public class ExportViewHierarchyAction extends MDAction {
 			String posturl = url + "/rest/views/" + doc.getID() + "/hierarchy";
 			pm = new PostMethod(posturl);
 			
-			pm.setRequestHeader("Content-Type", "text/json");
+			pm.setRequestHeader("Content-Type", "application/json");
 			pm.setRequestEntity(JsonRequestEntity.create(post));
 			HttpClient client = new HttpClient();
 			ViewEditUtils.setCredentials(client);
