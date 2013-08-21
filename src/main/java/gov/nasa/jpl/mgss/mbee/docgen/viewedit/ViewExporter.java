@@ -26,6 +26,9 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -103,6 +106,7 @@ public class ViewExporter implements RunnableWithProgress{
 				params.add("force=true");
 			baseurl += Utils.join(params, "&");
 		}
+		
 		PostMethod pm = new PostMethod(baseurl);
 		try {
 			//gl.log(json);
@@ -150,17 +154,25 @@ public class ViewExporter implements RunnableWithProgress{
 		} finally {
 			pm.releaseConnection();
 		}
-/*
+
 		// Upload images to view editor (JSON keys are specified in DBEditDocwebVisitor
 		gl.log("[INFO] Updating Images...");
 		Map<String, JSONObject> images = v.getImages();
+		boolean isAlfresco = false;
+		if (url.indexOf("service") >= 0) {
+			isAlfresco = true;
+		}
 		for (String key: images.keySet()) {
 			String filename = (String)images.get(key).get("abspath");
 			String cs = (String)images.get(key).get("cs");
 			String extension = (String)images.get(key).get("extension");
 			
 			File imageFile = new File(filename);
-			baseurl = url + "/rest/images/" + key + "?cs=" + cs + "&extension=" + extension;
+			if (isAlfresco) {
+				baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
+			} else {
+				baseurl = url + "/rest/images/" + key + "?cs=" + cs + "&extension=" + extension;
+			}
 			
 			// check whether the image already exists
 			GetMethod get = new GetMethod(baseurl);
@@ -183,8 +195,14 @@ public class ViewExporter implements RunnableWithProgress{
 			} else {
 				PostMethod post = new PostMethod(baseurl);
 				try {
-					post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile), imageFile.length()));
+					if (isAlfresco) {
+						Part[] parts = { new FilePart("content", imageFile) };
+						post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
+					} else {
+						post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile), imageFile.length()));
+					}
 					HttpClient client = new HttpClient();
+					ViewEditUtils.setCredentials(client);
 					gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
 					client.executeMethod(post);
 					
@@ -202,7 +220,7 @@ public class ViewExporter implements RunnableWithProgress{
 		
 		// clean up the local images
 		v.removeImages();
-		*/
+		
 		//if synchronizing views
 		if (!force) {
 			ImportViewAction.doImportView(doc, true, recurse, url);
