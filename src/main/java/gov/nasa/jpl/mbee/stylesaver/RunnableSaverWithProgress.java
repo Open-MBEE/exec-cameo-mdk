@@ -15,6 +15,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 /**
  * Nested class contains a run method for the save operation.
  * Updates progress bar dynamically.
+ * 
+ * @author Benjamin Inada, JPL/Caltech
  */
 public class RunnableSaverWithProgress implements RunnableWithProgress {
 	private JSONObject mainStore;

@@ -10,6 +10,8 @@ import com.nomagic.task.RunnableWithProgress;
 /**
  * This class contains a run method for the load operation.
  * Updates progress bar dynamically.
+ * 
+ * @author Benjamin Inada, JPL/Caltech
  */
 class RunnableLoaderWithProgress implements RunnableWithProgress {
 	private List<PresentationElement> list;

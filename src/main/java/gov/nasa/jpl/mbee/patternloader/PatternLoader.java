@@ -15,14 +15,12 @@ import javax.swing.JOptionPane;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -96,31 +94,21 @@ public class PatternLoader extends MDAction {
 		if((opt == JOptionPane.CANCEL_OPTION) || (opt == JOptionPane.CLOSED_OPTION)) {
 			throw new RuntimeException();
 		}
-		
-		if((opt == JOptionPane.YES_OPTION)) {
-			try {
-				runLoadPattern();
-			} catch(RuntimeException e) {
-				e.printStackTrace();
-				throw new RuntimeException();
+	
+		try {
+			if((opt == JOptionPane.YES_OPTION)) {
+				prepAndRun(true);
+			} else if((opt == JOptionPane.NO_OPTION)) {
+				prepAndRun(false);
 			}
-		} else if((opt == JOptionPane.NO_OPTION)) {
-			try {
-				runStampPattern();
-			} catch(RuntimeException e) {
-				e.printStackTrace();
-				throw new RuntimeException();
-			}
+		} catch(RuntimeException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
 		}
 	}
 	
-	/**
-	 * Runs the Pattern Loader with a progress bar.
-	 * 
-	 * @throws RuntimeException if a problem with loading is encountered.
-	 */
-	private void runLoadPattern() throws RuntimeException {
-    	final Project proj = Application.getInstance().getProject();
+	protected void prepAndRun(boolean runLoad) throws RuntimeException {
+    	Project proj = Application.getInstance().getProject();
         
     	// get the presentation elements of the requester - there should only be one (the diagram)
     	Element requesterElem = requester.getElement();
@@ -133,37 +121,45 @@ public class PatternLoader extends MDAction {
     	
     	Diagram requesterDiagramElem = (Diagram) proj.getElementByID(requesterElem.getID());
        	
-		final DiagramPresentationElement patternDiagram = getPatternDiagram();
+		DiagramPresentationElement patternDiagram = getPatternDiagram();
     	DiagramPresentationElement targetDiagram = proj.getDiagram(requesterDiagramElem);
 		
 		if((patternDiagram == null) || (targetDiagram == null)) {
     		throw new RuntimeException();
+		} else {
+			patternDiagram.ensureLoaded();
+			targetDiagram.ensureLoaded();
 		}
 		
-    	final List<PresentationElement> elemList = targetDiagram.getPresentationElements();
-    		
-		RunnableWithProgress runnable = null;
 		try {
-    		runnable = new RunnableWithProgress() {
-    			public void run(ProgressStatus progressStatus) {
-    				progressStatus.init("Loading pattern...", 0, elemList.size());
-    				
-					// save the pattern in the pattern diagram
-					PatternSaver ps  = new PatternSaver();
-					ps.savePattern(proj, patternDiagram);
-					
-					// load the pattern in the active diagram
-			    	loadPattern(elemList, ps.getPattern(), progressStatus);
-    			}
-    		};
-		} catch(NoSuchMethodError ex) {
-    		Application.getInstance().getGUILog().log("There was a problem starting the Pattern Loader. The Pattern Loader is now exiting.");
-    		throw new RuntimeException();
+			if(runLoad) {
+				runLoadPattern(proj, targetDiagram, patternDiagram);
+			} else {
+				runStampPattern(proj, targetDiagram, patternDiagram);
+			}
+		} catch(RuntimeException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
 		}
-		
+	}
+	
+	/**
+	 * Runs the Pattern Loader with a progress bar.
+	 * 
+	 * @throws RuntimeException if a problem with loading is encountered.
+	 */
+	private void runLoadPattern(Project proj, DiagramPresentationElement targetDiagram, DiagramPresentationElement patternDiagram) throws RuntimeException {
+    	List<PresentationElement> targetElements = targetDiagram.getPresentationElements();
+    		
+		RunnablePatternLoaderWithProgress runnable = new RunnablePatternLoaderWithProgress(proj, patternDiagram, targetElements);
 		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
 		
-		JOptionPane.showMessageDialog(null, "Pattern load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		if(runnable.getSuccess()) {
+			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			JOptionPane.showMessageDialog(null, "Error occurred. Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			throw new RuntimeException();
+		}
 	}
 	
 	/**
@@ -171,49 +167,18 @@ public class PatternLoader extends MDAction {
 	 * 
 	 * @throws RuntimeException if a problem with loading is encountered.
 	 */
-	private void runStampPattern() throws RuntimeException {
-    	final Project proj = Application.getInstance().getProject();
-    	
-    	// get the presentation elements of the requester - there should only be one (the diagram)
-    	Element requesterElem = requester.getElement();
-
-		// ensure the diagram is locked for edit
-    	if(!StylerUtils.isDiagramLocked(proj, requester.getElement())) {
-			JOptionPane.showMessageDialog(null, "The target diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
-    		return;
-    	}
-
-    	final Diagram requesterDiagramElem = (Diagram) proj.getElementByID(requesterElem.getID());
-    	
-		final DiagramPresentationElement patternDiagram = getPatternDiagram();
-		final DiagramPresentationElement targetDiagram = proj.getDiagram(requesterDiagramElem);
+	private void runStampPattern(Project proj, DiagramPresentationElement targetDiagram, DiagramPresentationElement patternDiagram) throws RuntimeException {
+		List<PresentationElement> patternElements = patternDiagram.getPresentationElements();
 		
-		if((patternDiagram == null) || (targetDiagram == null)) {
-    		throw new RuntimeException();
-		}
-		
-		// need to ensure that both diagrams are loaded before operating on them
-		patternDiagram.ensureLoaded();
-		targetDiagram.ensureLoaded();
-		
-		final List<PresentationElement> patternElements = patternDiagram.getPresentationElements();
-		
-		RunnableWithProgress runnable = null;
-		try {
-    		runnable = new RunnableWithProgress() {
-    			public void run(ProgressStatus progressStatus) {
-    				progressStatus.init("Stamping pattern...", 0, 100);
-    				CopyPasting.copyPasteElements(patternElements, targetDiagram.getObjectParent(), targetDiagram, true, false);
-    			}
-    		};
-		} catch(NoSuchMethodError ex) {
-    		Application.getInstance().getGUILog().log("There was a problem starting the Pattern Stamper. The Pattern Stamper is now exiting.");
-    		throw new RuntimeException();
-		}
-		
+		RunnablePatternStamperWithProgress runnable = new RunnablePatternStamperWithProgress(targetDiagram, patternElements);
 		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", false);
 		
-		JOptionPane.showMessageDialog(null, "Pattern stamp complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		if(runnable.getSuccess()) {
+			JOptionPane.showMessageDialog(null, "Stamp complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			JOptionPane.showMessageDialog(null, "Error occurred. Stamp cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			throw new RuntimeException();
+		}
 	}
 	
 	/**
