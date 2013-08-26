@@ -1,4 +1,6 @@
-package gov.nasa.jpl.mbee.patternloader;
+package gov.nasa.jpl.mbee.patternloader.validationfixes;
+
+import gov.nasa.jpl.mbee.patternloader.PatternLoader;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;

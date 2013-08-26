@@ -107,7 +107,7 @@ public class PatternLoader extends MDAction {
 		}
 	}
 	
-	protected void prepAndRun(boolean runLoad) throws RuntimeException {
+	public void prepAndRun(boolean runLoad) throws RuntimeException {
     	Project proj = Application.getInstance().getProject();
         
     	// get the presentation elements of the requester - there should only be one (the diagram)

@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.patternloader;
 
+import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchAll;
+import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchSelect;
 import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
 
 import java.util.ArrayList;
