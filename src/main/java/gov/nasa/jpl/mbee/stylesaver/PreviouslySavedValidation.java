@@ -13,7 +13,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 
-import gov.nasa.jpl.mbee.stylesaver.fixes.FixNotSaved;
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixNotSaved;
 
 import java.lang.Class;
 import java.util.*;
