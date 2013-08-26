@@ -14,8 +14,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 
-import gov.nasa.jpl.mbee.stylesaver.fixes.FixStyleMismatchRestore;
-import gov.nasa.jpl.mbee.stylesaver.fixes.FixStyleMismatchUpdate;
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixStyleMismatchRestore;
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixStyleMismatchUpdate;
 
 import java.lang.Class;
 import java.util.*;
