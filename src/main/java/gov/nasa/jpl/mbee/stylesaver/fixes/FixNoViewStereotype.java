@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.stylesaver;
+package gov.nasa.jpl.mbee.stylesaver.fixes;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -8,6 +8,9 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+
+
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -85,7 +88,7 @@ public class FixNoViewStereotype extends NMAction implements AnnotationAction {
         Project project = Application.getInstance().getProject();
         
         // add the view stereotype to the diagram
-    	StereotypesHelper.addStereotype(diagToFix.getElement(), StylerUtils.getWorkingStereotype(project));
+    	StereotypesHelper.addStereotype(diagToFix.getElement(), StyleSaverUtils.getWorkingStereotype(project));
 		
 		JOptionPane.showMessageDialog(null, "Stereotype added.", "Info", JOptionPane.INFORMATION_MESSAGE);
     }

@@ -14,7 +14,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  * 
  * @author Benjamin Inada, JPL/Caltech
  */
-public class StylerUtils {
+public class StyleSaverUtils {
 	/**
 	 * Returns the correct View or derived stereotype necessary for saving styles in this project.
 	 * 
@@ -23,7 +23,7 @@ public class StylerUtils {
 	 */
 	public static Stereotype getWorkingStereotype(Project proj) {
 		Stereotype workingStereotype = null;
-		String[] possStereotypes = { "DGView", "view" };
+		String[] possStereotypes = { "view", "DGView", "View" };
 		int index = 0;
 		
 		while((workingStereotype == null) && (index < possStereotypes.length)) {			

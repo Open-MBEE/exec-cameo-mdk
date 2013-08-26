@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.stylesaver;
+package gov.nasa.jpl.mbee.stylesaver.fixes;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -10,6 +10,10 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+
+
+import gov.nasa.jpl.mbee.stylesaver.RunnableLoaderWithProgress;
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -82,7 +86,7 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
         Project project = Application.getInstance().getProject();
         
     	// get the main style string from the view stereotype tag "style"
-    	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StylerUtils.getWorkingStereotype(project), "style");
+    	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StyleSaverUtils.getWorkingStereotype(project), "style");
     	String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
     	
     	// get the elements on the diagram to load styles into

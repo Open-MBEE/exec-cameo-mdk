@@ -59,32 +59,56 @@ public class ViewLoader extends MDAction {
 		SessionManager.getInstance().createSession("Loading styles...");
 		
 		Project proj = Application.getInstance().getProject();
-
-    	// try to load the active diagram
-    	DiagramPresentationElement diagram;
+		DiagramPresentationElement diagram = proj.getActiveDiagram();
+		String style = null;
+		
+		try {
+			style = prep(proj, diagram);
+		} catch(RuntimeException ex) {
+			SessionManager.getInstance().cancelSession();
+		}
+    	
+    	// run the loader with a progress bar
+		RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(diagram.getPresentationElements(), style);
+		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
+		
+		if(runnable.getSuccess()) {
+			SessionManager.getInstance().closeSession();
+			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			SessionManager.getInstance().cancelSession();
+			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+	
+	/**
+	 * Prepares the active diagram for a load.
+	 * 
+	 * @param proj 				the project the diagram resides in.
+	 * @param diagram			the diagram to prepare.
+	 * @return					the style string from the style tag.
+	 * @throws RuntimeException	if an error occurs.
+	 */
+	private String prep(Project proj, DiagramPresentationElement diagram) throws RuntimeException {
     	try {
-        	diagram = proj.getActiveDiagram();
         	diagram.ensureLoaded();
     	} catch (NullPointerException ex) {
     		JOptionPane.showMessageDialog(null, "Exiting - there was an error loading the diagram.", "Error", JOptionPane.ERROR_MESSAGE);
-            SessionManager.getInstance().cancelSession();
-			return;
+			return null;
     	}
     	
-    	if(!StylerUtils.isDiagramLocked(proj, diagram.getElement())) {
+    	if(!StyleSaverUtils.isDiagramLocked(proj, diagram.getElement())) {
 			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
-			SessionManager.getInstance().cancelSession();
-    		return;
+    		return null;
     	}
     	
-		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(proj);
+		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(proj);
 		if(workingStereotype == null) {
-			SessionManager.getInstance().cancelSession();
-			return;
+			return null;
 		}
     	
     	// ensure that this diagram is stereotyped with the working stereotype
-    	if(!StylerUtils.isGoodStereotype(diagram, workingStereotype)) {
+    	if(!StyleSaverUtils.isGoodStereotype(diagram, workingStereotype)) {
 			Object[] options = { "Yes", "Cancel load" };
 
     		int opt = JOptionPane.showOptionDialog(null, "This diagram is not stereotyped " + workingStereotype.getName() + ". It must be stereotyped " + workingStereotype.getName() + "\n" +
@@ -94,42 +118,18 @@ public class ViewLoader extends MDAction {
 		
     		// if user presses no or closes the dialog, exit the program. else, add view stereotype to diagram 
     		if((opt == JOptionPane.NO_OPTION) || (opt == JOptionPane.CLOSED_OPTION)) {
-    			SessionManager.getInstance().cancelSession();
-    			return;
+    			return null;
     		} else {
     			StereotypesHelper.addStereotype(diagram.getElement(), workingStereotype);
     			JOptionPane.showMessageDialog(null, "Stereotype added.", "Info", JOptionPane.INFORMATION_MESSAGE);
     		}
     	}
 
-    	// get all the elements in the active diagram and store them into a list
-    	final List<PresentationElement> list;
-    	try {
-    		list = diagram.getPresentationElements();
-    	} catch(NullPointerException ex) {
-			JOptionPane.showMessageDialog(null, "Load cancelled. There are no elements in the diagram.", "Info", JOptionPane.INFORMATION_MESSAGE);
-            SessionManager.getInstance().cancelSession();
-			return;
-    	}
-       	
     	// get the main style string from the view stereotype tag "style"
     	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(diagram.getElement(), workingStereotype, "style");
     	String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
     	
-    	// run the loader with a progress bar
-    	if((style != null) && (!style.equals(""))) {
-    		RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(list, style);
-    		
-    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
-    		
-    		if(runnable.getSuccess()) {
-				SessionManager.getInstance().closeSession();
-    			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-    		} else {
-    			SessionManager.getInstance().cancelSession();
-    			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
-    		}
-    	}
+    	return style;
 	}
 	
 	/**
@@ -140,20 +140,19 @@ public class ViewLoader extends MDAction {
 	 */
 	public static void load(List<PresentationElement> elemList, String style) {
     	for(PresentationElement elem : elemList) {
+    		// load the style of the element's children recursively
+    		setStyleChildren(elem, style);
+    		
     		// parse the style string for the correct style of each element
     		String elemStyle = getStyleStringForElement(elem, style);
     		
     		if(elemStyle == null) {
-    			// there was no style string found for this element, load children and then continue
-				setStyleChildren(elem, style);
+    			// there was no style string found for this element, just continue
 				continue;
     		}
     		
-    		// load the style of the diagram element
+    		// load the style of the element
     		setStyle(elem, elemStyle);
-    		
-    		// then load the style of its children recursively
-    		setStyleChildren(elem, style);
     		
     		elem.getDiagramSurface().repaint();
        	}
@@ -170,25 +169,23 @@ public class ViewLoader extends MDAction {
 	 */
 	public static boolean load(List<PresentationElement> elemList, String style, ProgressStatus progressStatus) {
     	for(PresentationElement elem : elemList) {    		
-    		// check to see if the user cancelled
     		if(progressStatus.isCancel()) {
     			return false;
     		}
+    		
+    		// load the style of the element's children recursively
+    		setStyleChildren(elem, style);
     		
     		// parse the style string for the correct style of each element
     		String elemStyle = getStyleStringForElement(elem, style);
     		
     		if(elemStyle == null) {
-    			// there was no style string found for this element, load children and then continue
-				setStyleChildren(elem, style);
+    			// there was no style string found for this element, just continue
 				continue;
     		}
     		
-    		// load the style of the diagram element
+    		// load the style of the element
     		setStyle(elem, elemStyle);
-    		
-    		// then load the style of its children recursively
-    		setStyleChildren(elem, style);
     		
     		elem.getDiagramSurface().repaint();
     		
