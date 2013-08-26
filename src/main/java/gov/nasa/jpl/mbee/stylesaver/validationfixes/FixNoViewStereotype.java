@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.stylesaver.fixes;
+package gov.nasa.jpl.mbee.stylesaver.validationfixes;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
