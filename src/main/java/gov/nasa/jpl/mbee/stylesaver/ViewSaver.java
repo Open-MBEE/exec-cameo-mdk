@@ -74,7 +74,7 @@ public class ViewSaver extends MDAction {
     	}
     	
     	// ensure the diagram is locked for edit
-    	if(!StylerUtils.isDiagramLocked(proj, diagram.getElement())) {
+    	if(!StyleSaverUtils.isDiagramLocked(proj, diagram.getElement())) {
 			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
     		return;
     	}
@@ -113,7 +113,7 @@ public class ViewSaver extends MDAction {
     	}
 
     	// get the proper stereotype for diagrams of this project
-		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(proj);
+		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(proj);
 		if(workingStereotype == null) {
 			if(!suppressOutput) {
 				JOptionPane.showMessageDialog(null, "This diagram's stereotype is invalid for this function.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -123,7 +123,7 @@ public class ViewSaver extends MDAction {
 		}
 
     	// ensure that this diagram is stereotyped view
-    	if(!StylerUtils.isGoodStereotype(diagram, workingStereotype)) {
+    	if(!StyleSaverUtils.isGoodStereotype(diagram, workingStereotype)) {
     		int opt;
     		if(!suppressOutput) {
     			Object[] options = { "Yes", "Cancel save" };

@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.patternloader;
 
-import gov.nasa.jpl.mbee.stylesaver.StylerUtils;
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
 import gov.nasa.jpl.mbee.stylesaver.ViewLoader;
 
 import java.awt.HeadlessException;
@@ -114,7 +114,7 @@ public class PatternLoader extends MDAction {
     	Element requesterElem = requester.getElement();
     	
 		// ensure the diagram is locked for edit
-    	if(!StylerUtils.isDiagramLocked(proj, requester.getElement())) {
+    	if(!StyleSaverUtils.isDiagramLocked(proj, requester.getElement())) {
 			JOptionPane.showMessageDialog(null, "The target diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
     		return;
     	}

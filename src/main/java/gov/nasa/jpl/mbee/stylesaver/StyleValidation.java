@@ -13,6 +13,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+
+import gov.nasa.jpl.mbee.stylesaver.fixes.FixStyleMismatchRestore;
+import gov.nasa.jpl.mbee.stylesaver.fixes.FixStyleMismatchUpdate;
+
 import java.lang.Class;
 import java.util.*;
 
@@ -67,11 +71,11 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
 		// get all the diagrams in the project
 		Collection<DiagramPresentationElement> diagCollection = project.getDiagrams();
 		
-		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(project);
+		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
 		
 		// iterate over each diagram checking for matched tag styling and actual styling
 		for(DiagramPresentationElement diag : diagCollection) {
-			if(StylerUtils.isGoodStereotype(diag, workingStereotype)) {
+			if(StyleSaverUtils.isGoodStereotype(diag, workingStereotype)) {
 		    	// get the style currently in the tag
 		    	Object tagStyleObj = StereotypesHelper.getStereotypePropertyFirst(diag.getElement(), workingStereotype, "style");
 		    	String tagStyle = StereotypesHelper.getStereotypePropertyStringValue(tagStyleObj);

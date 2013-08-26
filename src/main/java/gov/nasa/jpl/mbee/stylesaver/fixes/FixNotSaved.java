@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.stylesaver;
+package gov.nasa.jpl.mbee.stylesaver.fixes;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -7,6 +7,9 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+
+
+import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;

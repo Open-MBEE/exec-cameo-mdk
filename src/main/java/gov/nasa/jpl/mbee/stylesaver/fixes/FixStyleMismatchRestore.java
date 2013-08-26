@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.stylesaver;
+package gov.nasa.jpl.mbee.stylesaver.fixes;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -11,11 +11,17 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 
+
+import gov.nasa.jpl.mbee.stylesaver.RunnableLoaderWithProgress;
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
+
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.List;
 
 import javax.swing.JOptionPane;
+
+import org.json.simple.JSONObject;
 
 /**
  * Class for fixing a mismatch between the view style tag and the styling currently
@@ -82,25 +88,24 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
         Project project = Application.getInstance().getProject();
         
     	// get the main style string from the view stereotype tag "style"
-    	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StylerUtils.getWorkingStereotype(project), "style");
-    	String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
+    	Object tag = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StyleSaverUtils.getWorkingStereotype(project), "style");
+    	String styleStr = StereotypesHelper.getStereotypePropertyStringValue(tag);
     	
+		JSONObject style = StyleSaverUtils.parse(styleStr); 
+		
     	// get the elements on the diagram to load styles into
     	List<PresentationElement> list = this.diagToFix.getPresentationElements();
     	
     	// run the loader with a progress bar
-    	if((style != null) && (!style.equals(""))) {
-    		RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(list, style);
-    		
-    		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
-    		
-    		if(runnable.getSuccess()) {
-				SessionManager.getInstance().closeSession();
-    			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-    		} else {
-    			SessionManager.getInstance().cancelSession();
-    			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
-    		}
-    	}
+		RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(list, style);
+		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
+		
+		if(runnable.getSuccess()) {
+			SessionManager.getInstance().closeSession();
+			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			SessionManager.getInstance().cancelSession();
+			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+		}
     }
 }
