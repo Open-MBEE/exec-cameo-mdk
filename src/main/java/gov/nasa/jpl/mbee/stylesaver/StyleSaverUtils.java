@@ -2,9 +2,14 @@ package gov.nasa.jpl.mbee.stylesaver;
 
 import java.util.Collection;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -82,6 +87,31 @@ public class StyleSaverUtils {
 	}
 	
 	/**
+	 * Get the specific style string for an element from the main style string.
+	 * 
+	 * @param elem	the element the returned style string is for.
+	 * @param style the main style string associated with the active diagram.
+	 * @return 		the style string associated with the PresentationElement argument or null
+	 *         		if the element has not yet had its style saved.
+	 */
+	public static String getStyleStringForElement(PresentationElement elem, JSONObject style) {
+		// get the value associated with the element's ID
+		String styleStr;
+		try {
+			styleStr = (String) style.get(elem.getID());
+		} catch(NullPointerException e) {
+			return null;
+		}
+		
+		// element has not yet had its style saved
+		if(styleStr == null) {
+			return null;
+		}
+		
+		return styleStr;
+	}
+	
+	/**
 	 * Checks if the diagram is a locked Teamwork project.
 	 * 
 	 * @param project	the project that contains the diagram.
@@ -106,5 +136,24 @@ public class StyleSaverUtils {
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Parses the style string that should have been stored in the "style" tag.
+	 * 
+	 * @param style	the string to parse.
+	 * @return		the parsed JSON Object.
+	 */
+	public static JSONObject parse(String style) {
+		JSONParser parser = new JSONParser();
+		Object obj = null;
+		
+		try {
+			obj = parser.parse(style);
+		} catch(ParseException e) {
+			e.printStackTrace();
+		}
+		
+		return (JSONObject) obj;
 	}
 }

@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -60,7 +58,7 @@ public class ViewLoader extends MDAction {
 		
 		Project proj = Application.getInstance().getProject();
 		DiagramPresentationElement diagram = proj.getActiveDiagram();
-		String style = null;
+		JSONObject style = null;
 		
 		try {
 			style = prep(proj, diagram);
@@ -89,7 +87,7 @@ public class ViewLoader extends MDAction {
 	 * @return					the style string from the style tag.
 	 * @throws RuntimeException	if an error occurs.
 	 */
-	private String prep(Project proj, DiagramPresentationElement diagram) throws RuntimeException {
+	private JSONObject prep(Project proj, DiagramPresentationElement diagram) throws RuntimeException {
     	try {
         	diagram.ensureLoaded();
     	} catch (NullPointerException ex) {
@@ -126,36 +124,11 @@ public class ViewLoader extends MDAction {
     	}
 
     	// get the main style string from the view stereotype tag "style"
-    	Object styleObj = StereotypesHelper.getStereotypePropertyFirst(diagram.getElement(), workingStereotype, "style");
-    	String style = StereotypesHelper.getStereotypePropertyStringValue(styleObj);
-    	
-    	return style;
-	}
-	
-	/**
-	 * Loads the style of elements on the diagram by gathering relevant style information from the JSON style string.
-	 * 
-	 * @param elemList	the list of elements to load styles into.
-	 * @param style		the style string.
-	 */
-	public static void load(List<PresentationElement> elemList, String style) {
-    	for(PresentationElement elem : elemList) {
-    		// load the style of the element's children recursively
-    		setStyleChildren(elem, style);
-    		
-    		// parse the style string for the correct style of each element
-    		String elemStyle = getStyleStringForElement(elem, style);
-    		
-    		if(elemStyle == null) {
-    			// there was no style string found for this element, just continue
-				continue;
-    		}
-    		
-    		// load the style of the element
-    		setStyle(elem, elemStyle);
-    		
-    		elem.getDiagramSurface().repaint();
-       	}
+    	Object tag  = StereotypesHelper.getStereotypePropertyFirst(diagram.getElement(), workingStereotype, "style");
+    	String style = StereotypesHelper.getStereotypePropertyStringValue(tag);
+
+    	// return the parsed JSON Object
+    	return StyleSaverUtils.parse(style);
 	}
 
 	/**
@@ -167,32 +140,61 @@ public class ViewLoader extends MDAction {
 	 * @param progressStatus	the status of the program status bar.
 	 * @return					true if successful, false if the user cancelled load
 	 */
-	public static boolean load(List<PresentationElement> elemList, String style, ProgressStatus progressStatus) {
+	public static boolean load(List<PresentationElement> elemList, JSONObject style, ProgressStatus progressStatus) {
     	for(PresentationElement elem : elemList) {    		
     		if(progressStatus.isCancel()) {
     			return false;
     		}
     		
-    		// load the style of the element's children recursively
-    		setStyleChildren(elem, style);
+    		// recursively load the style of the element's children
+    		loadChildren(elem, style);
     		
-    		// parse the style string for the correct style of each element
-    		String elemStyle = getStyleStringForElement(elem, style);
+    		// parse the style string for the correct style of the current element
+    		String elemStyle = StyleSaverUtils.getStyleStringForElement(elem, style);
     		
     		if(elemStyle == null) {
-    			// there was no style string found for this element, just continue
+    			// there was no style string found for the current element, just continue
 				continue;
     		}
     		
-    		// load the style of the element
+    		// load the style of the current element
     		setStyle(elem, elemStyle);
-    		
     		elem.getDiagramSurface().repaint();
     		
+    		style.remove(elem.getID());
+
     		progressStatus.increase();
        	}
     	
     	return true;
+	}
+
+	/**
+	 * Loads the style of elements on the diagram by gathering relevant style information from the JSON style string.
+	 * Does NOT monitor progress.
+	 * 
+	 * @param elemList	the list of elements to load styles into.
+	 * @param style		the style string.
+	 */
+	public static void load(List<PresentationElement> elemList, JSONObject style) {
+    	for(PresentationElement elem : elemList) {
+    		// recursively load the style of the element's children
+    		loadChildren(elem, style);
+    		
+    		// parse the style string for the correct style of the current element
+    		String elemStyle = StyleSaverUtils.getStyleStringForElement(elem, style);
+    		
+    		if(elemStyle == null) {
+    			// there was no style string found for the current element, just continue
+				continue;
+    		}
+    		
+    		// load the style of the current element
+    		setStyle(elem, elemStyle);
+    		elem.getDiagramSurface().repaint();
+
+    		style.remove(elem.getID());
+       	}
 	}
 
 	/**
@@ -201,7 +203,7 @@ public class ViewLoader extends MDAction {
 	 * @param parent	the parent element to recurse on.
 	 * @param style		the central style string holding all style properties.
 	 */
-	private static void setStyleChildren(PresentationElement parent, String style) {
+	private static void loadChildren(PresentationElement parent, JSONObject style) {
 		List<PresentationElement> children = parent.getPresentationElements();
 		
 		// base case -- no children
@@ -212,44 +214,7 @@ public class ViewLoader extends MDAction {
 		// recursively load the style of the diagram element's children
 		load(children, style);
 	}
-	
-	/**
-	 * Get the specific style string for an element from the main style string.
-	 * 
-	 * @param elem	the element the returned style string is for.
-	 * @param style the main style string associated with the active diagram.
-	 * @return 		the style string associated with the PresentationElement argument or null
-	 *         		if the element has not yet had its style saved.
-	 */
-	private static String getStyleStringForElement(PresentationElement elem, String style) {
-		JSONParser parser = new JSONParser();
 
-		// parse the style string
-		Object obj = null;
-		try {
-			obj = parser.parse(style);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		
-		JSONObject jsonObj = (JSONObject) obj;
-		
-		// get the value associated with the element's ID
-		String styleStr;
-		try {
-			styleStr = (String) jsonObj.get(elem.getID());
-		} catch(NullPointerException e) {
-			return null;
-		}
-		
-		// element has not yet had its style saved
-		if(styleStr == null) {
-			return null;
-		}
-		
-		return styleStr;
-	}
-	
 	/**
 	 * Sets style properties in the parameterized PresentationElement according to the
 	 * PresentationElement's style property.
@@ -257,19 +222,9 @@ public class ViewLoader extends MDAction {
 	 * @param elem	the element to set style properties in.
 	 * @param style	the JSON style string for the element.
 	 */
-	private static void setStyle(PresentationElement elem, String style) {
+	private static void setStyle(PresentationElement elem, String styleStr) {
 		PropertyManager propMan = elem.getPropertyManager();
-		JSONParser parser = new JSONParser();
-
-		// parse the style string
-		Object obj = null;
-		try {
-			obj = parser.parse(style);
-		} catch(ParseException e) {
-			e.printStackTrace();
-		}
-		
-		JSONObject jsonObj = (JSONObject) obj;
+		JSONObject styleObj = StyleSaverUtils.parse(styleStr);
 
 		List<Property> propList = new ArrayList<Property>(propMan.getProperties());
 		
@@ -283,11 +238,10 @@ public class ViewLoader extends MDAction {
 		// iterate over all the current properties
 		while(iter.hasNext()) {
 			Property currProp = iter.next();
-			
 			String currPropID = currProp.getID();
 
 			// generate the new property
-			String newPropValue = (String) jsonObj.get(currPropID);
+			String newPropValue = (String) styleObj.get(currPropID);
 			
 			// select the correct set method for the property's type
 			if(currProp.getValue() instanceof java.awt.Color) {
@@ -299,17 +253,19 @@ public class ViewLoader extends MDAction {
 			} else if(currProp instanceof com.nomagic.magicdraw.properties.ChoiceProperty) {
 				ViewLoaderHelper.setChoice(currProp, newPropValue, elem);
 			}
+			
+			styleObj.remove(currPropID);
 		}
 		
 		// deal with break points if the element is a PathElement
 		if(elem instanceof PathElement) {
-			ViewLoaderHelper.setBreakPoints((PathElement) elem, jsonObj);
-			ViewLoaderHelper.setLineWidth((PathElement) elem, jsonObj);
+			ViewLoaderHelper.setBreakPoints((PathElement) elem, styleObj);
+			ViewLoaderHelper.setLineWidth((PathElement) elem, styleObj);
 		}
 		
 		// deal with bounds if the element is a ShapeElement
 		if(elem instanceof ShapeElement) {
-			ViewLoaderHelper.setBounds((ShapeElement) elem, jsonObj);
+			ViewLoaderHelper.setBounds((ShapeElement) elem, styleObj);
 		}
 	}
 }

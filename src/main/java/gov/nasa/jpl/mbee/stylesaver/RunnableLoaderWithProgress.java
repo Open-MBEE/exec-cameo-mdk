@@ -2,6 +2,8 @@ package gov.nasa.jpl.mbee.stylesaver;
 
 import java.util.List;
 
+import org.json.simple.JSONObject;
+
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
@@ -13,14 +15,14 @@ import com.nomagic.task.RunnableWithProgress;
  */
 public class RunnableLoaderWithProgress implements RunnableWithProgress {
 	private List<PresentationElement> list;
-	private String style;
+	private JSONObject style;
 	private boolean success;
 
 	/**
 	 * @param list	the list of elements to load styles into.
 	 * @param style	the style string to reference.
 	 */
-	public RunnableLoaderWithProgress(List<PresentationElement> list, String style) {
+	public RunnableLoaderWithProgress(List<PresentationElement> list, JSONObject style) {
 		this.list = list;
 		this.style = style;
 	}
