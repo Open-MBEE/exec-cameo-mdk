@@ -9,6 +9,7 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 
 
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
 import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
 
 import java.awt.event.ActionEvent;
@@ -80,6 +81,13 @@ public class FixStyleMismatchUpdate extends NMAction implements AnnotationAction
     	
         Project project = Application.getInstance().getProject();
         
+    	// ensure the diagram is locked for edit
+    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
+    		SessionManager.getInstance().cancelSession();
+			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+    		return;
+    	}
+    	
         String JSONStr = ViewSaver.save(project, this.diagToFix, false);
         
 		if(JSONStr != null) {

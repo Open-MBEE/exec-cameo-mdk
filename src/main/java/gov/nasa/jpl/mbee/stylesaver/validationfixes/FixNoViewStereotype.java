@@ -87,6 +87,12 @@ public class FixNoViewStereotype extends NMAction implements AnnotationAction {
     private void applyView() {
         Project project = Application.getInstance().getProject();
         
+    	// ensure the diagram is locked for edit
+    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
+			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+    		return;
+    	}
+    	
         // add the view stereotype to the diagram
     	StereotypesHelper.addStereotype(diagToFix.getElement(), StyleSaverUtils.getWorkingStereotype(project));
 		
