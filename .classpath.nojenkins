@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/main/java/extension"/>
-	<classpathentry excluding="extension/|plugin/" kind="src" path="src/main/java"/>
-	<classpathentry kind="src" path="src/main/java/plugin"/>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="lib/jsoup-1.6.1.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="http://jsoup.org/apidocs/"/>
@@ -14,8 +14,16 @@
 			<attribute name="javadoc_location" value="http://jgrapht.org/javadoc/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/json_simple-1.1.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://www.json.org/javadoc/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="lib/swingx-all-1.6.4.jar" sourcepath="lib/swingx-all-1.6.4-sources.jar"/>
 	<classpathentry kind="lib" path="lib/swingx-beaninfo-1.6.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/opencsv-2.3.jar"/>
+  <classpathentry kind="con" path="gov.nasa.jpl.magicdraw.CLASSPATH_LIB_CONTAINER/,lib/,lib/graphics/,lib/webservice/,plugins/com.nomagic.magicdraw.automaton/,plugins/com.nomagic.magicdraw.automaton/engines/,plugins/com.nomagic.magicdraw.automaton/engines/beanshell/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-1.7.10/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-1.7.10/embeddable/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-1.7.10/lib/,plugins/com.nomagic.magicdraw.automaton/help/,plugins/com.nomagic.magicdraw.automaton/lib/,plugins/com.nomagic.magicdraw.automaton/resources/,plugins/com.nomagic.magicdraw.codeengineering/,plugins/com.nomagic.magicdraw.codeengineering/lib/,plugins/com.nomagic.magicdraw.contentdiagram/,plugins/com.nomagic.magicdraw.dependencymatrix/,plugins/com.nomagic.magicdraw.dependencymatrix/resources/,plugins/com.nomagic.magicdraw.diagramtable/,plugins/com.nomagic.magicdraw.jpython/,plugins/com.nomagic.magicdraw.jpython/jython2.5.1/,plugins/com.nomagic.magicdraw.jpython/jython2.5.1/Lib/,plugins/com.nomagic.magicdraw.jpython/jython2.5.1/Lib/test/,plugins/com.nomagic.magicdraw.jpython/jython2.5.1/Lib/test/bug1126/,plugins/com.nomagic.magicdraw.qvt/,plugins/com.nomagic.magicdraw.qvt/lib/,plugins/gov.nasa.jpl.magicdraw.imce/,plugins/gov.nasa.jpl.magicdraw.imce/lib/,plugins/gov.nasa.jpl.magicdraw.imce/lib/jaxb2.2/,plugins/gov.nasa.jpl.magicdraw.qvto.library/,plugins/gov.nasa.jpl.magicdraw.qvto.library/lib"/>
 	<classpathentry kind="var" path="MD1701/lib/patch.jar"/>
 	<classpathentry kind="var" path="MD1701/lib/activation.jar"/>
 	<classpathentry kind="var" path="MD1701/lib/batik.jar"/>
@@ -74,13 +82,13 @@
 	<classpathentry kind="var" path="MD1701/lib/lpg.runtime.java_2.0.17.v201004271640.jar"/>
 	<classpathentry kind="var" path="MD1701/lib/md_api.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="file:/Applications/MagicDraw UML 17.0.1/openapi/docs/javadoc/MagicDraw/"/>
+			<attribute name="javadoc_location" value="MD1701/openapi/docs/javadoc/MagicDraw/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="var" path="MD1701/lib/md_cdo_1.0.jar"/>
 	<classpathentry kind="var" path="MD1701/lib/md_common_api.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="file:/Applications/MagicDraw UML 17.0.1/openapi/docs/javadoc/MagicDraw/"/>
+			<attribute name="javadoc_location" value="MD1701/openapi/docs/javadoc/MagicDraw/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="var" path="MD1701/lib/md_common.jar"/>
@@ -229,17 +237,17 @@
 <classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.xtend2_2.0.1.v201108020636.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext_2.0.1.v201108020636.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/qvt_api.jar"/>
-<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.docbook.qvt_1.0.0.jpl_sscae_level1_build_20130128_0135.jar"/>
-<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.docbook_1.0.0.jpl_sscae_level1_build_20130128_0135.jar"/>
-<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.owl2.api_1.6.0.jpl_sscae_level1_build_20130128_0135.jar"/>
-<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.owl2_1.5.0.jpl_sscae_level1_build_20130128_0135.jar"/>
-<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.qvto.emf.blackbox_1.0.2.jpl_sscae_level1_build_20130128_0135.jar"/>
-<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.sparql_2.6.8.jpl_sscae_level1_build_20130128_0135.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.docbook.qvt_1.0.0.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.docbook_1.0.0.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.owl2.api_1.6.0.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.owl2_1.5.0.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.qvto.emf.blackbox_1.0.2.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.sparql_2.6.8.jpl_sscae_level1_build_20130523_2234.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.apache.xml.resolver_1.2.0.v201005080400.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.dadacoalition.yedit_0.0.11.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.eclipse.uml2.uml.resources_3.1.100.v201008191510.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.eclipse.uml2.uml_3.2.100.v201108110105.jar"/>
-<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.semanticweb.owlapi_3.4.2093.jpl_sscae_level1_build_20130128_0135.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.semanticweb.owlapi_3.4.2093.jpl_sscae_level1_build_20130523_2234.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/owlapi.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/qvtoLib.jar"/>
 	<classpathentry kind="lib" path="lib/tomcat-embed-core-7.0.16.jar"/>
@@ -247,10 +255,7 @@
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.2.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.7.2.jar"/>
 	<classpathentry kind="lib" path="lib/tomcat-embed-jasper.jar"/>
-	<classpathentry kind="var" path="MD1701"/>
-	<classpathentry kind="lib" path="lib/swingx-all-1.6.4-sources.jar"/>
-	<classpathentry kind="lib" path="lib/swingx-beaninfo-1.6.4-sources.jar"/>
-	<classpathentry kind="lib" path="lib/opencsv-2.3.jar"/>
 	<classpathentry kind="lib" path="lib/ecj-3.7.2.jar"/>
+	<classpathentry kind="var" path="MD1701"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

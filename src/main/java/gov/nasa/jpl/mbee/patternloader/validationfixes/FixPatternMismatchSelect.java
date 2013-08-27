@@ -1,4 +1,6 @@
-package gov.nasa.jpl.mbee.patternloader;
+package gov.nasa.jpl.mbee.patternloader.validationfixes;
+
+import gov.nasa.jpl.mbee.patternloader.PatternLoader;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
@@ -14,6 +16,7 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 
@@ -148,6 +151,7 @@ public class FixPatternMismatchSelect extends NMAction implements AnnotationActi
 				SessionManager.getInstance().cancelSession();
 				return;
 			}
+			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
 			SessionManager.getInstance().closeSession();
 			
 			frame.dispose();

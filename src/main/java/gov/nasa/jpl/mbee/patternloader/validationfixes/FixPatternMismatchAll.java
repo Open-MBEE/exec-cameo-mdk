@@ -1,8 +1,9 @@
-package gov.nasa.jpl.mbee.patternloader;
+package gov.nasa.jpl.mbee.patternloader.validationfixes;
+
+import gov.nasa.jpl.mbee.patternloader.PatternLoader;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.List;
 
 import org.json.simple.JSONObject;
 
@@ -11,7 +12,6 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
-import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 
 /**
  * Class for fixing a mismatch between a diagram and its corresponding pattern.
@@ -22,7 +22,6 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 public class FixPatternMismatchAll extends NMAction implements AnnotationAction {
 	private static final long serialVersionUID = 1L;
 	private DiagramPresentationElement diagToFix;
-	private JSONObject pattern;
 
 	/**
 	 * Initializes this instance and adds a description to the fix.
@@ -34,7 +33,6 @@ public class FixPatternMismatchAll extends NMAction implements AnnotationAction 
 		super("FIX_PATTERN_MISMATCH_ALL", "Fix Pattern Mismatch: Automatically load pattern onto diagram", 0);
 		
 		this.diagToFix = diag;
-		this.pattern = pattern;
 	}
 	
     /**
@@ -73,7 +71,7 @@ public class FixPatternMismatchAll extends NMAction implements AnnotationAction 
 	 * Performs a sync on all elements on the diagram.
 	 */
 	private void syncAll() {
-		List<PresentationElement> elemsToFix = diagToFix.getPresentationElements();
-		PatternLoader.loadPattern(elemsToFix, pattern, null);
+		PatternLoader pl = new PatternLoader(null, null, 0, null, diagToFix);
+		pl.prepAndRun(true);
 	}
 }
