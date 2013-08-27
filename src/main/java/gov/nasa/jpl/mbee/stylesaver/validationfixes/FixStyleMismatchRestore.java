@@ -87,6 +87,13 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
     	
         Project project = Application.getInstance().getProject();
         
+    	// ensure the diagram is locked for edit
+    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
+    		SessionManager.getInstance().cancelSession();
+			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+    		return;
+    	}
+    	
     	// get the main style string from the view stereotype tag "style"
     	Object tag = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StyleSaverUtils.getWorkingStereotype(project), "style");
     	String styleStr = StereotypesHelper.getStereotypePropertyStringValue(tag);
