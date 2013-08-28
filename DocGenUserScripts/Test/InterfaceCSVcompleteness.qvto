@@ -1,0 +1,425 @@
+/*  
+interface csv completeness
+@efosse
+
+*/
+import lib.ProfileLib;
+import lib.UMLLib;
+import lib.CoreLibMD;
+import gov.nasa.jpl.magicdraw.qvto.units.CSVReader;
+import gov.nasa.jpl.magicdraw.qvto.units.MDStereotypesHelper;
+import gov.nasa.jpl.magicdraw.qvto.units.MDModelHelper;
+
+modeltype uml uses 'http://www.nomagic.com/magicdraw/UML/2.4.1';
+modeltype dgview uses 'http://mbee.jpl.nasa.gov/docgen/dgview';
+
+transformation InterfaceCSVcompleteness(in selectedElements:uml, out docgenOutput:dgview) {
+//Inputs from the model
+	property mainPackage : uml::Package = selectedElements.rootObjects()![uml::Package];	
+	configuration property FILE_URL : String;
+	configuration property SPEC_CREATION : Boolean;
+	configuration property validate_only : Boolean;
+	configuration property debug : Boolean;
+	 
+//Global Variables
+//uml stereotypes
+	property Cust : uml::Stereotype = null;
+//sysml stereotypes
+	property blockS : uml::Stereotype = null;
+	property partPropS : uml::Stereotype = null;
+	property flowS : uml::Stereotype = null;
+	property flowDirection : uml::Property = null;
+//esap stereotypes
+	property transmissionRole : uml::Property = null;
+	property bitRate : uml::Property = null;
+//mars2020 stereotypes
+	property rdSter : uml::Stereotype = null;
+	property sizeRatingProp : uml::Property = null;
+	property operatingVolt : uml::Property = null;
+	property samplingRate : uml::Property = null;
+//Interface profile(mounted on project) and interface specifications package(in editable project)
+	property interfaceLibrary : Sequence(uml::Package) = Sequence{};
+	property interfaceSpecPack : uml::Package=null;
+//collections (for existence checking)
+	property allRefDes : Set(uml::Class) = Set{};
+	property beginPorts : Set(uml::Port)=Set{};
+	property finalPorts: Set(uml::Port)=Set{};
+	property beginSpecs : Set(uml::Class)=Set{};
+	property finalSpecs : Set(uml::Class)=Set{};
+	property missingSpec :Set(String)=Set{};
+//metrics
+	property badPorts: Dict(String, uml::Class)=Dict{};
+	property portNoName = 0;
+	property newPorts = 0;
+	property badRefDes: Set(String) =Set{};
+	property badSpec: Dict(String, uml::Class)=Dict{};
+	property badFlow: Set(uml::Class)=Set{};
+	property goahead : Boolean = true;
+	property duplicatePorts = 0;
+	property duplicateSpecs = 0;
+	property intSpecCount = 0;
+//helpers
+	helper UMLProfileSetUp(){
+		var umlPS := getProfileStereotypesByName('DSL Customization');
+		Cust := umlPS.getStereotypeByName('Customization');
+		return;
+	}
+	helper SysMLProfileSetup() {
+		UMLLib();
+		var sysmlPS := getProfileStereotypesByName('SysML');
+		var addStPS := getProfileStereotypesByName('additional_stereotypes');
+		blockS := sysmlPS.getStereotypeByName('Block');
+		flowS := sysmlPS.getStereotypeByName('FlowProperty');
+		partPropS := addStPS.getStereotypeByName('PartProperty');
+		flowDirection := flowS.ownedElement[uml::Property]->selectOne(i|i.name = "direction");
+		return;
+	}
+	helper ESAPProfileSetup(){
+		var esapSter:=getProfileStereotypesByName('electrical');
+		transmissionRole := esapSter.getStereotypeByName('BusTransmissionRole').ownedElement[uml::Property]->selectOne(i|i.name='transmissionRole');
+		bitRate := esapSter.getStereotypeByName('Quantity.Data').ownedElement[uml::Property]->selectOne(i|i.name='bitRate');
+		return;
+	}
+	helper MarsProfileSetup(){
+		//finds MSM Extensions profile and sterotypes
+		var marsSter:=getProfileStereotypesByName('MSM Extensions');
+		var marsProf:=getAllProfiles()->select(i|i.name="MSM Extensions");
+		rdSter := marsSter.getStereotypeByName('Reference Designator');
+		sizeRatingProp := marsSter.getStereotypeByName('Power Interface').ownedElement[uml::Property]->selectOne(i|i.name = 'Size/Rating');
+		samplingRate := marsSter.getStereotypeByName('Data Interface').ownedElement[uml::Property]->selectOne(i|i.name='Sampling Rate');
+		operatingVolt := marsSter.getStereotypeByName('Power Interface').ownedElement[uml::Property]->selectOne(i|i.name='Operating Voltage');
+		interfaceLibrary:= marsProf.ownedElement[uml::Package]->select(i|i.name="Interface Library Package");
+		assert fatal (interfaceLibrary!=Sequence{})with log('[ERROR]: Interfaces Library is not mounted on project.  Mount this first then retry. Stopping Exection.');
+		return	
+	}
+
+
+	
+	main() {
+	//ProfileSetup();
+		UMLProfileSetUp();
+		SysMLProfileSetup();
+		ESAPProfileSetup();
+		MarsProfileSetup();
+		var landingPackage := mainPackage;
+	//csv import
+		var myNewDictionary : Dict(Integer, Sequence(String)) = Dict{};
+		//log("Looking to load " + FILE_URL);
+		
+		myNewDictionary := loadCSV(FILE_URL, true);
+		//log("Dictionary size is " + myNewDictionary->keys()->size().repr());
+		myNewDictionary->keys()->forEach(key) {
+			myNewDictionary->get(key)->forEach(field) {
+			};
+		};
+		
+		if(SPEC_CREATION = false)then{
+			allRefDes := mainPackage![uml::Element]->closure(ownedElement)[uml::Class]->select(x | isStereotypeOrDerivedApplied(x, rdSter));
+			assert fatal (allRefDes->size()!=0) with log('[ERROR]: Ref Designators are missing; try pointing to a different package or applying the RefDes stereotype.  Stopping Execution.');
+		}endif;
+		
+		beginPorts:=mainPackage![uml::Element]->closure(ownedElement)[uml::Port];
+
+		if(SPEC_CREATION = true)then{
+			//find interface specification package in selected model
+			if(mainPackage.name = "Interface Specifications")then{
+				interfaceSpecPack := mainPackage;
+			}else{
+				interfaceSpecPack:= mainPackage.ownedElement[uml::Package]->select(i|i.name="Interface Specifications")->asOrderedSet()->first();
+			}endif;
+		}endif;
+		assert fatal (interfaceSpecPack!=null) with log('[ERROR]: No package named "Interface Specifications" in this project.  Create package and retry. Stopping Execution.');
+		beginSpecs:=interfaceSpecPack![uml::Element]->closure(ownedElement)[uml::Class];
+			
+	//do mapping
+		var startPortCount:=beginPorts->size();
+		var startSpecCount:=beginSpecs->size();
+		log('---------------[Logs]--------------------');
+		log('Beginning RefDes Count: '+ allRefDes->size().toString());
+		log('Beginning Port Count: '+ startPortCount.toString());
+		log('Beginning Interface Spec Count: '+ startSpecCount.toString());
+		var colToHeaderDict : Dict(Integer, String)=Dict{};
+		myNewDictionary->keys()->forEach(row){
+			if(row = 1) then {
+				var colCounter:=1;
+				myNewDictionary->get(row)->forEach(col){
+					colToHeaderDict->put(colCounter, col);
+					colCounter:= colCounter +1;
+				};
+			}endif;
+			if (row >1)then myNewDictionary->get(row)->colsToFunctions(colToHeaderDict)endif;
+		};
+		log('-----------------------------------------------------');
+	//print metrics
+		var newPort:= beginPorts->size() - startPortCount;
+		var newSpecs:= beginSpecs->size() - startSpecCount;
+		
+		map validationLog(missingSpec->size(), badPorts->size(), duplicatePorts, duplicateSpecs);
+		map badRefDesTable(badRefDes);
+		map portsNoSpecTable(badPorts);
+		map badSpecTable(badSpec);
+		
+		
+		
+		
+		log('---------------[Creation Summary]--------------------');
+		log('Ports created: '+ newPort.toString());
+		log('Specifications created: '+ newSpecs.toString());
+		log('[ERRORS]Ports not created (see log)= '+ badPorts->size().toString());
+		log('[WARNING]Ports with no name (see log)= ' + portNoName.toString());
+		log('[WARNING]Ports not create because duplicate (see log)= '+duplicatePorts.toString());
+		log('[WARNING]Specifications not created(see log)= ' + duplicateSpecs.toString());
+		log('-----------------------------------------------------');
+	
+	}
+
+//mappings	
+	
+	mapping makePort(inout c:uml::Class, in name: String, in owner:uml::Class):uml::Port{
+		result.name:=name;
+		result.type:=c;
+		result.owner:=owner;
+	}
+	
+	mapping makeGen(inout newIntSpec:uml::Class, in base:uml::Class):uml::Generalization{
+		result.general := base;
+		result.specific := newIntSpec;
+		result.owner := newIntSpec;
+	}
+	
+	mapping makeProperty(inout spec:uml::Class):uml::Property{
+		result.owner := spec;
+	}
+	
+	mapping inout uml::Property::makeFlowProperty(in direction: String){
+		self.addStereotype(flowS);
+		var directionSlot := new uml::Slot();
+		directionSlot.definingFeature:= flowDirection;
+		var directionSlotValue := new uml::InstanceValue();
+		var targetType := flowDirection.type![uml::Enumeration];
+		var targetValue := targetType.ownedLiteral->selectOne(i|i.name = direction);
+		directionSlotValue.instance := targetValue;
+		directionSlotValue.owner := directionSlot;
+		directionSlot.value := directionSlotValue;
+		directionSlot.owner := self.appliedStereotypeInstance;
+	}
+	
+
+	mapping inout uml::Class::updateEnumeration(in value:String, in enumeration:uml::Property)	{
+		var slot := new uml::Slot();
+		slot.definingFeature:=enumeration;
+		var slotValue := new uml::InstanceValue();
+		var targetType := enumeration.type![uml::Enumeration];
+		var targetValue := targetType.ownedLiteral->selectOne(i|i.name = value);
+		slotValue.instance := targetValue;
+		slotValue.owner := slot;
+		slot.value := slotValue;
+		slot.owner:= self.appliedStereotypeInstance;
+	}
+	mapping inout uml::Class::updateTextField(in value:String, in prop:uml::Property){
+		var slot := new uml::Slot();
+		slot.definingFeature := prop;
+		var slotString := new uml::LiteralString();
+		slotString.value := value;
+		slotString.owner := slot;
+		slot.value := slotString;
+		slot.owner:= self.appliedStereotypeInstance;
+	}
+
+	mapping badRefDesTable(in badRefDes:Set(String)):dgview::Table@docgenOutput{
+		var tableBody:Sequence(dgview::TableRow)=Sequence{};
+		badRefDes->forEach(b){
+			var Row:=Sequence{object dgview::Text{text:= b;}};
+			tableBody+=Sequence{object dgview::TableRow{children:=Row}};
+		};
+		result.body:=tableBody;
+		result.title:= 'Reference Designators Not In Model';
+		result.headers:=Sequence{object dgview::TableRow{children:=Sequence{object dgview::Text{text:="Missing Reference Designator";}}}};
+	}
+	
+	
+	mapping portsNoSpecTable(in badPort:Dict(String, uml::Class)):dgview::Table@docgenOutput{
+		var tableBody:Sequence(dgview::TableRow)=Sequence{};
+		badPort->keys()->forEach(k){
+			var Row:=Sequence{object dgview::Text{text:= k;}, object dgview::Text{text:=badPort->get(k).name;}};
+			tableBody+=Sequence{object dgview::TableRow{children:=Row}};
+		};
+		result.body:=tableBody;
+		result.title:='Ports with Bad Specs';
+		result.headers:=Sequence{object dgview::TableRow{children:=Sequence{object dgview::Text{text:='Port Name';}, object dgview::Text{text:='Ref Des';}}}};		
+	}
+	
+	mapping badSpecTable(in badSpec:Dict(String, uml::Class)):dgview::Table@docgenOutput{
+		var tableBody:Sequence(dgview::TableRow)=Sequence{};
+		badSpec->keys()->forEach(k){
+			var Row:=Sequence{object dgview::Text{text:=k;}, object dgview::Text{text:=badSpec->get(k).name;}};
+			tableBody+=Sequence{object dgview::TableRow{children:=Row}};
+		};
+		result.body:=tableBody;
+		result.title:='Bad Specs';
+		result.headers:=Sequence{object dgview::TableRow{children:=Sequence{object dgview::Text{text:='Spec Name';}, object dgview::Text{text:='Ref Des';}}}};		
+	}
+	
+	mapping missingSpecTable(in missingSpec:Set(String)):dgview::Table@docgenOutput{
+		var tableBody:Sequence(dgview::TableRow)=Sequence{};
+		missingSpec->forEach(m){
+			var Row:=Sequence{object dgview::Text{text:=m;}};
+			tableBody+=Sequence{object dgview::TableRow{children:=Row}};
+		};
+		result.body:=tableBody;
+		result.title:='Missing Specs';
+		result.headers:=Sequence{object dgview::TableRow{children:=Sequence{object dgview::Text{text:= "Spec Name";}}}};
+	}
+	
+	mapping validationLog(in missingSpecs:Integer, in badPorts:Integer, in duplicatePorts:Integer, in duplicateSpec:Integer):dgview::_List@docgenOutput{
+		result.children:= Sequence{object dgview::Paragraph{text:="Missing Specs = "+missingSpecs.toString();},
+		object dgview::Paragraph{text:="Bad Ports "+badPorts.toString();},
+		object dgview::Paragraph{text:="Duplicate Ports "+duplicatePorts.toString();},
+		object dgview::Paragraph{text:="Duplicate Specs "+duplicateSpec.toString();}};
+	}
+	
+//querys
+
+	query Sequence(String)::colsToFunctions(in colToHeaderDict : Dict(Integer, String)) : Boolean{
+		var refDes : uml::Class = null;
+		var newSpec : uml::Class = null;
+		var portName : String ="";
+		var columnCounter := 1;
+		var goAhead := true;
+		self->forEach(dataField){
+			var colHeader:= colToHeaderDict->get(columnCounter);
+			if(colHeader.oclIsInvalid() or colHeader = null)then colHeader:="" endif;
+			switch{
+				case(colHeader = "RefDes" and SPEC_CREATION = false){
+					refDes:=findRefDesByName(dataField)![uml::Class];
+					if (allRefDes->includes(refDes)) then {
+						refDes:= refDes;
+					}else{
+						badRefDes+=dataField;
+						if(debug=true) then log('[ERROR]: '+ dataField + ' is not a Reference Designator. Interfaces will not be made for it') endif;
+						goAhead:=false;
+					}endif;
+				}
+				case(colHeader = "Interface Name"){
+					portName := dataField;
+					if (portName = "")then{
+						log('[WARNING]: port for '+ refDes.name + ' does not have a name');
+						portNoName:= portNoName+1;
+					}endif;
+					if (SPEC_CREATION = false and goAhead) then{
+						if(checkPortExists(portName)=null)then{
+							var portType := findSpec(portName);
+							if(portType = null and portName!="") then{
+								if(debug = true) then log('[ERROR]: port spec for ' + portName + ' not found. Not creating port') endif;
+								badPorts->put(portName, refDes);
+							}else{
+								if(validate_only!=true) then beginPorts+= map makePort(portType, portName, refDes) endif;
+							}endif;
+						}else{
+							if(debug = true) then log('[WARNING]: port already exists: '+ portName) endif;
+							duplicatePorts:=duplicatePorts+1;
+						}endif;
+					}endif;
+				}
+				case(colHeader= "Interface Type" and SPEC_CREATION){
+					if(findSpec(portName)=null)then{
+						var intSpec := validateInterfaceSpec(dataField);
+						if (intSpec!=null)then{
+							if(validate_only!=true)then{
+								newSpec:= map makeUMLClass(interfaceSpecPack, portName + " Interface Spec");
+								beginSpecs+=newSpec;
+								var specSter:=intSpec.getAppliedStereotypes()->collectOne(i|i);
+								newSpec.addStereotype(specSter);
+								var prof := specSter.findProfile();
+								if(prof!=null and specSter!=null)then{
+									var base := getBaseClass(prof, specSter);
+									if(base!=null)then map makeGen(newSpec, base) endif;
+								}else{
+									if(debug = true) then log('[WARNING]: no dsl') endif;
+								}endif;
+							}else{
+								missingSpec+=dataField;
+							}endif;
+						}else{
+							if(debug= true) then log('[ERROR]:spec not in library:'+ dataField +' Interface Spec') endif;
+							badSpec->put(portName, refDes);
+						}endif;
+					}else{
+						if(debug = true) then log('[WARNING]: spec already exist: '+ dataField+ 'Interface Spec. not creating again') endif;
+						duplicateSpecs:=duplicateSpecs+1;
+					}endif;
+				}
+				case(colHeader = "Directionality" and SPEC_CREATION){
+					if(validate_only!=true) then{
+						var flowProp := map makeProperty(newSpec);
+						flowProp.map makeFlowProperty(dataField);
+					}endif;
+					
+				}
+				case(colHeader = "Size/Rating" and SPEC_CREATION){
+					if(validate_only!=true) then newSpec.map updateTextField(dataField, sizeRatingProp) endif;
+				}
+				case(colHeader = "Transmission Role" and SPEC_CREATION){
+					if(validate_only!=true) then newSpec.map updateEnumeration(dataField, transmissionRole) endif;
+				}
+				case(colHeader = "Max Data Rate (bps)" and SPEC_CREATION){
+					if(validate_only!=true) then newSpec.map updateTextField(dataField, bitRate) endif;
+				}
+				case(colHeader = "Sampling Rate (Hz)" and SPEC_CREATION){
+					if(validate_only!=true) then newSpec.map updateTextField(dataField, samplingRate) endif;
+				}
+				case(colHeader = "Op V" and SPEC_CREATION){
+					if(validate_only!=true) then newSpec.map updateTextField(dataField, operatingVolt) endif;
+				}
+				else{
+					
+				}
+			};
+			columnCounter:=columnCounter+1;				
+		};
+		return true;
+	}
+	
+	query checkPortExists(in portName:String): uml::Port{
+		var dupPort:uml::Port:=null;
+		dupPort:=beginPorts->selectOne(i|i.name=portName);
+		return dupPort;
+	}
+	
+	query findSpec(in portName : String): uml::Class{
+		var spec : uml::Class := null;
+		spec := interfaceSpecPack![uml::Element]->closure(ownedElement)[uml::Class]->selectOne(i|i.name = portName + ' Interface Spec');
+		return spec;
+	}
+	query getBaseClass(in profile:uml::Profile, in ster:uml::Stereotype):uml::Class{
+		var base:uml::Class=null;
+		base:= profile.recursiveGetAllClasses()->select(i|i.name=ster.name)->select(x| not isStereotypeOrDerivedApplied(x, Cust))->selectOne(x| not isValidUMLStereotype(x));
+		return base;
+	}
+	
+	query validateInterfaceSpec(in specName:String):Class{
+		var gen:uml::Class := null;
+		gen:=interfaceLibrary.ownedElement[uml::Class]->selectOne(i|i.name = specName);
+		if(gen = null)then{
+			gen:=interfaceLibrary.ownedElement[uml::Class]->selectOne(i|i.name = specName + " Interface");
+			if(gen = null)then{
+				gen:=interfaceLibrary.ownedElement[uml::Class]->selectOne(i|i.name = specName+ " Data Interface");
+			}endif;
+		}endif;
+		return gen;
+	}
+		
+	query findRefDesByName(in findString : String) : uml::NamedElement {
+		var myModelPieces := allRefDes->select(i | i.name = findString);
+		if (myModelPieces->size() = 1) then return myModelPieces[uml::NamedElement]->collectOne(i | i) endif;
+		return null;
+	}
+	
+	query uml::Element::findProfile():uml::Profile{
+		return self->closure(owner)[uml::Profile]->collectOne(i|i);
+			
+		
+	}
+	
+
+}
