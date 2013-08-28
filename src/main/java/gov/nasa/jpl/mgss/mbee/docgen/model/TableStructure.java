@@ -40,6 +40,14 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+/**
+ * This class contains methods for parsing and visiting 
+ * TableStructures and their contents.
+ * 
+ * @author bcompane
+ *
+ */
+
 public class TableStructure extends Table implements Iterator<List<Object>> {
 
 	//TODO decide tag options
@@ -173,7 +181,6 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		rows = in;
 	}
 
-	// TODO: Does this already handle CBAs? 
 	public void parse() {
 		if (ts == null) return;
 		
@@ -338,6 +345,7 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 			rAsTargets.add(r);
 //			targets.push(rAsTargets);
 			rowsOut.add(CollectFilterParser.startCollectAndFilterSequence(bNode, rAsTargets));
+//			rowsOut.add(DocumentGenerator.)
 		}
 		
 		return rowsOut; // TODO: for some reason, this is always an empty list. Why?
@@ -508,29 +516,6 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		return;
 	}
 		
-	// DEBUGGING STUFF TODO: REMOVE
-	// ><>><><><><><><><><><><><><>
-	
-	public String toString() {
-		//determine longest row
-		int biggest=0;
-		if (table != null)
-			for (List<Object> c: table)
-				biggest = (c.size() > biggest) ? c.size() : biggest;
-		//add lines to the string
-		String output = new String();
-		for (int n = 0; n < biggest; n++) {
-			for (List<Object> c: table) {
-				if (c.size() <= n)
-					output.concat("| null\t");
-				else
-					output.concat("| " + c.toString() + "\t");
-			}
-			output.concat("||\n");
-		}	
-		return output;
-	}
-	
 	// FOR DOCBOOKOUTPUTVISITOR STUFF
 	// ><><><><><><><><><><><><><><><
 	
