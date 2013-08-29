@@ -16,21 +16,6 @@ public class DependencyMatrix extends Table {
 		
 	}
 
-	@Override
-	public void initialize(ActivityNode an, List<Element> in) {
-		// TODO Auto-generated method stub
-		
-	}
 
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
 
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

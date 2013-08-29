@@ -583,7 +583,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 	public void visit(TableStructure ts) {
 		if (ts.getIgnore())
 			return;
-		parent.peek().addElement(ts.visit(forViewEditor));
+		parent.peek().addElements(ts.visit(forViewEditor));
 	}
 	
 	@Override
@@ -864,7 +864,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 
 	@Override
 	public void visit(MissionMapping cm) {
-		if (!cm.initialize())
+		if (!cm.init())
 			return;
 		DBTable table = new DBTable();
 		Node<String, MissionComponent> root = cm.getRoot();
@@ -921,7 +921,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 	
 	@Override
 	public void visit(LibraryMapping cm) {
-		if (!cm.initialize())
+		if (!cm.init())
 			return;
 		DBTable table = new DBTable();
 		Node<String, LibraryComponent> root = cm.getRoot();

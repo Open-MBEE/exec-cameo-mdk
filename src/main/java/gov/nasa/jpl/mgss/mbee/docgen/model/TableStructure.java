@@ -170,15 +170,16 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 	private Element ts;
 	private List<Element> rows;
 	
-	public void initialize(ActivityNode an, List<Element> in) {
-		if (an instanceof StructuredActivityNode) {
-			ts = (StructuredActivityNode)an;
-		} else if (an instanceof CallBehaviorAction) {
-			ts = ((CallBehaviorAction)an).getBehavior();
+	@Override
+	public void initialize() {
+		if (dgElement instanceof StructuredActivityNode) {
+			ts = (StructuredActivityNode)dgElement;
+		} else if (dgElement instanceof CallBehaviorAction) {
+			ts = ((CallBehaviorAction)dgElement).getBehavior();
 		} else {
 			ts = null;
 		}
-		rows = in;
+		rows = targets;
 	}
 
 	public void parse() {
@@ -256,7 +257,7 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		setHeaders(hs);
 	}
 	
-	public DocumentElement visit(boolean forViewEditor) {
+	public List<DocumentElement> visit(boolean forViewEditor) {
 		DBTable t = new DBTable();
 		
 		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
@@ -311,8 +312,9 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		}
 		t.setColspecs(cslist);
 		t.setStyle(getStyle());
-		
-		return t;
+		List<DocumentElement> res = new ArrayList<DocumentElement>();
+		res.add(t);
+		return res;
 	}
 	
 	// PARSING HELPERS

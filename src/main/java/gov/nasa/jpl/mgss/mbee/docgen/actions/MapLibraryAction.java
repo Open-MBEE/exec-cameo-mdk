@@ -17,7 +17,7 @@ public class MapLibraryAction extends MDAction {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
-		if (mapping.initialize()) {		
+		if (mapping.init()) {		
 			mapping.showChooser();
 		} else
 			Application.getInstance().getGUILog().log("Missing imports");

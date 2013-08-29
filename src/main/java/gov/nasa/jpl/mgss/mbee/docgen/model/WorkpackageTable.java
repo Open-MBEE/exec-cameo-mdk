@@ -77,26 +77,27 @@ public abstract class WorkpackageTable extends Table {
 		return sortByName;
 	}
 	
-	public void initialize(ActivityNode an, List<Element> in) {
-		Element workpackage = (Element)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "workpackage", null);
-		Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "doRollup", false);
-		Boolean suppliesAsso = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "suppliesAsso", false);
-		Boolean authorizesAsso = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "authorizesAsso", false);
-		Boolean sortByName = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "sortDeploymentByName", false);
-		Boolean showProducts = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "showProducts", true);
-		Boolean showMassMargin = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.workpackageTablesStereotype, "showMassMargin", false);
+	@Override
+	public void initialize() {
+		Element workpackage = (Element)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "workpackage", null);
+		Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "doRollup", false);
+		Boolean suppliesAsso = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "suppliesAsso", false);
+		Boolean authorizesAsso = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "authorizesAsso", false);
+		Boolean sortByName = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "sortDeploymentByName", false);
+		Boolean showProducts = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "showProducts", true);
+		Boolean showMassMargin = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "showMassMargin", false);
 		
-		setCaptions((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hasCaptions, "showCaptions", true));
-		setFloatingPrecision((Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.precisionChoosable, "floatingPrecision", -1));
+		setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
+		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
+		setFloatingPrecision((Integer)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.precisionChoosable, "floatingPrecision", -1));
 		setWorkpackage(workpackage);
 		setDoRollup(doRollup);
-		setIncludeInherited((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.inheritedChoosable, "includeInherited", false));
+		setIncludeInherited((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.inheritedChoosable, "includeInherited", false));
 		setSuppliesAsso(suppliesAsso);
 		setAuthorizesAsso(authorizesAsso);
 		setSortByName(sortByName);
 		setShowProducts(showProducts);
-		setStyle((String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.tableStereotype, "style", null));
+		setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
 		setShowMassMargin(showMassMargin);
 	}
 }

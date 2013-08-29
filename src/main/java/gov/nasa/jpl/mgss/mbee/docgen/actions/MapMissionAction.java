@@ -22,7 +22,7 @@ public class MapMissionAction extends MDAction {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
-		if (mapping.initialize()) {
+		if (mapping.init()) {
 			//mapping.dump();
 		
 			mapping.showChooser();

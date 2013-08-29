@@ -28,8 +28,6 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 
 import org.eclipse.m2m.qvt.oml.ecore.ImperativeOCL.ReturnExp;
-import org.jboss.aop.advice.annotation.Return;
-import org.python.antlr.PythonParser.return_stmt_return;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;

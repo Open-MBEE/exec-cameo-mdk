@@ -87,7 +87,7 @@ public class MissionMapping extends Query {
 	
 	
 
-	public boolean initialize() {
+	public boolean init() {
 		ef = Application.getInstance().getProject().getElementsFactory();
 		sm = SessionManager.getInstance();
 		libraryComponents = new HashSet<LibraryComponent>();
@@ -469,20 +469,5 @@ public class MissionMapping extends Query {
 		return chars;
 	}
 
-	@Override
-	public void initialize(ActivityNode an, List<Element> in) {
-		
-	}
-
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 }

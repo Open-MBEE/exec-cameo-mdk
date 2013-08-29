@@ -72,26 +72,14 @@ public class BulletedList extends Table {
 	}
 
 	@Override
-	public void initialize(ActivityNode an, List<Element> in) {
-		Boolean showTargets = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.bulletedListStereotype, "showTargets", false);
-		Boolean showSPN = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.bulletedListStereotype, "showStereotypePropertyNames", false);
-		Boolean ordered = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.bulletedListStereotype, "orderedList", false);
+	public void initialize() {
+		Boolean showTargets = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.bulletedListStereotype, "showTargets", false);
+		Boolean showSPN = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.bulletedListStereotype, "showStereotypePropertyNames", false);
+		Boolean ordered = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.bulletedListStereotype, "orderedList", false);
 		setShowTargets(showTargets);
 		setShowStereotypePropertyNames(showSPN);
 		setOrderedList(ordered);
-		setIncludeDoc((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.documentationChoosable, "includeDoc", false));
-		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(an, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
-	}
-
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
+		setIncludeDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.documentationChoosable, "includeDoc", false));
+		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
 	}
 }

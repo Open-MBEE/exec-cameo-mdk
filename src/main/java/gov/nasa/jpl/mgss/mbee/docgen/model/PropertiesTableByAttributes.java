@@ -370,21 +370,21 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 	}
 
 	@Override
-	public void initialize(ActivityNode an, List<Element> in) {
-		super.initialize(an, in);
+	public void initialize() {
+		super.initialize();
 		
-		List<Stereotype> splitStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "splitStereotype", new ArrayList<Stereotype>());
-		List<Stereotype> systemIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeStereotype", new ArrayList<Stereotype>());
-		List<Stereotype> systemExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeStereotype", new ArrayList<Stereotype>());
-		List<String> systemIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeTypeName", new ArrayList<Property>()));
-		List<String> systemExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeTypeName", new ArrayList<Property>()));
-		List<String> systemIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeName", new ArrayList<Property>()));
-		List<String> systemExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeName", new ArrayList<Property>()));
-		Integer systemAssociationType = (Integer)GeneratorUtils.getObjectProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "systemAssociationType", 0);
-		Boolean consolidateTypes = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "consolidateTypes", false);
-		Boolean showMultiplicity = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "showMultiplicity", false);
-		Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "doRollup", false);
-		List<String> rollupProperty = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(an, DocGen3Profile.propertiesTableByAttributesStereotype, "rollupProperty", new ArrayList<Property>()));
+		List<Stereotype> splitStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "splitStereotype", new ArrayList<Stereotype>());
+		List<Stereotype> systemIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeStereotype", new ArrayList<Stereotype>());
+		List<Stereotype> systemExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeStereotype", new ArrayList<Stereotype>());
+		List<String> systemIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeTypeName", new ArrayList<Property>()));
+		List<String> systemExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeTypeName", new ArrayList<Property>()));
+		List<String> systemIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeName", new ArrayList<Property>()));
+		List<String> systemExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeName", new ArrayList<Property>()));
+		Integer systemAssociationType = (Integer)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemAssociationType", 0);
+		Boolean consolidateTypes = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "consolidateTypes", false);
+		Boolean showMultiplicity = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "showMultiplicity", false);
+		Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "doRollup", false);
+		List<String> rollupProperty = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "rollupProperty", new ArrayList<Property>()));
 		
 		setSplitStereotype(splitStereotype);
 		setSystemIncludeStereotype(systemIncludeStereotype);
@@ -400,15 +400,5 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 		setRollupProperty(rollupProperty);
 	}
 
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
 
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
