@@ -994,6 +994,7 @@ public class Utils {
     				if (allNums) {
     					Double da = Double.parseDouble(DocGenUtils.fixString(a));
     					Double db = Double.parseDouble(DocGenUtils.fixString(b));
+    					return da.compareTo(db);
     				} else if (a instanceof String && b instanceof String) {
     					return ((String)a).compareTo((String)b);
     				} else {
@@ -1023,7 +1024,7 @@ public class Utils {
 				isAllNumbers = false;
 				break;
 			}
-			for (Object o: getElementProperty(e, prop)) {
+			for (Object o: temp) {
 				if (!Utils2.isNumber(DocGenUtils.fixString(o))) { 
 					isAllNumbers = false;
 					break;
@@ -1041,24 +1042,22 @@ public class Utils {
     	
     	return new Comparator<Element>() {
     		public int compare(Element A, Element B) {
-    			Object a = getElementProperty(A, property);
-    			Object b = getElementProperty(B, property);
-    			if (a instanceof List && b instanceof List && ((List)a).size() == 1 && ((List)b).size() == 1) {
-    				Object a0 = ((List)a).get(0);
-    				Object b0 = ((List)b).get(0);
+    			List<Object> a = getElementProperty(A, property);
+    			List<Object> b = getElementProperty(B, property);
+    			if (a.size() == 1 && b.size() == 1) {
+    				Object a0 = a.get(0);
+    				Object b0 = b.get(0);
+    				String as = DocGenUtils.fixString(a0);
+    				String bs = DocGenUtils.fixString(b0);
     				if (allNums) {
-    					Double da0 = Double.parseDouble(DocGenUtils.fixString(a0));
-    					Double db0 = Double.parseDouble(DocGenUtils.fixString(b0));
-    					return (int)Math.round(da0 - db0);
-    				} else if (a0 instanceof String && b0 instanceof String) {
-    					return ((String)a0).compareTo((String)b0);
+    					Double da0 = Double.parseDouble(as);
+    					Double db0 = Double.parseDouble(bs);
+    					return da0.compareTo(db0);
     				} else {
-    					return 0;
+    					return as.compareTo(bs);
     				}
-    			} else if (a instanceof List && b instanceof List) {
-    				return ((List)a).size() - ((List)b).size();
     			} else {
-    				return 0;
+    				return a.size() - b.size();
     			}
     		}
     	};
@@ -1110,12 +1109,12 @@ public class Utils {
 	public static List<Object> getElementProperty(Element elem, Property prop) {
 		Element myOwner = prop.getOwner();
 		List<Object> rSlots = new ArrayList<Object>();
-		if (myOwner instanceof Stereotype && StereotypesHelper.hasStereotype(elem, (Stereotype)myOwner)) {
+		if (myOwner instanceof Stereotype && StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) {
 			ValueSpecification pDefault = null;
-			if (prop != null) {
-				rSlots.addAll(StereotypesHelper.getStereotypePropertyValue(elem, (Stereotype)myOwner, (Property)prop));
-				pDefault = prop.getDefaultValue();
-			}
+			
+			rSlots.addAll(StereotypesHelper.getStereotypePropertyValue(elem, (Stereotype)myOwner, (Property)prop));
+			pDefault = prop.getDefaultValue();
+			
 			if (rSlots.size() < 1 && pDefault != null) {
 				rSlots.add(pDefault); 
 			}
@@ -1124,7 +1123,7 @@ public class Utils {
 		Collection<Element> rOwned = elem.getOwnedElement();
 		for (Object o: rOwned) {
 			if (((Element)o) instanceof Property && ((Property)o).getName().equals(prop.getName())) {
-				rSlots.add((Object)((Property)o).getDefaultValue());
+				rSlots.add(((Property)o).getDefaultValue());
 			}
 		}
 		return rSlots;
