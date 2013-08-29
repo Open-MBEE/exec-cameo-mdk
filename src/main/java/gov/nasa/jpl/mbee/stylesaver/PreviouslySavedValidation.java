@@ -12,6 +12,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixNotSaved;
+
 import java.lang.Class;
 import java.util.*;
 
@@ -65,11 +68,11 @@ public class PreviouslySavedValidation implements ElementValidationRuleImpl, Sma
 		
 		// get all the diagrams in this project
 		Collection<DiagramPresentationElement> diagCollection = project.getDiagrams();
-		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(project);
+		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
 		
 		for(DiagramPresentationElement diag : diagCollection) {
 			// check that the working stereotype is usable
-			if(StylerUtils.isGoodStereotype(diag, workingStereotype)) {
+			if(StyleSaverUtils.isGoodStereotype(diag, workingStereotype)) {
 		    	// get the style currently in the tag
 		        String tagStyle = (String) StereotypesHelper.getStereotypePropertyFirst(diag.getElement(), workingStereotype, "style");
 

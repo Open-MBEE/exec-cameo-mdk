@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
+import gov.nasa.jpl.mgss.mbee.docgen.DocWebProfile;
 import gov.nasa.jpl.mgss.mbee.docgen.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
@@ -12,6 +13,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class DeleteDocumentAction extends MDAction {
@@ -25,11 +27,14 @@ public class DeleteDocumentAction extends MDAction {
 	
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
-		
+		String docid = proj.getID();
+		if (StereotypesHelper.hasStereotypeOrDerived(proj, DocWebProfile.document)) {
+			docid = (String)StereotypesHelper.getStereotypePropertyFirst(proj, DocWebProfile.document, "documentId");
+		}
 		String url = ViewEditUtils.getUrl();
 		if (url == null || url.equals(""))
 			return;
-		url += "/rest/projects/document/" + proj.getID() + "/delete";
+		url += "/rest/projects/document/" + docid + "/delete";
 		PostMethod pm = new PostMethod(url);
 		try {
 			//pm.setRequestHeader("Content-Type", "text/json");
@@ -37,6 +42,7 @@ public class DeleteDocumentAction extends MDAction {
 			//Protocol easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
 			//Protocol.registerProtocol("https", easyhttps);
 			HttpClient client = new HttpClient();
+			ViewEditUtils.setCredentials(client);
 			client.executeMethod(pm);
 			String code = pm.getResponseBodyAsString();
 			if (code.equals("ok"))

@@ -205,6 +205,12 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 			if (act == null)
 				c.addAction(new DeleteProjectAction(e));
 		}
+		if (StereotypesHelper.hasStereotype(e, DocWebProfile.document)) {
+			ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
+			NMAction act = manager.getActionFor(DeleteDocumentAction.actionid);
+			if (act ==  null)
+				c.addAction(new DeleteDocumentAction(e));
+		}
 	}
 
 	private void addDiagramActions(ActionsManager manager, DiagramPresentationElement diagram) {

@@ -558,7 +558,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 	public void visit(Paragraph para) {
 		if (para.getIgnore())
 			return;
-		if (para.getText() != null) { 
+		if (para.getText() != null && !para.getText().equals("")) { 
 			if (forViewEditor || !para.getText().trim().equals("")) 
 				parent.peek().addElement(new DBParagraph(para.getText(), para.getDgElement(), para.getFrom()));
 		} else if (para.getTargets() != null) {

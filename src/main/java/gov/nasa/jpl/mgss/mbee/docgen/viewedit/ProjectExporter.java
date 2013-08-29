@@ -53,18 +53,19 @@ public class ProjectExporter {
 		res.put("documents", docs);
 		res.put("volumes", volumes);
 		String post = res.toJSONString();
-		//log.log("posting:" + post);
+		//log.log(post);
 		String url = ViewEditUtils.getUrl();
 		if (url == null || url.equals(""))
 			return;
 		url += "/rest/projects/" + project.getID();
 		PostMethod pm = new PostMethod(url);
 		try {
-			pm.setRequestHeader("Content-Type", "text/json");
+			pm.setRequestHeader("Content-Type", "application/json");
 			pm.setRequestEntity(JsonRequestEntity.create(post));
 			//Protocol easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
 			//Protocol.registerProtocol("https", easyhttps);
 			HttpClient client = new HttpClient();
+			ViewEditUtils.setCredentials(client);
 			client.executeMethod(pm);
 			String code = pm.getResponseBodyAsString();
 			if (code.equals("ok"))

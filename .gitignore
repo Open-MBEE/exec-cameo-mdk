@@ -2,3 +2,5 @@
 /dist
 /javadoc
 /bin
+*.jresult
+*.diff

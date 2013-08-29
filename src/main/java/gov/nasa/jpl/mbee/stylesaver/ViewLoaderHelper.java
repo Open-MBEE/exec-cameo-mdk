@@ -278,6 +278,11 @@ public class ViewLoaderHelper {
 	public static void setBreakPoints(PathElement elem, JSONObject jsonObj) {
 		// get the break points in the saved style
 		Long numBreakPts = (Long) jsonObj.get("num_break_points");
+		
+		if(numBreakPts == null) {
+			return;
+		}
+		
 		List<Point> breakPoints = new ArrayList<Point>(numBreakPts.intValue());
 		
 		// add each of the break points to a list
@@ -348,6 +353,10 @@ public class ViewLoaderHelper {
 		Double y = (Double) jsonObj.get("rect_y");
 		Double width = (Double) jsonObj.get("rect_width");
 		Double height = (Double) jsonObj.get("rect_height");
+		
+		if((x == null) || (y == null) || (width == null) || (height == null)) {
+			return;
+		}
 		
 		// the restored bounds
 		Rectangle rect = new Rectangle(x.intValue(), y.intValue(), width.intValue(), height.intValue());
