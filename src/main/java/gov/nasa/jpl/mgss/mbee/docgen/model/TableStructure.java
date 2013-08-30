@@ -172,6 +172,7 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 	
 	@Override
 	public void initialize() {
+		super.initialize();
 		if (dgElement instanceof StructuredActivityNode) {
 			ts = (StructuredActivityNode)dgElement;
 		} else if (dgElement instanceof CallBehaviorAction) {

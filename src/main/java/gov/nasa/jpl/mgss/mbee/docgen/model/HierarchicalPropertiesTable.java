@@ -104,6 +104,7 @@ public abstract class HierarchicalPropertiesTable extends Table {
 	
 	@Override
 	public void initialize() {
+		super.initialize();
 		Integer maxDepth = (Integer)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype, "maxDepth", 0);
 		List<String> topIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeTypeName", new ArrayList<Property>()));
 		List<String> topExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeTypeName", new ArrayList<Property>()));
@@ -126,11 +127,6 @@ public abstract class HierarchicalPropertiesTable extends Table {
 		setTopExcludeName(topExcludeName);
 		setTopAssociationType(topAssociationType);
 		setTopOrder(topOrder);
-		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
-		setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
-		setIncludeDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.documentationChoosable, "includeDoc", false));
 		setIncludeInherited((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.inheritedChoosable, "includeInherited", false));
-		setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
 	}
 }

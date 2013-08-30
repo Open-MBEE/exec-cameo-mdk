@@ -67,14 +67,9 @@ public class CustomTable extends Table {
 
   @Override
   public void initialize() {
-	
+	  super.initialize();
 	  setHeaders((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>()));
-	  setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-	  setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
-//	  setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(an, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
-	  setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
 	  setColumns((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.customTableStereotype, "columns", new ArrayList<String>()));
-	  setColwidths((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.tableStereotype, "colwidths", new ArrayList<String>()));
   }
 
 

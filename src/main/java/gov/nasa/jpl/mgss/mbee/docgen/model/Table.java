@@ -1,5 +1,9 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -59,5 +63,15 @@ public abstract class Table extends Query {
 	
 	public List<String> getColwidths() {
 		return colwidths;
+	}
+	
+	@Override
+	public void initialize() {
+		setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
+		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
+		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
+		setIncludeDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.documentationChoosable, "includeDoc", false));
+		setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
+		setColwidths((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.tableStereotype, "colwidths", new ArrayList<String>()));
 	}
 }

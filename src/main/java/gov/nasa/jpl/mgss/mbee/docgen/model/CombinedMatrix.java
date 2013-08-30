@@ -81,23 +81,18 @@ public class CombinedMatrix extends Table {
 
 	@Override
 	public void initialize() {
+		super.initialize();
 		// TODO Auto-generated method stub
 		Integer nameColumn = (Integer)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.combinedMatrixStereotype, "nameColumn", 1);
 		Integer docColumn = (Integer)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.combinedMatrixStereotype, "docColumn", 2);
 		nameColumn = nameColumn < 1 ? 1 : nameColumn;
 		docColumn = docColumn < 1 ? 2 : docColumn;
 		setHeaders((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>()));
-		setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
-		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
 		setOutgoing((List<Stereotype>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.stereotypedRelChoosable, "outgoingStereotypedRelationships", new ArrayList<Stereotype>()));
 		setIncoming((List<Stereotype>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.stereotypedRelChoosable, "incomingStereotypedRelationships", new ArrayList<Stereotype>()));
-		setIncludeDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.documentationChoosable, "includeDoc", false));
 		setSkipIfNoDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.docSkippable, "skipIfNoDoc", false));
-		setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
 		setNameColumn(nameColumn);
 		setDocColumn(docColumn);
-		setColwidths((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.tableStereotype, "colwidths", new ArrayList<String>()));
 	}
 
 }

@@ -79,6 +79,7 @@ public abstract class WorkpackageTable extends Table {
 	
 	@Override
 	public void initialize() {
+		super.initialize();
 		Element workpackage = (Element)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "workpackage", null);
 		Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "doRollup", false);
 		Boolean suppliesAsso = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "suppliesAsso", false);
@@ -87,8 +88,6 @@ public abstract class WorkpackageTable extends Table {
 		Boolean showProducts = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "showProducts", true);
 		Boolean showMassMargin = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.workpackageTablesStereotype, "showMassMargin", false);
 		
-		setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
 		setFloatingPrecision((Integer)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.precisionChoosable, "floatingPrecision", -1));
 		setWorkpackage(workpackage);
 		setDoRollup(doRollup);
@@ -97,7 +96,6 @@ public abstract class WorkpackageTable extends Table {
 		setAuthorizesAsso(authorizesAsso);
 		setSortByName(sortByName);
 		setShowProducts(showProducts);
-		setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
 		setShowMassMargin(showMassMargin);
 	}
 }
