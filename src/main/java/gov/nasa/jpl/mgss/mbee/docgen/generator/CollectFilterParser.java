@@ -235,18 +235,22 @@ public class CollectFilterParser {
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.userScriptCFStereotype, true)) {
 			res.addAll(getUserScriptCF(in, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByName)) {
-			res.addAll(Utils.sortByName(in));
+			List<Element> sorted = Utils.sortByName(in);
+			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByName, "reverse", false)) {
+				Collections.reverse(sorted);
+			}
+			res.addAll(sorted);
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByAttribute)) {
 			String attribute = ((EnumerationLiteral)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "desiredAttribute", null)).getName();
-			List ordered = Utils.sortByAttribute(in, attribute);
-			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "invertOrder", false)) {
+			List<Element> ordered = Utils.sortByAttribute(in, attribute);
+			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "reverse", false)) {
 				Collections.reverse(ordered);
 			}
 			res.addAll(ordered);
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByProperty)) {
 			Property property = (Property)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByProperty, "desiredProperty", null);
-			List ordered = Utils.sortByProperty(in, property);
-			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByProperty, "invertOrder", false)) {
+			List<Element> ordered = Utils.sortByProperty(in, property);
+			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByProperty, "reverse", false)) {
 				Collections.reverse(ordered);
 			}
 			res.addAll(ordered);
