@@ -26,6 +26,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
+
+import org.eclipse.m2m.qvt.oml.ecore.ImperativeOCL.ReturnExp;
+
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -75,6 +78,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.impl.LiteralRealImpl;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
@@ -932,6 +936,199 @@ public class Utils {
     	return n;
     }
     
+    /**
+     * Sorts elements by a specific attribute limited to the enumeration below, which is
+     * suspiciously similar to the possible attributes in tableAttributeColumn...
+     * @param elem
+     * @param attr
+     * @return
+     */
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, String attr) {
+    	return sortByAttribute(elem, availableAttribute.valueOf(attr));
+    }
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, availableAttribute attr) {
+    	List<Element> list = new ArrayList<Element>(elem);
+    	switch (attr) {
+    	case Name:
+    		Collections.sort(list, getAttributeComparator(availableAttribute.Name, false));
+    		break;
+    	case Documentation:
+    		Collections.sort(list, getAttributeComparator(availableAttribute.Documentation, false));
+    		break;
+    	case Value:
+    		boolean isAllNumbers = true;
+    		for (Element e: list) {
+    			if (!Utils2.isNumber(DocGenUtils.fixString(getElementAttribute(e, attr)))) {
+    				isAllNumbers = false;
+    				break;
+    			}
+    		}
+    		Collections.sort(list, getAttributeComparator(availableAttribute.Value, isAllNumbers));
+    		break;
+    		
+    	}
+    	return list;
+    }
+    private static Comparator<Element> getAttributeComparator(availableAttribute attr, boolean isAllNumbers) {
+    	final availableAttribute attribute = attr;
+    	final boolean allNums = isAllNumbers;
+    	
+    	return new Comparator<Element>() {
+    		public int compare(Element A, Element B) {
+    			Object a = getElementAttribute(A, attribute);
+    			Object b = getElementAttribute(B, attribute);
+    			switch (attribute) {
+    			case Name:
+    				if (a instanceof String && b instanceof String) {
+    					return ((String)a).compareTo((String)b);
+    				} else {
+    					return 0;
+    				}
+    			case Documentation:
+    				if (a instanceof String && b instanceof String) {
+    					return ((String)a).length() - ((String)b).length();
+    				} else {
+    					return 0;
+    				}
+    			case Value:
+    				if (allNums) {
+    					Double da = Double.parseDouble(DocGenUtils.fixString(a));
+    					Double db = Double.parseDouble(DocGenUtils.fixString(b));
+    					return da.compareTo(db);
+    				} else if (a instanceof String && b instanceof String) {
+    					return ((String)a).compareTo((String)b);
+    				} else {
+    					return 0;
+    				}
+    			default:
+    				return 0;
+    			}
+    		}
+    	};
+    }
+    
+    /**
+     * Sorts elements by a any property.
+     * Strings treated alphabetically, numbers treated least on top.
+     * @param in
+     * @param property
+     * @return
+     */
+	public static List sortByProperty(Collection<? extends Element>elem, Property prop) {
+		List<Element> list = new ArrayList<Element>(elem);
+		// Check if all numbers first
+		boolean isAllNumbers = true;
+		for (Element e: list) {
+			List<Object> temp = getElementProperty(e, prop);
+			if (temp.size() != 1) {
+				isAllNumbers = false;
+				break;
+			}
+			for (Object o: temp) {
+				if (!Utils2.isNumber(DocGenUtils.fixString(o))) { 
+					isAllNumbers = false;
+					break;
+				}
+			}
+			if (!isAllNumbers) break;
+		}
+		Collections.sort(list, getPropertyComparator(prop, isAllNumbers));
+		return list;
+	}
+	
+    private static Comparator<Element> getPropertyComparator(Property prop, boolean isAllNumbers) {
+    	final Property property = prop;
+    	final boolean allNums = isAllNumbers;
+    	
+    	return new Comparator<Element>() {
+    		public int compare(Element A, Element B) {
+    			List<Object> a = getElementProperty(A, property);
+    			List<Object> b = getElementProperty(B, property);
+    			if (a.size() == 1 && b.size() == 1) {
+    				Object a0 = a.get(0);
+    				Object b0 = b.get(0);
+    				String as = DocGenUtils.fixString(a0);
+    				String bs = DocGenUtils.fixString(b0);
+    				if (allNums) {
+    					Double da0 = Double.parseDouble(as);
+    					Double db0 = Double.parseDouble(bs);
+    					return da0.compareTo(db0);
+    				} else {
+    					return as.compareTo(bs);
+    				}
+    			} else {
+    				return a.size() - b.size();
+    			}
+    		}
+    	};
+    }
+    
+    /**
+     * Returns an attribute of the element, provided it is one in the enumeration 
+     * availableAttribute. Please try to use the (Element, availableAttributes) method
+     * over the (Element, String) version if possible.
+     * @param elem
+     * @param attr
+     * @return
+     */
+    public static Object getElementAttribute(Element elem, String attr) {
+    	return getElementAttribute(elem, availableAttribute.valueOf(attr));
+    }
+    public static Object getElementAttribute(Element elem, availableAttribute attr) {
+    	switch (attr) {
+    	case Name:
+    		if (elem instanceof NamedElement) {
+    			return ((NamedElement)elem).getName();
+    		} else {
+    			return elem.getHumanName(); 
+    		}
+    	case Documentation:
+			return ModelHelper.getComment(elem);
+    	case Value:
+			if (elem instanceof Property) {
+				return ((Property)elem).getDefaultValue();
+			} else if (elem instanceof Slot) { 
+				return ((Slot)elem).getValue(); 
+			} 
+		default:
+			return null;
+    	}
+    }
+    public static enum availableAttribute {		Name,
+    											Documentation,
+    											Value };
+   
+    /**
+     * The property returned will always be a list of values. Gets default value
+     * of a stereotype property is possible and there's no slot for the element. 
+     * Stand-alone value properties will be collected by name matching.
+     * @param elem
+     * @param prop
+     * @return
+     */
+	public static List<Object> getElementProperty(Element elem, Property prop) {
+		Element myOwner = prop.getOwner();
+		List<Object> rSlots = new ArrayList<Object>();
+		if (myOwner instanceof Stereotype && StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) {
+			ValueSpecification pDefault = null;
+			
+			rSlots.addAll(StereotypesHelper.getStereotypePropertyValue(elem, (Stereotype)myOwner, (Property)prop));
+			pDefault = prop.getDefaultValue();
+			
+			if (rSlots.size() < 1 && pDefault != null) {
+				rSlots.add(pDefault); 
+			}
+			return rSlots;
+		}
+		Collection<Element> rOwned = elem.getOwnedElement();
+		for (Object o: rOwned) {
+			if (((Element)o) instanceof Property && ((Property)o).getName().equals(prop.getName())) {
+				rSlots.add(((Property)o).getDefaultValue());
+			}
+		}
+		return rSlots;
+	}
+	
     /**
      * Get the things that have t has the type
      * @param t

@@ -89,4 +89,5 @@ public class BillOfMaterialsTable extends WorkpackageTable {
 	public void accept(IModelVisitor v) {
 		v.visit(this);
 	}
+
 }
