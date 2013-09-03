@@ -83,8 +83,16 @@ public class DocumentGenerator {
 	 */
 	public Document parseDocument(boolean singleView, boolean recurse) {
 		if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
-			ViewParser vp = new ViewParser(this, singleView, recurse, doc, start);
-			vp.parse();
+			if (start instanceof Package || StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype) || 
+					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype) != null || 
+					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nextStereotype) != null ||
+					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nosectionStereotype) != null) {
+				ViewParser vp = new ViewParser(this, singleView, recurse, doc, start);
+				vp.parse();
+			} else {
+				ProductViewParser vp = new ProductViewParser(this, singleView, recurse, doc, start);
+				vp.parse();
+			}
 		} else if (StereotypesHelper.hasStereotypeOrDerived(start, DocGen3Profile.documentStereotype) && start instanceof Activity)
 			parseActivityOrStructuredNode(start, doc);
 		else {
