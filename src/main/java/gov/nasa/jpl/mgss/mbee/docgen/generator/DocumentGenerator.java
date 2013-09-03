@@ -327,12 +327,12 @@ public class DocumentGenerator {
 			for (Property aR: aM) {
 				Element aT = ((TypedElement) aR).getType();
 				
-				if (StereotypesHelper.hasStereotype(aT, DocGen3Profile.projectStaffStereotype)) {
+				if (StereotypesHelper.hasStereotype(aT, DocGen3Profile.projectStaffStereotype)) {// REVIEW -- hasStereotypeOrDerived()?
 					f = ((NamedElement)aR).getName();
 					o = (String)StereotypesHelper.getStereotypePropertyFirst(aT, DocGen3Profile.projectStaffStereotype, "Organization"); 
 					d = (String)StereotypesHelper.getStereotypePropertyFirst(aT, DocGen3Profile.projectStaffStereotype, "Division"); 
 				}
-				else if (StereotypesHelper.hasStereotype(aT, DocGen3Profile.roleStereotype)) {
+				else if (StereotypesHelper.hasStereotype(aT, DocGen3Profile.roleStereotype)) {// REVIEW -- hasStereotypeOrDerived()?
 					t = ((NamedElement)aT).getName();
 				}
 			}
@@ -359,12 +359,12 @@ public class DocumentGenerator {
 			for (Property cR: cM) {
 				Element cT = ((TypedElement) cR).getType();
 				
-				if (StereotypesHelper.hasStereotype(cT, DocGen3Profile.projectStaffStereotype)) {
+				if (StereotypesHelper.hasStereotype(cT, DocGen3Profile.projectStaffStereotype)) {// REVIEW -- hasStereotypeOrDerived()?
 					f = ((NamedElement)cR).getName();
 					o = (String)StereotypesHelper.getStereotypePropertyFirst(cT, DocGen3Profile.projectStaffStereotype, "Organization"); 
 					d = (String)StereotypesHelper.getStereotypePropertyFirst(cT, DocGen3Profile.projectStaffStereotype, "Division"); 
 				}
-				else if (StereotypesHelper.hasStereotype(cT, DocGen3Profile.roleStereotype)) {
+				else if (StereotypesHelper.hasStereotype(cT, DocGen3Profile.roleStereotype)) {// REVIEW -- hasStereotypeOrDerived()?
 					t = ((NamedElement)cT).getName();
 				}
 			}
@@ -436,7 +436,7 @@ public class DocumentGenerator {
 		if (!section && parent instanceof Section) //parent can be Document, in which case this view must be a section
 			viewSection.setNoSection(true);
 		viewSection.setId(view.getID());
-		if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))
+		if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))// REVIEW -- hasStereotypeOrDerived()?
 			viewSection.isAppendix(true);
 		
 		if (viewpoint != null && viewpoint instanceof Class) { //view conforms to a viewpoint
@@ -558,7 +558,7 @@ public class DocumentGenerator {
 		while (outs != null && outs.size() == 1) {
 			ActivityNode next = outs.iterator().next().getTarget();
 			next2 = null;
-			if (next instanceof CallBehaviorAction || next instanceof StructuredActivityNode && StereotypesHelper.hasStereotype(next, DocGen3Profile.tableStructureStereotype)) {
+			if (next instanceof CallBehaviorAction || next instanceof StructuredActivityNode && StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.tableStructureStereotype)) { 
 				Behavior b = (next instanceof CallBehaviorAction)?((CallBehaviorAction)next).getBehavior():null;
 				if (StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.sectionStereotype) || b != null && StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.sectionStereotype)) {
 					parseSection((CallBehaviorAction)next, parent);
@@ -643,7 +643,7 @@ public class DocumentGenerator {
 					}
 				}
 				next2 = next;
-			} else if (next instanceof ForkNode && StereotypesHelper.hasStereotype(next, DocGen3Profile.parallel)) {
+			} else if (next instanceof ForkNode && StereotypesHelper.hasStereotype(next, DocGen3Profile.parallel)) {// REVIEW -- hasStereotypeOrDerived()?
 				CollectFilterParser.setContext(context);
 				List<Element> results = CollectFilterParser.startCollectAndFilterSequence(next, null);
 				this.context.pushTargets(results);
@@ -670,7 +670,10 @@ public class DocumentGenerator {
 		Boolean ignore = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype, "ignore", false);
 		Boolean loop = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype, "loop", false);
 		Boolean isAppendix = false;
-		if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.appendixStereotype) || (cba.getBehavior() != null && StereotypesHelper.hasStereotype(cba.getBehavior(), DocGen3Profile.appendixStereotype)))
+
+		if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.appendixStereotype) || // REVIEW -- hasStereotypeOrDerived()?
+		    (cba.getBehavior() != null &&
+		     StereotypesHelper.hasStereotype(cba.getBehavior(), DocGen3Profile.appendixStereotype))) // REVIEW -- hasStereotypeOrDerived()?
 			isAppendix = true;
 		String title = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype, "title", "");
 		if (title == null || title.equals("")) {
@@ -725,7 +728,7 @@ public class DocumentGenerator {
 		Boolean loop = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "loop", false);
 		List<String> titles = (List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.templateStereotype, "titles", new ArrayList<String>());
 		boolean structured = false;
-		if (StereotypesHelper.hasStereotype(an, DocGen3Profile.structuredQueryStereotype) || (an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null && StereotypesHelper.hasStereotype(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.structuredQueryStereotype)))
+		if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.structuredQueryStereotype) || (an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.structuredQueryStereotype)))
 			structured = true;
 		List<Element> targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(an, DocGen3Profile.templateStereotype, "targets");
 		if (targets == null || context.targetsEmpty()) {
@@ -816,6 +819,7 @@ public class DocumentGenerator {
 		Element a = (an instanceof CallBehaviorAction)?((CallBehaviorAction)an).getBehavior():null;
 		
 		Query dge = null;
+		// REVIEW -- should the many hasStereotype() below be hasStereotypeOrDerived()?
 		if (StereotypesHelper.hasStereotype(an, DocGen3Profile.imageStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.imageStereotype))) {
 			dge = new Image();
 		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.paragraphStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.paragraphStereotype))) {

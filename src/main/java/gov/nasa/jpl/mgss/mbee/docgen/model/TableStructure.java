@@ -11,8 +11,10 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
+import gov.nasa.jpl.mgss.mbee.docgen.model.Common.Reference;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
@@ -195,10 +197,10 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 				bNode = GeneratorUtils.findInitialNode(curNode);
 				hasBehavior = true;
 			}
-			boolean hasTablePropColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype );
-			boolean hasTableExprColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableExpressionColumnStereotype);
-			boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableAttributeColumnStereotype);
-			boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype);
+			boolean hasTablePropColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tablePropertyColumnStereotype );
+			boolean hasTableExprColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableExpressionColumnStereotype);
+			boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableAttributeColumnStereotype);
+			boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableSumRowStereotype);
 			if (hasTablePropColStereoType||hasTableExprColStereoType) {
 				// TablePropertyColumn tags
 				Object dProp = null;
@@ -222,12 +224,9 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 							Debug.error( false, "Expected Property but got null" );
 						}
 					} else {
-						Debug.error( false, "Expected Property but got: "
-								+ dProp
-								+ ( dProp == null ? "" : " of type "
-										+ dProp.getClass()
-										.getName() ) );
-
+						Debug.error( false, "Expected Property but got: " + dProp +
+							 	            ( dProp == null ? "" : " of type " +
+						                      dProp.getClass().getName() ) );
 					}
 				}
 			} else if (hasTableAttrColStereoType) {
@@ -393,32 +392,37 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		}
 		addColumn(curCol);
 	}
-
+	
 	public static final String propertyColumn = "PROPERTY";
 	public static final String attributeColumn = "ATTRIBUTE";
 
 	@SuppressWarnings("unchecked")
 	private void parseColumn(Object dThing, List<?> rows, String colType) {
 		List<Object> curCol = new ArrayList<Object>();
+        List<Object> results;
 		if (dThing == null || colType == null) {
 			curCol.addAll(rows); // REVIEW -- does this need to be a list of lists?
 		} else {
 			for (Object r: rows) {
 				if (r instanceof Element) {
 					if (colType.equals(propertyColumn)) {
-						curCol.add(Utils.getElementProperty((Element)r, (Property)dThing));
+					    results = Utils.getElementProperty((Element)r, (Property)dThing);
+						curCol.add(Common.Reference.getEntries((Element)r, From.DVALUE, results));
 					} else if (colType.equals(attributeColumn)) {
-						curCol.add(handleAttributeCell(dThing, (Element)r));
+					    results = handleAttributeCell(dThing, (Element)r);
+						curCol.add(Common.Reference.getEntries((Element)r, Utils.getFromAttribute(dThing), results));
 					}
 				} else if (r instanceof List<?>) {
 					List<Object> superCell = new ArrayList<Object>();
 					for (Object c: (List<Object>)r) {
 						if (c instanceof Element) { 
-							if (colType.equals(propertyColumn)) {
-								superCell.addAll(Utils.getElementProperty((Element)c, (Property)dThing));
-							} else if (colType.equals(attributeColumn)) {
-								superCell.addAll(handleAttributeCell(dThing, (Element)c));
-							}
+		                    if (colType.equals(propertyColumn)) {
+		                        results = Utils.getElementProperty((Element)r, (Property)dThing);
+		                        superCell.addAll(Common.Reference.getEntries((Element)c, From.DVALUE, results));
+		                    } else if (colType.equals(attributeColumn)) {
+		                        results = handleAttributeCell(dThing, (Element)r);
+		                        superCell.addAll(Common.Reference.getEntries((Element)c, Utils.getFromAttribute(dThing), results));
+		                    }
 						} else {
 							superCell.addAll( Utils2.newList( c ) );
 						}
@@ -433,10 +437,10 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 	}
 
 	
-	public List<Object> handleAttributeCell(Object dAttr, Element cell) { 
+	public static List<Object> handleAttributeCell(Object dAttr, Element cell) { 
 		List<Object> rSlots = new ArrayList<Object>();
 		if (dAttr != null) {
-			Object cellAttr = Utils.getElementAttribute(cell, ((EnumerationLiteral)dAttr).getName());
+			Object cellAttr = Utils.getElementAttribute(cell, dAttr);
 			if (cellAttr != null) {
 				if (cellAttr instanceof Collection<?>) {
 					rSlots.addAll((Collection<? extends Object>)cellAttr);

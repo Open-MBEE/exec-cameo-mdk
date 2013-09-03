@@ -1020,12 +1020,12 @@ public class Utils {
 		// Check if all numbers first
 		boolean isAllNumbers = true;
 		for (Element e: list) {
-			List<Object> temp = getElementProperty(e, prop);
+			List<Object> temp = getElementPropertyValues(e, prop);
 			if (temp.size() != 1) {
 				isAllNumbers = false;
 				break;
 			}
-			for (Object o: getElementProperty(e, prop)) {
+			for (Object o: temp) {
 				if (!Utils2.isNumber(DocGenUtils.fixString(o))) { 
 					isAllNumbers = false;
 					break;
@@ -1067,6 +1067,76 @@ public class Utils {
     }
     
     /**
+     * Convert to an From enum value
+     * @param attr the attribute of some type
+     * @return the corresponding From value
+     */
+    public static From getFromAttribute( Object attr ) {
+        if ( attr instanceof From ) return (From)attr;
+        if ( attr instanceof availableAttribute ) {
+            availableAttribute aattr = (availableAttribute)attr;
+            switch ( aattr ) {
+            case Name:
+                return From.NAME;
+            case Documentation:
+                return From.DOCUMENTATION;
+            case Value:
+                return From.DVALUE;
+            default:
+            }
+        }
+    	if ( attr instanceof EnumerationLiteral ) return getFromAttribute(((EnumerationLiteral)attr).getName());
+    	From f = null;
+    	if ( attr instanceof String ) {
+    	    try {
+    	        f = getFromAttribute(From.valueOf((String)attr));
+            } catch (Exception e) {}
+            try {
+                if ( f == null ) f = getFromAttribute(availableAttribute.valueOf((String)attr));
+    	    } catch (Exception e) {}
+    	}
+    	if ( f == null ) {
+            Debug.error(false, "Unexpected argument " + attr + " to getFromAttribute()." );
+    	}
+    	return f;
+    }
+    
+    /**
+     * Convert to an availableAttribute enum value
+     * @param attr the attribute of some type
+     * @return the corresponding availableAttribute
+     */
+    public static availableAttribute getAvailableAttribute( Object attr ) {
+        if ( attr instanceof availableAttribute ) return (availableAttribute)attr;
+        if ( attr instanceof From ) {
+            From fattr = (From)attr;
+            switch ( fattr ) {
+            case NAME:
+                return availableAttribute.Name;
+            case DOCUMENTATION:
+                return availableAttribute.Documentation;
+            case DVALUE:
+                return availableAttribute.Value;
+            default:
+            }
+        }
+        if ( attr instanceof EnumerationLiteral ) return getAvailableAttribute(((EnumerationLiteral)attr).getName());
+        availableAttribute aattr = null;
+        if ( attr instanceof String ) {
+            try {
+                aattr = getAvailableAttribute(availableAttribute.valueOf((String)attr));
+            } catch (Exception e) {}
+            try {
+                if ( aattr == null ) aattr = getAvailableAttribute(From.valueOf((String)attr));
+            } catch (Exception e) {}
+        }
+        if ( aattr == null ) {
+            Debug.error(false, "Unexpected argument " + attr + " to getFromAttribute()." );
+        }
+        return aattr;
+    }
+    
+    /**
      * Returns an attribute of the element, provided it is one in the enumeration 
      * availableAttribute. Please try to use the (Element, availableAttributes) method
      * over the (Element, String) version if possible.
@@ -1076,6 +1146,9 @@ public class Utils {
      */
     public static Object getElementAttribute(Element elem, String attr) {
     	return getElementAttribute(elem, availableAttribute.valueOf(attr));
+    }
+    public static Object getElementAttribute(Element elem, Object attr) {
+        return getElementAttribute( elem, getAvailableAttribute(attr));
     }
     public static Object getElementAttribute(Element elem, availableAttribute attr) {
     	switch (attr) {
@@ -1097,43 +1170,111 @@ public class Utils {
 			return null;
     	}
     }
-    public static enum availableAttribute {		Name,
-    											Documentation,
-    											Value };
+
+    public static enum availableAttribute { Name, Documentation, Value };
    
     /**
-     * The property returned will always be a list of values. Gets default value
-     * of a stereotype property is possible and there's no slot for the element. 
+     * A list of property values will always be returned. Gets default value
+     * of a stereotype property when there's no slot for the element. 
      * Stand-alone value properties will be collected by name matching.
      * @param elem
      * @param prop
      * @return
      */
+    public static List<Object> getElementPropertyValues(Element elem, Property prop) {
+        List<Object> props = getElementProperty( elem, prop );
+        List<Object> results = new ArrayList<Object>();
+        for ( Object p : props ) {
+            if ( p instanceof Slot ) results.addAll( getSlotValues( (Slot) p ) );
+            else if ( p instanceof Property ) results.add( ((Property)p).getDefaultValue() );
+            else results.add( p );
+        }
+        return results;
+    }
+
+    /**
+     * Get the element's matching Slots or Properties.
+     * 
+     * @param elem
+     *            the Element with the sought Properties.
+     * @param prop
+     *            the Stereotype tag or Class Property
+     * @return a list of Slots for an input Stereotype tag Property or else
+     *         member Properties of the same name as the input Property.
+     */
 	public static List<Object> getElementProperty(Element elem, Property prop) {
-		Element myOwner = prop.getOwner();
-		List<Object> rSlots = new ArrayList<Object>();
-		if (myOwner instanceof Stereotype && StereotypesHelper.hasStereotype(elem, (Stereotype)myOwner)) {
-			ValueSpecification pDefault = null;
-			if (prop != null) {
-				rSlots.addAll(StereotypesHelper.getStereotypePropertyValue(elem, (Stereotype)myOwner, (Property)prop));
-				pDefault = prop.getDefaultValue();
-			}
-			if (rSlots.size() < 1 && pDefault != null) {
-				rSlots.add(pDefault); 
-			}
-			return rSlots;
-		}
+	    // try as stereotype property
+        List<Object> results = getStereotypeProperty(elem, prop);
+	    if ( results == null ) results = new ArrayList<Object>();
+        if ( prop == null || !results.isEmpty() ) return results;
+
+        // now try as a class property
 		Collection<Element> rOwned = elem.getOwnedElement();
-		for (Object o: rOwned) {
-			if (((Element)o) instanceof Property && ((Property)o).getName().equals(prop.getName())) {
-				rSlots.add((Object)((Property)o).getDefaultValue());
+		for (Element o: rOwned) {
+			if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
+				results.add(o);
 			}
 		}
-		return rSlots;
+		return results;
 	}
 	
     /**
-     * Get the things that have t has the type
+     * Get the element's matching Slots or Properties.
+     * 
+     * @param elem
+     *            the Element with the sought Properties.
+     * @param prop
+     *            the Stereotype tag or Class Property
+     * @return a list of Slots for an input Stereotype tag Property or else
+     *         member Properties of the same name.
+     */
+    public static List<Object> getStereotypeProperty(Element elem, Property prop) {
+        List<Object> results = new ArrayList<Object>();
+        if ( prop == null ) return results;
+        Collection<Object> values = null;
+        Element myOwner = prop.getOwner();
+        if (myOwner instanceof Stereotype &&
+            StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) { // REVIEW -- may not be able to get slot from derived stereotype -- why doesn't Stereotypes.Helper give us this function?
+            ValueSpecification pDefault = null;
+                //results.addAll(StereotypesHelper.getStereotypePropertyValue(elem, (Stereotype)myOwner, (Property)prop));
+                Slot slot = StereotypesHelper.getSlot(elem, prop, false);
+                if ( slot != null && getSlotValues(slot) != null && !getSlotValues(slot).isEmpty() ) {
+                    results.add(slot);
+                } else {
+                    pDefault = prop.getDefaultValue();
+                }
+            if (results.size() < 1 && pDefault != null) {
+                results.add(pDefault); 
+            }
+            return results;
+        }
+        Object value = null;
+        try {
+            // maybe a derived property
+            value = elem.refGetValue(prop.getName()); // i think this only works
+                                                      // for derived properties
+        } catch (Exception ex) {
+        }
+        if (value != null) {
+            if (value instanceof Element || value instanceof String)
+                results.add(value);
+            else if (value instanceof Collection)
+                values = (Collection) value;
+        }
+        if (values != null) 
+            results.addAll(values);
+
+        Collection<Element> rOwned = elem.getOwnedElement();
+        for (Element o: rOwned) {
+            if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
+                results.add(o);
+            }
+        }
+        return results;
+    }
+    
+    /**
+     * Get the things that have t as the type
      * @param t
      * @return
      */
@@ -1176,30 +1317,14 @@ public class Utils {
      * @return
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	public static List<Object> getStereotypePropertyValues(Element e, Property p) {
-    	List<Object> res = new ArrayList<Object>();
-    	Element s = p.getOwner();
-    	Collection<Object> values = null;
-    	if (s instanceof Stereotype) 
-    		values = (Collection<Object>)StereotypesHelper.getStereotypePropertyValue(e, (Stereotype)s, p, true);
-    	else {
-    		Object value = null;
-    		try {
-    		//maybe a derived property
-    			value = e.refGetValue(p.getName()); //i think this only works for derived properties, throws reflection exception if not, should enclose in try catch
-    		} catch (Exception ex) {
-    			
-    		}
-    		if (value != null) {
-    			if (value instanceof Element || value instanceof String) 
-    				res.add(value);
-    			else if (value instanceof Collection)
-    				values = (Collection)value;
-    		}	
-    	}
-    	if (values != null) 
-    		res.addAll(values);
-    	return res;
+	public static List<Object> getStereotypePropertyValues(Element elem, Property prop) {
+        List<Object> props = getElementProperty( elem, prop );
+        List<Object> results = new ArrayList<Object>();
+        for ( Object p : props ) {
+            if ( p instanceof Property ) results.add( ((Property)p).getDefaultValue() );
+            else results.add( p );
+        }
+        return results;
     }
 
   /**
@@ -1211,8 +1336,9 @@ public class Utils {
    * @return the list of values
    */
     public static List<Object> getSlotValues( Slot slot ) {
-      List< ValueSpecification > list = slot.getValue();
       List< Object > sList = new ArrayList<Object>();
+      if (slot == null) return sList;
+      List< ValueSpecification > list = slot.getValue();
       // If there is only one element in the list, just use that element instead
       // of the list.
       for ( ValueSpecification vs : list ) {

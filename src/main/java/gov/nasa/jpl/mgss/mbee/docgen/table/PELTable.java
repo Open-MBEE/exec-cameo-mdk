@@ -508,7 +508,7 @@ public class PELTable {
 			p2i.put(p, is);
 			Set<Classifier> redefined = new HashSet<Classifier>();
 			for (Element e: p.getOwnedElement()) {
-				if (e instanceof Interaction && StereotypesHelper.hasStereotype(e, "Mode Scenario")) {
+				if (e instanceof Interaction && StereotypesHelper.hasStereotype(e, "Mode Scenario")) { // REVIEW -- hasStereotypeOrDerived()?
 					String mode = ((Interaction)e).getName();
 					is.put(mode, (Interaction)e);
 					if (!modes.contains(mode))
@@ -519,7 +519,7 @@ public class PELTable {
 			if (includeInherited) {
 			for (Element parent: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(p, Generalization.class, 1, 1)) {
 				for (Element e: parent.getOwnedElement()) {
-					if (e instanceof Interaction && StereotypesHelper.hasStereotype(e, "Mode Scenario") && !redefined.contains(e)) {
+					if (e instanceof Interaction && StereotypesHelper.hasStereotype(e, "Mode Scenario") && !redefined.contains(e)) { // REVIEW -- hasStereotypeOrDerived()?
 						String mode = ((Interaction)e).getName();
 						is.put(mode, (Interaction)e);
 						if (!modes.contains(mode))

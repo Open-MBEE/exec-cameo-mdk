@@ -29,7 +29,7 @@ public class GenericTable extends Table {
 			for (String h: this.headers)
 				row.add(new DBText(h));
 			res.add(row);
-		} else if (StereotypesHelper.hasStereotype(d, DocGen3Profile.headersChoosable)) {
+		} else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGen3Profile.headersChoosable)) {
 			List<DocumentElement> row = new ArrayList<DocumentElement>();
 			for (String h: (List<String>)StereotypesHelper.getStereotypePropertyValue(d, DocGen3Profile.headersChoosable, "headers"))
 				row.add(new DBText(h));

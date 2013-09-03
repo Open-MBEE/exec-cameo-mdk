@@ -178,26 +178,26 @@ public class CollectFilterParser {
 			associationType = AggregationKindEnum.COMPOSITE;
 		List<Element> res = new ArrayList<Element>();
 		
-		if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectDiagram) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectDiagram))) {
+		if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectDiagram) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectDiagram))) { // REVIEW -- hasStereotypeOrDerived()?
 			for (Element e: in)
 				if (e instanceof Diagram)
 					res.addAll(Utils.getElementsOnDiagram((Diagram)e));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectAssociationStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectAssociationStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectAssociationStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectAssociationStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			for (Element e: in)
 				res.addAll(Utils.collectAssociatedElements(e, depth, associationType));
 		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectOwnedElementStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectOwnedElementStereotype))) {
 			for (Element e: in)
 				res.addAll(Utils.collectOwnedElements(e, depth));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectOwnerStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectOwnerStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectOwnerStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectOwnerStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			for (Element e: in)
 				res.addAll(Utils.collectOwners(e, depth));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectRelMetaclassStereotype) || (a!= null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectRelMetaclassStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectRelMetaclassStereotype) || (a!= null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectRelMetaclassStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			for (Element e: in)
 				res.addAll(Utils.collectDirectedRelatedElementsByRelationshipMetaclasses(e, metaclasses, direction, depth));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectRelStereotypeStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectRelStereotypeStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectRelStereotypeStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectRelStereotypeStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			for (Element e: in)
 				res.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypes(e, stereotypes, direction, derived, depth));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectStereotypePropStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectStereotypePropStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectStereotypePropStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectStereotypePropStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			List<Object> blah = new ArrayList<Object>();
 			for (Element e: in)
 				for (Property p: stereotypeProperties)
@@ -205,7 +205,7 @@ public class CollectFilterParser {
 			for (Object b:blah)
 				if (b instanceof Element)
 					res.add((Element)b);
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectTypeStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectTypeStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectTypeStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectTypeStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			for (Element e: in) {
 				if (e instanceof TypedElement) {
 					if (((TypedElement)e).getType() != null) {
@@ -217,20 +217,20 @@ public class CollectFilterParser {
 					res.add(((CallOperationAction)e).getOperation());
 				}
 			}
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectClassifierAttributes) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectClassifierAttributes))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectClassifierAttributes) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectClassifierAttributes))) { // REVIEW -- hasStereotypeOrDerived()?
 				for (Element e: in)
 					res.addAll(Utils.getAttributes(e, inherited));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.filterDiagramTypeStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.filterDiagramTypeStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.filterDiagramTypeStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.filterDiagramTypeStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			res.addAll(Utils.filterDiagramsByDiagramTypes(in, diagramTypes, include));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.filterMetaclassStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.filterMetaclassStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.filterMetaclassStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.filterMetaclassStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			res.addAll(Utils.filterElementsByMetaclasses(in, metaclasses, include));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.filterNameStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.filterNameStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.filterNameStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.filterNameStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			res.addAll(Utils.filterElementsByNameRegex(in, names, include));
 		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.filterStereotypeStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.filterStereotypeStereotype))) {
 			res.addAll(Utils.filterElementsByStereotypes(in, stereotypes, include, derived));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectionStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectionStereotype))) {
+		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.collectionStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.collectionStereotype))) { // REVIEW -- hasStereotypeOrDerived()?
 			res.addAll(collectAndFilterGroup((Activity)cba.getBehavior(), in));
-		} else if (StereotypesHelper.hasStereotype(cba, DocGen3Profile.removeDuplicates) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.removeDuplicates))) {
+		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.removeDuplicates) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.removeDuplicates))) {
 			res.addAll(Utils.removeDuplicates(in));
 		} else if (StereotypesHelper.hasStereotypeOrDerived(cba, DocGen3Profile.userScriptCFStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.userScriptCFStereotype))) {
 			res.addAll(getUserScriptCF(in, cba));
