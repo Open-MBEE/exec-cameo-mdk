@@ -1,19 +1,8 @@
 package gov.nasa.jpl.mgss.mbee.docgen.generator;
 
-import gov.nasa.jpl.graphs.DirectedEdgeVector;
-import gov.nasa.jpl.graphs.DirectedGraphHashSet;
-import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
-import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.lib.ScriptRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
-import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSerializeVisitor;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BillOfMaterialsTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BulletedList;
 import gov.nasa.jpl.mgss.mbee.docgen.model.CombinedMatrix;
@@ -21,11 +10,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Container;
 import gov.nasa.jpl.mgss.mbee.docgen.model.CustomTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.DependencyMatrix;
 import gov.nasa.jpl.mgss.mbee.docgen.model.DeploymentTable;
-import gov.nasa.jpl.mgss.mbee.docgen.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.model.DocGenElement;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
 import gov.nasa.jpl.mgss.mbee.docgen.model.GenericTable;
-import gov.nasa.jpl.mgss.mbee.docgen.model.HierarchicalPropertiesTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Image;
 import gov.nasa.jpl.mgss.mbee.docgen.model.LibraryMapping;
 import gov.nasa.jpl.mgss.mbee.docgen.model.MissionMapping;
@@ -36,66 +23,27 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
 import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
 import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageAssemblyTable;
-import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageTable;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
 import java.util.Stack;
 
-import javax.lang.model.util.Elements;
-import javax.script.ScriptException;
-
-import org.jboss.util.property.PropertyManager;
-
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
-import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallOperationAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
-import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.DecisionNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ForkNode;
-import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.JoinNode;
-import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.MergeNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementImport;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
-import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 
 
 /**
@@ -109,71 +57,18 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
  */
 public class DocumentGenerator {
 
-//	private Stack<List<Element>> targets;
-//	private ActivityNode current;
-//	private GUILog log;
 	private GenerationContext context; // Easier for modular implementation. Contains previous three variables.
 	private Element start;
 	private Document doc;
 	private Stereotype sysmlview;
-	
-	/**
-	 * this is just some static method added as an experiment in triggering docgen from simulation toolkit
-	 * Louise was trying this sometime ago, not sure if it's used by anyone
-	 * @param e
-	 * @param file
-	 * @return
-	 */
-	public static boolean generateDocument(Element e, String file) {
-		DocumentValidator dv = new DocumentValidator(e);
-		dv.validateDocument();
-		dv.printErrors();
-		if (dv.isFatal())
-			return false;
-		DocumentGenerator dg = new DocumentGenerator(e, null);
-		Document dge = dg.parseDocument();
-		boolean genNewImage = dge.getGenNewImage();
-		(new PostProcessor()).process(dge);
-		File savefile = null;
-		if (file == null) {
-			String homedir = System.getProperty("user.home") + File.separator + "DocGenOutput";
-			File dir = new File(homedir);
-			dir.mkdirs();
-			savefile = new File(homedir + File.separator + "out.xml");
-		} else
-			savefile = new File(file);
-		File dir = savefile.getParentFile();
-		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(savefile));
-			//List<DocumentElement> books = dge.getDocumentElement();
-			DocBookOutputVisitor visitor = new DocBookOutputVisitor(false);
-			dge.accept(visitor);
-			DBBook book = visitor.getBook();
-			if (book != null) {
-				DBSerializeVisitor v = new DBSerializeVisitor(genNewImage, dir, null);
-				book.accept(v);
-				writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-				writer.write(v.getOut());
-			}
-			writer.flush();
-			writer.close();
-					
-		} catch (IOException ex) {
-			ex.printStackTrace();	
-			return false;
-					
-		}
-		return true;
-	}
-		
-	
+	private Stereotype product;
+			
 	public DocumentGenerator(Element e, PrintWriter wlog) {
 		start = e;
 		sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
+		product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
 		StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
 		doc = new Document();
-//		targets = new Stack<List<Element>>();
-//		log = Application.getInstance().getGUILog();
 		context = new GenerationContext(new Stack<List<Element>>(), null, Application.getInstance().getGUILog());
 	}
 
@@ -188,14 +83,8 @@ public class DocumentGenerator {
 	 */
 	public Document parseDocument(boolean singleView, boolean recurse) {
 		if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
-			if (StereotypesHelper.hasStereotypeOrDerived(start, DocGen3Profile.documentViewStereotype)) {
-				doc.setDgElement(start); //only set the DgElement if this is actually a document view, this affects processing down the line for various things (like docweb visitors)
-				Element first = GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype);
-				if (first != null)
-					parseView(first, doc, true, singleView, recurse, false);				
-			} else {//starting from regular view, not document
-				parseView(start, doc, true, singleView, recurse, true);	
-			}
+			ViewParser vp = new ViewParser(this, singleView, recurse, doc, start);
+			vp.parse();
 		} else if (StereotypesHelper.hasStereotypeOrDerived(start, DocGen3Profile.documentStereotype) && start instanceof Activity)
 			parseActivityOrStructuredNode(start, doc);
 		else {
@@ -214,138 +103,12 @@ public class DocumentGenerator {
 	}
 	
 	/**
-	 * 
-	 * @param view current view
-	 * @param parent parent view
-	 * @param section should current view be a section
-	 * @param singleView parse only one view
-	 * @param recurse if singleView is true, but want all children view from top view
-	 * @param top is current view the top view
-	 */
-	private void parseView(Element view, Container parent, boolean section, boolean singleView, boolean recurse, boolean top) {
-		Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.conformStereotype);
-		
-		Section viewSection = new Section(); //Section is a misnomer, should be View
-		viewSection.setTitle(((NamedElement)view).getName());
-		viewSection.setDgElement(view);
-		viewSection.setView(true);
-		parent.addElement(viewSection);
-		if (!section && parent instanceof Section) //parent can be Document, in which case this view must be a section
-			viewSection.setNoSection(true);
-		viewSection.setId(view.getID());
-		if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))
-			viewSection.isAppendix(true);
-		
-		if (viewpoint != null && viewpoint instanceof Class) { //view conforms to a viewpoint
-			if (!(view instanceof Diagram)) { //if it's a diagram, people most likely put image query in viewpoint already. this is to prevent showing duplicate documentation
-				String viewDoc = ModelHelper.getComment(view);
-				if (viewDoc != null) {
-					Paragraph para = new Paragraph(viewDoc);
-					para.setDgElement(view);
-					para.setFrom(From.DOCUMENTATION);
-					viewSection.addElement(para);
-				}
-			}
-			Collection<Behavior> viewpointBehavior = ((Class)viewpoint).getOwnedBehavior();
-			Behavior b = null;
-			if (viewpointBehavior.size() > 0) 
-				b = viewpointBehavior.iterator().next();
-			else {
-				//viewpoint can inherit other viewpoints, if this viewpoint has no behavior, check inherited behaviors
-				Class now = (Class)viewpoint;
-				while(now != null) {
-					if (!now.getSuperClass().isEmpty()) {
-						now = now.getSuperClass().iterator().next();
-						if (now.getOwnedBehavior().size() > 0) {
-							b = now.getOwnedBehavior().iterator().next();
-							break;
-						}
-					} else {
-						now = null;
-					}
-				}
-			}
-			if (b != null) { //parse and execute viewpoint behavior, giving it the imported/queried elements
-				List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, ElementImport.class, 1, 1);
-				List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, PackageImport.class, 1, 1);
-				List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.queriesStereotype, 1, false, 1);
-				List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.oldQueriesStereotype, 1, false, 1);
-				if (elementImports == null) elementImports = new ArrayList<Element>();
-				if (packageImports != null) elementImports.addAll(packageImports);
-				if (expose != null) elementImports.addAll(expose); //all three import/queries relationships are interpreted the same
-				if (queries != null) elementImports.addAll(queries); //all three import/queries relationships are interpreted the same
-				if (elementImports.isEmpty())
-					elementImports.add(view); //if view does not import/query anything, give the view element itself to the viewpoint
-				context.pushTargets(elementImports); //this becomes the context of the activity going in
-				if (b instanceof Activity) {
-					parseActivityOrStructuredNode(b, viewSection);
-				}
-				context.popTargets();
-			}
-		} else { //view does not conform to a viewpoint, apply default behavior
-			if (view instanceof Diagram) { //if a diagram, show diagram and documentation
-				Image image = new Image();
-				List<Element> images = new ArrayList<Element>();
-				images.add(view);
-				image.setTargets(images);
-				String caption = (String)StereotypesHelper.getStereotypePropertyFirst(view, DocGen3Profile.dgviewStereotype, "caption");
-				// Check for old stereotype name for backwards compatibility
-				if (caption == null) caption = (String)StereotypesHelper.getStereotypePropertyFirst(view, DocGen3Profile.oldDgviewStereotype, "caption");
-				List<String> captions = new ArrayList<String>();
-				captions.add(caption);
-				image.setCaptions(captions);
-				image.setShowCaptions(true);
-				viewSection.addElement(image);
-			} else { //just show documentation
-				String viewDoc = ModelHelper.getComment(view);
-				if (viewDoc != null) {
-					Paragraph para = new Paragraph(viewDoc);
-					para.setDgElement(view);
-					para.setFrom(From.DOCUMENTATION);
-					viewSection.addElement(para);
-				}
-			}
-		}
-		
-		if (!singleView) { //does everything from here including nexts
-			Element content = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.nosectionStereotype);
-			if (content != null && section) //current view is a section, nosection children should go under it
-				parseView(content,  viewSection, false, singleView, recurse, false);
-			if (content != null && !section) //current view is not a section, further nosection children should be siblings
-				parseView(content,  parent, false, singleView, recurse, false);
-			Element first = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.firstStereotype);
-			if (first != null)
-				parseView(first, viewSection, true, singleView, recurse, false);
-			Element next = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.nextStereotype);
-			if (next != null) {
-				parseView(next, parent, true, singleView, recurse, false);
-			}
-			
-		} else if (recurse) {//single view, but recursive (gets everything underneath view including view, but not nexts from the top view
-			Element content = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.nosectionStereotype);
-			if (content != null && section)
-				parseView(content,  viewSection, false, singleView, recurse, false);
-			if (content != null && !section)
-				parseView(content,  parent, false, singleView, recurse, false);
-			Element first = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.firstStereotype);
-			if (first != null)
-				parseView(first, viewSection, true, singleView, recurse, false);
-			if (!top) {
-				Element next = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.nextStereotype);
-				if (next != null) {
-					parseView(next, parent, true, singleView, recurse, false);
-				}
-			}
-		}
-	}
-	
-	/**
 	 * parses activity/structured node - these usually indicate a new context of target elements
 	 * @param a
 	 * @param parent
 	 */
 	@SuppressWarnings("unchecked")
-	private void parseActivityOrStructuredNode(Element a, Container parent) {
+	public void parseActivityOrStructuredNode(Element a, Container parent) {
 		InitialNode in = GeneratorUtils.findInitialNode(a);
 		if (in == null)
 			return;
@@ -451,6 +214,7 @@ public class DocumentGenerator {
 		}
 	}
 	
+	//this is a section made using an activity and should be discouraged since it won't show up on view editor
 	private void parseSection(CallBehaviorAction cba, Container parent) {
 		String titlePrefix = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype, "titlePrefix", "");
 		String titleSuffix = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype, "titleSuffix", "");
@@ -639,6 +403,14 @@ public class DocumentGenerator {
 			dge = new LibraryMapping();
 		}
 		return dge;
+	}
+	
+	public GenerationContext getContext() {
+		return context;
+	}
+	
+	public Stereotype getProductStereotype() {
+		return product;
 	}
  
 		
