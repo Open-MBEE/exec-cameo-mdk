@@ -28,8 +28,6 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 
 import org.eclipse.m2m.qvt.oml.ecore.ImperativeOCL.ReturnExp;
-import org.jboss.aop.advice.annotation.Return;
-import org.python.antlr.PythonParser.return_stmt_return;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -996,6 +994,7 @@ public class Utils {
     				if (allNums) {
     					Double da = Double.parseDouble(DocGenUtils.fixString(a));
     					Double db = Double.parseDouble(DocGenUtils.fixString(b));
+    					return da.compareTo(db);
     				} else if (a instanceof String && b instanceof String) {
     					return ((String)a).compareTo((String)b);
     				} else {
@@ -1043,24 +1042,22 @@ public class Utils {
     	
     	return new Comparator<Element>() {
     		public int compare(Element A, Element B) {
-    			Object a = getElementProperty(A, property);
-    			Object b = getElementProperty(B, property);
-    			if (a instanceof List && b instanceof List && ((List)a).size() == 1 && ((List)b).size() == 1) {
-    				Object a0 = ((List)a).get(0);
-    				Object b0 = ((List)b).get(0);
+    			List<Object> a = getElementProperty(A, property);
+    			List<Object> b = getElementProperty(B, property);
+    			if (a.size() == 1 && b.size() == 1) {
+    				Object a0 = a.get(0);
+    				Object b0 = b.get(0);
+    				String as = DocGenUtils.fixString(a0);
+    				String bs = DocGenUtils.fixString(b0);
     				if (allNums) {
-    					Double da0 = Double.parseDouble(DocGenUtils.fixString(a0));
-    					Double db0 = Double.parseDouble(DocGenUtils.fixString(b0));
-    					return (int)Math.round(da0 - db0);
-    				} else if (a0 instanceof String && b0 instanceof String) {
-    					return ((String)a0).compareTo((String)b0);
+    					Double da0 = Double.parseDouble(as);
+    					Double db0 = Double.parseDouble(bs);
+    					return da0.compareTo(db0);
     				} else {
-    					return 0;
+    					return as.compareTo(bs);
     				}
-    			} else if (a instanceof List && b instanceof List) {
-    				return ((List)a).size() - ((List)b).size();
     			} else {
-    				return 0;
+    				return a.size() - b.size();
     			}
     		}
     	};

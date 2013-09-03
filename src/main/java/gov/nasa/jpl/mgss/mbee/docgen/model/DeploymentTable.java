@@ -66,15 +66,4 @@ public class DeploymentTable extends WorkpackageTable {
 		
 	}
 
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

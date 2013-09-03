@@ -101,23 +101,13 @@ public class GenericTable extends Table {
 	}
 
 	@Override
-	public void initialize(ActivityNode an, List<Element> in) {
-		setCaptions((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hasCaptions, "showCaptions", true));
-		setHeaders((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>()));
-		setSkipIfNoDoc((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.docSkippable, "skipIfNoDoc", false));
-		setStyle((String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.tableStereotype, "style", null));
+	public void initialize() {
+		setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
+		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
+		setHeaders((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>()));
+		setSkipIfNoDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.docSkippable, "skipIfNoDoc", false));
+		setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
 	}
 
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 }

@@ -42,6 +42,14 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+/**
+ * This class contains methods for parsing and visiting 
+ * TableStructures and their contents.
+ * 
+ * @author bcompane
+ *
+ */
+
 public class TableStructure extends Table implements Iterator<List<Object>> {
 
 	//TODO decide tag options
@@ -164,18 +172,18 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 	private Element ts;
 	private List<Element> rows;
 	
-	public void initialize(ActivityNode an, List<Element> in) {
-		if (an instanceof StructuredActivityNode) {
-			ts = (StructuredActivityNode)an;
-		} else if (an instanceof CallBehaviorAction) {
-			ts = ((CallBehaviorAction)an).getBehavior();
+	@Override
+	public void initialize() {
+		if (dgElement instanceof StructuredActivityNode) {
+			ts = (StructuredActivityNode)dgElement;
+		} else if (dgElement instanceof CallBehaviorAction) {
+			ts = ((CallBehaviorAction)dgElement).getBehavior();
 		} else {
 			ts = null;
 		}
-		rows = in;
+		rows = targets;
 	}
 
-	// TODO: Does this already handle CBAs? 
 	public void parse() {
 		if (ts == null) return;
 		
@@ -248,7 +256,7 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		setHeaders(hs);
 	}
 	
-	public DocumentElement visit(boolean forViewEditor) {
+	public List<DocumentElement> visit(boolean forViewEditor) {
 		DBTable t = new DBTable();
 		
 		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
@@ -303,8 +311,9 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		}
 		t.setColspecs(cslist);
 		t.setStyle(getStyle());
-		
-		return t;
+		List<DocumentElement> res = new ArrayList<DocumentElement>();
+		res.add(t);
+		return res;
 	}
 	
 	// PARSING HELPERS
@@ -337,6 +346,7 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 			rAsTargets.add(r);
 //			targets.push(rAsTargets);
 			rowsOut.add(CollectFilterParser.startCollectAndFilterSequence(bNode, rAsTargets));
+//			rowsOut.add(DocumentGenerator.)
 		}
 		
 		return rowsOut; // TODO: for some reason, this is always an empty list. Why?
@@ -512,29 +522,6 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		return;
 	}
 		
-	// DEBUGGING STUFF TODO: REMOVE
-	// ><>><><><><><><><><><><><><>
-	
-	public String toString() {
-		//determine longest row
-		int biggest=0;
-		if (table != null)
-			for (List<Object> c: table)
-				biggest = (c.size() > biggest) ? c.size() : biggest;
-		//add lines to the string
-		String output = new String();
-		for (int n = 0; n < biggest; n++) {
-			for (List<Object> c: table) {
-				if (c.size() <= n)
-					output.concat("| null\t");
-				else
-					output.concat("| " + c.toString() + "\t");
-			}
-			output.concat("||\n");
-		}	
-		return output;
-	}
-	
 	// FOR DOCBOOKOUTPUTVISITOR STUFF
 	// ><><><><><><><><><><><><><><><
 	

@@ -56,7 +56,7 @@ public class LibraryMapping extends Query {
 		v.visit(this);
 	}
 
-	public boolean initialize() {
+	public boolean init() {
 		chars = new HashSet<NamedElement>();
 		usedChars = new HashSet<NamedElement>();
 		ef = Application.getInstance().getProject().getElementsFactory();
@@ -246,20 +246,4 @@ public class LibraryMapping extends Query {
 
 	}
 
-	@Override
-	public void initialize(ActivityNode an, List<Element> in) {
-		
-	}
-
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

@@ -16,8 +16,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  */
 public interface Generatable {
 	
-	public void initialize(ActivityNode an, List<Element> in);
+	public void initialize();
 	public void parse();
-	public DocumentElement visit(boolean forViewEditor);
+	public List<DocumentElement> visit(boolean forViewEditor);
 	
 }

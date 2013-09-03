@@ -66,31 +66,16 @@ public class CustomTable extends Table {
 	}
 
   @Override
-  public void initialize(ActivityNode an, List<Element> in) {
-	  // Get "columns" slot -- should be a list of strings (e.g., OCL expressions)
-	  List<String> columns = null;
-	  Object columnsO = StereotypesHelper.getStereotypePropertyValue(an, DocGen3Profile.customTableStereotype, "columns");
-	  if (columnsO != null && columnsO instanceof List)
-		  columns = (List<String>)columnsO;
-
-	  setHeaders((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>()));
-	  setCaptions((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-	  setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hasCaptions, "showCaptions", true));
+  public void initialize() {
+	
+	  setHeaders((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>()));
+	  setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
+	  setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
 //	  setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(an, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
-	  setStyle((String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.tableStereotype, "style", null));
-	  setColumns(columns);
-	  setColwidths((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.tableStereotype, "colwidths", new ArrayList<String>()));
+	  setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
+	  setColumns((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.customTableStereotype, "columns", new ArrayList<String>()));
+	  setColwidths((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.tableStereotype, "colwidths", new ArrayList<String>()));
   }
 
-  @Override
-  public void parse() {
-	  // TODO Auto-generated method stub
 
-  }
-
-  @Override
-  public DocumentElement visit(boolean forViewEditor) {
-	  // TODO Auto-generated method stub
-	  return null;
-  }
 }

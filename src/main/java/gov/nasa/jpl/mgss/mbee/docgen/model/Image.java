@@ -47,23 +47,13 @@ public class Image extends Query {
 	}
 
 	@Override
-	public void initialize(ActivityNode an, List<Element> in) {
+	public void initialize() {
 		// TODO Auto-generated method stub
-		Boolean doNotShow = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.imageStereotype, "doNotShow", false);
-		setCaptions((List<String>)GeneratorUtils.getListProperty(an, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.hasCaptions, "showCaptions", true));
+		Boolean doNotShow = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.imageStereotype, "doNotShow", false);
+		setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
+		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
 		setDoNotShow(doNotShow);
 	}
 
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 }

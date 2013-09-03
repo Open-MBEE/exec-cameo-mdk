@@ -210,210 +210,7 @@ public class DocumentGenerator {
 	}
 	
 	private void docMetadata() {
-		// documentMeta Backwards Compatibility 
-		String title = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "title");
-		String subtitle = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "subtitle");
-		String header = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "header");
-		String footer = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "footer");
-		String subheader = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "subheader");
-		String subfooter = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "subfooter");
-		String legalNotice = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "legalNotice");
-		String acknowledgements = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "acknowledgement");
-		Object chunkFirstSectionsO = StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "chunkFirstSections");
-		Diagram coverImage = (Diagram)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "coverImage");
-		boolean chunkFirstSections = (chunkFirstSectionsO instanceof Boolean && !(Boolean)chunkFirstSectionsO || chunkFirstSectionsO instanceof String && chunkFirstSectionsO.equals("false")) ? false : true;
-		Object indexO = StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "index");
-		boolean index = (indexO instanceof Boolean && (Boolean)indexO || indexO instanceof String && indexO.equals("true")) ? true : false;
-		Object tocSectionDepthO = StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "tocSectionDepth");
-    	Integer tocSectionDepth = 20;
-		if (tocSectionDepthO != null && tocSectionDepthO instanceof Integer && (Integer)tocSectionDepthO > 0)
-    		tocSectionDepth = (Integer)tocSectionDepthO;
-    	if (tocSectionDepthO != null && tocSectionDepthO instanceof String)
-    		tocSectionDepth = Integer.parseInt((String)tocSectionDepthO);
-    	Object chunkSectionDepthO = StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "chunkSectionDepth");
-    	Integer chunkSectionDepth = 20;
-		if (chunkSectionDepthO != null && chunkSectionDepthO instanceof Integer && (Integer)chunkSectionDepthO > 0)
-    		chunkSectionDepth = (Integer)chunkSectionDepthO;
-    	if (chunkSectionDepthO != null && chunkSectionDepthO instanceof String)
-    		chunkSectionDepth = Integer.parseInt((String)chunkSectionDepthO);
-    	
-    	//Document View Settings
-		String DocumentID = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Document ID");
-		String DocumentVersion = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Version");
-		String LogoAlignment = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Logo Alignment");
-		String LogoLocation = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Logo Location");
-		String AbbreviatedProjectName= (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Project Acronym");
-		String DocushareLink= (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Docushare Link");
-		String AbbreiviatedTitle = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Document Acronym");
-		String TitlePageLegalNotice = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Title Page Legal Notice");
-		String FooterLegalNotice = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Footer Legal Notice");
-		String RemoveBlankPages = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Remove Blank Pages");
-		
-		List <String> CollaboratorEmail = StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Collaborator Email");
-		List <String> RevisionHistory = StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Revision History");
-		String JPLProjectTitle =(String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Formal Project Title");
-		
-		String LogoSize = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Logo Size");
-		Object UseDefaultStylesheetO =StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "UseDefaultStylesheet");
-		boolean UseDefaultStylesheet=(UseDefaultStylesheetO instanceof Boolean && !(Boolean)UseDefaultStylesheetO || UseDefaultStylesheetO instanceof String && UseDefaultStylesheetO.equals("false")) ? false : true;
-		
-    	
-    	Object genO = StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "genNewImages");
-		boolean gen = (genO instanceof Boolean && (Boolean)genO || genO instanceof String && genO.equals("true")) ? true : false;
-		
-    	if (title == null || title.equals(""))
-    		title = ((NamedElement)start).getName();
-    	Stereotype stereotype = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGen3Profile.documentViewStereotype);
-      if (FooterLegalNotice == null || FooterLegalNotice.equals("")){
-    		Property propertyByName = StereotypesHelper.getPropertyByName(stereotype, "Footer Legal Notice");
-        if ( propertyByName != null ) {
-          FooterLegalNotice= propertyByName.getDefault();
-        }    	
-    	}
-    	if (TitlePageLegalNotice == null || TitlePageLegalNotice.equals("")){
-    		Property propertyByName = StereotypesHelper.getPropertyByName(stereotype, "Title Page Legal Notice");
-    		if ( propertyByName != null ) {
-    		  TitlePageLegalNotice = propertyByName.getDefault();
-    		}
-    	
-    	}
-    	
-    	//Institutional Logo setup
-    	String instLogo = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "InstLogo");
-		String instLogoSize = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "InstLogoSize");
-		String instTxt1= (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Insttxt1");
-		String instTxt2 = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Insttxt2");
-    	
-    	//Collect author information
-    	List <String> Author= StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Author");
-		
-    	List<String> authorCollect = new ArrayList<String>();
-    	List <Element> roles = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start, DocGen3Profile.accountableForStereotype, 2, false, 1);
-    	String s = "1,2,3,4,5";
-		for (Element r: roles) {
-			
-			String t = ((NamedElement)r).getName();
-			s = "1,2," + t + "4,5";
-			Collection<Element> rAttrs = ((NamedElement) r).getOwnedElement();
-			for (Element rA: rAttrs) {
-				String f = ((NamedElement)rA).getName();
-				if (f.isEmpty()) {}
-				else {
-				s = f + ",2," + t + "4,5";
-				Type rT = ((TypedElement) rA).getType();
-				//if StereotypesHelper.hasSereotype(rT, DocGen3Profile.projectStaffStereotype) {
-				String o = (String)StereotypesHelper.getStereotypePropertyFirst(rT, DocGen3Profile.projectStaffStereotype, "Organization"); 
-				String d = (String)StereotypesHelper.getStereotypePropertyFirst(rT, DocGen3Profile.projectStaffStereotype, "Division"); 
-				s = f + ",," + t + "," + o + "," + d;
-				authorCollect.add(s);
-				}
-			}
-		}
-		if (Author.isEmpty()) {
-		Author  = authorCollect;
-		}
-    	
-    	//Collect approver information
-		List <String> Approver = StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Approver");
-		List<String> approverCollect = new ArrayList<String>();
-		
-		List<Element> aprvrs = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start, DocGen3Profile.approvesStereotype, 1, false, 1);
-		for (Element a: aprvrs) {
-			List<Property> aM =  ((Association) a).getMemberEnd();
-			String f = "";
-			String o = "";
-			String t = "";
-			String d = "";
-			for (Property aR: aM) {
-				Element aT = ((TypedElement) aR).getType();
-				
-				if (StereotypesHelper.hasStereotype(aT, DocGen3Profile.projectStaffStereotype)) {// REVIEW -- hasStereotypeOrDerived()?
-					f = ((NamedElement)aR).getName();
-					o = (String)StereotypesHelper.getStereotypePropertyFirst(aT, DocGen3Profile.projectStaffStereotype, "Organization"); 
-					d = (String)StereotypesHelper.getStereotypePropertyFirst(aT, DocGen3Profile.projectStaffStereotype, "Division"); 
-				}
-				else if (StereotypesHelper.hasStereotype(aT, DocGen3Profile.roleStereotype)) {// REVIEW -- hasStereotypeOrDerived()?
-					t = ((NamedElement)aT).getName();
-				}
-			}
-			String z = f + ",," + t + "," + o + "," + d;
-			if( z != ",,,,") {
-			approverCollect.add(z);
-			}	
-		}
-		if (Approver.isEmpty()) {
-		Approver = approverCollect;
-		}
-		
-		//Collect concurrence information
-		List <String> Concurrence = StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Concurrence");
-		List<String> concurCollect = new ArrayList<String>();
-		
-		List<Element> cncr = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start, DocGen3Profile.concursStereotype, 1, false, 1);
-		for (Element c: cncr) {
-			List<Property> cM =  ((Association) c).getMemberEnd();
-			String f = "";
-			String o = "";
-			String t = "";
-			String d = "";
-			for (Property cR: cM) {
-				Element cT = ((TypedElement) cR).getType();
-				
-				if (StereotypesHelper.hasStereotype(cT, DocGen3Profile.projectStaffStereotype)) {// REVIEW -- hasStereotypeOrDerived()?
-					f = ((NamedElement)cR).getName();
-					o = (String)StereotypesHelper.getStereotypePropertyFirst(cT, DocGen3Profile.projectStaffStereotype, "Organization"); 
-					d = (String)StereotypesHelper.getStereotypePropertyFirst(cT, DocGen3Profile.projectStaffStereotype, "Division"); 
-				}
-				else if (StereotypesHelper.hasStereotype(cT, DocGen3Profile.roleStereotype)) {// REVIEW -- hasStereotypeOrDerived()?
-					t = ((NamedElement)cT).getName();
-				}
-			}
-			String z = f + ",," + t + "," + o + "," + d;
-			if( z != ",,,,") {
-			concurCollect.add(z);
-			}	
-		}
-		if (Concurrence.isEmpty()) {
-		Concurrence = concurCollect;
-		}
-		
-    	
-    	doc.setGenNewImage(gen);
-		doc.setAcknowledgement(acknowledgements);
-		doc.setChunkFirstSections(chunkFirstSections);
-		doc.setChunkSectionDepth(chunkSectionDepth);
-		doc.setCoverimage(coverImage);
-		doc.setFooter(footer);
-		doc.setHeader(header);
-		doc.setIndex(index);
-		doc.setLegalnotice(legalNotice);
-		doc.setSubfooter(subfooter);
-		doc.setSubheader(subheader);
-		doc.setSubtitle(subtitle);
-		doc.setTitle(title);
-		doc.setTocSectionDepth(tocSectionDepth);
-		doc.setDocumentID(DocumentID);
-		doc.setDocumentVersion(DocumentVersion);
-		doc.setLogoAlignment(LogoAlignment);
-		doc.setLogoLocation(LogoLocation);
-		doc.setAbbreviatedProjectName(AbbreviatedProjectName);
-		doc.setAbbreviatedTitle(AbbreiviatedTitle);
-		doc.setDocushareLink(DocushareLink);
-		doc.setTitlePageLegalNotice(TitlePageLegalNotice);
-		doc.setFooterLegalNotice(FooterLegalNotice);
-		doc.setCollaboratorEmail(CollaboratorEmail);
-		doc.setRemoveBlankPages(RemoveBlankPages);
-		doc.setAuthor(Author);
-		doc.setApprover(Approver);
-		doc.setConcurrance(Concurrence);
-		doc.setJPLProjectTitle(JPLProjectTitle);
-		doc.setRevisionHistory(RevisionHistory);
-		doc.setUseDefaultStylesheet(UseDefaultStylesheet);
-		doc.setLogoSize(LogoSize);
-		doc.setInstLogo(instLogo);
-		doc.setInstLogoSize(instLogoSize);
-		doc.setInstTxt1(instTxt1);
-		doc.setInstTxt2(instTxt2);
+		GeneratorUtils.docMetadata(doc, start);
 	}
 	
 	/**
@@ -573,13 +370,6 @@ public class DocumentGenerator {
 					pushed++;
 					next2 = context.getCurrentNode();
 				}
-//			} else if (StereotypesHelper.hasStereotype(next, DocGen3Profile.tableStructureStereotype)) {
-//				// TODO: Talk to doris about treating TS differently than the templates because 
-//				// it (and its constituents) because it can be a CBA or SAN.
-//				TableStructure ts = new TableStructure();
-//				((TableStructure)ts).initialize(next, context.peekTargets().isEmpty()?new ArrayList<Element>():context.peekTargets());
-//				((TableStructure)ts).parse();
-//				parent.addElement(ts);
 			} else if (next instanceof StructuredActivityNode) {
 				Boolean loop = (Boolean)GeneratorUtils.getObjectProperty(next, DocGen3Profile.templateStereotype, "loop", false);
 				Boolean ignore = (Boolean)GeneratorUtils.getObjectProperty(next, DocGen3Profile.templateStereotype, "ignore", false);
@@ -591,11 +381,11 @@ public class DocumentGenerator {
 				if (titles == null)
 					titles = new ArrayList<String>();
 				List<Element> targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(next, DocGen3Profile.templateStereotype, "targets");
-				if (targets == null || context.targetsEmpty()) {
+				if (targets == null || targets.isEmpty()) {
 					targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next, DocGen3Profile.queriesStereotype, 1, false, 1);
 					targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
 				}
-				if (context.targetsEmpty() && !this.context.targetsEmpty()) {
+				if (targets.isEmpty() && !this.context.targetsEmpty()) {
 					targets = this.context.peekTargets();
 				}
 				if (!ignore) {
@@ -731,18 +521,18 @@ public class DocumentGenerator {
 		if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.structuredQueryStereotype) || (an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.structuredQueryStereotype)))
 			structured = true;
 		List<Element> targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(an, DocGen3Profile.templateStereotype, "targets");
-		if (targets == null || context.targetsEmpty()) {
+		if (targets == null || targets.isEmpty()) {
 			targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(an, DocGen3Profile.queriesStereotype, 1, false, 1);
 			targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(an, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
 		}
-		if ((targets == null || context.targetsEmpty()) && an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null) {
+		if ((targets == null || targets.isEmpty()) && an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null) {
 			targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.templateStereotype, "targets");
-			if (targets == null || context.targetsEmpty()) {
+			if (targets == null || targets.isEmpty()) {
 				targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.queriesStereotype, 1, false, 1);
 				targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.oldQueriesStereotype, 1, false, 1));
 			}
 		}
-		if (context.targetsEmpty() && !this.context.targetsEmpty()) {
+		if (targets.isEmpty() && !this.context.targetsEmpty()) {
 			targets = this.context.peekTargets();
 		}		
 		if (structured && !ignore && an instanceof CallBehaviorAction) {
@@ -801,6 +591,7 @@ public class DocumentGenerator {
 				dge.setUseContextNameAsTitle(useContextNameAsTitle);
 				dge.setIgnore(ignore);
 				dge.setLoop(loop);
+				dge.initialize();
 				parent.addElement(dge);
 			}
 		}
@@ -816,49 +607,39 @@ public class DocumentGenerator {
 	 */
 	@SuppressWarnings("unchecked")
 	private Query parseTemplate(ActivityNode an) {
-		Element a = (an instanceof CallBehaviorAction)?((CallBehaviorAction)an).getBehavior():null;
 		
 		Query dge = null;
-		// REVIEW -- should the many hasStereotype() below be hasStereotypeOrDerived()?
-		if (StereotypesHelper.hasStereotype(an, DocGen3Profile.imageStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.imageStereotype))) {
+		if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.imageStereotype)) {
 			dge = new Image();
-		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.paragraphStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.paragraphStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.paragraphStereotype)) {
 			dge = new Paragraph();
-		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.bulletedListStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.bulletedListStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.bulletedListStereotype)) {
 			dge = new BulletedList();
-		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.dependencyMatrixStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.dependencyMatrixStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.dependencyMatrixStereotype)) {
 			dge = new DependencyMatrix();
-		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.genericTableStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.genericTableStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.genericTableStereotype)) {
 			dge = new GenericTable();
-		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.tableStructureStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.tableStructureStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.tableStructureStereotype)) {
 			// Get all the variables or whatever
 			dge = new TableStructure();
-		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.combinedMatrixStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.combinedMatrixStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.combinedMatrixStereotype)) {
 			dge = new CombinedMatrix();
-		} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.customTableStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.customTableStereotype))) { 
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.customTableStereotype)) { 
 			dge = new CustomTable();
-		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.userScriptStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.userScriptStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.userScriptStereotype, true)) {
 			dge = new UserScript();
-		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.hierarchicalPropertiesTableStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.hierarchicalPropertiesTableStereotype))) {
-			if (StereotypesHelper.hasStereotype(an, DocGen3Profile.propertiesTableByAttributesStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.propertiesTableByAttributesStereotype))) {
-				dge = new PropertiesTableByAttributes();
-			}
-		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.workpackageTablesStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.workpackageTablesStereotype))) {
-			if (StereotypesHelper.hasStereotype(an, DocGen3Profile.billOfMaterialsStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.billOfMaterialsStereotype))) {
-				dge = new BillOfMaterialsTable();
-			} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.deploymentStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.deploymentStereotype))) {
-				dge = new DeploymentTable();
-			} else if (StereotypesHelper.hasStereotype(an, DocGen3Profile.workpakcageAssemblyStereotype) || (a != null && StereotypesHelper.hasStereotype(a, DocGen3Profile.workpakcageAssemblyStereotype))) {
-				dge = new WorkpackageAssemblyTable();
-			}
-		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.missionMappingStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.missionMappingStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.propertiesTableByAttributesStereotype)) {
+			dge = new PropertiesTableByAttributes();
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.billOfMaterialsStereotype)) {
+			dge = new BillOfMaterialsTable();
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.deploymentStereotype)) {
+			dge = new DeploymentTable();
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.workpakcageAssemblyStereotype)) {
+			dge = new WorkpackageAssemblyTable();
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.missionMappingStereotype)) {
 			dge = new MissionMapping();
-		} else if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.libraryChooserStereotype) || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, DocGen3Profile.libraryChooserStereotype))) {
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.libraryChooserStereotype)) {
 			dge = new LibraryMapping();
-		}
-		if (dge != null) {
-			dge.initialize(an, context.peekTargets().isEmpty()?new ArrayList<Element>():context.peekTargets());
-			dge.parse(); // TODO: Put this in the DocBookOutputVistor
 		}
 		return dge;
 	}

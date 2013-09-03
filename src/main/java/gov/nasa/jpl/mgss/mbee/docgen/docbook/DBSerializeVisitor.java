@@ -373,7 +373,8 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
 		if (table.getStyle() != null && !table.getStyle().equals(""))
 			style = " tabstyle=\"" + table.getStyle() + "\"";
 		out.append("<table frame=\"all\" pgwide=\"1\" role=\"longtable\"" + id + style + ">\n");
-		out.append("<title>" + DocGenUtils.fixString(table.getTitle()) + "</title>\n");
+//		out.append("<informaltable frame=\"all\" pgwide=\"1\" role=\"longtable\"" + id + style + ">\n");
+		out.append("<title>" + DocGenUtils.fixString(table.getTitle()) + "</title>\n"); // don't have this for informaltable
 		out.append("<tgroup cols=\"" + cols + "\" align=\"left\" colsep=\"1\" rowsep=\"1\">\n");
 		if (table.getColspecs() != null)
 			for (DBColSpec colspec: table.getColspecs())

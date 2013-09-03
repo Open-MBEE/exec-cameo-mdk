@@ -55,22 +55,11 @@ public class Paragraph extends Query {
 	}
 
 	@Override
-	public void initialize(ActivityNode an, List<Element> in) {
-		setDgElement(an);
-		String body = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.paragraphStereotype, "body", "");
+	public void initialize() {
+		String body = (String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.paragraphStereotype, "body", "");
 		setText(body);
-		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(an, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
+		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
 	}
 
-	@Override
-	public void parse() {
-		// TODO Auto-generated method stub
-		
-	}
 
-	@Override
-	public DocumentElement visit(boolean forViewEditor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
