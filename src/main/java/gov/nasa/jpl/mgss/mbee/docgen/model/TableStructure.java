@@ -276,7 +276,7 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		}
 		// set DBTable headers
 		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
-		if (!getHeaders().isEmpty()) {
+		if (getHeaders() != null && !getHeaders().isEmpty()) {
 			List<DocumentElement> first = new ArrayList<DocumentElement>();
 			hs.add(first);
 			for (String h: getHeaders())
