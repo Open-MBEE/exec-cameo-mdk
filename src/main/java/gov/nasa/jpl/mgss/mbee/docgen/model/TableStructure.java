@@ -11,8 +11,8 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
@@ -22,8 +22,6 @@ import java.util.Iterator;
 
 import org.eclipse.emf.ecore.EObject;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -31,14 +29,9 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 /**
  * This class contains methods for parsing and visiting 
@@ -53,43 +46,16 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 	//TODO decide tag options
 	
 	private List<String> headers;
-	private List<Stereotype> outgoing;
-	private List<Stereotype> incoming;
-	private boolean skipIfNoDoc;
 	private List<List<Object>> table;
-	
-	public void setSkipIfNoDoc(boolean b) {
-		skipIfNoDoc = b;
-	}
 	
 	public void setHeaders(List<String> d) {
 		headers = d;
 	}
 	
-	public void setOutgoing(List<Stereotype> s) {
-		outgoing = s;
-	}
-	
-	public void setIncoming(List<Stereotype> s) {
-		incoming = s;
-	}
-
 	public List<String> getHeaders() {
 		return headers;
 	}
 
-	public List<Stereotype> getOutgoing() {
-		return outgoing;
-	}
-
-	public List<Stereotype> getIncoming() {
-		return incoming;
-	}
-
-	public boolean isSkipIfNoDoc() {
-		return skipIfNoDoc;
-	}
-	
 	// Table Stuff
 
 	private Object nullEntry = new String("no entry");
@@ -181,6 +147,7 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 			ts = null;
 		}
 		rows = targets;
+		parse();
 	}
 
 	public void parse() {
@@ -199,15 +166,15 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 			// Find out if have a behavior
 			if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
 				bNode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
-				hasBehavior = true;
 			} else if (curNode instanceof StructuredActivityNode) {
 				bNode = GeneratorUtils.findInitialNode(curNode);
-				hasBehavior = true;
 			}
-			boolean hasTablePropColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tablePropertyColumnStereotype );
-			boolean hasTableExprColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableExpressionColumnStereotype);
-			boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableAttributeColumnStereotype);
-			boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotype(curNode, DocGen3Profile.tableSumRowStereotype);
+            hasBehavior = bNode != null;
+
+			boolean hasTablePropColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tablePropertyColumnStereotype );
+			boolean hasTableExprColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableExpressionColumnStereotype);
+			boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableAttributeColumnStereotype);
+			boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableSumRowStereotype);
 			if (hasTablePropColStereoType||hasTableExprColStereoType) {
 				// TablePropertyColumn tags
 				Object dProp = null;
@@ -231,12 +198,9 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 							Debug.error( false, "Expected Property but got null" );
 						}
 					} else {
-						Debug.error( false, "Expected Property but got: "
-								+ dProp
-								+ ( dProp == null ? "" : " of type "
-										+ dProp.getClass()
-										.getName() ) );
-
+						Debug.error( false, "Expected Property but got: " + dProp +
+							 	            ( dProp == null ? "" : " of type " +
+						                      dProp.getClass().getName() ) );
 					}
 				}
 			} else if (hasTableAttrColStereoType) {
@@ -278,7 +242,7 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		}
 		// set DBTable headers
 		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
-		if (!getHeaders().isEmpty()) {
+		if (getHeaders() != null && !getHeaders().isEmpty()) {
 			List<DocumentElement> first = new ArrayList<DocumentElement>();
 			hs.add(first);
 			for (String h: getHeaders())
@@ -404,32 +368,44 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		}
 		addColumn(curCol);
 	}
-
+	
 	public static final String propertyColumn = "PROPERTY";
 	public static final String attributeColumn = "ATTRIBUTE";
 
 	@SuppressWarnings("unchecked")
 	private void parseColumn(Object dThing, List<?> rows, String colType) {
 		List<Object> curCol = new ArrayList<Object>();
+        List<Object> results;
 		if (dThing == null || colType == null) {
 			curCol.addAll(rows); // REVIEW -- does this need to be a list of lists?
 		} else {
 			for (Object r: rows) {
 				if (r instanceof Element) {
 					if (colType.equals(propertyColumn)) {
-						curCol.add(Utils.getElementProperty((Element)r, (Property)dThing));
+                        curCol.add(Common.Reference.getPropertyReferences((Element)r, (Property)dThing));
+//					    List<Element> props = Utils.getElementProperty((Element)r, (Property)dThing);
+//					    results = new ArrayList<Object>();
+//					    if ( props != null ) results.addAll(props);
+//					    if ( results.isEmpty() ) {
+//					        results.add(new Common.Reference)
+//					    }
+//						curCol.add(Common.Reference.getEntries((Element)r, From.DVALUE, results));
 					} else if (colType.equals(attributeColumn)) {
-						curCol.add(handleAttributeCell(dThing, (Element)r));
+					    results = handleAttributeCell(dThing, (Element)r);
+						curCol.add(Common.Reference.getReferences((Element)r, Utils.getFromAttribute(dThing), results));
 					}
 				} else if (r instanceof List<?>) {
 					List<Object> superCell = new ArrayList<Object>();
 					for (Object c: (List<Object>)r) {
 						if (c instanceof Element) { 
-							if (colType.equals(propertyColumn)) {
-								superCell.addAll(Utils.getElementProperty((Element)c, (Property)dThing));
-							} else if (colType.equals(attributeColumn)) {
-								superCell.addAll(handleAttributeCell(dThing, (Element)c));
-							}
+		                    if (colType.equals(propertyColumn)) {
+		                        superCell.addAll(Common.Reference.getPropertyReferences((Element)r, (Property)dThing));
+//		                        results = Utils.getElementProperty((Element)r, (Property)dThing);
+//		                        superCell.addAll(Common.Reference.getEntries((Element)c, From.DVALUE, results));
+		                    } else if (colType.equals(attributeColumn)) {
+		                        results = handleAttributeCell(dThing, (Element)r);
+		                        superCell.addAll(Common.Reference.getReferences((Element)c, Utils.getFromAttribute(dThing), results));
+		                    }
 						} else {
 							superCell.addAll( Utils2.newList( c ) );
 						}
@@ -444,10 +420,10 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 	}
 
 	
-	public List<Object> handleAttributeCell(Object dAttr, Element cell) { 
+	public static List<Object> handleAttributeCell(Object dAttr, Element cell) { 
 		List<Object> rSlots = new ArrayList<Object>();
 		if (dAttr != null) {
-			Object cellAttr = Utils.getElementAttribute(cell, ((EnumerationLiteral)dAttr).getName());
+			Object cellAttr = Utils.getElementAttribute(cell, dAttr);
 			if (cellAttr != null) {
 				if (cellAttr instanceof Collection<?>) {
 					rSlots.addAll((Collection<? extends Object>)cellAttr);
