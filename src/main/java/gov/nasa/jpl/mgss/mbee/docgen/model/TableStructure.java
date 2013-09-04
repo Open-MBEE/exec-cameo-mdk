@@ -399,11 +399,11 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 					for (Object c: (List<Object>)r) {
 						if (c instanceof Element) { 
 		                    if (colType.equals(propertyColumn)) {
-		                        superCell.addAll(Common.Reference.getPropertyReferences((Element)r, (Property)dThing));
+		                        superCell.addAll(Common.Reference.getPropertyReferences((Element)c, (Property)dThing));
 //		                        results = Utils.getElementProperty((Element)r, (Property)dThing);
 //		                        superCell.addAll(Common.Reference.getEntries((Element)c, From.DVALUE, results));
 		                    } else if (colType.equals(attributeColumn)) {
-		                        results = handleAttributeCell(dThing, (Element)r);
+		                        results = handleAttributeCell(dThing, (Element)c);
 		                        superCell.addAll(Common.Reference.getReferences((Element)c, Utils.getFromAttribute(dThing), results));
 		                    }
 						} else {
