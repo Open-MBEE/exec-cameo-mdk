@@ -10,26 +10,26 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  */
 public class DBParagraph extends DocumentElement {
 
-	private String text;
+	private Object text;
 
 	
 	public DBParagraph() {}
 	
-	public DBParagraph(String text) {
+	public DBParagraph(Object text) {
 		this.text = text;
 	}
 	
-	public DBParagraph(String text, Element from, From fromProp) {
+	public DBParagraph(Object text, Element from, From fromProp) {
 		this.text = text;
 		this.from = from;
 		this.fromProperty = fromProp;
 	}
 	
-	public void setText(String text) {
+	public void setText(Object text) {
 		this.text = text;
 	}
 
-	public String getText() {
+	public Object getText() {
 		return text;
 	}
 	

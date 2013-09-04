@@ -94,23 +94,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
 public class Utils {
 	private Utils() {}
 	
-	/**
-	 * if multiplicity is not a range, returns the number
-	 * if upper limit is infinity and lower limit > 0, returns lower
-	 * else returns 1
-	 * @param p
-	 * @return
-	 */
-	public static int getMultiplicity(Property p) {
-		int lower = p.getLower();
-		int upper = p.getUpper();
-		if (lower == upper)
-			return lower;
-		if (upper == -1 && lower > 0)
-			return lower;
-		return 1;
-	}
-	
+	/******************************************** Collect/Filter/Sort *******************************************************/
 	
 	/**
 	 * This does not change the passed in elements collection, it returns a new list
@@ -127,6 +111,15 @@ public class Utils {
 		return res;
 	}
 	
+	/**
+     * returns collection of model elements that's on the diagram
+     * @param diagram
+     * @return
+     */
+    public static Collection<Element> getElementsOnDiagram(Diagram diagram) {
+    	return Project.getProject(diagram).getDiagram(diagram).getUsedModelElements(true);
+    }
+    
 	/**
 	 * like it says
 	 * @param diagrams can be a list of any model element, only diagrams will be tested and returned
@@ -615,6 +608,72 @@ public class Utils {
     	return new ArrayList<Element>();
     }
     
+    /**
+	 * depending on includeInherited flag, gets all the attributes of e based on redefinition (if e is not a classifier it'll be ignored)
+	 * if includeInherited is false, will get the owned attributes of the classifiers
+	 * @param c
+	 * @param includeInherited
+	 * @return
+	 */
+	public static List<Property> getAttributes(Element e, boolean includeInherited) {
+		List<Property> res = new ArrayList<Property>();
+		
+			if (!(e instanceof Classifier))
+				return res;
+			List<Property> owned = new ArrayList<Property>(((Classifier)e).getAttribute());
+			res.addAll(owned);
+			if (includeInherited) {
+				Collection<NamedElement> inherited = new ArrayList<NamedElement>(((Classifier)e).getInheritedMember());
+				List<NamedElement> inheritedCopy = new ArrayList<NamedElement>(inherited);
+				for (NamedElement ne: inherited) {
+					if (ne instanceof Property) {
+						for (Property redef: ((Property)ne).getRedefinedProperty()) 
+							inheritedCopy.remove(redef);
+					} else
+						inheritedCopy.remove(ne);
+				}
+				for (Property p: owned) 
+					for (Property redef: ((Property)p).getRedefinedProperty()) 
+						inheritedCopy.remove(redef);
+				for (NamedElement ee: inheritedCopy)
+					res.add((Property)ee);
+			}
+		
+    	return res;
+    }
+	
+	/**
+     * Get the things that have t as the type
+     * @param t
+     * @return
+     */
+    public static List<TypedElement> getPropertiesWithType(Type t) {
+    	return new ArrayList<TypedElement>(t.get_typedElementOfType());
+    }
+    
+    /**
+     * get the call behavior actions that're typed by b
+     * @param b
+     * @return
+     */
+    public static List<CallBehaviorAction> getCallBehaviorActionsOfBehavior(Behavior b) {
+    	return new ArrayList<CallBehaviorAction>(b.get_callBehaviorActionOfBehavior());
+    }
+    
+    /**
+     * get call operation actions that're typed by o
+     * @param o
+     * @return
+     */
+    public static List<CallOperationAction> getCallOperationActionsOfOperation(Operation o) {
+    	return new ArrayList<CallOperationAction>(o.get_callOperationActionOfOperation());
+    }
+    
+    
+    public static List<ActivityPartition> getSwimlanesThatRepresentElement(Element e) {
+    	return new ArrayList<ActivityPartition>(e.get_activityPartitionOfRepresents());
+    }
+	
     public static List<Element> intersectionOfCollections(Collection<Element> ... a) {
         List<Element> i = new ArrayList<Element>();
         Set<Element> inter = new HashSet<Element>(a[0]);
@@ -675,243 +734,6 @@ public class Utils {
     }
     
     /**
-     * returns all directed relationships where client element is source and supplier element is target
-     * @param source
-     * @param target
-     * @return
-     */
-    public static List<DirectedRelationship> findDirectedRelationshipsBetween(Element source, Element target) {
-    	List<DirectedRelationship> res = new ArrayList<DirectedRelationship>();
-    	for (DirectedRelationship dr: source.get_directedRelationshipOfSource()) {
-    		if (ModelHelper.getSupplierElement(dr) == target)
-    			res.add(dr);
-    	}
-    	return res;
-    }
-    
-    /**
-     * Displays a dialog box that allows users to select elements from the containment tree<br/>
-     * 17.0.2 seems to have a new nicer dialog box, gotta find it...
-     * @param types this should be a list of java.lang.Class types (ex. Package from com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package) This constraints what the user can select
-     * @param title title of the dialog box
-     * @return
-     */
-    @SuppressWarnings("unchecked")
-	public static List<BaseElement> getUserSelections(List<java.lang.Class<?>> types, String title) {
-        SelectElementTypes a = new SelectElementTypes(null,types);
-        //SelectElementType(display, select)
-        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getModel(), true);
-        SelectElementsDlg z = null;
-        z = new SelectElementsDlg(MDDialogParentProvider.getProvider().getDialogParent(), a, b, false, false, null);
-        z.setTitle(title);
-        z.setVisible(true);
-        if (z.isOk())
-            return (List<BaseElement>) z.getSelected();
-        return null;
-    }
-    
-    /**
-     * 
-     * @param types
-     * @param title title of the dialog box
-     * @return
-     * @see getUserSelections
-     */
-    public static BaseElement getUserSelection(List<java.lang.Class<?>> types, String title) {
-        SelectElementTypes a = new SelectElementTypes(null,types);
-        //SelectElementType(display, select)
-        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getModel(), true);
-        SelectElementDlg z = null;
-        z = new SelectElementDlg(MDDialogParentProvider.getProvider().getDialogParent(), null, a, b);
-        z.setTitle(title);
-        z.setVisible(true);
-        if (z.isOk())
-        	return z.getSelected();
-        return null;
-    }
-    
-    /**
-     * Given a collection of stuff, joins their string representation into one string using delimiter
-     * @param s
-     * @param delimiter
-     * @return
-     */
-    public static String join(Collection<?> s, String delimiter) {
-    	StringBuilder builder = new StringBuilder();
-    	Iterator<?> iter = s.iterator();
-    	while (iter.hasNext()) {
-    		builder.append(iter.next());
-    		if (!iter.hasNext())
-    			break;
-    		builder.append(delimiter);
-    	}
-    	return builder.toString();
-    }
-    
-    /**
-     * Given a list of named elements, will prompt the user to choose one and return it (selections are showne as qualified names, null if nothing chosen
-     * @param title
-     * @param message
-     * @param elements
-     * @return
-     */
-    public static Element getUserDropdownSelection(String title, String message, List<NamedElement> elements) {
-    	String[] strings = new String[elements.size()];
-    	int i = 0;
-    	for (NamedElement e: elements) {
-    		strings[i] = e.getQualifiedName();
-    		i++;
-    	}
-    	Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null, strings, null);
-    	if (input != null) {
-    		for (int j = 0; j < strings.length; j++) {
-    			if (((String)input).equals(strings[j]))
-    				return elements.get(j);
-    		}
-    	}
-    	return null;
-    }
-    
-    /**
-     * This is similar to getUserDropdownSelection but you provide the string of what to display to user
-     * @param title
-     * @param message
-     * @param elements what to return based on what user selected
-     * @param displays what to display to user (the size of this must match the size of elements argument)
-     * @return
-     */
-    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays, String initial) {
-    	String[] strings = new String[elements.size()];
-    	int i = 0;
-    	for (String e: displays) {
-    		strings[i] = e;
-    		i++;
-    	}
-    	Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null, strings, initial);
-    	if (input != null) {
-    		for (int j = 0; j < strings.length; j++) {
-    			if (((String)input).equals(strings[j]))
-    				return elements.get(j);
-    		}
-    	}
-    	return null;
-    }
-    
-    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays) {
-    	return getUserDropdownSelectionForString(title, message, elements, displays, null);
-    }
-    
-    /**
-     * 
-     * @param question
-     * @return null if user hits cancel
-     */
-    public static Boolean getUserYesNoAnswer(String question) {
-    	int res = JOptionPane.showConfirmDialog(null, question);
-    	if (res == JOptionPane.YES_OPTION)
-    		return true;
-    	if (res == JOptionPane.NO_OPTION)
-    		return false;
-    	return null;
-    }
-    
-    /**
-     * return names of a collection of named elements
-     * @param elements
-     * @return
-     */
-    public static List<String> getElementNames(Collection<NamedElement> elements) {
-    	List<String> names = new ArrayList<String>();
-    	for (NamedElement e: elements) {
-    		names.add(e.getName());
-    	} 
-    	return names;
-    }
-    
-    /**
-     * returns collection of model elements that's on the diagram
-     * @param diagram
-     * @return
-     */
-    public static Collection<Element> getElementsOnDiagram(Diagram diagram) {
-    	return Project.getProject(diagram).getDiagram(diagram).getUsedModelElements(true);
-    }
-    
-    /**
-     * Copies all stereotypes of element a to element b if b doesn't already have it (including derived)
-     * @param a
-     * @param b
-     */
-    public static void copyStereotypes(Element a, Element b) {
-    	for (Stereotype s: StereotypesHelper.getStereotypes(a))
-    		if (!StereotypesHelper.hasStereotypeOrDerived(b, s))
-    			StereotypesHelper.addStereotype(b, s);
-    }
-    
-    /**
-     * check if there's any directed relationship between 2 elements
-     * @param from
-     * @param to
-     * @return
-     */
-    public static boolean hasDirectedRelationship(Element from, Element to) {
-    	for (DirectedRelationship dr: from.get_directedRelationshipOfSource())
-    		if (ModelHelper.getSupplierElement(dr) == to)
-    			return true;
-    	return false;
-    }
-    
-    /**
-     * Creates a generalization relationship between parent and child 
-     * @param parent
-     * @param child
-     */
-    public static void createGeneralization(Classifier parent, Classifier child) {
-    	Generalization g = Project.getProject(parent).getElementsFactory().createGeneralizationInstance();
-    	ModelHelper.setClientElement(g, child);
-    	ModelHelper.setSupplierElement(g, parent);
-    	g.setOwner(child);
-    }
-    
-    public static void createDependency(Element from, Element to) {
-    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-    	ModelHelper.setClientElement(d, from);
-    	ModelHelper.setSupplierElement(d, to);
-    	d.setOwner(from);
-    }
-    
-    public static void createDependencyWithStereotype(Element from, Element to, Stereotype s) {
-    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-    	ModelHelper.setClientElement(d, from);
-    	ModelHelper.setSupplierElement(d, to);
-    	StereotypesHelper.addStereotype(d, s);
-    	d.setOwner(from);
-    }
-    
-    public static void createDependencyWithStereotypes(Element from, Element to, Collection<Stereotype> s) {
-    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-    	ModelHelper.setClientElement(d, from);
-    	ModelHelper.setSupplierElement(d, to);
-    	StereotypesHelper.addStereotypes(d, s);
-    	d.setOwner(from);
-    }
-    
-    public static void createDependencyWithStereotypeName(Element from, Element to, String stereotype) {
-    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-    	ModelHelper.setClientElement(d, from);
-    	ModelHelper.setSupplierElement(d, to);
-    	StereotypesHelper.addStereotypeByString(d, stereotype);
-    	d.setOwner(from);
-    }
-    
-    public static void createDependencyWithStereotypeNames(Element from, Element to, Collection<String> stereotypes) {
-    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-    	ModelHelper.setClientElement(d, from);
-    	ModelHelper.setSupplierElement(d, to);
-    	StereotypesHelper.addStereotypesWithNames(d, stereotypes);
-    	d.setOwner(from);
-    }
-    /**
      * Sorts e by name, returns a new list with name ordered elements
      * @param e
      * @return
@@ -931,24 +753,14 @@ public class Utils {
     	return n;
     }
     
-    /**
-     * Sorts elements by a specific attribute limited to the enumeration below, which is
-     * suspiciously similar to the possible attributes in tableAttributeColumn...
-     * @param elem
-     * @param attr
-     * @return
-     */
-    public static List<Element> sortByAttribute(Collection<? extends Element> elem, String attr) {
-    	return sortByAttribute(elem, availableAttribute.valueOf(attr));
-    }
-    public static List<Element> sortByAttribute(Collection<? extends Element> elem, availableAttribute attr) {
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, AvailableAttribute attr) {
     	List<Element> list = new ArrayList<Element>(elem);
     	switch (attr) {
     	case Name:
-    		Collections.sort(list, getAttributeComparator(availableAttribute.Name, false));
+    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Name, false));
     		break;
     	case Documentation:
-    		Collections.sort(list, getAttributeComparator(availableAttribute.Documentation, false));
+    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Documentation, false));
     		break;
     	case Value:
     		boolean isAllNumbers = true;
@@ -958,15 +770,15 @@ public class Utils {
     				break;
     			}
     		}
-    		Collections.sort(list, getAttributeComparator(availableAttribute.Value, isAllNumbers));
+    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Value, isAllNumbers));
     		break;
     		
     	}
     	return list;
     }
 
-    private static Comparator<Element> getAttributeComparator(availableAttribute attr, boolean isAllNumbers) {
-    	final availableAttribute attribute = attr;
+    private static Comparator<Element> getAttributeComparator(AvailableAttribute attr, boolean isAllNumbers) {
+    	final AvailableAttribute attribute = attr;
     	final boolean allNums = isAllNumbers;
     	
     	return new Comparator<Element>() {
@@ -1060,14 +872,375 @@ public class Utils {
     }
     
     /**
+     * returns all directed relationships where client element is source and supplier element is target
+     * @param source
+     * @param target
+     * @return
+     */
+    public static List<DirectedRelationship> findDirectedRelationshipsBetween(Element source, Element target) {
+    	List<DirectedRelationship> res = new ArrayList<DirectedRelationship>();
+    	for (DirectedRelationship dr: source.get_directedRelationshipOfSource()) {
+    		if (ModelHelper.getSupplierElement(dr) == target)
+    			res.add(dr);
+    	}
+    	return res;
+    }
+    
+    /********************************************* User interaction ****************************************************/
+    
+    /**
+     * Displays a dialog box that allows users to select elements from the containment tree<br/>
+     * 17.0.2 seems to have a new nicer dialog box, gotta find it...
+     * @param types this should be a list of java.lang.Class types (ex. Package from com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package) This constraints what the user can select
+     * @param title title of the dialog box
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+	public static List<BaseElement> getUserSelections(List<java.lang.Class<?>> types, String title) {
+        SelectElementTypes a = new SelectElementTypes(null,types);
+        //SelectElementType(display, select)
+        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getModel(), true);
+        SelectElementsDlg z = null;
+        z = new SelectElementsDlg(MDDialogParentProvider.getProvider().getDialogParent(), a, b, false, false, null);
+        z.setTitle(title);
+        z.setVisible(true);
+        if (z.isOk())
+            return (List<BaseElement>) z.getSelected();
+        return null;
+    }
+    
+    /**
+     * 
+     * @param types
+     * @param title title of the dialog box
+     * @return
+     * @see getUserSelections
+     */
+    public static BaseElement getUserSelection(List<java.lang.Class<?>> types, String title) {
+        SelectElementTypes a = new SelectElementTypes(null,types);
+        //SelectElementType(display, select)
+        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getModel(), true);
+        SelectElementDlg z = null;
+        z = new SelectElementDlg(MDDialogParentProvider.getProvider().getDialogParent(), null, a, b);
+        z.setTitle(title);
+        z.setVisible(true);
+        if (z.isOk())
+        	return z.getSelected();
+        return null;
+    }
+    
+    
+    
+    /**
+     * Given a list of named elements, will prompt the user to choose one and return it (selections are showne as qualified names, null if nothing chosen
+     * @param title
+     * @param message
+     * @param elements
+     * @return
+     */
+    public static Element getUserDropdownSelection(String title, String message, List<NamedElement> elements) {
+    	String[] strings = new String[elements.size()];
+    	int i = 0;
+    	for (NamedElement e: elements) {
+    		strings[i] = e.getQualifiedName();
+    		i++;
+    	}
+    	Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null, strings, null);
+    	if (input != null) {
+    		for (int j = 0; j < strings.length; j++) {
+    			if (((String)input).equals(strings[j]))
+    				return elements.get(j);
+    		}
+    	}
+    	return null;
+    }
+    
+    /**
+     * This is similar to getUserDropdownSelection but you provide the string of what to display to user
+     * @param title
+     * @param message
+     * @param elements what to return based on what user selected
+     * @param displays what to display to user (the size of this must match the size of elements argument)
+     * @return
+     */
+    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays, String initial) {
+    	String[] strings = new String[elements.size()];
+    	int i = 0;
+    	for (String e: displays) {
+    		strings[i] = e;
+    		i++;
+    	}
+    	Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null, strings, initial);
+    	if (input != null) {
+    		for (int j = 0; j < strings.length; j++) {
+    			if (((String)input).equals(strings[j]))
+    				return elements.get(j);
+    		}
+    	}
+    	return null;
+    }
+    
+    public static String getUserDropdownSelectionForString(String title, String message, List<String> elements, List<String> displays) {
+    	return getUserDropdownSelectionForString(title, message, elements, displays, null);
+    }
+    
+    /**
+     * 
+     * @param question
+     * @return null if user hits cancel
+     */
+    public static Boolean getUserYesNoAnswer(String question) {
+    	int res = JOptionPane.showConfirmDialog(null, question);
+    	if (res == JOptionPane.YES_OPTION)
+    		return true;
+    	if (res == JOptionPane.NO_OPTION)
+    		return false;
+    	return null;
+    }
+    
+    public static String getUsername() {
+		String username;
+		String teamworkUsername = TeamworkUtils.getLoggedUserName();
+		if (teamworkUsername != null) {
+			username = teamworkUsername;
+		} else {
+			username = System.getProperty("user.name", "");
+		}
+		return username;
+	}
+	
+	public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
+		Project project = Application.getInstance().getProject();
+        ValidationResultProvider provider = project.getValidationResultProvider();
+        Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
+        Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
+        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        
+        if (dummyvs == null || cons == null)
+        	return;
+        Set<Element> elements = new HashSet<Element>();
+		for (ValidationSuite vs: vss) {
+			for (ValidationRule vr: vs.getValidationRules()) {
+				EnumerationLiteral severity;
+				/*
+				 * Switch added by Peter Di Pasquale 02/15/2013
+				 * Changelog: switch statement added, selects element highlight and icon color according to severity of error. 
+				 */
+				
+				switch (vr.getSeverity()){
+				case WARNING: 
+					severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
+					cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+				break;
+				case ERROR: 
+					severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
+					cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
+				break;
+				case FATAL: 
+					severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
+					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
+				break;
+				case INFO: 
+					severity = Annotation.getSeverityLevel(project, Annotation.INFO);
+					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
+				break;
+				default: severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
+				break;
+				}
+				for (ValidationRuleViolation vrv: vr.getViolations()) {
+					Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
+					results.add(new RuleViolationResult(anno, cons));
+					elements.add(vrv.getElement());
+				}
+			}
+		}
+		EnumerationLiteral severitylevel =Annotation.getSeverityLevel(project, Annotation.WARNING);
+		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
+//		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
+		//provider.dispose();
+		//provider.init();
+		String id = "" + System.currentTimeMillis();
+		//provider.setValidationResults(id, results);
+		//provider.update();
+		ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
+		
+	}
+	
+    /************************************************ Existence check **************************************/
+    
+    /**
+     * check if there's any directed relationship between 2 elements
+     * @param from
+     * @param to
+     * @return
+     */
+    public static boolean hasDirectedRelationship(Element from, Element to) {
+    	for (DirectedRelationship dr: from.get_directedRelationshipOfSource())
+    		if (ModelHelper.getSupplierElement(dr) == to)
+    			return true;
+    	return false;
+    }
+    
+    /************************************************ Model Modification **************************************/
+    
+    /**
+     * Copies all stereotypes of element a to element b if b doesn't already have it (including derived)
+     * @param a
+     * @param b
+     */
+    public static void copyStereotypes(Element a, Element b) {
+    	for (Stereotype s: StereotypesHelper.getStereotypes(a))
+    		if (!StereotypesHelper.hasStereotypeOrDerived(b, s))
+    			StereotypesHelper.addStereotype(b, s);
+    }
+    
+    /**
+     * Creates a generalization relationship between parent and child 
+     * @param parent
+     * @param child
+     */
+    public static void createGeneralization(Classifier parent, Classifier child) {
+    	Generalization g = Project.getProject(parent).getElementsFactory().createGeneralizationInstance();
+    	ModelHelper.setClientElement(g, child);
+    	ModelHelper.setSupplierElement(g, parent);
+    	g.setOwner(child);
+    }
+    
+    public static void createDependency(Element from, Element to) {
+    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
+    	ModelHelper.setClientElement(d, from);
+    	ModelHelper.setSupplierElement(d, to);
+    	d.setOwner(from);
+    }
+    
+    public static void createDependencyWithStereotype(Element from, Element to, Stereotype s) {
+    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
+    	ModelHelper.setClientElement(d, from);
+    	ModelHelper.setSupplierElement(d, to);
+    	StereotypesHelper.addStereotype(d, s);
+    	d.setOwner(from);
+    }
+    
+    public static void createDependencyWithStereotypes(Element from, Element to, Collection<Stereotype> s) {
+    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
+    	ModelHelper.setClientElement(d, from);
+    	ModelHelper.setSupplierElement(d, to);
+    	StereotypesHelper.addStereotypes(d, s);
+    	d.setOwner(from);
+    }
+    
+    public static void createDependencyWithStereotypeName(Element from, Element to, String stereotype) {
+    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
+    	ModelHelper.setClientElement(d, from);
+    	ModelHelper.setSupplierElement(d, to);
+    	StereotypesHelper.addStereotypeByString(d, stereotype);
+    	d.setOwner(from);
+    }
+    
+    public static void createDependencyWithStereotypeNames(Element from, Element to, Collection<String> stereotypes) {
+    	Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
+    	ModelHelper.setClientElement(d, from);
+    	ModelHelper.setSupplierElement(d, to);
+    	StereotypesHelper.addStereotypesWithNames(d, stereotypes);
+    	d.setOwner(from);
+    }
+    
+    /**
+     * This will set the default value of p to value, based on what type the
+     * default value currently is right now, it'll try to convert to:
+     * LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise it'll be
+     * a LiteralString more options possibly in future like durations, etc
+     * 
+     * @param p
+     * @param value
+     */
+    public static void setPropertyValue(Property p, String value) {
+    	ValueSpecification valueSpec = p.getDefaultValue();
+    	ValueSpecification v = makeValueSpecification( value, valueSpec );
+    	p.setDefaultValue(v);
+    }
+
+    /**
+     * This will set the default value of p to value, based on what type the
+     * default value currently is right now, it'll try to convert to:
+     * LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise it'll be
+     * a LiteralString more options possibly in future like durations, etc
+     * 
+     * @param slot
+     * @param value
+     */
+    public static void setSlotValue(Slot slot, String value) {
+      List< ValueSpecification > valueSpecs = slot.getValue();
+      ValueSpecification v = null;
+      for ( ValueSpecification valueSpec : valueSpecs ) {
+        v = makeValueSpecification( value, valueSpec );
+        break;
+      }
+      valueSpecs.clear();
+      valueSpecs.add( v );
+    }
+
+    /**
+     * Creates a new {@link ValueSpecification} of the same type as valueSpec but
+     * with a new value to be parsed from a {@link String}. It'll try to convert
+     * to: LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise
+     * it'll be a LiteralString more options possibly in future like durations,
+     * etc
+     * 
+     * @param value
+     * @param ef
+     * @param valueSpec
+     * @return
+     */
+    public static ValueSpecification
+        makeValueSpecification( String value,
+                                ValueSpecification valueSpec ) {
+      ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+      ValueSpecification v;
+      try {
+      	if (valueSpec instanceof LiteralBoolean) {
+      		v = ef.createLiteralBooleanInstance();
+      		if (value.equals("false") || value.equals("False") || value.equals("F") || value.equals("f") || value.equals("no") || value.equals("n") || value.equals("") || value.equals("FALSE") || value.equals("NO") || value.equals("No"))
+      			((LiteralBoolean)v).setValue(false);
+      		else
+      			((LiteralBoolean)v).setValue(true);
+      	} else if (valueSpec instanceof LiteralInteger) {
+      		v = ef.createLiteralIntegerInstance();
+      		((LiteralInteger)v).setValue(Integer.parseInt(value));
+      	} else if (valueSpec instanceof LiteralUnlimitedNatural) {
+      		v = ef.createLiteralUnlimitedNaturalInstance();
+      		((LiteralUnlimitedNatural)v).setValue(Integer.parseInt(value));
+      	} else if (valueSpec instanceof LiteralReal) {
+      		v = ef.createLiteralRealInstance();
+      		((LiteralReal)v).setValue(Double.parseDouble(value));
+      	} else {
+      		v = ef.createLiteralStringInstance();
+      		((LiteralString)v).setValue(value);
+      	}
+      } catch (NumberFormatException e) {
+        // The field is no longer a number; treat it as a string
+        // REVIEW -- This may conflict with the element's type.  Should we change the type of the element?
+        // TODO -- Only some of the ValueSpecifications are supported here. The
+        // subclasses of ValueSpecification and supportive factory methods in
+        // ElementFactory can guide the addition of types.
+        v = makeValueSpecification( value, ef.createLiteralStringInstance() );
+      }
+
+      return v;
+    }
+    
+    /*************************Getting element attributes and properties/values****************************/
+    
+    public static enum AvailableAttribute { Name, Documentation, Value };
+    /**
      * Convert to an From enum value
      * @param attr the attribute of some type
      * @return the corresponding From value
      */
     public static From getFromAttribute( Object attr ) {
         if ( attr instanceof From ) return (From)attr;
-        if ( attr instanceof availableAttribute ) {
-            availableAttribute aattr = (availableAttribute)attr;
+        if ( attr instanceof AvailableAttribute ) {
+            AvailableAttribute aattr = (AvailableAttribute)attr;
             switch ( aattr ) {
             case Name:
                 return From.NAME;
@@ -1085,7 +1258,7 @@ public class Utils {
     	        f = getFromAttribute(From.valueOf((String)attr));
             } catch (Exception e) {}
             try {
-                if ( f == null ) f = getFromAttribute(availableAttribute.valueOf((String)attr));
+                if ( f == null ) f = getFromAttribute(AvailableAttribute.valueOf((String)attr));
     	    } catch (Exception e) {}
     	}
     	if ( f == null ) {
@@ -1103,25 +1276,25 @@ public class Utils {
      *            the attribute of some type
      * @return the corresponding availableAttribute
      */
-    public static availableAttribute getAvailableAttribute( Object attr ) {
-        if ( attr instanceof availableAttribute ) return (availableAttribute)attr;
+    public static AvailableAttribute getAvailableAttribute( Object attr ) {
+        if ( attr instanceof AvailableAttribute ) return (AvailableAttribute)attr;
         if ( attr instanceof From ) {
             From fattr = (From)attr;
             switch ( fattr ) {
             case NAME:
-                return availableAttribute.Name;
+                return AvailableAttribute.Name;
             case DOCUMENTATION:
-                return availableAttribute.Documentation;
+                return AvailableAttribute.Documentation;
             case DVALUE:
-                return availableAttribute.Value;
+                return AvailableAttribute.Value;
             default:
             }
         }
         if ( attr instanceof EnumerationLiteral ) return getAvailableAttribute(((EnumerationLiteral)attr).getName());
-        availableAttribute aattr = null;
+        AvailableAttribute aattr = null;
         if ( attr instanceof String ) {
             try {
-                aattr = getAvailableAttribute(availableAttribute.valueOf((String)attr));
+                aattr = getAvailableAttribute(AvailableAttribute.valueOf((String)attr));
             } catch (Exception e) {}
             try {
                 if ( aattr == null ) aattr = getAvailableAttribute(From.valueOf((String)attr));
@@ -1142,7 +1315,7 @@ public class Utils {
      * @return
      */
     public static Object getElementAttribute(Element elem, String attr) {
-    	return getElementAttribute(elem, availableAttribute.valueOf(attr));
+    	return getElementAttribute(elem, AvailableAttribute.valueOf(attr));
     }
 
     /**
@@ -1168,9 +1341,9 @@ public class Utils {
      *            the element whose attribute is sought
      * @param attr
      *            the type of attribute (name, value, ...)
-     * @return
+     * @return possible return values are String for name or documentation, ValueSpec, or List of ValueSpec
      */
-    public static Object getElementAttribute(Element elem, availableAttribute attr) {
+    public static Object getElementAttribute(Element elem, AvailableAttribute attr) {
     	switch (attr) {
     	case Name:
     		if (elem instanceof NamedElement) {
@@ -1190,10 +1363,92 @@ public class Utils {
 			return null;
     	}
     }
-
-    public static enum availableAttribute { Name, Documentation, Value };
-   
+    
     /**
+     * Get Class Properties with a name matching that of the input Property.
+     * 
+     * @param elem
+     *            the owner of the Property
+     * @param prop
+     *            a property of the same name as that owned by the input Element
+     * @param inherited
+     *            ignored for now, should indicate whether to look for inherited properties
+     * @return the Properties of the input Element whose names match that of the
+     *         input Property
+     */
+    public static Property getClassProperty(Element elem, Property prop, boolean inherited) {
+        if ( prop == null ) 
+        	return null;
+        Collection<Element> rOwned = elem.getOwnedElement();
+        for (Element o: rOwned) {
+            if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
+                return (Property)o;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Get the element's matching Slot.
+     * 
+     * @param elem
+     *            the source Element
+     * @param prop
+     *            the Stereotype tag that the Slot instantiates
+     * @return a Slot with zero or more values or null if no such Slot exists
+     */
+    public static Slot getSlot(Element elem, Property prop) {
+        if ( prop == null ) return null;
+        Element myOwner = prop.getOwner();
+        if (myOwner instanceof Stereotype &&
+            StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) { // REVIEW -- may not be able to get slot from derived stereotype -- why doesn't Stereotypes.Helper give us this function?
+            Slot slot = StereotypesHelper.getSlot(elem, prop, false);
+            if ( slot != null ) {
+                return slot;
+            }
+        }
+        return null;
+    }
+	
+	/**
+     * Get the element's matching Slots or Properties.
+     * 
+     * @param elem
+     *            the Element with the sought Properties.
+     * @param prop
+     *            the Stereotype tag or Class Property
+     * @return a slot that matches the input property or null
+     */
+    public static Slot getStereotypeProperty(Element elem, Property prop) {
+        return getSlot( elem, prop );
+    }
+    
+    /**
+     * Get the element's matching Slot or Properties.
+     * 
+     * @param elem
+     *            the Element with the sought Properties.
+     * @param prop
+     *            the Stereotype tag or Class Property
+     * @return a Property or Slot that corresponds to the input property
+     */
+	public static Element getElementProperty(Element elem, Property prop) {
+	    if ( prop == null ) 
+	    	return null;
+	    if (prop.getOwner() instanceof Stereotype) {
+	    	Slot slot = getStereotypeProperty(elem, prop);
+	        if ( slot != null ) 
+	        	return slot;
+	    } else {
+	    	Property result = getClassProperty(elem, prop, true);
+	    	if (result != null)
+	    		return result;
+	    }
+		return null;
+	}
+	
+    
+	 /**
      * A list of property values will always be returned. Gets default value of
      * a stereotype property when there's no slot for the element. Class
      * value properties will be collected by name matching.
@@ -1206,20 +1461,24 @@ public class Utils {
      *         Property
      */
     public static List<Object> getElementPropertyValues(Element elem, Property prop,
-                                                        boolean allowStereotypeDefault) {
-        List<Object> results = getStereotypePropertyValues(elem, prop, allowStereotypeDefault);
-        if ( !Utils2.isNullOrEmpty( results ) ) return results;
-        results = getClassPropertyValues( elem, prop );
+                                                        boolean allowStereotypeDefaultOrInherited) {
+        List<Object> results = getStereotypePropertyValues(elem, prop, allowStereotypeDefaultOrInherited);
+        if ( !Utils2.isNullOrEmpty( results ) ) 
+        	return results;
+        ValueSpecification vs = getClassPropertyValue( elem, prop, allowStereotypeDefaultOrInherited);
+        if (vs != null)
+        	results.add(vs);
         if ( results.isEmpty() ) {
-            // maybe a derived property
-            Object value = null;
             try {
-                value = elem.refGetValue(prop.getName()); // i think this only works
-                                                          // for derived properties
-            } catch (Throwable e) {
-                // ignore
+                Object value = elem.refGetValue(prop.getName()); // i think this only works for derived properties
+                if ( value != null ) {
+                	if (value instanceof Collection)
+                		results.addAll((Collection)value );
+                	else
+                		results.add(value);
+                }
+            } catch (Throwable e) { //ignore
             }
-            if ( value != null ) results.add( value );
         }
         return results;
     }
@@ -1235,152 +1494,12 @@ public class Utils {
      * @return values for Properties with a name matching that of the input
      *         Property
      */
-    public static List<Object> getClassPropertyValues(Element elem, Property prop ) {
-        List<Object> results = new ArrayList<Object>();
-        List<Element> props = getClassProperty( elem, prop );
-        if ( Utils2.isNullOrEmpty( props ) ) return results;
-        for ( Element p : props ) {
-            results.addAll(getValues(p));
-        }
-        return results;
+    public static ValueSpecification getClassPropertyValue(Element elem, Property prop, boolean includeInherited ) {
+        Property cprop = getClassProperty( elem, prop, includeInherited );
+        if (cprop == null) 
+        	return null;
+        return cprop.getDefaultValue();
     }
-
-    public static List<Object> getValues(Element element) {
-        List<Object> results = new ArrayList<Object>();
-        if ( element instanceof Property ) results.add( ((Property)element).getDefaultValue() );
-        else if (element instanceof Slot) results.addAll( ((Slot)element).getValue() );
-        else if ( element != null ) {
-            Collection<ElementValue> c = element.get_elementValueOfElement();
-            if ( !Utils2.isNullOrEmpty(c) ) results.addAll( c );
-            else results.add( element );
-        }
-        return results;
-    }
-    
-    /**
-     * Get Class Properties with a name matching that of the input Property.
-     * 
-     * @param elem
-     *            the owner of the Property
-     * @param prop
-     *            a property of the same name as that owned by the input Element
-     * @return the Properties of the input Element whose names match that of the
-     *         input Property
-     */
-    public static List<Element> getClassProperty(Element elem, Property prop) {
-        List<Element> results = new ArrayList<Element>();
-        if ( prop == null ) return results;
-        if ( elem == null ) {
-            results.add(prop);
-            return results;
-        }
-        Collection<Element> rOwned = elem.getOwnedElement();
-        if ( Utils2.isNullOrEmpty( rOwned ) ) return results;
-        for (Element o: rOwned) {
-            if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
-                results.add(o);
-            }
-        }
-        return results;
-    }
-    
-    /**
-     * Get the element's matching Slot or Properties.
-     * 
-     * @param elem
-     *            the Element with the sought Properties.
-     * @param prop
-     *            the Stereotype tag or Class Property
-     * @return a List containing a non-empty Slot for the input Stereotype tag
-     *         Property or, if no such Slot exists, member Properties of the
-     *         same name as the input Class Property.
-     */
-	public static List<Element> getElementProperty(Element elem, Property prop) {
-	    if ( prop == null ) return null;
-	    // try as stereotype property
-        List<Element> results = new ArrayList<Element>();
-        Slot slot = getStereotypeProperty(elem, prop);
-        if ( slot != null ) results.add( slot );
-        if ( prop == null || !results.isEmpty() ) return results;
-        // now try as a class property
-        results = getClassProperty(elem, prop);
-		return results;
-	}
-	
-    /**
-     * Get the element's matching Slot.
-     * 
-     * @param elem
-     *            the source Element
-     * @param prop
-     *            the Stereotype tag that the Slot instantiates
-     * @return a Slot with one or more values or null if no such Slot exists
-     */
-    public static Slot getSlot(Element elem, Property prop) {
-        if ( prop == null ) return null;
-        Element myOwner = prop.getOwner();
-        if (myOwner instanceof Stereotype &&
-            StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) { // REVIEW -- may not be able to get slot from derived stereotype -- why doesn't Stereotypes.Helper give us this function?
-            Slot slot = StereotypesHelper.getSlot(elem, prop, false);
-            if ( slot != null && !Utils2.isNullOrEmpty( slot.getValue() ) ) {
-                return slot;
-            }
-        }
-        return null;
-    }
-	
-	/**
-     * Get the element's matching Slots or Properties.
-     * 
-     * @param elem
-     *            the Element with the sought Properties.
-     * @param prop
-     *            the Stereotype tag or Class Property
-     * @return a list of Slots for an input Stereotype tag Property or else
-     *         member Properties of the same name.
-     */
-    public static Slot getStereotypeProperty(Element elem, Property prop) {
-        return getSlot( elem, prop );
-    }
-    
-    /**
-     * Get the things that have t as the type
-     * @param t
-     * @return
-     */
-    public static List<TypedElement> getPropertiesWithType(Type t) {
-    	return new ArrayList<TypedElement>(t.get_typedElementOfType());
-    }
-    
-    /**
-     * get the call behavior actions that're typed by b
-     * @param b
-     * @return
-     */
-    public static List<CallBehaviorAction> getCallBehaviorActionsOfBehavior(Behavior b) {
-    	return new ArrayList<CallBehaviorAction>(b.get_callBehaviorActionOfBehavior());
-    }
-    
-    /**
-     * get call operation actions that're typed by o
-     * @param o
-     * @return
-     */
-    public static List<CallOperationAction> getCallOperationActionsOfOperation(Operation o) {
-    	return new ArrayList<CallOperationAction>(o.get_callOperationActionOfOperation());
-    }
-    
-    
-    public static List<ActivityPartition> getSwimlanesThatRepresentElement(Element e) {
-    	return new ArrayList<ActivityPartition>(e.get_activityPartitionOfRepresents());
-    }
-    
-    public static void log(Object o) {
-    	GUILog log = Application.getInstance().getGUILog();
-    	log.log(o.toString());
-    }
-    
-    
     
     /**
      * Gets list of values for a stereotype property, supports derived
@@ -1406,37 +1525,23 @@ public class Utils {
                  StereotypesHelper.hasStereotypeOrDerived( elem,
                                                            (Stereotype)propOwner ) ) {
                 ValueSpecification v = prop.getDefaultValue();
-                if ( v != null ) results.add( v );
+                if ( v != null ) 
+                	results.add( v );
             }
         }
         return results;
     }
-
-  /**
-   * Get the list of slot values after digging Elements and
-   * InstanceSpecifications out of ElementValues and InstanceValues,
-   * respectively, and leaving other ValueSpecifications as is.
-   * 
-   * @param slot
-   * @return the list of values
-   */
-    public static List<Object> getSlotValues( Slot slot ) {
-      List< Object > sList = new ArrayList<Object>();
-      if (slot == null) return sList;
-      List< ValueSpecification > list = slot.getValue();
-      // If there is only one element in the list, just use that element instead
-      // of the list.
-      for ( ValueSpecification vs : list ) {
-        if ( vs instanceof ElementValue ) {
-          sList.add( ( (ElementValue)vs ).getElement() );
-        } else if ( vs instanceof InstanceValue ) {
-          sList.add( ( (InstanceValue)vs ).getInstance() );
-        } else {
-          sList.add( vs );
-        }
-      }
-      return sList;
+    
+/*****************************************************************************************/
+    
+    public static void log(Object o) {
+    	GUILog log = Application.getInstance().getGUILog();
+    	log.log(o.toString());
     }
+    
+    
+    
+   
       
   /**
    * @param slot
@@ -1651,89 +1756,7 @@ public class Utils {
     	return res;
     }
     
-    /**
-     * This will set the default value of p to value, based on what type the
-     * default value currently is right now, it'll try to convert to:
-     * LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise it'll be
-     * a LiteralString more options possibly in future like durations, etc
-     * 
-     * @param p
-     * @param value
-     */
-    public static void setPropertyValue(Property p, String value) {
-    	ValueSpecification valueSpec = p.getDefaultValue();
-    	ValueSpecification v = makeValueSpecification( value, valueSpec );
-    	p.setDefaultValue(v);
-    }
-
-    /**
-     * This will set the default value of p to value, based on what type the
-     * default value currently is right now, it'll try to convert to:
-     * LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise it'll be
-     * a LiteralString more options possibly in future like durations, etc
-     * 
-     * @param slot
-     * @param value
-     */
-    public static void setSlotValue(Slot slot, String value) {
-      List< ValueSpecification > valueSpecs = slot.getValue();
-      ValueSpecification v = null;
-      for ( ValueSpecification valueSpec : valueSpecs ) {
-        v = makeValueSpecification( value, valueSpec );
-        break;
-      }
-      valueSpecs.clear();
-      valueSpecs.add( v );
-    }
-
-    /**
-     * Creates a new {@link ValueSpecification} of the same type as valueSpec but
-     * with a new value to be parsed from a {@link String}. It'll try to convert
-     * to: LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise
-     * it'll be a LiteralString more options possibly in future like durations,
-     * etc
-     * 
-     * @param value
-     * @param ef
-     * @param valueSpec
-     * @return
-     */
-    public static ValueSpecification
-        makeValueSpecification( String value,
-                                ValueSpecification valueSpec ) {
-      ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
-      ValueSpecification v;
-      try {
-      	if (valueSpec instanceof LiteralBoolean) {
-      		v = ef.createLiteralBooleanInstance();
-      		if (value.equals("false") || value.equals("False") || value.equals("F") || value.equals("f") || value.equals("no") || value.equals("n") || value.equals("") || value.equals("FALSE") || value.equals("NO") || value.equals("No"))
-      			((LiteralBoolean)v).setValue(false);
-      		else
-      			((LiteralBoolean)v).setValue(true);
-      	} else if (valueSpec instanceof LiteralInteger) {
-      		v = ef.createLiteralIntegerInstance();
-      		((LiteralInteger)v).setValue(Integer.parseInt(value));
-      	} else if (valueSpec instanceof LiteralUnlimitedNatural) {
-      		v = ef.createLiteralUnlimitedNaturalInstance();
-      		((LiteralUnlimitedNatural)v).setValue(Integer.parseInt(value));
-      	} else if (valueSpec instanceof LiteralReal) {
-      		v = ef.createLiteralRealInstance();
-      		((LiteralReal)v).setValue(Double.parseDouble(value));
-      	} else {
-      		v = ef.createLiteralStringInstance();
-      		((LiteralString)v).setValue(value);
-      	}
-      } catch (NumberFormatException e) {
-        // The field is no longer a number; treat it as a string
-        // REVIEW -- This may conflict with the element's type.  Should we change the type of the element?
-        // TODO -- Only some of the ValueSpecifications are supported here. The
-        // subclasses of ValueSpecification and supportive factory methods in
-        // ElementFactory can guide the addition of types.
-        v = makeValueSpecification( value, ef.createLiteralStringInstance() );
-      }
-
-      return v;
-    }
+    
     
     /**
      * if s has any xml tags it'll assume it's html
@@ -1761,109 +1784,56 @@ public class Utils {
 		return HTML_WRAPPER_END.matcher(startRemoved).replaceAll("");
 	}
 	
-	/**
-	 * depending on includeInherited flag, gets all the attributes of e based on redefinition (if e is not a classifier it'll be ignored)
-	 * if includeInherited is false, will get the owned attributes of the classifiers
-	 * @param c
-	 * @param includeInherited
-	 * @return
-	 */
-	public static List<Property> getAttributes(Element e, boolean includeInherited) {
-		List<Property> res = new ArrayList<Property>();
-		
-			if (!(e instanceof Classifier))
-				return res;
-			List<Property> owned = new ArrayList<Property>(((Classifier)e).getAttribute());
-			res.addAll(owned);
-			if (includeInherited) {
-				Collection<NamedElement> inherited = new ArrayList<NamedElement>(((Classifier)e).getInheritedMember());
-				List<NamedElement> inheritedCopy = new ArrayList<NamedElement>(inherited);
-				for (NamedElement ne: inherited) {
-					if (ne instanceof Property) {
-						for (Property redef: ((Property)ne).getRedefinedProperty()) 
-							inheritedCopy.remove(redef);
-					} else
-						inheritedCopy.remove(ne);
-				}
-				for (Property p: owned) 
-					for (Property redef: ((Property)p).getRedefinedProperty()) 
-						inheritedCopy.remove(redef);
-				for (NamedElement ee: inheritedCopy)
-					res.add((Property)ee);
-			}
-		
-    	return res;
-    }
-	
-	public static String getUsername() {
-		String username;
-		String teamworkUsername = TeamworkUtils.getLoggedUserName();
-		if (teamworkUsername != null) {
-			username = teamworkUsername;
-		} else {
-			username = System.getProperty("user.name", "");
-		}
-		return username;
-	}
-	
-	public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
-		Project project = Application.getInstance().getProject();
-        ValidationResultProvider provider = project.getValidationResultProvider();
-        Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
-        Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
-        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-        
-        if (dummyvs == null || cons == null)
-        	return;
-        Set<Element> elements = new HashSet<Element>();
-		for (ValidationSuite vs: vss) {
-			for (ValidationRule vr: vs.getValidationRules()) {
-				EnumerationLiteral severity;
-				/*
-				 * Switch added by Peter Di Pasquale 02/15/2013
-				 * Changelog: switch statement added, selects element highlight and icon color according to severity of error. 
-				 */
-				
-				switch (vr.getSeverity()){
-				case WARNING: 
-					severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-					cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-				break;
-				case ERROR: 
-					severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
-					cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
-				break;
-				case FATAL: 
-					severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
-					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
-				break;
-				case INFO: 
-					severity = Annotation.getSeverityLevel(project, Annotation.INFO);
-					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
-				break;
-				default: severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-				break;
-				}
-				for (ValidationRuleViolation vrv: vr.getViolations()) {
-					Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
-					results.add(new RuleViolationResult(anno, cons));
-					elements.add(vrv.getElement());
-				}
-			}
-		}
-		EnumerationLiteral severitylevel =Annotation.getSeverityLevel(project, Annotation.WARNING);
-		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
-//		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
-		//provider.dispose();
-		//provider.init();
-		String id = "" + System.currentTimeMillis();
-		//provider.setValidationResults(id, results);
-		//provider.update();
-		ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
-		
-	}
-	
 	public static String escapeString(String s) {
 		return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
 	}
+	
+	/**
+     * Given a collection of stuff, joins their string representation into one string using delimiter
+     * @param s
+     * @param delimiter
+     * @return
+     */
+    public static String join(Collection<?> s, String delimiter) {
+    	StringBuilder builder = new StringBuilder();
+    	Iterator<?> iter = s.iterator();
+    	while (iter.hasNext()) {
+    		builder.append(iter.next());
+    		if (!iter.hasNext())
+    			break;
+    		builder.append(delimiter);
+    	}
+    	return builder.toString();
+    }
+    
+    /**
+     * return names of a collection of named elements
+     * @param elements
+     * @return
+     */
+    public static List<String> getElementNames(Collection<NamedElement> elements) {
+    	List<String> names = new ArrayList<String>();
+    	for (NamedElement e: elements) {
+    		names.add(e.getName());
+    	} 
+    	return names;
+    }
+    
+    /**
+	 * if multiplicity is not a range, returns the number
+	 * if upper limit is infinity and lower limit > 0, returns lower
+	 * else returns 1
+	 * @param p
+	 * @return
+	 */
+	public static int getMultiplicity(Property p) {
+		int lower = p.getLower();
+		int upper = p.getUpper();
+		if (lower == upper)
+			return lower;
+		if (upper == -1 && lower > 0)
+			return lower;
+		return 1;
+	}
+    
 }

@@ -62,7 +62,7 @@ public class GenericTable extends Table {
 					count++;
 					continue;
 				}
-				row.add(Common.getTableEntryFromList(getTableValues(dtt.getCellValue(d, e, cid)), false, forViewEditor));
+				row.add(Common.getTableEntryFromObject(getTableValues(dtt.getCellValue(d, e, cid))));
 			}
 			res.add(row);
 		}

@@ -273,26 +273,17 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 			if (cm.isSkipIfNoDoc() && ModelHelper.getComment(e).trim().equals(""))
 				continue;
 			List<DocumentElement> row = new ArrayList<DocumentElement>();
-		/*	if (e instanceof NamedElement) {
-				if (!forViewEditor)
-					row.add(new DBText(DocGenUtils.addInvisibleSpace(DocGenUtils.fixString(((NamedElement)e).getName()))));
-				else
-					row.add(new DBParagraph(((NamedElement)e).getName(), e, From.NAME));
-			} else
-				row.add(new DBParagraph(e.getHumanName())); 
-			if (cm.isIncludeDoc())
-				row.add(new DBParagraph(ModelHelper.getComment(e), e, From.DOCUMENTATION)); */
 			for (Property p: cm.getStereotypeProperties()) 
-				row.add(Common.getStereotypePropertyEntry(e, p, forViewEditor));
+				row.add(Common.getStereotypePropertyEntry(e, p));
 			for (Stereotype s: cm.getOutgoing()) {
-				List<Object> blah = new ArrayList<Object>();
+				List<Element> blah = new ArrayList<Element>();
 				blah.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, s, 1, true, 1));
-                row.add(Common.getTableEntryFromObject(blah, true, forViewEditor));
+                row.add(Common.getTableEntryFromObject(blah));
 			}
 			for (Stereotype s: cm.getIncoming()) {
-				List<Object> blah = new ArrayList<Object>();
+				List<Element> blah = new ArrayList<Element>();
 				blah.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, s, 2, true, 1));
-				row.add(Common.getTableEntryFromObject(blah, true, forViewEditor));
+				row.add(Common.getTableEntryFromObject(blah));
 			}
 			DocumentElement name = null;
 			DocumentElement doc = null;
@@ -410,8 +401,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
             // construct cell for each column
             for (String oclExpr : customTable.getColumns()) {
                 Object result = customTable.evaluateOcl(e, oclExpr);
-                row.add(Common.getTableEntryFromObject(result, false,
-                        forViewEditor));
+                row.add(Common.getTableEntryFromObject(result));
             }
             body.add(row);
         }
