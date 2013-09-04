@@ -972,6 +972,7 @@ public class Utils {
     	}
     	return list;
     }
+
     private static Comparator<Element> getAttributeComparator(availableAttribute attr, boolean isAllNumbers) {
     	final availableAttribute attribute = attr;
     	final boolean allNums = isAllNumbers;
@@ -1102,8 +1103,12 @@ public class Utils {
     }
     
     /**
-     * Convert to an availableAttribute enum value
-     * @param attr the attribute of some type
+     * Convert the input Object to an availableAttribute enum value. Supported
+     * attribute objects include availableAttribute, From, EnumerationLiteral,
+     * and String.
+     * 
+     * @param attr
+     *            the attribute of some type
      * @return the corresponding availableAttribute
      */
     public static availableAttribute getAvailableAttribute( Object attr ) {
@@ -1138,7 +1143,7 @@ public class Utils {
     
     /**
      * Returns an attribute of the element, provided it is one in the enumeration 
-     * availableAttribute. Please try to use the (Element, availableAttributes) method
+     * availableAttribute. Please try to use the {@link getElementAttribute(Element, availableAttribute)} method
      * over the (Element, String) version if possible.
      * @param elem
      * @param attr
@@ -1147,9 +1152,32 @@ public class Utils {
     public static Object getElementAttribute(Element elem, String attr) {
     	return getElementAttribute(elem, availableAttribute.valueOf(attr));
     }
+
+    /**
+     * Returns an attribute of the element based on the input attribute type,
+     * provided it is one of those supported by {@link
+     * gov.nasa.jpl.mbee.lib.Utils.getAvailableAttribute(Object attr)}.
+     * 
+     * @param elem
+     *            the element whose attribute is sought
+     * @param attr
+     *            the type of attribute (name, value, ...)
+     * @return
+     */
     public static Object getElementAttribute(Element elem, Object attr) {
         return getElementAttribute( elem, getAvailableAttribute(attr));
     }
+
+    /**
+     * Returns an attribute of the element based on the input availableAttribute
+     * type.
+     * 
+     * @param elem
+     *            the element whose attribute is sought
+     * @param attr
+     *            the type of attribute (name, value, ...)
+     * @return
+     */
     public static Object getElementAttribute(Element elem, availableAttribute attr) {
     	switch (attr) {
     	case Name:
@@ -1221,12 +1249,6 @@ public class Utils {
         if ( Utils2.isNullOrEmpty( props ) ) return results;
         for ( Element p : props ) {
             results.addAll(getValues(p));
-//            if ( p instanceof Property ) results.add( ((Property)p).getDefaultValue() );
-//            else if ( p != null ) {
-//                Collection<ElementValue> c = p.get_elementValueOfElement();
-//                if ( !Utils2.isNullOrEmpty(c) ) results.addAll( c );
-//                else results.add( p );
-//            }
         }
         return results;
     }
