@@ -53,7 +53,7 @@ public class BulletedList extends Table {
 	}
 
 	public void addStereotypeProperties(DBHasContent parent, Element e, Property p) {
-		List<Object> results = Utils.getStereotypePropertyValues(e, p);
+		List<Object> results = Utils.getStereotypePropertyValues(e, p, true);
 		for (Object o: results) {
 			if (o instanceof NamedElement)
 				parent.addElement(new DBParagraph(((NamedElement)o).getName()));

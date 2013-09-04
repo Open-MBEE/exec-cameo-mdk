@@ -2,6 +2,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -19,8 +20,10 @@ import java.util.List;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 
 public class Common {
  
@@ -44,25 +47,19 @@ public class Common {
     		}
     		
             /**
-             * @param element the value to be shown
-             */
-            public Reference(Element element) {
-                this(element, From.DVALUE, element, null);
-            }
-
-            /**
              * @param object the value to be shown
              */
             public Reference(Object object) {
                 if ( object instanceof Element ) {
                     this.element = (Element)object;
                 }
+                this.result = object;
                 if ( object instanceof Slot ) {
                     Slot slot = (Slot)object;
-                    this.element = slot.getOwner();
-                    this.result = Utils.getSlotValues( (Slot)result );
-                } else {
-                    this.result = object;
+                    this.result = slot.getValue();//Utils.getSlotValues( (Slot)result );
+                } else if ( object instanceof Property ) {
+                    Property property = (Property)object;
+                    this.element = property.getOwner();
                 }
                 this.from = From.DVALUE;
                 this.dbElement = null;
@@ -79,37 +76,58 @@ public class Common {
                 sb.append( ")" );
                 return sb.toString();
             }
-            //		/**
-    //		 * @param elements the source of the entry
-    //		 * @param dbElement the DocBook entry
-    //		 * @param from what aspect of the source to show
-    //		 */
-    //		public Entry(List<Object> elements, DocumentElement dbElement, From from) {
-    //			super();
-    //			this.elements = elements;
-    //			this.dbElement = dbElement;
-    //			this.from = from;
-    //		}
     		
-    		public static List<Reference> getEntries(Element element, From from, List<Object> results) {
+            public static List<Reference> getPropertyReferences(Element element, Property property) {
+                List<Reference> entries = new ArrayList<Reference>();
+                List<Reference> c;
+                List<Object> v;
+                List<Element> props;
+                // need to get actual properties
+                props = Utils.getElementProperty(element, property);
+                if ( Utils2.isNullOrEmpty( props ) ) {
+                    // try to get tag default value
+                    v = Utils.getStereotypePropertyValues(element, property, true);
+                    if ( !Utils2.isNullOrEmpty( v ) ) {
+                        // make element reference null since value is part of stereotype, not element
+                        c = getReferences( null, From.DVALUE, v );
+                        entries.addAll(c);
+                    }
+                } else {
+                    for ( Element p : props ) {
+                        v = Utils.getValues(p);
+                        if ( !Utils2.isNullOrEmpty( v ) ) {
+                            c = getReferences( p, From.DVALUE, v );
+                            entries.addAll(c);
+                        }
+                    }
+                }
+                
+                return entries;
+            }
+            
+    		public static List<Reference> getReferences(Element element, From from, List<Object> results) {
     		    List<Reference> entries = new ArrayList<Reference>();
     		    for ( Object result : results ) {
-    		        Element e = element;
-    		        //if ( result instanceof Element ) e = (Element)result;
     		        List<Reference> c;
     		        List<Object> v;
-                    if ( result instanceof Slot ) {
+    		        // null Element with ValueSpecification is meant to be disconnected from an Element  
+    		        if ( element == null && result instanceof ValueSpecification ) {
+    		            Reference ref = new Reference(null, from, result, null);
+                        entries.add(ref);
+    		        } else if ( result instanceof Slot ) {
     		            Slot slot = (Slot)result;
-    		            v = Utils.getSlotValues( slot );
-    		            c = Common.Reference.getEntries( slot, From.DVALUE, v );
-    		            entries.addAll(c);
+    		            List<ValueSpecification> vals = slot.getValue(); //Utils.getSlotValues( slot );
+    		            if ( !Utils2.isNullOrEmpty( vals ) ) {
+    		                v = new ArrayList<Object>( vals );
+    		                c = Common.Reference.getReferences( slot, From.DVALUE, v );
+    		                entries.addAll(c);
+    		            }
     		        } else if ( result instanceof Property ) {
-    		            Property property = (Property)result;
-    		            v = Utils.getElementPropertyValues(element, property);
-    		            c = Common.Reference.getEntries( property, From.DVALUE, v );
-                        entries.addAll(c);
+                        Property property = (Property)result;
+    		            c = getPropertyReferences( element, property);
+    		            entries.addAll(c);
     		        } else {
-    		            Reference ref = new Reference(e, from, result, null);
+    		            Reference ref = new Reference(element, from, result, null);
     		            entries.add(ref);
     		        }    		        
     		    }
@@ -120,10 +138,12 @@ public class Common {
     public static HashSet<Object> seen = new HashSet< Object >(); 
 
 	public static DBTableEntry getStereotypePropertyEntry(Element e, Property p, boolean forViewEditor) {
-		List<Object> results = Utils.getStereotypeProperty(e, p);
-//		return getTableEntryFromList(results, false, forViewEditor);
-//	    Slot slot = StereotypesHelper.getSlot(e, p, false);
-        return getTableEntryFromObject(results, false, forViewEditor);
+	    List<Reference> c = Common.Reference.getPropertyReferences(e, p);
+        return getTableEntryFromObject(c, false, forViewEditor);
+//		Slot result = Utils.getStereotypeProperty(e, p);
+////		return getTableEntryFromList(results, false, forViewEditor);
+////	    Slot slot = StereotypesHelper.getSlot(e, p, false);
+//        return getTableEntryFromObject(result, false, forViewEditor);
 	}
 	
 	public static DBTableEntry getTableEntryFromList(List<Object> results, boolean simple, boolean forViewEditor) {
@@ -192,12 +212,11 @@ public class Common {
       c = (Collection<?>)result;
     } else if ( !saw && result instanceof Slot ) {
         Slot slot = (Slot)result;
-        c = Common.Reference.getEntries( slot, From.DVALUE,
-                                         Utils.getSlotValues( slot ) );
+        c = Common.Reference.getReferences( slot, From.DVALUE,
+                                            Utils.getSlotValues( slot ) );
     } else if ( !saw && result instanceof Property ) {
         Property property = (Property)result;
-        c = Common.Reference.getEntries( property, From.DVALUE,
-                                         Utils.getElementPropertyValues(property.getOwner(), property) );
+        c = Common.Reference.getPropertyReferences( property.getOwner(), property );
     }
     DBTableEntry entry = null;
     if ( c != null ) {

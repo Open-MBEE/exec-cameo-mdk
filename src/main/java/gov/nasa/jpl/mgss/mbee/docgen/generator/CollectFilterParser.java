@@ -201,7 +201,7 @@ public class CollectFilterParser {
 			List<Object> blah = new ArrayList<Object>();
 			for (Element e: in)
 				for (Property p: stereotypeProperties)
-					blah.addAll(Utils.getStereotypePropertyValues(e, p));
+					blah.addAll(Utils.getStereotypePropertyValues(e, p, true)); // TODO -- REVIEW -- should default value be allowed?! (specified by last argument)
 			for (Object b:blah)
 				if (b instanceof Element)
 					res.add((Element)b);

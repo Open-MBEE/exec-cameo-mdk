@@ -570,7 +570,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 	    for (Element e: targets) {
 				if (para.getStereotypeProperties() != null && !para.getStereotypeProperties().isEmpty()) {
 					for (Property p: para.getStereotypeProperties()) {
-						List<Object> ob = Utils.getStereotypePropertyValues(e, p);
+						List<Object> ob = Utils.getStereotypePropertyValues(e, p, true);
 						for (Object o: ob) {
 							if (o instanceof String)
 								parent.peek().addElement(new DBParagraph((String)o));

@@ -27,7 +27,10 @@ import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
+import org.apache.ivy.core.event.download.NeedArtifactEvent;
 import org.eclipse.m2m.qvt.oml.ecore.ImperativeOCL.ReturnExp;
+
+import a.a.u;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -1019,7 +1022,7 @@ public class Utils {
 		// Check if all numbers first
 		boolean isAllNumbers = true;
 		for (Element e: list) {
-			List<Object> temp = getElementPropertyValues(e, prop);
+			List<Object> temp = getElementPropertyValues(e, prop, true);
 			if (temp.size() != 1) {
 				isAllNumbers = false;
 				break;
@@ -1042,8 +1045,8 @@ public class Utils {
     	
     	return new Comparator<Element>() {
     		public int compare(Element A, Element B) {
-    			List<Object> a = getElementProperty(A, property);
-    			List<Object> b = getElementProperty(B, property);
+    			List<Element> a = getElementProperty(A, property);
+    			List<Element> b = getElementProperty(B, property);
     			if (a.size() == 1 && b.size() == 1) {
     				Object a0 = a.get(0);
     				Object b0 = b.get(0);
@@ -1171,51 +1174,148 @@ public class Utils {
     public static enum availableAttribute { Name, Documentation, Value };
    
     /**
-     * A list of property values will always be returned. Gets default value
-     * of a stereotype property when there's no slot for the element. 
-     * Stand-alone value properties will be collected by name matching.
+     * A list of property values will always be returned. Gets default value of
+     * a stereotype property when there's no slot for the element. Class
+     * value properties will be collected by name matching.
+     * 
      * @param elem
+     *            the owner of the Property
      * @param prop
-     * @return
+     *            a property of the same name as that owned by the input Element
+     * @return values for Properties with a name matching that of the input
+     *         Property
      */
-    public static List<Object> getElementPropertyValues(Element elem, Property prop) {
-        List<Object> props = getElementProperty( elem, prop );
+    public static List<Object> getElementPropertyValues(Element elem, Property prop,
+                                                        boolean allowStereotypeDefault) {
+        List<Object> results = getStereotypePropertyValues(elem, prop, allowStereotypeDefault);
+        if ( !Utils2.isNullOrEmpty( results ) ) return results;
+        results = getClassPropertyValues( elem, prop );
+        if ( results.isEmpty() ) {
+            // maybe a derived property
+            Object value = null;
+            try {
+                value = elem.refGetValue(prop.getName()); // i think this only works
+                                                          // for derived properties
+            } catch (Throwable e) {
+                // ignore
+            }
+            if ( value != null ) results.add( value );
+        }
+        return results;
+    }
+    
+    /**
+     * Get Class Property values for Properties with a name matching that of the
+     * input Property.
+     * 
+     * @param elem
+     *            the owner of the Property
+     * @param prop
+     *            a property of the same name as that owned by the input Element
+     * @return values for Properties with a name matching that of the input
+     *         Property
+     */
+    public static List<Object> getClassPropertyValues(Element elem, Property prop ) {
         List<Object> results = new ArrayList<Object>();
-        for ( Object p : props ) {
-            if ( p instanceof Slot ) results.addAll( getSlotValues( (Slot) p ) );
-            else if ( p instanceof Property ) results.add( ((Property)p).getDefaultValue() );
-            else results.add( p );
+        List<Element> props = getClassProperty( elem, prop );
+        if ( Utils2.isNullOrEmpty( props ) ) return results;
+        for ( Element p : props ) {
+            results.addAll(getValues(p));
+//            if ( p instanceof Property ) results.add( ((Property)p).getDefaultValue() );
+//            else if ( p != null ) {
+//                Collection<ElementValue> c = p.get_elementValueOfElement();
+//                if ( !Utils2.isNullOrEmpty(c) ) results.addAll( c );
+//                else results.add( p );
+//            }
         }
         return results;
     }
 
+    public static List<Object> getValues(Element element) {
+        List<Object> results = new ArrayList<Object>();
+        if ( element instanceof Property ) results.add( ((Property)element).getDefaultValue() );
+        else if (element instanceof Slot) results.addAll( ((Slot)element).getValue() );
+        else if ( element != null ) {
+            Collection<ElementValue> c = element.get_elementValueOfElement();
+            if ( !Utils2.isNullOrEmpty(c) ) results.addAll( c );
+            else results.add( element );
+        }
+        return results;
+    }
+    
     /**
-     * Get the element's matching Slots or Properties.
+     * Get Class Properties with a name matching that of the input Property.
+     * 
+     * @param elem
+     *            the owner of the Property
+     * @param prop
+     *            a property of the same name as that owned by the input Element
+     * @return the Properties of the input Element whose names match that of the
+     *         input Property
+     */
+    public static List<Element> getClassProperty(Element elem, Property prop) {
+        List<Element> results = new ArrayList<Element>();
+        if ( prop == null ) return results;
+        if ( elem == null ) {
+            results.add(prop);
+            return results;
+        }
+        Collection<Element> rOwned = elem.getOwnedElement();
+        if ( Utils2.isNullOrEmpty( rOwned ) ) return results;
+        for (Element o: rOwned) {
+            if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
+                results.add(o);
+            }
+        }
+        return results;
+    }
+    
+    /**
+     * Get the element's matching Slot or Properties.
      * 
      * @param elem
      *            the Element with the sought Properties.
      * @param prop
      *            the Stereotype tag or Class Property
-     * @return a list of Slots for an input Stereotype tag Property or else
-     *         member Properties of the same name as the input Property.
+     * @return a List containing a non-empty Slot for the input Stereotype tag
+     *         Property or, if no such Slot exists, member Properties of the
+     *         same name as the input Class Property.
      */
-	public static List<Object> getElementProperty(Element elem, Property prop) {
+	public static List<Element> getElementProperty(Element elem, Property prop) {
+	    if ( prop == null ) return null;
 	    // try as stereotype property
-        List<Object> results = getStereotypeProperty(elem, prop);
-	    if ( results == null ) results = new ArrayList<Object>();
+        List<Element> results = new ArrayList<Element>();
+        Slot slot = getStereotypeProperty(elem, prop);
+        if ( slot != null ) results.add( slot );
         if ( prop == null || !results.isEmpty() ) return results;
-
         // now try as a class property
-		Collection<Element> rOwned = elem.getOwnedElement();
-		for (Element o: rOwned) {
-			if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
-				results.add(o);
-			}
-		}
+        results = getClassProperty(elem, prop);
 		return results;
 	}
 	
     /**
+     * Get the element's matching Slot.
+     * 
+     * @param elem
+     *            the source Element
+     * @param prop
+     *            the Stereotype tag that the Slot instantiates
+     * @return a Slot with one or more values or null if no such Slot exists
+     */
+    public static Slot getSlot(Element elem, Property prop) {
+        if ( prop == null ) return null;
+        Element myOwner = prop.getOwner();
+        if (myOwner instanceof Stereotype &&
+            StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) { // REVIEW -- may not be able to get slot from derived stereotype -- why doesn't Stereotypes.Helper give us this function?
+            Slot slot = StereotypesHelper.getSlot(elem, prop, false);
+            if ( slot != null && !Utils2.isNullOrEmpty( slot.getValue() ) ) {
+                return slot;
+            }
+        }
+        return null;
+    }
+	
+	/**
      * Get the element's matching Slots or Properties.
      * 
      * @param elem
@@ -1225,49 +1325,8 @@ public class Utils {
      * @return a list of Slots for an input Stereotype tag Property or else
      *         member Properties of the same name.
      */
-    public static List<Object> getStereotypeProperty(Element elem, Property prop) {
-        List<Object> results = new ArrayList<Object>();
-        if ( prop == null ) return results;
-        Collection<Object> values = null;
-        Element myOwner = prop.getOwner();
-        if (myOwner instanceof Stereotype &&
-            StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) { // REVIEW -- may not be able to get slot from derived stereotype -- why doesn't Stereotypes.Helper give us this function?
-            ValueSpecification pDefault = null;
-                //results.addAll(StereotypesHelper.getStereotypePropertyValue(elem, (Stereotype)myOwner, (Property)prop));
-                Slot slot = StereotypesHelper.getSlot(elem, prop, false);
-                if ( slot != null && getSlotValues(slot) != null && !getSlotValues(slot).isEmpty() ) {
-                    results.add(slot);
-                } else {
-                    pDefault = prop.getDefaultValue();
-                }
-            if (results.size() < 1 && pDefault != null) {
-                results.add(pDefault); 
-            }
-            return results;
-        }
-        Object value = null;
-        try {
-            // maybe a derived property
-            value = elem.refGetValue(prop.getName()); // i think this only works
-                                                      // for derived properties
-        } catch (Exception ex) {
-        }
-        if (value != null) {
-            if (value instanceof Element || value instanceof String)
-                results.add(value);
-            else if (value instanceof Collection)
-                values = (Collection) value;
-        }
-        if (values != null) 
-            results.addAll(values);
-
-        Collection<Element> rOwned = elem.getOwnedElement();
-        for (Element o: rOwned) {
-            if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
-                results.add(o);
-            }
-        }
-        return results;
+    public static Slot getStereotypeProperty(Element elem, Property prop) {
+        return getSlot( elem, prop );
     }
     
     /**
@@ -1307,19 +1366,34 @@ public class Utils {
     	log.log(o.toString());
     }
     
+    
+    
     /**
-     * Gets list of values for a stereotype property, supports derived properties in customizations
+     * Gets list of values for a stereotype property, supports derived
+     * properties in customizations
+     * 
      * @param e
      * @param p
      * @return
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-	public static List<Object> getStereotypePropertyValues(Element elem, Property prop) {
-        List<Object> props = getElementProperty( elem, prop );
+	public static List<Object> getStereotypePropertyValues(Element elem,
+	                                                       Property prop,
+	                                                       boolean useDefaultIfNoSlot) {
         List<Object> results = new ArrayList<Object>();
-        for ( Object p : props ) {
-            if ( p instanceof Property ) results.add( ((Property)p).getDefaultValue() );
-            else results.add( p );
+        Slot elemProp = getStereotypeProperty( elem, prop );
+        if ( elemProp != null ) {
+            if ( elemProp.getValue() != null ) {
+                results.addAll( elemProp.getValue() );
+            }
+        }
+        Element propOwner = prop.getOwner();
+        if ( useDefaultIfNoSlot && results.isEmpty() && prop != null ) {
+            if ( propOwner instanceof Stereotype &&
+                 StereotypesHelper.hasStereotypeOrDerived( elem,
+                                                           (Stereotype)propOwner ) ) {
+                ValueSpecification v = prop.getDefaultValue();
+                if ( v != null ) results.add( v );
+            }
         }
         return results;
     }

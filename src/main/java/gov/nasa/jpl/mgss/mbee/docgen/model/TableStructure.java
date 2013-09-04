@@ -381,22 +381,29 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 			for (Object r: rows) {
 				if (r instanceof Element) {
 					if (colType.equals(propertyColumn)) {
-					    results = Utils.getElementProperty((Element)r, (Property)dThing);
-						curCol.add(Common.Reference.getEntries((Element)r, From.DVALUE, results));
+                        curCol.add(Common.Reference.getPropertyReferences((Element)r, (Property)dThing));
+//					    List<Element> props = Utils.getElementProperty((Element)r, (Property)dThing);
+//					    results = new ArrayList<Object>();
+//					    if ( props != null ) results.addAll(props);
+//					    if ( results.isEmpty() ) {
+//					        results.add(new Common.Reference)
+//					    }
+//						curCol.add(Common.Reference.getEntries((Element)r, From.DVALUE, results));
 					} else if (colType.equals(attributeColumn)) {
 					    results = handleAttributeCell(dThing, (Element)r);
-						curCol.add(Common.Reference.getEntries((Element)r, Utils.getFromAttribute(dThing), results));
+						curCol.add(Common.Reference.getReferences((Element)r, Utils.getFromAttribute(dThing), results));
 					}
 				} else if (r instanceof List<?>) {
 					List<Object> superCell = new ArrayList<Object>();
 					for (Object c: (List<Object>)r) {
 						if (c instanceof Element) { 
 		                    if (colType.equals(propertyColumn)) {
-		                        results = Utils.getElementProperty((Element)r, (Property)dThing);
-		                        superCell.addAll(Common.Reference.getEntries((Element)c, From.DVALUE, results));
+		                        superCell.addAll(Common.Reference.getPropertyReferences((Element)r, (Property)dThing));
+//		                        results = Utils.getElementProperty((Element)r, (Property)dThing);
+//		                        superCell.addAll(Common.Reference.getEntries((Element)c, From.DVALUE, results));
 		                    } else if (colType.equals(attributeColumn)) {
 		                        results = handleAttributeCell(dThing, (Element)r);
-		                        superCell.addAll(Common.Reference.getEntries((Element)c, Utils.getFromAttribute(dThing), results));
+		                        superCell.addAll(Common.Reference.getReferences((Element)c, Utils.getFromAttribute(dThing), results));
 		                    }
 						} else {
 							superCell.addAll( Utils2.newList( c ) );
