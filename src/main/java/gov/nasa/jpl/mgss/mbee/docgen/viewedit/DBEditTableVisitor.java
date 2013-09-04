@@ -81,7 +81,7 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void visit(DBTableEntry tableentry) {
+	public void visit(DBTableEntry tableentry) { //TODO; check for informaltable and ignore it
 		if (tableentry.getMorerows() > 0) {
 			rowspan = tableentry.getMorerows() + 1;
 		}

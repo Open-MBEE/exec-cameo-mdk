@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.ModelLib;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 import gov.nasa.jpl.mgss.mbee.docgen.table.WorkPackageAssembly;
 
@@ -43,5 +44,7 @@ public class WorkpackageAssemblyTable extends WorkpackageTable {
 		v.visit(this);
 		
 	}
+
+
 
 }

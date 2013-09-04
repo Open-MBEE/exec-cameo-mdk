@@ -1,0 +1,41 @@
+modeltype uml uses 'http://www.nomagic.com/magicdraw/UML/2.4.1';
+modeltype dgvalidation uses 'http://mbee.jpl.nasa.gov/docgen/dgvalidation';
+modeltype dgview uses 'http://mbee.jpl.nasa.gov/docgen/dgview';
+
+transformation qvtvalidationtest(in selectedElements:uml, out docgenValidationOutput:dgvalidation, 
+														  out docgenOutput:dgview) {
+	main() {
+		var vr := object dgvalidation::Rule{
+			name := "Rule 1";
+			description := "Stuff with names";
+			severity := dgvalidation::Severity::WARNING; //rule 1
+		};
+		var vr2 := object dgvalidation::Rule{
+			name := "Rule 2";
+			description := "Stuff that's Packages";
+			severity := dgvalidation::Severity::ERROR; //rule 2
+		};
+		var para := object dgvalidation::Suite{
+			name := "TestSuite";
+			showDetail := true;
+			showSummary := true;
+			ownSection := false;
+			rules := Sequence{vr, vr2}; 				//suite with rule 1 and rule 2
+		};
+		
+		selectedElements.rootObjects()[uml::Package]->forEach(e) {
+			e.ownedElement[uml::NamedElement]->forEach(i) {
+				if (i.name != "") then i.map rule(vr, "Has Name") endif;
+			};
+			e.ownedElement[uml::Package].map rule(vr2, "Is Package");
+		};
+		//regular paragraph output
+		var output := object dgview::Paragraph{text := "'Regular' output shows up first.";};
+	}
+	
+	mapping uml::Element::rule(inout rule:dgvalidation::Rule, c:String) : dgvalidation::Violation {
+		result.elementId := self.ID;
+		result.comment := c;
+		rule.violations += result;
+	}
+}

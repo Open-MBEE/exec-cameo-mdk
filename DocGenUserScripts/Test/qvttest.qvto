@@ -1,0 +1,53 @@
+modeltype uml uses 'http://www.nomagic.com/magicdraw/UML/2.4.1';
+modeltype dgview uses 'http://mbee.jpl.nasa.gov/docgen/dgview';
+
+transformation qvttest(in selectedElements:uml, in currentModel:uml, out docgenOutput:dgview) {
+
+    configuration property configProp : String;
+	configuration property md_install_dir : String;
+	configuration property docgen_output_dir : String;
+	configuration property ForViewEditor : Boolean;
+	
+	main() {
+		var para := object dgview::Paragraph{
+			text := "Inside QVT Script! Targets are:";
+		};
+		selectedElements.rootObjects()->forEach(i) {
+			i![uml::NamedElement].map name();
+		};
+		currentModel.rootObjects()->forEach(i) {
+			i![uml::NamedElement].map name();
+		};
+		var prop := object dgview::Paragraph{
+			text := "A property on the userscript: " + configProp;
+		};
+		var install := object dgview::Paragraph { 
+			text := "Magicdraw Install Dir: " + md_install_dir; 
+		};
+		if (not ForViewEditor) then map viewedit() endif;
+		var output := object dgview::Paragraph {
+			text := "DocGen Output Dir: " + docgen_output_dir;
+		}; 
+		map table();
+		map list();
+	} 
+	
+	mapping in uml::NamedElement::name() : dgview::Paragraph@docgenOutput {
+		result.text := self.name;
+	}
+	
+	mapping table() : dgview::Table@docgenOutput {
+		result.body := Sequence{object dgview::TableRow{children := Sequence{object dgview::Text{text := "cell";}}}};
+		result.headers := Sequence{object dgview::TableRow{children := Sequence{object dgview::Text{text := "header";}}}};
+		result.title := "table title";
+	}
+	
+	mapping viewedit() : dgview::Paragraph@docgenOutput {
+		result.text := "ForViewEditor is false"; 
+	}
+	
+	mapping list() : dgview::_List@docgenOutput {
+		result._ordered := true; 
+		result.children := Sequence{object dgview::Paragraph{text := "hello list item";}};
+	}
+}

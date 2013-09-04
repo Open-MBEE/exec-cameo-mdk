@@ -1,4 +1,7 @@
-package gov.nasa.jpl.mbee.patternloader;
+package gov.nasa.jpl.mbee.patternloader.validationfixes;
+
+import gov.nasa.jpl.mbee.patternloader.PatternLoader;
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
@@ -14,6 +17,7 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 
@@ -22,6 +26,7 @@ import org.json.simple.JSONObject;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
@@ -37,6 +42,7 @@ import com.jidesoft.swing.JideSwingUtilities;
  */
 public class FixPatternMismatchSelect extends NMAction implements AnnotationAction {
 	private static final long serialVersionUID = 1L;
+	private Project project;
 	private DiagramPresentationElement diagToFix;
 	private JSONObject pattern;
 	private HashSet<String> typesToRepair;
@@ -47,9 +53,10 @@ public class FixPatternMismatchSelect extends NMAction implements AnnotationActi
 	 * @param diag		the diagram to fix.
 	 * @param pattern	the pattern to load.
 	 */
-	public FixPatternMismatchSelect(DiagramPresentationElement diag, JSONObject pattern, HashSet<String> typesToRepair) {
+	public FixPatternMismatchSelect(Project project, DiagramPresentationElement diag, JSONObject pattern, HashSet<String> typesToRepair) {
 		super("FIX_PATTERN_MISMATCH_SELECT", "Fix Pattern Mismatch: Manually choose types to fix", 0);
 		
+		this.project = project;
 		this.diagToFix = diag;
 		this.pattern = pattern;
 		this.typesToRepair = typesToRepair;
@@ -131,6 +138,12 @@ public class FixPatternMismatchSelect extends NMAction implements AnnotationActi
 		
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
+			// ensure the diagram is locked for edit
+	    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
+				JOptionPane.showMessageDialog(null, "The target diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+	    		return;
+	    	}
+			
 			Object[] userSelections = cbl.getCheckBoxListSelectedValues();
 			
 			List<PresentationElement> loadList = new ArrayList<PresentationElement>();
@@ -148,6 +161,7 @@ public class FixPatternMismatchSelect extends NMAction implements AnnotationActi
 				SessionManager.getInstance().cancelSession();
 				return;
 			}
+			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
 			SessionManager.getInstance().closeSession();
 			
 			frame.dispose();

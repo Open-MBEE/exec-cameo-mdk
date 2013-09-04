@@ -78,7 +78,7 @@ public class ViewDependencyNumberer {
 	public static Dependency findStereotypedRelationship(Element e, String s) {
 		Stereotype stereotype = StereotypesHelper.getStereotype(Application.getInstance().getProject(), s);
 		for (DirectedRelationship dr: e.get_directedRelationshipOfSource()) {
-			if (dr instanceof Dependency && StereotypesHelper.hasStereotype(dr, stereotype))
+			if (dr instanceof Dependency && StereotypesHelper.hasStereotype(dr, stereotype))  // REVIEW -- hasStereotypeOrDerived()?
 				return (Dependency)dr;
 		}
 		return null;

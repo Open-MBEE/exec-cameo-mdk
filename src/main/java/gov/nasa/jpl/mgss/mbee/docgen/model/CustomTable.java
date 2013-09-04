@@ -1,11 +1,18 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class CustomTable extends Table {
@@ -57,4 +64,13 @@ public class CustomTable extends Table {
 		v.visit(this);
 		
 	}
+
+  @Override
+  public void initialize() {
+	  super.initialize();
+	  setHeaders((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>()));
+	  setColumns((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.customTableStereotype, "columns", new ArrayList<String>()));
+  }
+
+
 }

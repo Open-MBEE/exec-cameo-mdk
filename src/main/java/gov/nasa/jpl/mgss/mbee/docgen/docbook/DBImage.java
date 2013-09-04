@@ -62,5 +62,16 @@ public class DBImage extends DocumentElement{
 	public void accept(IDBVisitor v) {
 		v.visit(this);
 	}
+	
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append( super.toString() );
+        int pos = sb.lastIndexOf(")");
+        sb.insert(pos, ", " + getImage() );
+        return sb.toString();
+    }
+
+
 
 }

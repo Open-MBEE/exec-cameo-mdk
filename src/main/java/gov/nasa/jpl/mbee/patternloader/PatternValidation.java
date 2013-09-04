@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.patternloader;
 
+import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchAll;
+import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchSelect;
 import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
 
 import java.util.ArrayList;
@@ -135,7 +137,7 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
 			
 			if(!badElemTypes.isEmpty()) {
 				// add a fix for the mismatch - user select repairs for styles per element type
-				NMAction patternMismatchSelect = new FixPatternMismatchSelect(requesterDiag, pattern, badElemTypes);
+				NMAction patternMismatchSelect = new FixPatternMismatchSelect(project, requesterDiag, pattern, badElemTypes);
 				
 				// add a fix for the mismatch - automatically sync styles on all element types
 				NMAction patternMismatchAll = new FixPatternMismatchAll(requesterDiag, pattern);

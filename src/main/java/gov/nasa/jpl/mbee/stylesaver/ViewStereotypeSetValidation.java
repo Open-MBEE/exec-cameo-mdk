@@ -11,6 +11,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixNoViewStereotype;
+
 import java.lang.Class;
 import java.util.*;
 
@@ -65,11 +68,11 @@ public class ViewStereotypeSetValidation implements ElementValidationRuleImpl, S
 		// get all the diagrams in the project
 		Collection<DiagramPresentationElement> diagCollection = project.getDiagrams();
 		
-		Stereotype workingStereotype = StylerUtils.getWorkingStereotype(project);
+		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
 		
 		// iterate over each diagram checking if the view stereotype is applied
 		for(DiagramPresentationElement diag : diagCollection) {
-	    	if(!StylerUtils.isGoodStereotype(diag, workingStereotype)) {
+	    	if(!StyleSaverUtils.isGoodStereotype(diag, workingStereotype)) {
 	            // add a fix for diagrams without the view stereotype
 	            NMAction noView = new FixNoViewStereotype(diag);
 	            
