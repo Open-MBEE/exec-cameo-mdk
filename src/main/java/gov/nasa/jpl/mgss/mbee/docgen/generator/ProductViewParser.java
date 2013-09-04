@@ -15,16 +15,20 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementImport;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
@@ -35,7 +39,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  */
 public class ProductViewParser {
 
-	private Element start;
+	private Class start;
 	private DocumentGenerator dg;
 	private Document doc;
 	private boolean recurse;
@@ -49,7 +53,8 @@ public class ProductViewParser {
 		this.singleView = singleView;
 		this.recurse = recurse;
 		this.doc = doc;
-		this.start = start;
+		if (start instanceof Class)
+			this.start = (Class)start;
 		this.product = dg.getProductStereotype();
 		if (product != null && StereotypesHelper.hasStereotypeOrDerived(start, product)) {
 			doc.setDgElement(start);
@@ -64,18 +69,41 @@ public class ProductViewParser {
 	}
 	
 	public void parse() {
-		
+		Stack<Container> parent = new Stack<Container>();
+		parent.push(doc);
+		if (start == null)
+			return;
+		Boolean nosection = null;
+		for (Property view: start.getOwnedAttribute()) {
+			Type type = view.getType();
+			if (type == null || StereotypesHelper.hasStereotypeOrDerived(type, dg.getView()) || excludeViews.contains(view) || excludeViews.contains(type))
+				continue;
+			Section now = null;
+			
+			if (noSections.contains(view) || noSections.contains(type)) {
+				if (nosection == null || nosection) {
+					now = parseView(type, false);
+					nosection = true;
+				} else {
+					now = parseView(type, true);
+				}
+			} else {
+				now = parseView(type, true);
+				nosection = false;
+			}
+			parent.peek().addElement(now);
+		}
 	}
 	
-	private void parseView(Element view, Container parent, boolean section) {
+	private Section parseView(Element view, boolean section) {
 		Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.conformStereotype);
 		
 		Section viewSection = new Section(); //Section is a misnomer, should be View
 		viewSection.setTitle(((NamedElement)view).getName());
 		viewSection.setDgElement(view);
 		viewSection.setView(true);
-		parent.addElement(viewSection);
-		if (!section && parent instanceof Section) //parent can be Document, in which case this view must be a section
+		//parent.addElement(viewSection);
+		if (!section) //parent can be Document, in which case this view must be a section
 			viewSection.setNoSection(true);
 		viewSection.setId(view.getID());
 		if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))
@@ -151,11 +179,6 @@ public class ProductViewParser {
 				}
 			}
 		}
-		
-		if (recurse) {
-			
-		}
-	
+		return viewSection;
 	}
-	
 }

@@ -421,5 +421,8 @@ public class DocumentGenerator {
 		return product;
 	}
  
+	public Stereotype getView() {
+		return sysmlview;
+	}
 		
 }
