@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -13,11 +15,13 @@ import gov.nasa.jpl.mgss.mbee.docgen.table.PropertiesTable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
@@ -364,4 +368,37 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 		v.visit(this);
 		
 	}
+
+	@Override
+	public void initialize() {
+		super.initialize();
+		
+		List<Stereotype> splitStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "splitStereotype", new ArrayList<Stereotype>());
+		List<Stereotype> systemIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeStereotype", new ArrayList<Stereotype>());
+		List<Stereotype> systemExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeStereotype", new ArrayList<Stereotype>());
+		List<String> systemIncludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeTypeName", new ArrayList<Property>()));
+		List<String> systemExcludeTypeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeTypeName", new ArrayList<Property>()));
+		List<String> systemIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeName", new ArrayList<Property>()));
+		List<String> systemExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeName", new ArrayList<Property>()));
+		Integer systemAssociationType = (Integer)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemAssociationType", 0);
+		Boolean consolidateTypes = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "consolidateTypes", false);
+		Boolean showMultiplicity = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "showMultiplicity", false);
+		Boolean doRollup = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "doRollup", false);
+		List<String> rollupProperty = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "rollupProperty", new ArrayList<Property>()));
+		
+		setSplitStereotype(splitStereotype);
+		setSystemIncludeStereotype(systemIncludeStereotype);
+		setSystemExcludeStereotype(systemExcludeStereotype);
+		setSystemIncludeName(systemIncludeName);
+		setSystemExcludeName(systemExcludeName);
+		setSystemIncludeTypeName(systemIncludeTypeName);
+		setSystemExcludeTypeName(systemExcludeTypeName);
+		setSystemAssociationType(systemAssociationType);
+		setConsolidateTypes(consolidateTypes);
+		setShowMultiplicity(showMultiplicity);
+		setDoRollup(doRollup);
+		setRollupProperty(rollupProperty);
+	}
+
+
 }

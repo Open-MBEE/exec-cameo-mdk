@@ -28,7 +28,7 @@ public class ApplyDocumentCommentStereotype extends ChangeTheModel {
 			fail("Couldn't find " + DOCUMENT_COMMENT + " stereotype");
 			return;
 		}
-		if (StereotypesHelper.hasStereotype(comment, stereotype)) {
+		if (StereotypesHelper.hasStereotype(comment, stereotype)) {  // hasStereotypeOrDerived()?
 			return;
 		}
 		if (!StereotypesHelper.canApplyStereotype(comment,  stereotype)) {

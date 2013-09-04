@@ -164,7 +164,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 					c.addAction(new PublishDocWebAction((NamedElement)e));
 			}
 		}	
-		if (e instanceof Package && StereotypesHelper.hasStereotype(e, TeamworkProfile.updatePackage)) {
+		if (e instanceof Package && StereotypesHelper.hasStereotype(e, TeamworkProfile.updatePackage)) { // REVIEW -- hasStereotypeOrDerived()?
 			ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
 			NMAction act = manager.getActionFor(UpdateDocWebAction.actionid);
 			if (act == null)
@@ -196,7 +196,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 			if (act == null)
 				addCommentActions(c, (NamedElement)e);
 		}
-		if (StereotypesHelper.hasStereotype(e, DocWebProfile.project)) {
+		if (StereotypesHelper.hasStereotype(e, DocWebProfile.project)) { // REVIEW -- hasStereotypeOrDerived()?
 			ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
 			NMAction act = manager.getActionFor(OrganizeViewEditorAction.actionid);
 			if (act == null)

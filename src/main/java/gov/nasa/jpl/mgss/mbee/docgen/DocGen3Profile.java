@@ -25,10 +25,10 @@ public class DocGen3Profile {
 	
 	public static final String customTableStereotype = "CustomTable";
 	public static final String tableStructureStereotype = "TableStructure";					
-	public static final String tablePropertyColumnStereotype = "TablePropertyColumn";		// TODO: Change in MD Prof
-  public static final String tableExpressionColumnStereotype = "TableExpressionColumn";
-	public static final String tableAttributeColumnStereotype = "TableAttributeColumn";		// TODO: Add to MD Prof
-	public static final String tableSumRowStereotype = "TableSumRow";						// TODO: Add to MD Prof
+	public static final String tablePropertyColumnStereotype = "TablePropertyColumn";		
+	public static final String tableExpressionColumnStereotype = "TableExpressionColumn";
+	public static final String tableAttributeColumnStereotype = "TableAttributeColumn";		
+	public static final String tableSumRowStereotype = "TableSumRow";						
 	
 	public static final String dependencyMatrixStereotype = "DependencyMatrix3";
 	public static final String genericTableStereotype = "GenericTable3";
@@ -76,6 +76,7 @@ public class DocGen3Profile {
 	public static final String includeChoosable = "IncludeChoosable";
 	public static final String nameChoosable = "NameChoosable";
 	public static final String diagramTypeChoosable = "DiagramTypeChoosable";
+	public static final String sortable = "Sortable";
 	
 	public static final String stereotypePropertyChoosable = "StereotypePropertiesChoosable";
 	public static final String documentationChoosable = "DocumentationChoosable";
@@ -90,7 +91,10 @@ public class DocGen3Profile {
 	public static final String intersection = "Intersection";
 	public static final String union = "Union";
 	public static final String removeDuplicates = "RemoveDuplicates";
+	
 	public static final String sortByName = "SortByName";
+	public static final String sortByAttribute = "SortByAttribute";	//TODO: add to MD Profile
+	public static final String sortByProperty = "SortByProperty";   //TODO: add to MD Profile
 	
 	public static final String conformStereotype = "Conform";
 	

@@ -2,6 +2,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.tree.Node;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.CharacterizationChooserUI;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.LibraryChooserUI;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.LibraryComponent;
@@ -21,6 +22,7 @@ import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
@@ -54,7 +56,7 @@ public class LibraryMapping extends Query {
 		v.visit(this);
 	}
 
-	public boolean initialize() {
+	public boolean init() {
 		chars = new HashSet<NamedElement>();
 		usedChars = new HashSet<NamedElement>();
 		ef = Application.getInstance().getProject().getElementsFactory();
@@ -243,4 +245,5 @@ public class LibraryMapping extends Query {
 			StereotypesHelper.addStereotypeByString(d, "Characterizes");
 
 	}
+
 }
