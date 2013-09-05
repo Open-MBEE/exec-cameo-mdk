@@ -1835,5 +1835,19 @@ public class Utils {
 			return lower;
 		return 1;
 	}
+	
+	public static boolean isLiteral(Object o) {
+    	if (o instanceof Collection) {
+    		for (Object oo: (Collection)o) {
+    			if (!isLiteral(oo))
+    				return false;
+    		}
+    	} else {
+    		if (o instanceof Integer || o instanceof String || o instanceof Double || o instanceof Float || o instanceof Boolean ||
+    				o instanceof LiteralInteger || o instanceof LiteralString || o instanceof LiteralUnlimitedNatural || o instanceof LiteralReal || o instanceof LiteralBoolean)
+    			return true;
+    	}
+    	return false;
+    }
     
 }

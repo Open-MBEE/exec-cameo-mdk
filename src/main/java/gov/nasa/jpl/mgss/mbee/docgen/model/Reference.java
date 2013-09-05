@@ -3,6 +3,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -41,6 +42,7 @@ public class Reference {
 
     /**
      * Create a reference to the input object based on its type. 
+     * this is very error prone since it's inferring what the element should be and what the From attribute should be, avoid using
      * @param element
      */
     public Reference(Element element) {
@@ -108,6 +110,23 @@ public class Reference {
         }
     }
 
+    /**
+     * Determines whether result should be editable based on current view editor, a result is not editable if:
+     * <ul><li>any of the result/element/from properties are null</li>
+     * <li>the source element is a slot and its corresponding property has multiplicity > 1</li>
+     * <li>the result is not a literal or made up of literals (string, number, boolean)</li>
+     * </ul>
+     * @return
+     */
+    public boolean isResultEditable() {
+    	if (result == null || element == null || from == null || 
+    			(element instanceof Slot && ((Slot)element).getDefiningFeature().getUpper() > 1) || 
+    			(result instanceof Collection && ((Collection)result).size() > 1) || !Utils.isLiteral(result))
+    		return false;
+    	return true;
+    }
+    
+    
     /**
      * Create references to an attribute of an element for each of its
      * values.

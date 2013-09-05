@@ -33,8 +33,7 @@ public class Common {
     public static void addReferenceToDBHasContent(Reference ref, DBHasContent parent) {
 		if (ref.result == null)
 			return;
-		//view editor currently does not support editing values where multiplicity > 1
-		if (ref.element == null || ref.from == null || (ref.result instanceof Collection && ((Collection)ref.result).size() > 1)) { 
+		if (!ref.isResultEditable()) { 
 			if (ref.result instanceof Collection) {
 				for (Object res: (Collection)ref.result) {
 					parent.addElement(new DBParagraph(res));
