@@ -81,7 +81,7 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void visit(DBTableEntry tableentry) {
+	public void visit(DBTableEntry tableentry) { //TODO; check for informaltable and ignore it
 		if (tableentry.getMorerows() > 0) {
 			rowspan = tableentry.getMorerows() + 1;
 		}
@@ -106,6 +106,12 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 			curRow.add(entry);
 		} else if (!tableentry.getChildren().isEmpty()){
 			tableentry.getChildren().get(0).accept(this);
+		} else {
+			JSONObject entry = new JSONObject();
+			entry.put("source", "text");
+			entry.put("text", "");
+			addSpans(entry);
+			curRow.add(entry);
 		}
 		
 	}
