@@ -1777,6 +1777,7 @@ public class Utils {
     			if (!isLiteral(oo))
     				return false;
     		}
+    		return true;
     	} else {
     		if (o instanceof Integer || o instanceof String || o instanceof Double || o instanceof Float || o instanceof Boolean ||
     				o instanceof LiteralInteger || o instanceof LiteralString || o instanceof LiteralUnlimitedNatural || o instanceof LiteralReal || o instanceof LiteralBoolean)
