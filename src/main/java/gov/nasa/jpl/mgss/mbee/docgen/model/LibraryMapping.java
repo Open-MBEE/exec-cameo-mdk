@@ -59,6 +59,10 @@ public class LibraryMapping extends Query {
 		usedChars = new HashSet<NamedElement>();
 		ef = Application.getInstance().getProject().getElementsFactory();
 		sm = SessionManager.getInstance();
+		
+		// create a root tree node so we can add multiple component imports
+		tree = new Node<String, LibraryComponent>("Library", new LibraryComponent("Library"));
+		
 		for (Element e: this.targets) {
 			if (e instanceof Package) {
 				for (Element ee: Utils.collectOwnedElements(e, 0)) {
@@ -70,6 +74,7 @@ public class LibraryMapping extends Query {
 						break;
 					} else if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT)||StereotypesHelper.hasStereotypeOrDerived(ee, COMPONENT)) {
 						componentPackage = (Package)e;
+						tree.addChild(fillComponent(componentPackage));
 						if(StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT))
 							IMCEPresent=true;
 						break;
@@ -79,7 +84,7 @@ public class LibraryMapping extends Query {
 		}
 		if (missingInformation())
 			return false;
-		tree = fillComponent(componentPackage);
+		
 		tree.sortAllChildren(new Comparator<Node<String, LibraryComponent>>() {
 			@Override
 			public int compare(Node<String, LibraryComponent> o1, Node<String, LibraryComponent> o2) {
@@ -179,6 +184,9 @@ public class LibraryMapping extends Query {
 		return (charPackage == null || componentPackage == null);
 	}
 	
+	/**
+	 * Refactor is really save, then refactor based on the library characterizations
+	 */
 	public void refactor() {
 		GUILog log = Application.getInstance().getGUILog();
 		
@@ -186,32 +194,21 @@ public class LibraryMapping extends Query {
 			sm.createSession("refactor library mappings");
 			// apply all changes before doing the refactoring
 			applyInternal();
+			
+			// start the refactoring of both characterizations and properties
 			for (Node<String, LibraryComponent> lc: tree.getAllNodes()) {
 				if (lc.getData().isPackage())
 					continue;
 				NamedElement e = lc.getData().getElement();
-				
 				Set<NamedElement> characterizations = lc.getData().getCharacterizations();
-//				if (!characterizations.isEmpty()) {
-					Collection<Classifier> derived = ModelHelper.getDerivedClassifiers((Classifier) e);
-					if (!derived.isEmpty()) {
-//						if (e.getName().equalsIgnoreCase("solar array")) {
-							log.log("Refactoring instances of: " + e.getName());
-							for (Classifier c: derived) {
-								refactorCharacterizations(characterizations, c);
-								refactorCharacterizationProperties(characterizations, c);
-//								log.log("\t" + c.getName());
-//								for (Element element: c.getOwnedElement()) {
-//									if (element instanceof TypedElement) {
-//										log.log("\t\t" + element.getHumanName() + ":::>   " + ((TypedElement)element).getType().getHumanName());
-//									} else {
-//										log.log("\t\t" + element.getHumanName());
-//									}
-//								}
-							}
-//						}
+				Collection<Classifier> derived = ModelHelper.getDerivedClassifiers((Classifier) e);
+				if (!derived.isEmpty()) {
+					log.log("Refactoring instances of: " + e.getName());
+					for (Classifier c: derived) {
+						refactorCharacterizations(characterizations, c);
+						refactorCharacterizationProperties(characterizations, c);
 					}
-//				}
+				}
 			}
 			log.log("Refactor changes successfully applied");
 			sm.closeSession();
@@ -226,30 +223,34 @@ public class LibraryMapping extends Query {
 	}
 		
 	private void refactorCharacterizations(Set<NamedElement> characterizations, Classifier classifier) {
+		GUILog log = Application.getInstance().getGUILog();
 		for (Element e: classifier.getOwnedElement()) {
 			boolean missing = true;
-			if (e instanceof Property) {
-				if (hasCharacterization(characterizations, e) != null) {
-					missing = false;
-					break;
-				}
-			} else if (StereotypesHelper.hasStereotypeOrDerived(e, "analysis:Characterization")) {
-				if (hasCharacterization(characterizations, e) != null) {
-					missing = false;
-					break;
-				}
-			} else {
+			
+			if (! (e instanceof Property || 
+					StereotypesHelper.hasStereotypeOrDerived(e, IMCECHAR) || 
+					StereotypesHelper.hasStereotypeOrDerived(e, CHAR)) ) {
 				continue;
+			}
+			
+			// fchar is matching characterization
+			NamedElement fchar = hasCharacterization(characterizations, e);
+			if (fchar != null) {
+				missing = false;
 			}
 			
 			NamedElement ne = (NamedElement) e;
 			if (missing) {
 				if (!ne.getName().startsWith(DEPPREFIX)) {
+					log.log("Deprecated unreferenced characterization: " + e.getHumanName());
 					ne.setName(DEPPREFIX + ne.getName());
 				}
+			} else {
+				if (ne.getName().startsWith(DEPPREFIX)) {
+					log.log("Undeprecating re-referenced characterization: " + e.getHumanName());
+					ne.setName(ne.getName().replace(DEPPREFIX, ""));
+				}
 			}
-// TODO: be smart about re-naming re-selected instances?
-//			ne.setName(ne.getName().replace(DEPPREFIX, ""));
 		}
 	}
 	
@@ -275,7 +276,7 @@ public class LibraryMapping extends Query {
 	private void refactorCharacterizationProperties(Set<NamedElement> characterizations, Classifier classifier) {
 		GUILog log = Application.getInstance().getGUILog();
 		for (Element e: classifier.getOwnedElement()) {
-			if (StereotypesHelper.hasStereotypeOrDerived(e, "analysis:Characterization")) {
+			if (StereotypesHelper.hasStereotypeOrDerived(e, IMCECHAR) || StereotypesHelper.hasStereotypeOrDerived(e, CHAR)) {
 				NamedElement ne = hasCharacterization(characterizations, e);
 				if (ne != null) {
 					// get the required properties (rprop)
