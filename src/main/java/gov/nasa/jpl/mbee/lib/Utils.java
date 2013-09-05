@@ -1267,72 +1267,7 @@ public class Utils {
     	return f;
     }
     
-    /**
-     * Convert the input Object to an availableAttribute enum value. Supported
-     * attribute objects include availableAttribute, From, EnumerationLiteral,
-     * and String.
-     * 
-     * @param attr
-     *            the attribute of some type
-     * @return the corresponding availableAttribute
-     */
-    public static AvailableAttribute getAvailableAttribute( Object attr ) {
-        if ( attr instanceof AvailableAttribute ) return (AvailableAttribute)attr;
-        if ( attr instanceof From ) {
-            From fattr = (From)attr;
-            switch ( fattr ) {
-            case NAME:
-                return AvailableAttribute.Name;
-            case DOCUMENTATION:
-                return AvailableAttribute.Documentation;
-            case DVALUE:
-                return AvailableAttribute.Value;
-            default:
-            }
-        }
-        if ( attr instanceof EnumerationLiteral ) return getAvailableAttribute(((EnumerationLiteral)attr).getName());
-        AvailableAttribute aattr = null;
-        if ( attr instanceof String ) {
-            try {
-                aattr = getAvailableAttribute(AvailableAttribute.valueOf((String)attr));
-            } catch (Exception e) {}
-            try {
-                if ( aattr == null ) aattr = getAvailableAttribute(From.valueOf((String)attr));
-            } catch (Exception e) {}
-        }
-        if ( aattr == null ) {
-            Debug.error(false, "Unexpected argument " + attr + " to getFromAttribute()." );
-        }
-        return aattr;
-    }
     
-    /**
-     * Returns an attribute of the element, provided it is one in the enumeration 
-     * availableAttribute. Please try to use the {@link getElementAttribute(Element, availableAttribute)} method
-     * over the (Element, String) version if possible.
-     * @param elem
-     * @param attr
-     * @return
-     */
-    public static Object getElementAttribute(Element elem, String attr) {
-    	return getElementAttribute(elem, AvailableAttribute.valueOf(attr));
-    }
-
-    /**
-     * Returns an attribute of the element based on the input attribute type,
-     * provided it is one of those supported by {@link
-     * gov.nasa.jpl.mbee.lib.Utils.getAvailableAttribute(Object attr)}.
-     * 
-     * @param elem
-     *            the element whose attribute is sought
-     * @param attr
-     *            the type of attribute (name, value, ...)
-     * @return
-     */
-    public static Object getElementAttribute(Element elem, Object attr) {
-        return getElementAttribute( elem, getAvailableAttribute(attr));
-    }
-
     /**
      * Returns an attribute of the element based on the input availableAttribute
      * type.
