@@ -2,6 +2,10 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.tree.Node;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.CharacterizationChooserUI;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.LibraryChooserUI;
@@ -9,6 +13,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.ui.LibraryComponent;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -244,6 +249,51 @@ public class LibraryMapping extends Query {
 		else
 			StereotypesHelper.addStereotypeByString(d, "Characterizes");
 
+	}
+	
+	@Override
+	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+		if (!init())
+			return;
+		DBTable table = new DBTable();
+		Node<String, LibraryComponent> root = getRoot();
+		List<Element> chars = Utils.sortByName(getUsedChars());
+		List<List<DocumentElement>> grid = new ArrayList<List<DocumentElement>>();
+		List<List<DocumentElement>> headers = new ArrayList<List<DocumentElement>>();
+		addLibraryRows(root, chars, grid, 1);
+		table.setBody(grid);
+		List<DocumentElement> headerrow = new ArrayList<DocumentElement>();
+		headerrow.add(new DBText("Component"));
+		for (Element charr: chars) {
+			headerrow.add(new DBText(((NamedElement)charr).getName()));
+		}
+		headers.add(headerrow);
+		table.setHeaders(headers);
+		table.setCols(headerrow.size());
+		table.setTitle("Possible Component Characterizations");
+		parent.addElement(table);
+	}
+	
+	private void addLibraryRows(Node<String, LibraryComponent> cur, List<Element> chars, List<List<DocumentElement>> grid, int depth) {
+		LibraryComponent curc = cur.getData();
+		List<DocumentElement> row = new ArrayList<DocumentElement>();
+		row.add(new DBText(DocGenUtils.getIndented(curc.getName(), depth)));
+		if (curc.isPackage()) {
+			for (Element charr: chars) {
+				row.add(new DBText(""));
+			}
+		} else {
+			for (Element charr: chars) {
+				if (curc.hasCharacterization((NamedElement)charr)) 
+					row.add(new DBText("X"));
+				 else
+					row.add(new DBText(""));
+			}
+		}
+		grid.add(row);
+		for (Node<String, LibraryComponent> child: cur.getChildrenAsList()) {
+			addLibraryRows(child, chars, grid, depth+1);
+		}
 	}
 
 }

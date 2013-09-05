@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen.generator;
 
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 
 import java.util.List;
@@ -18,6 +19,6 @@ public interface Generatable {
 	
 	public void initialize();
 	public void parse();
-	public List<DocumentElement> visit(boolean forViewEditor);
+	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir);
 	
 }
