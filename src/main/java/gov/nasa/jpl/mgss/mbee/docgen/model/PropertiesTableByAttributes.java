@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
@@ -100,7 +101,7 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 	 * even then, still need to do some massaging to get the headers right and to add in any extra columns like documentation, stereotype properties, etc
 	 * need to revisit once editable table can handle more things
 	 */
-	public List<DocumentElement> getDocumentElement() {
+	private List<DocumentElement> getDocumentElement() {
 		List<DocumentElement> res1 = new ArrayList<DocumentElement>();
 		if (this.ignore)
 			return res1;
@@ -203,7 +204,7 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 		}
 	}
 	
-	public void getHierarchyConsolidated(Class e, int curdepth,  Map<Class, Integer> typeUnits, Map<Class, Map<Class, Integer>> consolidated, List<List<DocumentElement>> body, List<String> colspecs) {
+	private void getHierarchyConsolidated(Class e, int curdepth,  Map<Class, Integer> typeUnits, Map<Class, Map<Class, Integer>> consolidated, List<List<DocumentElement>> body, List<String> colspecs) {
 		List<DocumentElement> row = new ArrayList<DocumentElement>();
 		body.add(row);
 		String name = DocGenUtils.getIndented(e.getName(), curdepth);
@@ -223,7 +224,7 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 	}
 	
 	
-	public void getHierarchy(NamedElement e, int curdepth, Map<Class, Map<Property, Class>> childMap, List<List<DocumentElement>> body, List<String> colspecs) {
+	private void getHierarchy(NamedElement e, int curdepth, Map<Class, Map<Property, Class>> childMap, List<List<DocumentElement>> body, List<String> colspecs) {
 		List<DocumentElement> row = new ArrayList<DocumentElement>();
 	
 		Class type = null;
@@ -249,7 +250,7 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 		}
 	}
 	
-	public List<List<DocumentElement>> getTHead(List<List<Map<String, String>>> headers) {
+	private List<List<DocumentElement>> getTHead(List<List<Map<String, String>>> headers) {
 		List<List<DocumentElement>> res = new ArrayList<List<DocumentElement>>();
 		int count = 1;
 		int headerRowSize = headers.size();
@@ -369,6 +370,26 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 		
 	}
 
+	@Override
+	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+		if (getIgnore())
+			return;
+		if (forViewEditor) {
+			EditableTable et = getEditableTable();
+			DBTable dtable = Utils.getDBTableFromEditableTable(et, true);
+			dtable.setStyle(getStyle());
+			parent.addElement(dtable);
+		} else {
+			List<DocumentElement> results = getDocumentElement();
+			for (DocumentElement de: results) {
+				if (de instanceof DBTable) {
+					((DBTable)de).setStyle(getStyle());
+				}
+			}
+			parent.addElements(results);
+		}
+	}
+	
 	@Override
 	public void initialize() {
 		super.initialize();

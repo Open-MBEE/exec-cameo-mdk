@@ -1,7 +1,10 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DiagramTableTool;
@@ -10,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
@@ -99,14 +103,49 @@ public class GenericTable extends Table {
 		v.visit(this);
 		
 	}
+	
+	@Override
+	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+		DiagramTableTool dtt = new DiagramTableTool();
+		if (getIgnore())
+			return;
+		int tableCount = 0;
+		List< Element > targets =
+        isSortElementsByName() ? Utils.sortByName( getTargets() )
+                                  : getTargets();
+        for (Element e: targets) {
+			if (e instanceof Diagram) {
+				if (Application.getInstance().getProject().getDiagram((Diagram)e).getDiagramType().getType().equals("Generic Table")) {
+					DBTable t = new DBTable();
+					List<String> columnIds = dtt.getColumnIds((Diagram)e);
+					t.setHeaders(getHeaders((Diagram)e, columnIds, dtt));
+					List<Element> rowElements = dtt.getRowElements((Diagram)e);
+					t.setBody(getBody((Diagram)e, rowElements, columnIds, dtt, forViewEditor));
+					if (getTitles() != null && getTitles().size() > tableCount) {
+						t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
+					} else {
+						t.setTitle(getTitlePrefix() + ((Diagram)e).getName() + getTitleSuffix());
+					}
+					if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
+						t.setCaption(getCaptions().get(tableCount));
+					} else {
+						t.setCaption(ModelHelper.getComment(e));
+					}
+					t.setCols(columnIds.size() -1);
+					parent.addElement(t);
+					t.setStyle(getStyle());
+					tableCount++;
+				}
+			}
+		}
+		dtt.closeOpenedTables();
+	}
 
 	@Override
 	public void initialize() {
-		setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions, "captions", new ArrayList<String>()));
-		setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions, "showCaptions", true));
+		super.initialize();
 		setHeaders((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable, "headers", new ArrayList<String>()));
 		setSkipIfNoDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.docSkippable, "skipIfNoDoc", false));
-		setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style", null));
 	}
 
 	

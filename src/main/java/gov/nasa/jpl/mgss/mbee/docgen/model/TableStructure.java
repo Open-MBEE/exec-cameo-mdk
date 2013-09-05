@@ -7,6 +7,7 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
@@ -126,6 +127,9 @@ public class TableStructure extends Table {
 			columns.add(col);
 			outs = curNode.getOutgoing();
 		}
+		if (title != null && !title.equals("") && titles.isEmpty()) {
+			titles.add(title);
+		}
 	}
 	
 	private void buildTableReferences() {
@@ -182,12 +186,13 @@ public class TableStructure extends Table {
 	}
 	
 	@Override
-	public List<DocumentElement> visit(boolean forViewEditor) {
-		buildTableReferences();
-		List<DocumentElement> res = new ArrayList<DocumentElement>();
+	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+		if (ignore)
+			return;
 		
+		buildTableReferences();
 		DBTable table = new DBTable();
-		table.setTitle(title);
+		
 		
 		List<List<DocumentElement>> tableheaders = new ArrayList<List<DocumentElement>>();
 		List<DocumentElement> header = new ArrayList<DocumentElement>();
@@ -211,23 +216,11 @@ public class TableStructure extends Table {
 		}
 		table.setBody(body);
 		
-		if (getColwidths() != null && !getColwidths().isEmpty()) {
-			List<DBColSpec> cslist = new ArrayList<DBColSpec>();
-			int i = 1;
-			for (String s: getColwidths()) {
-				DBColSpec cs = new DBColSpec(i);
-				cs.setColwidth(s);
-				cslist.add(cs);
-				i++;
-			}
-			table.setColspecs(cslist);
-		} 
-		table.setStyle(getStyle());
-		res.add(table);
-		return res;
+		setTableThings(table);
+		parent.addElement(table);
 	}
 
-	
+
 	/*
 	@SuppressWarnings("unchecked")
 	public void addSumRow() {
