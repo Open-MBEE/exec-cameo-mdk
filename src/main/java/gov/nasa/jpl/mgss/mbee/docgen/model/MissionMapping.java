@@ -2,6 +2,10 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.tree.Node;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.CharacterizationChooserUI;
 import gov.nasa.jpl.mgss.mbee.docgen.model.ui.LibraryComponent;
@@ -10,6 +14,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.ui.MissionComponent;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -468,6 +473,62 @@ public class MissionMapping extends Query {
 	public Set<NamedElement> getLibraryCharacterizations() {
 		return chars;
 	}
-
+	
+	@Override
+	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+		if (!init())
+			return;
+		DBTable table = new DBTable();
+		Node<String, MissionComponent> root = getRoot();
+		List<Element> chars = Utils.sortByName(getLibraryCharacterizations());
+		Set<LibraryComponent> comps = getLibraryComponents();
+		List<List<DocumentElement>> grid = new ArrayList<List<DocumentElement>>();
+		List<List<DocumentElement>> headers = new ArrayList<List<DocumentElement>>();
+		addMissionRows(root, chars, grid, 1);
+		table.setBody(grid);
+		List<DocumentElement> headerrow = new ArrayList<DocumentElement>();
+		headerrow.add(new DBText("Component"));
+		headerrow.add(new DBText("Inherits From"));
+		for (Element charr: chars) {
+			headerrow.add(new DBText(((NamedElement)charr).getName()));
+		}
+		headers.add(headerrow);
+		table.setHeaders(headers);
+		table.setCols(headerrow.size());
+		table.setTitle("Component Characterizations");
+		parent.addElement(table);
+	}
+	
+	private void addMissionRows(Node<String, MissionComponent> cur, List<Element> chars, List<List<DocumentElement>> grid, int depth) {
+		MissionComponent curc = cur.getData();
+		List<DocumentElement> row = new ArrayList<DocumentElement>();
+		row.add(new DBText(DocGenUtils.getIndented(curc.getName(), depth)));
+		if (curc.isPackage()) {
+			for (Element charr: chars) {
+				row.add(new DBText(""));
+			}
+			row.add(new DBText(""));
+		} else {
+			String inherits = "";
+			int i = 0;
+			for (LibraryComponent lc: curc.getLibraryComponents()) {
+				if (i == 0)
+					inherits = inherits + lc.getName();
+				else
+					inherits = ", " + inherits + lc.getName();
+			}
+			row.add(new DBText(inherits));
+			for (Element charr: chars) {
+				if (curc.hasLibraryCharacterization((NamedElement)charr)) 
+					row.add(new DBText("X"));
+				 else
+					row.add(new DBText(""));
+			}
+		}
+		grid.add(row);
+		for (Node<String, MissionComponent> child: cur.getChildrenAsList()) {
+			addMissionRows(child, chars, grid, depth+1);
+		}
+	}
 	
 }

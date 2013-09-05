@@ -2,6 +2,8 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +65,31 @@ public abstract class Table extends Query {
 	
 	public List<String> getColwidths() {
 		return colwidths;
+	}
+	
+	protected void setTableThings(DBTable dbTable) {
+		String title = "";
+		if (getTitles() != null && getTitles().size() > 0)
+			title = getTitles().get(0);
+		title = getTitlePrefix() + title + getTitleSuffix();
+		dbTable.setTitle(title);
+		
+		if (getCaptions() != null && getCaptions().size() > 0 && isShowCaptions())
+			dbTable.setCaption(getCaptions().get(0));
+		
+		dbTable.setStyle(getStyle());
+		
+		List<DBColSpec> cslist = new ArrayList<DBColSpec>();
+		if (getColwidths() != null && !getColwidths().isEmpty()) {
+			int i = 1;
+			for (String s: getColwidths()) {
+				DBColSpec cs = new DBColSpec(i);
+				cs.setColwidth(s);
+				cslist.add(cs);
+				i++;
+			}
+			dbTable.setColspecs(cslist);
+		}
 	}
 	
 	@Override

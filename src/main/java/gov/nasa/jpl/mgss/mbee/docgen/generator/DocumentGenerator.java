@@ -592,6 +592,7 @@ public class DocumentGenerator {
 				dge.setIgnore(ignore);
 				dge.setLoop(loop);
 				dge.initialize();
+				dge.parse();
 				parent.addElement(dge);
 			}
 		}
