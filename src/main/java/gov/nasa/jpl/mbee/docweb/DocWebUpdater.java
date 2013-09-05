@@ -55,9 +55,9 @@ public class DocWebUpdater {
 	}
 	
 	private void fillStuff(Element cat, Element parent, List<Integer> order) {
-		if (StereotypesHelper.hasStereotype(cat, TeamworkProfile.category)) {
+		if (StereotypesHelper.hasStereotype(cat, TeamworkProfile.category)) { // REVIEW -- hasStereotypeOrDerived?
 			cat2order.put(cat.getID(), join(order, "."));
-			if (parent != null && StereotypesHelper.hasStereotype(parent, TeamworkProfile.category))
+			if (parent != null && StereotypesHelper.hasStereotype(parent, TeamworkProfile.category)) // REVIEW -- hasStereotypeOrDerived?
 				cat2cat.put(cat.getID(), parent.getID());
 			catIdName.put(cat.getID(), ((NamedElement)cat).getName());
 			List<Element> twprojs = findCategoryProjects(cat);

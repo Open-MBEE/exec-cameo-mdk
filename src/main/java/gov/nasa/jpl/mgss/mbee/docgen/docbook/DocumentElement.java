@@ -47,4 +47,16 @@ public abstract class DocumentElement implements IDocumentElement {
 		return fromProperty;
 	}
 	
+	@Override
+	public String toString() {
+	    StringBuffer sb = new StringBuffer();
+        sb.append( "(" );
+        sb.append( "id=" + id + ", "  );
+        sb.append( "title=" + title + ", "  );
+        sb.append( "from=" + ( from == null ? "null" : from.getHumanName() ) + ", "  );
+        sb.append( "fromProperty=" + fromProperty );
+        sb.append( ")" );
+        return sb.toString();
+	}
+	
 }

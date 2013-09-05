@@ -22,5 +22,14 @@ public abstract class DBHasContent extends DocumentElement {
 		children.addAll(es);
 	}
 	
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append( super.toString() );
+        int pos = sb.lastIndexOf(")");
+        sb.insert(pos, ", children=" + getChildren() );
+        return sb.toString();
+    }
+
 
 }

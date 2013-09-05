@@ -201,7 +201,7 @@ public class CollectFilterParser {
 			List<Object> blah = new ArrayList<Object>();
 			for (Element e: in)
 				for (Property p: stereotypeProperties)
-					blah.addAll(Utils.getStereotypePropertyValues(e, p));
+					blah.addAll(Utils.getStereotypePropertyValues(e, p, true)); // TODO -- REVIEW -- should default value be allowed?! (specified by last argument)
 			for (Object b:blah)
 				if (b instanceof Element)
 					res.add((Element)b);
@@ -241,8 +241,10 @@ public class CollectFilterParser {
 			}
 			res.addAll(sorted);
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByAttribute)) {
-			String attribute = ((EnumerationLiteral)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "desiredAttribute", null)).getName();
-			List<Element> ordered = Utils.sortByAttribute(in, attribute);
+			EnumerationLiteral attribute = (EnumerationLiteral)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "desiredAttribute", null);
+			if (attribute == null)
+				return res;
+			List<Element> ordered = Utils.sortByAttribute(in, Utils.AvailableAttribute.valueOf(attribute.getName()));
 			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "reverse", false)) {
 				Collections.reverse(ordered);
 			}

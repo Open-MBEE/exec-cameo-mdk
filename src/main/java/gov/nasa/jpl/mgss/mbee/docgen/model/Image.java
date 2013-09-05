@@ -1,14 +1,21 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBImage;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class Image extends Query {
@@ -46,6 +53,45 @@ public class Image extends Query {
 		
 	}
 
+	@Override
+	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+		if (getIgnore())
+			return;
+		if (getTargets() != null) {
+	    List< Element > targets =
+	        isSortElementsByName() ? Utils.sortByName( getTargets() )
+	                                 : getTargets();
+			for (int i = 0; i < targets.size(); i++) {
+				Element e = targets.get(i);
+				if (e instanceof Diagram) {
+					DBImage im = new DBImage();
+					im.setDiagram((Diagram)e);
+					im.setDoNotShow(getDoNotShow());
+					String title = "";
+					if (getTitles() != null && getTitles().size() > i)
+						title = getTitles().get(i);
+					else
+						title = ((Diagram)e).getName();
+					if (getTitlePrefix() != null)
+						title = getTitlePrefix() + title;
+					if (getTitleSuffix() != null)
+						title = title + getTitleSuffix();
+					im.setTitle(title);
+					if (getCaptions() != null && getCaptions().size() > i && getShowCaptions())
+						im.setCaption(getCaptions().get(i));
+					im.setId(e.getID());
+					parent.addElement(im);
+				
+					String doc = ModelHelper.getComment(e);
+					if (doc != null && (forViewEditor || (!doc.trim().equals("") && !getDoNotShow()))) {
+						parent.addElement(new DBParagraph(doc, e, From.DOCUMENTATION));
+					}
+					
+				}
+			}
+		}	
+	}
+	
 	@Override
 	public void initialize() {
 		// TODO Auto-generated method stub
