@@ -59,6 +59,7 @@ public class ProductViewParser {
 		this.productS = dg.getProductStereotype();
 		if (productS != null && StereotypesHelper.hasStereotypeOrDerived(start, productS)) {
 			product = true;
+			doc.setProduct(true);
 			doc.setDgElement(start);
 			List<Element> noSections = (List<Element>)StereotypesHelper.getStereotypePropertyValue(start, productS, "noSections");
 			List<Element> excludeViews = (List<Element>)StereotypesHelper.getStereotypePropertyValue(start, productS, "excludeViews");
