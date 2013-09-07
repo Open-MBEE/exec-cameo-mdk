@@ -46,7 +46,8 @@ public class ProductViewParser {
 	private boolean singleView;
 	private Set<Element> noSections;
 	private Set<Element> excludeViews;
-	private Stereotype product;
+	private Stereotype productS;
+	private boolean product;
 	
 	public ProductViewParser(DocumentGenerator dg, boolean singleView, boolean recurse, Document doc, Element start) {
 		this.dg = dg;
@@ -55,11 +56,12 @@ public class ProductViewParser {
 		this.doc = doc;
 		if (start instanceof Class)
 			this.start = (Class)start;
-		this.product = dg.getProductStereotype();
-		if (product != null && StereotypesHelper.hasStereotypeOrDerived(start, product)) {
+		this.productS = dg.getProductStereotype();
+		if (productS != null && StereotypesHelper.hasStereotypeOrDerived(start, productS)) {
+			product = true;
 			doc.setDgElement(start);
-			List<Element> noSections = (List<Element>)StereotypesHelper.getStereotypePropertyValue(start, product, "noSections");
-			List<Element> excludeViews = (List<Element>)StereotypesHelper.getStereotypePropertyValue(start, product, "excludeViews");
+			List<Element> noSections = (List<Element>)StereotypesHelper.getStereotypePropertyValue(start, productS, "noSections");
+			List<Element> excludeViews = (List<Element>)StereotypesHelper.getStereotypePropertyValue(start, productS, "excludeViews");
 			this.noSections = new HashSet<Element>(noSections);
 			this.excludeViews = new HashSet<Element>(excludeViews);
 		} else {
@@ -69,116 +71,48 @@ public class ProductViewParser {
 	}
 	
 	public void parse() {
-		Stack<Container> parent = new Stack<Container>();
-		parent.push(doc);
 		if (start == null)
 			return;
-		Boolean nosection = null;
-		for (Property view: start.getOwnedAttribute()) {
-			Type type = view.getType();
-			if (type == null || StereotypesHelper.hasStereotypeOrDerived(type, dg.getView()) || excludeViews.contains(view) || excludeViews.contains(type))
-				continue;
-			Section now = null;
-			
-			if (noSections.contains(view) || noSections.contains(type)) {
-				if (nosection == null || nosection) {
-					now = parseView(type, false);
-					nosection = true;
-				} else {
-					now = parseView(type, true);
-				}
-			} else {
-				now = parseView(type, true);
-				nosection = false;
-			}
-			parent.peek().addElement(now);
+		Container top = doc;
+		if (!product) {
+			Section chapter1 = dg.parseView(start);
+			top = chapter1;
+			doc.addElement(chapter1);
 		}
+		handleViewChildren(start, top);
 	}
 	
-	private Section parseView(Element view, boolean section) {
-		Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.conformStereotype);
-		
-		Section viewSection = new Section(); //Section is a misnomer, should be View
-		viewSection.setTitle(((NamedElement)view).getName());
-		viewSection.setDgElement(view);
-		viewSection.setView(true);
-		//parent.addElement(viewSection);
-		if (!section) //parent can be Document, in which case this view must be a section
-			viewSection.setNoSection(true);
-		viewSection.setId(view.getID());
-		if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))
-			viewSection.isAppendix(true);
-		
-		if (viewpoint != null && viewpoint instanceof Class) { //view conforms to a viewpoint
-			if (!(view instanceof Diagram)) { //if it's a diagram, people most likely put image query in viewpoint already. this is to prevent showing duplicate documentation
-				String viewDoc = ModelHelper.getComment(view);
-				if (viewDoc != null) {
-					Paragraph para = new Paragraph(viewDoc);
-					para.setDgElement(view);
-					para.setFrom(From.DOCUMENTATION);
-					viewSection.addElement(para);
-				}
-			}
-			Collection<Behavior> viewpointBehavior = ((Class)viewpoint).getOwnedBehavior();
-			Behavior b = null;
-			if (viewpointBehavior.size() > 0) 
-				b = viewpointBehavior.iterator().next();
-			else {
-				//viewpoint can inherit other viewpoints, if this viewpoint has no behavior, check inherited behaviors
-				Class now = (Class)viewpoint;
-				while(now != null) {
-					if (!now.getSuperClass().isEmpty()) {
-						now = now.getSuperClass().iterator().next();
-						if (now.getOwnedBehavior().size() > 0) {
-							b = now.getOwnedBehavior().iterator().next();
-							break;
-						}
-					} else {
-						now = null;
-					}
-				}
-			}
-			if (b != null) { //parse and execute viewpoint behavior, giving it the imported/queried elements
-				List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, ElementImport.class, 1, 1);
-				List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, PackageImport.class, 1, 1);
-				List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.queriesStereotype, 1, false, 1);
-				List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.oldQueriesStereotype, 1, false, 1);
-				if (elementImports == null) elementImports = new ArrayList<Element>();
-				if (packageImports != null) elementImports.addAll(packageImports);
-				if (expose != null) elementImports.addAll(expose); //all three import/queries relationships are interpreted the same
-				if (queries != null) elementImports.addAll(queries); //all three import/queries relationships are interpreted the same
-				if (elementImports.isEmpty())
-					elementImports.add(view); //if view does not import/query anything, give the view element itself to the viewpoint
-				dg.getContext().pushTargets(elementImports); //this becomes the context of the activity going in
-				if (b instanceof Activity) {
-					dg.parseActivityOrStructuredNode(b, viewSection);
-				}
-				dg.getContext().popTargets();
-			}
-		} else { //view does not conform to a viewpoint, apply default behavior
-			if (view instanceof Diagram) { //if a diagram, show diagram and documentation
-				Image image = new Image();
-				List<Element> images = new ArrayList<Element>();
-				images.add(view);
-				image.setTargets(images);
-				String caption = (String)StereotypesHelper.getStereotypePropertyFirst(view, DocGen3Profile.dgviewStereotype, "caption");
-				// Check for old stereotype name for backwards compatibility
-				if (caption == null) caption = (String)StereotypesHelper.getStereotypePropertyFirst(view, DocGen3Profile.oldDgviewStereotype, "caption");
-				List<String> captions = new ArrayList<String>();
-				captions.add(caption);
-				image.setCaptions(captions);
-				image.setShowCaptions(true);
-				viewSection.addElement(image);
-			} else { //just show documentation
-				String viewDoc = ModelHelper.getComment(view);
-				if (viewDoc != null) {
-					Paragraph para = new Paragraph(viewDoc);
-					para.setDgElement(view);
-					para.setFrom(From.DOCUMENTATION);
-					viewSection.addElement(para);
-				}
+	/**
+	 * 
+	 * @param view
+	 * @param parent parent view the current view should go under
+	 * @param section whether current view is a section 
+	 */
+	private void parseView(Class view, Container parent, boolean nosection) {
+		Section viewSection = dg.parseView(view);
+		viewSection.setNoSection(nosection);
+		parent.addElement(viewSection);
+		handleViewChildren(view, viewSection);
+	}
+
+	private void handleViewChildren(Class view, Container viewSection) {
+		List<Class> childSections = new ArrayList<Class>();
+		List<Class> childNoSections = new ArrayList<Class>();
+		for (Property prop: view.getOwnedAttribute()) {
+			Class type = (Class)prop.getType();
+			if (type == null || !StereotypesHelper.hasStereotypeOrDerived(type, dg.getView()) || excludeViews.contains(prop) || excludeViews.contains(type))
+				continue;
+			if (noSections.contains(type) || noSections.contains(type)) {
+				childNoSections.add(type);
+			} else {
+				childSections.add(type);
 			}
 		}
-		return viewSection;
+		for (Class nos: childNoSections) {
+			parseView(nos, viewSection, true);
+		}
+		for (Class s: childSections) {
+			parseView(s, viewSection, false);
+		}
 	}
 }
