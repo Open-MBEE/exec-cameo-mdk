@@ -473,7 +473,6 @@ public class DocumentGenerator {
 	 * @param an
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	private Query parseTemplate(ActivityNode an) {
 		
 		Query dge = null;

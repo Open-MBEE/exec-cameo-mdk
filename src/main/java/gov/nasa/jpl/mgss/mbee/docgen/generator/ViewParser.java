@@ -1,29 +1,13 @@
 package gov.nasa.jpl.mgss.mbee.docgen.generator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementImport;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
-
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Container;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
-import gov.nasa.jpl.mgss.mbee.docgen.model.Image;
-import gov.nasa.jpl.mgss.mbee.docgen.model.Paragraph;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
+
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  * This parses the view structure constructed using First, Next, NoSection dependencies
