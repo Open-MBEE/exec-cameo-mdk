@@ -80,7 +80,8 @@ public class ProductViewParser {
 			top = chapter1;
 			doc.addElement(chapter1);
 		}
-		handleViewChildren(start, top);
+		if (!singleView || recurse)
+			handleViewChildren(start, top);
 	}
 	
 	/**
