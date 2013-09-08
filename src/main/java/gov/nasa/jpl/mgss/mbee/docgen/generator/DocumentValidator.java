@@ -299,8 +299,8 @@ public class DocumentValidator {
 			missingOutgoingFlow.addViolation(n, missingOutgoingFlow.getDescription());
 		if (!(n instanceof MergeNode) && !(n instanceof JoinNode) && !(n instanceof DecisionNode) && n.getIncoming().size() > 1)
 			multipleIncomingFlows.addViolation(n, multipleIncomingFlows.getDescription());
-		if (n instanceof CallBehaviorAction) {
-			Behavior b = ((CallBehaviorAction)n).getBehavior();
+		if (n instanceof CallBehaviorAction || StereotypesHelper.hasStereotypeOrDerived(n, DocGen3Profile.tableStructureStereotype)) {
+			Behavior b = n instanceof CallBehaviorAction ? ((CallBehaviorAction)n).getBehavior() : null;
 			Collection<Stereotype> napplied = new HashSet<Stereotype>(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.collectFilterStereotype));
 			napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.ignorableStereotype));
 			if (b == null) {
