@@ -102,6 +102,8 @@ public class ViewExporter implements RunnableWithProgress{
 				params.add("doc=true");
 			if (force)
 				params.add("force=true");
+			if (dge.isProduct())
+				params.add("product=true");
 			baseurl += Utils.join(params, "&");
 		}
 		
