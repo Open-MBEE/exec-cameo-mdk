@@ -13,9 +13,18 @@ public class LibraryComponent {
 	private String name;
 	private Set<NamedElement> added;
 	private Set<NamedElement> removed;
+	private boolean pseudoPackage = false;
 
+	/**
+	 * Should only be used when making a placeholder for a root node for 
+	 * LibraryComponent tree - so it's always a pseudoPackage and won't be
+	 * processed in any of the choosers.
+	 * 
+	 * @param name
+	 */
 	public LibraryComponent(String name) {
 		this.name = name;
+		pseudoPackage = true;
 		init();
 	}
 
@@ -34,7 +43,7 @@ public class LibraryComponent {
 	public boolean isPackage() {
 		if (element != null)
 			return (element instanceof Package);
-		return false;
+		return pseudoPackage;
 	}
 
 	public void addCharacterization(NamedElement chara) {
