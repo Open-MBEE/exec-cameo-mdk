@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<diagram abbreviation="ViewClass" baseType="Class Diagram" category="MBEE DocGen" type="View Class Diagram" version="5">
+    <toolbarConfiguration>
+        <baseCategory expandedByDefault="true" id="COMMON_ELEMENTS_STATIC" parentCategoryID="COMMON_ELEMENTS_STATIC"/>
+        <category expandedByDefault="true" id="action_category_1378760795058_456847_0" name="View Class Diagram">
+            <actions>
+                <custom description="View" id="IDaction_1378760887341_190598_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
+                    <stereotype id="_17_0_1_232f03dc_1325612611695_581988_21583"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Viewpoint" id="IDaction_1378760931841_229013_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
+                    <stereotype id="_11_5EAPbeta_be00301_1147420812402_281263_364"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Product" id="IDaction_1378760972112_50537_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
+                    <stereotype id="_17_0_2_3_87b0275_1371477871400_792964_43374"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Expose" id="IDaction_1378760996044_294568_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency">
+                    <stereotype id="_16_5_4_409a058d_1259862803278_226185_1083"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Conform" id="IDaction_1378761047596_122536_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency">
+                    <stereotype id="_11_5EAPbeta_be00301_1147420728091_674481_152"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+            </actions>
+        </category>
+    </toolbarConfiguration>
+    <module location="/Applications/MagicDraw UML 17.0.2/profiles/MDK/CoP Extensions.mdxml" name="CoP Extensions.mdxml">
+        <root id="_17_0_2_3_e9f034d_1372781831901_334575_29028"/>
+    </module>
+    <module location="/Applications/MagicDraw UML 17.0.2/profiles/UML_Standard_Profile.mdzip" name="UML_Standard_Profile.mdzip">
+        <root id="magicdraw_uml_standard_profile_v_0001"/>
+    </module>
+    <manipulators>
+        <element>com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class</element>
+        <path action="IDaction_1378760996044_294568_0"/>
+        <path action="IDaction_1378761047596_122536_0"/>
+        <path action="ADD_DIRECTED_AGGREGATION">
+            <target>ADD_CLASS</target>
+            <target>ADD_INTERFACE</target>
+            <target>ADD_ENUMERATION</target>
+        </path>
+        <path action="ADD_DIRECTED_COMPOSITION">
+            <target>ADD_CLASS</target>
+            <target>ADD_INTERFACE</target>
+            <target>ADD_ENUMERATION</target>
+        </path>
+        <path action="ADD_DEPENDENCY">
+            <target>ADD_CLASS</target>
+            <target>ADD_INTERFACE</target>
+            <target>ADD_ENUMERATION</target>
+            <target>ADD_PACKAGE</target>
+        </path>
+        <path action="ADD_NOTE_ANCHOR">
+            <target>ADD_NOTE</target>
+            <target>ADD_HTML_NOTE</target>
+            <target>ADD_COMMENT</target>
+            <target>ADD_HTML_COMMENT</target>
+        </path>
+    </manipulators>
+</diagram>
+
