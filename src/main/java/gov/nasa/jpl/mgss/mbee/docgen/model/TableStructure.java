@@ -14,15 +14,18 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.GenerationContext;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Iterator;
+import java.util.Stack;
 
 import org.eclipse.emf.ecore.EObject;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -138,6 +141,8 @@ public class TableStructure extends Table {
 				List<Element> resultElements;
 				if (tc.bnode != null && tc.bnode.getOutgoing().iterator().hasNext()) { //should check next node is collect/filter node
 					ActivityNode n = tc.bnode.getOutgoing().iterator().next().getTarget();
+					Stack<List<Element>> in = new Stack<List<Element>>();
+					CollectFilterParser.setContext(new GenerationContext(in, n, Application.getInstance().getGUILog()));
 					resultElements = CollectFilterParser.startCollectAndFilterSequence(n, startElements);
 				} else
 					resultElements = startElements;
