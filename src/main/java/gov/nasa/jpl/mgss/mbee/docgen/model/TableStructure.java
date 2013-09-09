@@ -127,9 +127,6 @@ public class TableStructure extends Table {
 			columns.add(col);
 			outs = curNode.getOutgoing();
 		}
-		if (title != null && !title.equals("") && titles.isEmpty()) {
-			titles.add(title);
-		}
 	}
 	
 	private void buildTableReferences() {
@@ -215,7 +212,9 @@ public class TableStructure extends Table {
 			body.add(tableRow);
 		}
 		table.setBody(body);
-		
+		if (title != null && !title.equals("") && titles.isEmpty()) {
+			titles.add(title);
+		}
 		setTableThings(table);
 		parent.addElement(table);
 	}

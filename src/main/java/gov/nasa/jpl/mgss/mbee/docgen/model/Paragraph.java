@@ -72,11 +72,12 @@ public class Paragraph extends Query {
 	    for (Element e: targets) {
 				if (getStereotypeProperties() != null && !getStereotypeProperties().isEmpty()) {
 					for (Property p: getStereotypeProperties()) {
-						List<Object> ob = Utils.getStereotypePropertyValues(e, p, true);
-						for (Object o: ob) {
-							if (o instanceof String)
-								parent.addElement(new DBParagraph((String)o));
-						}
+						Common.addReferenceToDBHasContent(Reference.getPropertyReference(e, p), parent);
+						//List<Object> ob = Utils.getStereotypePropertyValues(e, p, true);
+						//for (Object o: ob) {
+						//	if (o instanceof String)
+						//		parent.addElement(new DBParagraph((String)o));
+						//}
 					}
 				} else 
 					parent.addElement(new DBParagraph(ModelHelper.getComment(e), e, From.DOCUMENTATION));

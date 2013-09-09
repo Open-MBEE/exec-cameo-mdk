@@ -7,7 +7,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -16,6 +15,8 @@ import java.util.EventObject;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -235,9 +236,11 @@ public class CharacterizationChooserUI {
 				treeTable.updateUI();
 			}
 		});
-		panel.setLayout(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
 		panel.add(btnAdd);
 
+		panel.add(Box.createHorizontalGlue());
+		
 		JButton btnSave = new JButton("Save");
 		panel.add(btnSave);
 		btnSave.addActionListener(new ActionListener() {

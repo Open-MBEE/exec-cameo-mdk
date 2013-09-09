@@ -131,9 +131,7 @@ public class CollectFilterParser {
 		graph.addVertex(source);
 		for (ActivityEdge e: cur.getOutgoing()) {
 			ActivityNode n = e.getTarget();
-			if (StereotypesHelper.hasStereotypeOrDerived(n, DocGen3Profile.collectFilterStereotype) || 
-					n instanceof CallBehaviorAction && ((CallBehaviorAction)n).getBehavior() != null && 
-					StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)n).getBehavior(), DocGen3Profile.collectFilterStereotype)) {
+			if (GeneratorUtils.hasStereotypeByString(n, DocGen3Profile.collectFilterStereotype, true)) {
 				CollectFilterNode target = mapping.get(n);
 				if (target == null) {
 					target = new CollectFilterNode(n);

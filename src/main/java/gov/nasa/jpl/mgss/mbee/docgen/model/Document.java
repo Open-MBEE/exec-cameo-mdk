@@ -42,6 +42,16 @@ public class Document extends Container {
 	
 	private boolean genNewImage;
 	
+	private boolean product;
+	
+	public boolean isProduct() {
+		return product;
+	}
+
+	public void setProduct(boolean product) {
+		this.product = product;
+	}
+
 	public String getHeader() {
 		return header;
 	}
