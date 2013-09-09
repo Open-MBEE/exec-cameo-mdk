@@ -25,6 +25,7 @@
 	<file from="data/defaults/data/diagrams/DocGen 3 Diagram/descriptor.xml" to="data/defaults/data/diagrams/DocGen 3 Diagram/descriptor.xml"/>
 	<file from="data/defaults/data/diagrams/DocGen 3 View Diagram/descriptor.xml" to="data/defaults/data/diagrams/DocGen 3 View Diagram/descriptor.xml"/>
 	<file from="data/defaults/data/diagrams/Module Management/descriptor.xml" to="data/defaults/data/diagrams/Module Management/descriptor.xml"/>
+	<file from="data/defaults/data/diagrams/View Class Diagram/descriptor.xml" to="data/defaults/data/diagrams/View Class Diagram/descriptor.xml"/>
 	<file from="data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml" to="data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
 	<file from="DocGenUserScripts/common/CustomDependencyValidation.py" to="DocGenUserScripts/common/CustomDependencyValidation.py"/>
 	<file from="DocGenUserScripts/common/DocGenAutoOrganize.py" to="DocGenUserScripts/common/DocGenAutoOrganize.py"/>
@@ -71,10 +72,6 @@
 	<file from="DocGenUserScripts/Test/CF.py" to="DocGenUserScripts/Test/CF.py"/>
 	<file from="DocGenUserScripts/Test/DocGenTest.py" to="DocGenUserScripts/Test/DocGenTest.py"/>
 	<file from="DocGenUserScripts/Test/DocGenTest2.groovy" to="DocGenUserScripts/Test/DocGenTest2.groovy"/>
-	<file from="DocGenUserScripts/Test/InterfaceCSVcompleteness.qvto" to="DocGenUserScripts/Test/InterfaceCSVcompleteness.qvto"/>
-	<file from="DocGenUserScripts/Test/InterfaceCSVcompleteness.qvtox" to="DocGenUserScripts/Test/InterfaceCSVcompleteness.qvtox"/>
-	<file from="DocGenUserScripts/Test/interfaceTable.qvto" to="DocGenUserScripts/Test/interfaceTable.qvto"/>
-	<file from="DocGenUserScripts/Test/interfaceTable.qvtox" to="DocGenUserScripts/Test/interfaceTable.qvtox"/>
 	<file from="DocGenUserScripts/Test/MakeParagraph.py" to="DocGenUserScripts/Test/MakeParagraph.py"/>
 	<file from="DocGenUserScripts/Test/messaging.py" to="DocGenUserScripts/Test/messaging.py"/>
 	<file from="DocGenUserScripts/Test/qvttest.qvto" to="DocGenUserScripts/Test/qvttest.qvto"/>
