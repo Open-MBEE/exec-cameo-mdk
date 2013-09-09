@@ -184,6 +184,10 @@ public class Deployment {
 			if (ne instanceof Class){
 				Class c = (Class) ne;
 				Property p = findMass(c, "Mass Current Best Estimate");
+
+				if (p == null)
+					p = findMassNewChar(c, "Mass Current Best Estimate");
+				
 				if (p != null)
 					mass.put(c, p);
 			} else {
@@ -197,6 +201,10 @@ public class Deployment {
 			if (ne instanceof Class){
 				Class c = (Class) ne;
 				Property p = findMass(c, "Mass Contingency");
+
+				if (p == null)
+					p = findMassNewChar(c, "Mass Contingency");
+				
 				if (p != null)
 					massContingency.put(c, p);
 			}
@@ -208,6 +216,10 @@ public class Deployment {
 			if (ne instanceof Class){
 				Class c = (Class) ne;
 				Property p = findMass(c, "Mass CBE_+_Contingency");
+				
+				if (p == null)
+					p = findMassNewChar(c, "Mass CBE_+_Contingency");
+				
 				if (p != null)
 					cbeContingency.put(c, p);
 			}
@@ -219,7 +231,11 @@ public class Deployment {
 				Class c = (Class) ne;
 
 				Property p = findMass(c, "Mass Allocation");
-				if (p !=null)
+				
+				if (p == null)
+					p = findMassNewChar(c, "Mass Allocation");
+				
+				if (p != null)
 					massAllocation.put(c, p);
 			}
 		}
@@ -231,7 +247,11 @@ public class Deployment {
 				Class c = (Class) ne;
 
 				Property p = findMass(c, "Mass Margin");
-				if (p !=null)
+				
+				if (p == null)
+					p = findMassNewChar(c, "Mass Margin");
+				
+				if (p != null)
 					massMargin.put(c, p);
 			}
 		}
@@ -243,16 +263,19 @@ public class Deployment {
 			if (ModelLib.isOriginalWorkPackage(wp)){
 				p = findMass((Class) wp, "Mass Current Best Estimate");
 			} else {
-				List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
-				if (characterizes.size() > 1){
-					throw new NullPointerException(); 
-				}
-				Element charact = characterizes.get(0);
+				p = findMassNewChar(wp, "Mass Current Best Estimate");
 
-				if (charact instanceof Class){
-					p = findMass((Class) charact, "Mass Current Best Estimate");
-				}
+				if (p == null){
+					List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
+					if (characterizes.size() > 1){
+						throw new NullPointerException(); 
+					}
+					Element charact = characterizes.get(0);
 
+					if (charact instanceof Class){
+						p = findMass((Class) charact, "Mass Current Best Estimate");
+					}
+				}
 
 			}
 			if (p != null)
@@ -266,16 +289,20 @@ public class Deployment {
 			if (ModelLib.isOriginalWorkPackage(wp)){
 				p = findMass((Class) wp, "Mass Contingency");
 			} else {
-				List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
-				if (characterizes.size() > 1){
-					throw new NullPointerException(); 
-				}
-				Element charact = characterizes.get(0);
+				p = findMassNewChar(wp, "Mass Contingency");
 
-				if (charact instanceof Class){
-					p = findMass((Class) charact, "Mass Contingency");
-				}
+				if (p == null){
 
+					List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
+					if (characterizes.size() > 1){
+						throw new NullPointerException(); 
+					}
+					Element charact = characterizes.get(0);
+
+					if (charact instanceof Class){
+						p = findMass((Class) charact, "Mass Contingency");
+					}
+				}
 
 			}
 			if (p != null)
@@ -289,14 +316,19 @@ public class Deployment {
 			if (ModelLib.isOriginalWorkPackage(wp)){
 				p = findMass((Class) wp, "Mass CBE_+_Contingency");
 			} else {
-				List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
-				if (characterizes.size() > 1){
-					throw new NullPointerException(); 
-				}
-				Element charact = characterizes.get(0);
+				p = findMassNewChar(wp, "Mass CBE_+_Contingency");
 
-				if (charact instanceof Class){
-					p = findMass((Class) charact, "Mass CBE_+_Contingency");
+				if (p == null){
+
+					List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
+					if (characterizes.size() > 1){
+						throw new NullPointerException(); 
+					}
+					Element charact = characterizes.get(0);
+
+					if (charact instanceof Class){
+						p = findMass((Class) charact, "Mass CBE_+_Contingency");
+					}
 				}
 
 
@@ -312,16 +344,18 @@ public class Deployment {
 			if (ModelLib.isOriginalWorkPackage(wp)){
 				p = findMass((Class) wp, "Mass Allocation");
 			} else {
-				List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
-				if (characterizes.size() > 1){
-					throw new NullPointerException(); 
-				}
-				Element charact = characterizes.get(0);
-				if (charact instanceof Class){
-					p = findMass((Class) charact, "Mass Allocation");
-				}
+				p = findMassNewChar(wp, "Mass Allocation");
 
-
+				if (p == null){
+					List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
+					if (characterizes.size() > 1){
+						throw new NullPointerException(); 
+					}
+					Element charact = characterizes.get(0);
+					if (charact instanceof Class){
+						p = findMass((Class) charact, "Mass Allocation");
+					}
+				}
 			}
 			if (p != null)
 				massAllocation.put(wp, p);
@@ -334,15 +368,20 @@ public class Deployment {
 			if (ModelLib.isOriginalWorkPackage(wp)){
 				p = findMass((Class) wp, "Mass Margin");
 			} else {
-				List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
-				if (characterizes.size() > 1){
-					throw new NullPointerException(); 
-				}
-				Element charact = characterizes.get(0);
-				if (charact instanceof Dependency){
-					Element client = ((Dependency) charact).getClient().iterator().next();
-					if (client instanceof Class){
-						p = findMass((Class) client, "Mass Margin");
+				p = findMassNewChar(wp, "Mass Margin");
+
+				if (p == null){
+
+					List <Element> characterizes = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(wp, ModelLib.CHARACTERIZES, 2, true, 1);
+					if (characterizes.size() > 1){
+						throw new NullPointerException(); 
+					}
+					Element charact = characterizes.get(0);
+					if (charact instanceof Dependency){
+						Element client = ((Dependency) charact).getClient().iterator().next();
+						if (client instanceof Class){
+							p = findMass((Class) client, "Mass Margin");
+						}
 					}
 				}
 
@@ -352,6 +391,21 @@ public class Deployment {
 		}
 	}
 
+
+	public static Property findMassNewChar(NamedElement c, String prop){
+		for (DirectedRelationship dr : c.get_directedRelationshipOfTarget()){
+			for (Element element : dr.getSource()){
+				if (ModelLib.isMassCharacterization(element)){
+					for (Property p3: ((Class) element).getOwnedAttribute()) {
+						if (p3.getName().equals(prop))
+							return p3;
+					}
+				}
+			}
+		}
+
+		return null;
+	}
 
 	public static Property findMass(Class c, String prop) {
 		for (Property p: c.getOwnedAttribute()) {
