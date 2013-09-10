@@ -220,6 +220,8 @@ public class CollectFilterParser {
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectClassifierAttributes)) {
 				for (Element e: in)
 					res.addAll(Utils.getAttributes(e, inherited));
+        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectExpression)) {
+            res.addAll(Utils.collectByExpression(in, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterDiagramTypeStereotype)) {
 			res.addAll(Utils.filterDiagramsByDiagramTypes(in, diagramTypes, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterMetaclassStereotype)) {
@@ -228,6 +230,8 @@ public class CollectFilterParser {
 			res.addAll(Utils.filterElementsByNameRegex(in, names, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterStereotypeStereotype)) {
 			res.addAll(Utils.filterElementsByStereotypes(in, stereotypes, include, derived));
+        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterExpression)) {
+            res.addAll(Utils.filterElementsByExpression(in, cba, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectionStereotype)) {
 			res.addAll(collectAndFilterGroup((Activity)cba.getBehavior(), in));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.removeDuplicates)) {
@@ -244,6 +248,8 @@ public class CollectFilterParser {
             res.addAll(sortElements(in, DocGen3Profile.sortByAttribute, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByProperty)) {
 		    res.addAll(sortElements(in, DocGen3Profile.sortByProperty, cba));
+        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByExpression)) {
+            res.addAll(sortElements(in, DocGen3Profile.sortByExpression, cba));
 		}
 		return res;
 	}
@@ -268,8 +274,9 @@ public class CollectFilterParser {
 
         boolean isProp = sortStereotype.equals(DocGen3Profile.sortByProperty);
         boolean isAttr = sortStereotype.equals(DocGen3Profile.sortByAttribute);
+        boolean isExpr = sortStereotype.equals(DocGen3Profile.sortByExpression);
         boolean isName = sortStereotype.equals(DocGen3Profile.sortByName);
-        if ( !isProp && !isAttr && !isName ) {
+        if ( !isProp && !isAttr && !isName && !isExpr ) {
             Debug.error(false, "Error! Trying to sort by unknown sort type: "
                     + sortStereotype);
             return ordered;
@@ -278,6 +285,7 @@ public class CollectFilterParser {
         String stereotypeProperty = null;
         if ( isProp ) stereotypeProperty = "desiredProperty";
         else if ( isAttr ) stereotypeProperty = "desiredAttribute";
+        else if ( isExpr ) stereotypeProperty = "expression";
 
         Object o = GeneratorUtils.getObjectProperty(cba, sortStereotype,
                                                     stereotypeProperty, null);
@@ -286,6 +294,8 @@ public class CollectFilterParser {
             ordered = Utils.sortByProperty(in, (Property) o);
         } else if (o instanceof EnumerationLiteral && isAttr) {
             ordered = Utils.sortByAttribute(in, o);
+        } else if (isExpr) {
+            ordered = Utils.sortByExpression(in, o);
         } else if (isName) {
             ordered = Utils.sortByName(in);
         } else {

@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import lpg.runtime.ParseTable;
@@ -92,6 +93,34 @@ public class OclEvaluator {
 		ocl = OCL.newInstance(envFactory);
 	}
 
+	protected static String queryObjectToStringExpression(Object query) {
+      String exprString = null;
+      if (query instanceof String) {
+        exprString = (String) query;
+      } else if (query instanceof Collection) {
+        Collection<?> expList = (Collection<?>) query;
+        if (expList.size() == 1) {
+          return queryObjectToStringExpression(expList.iterator().next());
+        } else {
+          Debug.error("Error! Query cannot be a list of multiple things!");
+        }
+      } else if (query != null) {
+        exprString = (String) query.toString();
+      }
+      return exprString;
+	}
+	
+  /**
+   * Evaluates the specified query given a particular context
+   * 
+   * @param context   EObject of the context that the query should be run against (e.g., self)
+   * @param query object to convert to a valid OCL string to be evaluated in the context
+   * @return        Object of the result whose type should be known by the caller
+   */
+  public static Object evaluateQuery(EObject context, Object query) {
+    return evaluateQuery(context, queryObjectToStringExpression(query));
+  }
+	
   /**
    * Evaluates the specified query given a particular context
    * 

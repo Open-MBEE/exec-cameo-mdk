@@ -326,31 +326,17 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 
 	private void parseExpressionColumn( ActivityNode curNode, Object expression,
 			List< Element > rows ) {
-		String exprString = null;
-		if ( expression instanceof String ) {
-			exprString = (String)expression;
-		} else if ( expression instanceof List ) {
-			List expList = (List)expression;
-			if ( expList.size() == 1 ) {
-				parseExpressionColumn( curNode, expList.get(0), rows );
-				return;
-			} else {
-				Debug.error( "Error! TableExpressionColumn expression cannot be a list of multiple elements!" );
-			}
-		} else {
-			exprString = (String)expression.toString();
-		}
 
 		List<Object> curCol = new ArrayList<Object>();
 
 		for (Object r: rows) {
 			if (r instanceof EObject) {
-				curCol.add(OclEvaluator.evaluateQuery( (EObject)r, exprString ) );
+				curCol.add(OclEvaluator.evaluateQuery( (EObject)r, expression ) );
 			} else if (r instanceof List<?>) {
 				for (Object c: (List<Object>)r) {
 					Object result = c;
 					if (c instanceof EObject) {
-						result = OclEvaluator.evaluateQuery( (EObject)c, exprString );
+						result = OclEvaluator.evaluateQuery( (EObject)c, expression );
 					} else {
 						// REVIEW -- TODO -- should be able to apply query to any object!
 						Debug.error( "Error! TableExpressionColumn requires an EObject!" );

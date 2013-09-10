@@ -57,6 +57,7 @@ public class DocGen3Profile {
 	public static final String filterNameStereotype = "FilterByNames";
 	public static final String filterMetaclassStereotype = "FilterByMetaclasses";
 	public static final String filterStereotypeStereotype = "FilterByStereotypes";
+    public static final String filterExpression = "FilterByExpression";
 	public static final String collectRelMetaclassStereotype = "CollectByDirectedRelationshipMetaclasses";
 	public static final String collectRelStereotypeStereotype = "CollectByDirectedRelationshipStereotypes";
 	public static final String collectStereotypePropStereotype = "CollectByStereotypeProperties";
@@ -66,6 +67,7 @@ public class DocGen3Profile {
 	public static final String collectTypeStereotype = "CollectTypes";
 	public static final String collectDiagram = "CollectThingsOnDiagram";
 	public static final String collectClassifierAttributes = "CollectClassifierAttributes";
+    public static final String collectExpression = "CollectByExpression";
 	
 	public static final String associationChoosable = "AssociationTypeChoosable";
 	public static final String depthChoosable = "DepthChoosable";
@@ -95,6 +97,7 @@ public class DocGen3Profile {
 	public static final String sortByName = "SortByName";
 	public static final String sortByAttribute = "SortByAttribute";	//TODO: add to MD Profile
 	public static final String sortByProperty = "SortByProperty";   //TODO: add to MD Profile
+    public static final String sortByExpression = "SortByExpression";   //TODO: add to MD Profile
 	
 	public static final String conformStereotype = "Conform";
 	
