@@ -14,25 +14,25 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  */
 public class DBText extends DocumentElement{
 	
-	private String text;
+	private Object text;
 	
 	public DBText() {	}
 	
-	public DBText(String s) {
+	public DBText(Object s) {
 		text = s;
 	}
 	
-	public DBText(String s, Element e, From f) {
+	public DBText(Object s, Element e, From f) {
 		this.text = s;
 		this.from = e;
 		this.fromProperty = f;
 	}
 	
-	public void setText(String t) {
+	public void setText(Object t) {
 		text = t;
 	}
 	
-	public String getText() {
+	public Object getText() {
 		return text;
 	}
 	

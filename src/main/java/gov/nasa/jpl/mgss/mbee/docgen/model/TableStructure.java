@@ -7,28 +7,34 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.GenerationContext;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Iterator;
+import java.util.Stack;
 
 import org.eclipse.emf.ecore.EObject;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
@@ -41,100 +47,39 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
  *
  */
 
-public class TableStructure extends Table implements Iterator<List<Object>> {
+public class TableStructure extends Table {
 
-	//TODO decide tag options
-	
-	private List<String> headers;
-	private List<List<Object>> table;
-	
-	public void setHeaders(List<String> d) {
-		headers = d;
+	private abstract class TableColumn {
+		public String name = "";
+		public boolean simpleList = false; //not implemented whether a cell should display simple list if content is a list
+		public InitialNode bnode;
 	}
 	
-	public List<String> getHeaders() {
-		return headers;
+	private class TableAttributeColumn extends TableColumn {
+		public Utils.AvailableAttribute attribute;
 	}
+	
+	private class TablePropertyColumn extends TableColumn {
+		public Property property;
+	}
+	
+	private class TableExpressionColumn extends TableColumn {
+		public String expression;
+	}
+		
+	private List<String> headers = new ArrayList<String>();
 
-	// Table Stuff
-
-	private Object nullEntry = new String("no entry");
-	private int cLen;
-	
-	public TableStructure() {
-		cLen = 0;
-		sortCol = 0;
-		table = new ArrayList<List<Object>>();
-	}
-	
-	public int getColumNum() {
-		return cLen;
-	}
-	
-	public List<List<Object>> getTable() {
-		return table;
-	}
-
-	// Doesn't account for column length differences
-	public void setTable(List<List<Object>> t) {
-		table = t;
-	}
-	
-	// Equalizes column lengths
-	public void addColumn(List<Object> c) {
-		if (c != null) {
-			table.add(c);
-			if (c.size() > cLen) 
-				cLen = c.size();
-			for (List<Object> x: table)
-				while (x.size() < cLen)
-					x.add(nullEntry);
-		} else {
-			table.add(new ArrayList<Object>());
-		}
-	}
-	
-	public List<Object> getColumn(int n) {
-		if (n < table.size() && n >= 0) 
-			return table.get(n); 
-		else
-			return null;
-	}
-	
-	// IMPORTANT INVARIANT: Assumes all columns given are equally sized
-	public void addRow(List<Object> r) {
-		if (table.size() < r.size()) {
-			List<Object> empty = new ArrayList<Object>();
-			if (table.size() > 0)  						
-				for (int i = 0; i < table.get(0).size(); i++)
-					empty.add(nullEntry);
-			for (int i = table.size(); i < r.size(); i++) 
-				table.add(empty);
-			
-		} else if (r.size() < table.size()) {
-			for (int i = r.size(); i < table.size(); i++) 
-				r.add(0, nullEntry);
-		}
-		for (int i = 0; i < r.size(); i++) 
-			table.get(i).add(r.get(i)); //?
-		cLen++;
-	}
-
-	// Makes same assumption as addRow
-	public List<Object> getRow(int n) {
-		if (table.get(0) == null || n >= table.get(0).size())
-			return null;
-		List<Object> output = new ArrayList<Object>();
-		for (int i = 0; i < table.size(); i++)
-			output.add(table.get(i).get(n));
-		return output;
-	}
-
-	// GENERATABLE INTERFACE CLASSES
-	// ><><><><><><><><><><><><><><>
-	
+	private List<TableColumn> columns = new ArrayList<TableColumn>();
+		
 	private Element ts;
-	private List<Element> rows;
+	
+	private InitialNode bnode;
+	
+	private String title;
+	
+	private String empty = "no entry";
+	
+	private List<List<List<Reference>>> tableContent = new ArrayList<List<List<Reference>>>();
 	
 	@Override
 	public void initialize() {
@@ -146,281 +91,176 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		} else {
 			ts = null;
 		}
-		rows = targets;
-		parse();
+		if (ts != null)
+			bnode = GeneratorUtils.findInitialNode(ts);
+		title = ((NamedElement)dgElement).getName();
 	}
 
+	@Override
 	public void parse() {
-		if (ts == null) return;
+		if (bnode == null)
+			return;
+		ActivityNode curNode = bnode;
 		
-		List<String> hs = new ArrayList<String>();
-		boolean hasBehavior = false;
-
-		if (rows == null) return;
-		ActivityNode curNode = GeneratorUtils.findInitialNode(ts);
-		ActivityNode bNode = null;
-		if (curNode == null) return;
 		Collection<ActivityEdge> outs = curNode.getOutgoing();
 		while (outs != null && outs.size() == 1) {
 			curNode = outs.iterator().next().getTarget();
-			// Find out if have a behavior
+			TableColumn col = null;
+			if (GeneratorUtils.hasStereotypeByString(curNode, DocGen3Profile.tableAttributeColumnStereotype)) {
+				col = new TableAttributeColumn();
+				Object attr = GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableAttributeColumnStereotype, "desiredAttribute", null);
+				((TableAttributeColumn)col).attribute = (attr instanceof EnumerationLiteral) ? Utils.AvailableAttribute.valueOf(((EnumerationLiteral)attr).getName()) : null;
+			} else if (GeneratorUtils.hasStereotypeByString(curNode, DocGen3Profile.tableExpressionColumnStereotype)) {
+				col = new TableExpressionColumn();
+				((TableExpressionColumn)col).expression = (String)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
+			} else if (GeneratorUtils.hasStereotypeByString(curNode, DocGen3Profile.tablePropertyColumnStereotype)) {
+				col = new TablePropertyColumn();
+				((TablePropertyColumn)col).property = (Property)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+			} else {
+				outs = curNode.getOutgoing();
+				continue;
+			}
 			if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
-				bNode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
+				col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
 			} else if (curNode instanceof StructuredActivityNode) {
-				bNode = GeneratorUtils.findInitialNode(curNode);
+				col.bnode = GeneratorUtils.findInitialNode(curNode);
 			}
-            hasBehavior = bNode != null;
-
-			boolean hasTablePropColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tablePropertyColumnStereotype );
-			boolean hasTableExprColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableExpressionColumnStereotype);
-			boolean hasTableAttrColStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableAttributeColumnStereotype);
-			boolean hasTableSumRowStereoType = StereotypesHelper.hasStereotypeOrDerived(curNode, DocGen3Profile.tableSumRowStereotype);
-			if (hasTablePropColStereoType||hasTableExprColStereoType) {
-				// TablePropertyColumn tags
-				Object dProp = null;
-				if (hasTablePropColStereoType) {
-					dProp = GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
-				} else if (hasTableExprColStereoType) {
-					dProp = GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
-				}
-				// Headings
-				hs.add(parseTableHeadings(curNode));
-				// Parse stuff
-				if ( hasTableExprColStereoType ) {
-					parseExpressionColumn(curNode, dProp, rows);
-				} else {
-					if ( dProp instanceof Property ) {
-						if (hasBehavior)parseColumn((Property)dProp, handleTableBehavior(bNode, rows), TableStructure.propertyColumn);
-						else parseColumn((Property)dProp, rows, TableStructure.propertyColumn);
-					} else if (dProp == null) {
-						if (hasBehavior)parseColumn((Property)dProp, handleTableBehavior(bNode, rows), TableStructure.propertyColumn);
-						else {
-							Debug.error( false, "Expected Property but got null" );
-						}
-					} else {
-						Debug.error( false, "Expected Property but got: " + dProp +
-							 	            ( dProp == null ? "" : " of type " +
-						                      dProp.getClass().getName() ) );
-					}
-				}
-			} else if (hasTableAttrColStereoType) {
-				// TableAttributeColumn tags
-				Object dAttr = GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableAttributeColumnStereotype, "desiredAttribute", null);
-				// Headings
-				hs.add(parseTableHeadings(curNode));
-				// Parse stuff
-				if (hasBehavior)parseColumn((Object)dAttr, handleTableBehavior(bNode, rows), TableStructure.attributeColumn);
-				else parseColumn(dAttr, rows, TableStructure.attributeColumn);
-			} else if (hasTableSumRowStereoType) {
-				addSumRow();
-			}
-			if (hasBehavior)
-				hasBehavior = false;
+			col.name = curNode.getName();
+			headers.add(curNode.getName());
+			columns.add(col);
 			outs = curNode.getOutgoing();
 		}
-
-		setHeaders(hs);
 	}
 	
-	public List<DocumentElement> visit(boolean forViewEditor) {
-		DBTable t = new DBTable();
+	private void buildTableReferences() {
+		for (Element e: targets) {
+			List<List<Reference>> row = new ArrayList<List<Reference>>();
+			for (TableColumn tc: columns) {
+				List<Element> startElements = new ArrayList<Element>();
+				startElements.add(e);
+				List<Element> resultElements;
+				if (tc.bnode != null && tc.bnode.getOutgoing().iterator().hasNext()) { //should check next node is collect/filter node
+					ActivityNode n = tc.bnode.getOutgoing().iterator().next().getTarget();
+					Stack<List<Element>> in = new Stack<List<Element>>();
+					CollectFilterParser.setContext(new GenerationContext(in, n, Application.getInstance().getGUILog()));
+					resultElements = CollectFilterParser.startCollectAndFilterSequence(n, startElements);
+				} else
+					resultElements = startElements;
+				
+				List<Reference> cell = new ArrayList<Reference>();
+				for (Element re: resultElements) {
+					if (tc instanceof TableAttributeColumn) {
+						Utils.AvailableAttribute at = ((TableAttributeColumn)tc).attribute;
+						if (at == null) {
+							//cell.add(new Reference(empty));
+							continue;
+						}
+						Object attr = Utils.getElementAttribute(re, at); //attr can be string, value spec, or list of value spec if element is a slot
+						if (attr != null)
+							cell.add(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn)tc).attribute), attr));
+						//else
+							//cell.add(new Reference(empty));
+					} else if (tc instanceof TablePropertyColumn) {
+						Property prop = ((TablePropertyColumn)tc).property;
+						if (prop == null) {
+							//cell.add(new Reference(empty));
+							continue;
+						}
+						Element slotOrProperty = Utils.getElementProperty(re, prop);
+						List<Object> values = Utils.getElementPropertyValues(re, prop, true);
+						if (slotOrProperty != null) {
+							cell.add(new Reference(slotOrProperty, From.DVALUE, values));
+						} else
+							cell.add(new Reference(values));
+					} else {
+						String expr = ((TableExpressionColumn)tc).expression;
+						if (expr == null) {
+							//cell.add(new Reference(empty));
+							continue;
+						}
+						cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
+					}
+				}
+				row.add(cell);
+			}
+			tableContent.add(row);
+		}
+	}
+	
+	@Override
+	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+		if (ignore)
+			return;
+		
+		buildTableReferences();
+		DBTable table = new DBTable();
+		
+		
+//<<<<<<< HEAD
+//		return rowsOut; // TODO: for some reason, this is always an empty list. Why?
+//	}
+//
+//	String irrelevantEntry = new String("--");
+//
+//	// TODO -- REVIEW -- Should parse*Column() and handle*Cell() methods not
+//	// evaluate expressions or find property values and do this in
+//	// DocBookOutputVisitor like other tables?
+//
+//	private void parseExpressionColumn( ActivityNode curNode, Object expression,
+//			List< Element > rows ) {
+//
+//		List<Object> curCol = new ArrayList<Object>();
+//
+//		for (Object r: rows) {
+//			if (r instanceof EObject) {
+//				curCol.add(OclEvaluator.evaluateQuery( (EObject)r, expression ) );
+//			} else if (r instanceof List<?>) {
+//				for (Object c: (List<Object>)r) {
+//					Object result = c;
+//					if (c instanceof EObject) {
+//						result = OclEvaluator.evaluateQuery( (EObject)c, expression );
+//					} else {
+//						// REVIEW -- TODO -- should be able to apply query to any object!
+//						Debug.error( "Error! TableExpressionColumn requires an EObject!" );
+//						result = c.toString();
+//					}
+//					if ( result instanceof List ) {
+//						curCol.add( result );
+//					} else {
+//						curCol.add( Utils2.newList( result ) );
+//					}
+//=======
+		List<List<DocumentElement>> tableheaders = new ArrayList<List<DocumentElement>>();
+		List<DocumentElement> header = new ArrayList<DocumentElement>();
+		for (String head: this.headers) {
+			header.add(new DBText(head));
+		}
+		tableheaders.add(header);
+		table.setHeaders(tableheaders);
 		
 		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-		// want to add things to body by rows
-		while (hasNext()) {
-			List<Object> tsRow = next();
-			if (tsRow == null)
-				continue;
-			List<DocumentElement> row = new ArrayList<DocumentElement>();
-			for (Object e: tsRow) {
-				// TODO: Think about any problem that could arise from the following casting...
-				// Note assumption that all Objects in TS are either Lists of Properties or empty list
-				DBTableEntry item = Common.getTableEntryFromObject( e, false, forViewEditor );
-				row.add(item);
-			}
-			body.add(row);
-		}
-		// set DBTable headers
-		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
-		if (getHeaders() != null && !getHeaders().isEmpty()) {
-			List<DocumentElement> first = new ArrayList<DocumentElement>();
-			hs.add(first);
-			for (String h: getHeaders())
-				first.add(new DBText(h));
-			t.setCols(first.size());
-		} 
-		// otherwise, take the names of each element, in which case this would
-		// parseTableStructure loop to automatcally add the name of columns to the headers variable in 
-		// TableStructure.j
-		else {
-			List<DocumentElement> first = new ArrayList<DocumentElement>();
-			hs.add(first);
-			for (int i = 0; i < getColumNum(); i++)
-				first.add(new DBText());
-		}
-		t.setHeaders(hs);
-		// set DBTable and add column specification stuff
-		t.setBody(body);
-		List<DBColSpec> cslist = new ArrayList<DBColSpec>();
-		if (getColwidths() != null && !getColwidths().isEmpty()) {
-			int i = 1;
-			for (String s: getColwidths()) {
-				DBColSpec cs = new DBColSpec(i);
-				cs.setColwidth(s);
-				cslist.add(cs);
-				i++;
-			}
-		} else {
-			DBColSpec cs = new DBColSpec(1);
-			cs.setColwidth(".4*");
-			cslist.add(cs);
-		}
-		t.setColspecs(cslist);
-		t.setStyle(getStyle());
-		List<DocumentElement> res = new ArrayList<DocumentElement>();
-		res.add(t);
-		return res;
-	}
-	
-	// PARSING HELPERS
-	// ><><><><><><><>
-	
-	private String parseTableHeadings(ActivityNode curNode) {
-		String cName = ((NamedElement)curNode).getName();
-		// Heading choice branch
-		if (cName != null && !cName.equals(""))
-			return cName;
-		else 
-			return new String();
-	}
-	
-	private List<Object> handleTableBehavior(ActivityNode bNode, List<Element> rowsIn) {
-		List<Object> rowsOut = new ArrayList<Object>();
-		
-		// Find the first collect/filter activitynode in the behavior
-		// IMPORTANT INVARIANT: assumes the activity whose initial node is passed as bNode ONLY
-		//   contains collect or filter action first!
-		if (bNode != null) {
-			if (bNode.getOutgoing() != null) {
-				bNode = bNode.getOutgoing().iterator().next().getTarget();
-			}
-		} 
-	
-		// Loop through row elements, passing each one as a target to the startCollectandFilter thing
-		for (Element r: rowsIn) {
-			List<Element> rAsTargets = new ArrayList<Element>();
-			rAsTargets.add(r);
-//			targets.push(rAsTargets);
-			rowsOut.add(CollectFilterParser.startCollectAndFilterSequence(bNode, rAsTargets));
-//			rowsOut.add(DocumentGenerator.)
-		}
-		
-		return rowsOut; // TODO: for some reason, this is always an empty list. Why?
-	}
-
-	String irrelevantEntry = new String("--");
-
-	// TODO -- REVIEW -- Should parse*Column() and handle*Cell() methods not
-	// evaluate expressions or find property values and do this in
-	// DocBookOutputVisitor like other tables?
-
-	private void parseExpressionColumn( ActivityNode curNode, Object expression,
-			List< Element > rows ) {
-
-		List<Object> curCol = new ArrayList<Object>();
-
-		for (Object r: rows) {
-			if (r instanceof EObject) {
-				curCol.add(OclEvaluator.evaluateQuery( (EObject)r, expression ) );
-			} else if (r instanceof List<?>) {
-				for (Object c: (List<Object>)r) {
-					Object result = c;
-					if (c instanceof EObject) {
-						result = OclEvaluator.evaluateQuery( (EObject)c, expression );
-					} else {
-						// REVIEW -- TODO -- should be able to apply query to any object!
-						Debug.error( "Error! TableExpressionColumn requires an EObject!" );
-						result = c.toString();
-					}
-					if ( result instanceof List ) {
-						curCol.add( result );
-					} else {
-						curCol.add( Utils2.newList( result ) );
-					}
+		for (List<List<Reference>> row: tableContent) {
+			List<DocumentElement> tableRow = new ArrayList<DocumentElement>();
+			for (List<Reference> cell: row) {
+				DBTableEntry entry = new DBTableEntry();
+				for (Reference cellPart: cell) {
+					Common.addReferenceToDBHasContent(cellPart, entry);
+//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 				}
-			} else {
-				curCol.add( Utils2.newList( r.toString() ) );
+				tableRow.add(entry);
 			}
+			body.add(tableRow);
 		}
-		addColumn(curCol);
-	}
-	
-	public static final String propertyColumn = "PROPERTY";
-	public static final String attributeColumn = "ATTRIBUTE";
-
-	@SuppressWarnings("unchecked")
-	private void parseColumn(Object dThing, List<?> rows, String colType) {
-		List<Object> curCol = new ArrayList<Object>();
-        List<Object> results;
-		if (dThing == null || colType == null) {
-			curCol.addAll(rows); // REVIEW -- does this need to be a list of lists?
-		} else {
-			for (Object r: rows) {
-				if (r instanceof Element) {
-					if (colType.equals(propertyColumn)) {
-                        curCol.add(Common.Reference.getPropertyReferences((Element)r, (Property)dThing));
-//					    List<Element> props = Utils.getElementProperty((Element)r, (Property)dThing);
-//					    results = new ArrayList<Object>();
-//					    if ( props != null ) results.addAll(props);
-//					    if ( results.isEmpty() ) {
-//					        results.add(new Common.Reference)
-//					    }
-//						curCol.add(Common.Reference.getEntries((Element)r, From.DVALUE, results));
-					} else if (colType.equals(attributeColumn)) {
-					    results = handleAttributeCell(dThing, (Element)r);
-						curCol.add(Common.Reference.getReferences((Element)r, Utils.getFromAttribute(dThing), results));
-					}
-				} else if (r instanceof List<?>) {
-					List<Object> superCell = new ArrayList<Object>();
-					for (Object c: (List<Object>)r) {
-						if (c instanceof Element) { 
-		                    if (colType.equals(propertyColumn)) {
-		                        superCell.addAll(Common.Reference.getPropertyReferences((Element)c, (Property)dThing));
-//		                        results = Utils.getElementProperty((Element)r, (Property)dThing);
-//		                        superCell.addAll(Common.Reference.getEntries((Element)c, From.DVALUE, results));
-		                    } else if (colType.equals(attributeColumn)) {
-		                        results = handleAttributeCell(dThing, (Element)c);
-		                        superCell.addAll(Common.Reference.getReferences((Element)c, Utils.getFromAttribute(dThing), results));
-		                    }
-						} else {
-							superCell.addAll( Utils2.newList( c ) );
-						}
-					}	
-					curCol.add(superCell);
-				} else {
-					curCol.add( Utils2.newList( r ) );
-				}
-			}
+		table.setBody(body);
+		if (title != null && !title.equals("") && titles.isEmpty()) {
+			titles.add(title);
 		}
-		addColumn(curCol);
+		setTableThings(table);
+		parent.addElement(table);
 	}
 
-	
-	public static List<Object> handleAttributeCell(Object dAttr, Element cell) { 
-		List<Object> rSlots = new ArrayList<Object>();
-		if (dAttr != null) {
-			Object cellAttr = Utils.getElementAttribute(cell, dAttr);
-			if (cellAttr != null) {
-				if (cellAttr instanceof Collection<?>) {
-					rSlots.addAll((Collection<? extends Object>)cellAttr);
-				} else {
-					rSlots.add(cellAttr);
-				}
-			}
-		}
-		return rSlots;
-	}
-	
+
+	/*
 	@SuppressWarnings("unchecked")
 	public void addSumRow() {
 		List<Object> sumRow = new ArrayList<Object>();
@@ -453,37 +293,8 @@ public class TableStructure extends Table implements Iterator<List<Object>> {
 		addRow(sumRow);
 	}
 	
-	// SORTING STUFF
-	// ><><><><><><>
-	
-	private int sortCol; // column index+1, neg means inv. order, 0 is no sort
+*/
 
-	private void setSort() {
-		
-	}
-	
-	// ITERATOR STUFF
-	// ><><><><><><><
-
-	private int itercount = 0;
-	
-	public boolean hasNext() {
-		return table.size()>0?(table.get(0).size() > itercount):false;
-	}
-	
-	public List<Object> next() {
-		List<Object> out = getRow(itercount);
-		itercount++;
-		return out;
-	}
-	
-	public void remove() {
-		return;
-	}
-		
-	// FOR DOCBOOKOUTPUTVISITOR STUFF
-	// ><><><><><><><><><><><><><><><
-	
 	@Override
 	public void accept(IModelVisitor v) {
 		v.visit(this);

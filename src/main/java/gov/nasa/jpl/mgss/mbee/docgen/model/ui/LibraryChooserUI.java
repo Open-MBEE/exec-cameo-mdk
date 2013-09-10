@@ -9,6 +9,8 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -22,6 +24,9 @@ public class LibraryChooserUI {
 
 	private JFrame frame;
 	private final LibraryMapping libraryMapping;
+	private JXTreeTable treeTable;
+	private JButton	btnExpandAll;
+	private JButton btnRefactor;
 
 	/**
 	 * Launch the application.
@@ -66,7 +71,7 @@ public class LibraryChooserUI {
 		JScrollPane scrollPane = new JScrollPane();
 		frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
 		LibraryTreeTableModel treeTableModel = new LibraryTreeTableModel(libraryMapping);
-		JXTreeTable treeTable = new JXTreeTable(treeTableModel);
+		treeTable = new JXTreeTable(treeTableModel);
 		scrollPane.setViewportView(treeTable);
 		treeTable.setHorizontalScrollEnabled(true);
 		treeTable.setShowGrid(true);
@@ -74,9 +79,35 @@ public class LibraryChooserUI {
 		treeTable.setBorder(new EtchedBorder(EtchedBorder.RAISED));  
 		
 		JPanel panel = new JPanel();
-		FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-		flowLayout.setAlignment(FlowLayout.RIGHT);
+		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
 		frame.getContentPane().add(panel, BorderLayout.SOUTH);
+		
+		btnExpandAll = new JButton("Expand All");
+		panel.add(btnExpandAll);
+		btnExpandAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent paramActionEvent) {
+				String  text = btnExpandAll.getText();
+				if (text.equalsIgnoreCase("Expand All")) {
+					treeTable.expandAll();
+					btnExpandAll.setText("Collapse All");
+				} else {
+					treeTable.collapseAll();
+					btnExpandAll.setText("Expand All");
+				}
+			}
+		});
+		
+		panel.add(Box.createHorizontalGlue());
+		
+		btnRefactor = new JButton("Save and Refactor");
+		panel.add(btnRefactor);
+		btnRefactor.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent paramActionEvent) {
+				libraryMapping.refactor();
+			}
+		});
 		
 		JButton btnOk = new JButton("Save");
 		panel.add(btnOk);

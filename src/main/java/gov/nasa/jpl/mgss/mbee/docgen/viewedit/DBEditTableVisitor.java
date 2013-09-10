@@ -106,6 +106,12 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 			curRow.add(entry);
 		} else if (!tableentry.getChildren().isEmpty()){
 			tableentry.getChildren().get(0).accept(this);
+		} else {
+			JSONObject entry = new JSONObject();
+			entry.put("source", "text");
+			entry.put("text", "");
+			addSpans(entry);
+			curRow.add(entry);
 		}
 		
 	}

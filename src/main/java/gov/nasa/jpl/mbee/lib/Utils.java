@@ -99,23 +99,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
 public class Utils {
 	private Utils() {}
 	
-	/**
-	 * if multiplicity is not a range, returns the number
-	 * if upper limit is infinity and lower limit > 0, returns lower
-	 * else returns 1
-	 * @param p
-	 * @return
-	 */
-	public static int getMultiplicity(Property p) {
-		int lower = p.getLower();
-		int upper = p.getUpper();
-		if (lower == upper)
-			return lower;
-		if (upper == -1 && lower > 0)
-			return lower;
-		return 1;
-	}
-	
+	/******************************************** Collect/Filter/Sort *******************************************************/
 	
 	/**
 	 * This does not change the passed in elements collection, it returns a new list
@@ -132,6 +116,15 @@ public class Utils {
 		return res;
 	}
 	
+	/**
+     * returns collection of model elements that's on the diagram
+     * @param diagram
+     * @return
+     */
+    public static Collection<Element> getElementsOnDiagram(Diagram diagram) {
+    	return Project.getProject(diagram).getDiagram(diagram).getUsedModelElements(true);
+    }
+    
 	/**
 	 * like it says
 	 * @param diagrams can be a list of any model element, only diagrams will be tested and returned
@@ -725,6 +718,72 @@ public class Utils {
     	return new ArrayList<Element>();
     }
     
+    /**
+	 * depending on includeInherited flag, gets all the attributes of e based on redefinition (if e is not a classifier it'll be ignored)
+	 * if includeInherited is false, will get the owned attributes of the classifiers
+	 * @param c
+	 * @param includeInherited
+	 * @return
+	 */
+	public static List<Property> getAttributes(Element e, boolean includeInherited) {
+		List<Property> res = new ArrayList<Property>();
+		
+			if (!(e instanceof Classifier))
+				return res;
+			List<Property> owned = new ArrayList<Property>(((Classifier)e).getAttribute());
+			res.addAll(owned);
+			if (includeInherited) {
+				Collection<NamedElement> inherited = new ArrayList<NamedElement>(((Classifier)e).getInheritedMember());
+				List<NamedElement> inheritedCopy = new ArrayList<NamedElement>(inherited);
+				for (NamedElement ne: inherited) {
+					if (ne instanceof Property) {
+						for (Property redef: ((Property)ne).getRedefinedProperty()) 
+							inheritedCopy.remove(redef);
+					} else
+						inheritedCopy.remove(ne);
+				}
+				for (Property p: owned) 
+					for (Property redef: ((Property)p).getRedefinedProperty()) 
+						inheritedCopy.remove(redef);
+				for (NamedElement ee: inheritedCopy)
+					res.add((Property)ee);
+			}
+		
+    	return res;
+    }
+	
+	/**
+     * Get the things that have t as the type
+     * @param t
+     * @return
+     */
+    public static List<TypedElement> getPropertiesWithType(Type t) {
+    	return new ArrayList<TypedElement>(t.get_typedElementOfType());
+    }
+    
+    /**
+     * get the call behavior actions that're typed by b
+     * @param b
+     * @return
+     */
+    public static List<CallBehaviorAction> getCallBehaviorActionsOfBehavior(Behavior b) {
+    	return new ArrayList<CallBehaviorAction>(b.get_callBehaviorActionOfBehavior());
+    }
+    
+    /**
+     * get call operation actions that're typed by o
+     * @param o
+     * @return
+     */
+    public static List<CallOperationAction> getCallOperationActionsOfOperation(Operation o) {
+    	return new ArrayList<CallOperationAction>(o.get_callOperationActionOfOperation());
+    }
+    
+    
+    public static List<ActivityPartition> getSwimlanesThatRepresentElement(Element e) {
+    	return new ArrayList<ActivityPartition>(e.get_activityPartitionOfRepresents());
+    }
+	
     public static List<Element> intersectionOfCollections(Collection<Element> ... a) {
         List<Element> i = new ArrayList<Element>();
         Set<Element> inter = new HashSet<Element>(a[0]);
@@ -785,6 +844,151 @@ public class Utils {
     }
     
     /**
+     * Sorts e by name, returns a new list with name ordered elements
+     * @param e
+     * @return
+     */
+    public static List<Element> sortByName(Collection<? extends Element> e) {
+    	List<Element> n = new ArrayList<Element>(e);
+    	Collections.sort(n, new Comparator<Element>() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public int compare(Element o1, Element o2) {
+				if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
+					return ((NamedElement)o1).compareTo((NamedElement)o2);
+				}
+				return 0;
+			}
+    	});
+    	return n;
+    }
+    
+    /**
+     * Sorts elements by a specific attribute limited to the enumeration below, which is
+     * suspiciously similar to the possible attributes in tableAttributeColumn...
+     * @param elem
+     * @param attr
+     * @return
+     */
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, AvailableAttribute attr) {
+    	List<Element> list = new ArrayList<Element>(elem);
+    	switch (attr) {
+    	case Name:
+    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Name, false));
+    		break;
+    	case Documentation:
+    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Documentation, false));
+    		break;
+    	case Value:
+    		boolean isAllNumbers = true;
+    		for (Element e: list) {
+    			if (!Utils2.isNumber(DocGenUtils.fixString(getElementAttribute(e, attr)))) {
+    				isAllNumbers = false;
+    				break;
+    			}
+    		}
+    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Value, isAllNumbers));
+    		break;
+    		
+    	}
+    	return list;
+    }
+
+    private static Comparator<Element> getAttributeComparator(AvailableAttribute attr, boolean isAllNumbers) {
+    	final AvailableAttribute attribute = attr;
+    	final boolean allNums = isAllNumbers;
+    	
+    	return new Comparator<Element>() {
+    		public int compare(Element A, Element B) {
+    			Object a = getElementAttribute(A, attribute);
+    			Object b = getElementAttribute(B, attribute);
+    			switch (attribute) {
+    			case Name:
+    				if (a instanceof String && b instanceof String) {
+    					return ((String)a).compareTo((String)b);
+    				} else {
+    					return 0;
+    				}
+    			case Documentation:
+    				if (a instanceof String && b instanceof String) {
+    					return ((String)a).length() - ((String)b).length();
+    				} else {
+    					return 0;
+    				}
+    			case Value:
+    				if (allNums) {
+    					Double da = Double.parseDouble(DocGenUtils.fixString(a));
+    					Double db = Double.parseDouble(DocGenUtils.fixString(b));
+    					return da.compareTo(db);
+    				} else if (a instanceof String && b instanceof String) {
+    					return ((String)a).compareTo((String)b);
+    				} else {
+    					return 0;
+    				}
+    			default:
+    				return 0;
+    			}
+    		}
+    	};
+    }
+    
+    /**
+     * Sorts elements by a any property.
+     * Strings treated alphabetically, numbers treated least on top.
+     * @param in
+     * @param property
+     * @return
+     */
+	public static List sortByProperty(Collection<? extends Element>elem, Property prop) {
+		List<Element> list = new ArrayList<Element>(elem);
+		// Check if all numbers first
+		boolean isAllNumbers = true;
+		for (Element e: list) {
+			List<Object> temp = getElementPropertyValues(e, prop, true);
+			if (temp.size() != 1) {
+				isAllNumbers = false;
+				break;
+			}
+			for (Object o: temp) {
+				if (!Utils2.isNumber(DocGenUtils.fixString(o))) { 
+					isAllNumbers = false;
+					break;
+				}
+			}
+			if (!isAllNumbers) break;
+		}
+		Collections.sort(list, getPropertyComparator(prop, isAllNumbers));
+		return list;
+	}
+	
+    private static Comparator<Element> getPropertyComparator(Property prop, boolean isAllNumbers) {
+    	final Property property = prop;
+    	final boolean allNums = isAllNumbers;
+    	
+    	return new Comparator<Element>() {
+    		public int compare(Element A, Element B) {
+    			List<Object> a = getElementPropertyValues(A, property, true);
+    			List<Object> b = getElementPropertyValues(B, property, true);
+    			if (a.size() == 1 && b.size() == 1) {
+    				Object a0 = a.get(0);
+    				Object b0 = b.get(0);
+    				String as = DocGenUtils.fixString(a0);
+    				String bs = DocGenUtils.fixString(b0);
+    				if (allNums) {
+    					Double da0 = Double.parseDouble(as);
+    					Double db0 = Double.parseDouble(bs);
+    					return da0.compareTo(db0);
+    				} else {
+    					return as.compareTo(bs);
+    				}
+    			} else {
+    				return a.size() - b.size();
+    			}
+    		}
+    	};
+    }
+    
+    /**
      * returns all directed relationships where client element is source and supplier element is target
      * @param source
      * @param target
@@ -798,6 +1002,8 @@ public class Utils {
     	}
     	return res;
     }
+    
+    /********************************************* User interaction ****************************************************/
     
     /**
      * Displays a dialog box that allows users to select elements from the containment tree<br/>
@@ -840,23 +1046,7 @@ public class Utils {
         return null;
     }
     
-    /**
-     * Given a collection of stuff, joins their string representation into one string using delimiter
-     * @param s
-     * @param delimiter
-     * @return
-     */
-    public static String join(Collection<?> s, String delimiter) {
-    	StringBuilder builder = new StringBuilder();
-    	Iterator<?> iter = s.iterator();
-    	while (iter.hasNext()) {
-    		builder.append(iter.next());
-    		if (!iter.hasNext())
-    			break;
-    		builder.append(delimiter);
-    	}
-    	return builder.toString();
-    }
+    
     
     /**
      * Given a list of named elements, will prompt the user to choose one and return it (selections are showne as qualified names, null if nothing chosen
@@ -925,38 +1115,75 @@ public class Utils {
     	return null;
     }
     
-    /**
-     * return names of a collection of named elements
-     * @param elements
-     * @return
-     */
-    public static List<String> getElementNames(Collection<NamedElement> elements) {
-    	List<String> names = new ArrayList<String>();
-    	for (NamedElement e: elements) {
-    		names.add(e.getName());
-    	} 
-    	return names;
-    }
-    
-    /**
-     * returns collection of model elements that's on the diagram
-     * @param diagram
-     * @return
-     */
-    public static Collection<Element> getElementsOnDiagram(Diagram diagram) {
-    	return Project.getProject(diagram).getDiagram(diagram).getUsedModelElements(true);
-    }
-    
-    /**
-     * Copies all stereotypes of element a to element b if b doesn't already have it (including derived)
-     * @param a
-     * @param b
-     */
-    public static void copyStereotypes(Element a, Element b) {
-    	for (Stereotype s: StereotypesHelper.getStereotypes(a))
-    		if (!StereotypesHelper.hasStereotypeOrDerived(b, s))
-    			StereotypesHelper.addStereotype(b, s);
-    }
+    public static String getUsername() {
+		String username;
+		String teamworkUsername = TeamworkUtils.getLoggedUserName();
+		if (teamworkUsername != null) {
+			username = teamworkUsername;
+		} else {
+			username = System.getProperty("user.name", "");
+		}
+		return username;
+	}
+	
+	public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
+		Project project = Application.getInstance().getProject();
+        ValidationResultProvider provider = project.getValidationResultProvider();
+        Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
+        Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
+        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        
+        if (dummyvs == null || cons == null)
+        	return;
+        Set<Element> elements = new HashSet<Element>();
+		for (ValidationSuite vs: vss) {
+			for (ValidationRule vr: vs.getValidationRules()) {
+				EnumerationLiteral severity;
+				/*
+				 * Switch added by Peter Di Pasquale 02/15/2013
+				 * Changelog: switch statement added, selects element highlight and icon color according to severity of error. 
+				 */
+				
+				switch (vr.getSeverity()){
+				case WARNING: 
+					severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
+					cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+				break;
+				case ERROR: 
+					severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
+					cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
+				break;
+				case FATAL: 
+					severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
+					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
+				break;
+				case INFO: 
+					severity = Annotation.getSeverityLevel(project, Annotation.INFO);
+					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
+				break;
+				default: severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
+				break;
+				}
+				for (ValidationRuleViolation vrv: vr.getViolations()) {
+					Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
+					results.add(new RuleViolationResult(anno, cons));
+					elements.add(vrv.getElement());
+				}
+			}
+		}
+		EnumerationLiteral severitylevel =Annotation.getSeverityLevel(project, Annotation.WARNING);
+		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
+//		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
+		//provider.dispose();
+		//provider.init();
+		String id = "" + System.currentTimeMillis();
+		//provider.setValidationResults(id, results);
+		//provider.update();
+		ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
+		
+	}
+	
+    /************************************************ Existence check **************************************/
     
     /**
      * check if there's any directed relationship between 2 elements
@@ -969,6 +1196,19 @@ public class Utils {
     		if (ModelHelper.getSupplierElement(dr) == to)
     			return true;
     	return false;
+    }
+    
+    /************************************************ Model Modification **************************************/
+    
+    /**
+     * Copies all stereotypes of element a to element b if b doesn't already have it (including derived)
+     * @param a
+     * @param b
+     */
+    public static void copyStereotypes(Element a, Element b) {
+    	for (Stereotype s: StereotypesHelper.getStereotypes(a))
+    		if (!StereotypesHelper.hasStereotypeOrDerived(b, s))
+    			StereotypesHelper.addStereotype(b, s);
     }
     
     /**
@@ -1021,35 +1261,25 @@ public class Utils {
     	StereotypesHelper.addStereotypesWithNames(d, stereotypes);
     	d.setOwner(from);
     }
-    /**
-     * Sorts e by name, returns a new list with name ordered elements
-     * @param e
-     * @return
-     */
-    public static List<Element> sortByName(Collection<? extends Element> e) {
-    	List<Element> n = new ArrayList<Element>(e);
-    	Collections.sort(n, new Comparator<Element>() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public int compare(Element o1, Element o2) {
-				if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
-					return ((NamedElement)o1).compareTo((NamedElement)o2);
-				}
-				return 0;
-			}
-    	});
-    	return n;
-    }
     
     /**
-     * Sorts elements by a specific attribute limited to the enumeration below, which is
-     * suspiciously similar to the possible attributes in tableAttributeColumn...
-     * @param elem
-     * @param attr
-     * @return
+     * This will set the default value of p to value, based on what type the
+     * default value currently is right now, it'll try to convert to:
+     * LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise it'll be
+     * a LiteralString more options possibly in future like durations, etc
+     * 
+     * @param p
+     * @param value
      */
+    public static void setPropertyValue(Property p, String value) {
+    	ValueSpecification valueSpec = p.getDefaultValue();
+    	ValueSpecification v = makeValueSpecification( value, valueSpec );
+    	p.setDefaultValue(v);
+    }
+
+//<<<<<<< HEAD
     public static List<Element> sortByAttribute(Collection<? extends Element> elem, String attr) {
-    	return sortByAttribute(elem, availableAttribute.valueOf(attr));
+    	return sortByAttribute(elem, AvailableAttribute.valueOf(attr));
     }
 
     /**
@@ -1066,103 +1296,80 @@ public class Utils {
         return sortByAttribute( elem, getAvailableAttribute(attr));
     }
 
+//    /**
+//     * Sorts elements by a specific attribute limited to the enumeration below, which is
+//     * suspiciously similar to the possible attributes in tableAttributeColumn...
+//     * @param elem
+//     * @param attr
+//     * @return
+//     */
+//    public static List<Element> sortByAttribute(Collection<? extends Element> elem, AvailableAttribute attr) {
+//    	List<Element> list = new ArrayList<Element>(elem);
+//    	switch (attr) {
+//    	case Name:
+//    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Name, false));
+//    		break;
+//    	case Documentation:
+//    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Documentation, false));
+//    		break;
+//    	case Value:
+//    		boolean isAllNumbers = true;
+//    		for (Element e: list) {
+//    			if (!Utils2.isNumber(DocGenUtils.fixString(getElementAttribute(e, attr)))) {
+//    				isAllNumbers = false;
+//    				break;
+//    			}
+//    		}
+//    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Value, isAllNumbers));
+//    		break;
+//    		
+//    	}
+//    	return list;
+//    }
+//=======
     /**
-     * Sorts elements by a specific attribute limited to the enumeration below, which is
-     * suspiciously similar to the possible attributes in tableAttributeColumn...
-     * @param elem
-     * @param attr
-     * @return
+     * This will set the default value of p to value, based on what type the
+     * default value currently is right now, it'll try to convert to:
+     * LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise it'll be
+     * a LiteralString more options possibly in future like durations, etc
+     * 
+     * @param slot
+     * @param value
      */
-    public static List<Element> sortByAttribute(Collection<? extends Element> elem, availableAttribute attr) {
-    	List<Element> list = new ArrayList<Element>(elem);
-    	switch (attr) {
-    	case Name:
-    		Collections.sort(list, getAttributeComparator(availableAttribute.Name, false));
-    		break;
-    	case Documentation:
-    		Collections.sort(list, getAttributeComparator(availableAttribute.Documentation, false));
-    		break;
-    	case Value:
-    		boolean isAllNumbers = true;
-    		for (Element e: list) {
-    			if (!Utils2.isNumber(DocGenUtils.fixString(getElementAttribute(e, attr)))) {
-    				isAllNumbers = false;
-    				break;
-    			}
-    		}
-    		Collections.sort(list, getAttributeComparator(availableAttribute.Value, isAllNumbers));
-    		break;
-    		
-    	}
-    	return list;
+    public static void setSlotValue(Slot slot, String value) {
+      List< ValueSpecification > valueSpecs = slot.getValue();
+      ValueSpecification v = null;
+      for ( ValueSpecification valueSpec : valueSpecs ) {
+        v = makeValueSpecification( value, valueSpec );
+        break;
+      }
+      valueSpecs.clear();
+      valueSpecs.add( v );
+//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
     }
 
-    private static Comparator<Element> getAttributeComparator(availableAttribute attr, boolean isAllNumbers) {
-    	final availableAttribute attribute = attr;
-    	final boolean allNums = isAllNumbers;
-    	
-    	return new Comparator<Element>() {
-    		public int compare(Element A, Element B) {
-    			Object a = getElementAttribute(A, attribute);
-    			Object b = getElementAttribute(B, attribute);
-    			switch (attribute) {
-    			case Name:
-    				if (a instanceof String && b instanceof String) {
-    					return ((String)a).compareTo((String)b);
-    				} else {
-    					return 0;
-    				}
-    			case Documentation:
-    				if (a instanceof String && b instanceof String) {
-    					return ((String)a).length() - ((String)b).length();
-    				} else {
-    					return 0;
-    				}
-    			case Value:
-    				if (allNums) {
-    					Double da = Double.parseDouble(DocGenUtils.fixString(a));
-    					Double db = Double.parseDouble(DocGenUtils.fixString(b));
-    					return da.compareTo(db);
-    				} else if (a instanceof String && b instanceof String) {
-    					return ((String)a).compareTo((String)b);
-    				} else {
-    					return 0;
-    				}
-    			default:
-    				return 0;
-    			}
-    		}
-    	};
-    }
-    
-    /**
-     * Sorts elements by a any property.
-     * Strings treated alphabetically, numbers treated least on top.
-     * @param in
-     * @param property
-     * @return
-     */
-	public static List<Element> sortByProperty(Collection<? extends Element>elem, Property prop) {
-		List<Element> list = new ArrayList<Element>(elem);
-		// Check if all numbers first
-		boolean isAllNumbers = true;
-		for (Element e: list) {
-			List<Object> temp = getElementPropertyValues(e, prop, true);
-			if (temp.size() != 1) {
-				isAllNumbers = false;
-				break;
-			}
-			for (Object o: temp) {
-				if (!Utils2.isNumber(DocGenUtils.fixString(o))) { 
-					isAllNumbers = false;
-					break;
-				}
-			}
-			if (!isAllNumbers) break;
-		}
-		Collections.sort(list, getPropertyComparator(prop, isAllNumbers));
-		return list;
-	}
+//<<<<<<< HEAD
+//	public static List<Element> sortByProperty(Collection<? extends Element>elem, Property prop) {
+//		List<Element> list = new ArrayList<Element>(elem);
+//		// Check if all numbers first
+//		boolean isAllNumbers = true;
+//		for (Element e: list) {
+//			List<Object> temp = getElementPropertyValues(e, prop, true);
+//			if (temp.size() != 1) {
+//				isAllNumbers = false;
+//				break;
+//			}
+//			for (Object o: temp) {
+//				if (!Utils2.isNumber(DocGenUtils.fixString(o))) { 
+//					isAllNumbers = false;
+//					break;
+//				}
+//			}
+//			if (!isAllNumbers) break;
+//		}
+//		Collections.sort(list, getPropertyComparator(prop, isAllNumbers));
+//		return list;
+//	}
 	
     public static List<Element> sortByExpression(Collection<? extends Element> elem, Object o) {
         List<Element> list = new ArrayList<Element>(elem);
@@ -1212,25 +1419,77 @@ public class Utils {
         }
     }
     
-    private static Comparator<Element> getPropertyComparator(Property prop, boolean isAllNumbers) {
-    	final Property property = prop;
-    	final boolean allNums = isAllNumbers;
-    	
-    	return new Comparator<Element>() {
-    		public int compare(Element A, Element B) {
-    			List<Object> a = getElementPropertyValues(A, property, true);
-    			List<Object> b = getElementPropertyValues(B, property, true);
-    			if (a.size() == 1 && b.size() == 1) {
-    				Object a0 = a.get(0);
-    				Object b0 = b.get(0);
-    				return docgenCompare(a0, b0, allNums);
-    			} else {
-    				return a.size() - b.size();
-    			}
-    		}
-    	};
+//    private static Comparator<Element> getPropertyComparator(Property prop, boolean isAllNumbers) {
+//    	final Property property = prop;
+//    	final boolean allNums = isAllNumbers;
+//    	
+//    	return new Comparator<Element>() {
+//    		public int compare(Element A, Element B) {
+//    			List<Object> a = getElementPropertyValues(A, property, true);
+//    			List<Object> b = getElementPropertyValues(B, property, true);
+//    			if (a.size() == 1 && b.size() == 1) {
+//    				Object a0 = a.get(0);
+//    				Object b0 = b.get(0);
+//    				return docgenCompare(a0, b0, allNums);
+//    			} else {
+//    				return a.size() - b.size();
+//    			}
+//    		}
+//    	};
+//=======
+    /**
+     * Creates a new {@link ValueSpecification} of the same type as valueSpec but
+     * with a new value to be parsed from a {@link String}. It'll try to convert
+     * to: LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise
+     * it'll be a LiteralString more options possibly in future like durations,
+     * etc
+     * 
+     * @param value
+     * @param ef
+     * @param valueSpec
+     * @return
+     */
+    public static ValueSpecification
+        makeValueSpecification( String value,
+                                ValueSpecification valueSpec ) {
+      ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+      ValueSpecification v;
+      try {
+      	if (valueSpec instanceof LiteralBoolean) {
+      		v = ef.createLiteralBooleanInstance();
+      		if (value.equals("false") || value.equals("False") || value.equals("F") || value.equals("f") || value.equals("no") || value.equals("n") || value.equals("") || value.equals("FALSE") || value.equals("NO") || value.equals("No"))
+      			((LiteralBoolean)v).setValue(false);
+      		else
+      			((LiteralBoolean)v).setValue(true);
+      	} else if (valueSpec instanceof LiteralInteger) {
+      		v = ef.createLiteralIntegerInstance();
+      		((LiteralInteger)v).setValue(Integer.parseInt(value));
+      	} else if (valueSpec instanceof LiteralUnlimitedNatural) {
+      		v = ef.createLiteralUnlimitedNaturalInstance();
+      		((LiteralUnlimitedNatural)v).setValue(Integer.parseInt(value));
+      	} else if (valueSpec instanceof LiteralReal) {
+      		v = ef.createLiteralRealInstance();
+      		((LiteralReal)v).setValue(Double.parseDouble(value));
+      	} else {
+      		v = ef.createLiteralStringInstance();
+      		((LiteralString)v).setValue(value);
+      	}
+      } catch (NumberFormatException e) {
+        // The field is no longer a number; treat it as a string
+        // REVIEW -- This may conflict with the element's type.  Should we change the type of the element?
+        // TODO -- Only some of the ValueSpecifications are supported here. The
+        // subclasses of ValueSpecification and supportive factory methods in
+        // ElementFactory can guide the addition of types.
+        v = makeValueSpecification( value, ef.createLiteralStringInstance() );
+      }
+
+      return v;
+//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
     }
     
+    /*************************Getting element attributes and properties/values****************************/
+    
+    public static enum AvailableAttribute { Name, Documentation, Value };
     /**
      * Convert to an From enum value
      * @param attr the attribute of some type
@@ -1238,8 +1497,8 @@ public class Utils {
      */
     public static From getFromAttribute( Object attr ) {
         if ( attr instanceof From ) return (From)attr;
-        if ( attr instanceof availableAttribute ) {
-            availableAttribute aattr = (availableAttribute)attr;
+        if ( attr instanceof AvailableAttribute ) {
+            AvailableAttribute aattr = (AvailableAttribute)attr;
             switch ( aattr ) {
             case Name:
                 return From.NAME;
@@ -1257,7 +1516,7 @@ public class Utils {
     	        f = getFromAttribute(From.valueOf((String)attr));
             } catch (Exception e) {}
             try {
-                if ( f == null ) f = getFromAttribute(availableAttribute.valueOf((String)attr));
+                if ( f == null ) f = getFromAttribute(AvailableAttribute.valueOf((String)attr));
     	    } catch (Exception e) {}
     	}
     	if ( f == null ) {
@@ -1266,34 +1525,35 @@ public class Utils {
     	return f;
     }
     
+    
     /**
      * Convert the input Object to an availableAttribute enum value. Supported
-     * attribute objects include availableAttribute, From, EnumerationLiteral,
+     * attribute objects include AvailableAttribute, From, EnumerationLiteral,
      * and String.
      * 
      * @param attr
      *            the attribute of some type
-     * @return the corresponding availableAttribute
+     * @return the corresponding AvailableAttribute
      */
-    public static availableAttribute getAvailableAttribute( Object attr ) {
-        if ( attr instanceof availableAttribute ) return (availableAttribute)attr;
+    public static AvailableAttribute getAvailableAttribute( Object attr ) {
+        if ( attr instanceof AvailableAttribute ) return (AvailableAttribute)attr;
         if ( attr instanceof From ) {
             From fattr = (From)attr;
             switch ( fattr ) {
             case NAME:
-                return availableAttribute.Name;
+                return AvailableAttribute.Name;
             case DOCUMENTATION:
-                return availableAttribute.Documentation;
+                return AvailableAttribute.Documentation;
             case DVALUE:
-                return availableAttribute.Value;
+                return AvailableAttribute.Value;
             default:
             }
         }
         if ( attr instanceof EnumerationLiteral ) return getAvailableAttribute(((EnumerationLiteral)attr).getName());
-        availableAttribute aattr = null;
+        AvailableAttribute aattr = null;
         if ( attr instanceof String ) {
             try {
-                aattr = getAvailableAttribute(availableAttribute.valueOf((String)attr));
+                aattr = getAvailableAttribute(AvailableAttribute.valueOf((String)attr));
             } catch (Exception e) {}
             try {
                 if ( aattr == null ) aattr = getAvailableAttribute(From.valueOf((String)attr));
@@ -1306,33 +1566,6 @@ public class Utils {
     }
     
     /**
-     * Returns an attribute of the element, provided it is one in the enumeration 
-     * availableAttribute. Please try to use the {@link getElementAttribute(Element, availableAttribute)} method
-     * over the (Element, String) version if possible.
-     * @param elem
-     * @param attr
-     * @return
-     */
-    public static Object getElementAttribute(Element elem, String attr) {
-    	return getElementAttribute(elem, availableAttribute.valueOf(attr));
-    }
-
-    /**
-     * Returns an attribute of the element based on the input attribute type,
-     * provided it is one of those supported by {@link
-     * gov.nasa.jpl.mbee.lib.Utils.getAvailableAttribute(Object attr)}.
-     * 
-     * @param elem
-     *            the element whose attribute is sought
-     * @param attr
-     *            the type of attribute (name, value, ...)
-     * @return
-     */
-    public static Object getElementAttribute(Element elem, Object attr) {
-        return getElementAttribute( elem, getAvailableAttribute(attr));
-    }
-
-    /**
      * Returns an attribute of the element based on the input availableAttribute
      * type.
      * 
@@ -1340,9 +1573,9 @@ public class Utils {
      *            the element whose attribute is sought
      * @param attr
      *            the type of attribute (name, value, ...)
-     * @return
+     * @return possible return values are String for name or documentation, ValueSpec, or List of ValueSpec
      */
-    public static Object getElementAttribute(Element elem, availableAttribute attr) {
+    public static Object getElementAttribute(Element elem, AvailableAttribute attr) {
     	switch (attr) {
     	case Name:
     		if (elem instanceof NamedElement) {
@@ -1362,10 +1595,92 @@ public class Utils {
 			return null;
     	}
     }
-
-    public static enum availableAttribute { Name, Documentation, Value };
-   
+    
     /**
+     * Get Class Properties with a name matching that of the input Property.
+     * 
+     * @param elem
+     *            the owner of the Property
+     * @param prop
+     *            a property of the same name as that owned by the input Element
+     * @param inherited
+     *            ignored for now, should indicate whether to look for inherited properties
+     * @return the Properties of the input Element whose names match that of the
+     *         input Property
+     */
+    public static Property getClassProperty(Element elem, Property prop, boolean inherited) {
+        if ( prop == null ) 
+        	return null;
+        Collection<Element> rOwned = elem.getOwnedElement();
+        for (Element o: rOwned) {
+            if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
+                return (Property)o;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Get the element's matching Slot.
+     * 
+     * @param elem
+     *            the source Element
+     * @param prop
+     *            the Stereotype tag that the Slot instantiates
+     * @return a Slot with zero or more values or null if no such Slot exists
+     */
+    public static Slot getSlot(Element elem, Property prop) {
+        if ( prop == null ) return null;
+        Element myOwner = prop.getOwner();
+        if (myOwner instanceof Stereotype &&
+            StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) { // REVIEW -- may not be able to get slot from derived stereotype -- why doesn't Stereotypes.Helper give us this function?
+            Slot slot = StereotypesHelper.getSlot(elem, prop, false);
+            if ( slot != null ) {
+                return slot;
+            }
+        }
+        return null;
+    }
+	
+	/**
+     * Get the element's matching Slots or Properties.
+     * 
+     * @param elem
+     *            the Element with the sought Properties.
+     * @param prop
+     *            the Stereotype tag or Class Property
+     * @return a slot that matches the input property or null
+     */
+    public static Slot getStereotypeProperty(Element elem, Property prop) {
+        return getSlot( elem, prop );
+    }
+    
+    /**
+     * Get the element's matching Slot or Properties.
+     * 
+     * @param elem
+     *            the Element with the sought Properties.
+     * @param prop
+     *            the Stereotype tag or Class Property
+     * @return a Property or Slot that corresponds to the input property
+     */
+	public static Element getElementProperty(Element elem, Property prop) {
+	    if ( prop == null ) 
+	    	return null;
+	    if (prop.getOwner() instanceof Stereotype) {
+	    	Slot slot = getStereotypeProperty(elem, prop);
+	        if ( slot != null ) 
+	        	return slot;
+	    } else {
+	    	Property result = getClassProperty(elem, prop, true);
+	    	if (result != null)
+	    		return result;
+	    }
+		return null;
+	}
+	
+    
+	 /**
      * A list of property values will always be returned. Gets default value of
      * a stereotype property when there's no slot for the element. Class
      * value properties will be collected by name matching.
@@ -1378,20 +1693,24 @@ public class Utils {
      *         Property
      */
     public static List<Object> getElementPropertyValues(Element elem, Property prop,
-                                                        boolean allowStereotypeDefault) {
-        List<Object> results = getStereotypePropertyValues(elem, prop, allowStereotypeDefault);
-        if ( !Utils2.isNullOrEmpty( results ) ) return results;
-        results = getClassPropertyValues( elem, prop );
+                                                        boolean allowStereotypeDefaultOrInherited) {
+        List<Object> results = getStereotypePropertyValues(elem, prop, allowStereotypeDefaultOrInherited);
+        if ( !Utils2.isNullOrEmpty( results ) ) 
+        	return results;
+        ValueSpecification vs = getClassPropertyValue( elem, prop, allowStereotypeDefaultOrInherited);
+        if (vs != null)
+        	results.add(vs);
         if ( results.isEmpty() ) {
-            // maybe a derived property
-            Object value = null;
             try {
-                value = elem.refGetValue(prop.getName()); // i think this only works
-                                                          // for derived properties
-            } catch (Throwable e) {
-                // ignore
+                Object value = elem.refGetValue(prop.getName()); // i think this only works for derived properties
+                if ( value != null ) {
+                	if (value instanceof Collection)
+                		results.addAll((Collection)value );
+                	else
+                		results.add(value);
+                }
+            } catch (Throwable e) { //ignore
             }
-            if ( value != null ) results.add( value );
         }
         return results;
     }
@@ -1407,152 +1726,12 @@ public class Utils {
      * @return values for Properties with a name matching that of the input
      *         Property
      */
-    public static List<Object> getClassPropertyValues(Element elem, Property prop ) {
-        List<Object> results = new ArrayList<Object>();
-        List<Element> props = getClassProperty( elem, prop );
-        if ( Utils2.isNullOrEmpty( props ) ) return results;
-        for ( Element p : props ) {
-            results.addAll(getValues(p));
-        }
-        return results;
+    public static ValueSpecification getClassPropertyValue(Element elem, Property prop, boolean includeInherited ) {
+        Property cprop = getClassProperty( elem, prop, includeInherited );
+        if (cprop == null) 
+        	return null;
+        return cprop.getDefaultValue();
     }
-
-    public static List<Object> getValues(Element element) {
-        List<Object> results = new ArrayList<Object>();
-        if ( element instanceof Property ) results.add( ((Property)element).getDefaultValue() );
-        else if (element instanceof Slot) results.addAll( ((Slot)element).getValue() );
-        else if ( element != null ) {
-            Collection<ElementValue> c = element.get_elementValueOfElement();
-            if ( !Utils2.isNullOrEmpty(c) ) results.addAll( c );
-            else results.add( element );
-        }
-        return results;
-    }
-    
-    /**
-     * Get Class Properties with a name matching that of the input Property.
-     * 
-     * @param elem
-     *            the owner of the Property
-     * @param prop
-     *            a property of the same name as that owned by the input Element
-     * @return the Properties of the input Element whose names match that of the
-     *         input Property
-     */
-    public static List<Element> getClassProperty(Element elem, Property prop) {
-        List<Element> results = new ArrayList<Element>();
-        if ( prop == null ) return results;
-        if ( elem == null ) {
-            results.add(prop);
-            return results;
-        }
-        Collection<Element> rOwned = elem.getOwnedElement();
-        if ( Utils2.isNullOrEmpty( rOwned ) ) return results;
-        for (Element o: rOwned) {
-            if (o instanceof Property && ((Property)o).getName().equals(prop.getName())) {
-                results.add(o);
-            }
-        }
-        return results;
-    }
-    
-    /**
-     * Get the element's matching Slot or Properties.
-     * 
-     * @param elem
-     *            the Element with the sought Properties.
-     * @param prop
-     *            the Stereotype tag or Class Property
-     * @return a List containing a non-empty Slot for the input Stereotype tag
-     *         Property or, if no such Slot exists, member Properties of the
-     *         same name as the input Class Property.
-     */
-	public static List<Element> getElementProperty(Element elem, Property prop) {
-	    if ( prop == null ) return null;
-	    // try as stereotype property
-        List<Element> results = new ArrayList<Element>();
-        Slot slot = getStereotypeProperty(elem, prop);
-        if ( slot != null ) results.add( slot );
-        if ( prop == null || !results.isEmpty() ) return results;
-        // now try as a class property
-        results = getClassProperty(elem, prop);
-		return results;
-	}
-	
-    /**
-     * Get the element's matching Slot.
-     * 
-     * @param elem
-     *            the source Element
-     * @param prop
-     *            the Stereotype tag that the Slot instantiates
-     * @return a Slot with one or more values or null if no such Slot exists
-     */
-    public static Slot getSlot(Element elem, Property prop) {
-        if ( prop == null ) return null;
-        Element myOwner = prop.getOwner();
-        if (myOwner instanceof Stereotype &&
-            StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) { // REVIEW -- may not be able to get slot from derived stereotype -- why doesn't Stereotypes.Helper give us this function?
-            Slot slot = StereotypesHelper.getSlot(elem, prop, false);
-            if ( slot != null && !Utils2.isNullOrEmpty( slot.getValue() ) ) {
-                return slot;
-            }
-        }
-        return null;
-    }
-	
-	/**
-     * Get the element's matching Slots or Properties.
-     * 
-     * @param elem
-     *            the Element with the sought Properties.
-     * @param prop
-     *            the Stereotype tag or Class Property
-     * @return a list of Slots for an input Stereotype tag Property or else
-     *         member Properties of the same name.
-     */
-    public static Slot getStereotypeProperty(Element elem, Property prop) {
-        return getSlot( elem, prop );
-    }
-    
-    /**
-     * Get the things that have t as the type
-     * @param t
-     * @return
-     */
-    public static List<TypedElement> getPropertiesWithType(Type t) {
-    	return new ArrayList<TypedElement>(t.get_typedElementOfType());
-    }
-    
-    /**
-     * get the call behavior actions that're typed by b
-     * @param b
-     * @return
-     */
-    public static List<CallBehaviorAction> getCallBehaviorActionsOfBehavior(Behavior b) {
-    	return new ArrayList<CallBehaviorAction>(b.get_callBehaviorActionOfBehavior());
-    }
-    
-    /**
-     * get call operation actions that're typed by o
-     * @param o
-     * @return
-     */
-    public static List<CallOperationAction> getCallOperationActionsOfOperation(Operation o) {
-    	return new ArrayList<CallOperationAction>(o.get_callOperationActionOfOperation());
-    }
-    
-    
-    public static List<ActivityPartition> getSwimlanesThatRepresentElement(Element e) {
-    	return new ArrayList<ActivityPartition>(e.get_activityPartitionOfRepresents());
-    }
-    
-    public static void log(Object o) {
-    	GUILog log = Application.getInstance().getGUILog();
-    	log.log(o.toString());
-    }
-    
-    
     
     /**
      * Gets list of values for a stereotype property, supports derived
@@ -1578,37 +1757,23 @@ public class Utils {
                  StereotypesHelper.hasStereotypeOrDerived( elem,
                                                            (Stereotype)propOwner ) ) {
                 ValueSpecification v = prop.getDefaultValue();
-                if ( v != null ) results.add( v );
+                if ( v != null ) 
+                	results.add( v );
             }
         }
         return results;
     }
-
-  /**
-   * Get the list of slot values after digging Elements and
-   * InstanceSpecifications out of ElementValues and InstanceValues,
-   * respectively, and leaving other ValueSpecifications as is.
-   * 
-   * @param slot
-   * @return the list of values
-   */
-    public static List<Object> getSlotValues( Slot slot ) {
-      List< Object > sList = new ArrayList<Object>();
-      if (slot == null) return sList;
-      List< ValueSpecification > list = slot.getValue();
-      // If there is only one element in the list, just use that element instead
-      // of the list.
-      for ( ValueSpecification vs : list ) {
-        if ( vs instanceof ElementValue ) {
-          sList.add( ( (ElementValue)vs ).getElement() );
-        } else if ( vs instanceof InstanceValue ) {
-          sList.add( ( (InstanceValue)vs ).getInstance() );
-        } else {
-          sList.add( vs );
-        }
-      }
-      return sList;
+    
+/*****************************************************************************************/
+    
+    public static void log(Object o) {
+    	GUILog log = Application.getInstance().getGUILog();
+    	log.log(o.toString());
     }
+    
+    
+    
+   
       
   /**
    * @param slot
@@ -1823,89 +1988,7 @@ public class Utils {
     	return res;
     }
     
-    /**
-     * This will set the default value of p to value, based on what type the
-     * default value currently is right now, it'll try to convert to:
-     * LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise it'll be
-     * a LiteralString more options possibly in future like durations, etc
-     * 
-     * @param p
-     * @param value
-     */
-    public static void setPropertyValue(Property p, String value) {
-    	ValueSpecification valueSpec = p.getDefaultValue();
-    	ValueSpecification v = makeValueSpecification( value, valueSpec );
-    	p.setDefaultValue(v);
-    }
-
-    /**
-     * This will set the default value of p to value, based on what type the
-     * default value currently is right now, it'll try to convert to:
-     * LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise it'll be
-     * a LiteralString more options possibly in future like durations, etc
-     * 
-     * @param slot
-     * @param value
-     */
-    public static void setSlotValue(Slot slot, String value) {
-      List< ValueSpecification > valueSpecs = slot.getValue();
-      ValueSpecification v = null;
-      for ( ValueSpecification valueSpec : valueSpecs ) {
-        v = makeValueSpecification( value, valueSpec );
-        break;
-      }
-      valueSpecs.clear();
-      valueSpecs.add( v );
-    }
-
-    /**
-     * Creates a new {@link ValueSpecification} of the same type as valueSpec but
-     * with a new value to be parsed from a {@link String}. It'll try to convert
-     * to: LiteralBoolean, LiteralInteger, LiteralUnlimitedNatural, otherwise
-     * it'll be a LiteralString more options possibly in future like durations,
-     * etc
-     * 
-     * @param value
-     * @param ef
-     * @param valueSpec
-     * @return
-     */
-    public static ValueSpecification
-        makeValueSpecification( String value,
-                                ValueSpecification valueSpec ) {
-      ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
-      ValueSpecification v;
-      try {
-      	if (valueSpec instanceof LiteralBoolean) {
-      		v = ef.createLiteralBooleanInstance();
-      		if (value.equals("false") || value.equals("False") || value.equals("F") || value.equals("f") || value.equals("no") || value.equals("n") || value.equals("") || value.equals("FALSE") || value.equals("NO") || value.equals("No"))
-      			((LiteralBoolean)v).setValue(false);
-      		else
-      			((LiteralBoolean)v).setValue(true);
-      	} else if (valueSpec instanceof LiteralInteger) {
-      		v = ef.createLiteralIntegerInstance();
-      		((LiteralInteger)v).setValue(Integer.parseInt(value));
-      	} else if (valueSpec instanceof LiteralUnlimitedNatural) {
-      		v = ef.createLiteralUnlimitedNaturalInstance();
-      		((LiteralUnlimitedNatural)v).setValue(Integer.parseInt(value));
-      	} else if (valueSpec instanceof LiteralReal) {
-      		v = ef.createLiteralRealInstance();
-      		((LiteralReal)v).setValue(Double.parseDouble(value));
-      	} else {
-      		v = ef.createLiteralStringInstance();
-      		((LiteralString)v).setValue(value);
-      	}
-      } catch (NumberFormatException e) {
-        // The field is no longer a number; treat it as a string
-        // REVIEW -- This may conflict with the element's type.  Should we change the type of the element?
-        // TODO -- Only some of the ValueSpecifications are supported here. The
-        // subclasses of ValueSpecification and supportive factory methods in
-        // ElementFactory can guide the addition of types.
-        v = makeValueSpecification( value, ef.createLiteralStringInstance() );
-      }
-
-      return v;
-    }
+    
     
     /**
      * if s has any xml tags it'll assume it's html
@@ -1933,110 +2016,78 @@ public class Utils {
 		return HTML_WRAPPER_END.matcher(startRemoved).replaceAll("");
 	}
 	
-	/**
-	 * depending on includeInherited flag, gets all the attributes of e based on redefinition (if e is not a classifier it'll be ignored)
-	 * if includeInherited is false, will get the owned attributes of the classifiers
-	 * @param c
-	 * @param includeInherited
-	 * @return
-	 */
-	public static List<Property> getAttributes(Element e, boolean includeInherited) {
-		List<Property> res = new ArrayList<Property>();
-		
-			if (!(e instanceof Classifier))
-				return res;
-			List<Property> owned = new ArrayList<Property>(((Classifier)e).getAttribute());
-			res.addAll(owned);
-			if (includeInherited) {
-				Collection<NamedElement> inherited = new ArrayList<NamedElement>(((Classifier)e).getInheritedMember());
-				List<NamedElement> inheritedCopy = new ArrayList<NamedElement>(inherited);
-				for (NamedElement ne: inherited) {
-					if (ne instanceof Property) {
-						for (Property redef: ((Property)ne).getRedefinedProperty()) 
-							inheritedCopy.remove(redef);
-					} else
-						inheritedCopy.remove(ne);
-				}
-				for (Property p: owned) 
-					for (Property redef: ((Property)p).getRedefinedProperty()) 
-						inheritedCopy.remove(redef);
-				for (NamedElement ee: inheritedCopy)
-					res.add((Property)ee);
-			}
-		
-    	return res;
-    }
-	
-	public static String getUsername() {
-		String username;
-		String teamworkUsername = TeamworkUtils.getLoggedUserName();
-		if (teamworkUsername != null) {
-			username = teamworkUsername;
-		} else {
-			username = System.getProperty("user.name", "");
-		}
-		return username;
-	}
-	
-	public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
-		Project project = Application.getInstance().getProject();
-        ValidationResultProvider provider = project.getValidationResultProvider();
-        Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
-        Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
-        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-        
-        if (dummyvs == null || cons == null)
-        	return;
-        Set<Element> elements = new HashSet<Element>();
-		for (ValidationSuite vs: vss) {
-			for (ValidationRule vr: vs.getValidationRules()) {
-				EnumerationLiteral severity;
-				/*
-				 * Switch added by Peter Di Pasquale 02/15/2013
-				 * Changelog: switch statement added, selects element highlight and icon color according to severity of error. 
-				 */
-				
-				switch (vr.getSeverity()){
-				case WARNING: 
-					severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-					cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-				break;
-				case ERROR: 
-					severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
-					cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
-				break;
-				case FATAL: 
-					severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
-					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
-				break;
-				case INFO: 
-					severity = Annotation.getSeverityLevel(project, Annotation.INFO);
-					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
-				break;
-				default: severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-				break;
-				}
-				for (ValidationRuleViolation vrv: vr.getViolations()) {
-					Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
-					results.add(new RuleViolationResult(anno, cons));
-					elements.add(vrv.getElement());
-				}
-			}
-		}
-		EnumerationLiteral severitylevel =Annotation.getSeverityLevel(project, Annotation.WARNING);
-		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
-//		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
-		//provider.dispose();
-		//provider.init();
-		String id = "" + System.currentTimeMillis();
-		//provider.setValidationResults(id, results);
-		//provider.update();
-		ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
-		
-	}
-	
 	public static String escapeString(String s) {
 		return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
 	}
-
+	
+	/**
+     * Given a collection of stuff, joins their string representation into one string using delimiter
+     * @param s
+     * @param delimiter
+     * @return
+     */
+    public static String join(Collection<?> s, String delimiter) {
+    	StringBuilder builder = new StringBuilder();
+    	Iterator<?> iter = s.iterator();
+    	while (iter.hasNext()) {
+    		builder.append(iter.next());
+    		if (!iter.hasNext())
+    			break;
+    		builder.append(delimiter);
+    	}
+    	return builder.toString();
+    }
+    
+    /**
+     * return names of a collection of named elements
+     * @param elements
+     * @return
+     */
+    public static List<String> getElementNames(Collection<NamedElement> elements) {
+    	List<String> names = new ArrayList<String>();
+    	for (NamedElement e: elements) {
+    		names.add(e.getName());
+    	} 
+    	return names;
+    }
+    
+    /**
+	 * if multiplicity is not a range, returns the number
+	 * if upper limit is infinity and lower limit > 0, returns lower
+	 * else returns 1
+	 * @param p
+	 * @return
+	 */
+	public static int getMultiplicity(Property p) {
+		int lower = p.getLower();
+		int upper = p.getUpper();
+		if (lower == upper)
+			return lower;
+		if (upper == -1 && lower > 0)
+			return lower;
+		return 1;
+	}
+	
+//<<<<<<< HEAD
+//	public static String escapeString(String s) {
+//		return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+//	}
+//
+//=======
+	public static boolean isLiteral(Object o) {
+    	if (o instanceof Collection) {
+    		for (Object oo: (Collection)o) {
+    			if (!isLiteral(oo))
+    				return false;
+    		}
+    		return true;
+    	} else {
+    		if (o instanceof Integer || o instanceof String || o instanceof Double || o instanceof Float || o instanceof Boolean ||
+    				o instanceof LiteralInteger || o instanceof LiteralString || o instanceof LiteralUnlimitedNatural || o instanceof LiteralReal || o instanceof LiteralBoolean)
+    			return true;
+    	}
+    	return false;
+    }
+    
+//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 }

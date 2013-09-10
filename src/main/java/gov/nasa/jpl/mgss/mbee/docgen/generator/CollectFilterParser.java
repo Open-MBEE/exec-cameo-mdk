@@ -131,9 +131,7 @@ public class CollectFilterParser {
 		graph.addVertex(source);
 		for (ActivityEdge e: cur.getOutgoing()) {
 			ActivityNode n = e.getTarget();
-			if (StereotypesHelper.hasStereotypeOrDerived(n, DocGen3Profile.collectFilterStereotype) || 
-					n instanceof CallBehaviorAction && ((CallBehaviorAction)n).getBehavior() != null && 
-					StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)n).getBehavior(), DocGen3Profile.collectFilterStereotype)) {
+			if (GeneratorUtils.hasStereotypeByString(n, DocGen3Profile.collectFilterStereotype, true)) {
 				CollectFilterNode target = mapping.get(n);
 				if (target == null) {
 					target = new CollectFilterNode(n);
@@ -245,7 +243,18 @@ public class CollectFilterParser {
 			}
 			res.addAll(sorted);
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByAttribute)) {
+//<<<<<<< HEAD
             res.addAll(sortElements(in, DocGen3Profile.sortByAttribute, cba));
+//=======
+//			EnumerationLiteral attribute = (EnumerationLiteral)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "desiredAttribute", null);
+//			if (attribute == null)
+//				return res;
+//			List<Element> ordered = Utils.sortByAttribute(in, Utils.AvailableAttribute.valueOf(attribute.getName()));
+//			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "reverse", false)) {
+//				Collections.reverse(ordered);
+//			}
+//			res.addAll(ordered);
+//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByProperty)) {
 		    res.addAll(sortElements(in, DocGen3Profile.sortByProperty, cba));
         } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByExpression)) {

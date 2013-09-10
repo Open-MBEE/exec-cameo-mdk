@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
 
@@ -41,8 +42,7 @@ public abstract class Query extends DocGenElement implements Generatable {
 	  
   }
   
-  public List<DocumentElement> visit(boolean forViewEditor) {
-	  return new ArrayList<DocumentElement>();
+  public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
   }
 	
   public void parse() {
