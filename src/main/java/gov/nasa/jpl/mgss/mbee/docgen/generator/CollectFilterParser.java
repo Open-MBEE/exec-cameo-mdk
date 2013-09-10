@@ -315,8 +315,13 @@ public class CollectFilterParser {
         }
         o = GeneratorUtils.getObjectProperty(cba, sortStereotype,
                                              "invertOrder", false);
-        if (o != null && Boolean.class.isAssignableFrom(o.getClass())
-                && (Boolean) o) {
+        Boolean b = null;
+        try {
+            b = (Boolean)o;
+        } catch (ClassCastException e) {
+            //ignore
+        }
+        if (b != null && b) {
             Collections.reverse(ordered);
         }
         return ordered;
