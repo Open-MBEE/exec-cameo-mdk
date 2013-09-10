@@ -89,7 +89,8 @@ public class ViewExporter implements RunnableWithProgress{
 			return;
 		String user = Utils.getUsername();
 		baseurl += "?user=" + user;
-		DBEditDocwebVisitor v = new DBEditDocwebVisitor(recurse);
+		boolean alfresco = baseurl.contains("service");
+		DBEditDocwebVisitor v = new DBEditDocwebVisitor(recurse, alfresco);
 		book.accept(v);
 		String json = v.getJSON();
 		//gl.log(json);

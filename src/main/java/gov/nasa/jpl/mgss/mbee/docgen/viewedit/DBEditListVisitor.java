@@ -22,7 +22,7 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
 	private JSONArray curitem;
 	
 	public DBEditListVisitor(boolean recurse, Map<String, JSONObject> e) {
-		super(recurse);
+		super(recurse, true);
 		this.elements = e;
 		listjson = new JSONObject();
 		listelements = new JSONArray();
@@ -32,7 +32,8 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
 		return listjson;
 	}
 	
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	public void visit(DBList list) {
 	    if (listjson.containsKey("type")) {
 	        DBEditListVisitor inner = new DBEditListVisitor(recurse, this.elements);
@@ -62,11 +63,6 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
 		    de.accept(this);
 		}
 	}
-	
-	@Override
-	public void visit(DBSimpleList simplelist) {
-		
-	}
 
 	@Override
 	public void visit(DBParagraph para) {
@@ -88,8 +84,13 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
 	
 	@Override
 	public void visit(DBTable table) {
-	    DBEditTableVisitor v = new DBEditTableVisitor(this.recurse, this.elements);
+	    DBEditTableVisitor2 v = new DBEditTableVisitor2(this.recurse, this.elements);
         table.accept(v);
+        listelements.addAll(v.getTableElements());
         curitem.add(v.getObject());
+	}
+	
+	public JSONArray getListElements() {
+	    return listelements;
 	}
 }

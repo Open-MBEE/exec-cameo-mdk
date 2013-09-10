@@ -17,6 +17,11 @@ import java.util.Map;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+/**
+ * table json exporter that allows multiple elements in cell editing and list editing
+ * @author dlam
+ *
+ */
 public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
 
     private JSONObject tablejson;
@@ -29,7 +34,7 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
     //private GUILog gl = Application.getInstance().getGUILog();
     
     public DBEditTableVisitor2(boolean recurse, Map<String, JSONObject> elements) {
-        super(recurse);
+        super(recurse, true);
         this.elements = elements;
         tablejson = new JSONObject();
         tableelements = new JSONArray();
@@ -131,6 +136,7 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
     public void visit(DBList list) {
         DBEditListVisitor listv = new DBEditListVisitor(this.recurse, this.elements);
         list.accept(listv);
+        tableelements.addAll(listv.getListElements());
         curCell.add(listv.getObject());
     }
 
@@ -171,5 +177,9 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
             entry.put("rowspan", Integer.toString(rowspan));
         if (colspan > 0)
             entry.put("colspan", Integer.toString(colspan));
+    }
+    
+    public JSONArray getTableElements() {
+        return tableelements;
     }
 }

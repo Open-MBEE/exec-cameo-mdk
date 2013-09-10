@@ -32,7 +32,7 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 	//private GUILog gl = Application.getInstance().getGUILog();
 	
 	public DBEditTableVisitor(boolean recurse, Map<String, JSONObject> elements) {
-		super(recurse);
+		super(recurse, false);
 		this.elements = elements;
 		tablejson = new JSONObject();
 		tableelements = new JSONArray();
