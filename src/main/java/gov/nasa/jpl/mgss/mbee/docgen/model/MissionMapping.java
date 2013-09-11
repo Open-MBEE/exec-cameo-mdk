@@ -232,13 +232,17 @@ public class MissionMapping extends Query {
 				if (existsProperty(e, c))
 					continue;
 				if (c == null) {
-					c = ef.createClassInstance();
-					c.setName(mmc.getName());
-					c.setOwner(e);
+					
 					if(IMCEPresent){
+						c = ef.createComponentInstance();
+						c.setName(mmc.getName());
+						c.setOwner(e);
 						StereotypesHelper.addStereotypeByString(c, IMCECHAR);
 					}
 					else {
+						c = ef.createClassInstance();
+						c.setName(mmc.getName());
+						c.setOwner(e);
 						StereotypesHelper.addStereotypeByString(c, CHAR);
 					}
 					
