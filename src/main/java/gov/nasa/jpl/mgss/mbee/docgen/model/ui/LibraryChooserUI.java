@@ -103,7 +103,7 @@ public class LibraryChooserUI {
 			@Override
 			public void actionPerformed(ActionEvent paramActionEvent) {
 				libraryMapping.refactor();
-//				frame.dispose();
+				frame.dispose();
 			}
 		});
 		
