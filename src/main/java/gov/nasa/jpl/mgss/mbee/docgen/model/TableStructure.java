@@ -195,7 +195,6 @@ public class TableStructure extends Table {
 		buildTableReferences();
 		DBTable table = new DBTable();
 		
-		
 		List<List<DocumentElement>> tableheaders = new ArrayList<List<DocumentElement>>();
 		List<DocumentElement> header = new ArrayList<DocumentElement>();
 		for (String head: this.headers) {
