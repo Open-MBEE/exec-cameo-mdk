@@ -205,7 +205,7 @@ public class Utils {
                                                            boolean include) {
         List<Element> res = new ArrayList<Element>();
         Object query = GeneratorUtils.getObjectProperty(cba,
-                                                        DocGen3Profile.filterExpression,
+                                                        DocGen3Profile.filterExpressionStereotype,
                                                         "expression", null);
         for (Element e : elements) {
             Object o = OclEvaluator.evaluateQuery(e, query);
@@ -501,7 +501,7 @@ public class Utils {
     public static List<Element> collectByExpression(List<Element> elements, CallBehaviorAction cba) {
         List<Element> res = new ArrayList<Element>();
         Object query = GeneratorUtils.getObjectProperty(cba,
-                                                        DocGen3Profile.collectExpression,
+                                                        DocGen3Profile.collectExpressionStereotype,
                                                         "expression", null);
         for (Element e : elements) {
             res.addAll(collectByExpression(e, query));
