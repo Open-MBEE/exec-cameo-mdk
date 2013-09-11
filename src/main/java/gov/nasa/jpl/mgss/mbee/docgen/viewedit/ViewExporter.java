@@ -93,7 +93,7 @@ public class ViewExporter implements RunnableWithProgress{
 		DBEditDocwebVisitor v = new DBEditDocwebVisitor(recurse, alfresco);
 		book.accept(v);
 		String json = v.getJSON();
-		//gl.log(json);
+		gl.log(json);
 		if (recurse || document || force) {
 			baseurl += "&";
 			List<String> params = new ArrayList<String>();
@@ -110,7 +110,6 @@ public class ViewExporter implements RunnableWithProgress{
 		
 		PostMethod pm = new PostMethod(baseurl);
 		try {
-			//gl.log(json);
 			pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
 			pm.setRequestEntity(JsonRequestEntity.create(json));
 			HttpClient client = new HttpClient();
