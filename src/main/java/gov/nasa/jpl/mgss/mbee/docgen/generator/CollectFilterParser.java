@@ -3,6 +3,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.generator;
 import gov.nasa.jpl.graphs.DirectedEdgeVector;
 import gov.nasa.jpl.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.ScriptRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -20,7 +21,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
-import javax.lang.model.util.Elements;
 import javax.script.ScriptException;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -218,6 +218,8 @@ public class CollectFilterParser {
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectClassifierAttributes)) {
 				for (Element e: in)
 					res.addAll(Utils.getAttributes(e, inherited));
+        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectExpressionStereotype)) {
+            res.addAll(Utils.collectByExpression(in, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterDiagramTypeStereotype)) {
 			res.addAll(Utils.filterDiagramsByDiagramTypes(in, diagramTypes, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterMetaclassStereotype)) {
@@ -226,6 +228,8 @@ public class CollectFilterParser {
 			res.addAll(Utils.filterElementsByNameRegex(in, names, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterStereotypeStereotype)) {
 			res.addAll(Utils.filterElementsByStereotypes(in, stereotypes, include, derived));
+        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterExpressionStereotype)) {
+            res.addAll(Utils.filterElementsByExpression(in, cba, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectionStereotype)) {
 			res.addAll(collectAndFilterGroup((Activity)cba.getBehavior(), in));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.removeDuplicates)) {
@@ -233,31 +237,84 @@ public class CollectFilterParser {
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.userScriptCFStereotype, true)) {
 			res.addAll(getUserScriptCF(in, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByName)) {
-			List<Element> sorted = Utils.sortByName(in);
-			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByName, "reverse", false)) {
-				Collections.reverse(sorted);
-			}
-			res.addAll(sorted);
+            res.addAll(sortElements(in, DocGen3Profile.sortByName, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByAttribute)) {
-			EnumerationLiteral attribute = (EnumerationLiteral)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "desiredAttribute", null);
-			if (attribute == null)
-				return res;
-			List<Element> ordered = Utils.sortByAttribute(in, Utils.AvailableAttribute.valueOf(attribute.getName()));
-			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "reverse", false)) {
-				Collections.reverse(ordered);
-			}
-			res.addAll(ordered);
+            res.addAll(sortElements(in, DocGen3Profile.sortByAttribute, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByProperty)) {
-			Property property = (Property)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByProperty, "desiredProperty", null);
-			List<Element> ordered = Utils.sortByProperty(in, property);
-			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByProperty, "reverse", false)) {
-				Collections.reverse(ordered);
-			}
-			res.addAll(ordered);
+		    res.addAll(sortElements(in, DocGen3Profile.sortByProperty, cba));
+        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByExpression)) {
+            res.addAll(sortElements(in, DocGen3Profile.sortByExpression, cba));
 		}
 		return res;
 	}
 	
+    /**
+     * Sorts elements by property, attribute, or name after applying call
+     * behavior.
+     * 
+     * @param in
+     *            elements to be sorted
+     * @param sortStereotype
+     *            the kind of sort based on sort stereotype name. This may be
+     *            sortByProperty, sortByAttribute, or sortByName as found in
+     *            DocGen3Profile.
+     * @param cba
+     *            call behavior to be applied before getting the specified 
+     * @return
+     */
+    public static List<Element> sortElements(Collection<? extends Element> in,
+            String sortStereotype, Element cba) {
+        List<Element> ordered = new ArrayList<Element>(in);
+
+        boolean isProp = sortStereotype.equals(DocGen3Profile.sortByProperty);
+        boolean isAttr = sortStereotype.equals(DocGen3Profile.sortByAttribute);
+        boolean isExpr = sortStereotype.equals(DocGen3Profile.sortByExpression);
+        boolean isName = sortStereotype.equals(DocGen3Profile.sortByName);
+        if ( !isProp && !isAttr && !isName && !isExpr ) {
+            Debug.error(false, "Error! Trying to sort by unknown sort type: "
+                    + sortStereotype);
+            return ordered;
+        }
+        
+        String stereotypeProperty = null;
+        if ( isProp ) stereotypeProperty = "desiredProperty";
+        else if ( isAttr ) stereotypeProperty = "desiredAttribute";
+        else if ( isExpr ) stereotypeProperty = "expression";
+
+        Object o = GeneratorUtils.getObjectProperty(cba, sortStereotype,
+                                                    stereotypeProperty, null);
+
+        if (o instanceof Property && isProp) {
+            ordered = Utils.sortByProperty(in, (Property) o);
+        } else if (o instanceof EnumerationLiteral && isAttr) {
+            ordered = Utils.sortByAttribute(in, o);
+        } else if (isExpr) {
+            ordered = Utils.sortByExpression(in, o);
+        } else if (isName) {
+            ordered = Utils.sortByName(in);
+        } else {
+            Debug.error(false, "Error! Trying to sort as " + 
+                        sortStereotype +
+                        ", but the property/attribute is the wrong type: " + o);
+            return ordered;
+        }
+        o = GeneratorUtils.getObjectProperty(cba, sortStereotype,
+                                             "reverse", false);
+        if ( o == null ) o = GeneratorUtils.getObjectProperty(cba, sortStereotype,
+                                                              "invertOrder", false);
+
+        Boolean b = null;
+        try {
+            b = (Boolean)o;
+        } catch (ClassCastException e) {
+            //ignore
+        }
+        if (b != null && b) {
+            Collections.reverse(ordered);
+        }
+        return ordered;
+    }
+
 	/**
 	 * an activity that should only has collect/filter actions in it
 	 * @param a

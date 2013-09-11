@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.lib;
 
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -13,15 +14,18 @@ import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -41,7 +45,6 @@ import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
-import com.nomagic.magicdraw.validation.ValidationResultProvider;
 import com.nomagic.magicdraw.validation.ValidationRunData;
 import com.nomagic.magicdraw.validation.ui.ValidationResultsWindowManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -57,10 +60,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -178,6 +179,44 @@ public class Utils {
     	return res;
 	}
 	
+	
+	protected static final String[] trueStrings = new String[] { "t", "true", "1", "1.0", "yes", "y" };
+
+    public static Boolean isTrue(Object o) {
+        return isTrue(o, true);
+    }
+	public static Boolean isTrue(Object o, boolean strict) {
+	    if ( o == null ) return strict ? null : false;
+	    if ( Boolean.class.isAssignableFrom(o.getClass()) ) {
+	        return (Boolean) o;
+	    }
+        String lower = o.toString().toLowerCase();
+        if (lower.equals("true")) return true;
+        if (lower.equals("false")) return false;
+	    if ( strict ) return null;
+	    for ( String t : trueStrings ) {
+	        if ( lower.equals(t) ) return true;
+	    }
+	    return false;
+	}
+	
+    public static List<Element> filterElementsByExpression(Collection<Element> elements,
+                                                           CallBehaviorAction cba,
+                                                           boolean include) {
+        List<Element> res = new ArrayList<Element>();
+        Object query = GeneratorUtils.getObjectProperty(cba,
+                                                        DocGen3Profile.filterExpressionStereotype,
+                                                        "expression", null);
+        for (Element e : elements) {
+            Object o = OclEvaluator.evaluateQuery(e, query);
+            Boolean istrue = isTrue(o, false);
+            if (include == ((Boolean)(istrue == null ? false : istrue)).booleanValue()) {
+                res.add(e);
+            }
+        }
+        return res;
+    }
+
 	/**
 	 * 
 	 * @param elements
@@ -284,6 +323,7 @@ public class Utils {
      */
     public static List<Element> filterElementsByJavaClasses(Collection<Element> elements, Collection<java.lang.Class<?>> javaClasses, boolean include) { 
     	List<Element> res = new ArrayList<Element>();
+    	if (Utils2.isNullOrEmpty(elements) || javaClasses == null) return res; 
     	if (javaClasses.isEmpty() && !include) {
     		res.addAll(elements);
     		return res;
@@ -294,7 +334,7 @@ public class Utils {
     	if (include) {
     		for (Element e: elements) {
     			for (java.lang.Class<?> c: javaClasses) {
-    				if (c.isInstance(e)) {
+    				if (c != null && e != null && c.isInstance(e)) {
     					res.add(e);
     					break;
     				}
@@ -304,7 +344,7 @@ public class Utils {
     		for (Element e: elements) {
     			boolean add = true;
     			for (java.lang.Class<?> c: javaClasses) {
-    				if (c.isInstance(e)) {
+    				if (c != null && e != null && c.isInstance(e)) {
     					add = false;
     					break;
     				}
@@ -403,7 +443,73 @@ public class Utils {
         	collectRecursiveOwnedElements(o, all, depth, current+1);
         }       
     }
+
+    /**
+     * Get a list including all objects that are of the specified type and are o
+     * or a child/grandchild of o if o is a Collection. type and the items in o
+     * that are of the specified type if o is a Collection.
+     * 
+     * @param o
+     * @param type
+     * @return a list of objects of the specified type or an empty list if there
+     *         are none
+     */
+    public static <T> List<T> getListOfType(Object o, java.lang.Class<T> type) {
+        return getListOfType(o, type, null);
+    }
+
+    /**
+     * Get a list including all objects that are of the specified type and are o
+     * or a child/grandchild of o if o is a Collection. type and the items in o
+     * that are of the specified type if o is a Collection.
+     * 
+     * @param o
+     * @param type
+     * @param seen
+     *            a list of already visited objects to avoid infinite recursion
+     * @return a list of objects of the specified type or an empty list if there
+     *         are none
+     */
+    public static <T> List<T> getListOfType(Object o, java.lang.Class<T> type, Set<Object> seen) {
+        List<T> res = new ArrayList<T>();
+        if (type == null || o == null) return res;
+        Pair<Boolean, Set<Object>> p = Utils2.seen(o, true, seen);
+        if ( p.first ) return res;
+        seen = p.second;
+        if (type.isInstance(o)) res.add((T)o);
+        else if (o instanceof Collection) {
+            for (Object obj : (Collection<?>)o) {
+                res.addAll(getListOfType(obj, type));
+            }
+        }
+        return res;
+    }
     
+    public static List<Element> collectByExpression(Element element, Object query) {
+        List<Element> res = new ArrayList<Element>();
+        Object o = OclEvaluator.evaluateQuery(element, query);
+        res.addAll(getListOfType(o, Element.class));
+        return res;
+    }
+
+    /**
+     * Collect all objects of type Element in each of the results of evaluating the query expression on each of the elements.
+     * @param elements contexts for evaluating the expression
+     * @param cba the collect action containing the expression 
+     * @return a List of Elements
+     */
+    public static List<Element> collectByExpression(List<Element> elements, CallBehaviorAction cba) {
+        List<Element> res = new ArrayList<Element>();
+        Object query = GeneratorUtils.getObjectProperty(cba,
+                                                        DocGen3Profile.collectExpressionStereotype,
+                                                        "expression", null);
+        for (Element e : elements) {
+            res.addAll(collectByExpression(e, query));
+        }
+        return res;
+    }
+
+
     /**
      * @param e needs to be a Classifier, else empty list will be returned
      * @param depth
@@ -753,6 +859,13 @@ public class Utils {
     	return n;
     }
     
+    /**
+     * Sorts elements by a specific attribute limited to the enumeration below, which is
+     * suspiciously similar to the possible attributes in tableAttributeColumn...
+     * @param elem
+     * @param attr
+     * @return
+     */
     public static List<Element> sortByAttribute(Collection<? extends Element> elem, AvailableAttribute attr) {
     	List<Element> list = new ArrayList<Element>(elem);
     	switch (attr) {
@@ -822,7 +935,7 @@ public class Utils {
      * @param property
      * @return
      */
-	public static List sortByProperty(Collection<? extends Element>elem, Property prop) {
+	public static List<Element> sortByProperty(Collection<? extends Element>elem, Property prop) {
 		List<Element> list = new ArrayList<Element>(elem);
 		// Check if all numbers first
 		boolean isAllNumbers = true;
@@ -1011,7 +1124,7 @@ public class Utils {
 	
 	public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
 		Project project = Application.getInstance().getProject();
-        ValidationResultProvider provider = project.getValidationResultProvider();
+        //ValidationResultProvider provider = project.getValidationResultProvider();
         Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
@@ -1160,6 +1273,24 @@ public class Utils {
     	p.setDefaultValue(v);
     }
 
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, String attr) {
+    	return sortByAttribute(elem, AvailableAttribute.valueOf(attr));
+    }
+
+    /**
+     * Sorts elements by attribute, provided it is one of those supported by
+     * {@link gov.nasa.jpl.mbee.lib.Utils.getAvailableAttribute(Object attr)}.
+     * 
+     * @param elem
+     *            the element whose attribute is sought
+     * @param attr
+     *            the type of attribute (name, value, ...)
+     * @return
+     */
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, Object attr) {
+        return sortByAttribute( elem, getAvailableAttribute(attr));
+    }
+
     /**
      * This will set the default value of p to value, based on what type the
      * default value currently is right now, it'll try to convert to:
@@ -1180,6 +1311,85 @@ public class Utils {
       valueSpecs.add( v );
     }
 
+    public static List<Element> sortByExpression(Collection<? extends Element> elem, Object o) {
+        List<Element> list = new ArrayList<Element>(elem);
+        // Check if all numbers
+        boolean isAllNumbers = true;
+        Map<Element, Object> resultMap = new HashMap<Element, Object>();
+        Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
+        for (Element e : list) {
+            Object result = OclEvaluator.evaluateQuery(e, o);
+            resultMap.put(e, result);
+            if (!isAllNumbers) continue;
+            Collection<?> coll = null;
+            if (result instanceof Collection) {
+                coll = ((Collection<?>) result);
+            }
+            if (coll != null && coll.size() > 0) {
+                isAllNumbers = false;
+                continue;
+            }
+            if (coll != null) {
+                List<Object> numbers = new ArrayList<Object>();
+                for (Object c : coll) {
+                    String s = DocGenUtils.fixString(c);
+                    if (isAllNumbers) {
+                        if (Utils2.isNumber(s)) {
+                            numbers.add(Utils2.toDouble(s));
+                        } else {
+                            isAllNumbers = false;
+                            break;
+                        }
+                    }
+                }
+                if (isAllNumbers) {
+                    resultNumberMap.put(e, numbers);
+                }
+            } else {
+                String s = DocGenUtils.fixString(result);
+                if (!Utils2.isNumber(s)) {
+                    isAllNumbers = false;
+                } else {
+                    resultNumberMap.put(e, Utils2.toDouble(s));
+                }
+
+            }
+        }
+        if ( isAllNumbers ) resultMap = resultNumberMap;
+        Collections.sort(list, new DocGenComparator(resultMap, isAllNumbers));
+        return list;
+    }
+    
+    public static class DocGenComparator implements Comparator<Object> {
+        final boolean allNums;
+        Map<Element, Object> resultMap = null;
+        public DocGenComparator( boolean isAllNumbers ) {
+            allNums = isAllNumbers;
+        }
+        public DocGenComparator(Map<Element, Object> resultMap,
+                boolean isAllNumbers) {
+            this.resultMap = resultMap;
+            allNums = isAllNumbers;
+        }
+        public int compare(Object A, Object B) {
+            Object resultA = resultMap == null ? A : resultMap.get(A);
+            Object resultB = resultMap == null ? B : resultMap.get(B);
+            return docgenCompare(resultA, resultB, allNums);
+        }
+    }
+
+    private static int docgenCompare( Object a0, Object b0, boolean asNumbers ) {
+        String as = DocGenUtils.fixString(a0);
+        String bs = DocGenUtils.fixString(b0);
+        if (asNumbers) {
+            Double da0 = Utils2.toDouble(as);
+            Double db0 = Utils2.toDouble(bs);
+            return CompareUtils.compare(da0, db0);
+        } else {
+            return CompareUtils.compare(as, bs);
+        }
+    }
+    
     /**
      * Creates a new {@link ValueSpecification} of the same type as valueSpec but
      * with a new value to be parsed from a {@link String}. It'll try to convert
@@ -1267,6 +1477,45 @@ public class Utils {
     	return f;
     }
     
+    
+    /**
+     * Convert the input Object to an availableAttribute enum value. Supported
+     * attribute objects include AvailableAttribute, From, EnumerationLiteral,
+     * and String.
+     * 
+     * @param attr
+     *            the attribute of some type
+     * @return the corresponding AvailableAttribute
+     */
+    public static AvailableAttribute getAvailableAttribute( Object attr ) {
+        if ( attr instanceof AvailableAttribute ) return (AvailableAttribute)attr;
+        if ( attr instanceof From ) {
+            From fattr = (From)attr;
+            switch ( fattr ) {
+            case NAME:
+                return AvailableAttribute.Name;
+            case DOCUMENTATION:
+                return AvailableAttribute.Documentation;
+            case DVALUE:
+                return AvailableAttribute.Value;
+            default:
+            }
+        }
+        if ( attr instanceof EnumerationLiteral ) return getAvailableAttribute(((EnumerationLiteral)attr).getName());
+        AvailableAttribute aattr = null;
+        if ( attr instanceof String ) {
+            try {
+                aattr = getAvailableAttribute(AvailableAttribute.valueOf((String)attr));
+            } catch (Exception e) {}
+            try {
+                if ( aattr == null ) aattr = getAvailableAttribute(From.valueOf((String)attr));
+            } catch (Exception e) {}
+        }
+        if ( aattr == null ) {
+            Debug.error(false, "Unexpected argument " + attr + " to getFromAttribute()." );
+        }
+        return aattr;
+    }
     
     /**
      * Returns an attribute of the element based on the input availableAttribute
@@ -1408,7 +1657,7 @@ public class Utils {
                 Object value = elem.refGetValue(prop.getName()); // i think this only works for derived properties
                 if ( value != null ) {
                 	if (value instanceof Collection)
-                		results.addAll((Collection)value );
+                		results.addAll((Collection<?>)value );
                 	else
                 		results.add(value);
                 }
@@ -1773,7 +2022,7 @@ public class Utils {
 	
 	public static boolean isLiteral(Object o) {
     	if (o instanceof Collection) {
-    		for (Object oo: (Collection)o) {
+    		for (Object oo: (Collection<?>)o) {
     			if (!isLiteral(oo))
     				return false;
     		}
