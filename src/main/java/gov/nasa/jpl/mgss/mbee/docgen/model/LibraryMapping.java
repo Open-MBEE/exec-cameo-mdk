@@ -315,7 +315,6 @@ public class LibraryMapping extends Query {
 	}
 	
 	private Node<String, LibraryComponent> fillComponent(NamedElement cur) {
-		GUILog log = Application.getInstance().getGUILog();
 		Node<String, LibraryComponent> node = new Node<String, LibraryComponent>(cur.getID(), new LibraryComponent(cur.getName(), cur));
 		if (cur instanceof Package) {
 			for (Element e: cur.getOwnedElement()) {
@@ -331,7 +330,6 @@ public class LibraryMapping extends Query {
 				StereotypesHelper.hasStereotypeOrDerived(cur, COMPONENT)){
 			fillComponentChars(cur, node.getData());
 		}
-		log.log("Adding Node: " + node.getData().getElement().getHumanName());
 		return node;
 	}
 	
