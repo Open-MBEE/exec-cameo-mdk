@@ -22,9 +22,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -1277,7 +1279,6 @@ public class Utils {
     	p.setDefaultValue(v);
     }
 
-//<<<<<<< HEAD
     public static List<Element> sortByAttribute(Collection<? extends Element> elem, String attr) {
     	return sortByAttribute(elem, AvailableAttribute.valueOf(attr));
     }
@@ -1296,37 +1297,6 @@ public class Utils {
         return sortByAttribute( elem, getAvailableAttribute(attr));
     }
 
-//    /**
-//     * Sorts elements by a specific attribute limited to the enumeration below, which is
-//     * suspiciously similar to the possible attributes in tableAttributeColumn...
-//     * @param elem
-//     * @param attr
-//     * @return
-//     */
-//    public static List<Element> sortByAttribute(Collection<? extends Element> elem, AvailableAttribute attr) {
-//    	List<Element> list = new ArrayList<Element>(elem);
-//    	switch (attr) {
-//    	case Name:
-//    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Name, false));
-//    		break;
-//    	case Documentation:
-//    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Documentation, false));
-//    		break;
-//    	case Value:
-//    		boolean isAllNumbers = true;
-//    		for (Element e: list) {
-//    			if (!Utils2.isNumber(DocGenUtils.fixString(getElementAttribute(e, attr)))) {
-//    				isAllNumbers = false;
-//    				break;
-//    			}
-//    		}
-//    		Collections.sort(list, getAttributeComparator(AvailableAttribute.Value, isAllNumbers));
-//    		break;
-//    		
-//    	}
-//    	return list;
-//    }
-//=======
     /**
      * This will set the default value of p to value, based on what type the
      * default value currently is right now, it'll try to convert to:
@@ -1345,65 +1315,72 @@ public class Utils {
       }
       valueSpecs.clear();
       valueSpecs.add( v );
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
     }
 
-//<<<<<<< HEAD
-//	public static List<Element> sortByProperty(Collection<? extends Element>elem, Property prop) {
-//		List<Element> list = new ArrayList<Element>(elem);
-//		// Check if all numbers first
-//		boolean isAllNumbers = true;
-//		for (Element e: list) {
-//			List<Object> temp = getElementPropertyValues(e, prop, true);
-//			if (temp.size() != 1) {
-//				isAllNumbers = false;
-//				break;
-//			}
-//			for (Object o: temp) {
-//				if (!Utils2.isNumber(DocGenUtils.fixString(o))) { 
-//					isAllNumbers = false;
-//					break;
-//				}
-//			}
-//			if (!isAllNumbers) break;
-//		}
-//		Collections.sort(list, getPropertyComparator(prop, isAllNumbers));
-//		return list;
-//	}
-	
     public static List<Element> sortByExpression(Collection<? extends Element> elem, Object o) {
         List<Element> list = new ArrayList<Element>(elem);
         // Check if all numbers
         boolean isAllNumbers = true;
-        for (Element e: list) {
-            Object temp = OclEvaluator.evaluateQuery( e, o );
+        Map<Element, Object> resultMap = new HashMap<Element, Object>();
+        Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
+        for (Element e : list) {
+            Object result = OclEvaluator.evaluateQuery(e, o);
+            resultMap.put(e, result);
+            if (!isAllNumbers) continue;
             Collection<?> coll = null;
-            if (temp instanceof Collection ) {
-                coll = ((Collection<?>)temp);
+            if (result instanceof Collection) {
+                coll = ((Collection<?>) result);
             }
-            if (coll == null || coll.size() != 1) {
+            if (coll != null && coll.size() > 0) {
                 isAllNumbers = false;
-                break;
+                continue;
             }
-            for (Object c: coll) {
-                if (!Utils2.isNumber(DocGenUtils.fixString(c))) { 
-                    isAllNumbers = false;
-                    break;
+            if (coll != null) {
+                List<Object> numbers = new ArrayList<Object>();
+                for (Object c : coll) {
+                    String s = DocGenUtils.fixString(c);
+                    if (isAllNumbers) {
+                        if (Utils2.isNumber(s)) {
+                            numbers.add(Utils2.toDouble(s));
+                        } else {
+                            isAllNumbers = false;
+                            break;
+                        }
+                    }
                 }
+                if (isAllNumbers) {
+                    resultNumberMap.put(e, numbers);
+                }
+            } else {
+                String s = DocGenUtils.fixString(result);
+                if (!Utils2.isNumber(s)) {
+                    isAllNumbers = false;
+                } else {
+                    resultNumberMap.put(e, Utils2.toDouble(s));
+                }
+
             }
-            if (!isAllNumbers) break;
         }
-        Collections.sort(list, new DocGenComparator(isAllNumbers));
+        if ( isAllNumbers ) resultMap = resultNumberMap;
+        Collections.sort(list, new DocGenComparator(resultMap, isAllNumbers));
         return list;
     }
     
     public static class DocGenComparator implements Comparator<Object> {
-        final boolean allNums;        
+        final boolean allNums;
+        Map<Element, Object> resultMap = null;
         public DocGenComparator( boolean isAllNumbers ) {
             allNums = isAllNumbers;
         }
+        public DocGenComparator(Map<Element, Object> resultMap,
+                boolean isAllNumbers) {
+            this.resultMap = resultMap;
+            allNums = isAllNumbers;
+        }
         public int compare(Object A, Object B) {
-            return docgenCompare(A, B, allNums);
+            Object resultA = resultMap == null ? A : resultMap.get(A);
+            Object resultB = resultMap == null ? B : resultMap.get(B);
+            return docgenCompare(resultA, resultB, allNums);
         }
     }
 
@@ -1419,24 +1396,6 @@ public class Utils {
         }
     }
     
-//    private static Comparator<Element> getPropertyComparator(Property prop, boolean isAllNumbers) {
-//    	final Property property = prop;
-//    	final boolean allNums = isAllNumbers;
-//    	
-//    	return new Comparator<Element>() {
-//    		public int compare(Element A, Element B) {
-//    			List<Object> a = getElementPropertyValues(A, property, true);
-//    			List<Object> b = getElementPropertyValues(B, property, true);
-//    			if (a.size() == 1 && b.size() == 1) {
-//    				Object a0 = a.get(0);
-//    				Object b0 = b.get(0);
-//    				return docgenCompare(a0, b0, allNums);
-//    			} else {
-//    				return a.size() - b.size();
-//    			}
-//    		}
-//    	};
-//=======
     /**
      * Creates a new {@link ValueSpecification} of the same type as valueSpec but
      * with a new value to be parsed from a {@link String}. It'll try to convert
@@ -1484,7 +1443,6 @@ public class Utils {
       }
 
       return v;
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
     }
     
     /*************************Getting element attributes and properties/values****************************/
@@ -2068,12 +2026,6 @@ public class Utils {
 		return 1;
 	}
 	
-//<<<<<<< HEAD
-//	public static String escapeString(String s) {
-//		return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
-//	}
-//
-//=======
 	public static boolean isLiteral(Object o) {
     	if (o instanceof Collection) {
     		for (Object oo: (Collection)o) {
@@ -2089,5 +2041,4 @@ public class Utils {
     	return false;
     }
     
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 }

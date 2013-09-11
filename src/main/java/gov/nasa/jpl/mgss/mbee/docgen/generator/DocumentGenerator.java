@@ -3,12 +3,6 @@ package gov.nasa.jpl.mgss.mbee.docgen.generator;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
-//<<<<<<< HEAD
-//import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
-//import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
-//import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSerializeVisitor;
-//=======
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BillOfMaterialsTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BulletedList;
@@ -34,20 +28,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageAssemblyTable;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-//<<<<<<< HEAD
-//import java.util.Collections;
-//import java.util.HashMap;
-//import java.util.HashSet;
-//=======
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 import java.util.List;
 import java.util.Stack;
 
-//<<<<<<< HEAD
-//import javax.script.ScriptException;
-//
-//=======
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -65,12 +48,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementImport;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
-//<<<<<<< HEAD
-//import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-//import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
-//=======
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 

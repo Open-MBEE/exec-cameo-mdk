@@ -237,24 +237,9 @@ public class CollectFilterParser {
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.userScriptCFStereotype, true)) {
 			res.addAll(getUserScriptCF(in, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByName)) {
-			List<Element> sorted = Utils.sortByName(in);
-			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByName, "reverse", false)) {
-				Collections.reverse(sorted);
-			}
-			res.addAll(sorted);
+            res.addAll(sortElements(in, DocGen3Profile.sortByName, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByAttribute)) {
-//<<<<<<< HEAD
             res.addAll(sortElements(in, DocGen3Profile.sortByAttribute, cba));
-//=======
-//			EnumerationLiteral attribute = (EnumerationLiteral)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "desiredAttribute", null);
-//			if (attribute == null)
-//				return res;
-//			List<Element> ordered = Utils.sortByAttribute(in, Utils.AvailableAttribute.valueOf(attribute.getName()));
-//			if ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sortByAttribute, "reverse", false)) {
-//				Collections.reverse(ordered);
-//			}
-//			res.addAll(ordered);
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByProperty)) {
 		    res.addAll(sortElements(in, DocGen3Profile.sortByProperty, cba));
         } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByExpression)) {
@@ -314,7 +299,10 @@ public class CollectFilterParser {
             return ordered;
         }
         o = GeneratorUtils.getObjectProperty(cba, sortStereotype,
-                                             "invertOrder", false);
+                                             "reverse", false);
+        if ( o == null ) o = GeneratorUtils.getObjectProperty(cba, sortStereotype,
+                                                              "invertOrder", false);
+
         Boolean b = null;
         try {
             b = (Boolean)o;
