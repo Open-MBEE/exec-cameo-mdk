@@ -15,10 +15,8 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.nomagic.magicdraw.core.Application;
@@ -46,9 +44,12 @@ public class LibraryMapping extends Query {
 	private ElementsFactory ef;
 	private SessionManager sm;
 	private static final String CHAR = "Characterization";
+	private static final String CHARACTERIZES = "Characterizes";
 	private static final String COMPONENT = "Component";
 	private static final String IMCECOMPONENT= "mission:Component";
 	private static final String IMCECHAR = "analysis:Characterization";
+	private static final String IMCECHARACTERIZES = "analysis:characterizes";
+	private static final String IMCECHARACTERIZABLE = "analysis:CharacterizedElement";
 	private static final String DEPPREFIX = "zz_";
 	private boolean IMCEPresent=false;
 	private Node<String, LibraryComponent> tree;
@@ -79,19 +80,33 @@ public class LibraryMapping extends Query {
 								IMCEPresent=true;
 						fillChars();
 						break;
-					} else if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT)||StereotypesHelper.hasStereotypeOrDerived(ee, COMPONENT)) {
+					} 
+				}
+			}
+		}
+				
+		// fill in the tree after all the characterizations
+		for (Element e: this.targets) {
+			if (e instanceof Package) {
+				for (Element ee: Utils.collectOwnedElements(e, 0)) {
+					if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT) ||
+							StereotypesHelper.hasStereotypeOrDerived(ee, COMPONENT) ||
+							StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHARACTERIZABLE)) {
 						componentPackage = (Package)e;
-						tree.addChild(fillComponent(componentPackage));
-						if(StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT))
+						if(StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT) ||
+								StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHARACTERIZABLE))
 							IMCEPresent=true;
+						// create tree after IMCEPresent is tagged
+						tree.addChild(fillComponent(componentPackage));
 						break;
 					}
 				}
 			}
 		}
+
 		if (missingInformation())
 			return false;
-		
+	
 		tree.sortAllChildren(new Comparator<Node<String, LibraryComponent>>() {
 			@Override
 			public int compare(Node<String, LibraryComponent> o1, Node<String, LibraryComponent> o2) {
@@ -217,8 +232,8 @@ public class LibraryMapping extends Query {
 					}
 				}
 			}
-			log.log("Refactor changes successfully applied");
 			sm.closeSession();
+			log.log("Refactor changes successfully applied");
 		} catch(Exception ex) {
 			log.log("Refactor failed, make sure you have all necessary things locked");
 			StringWriter sw = new StringWriter();
@@ -281,41 +296,12 @@ public class LibraryMapping extends Query {
 	}
 	
 	private void refactorCharacterizationProperties(Set<NamedElement> characterizations, Classifier classifier) {
-		GUILog log = Application.getInstance().getGUILog();
+//		GUILog log = Application.getInstance().getGUILog();
 		for (Element e: classifier.getOwnedElement()) {
 			if (StereotypesHelper.hasStereotypeOrDerived(e, IMCECHAR) || StereotypesHelper.hasStereotypeOrDerived(e, CHAR)) {
 				NamedElement ne = hasCharacterization(characterizations, e);
 				if (ne != null) {
-					// get the required properties (rprop)
-					Classifier c = (Classifier) ne;
-					Map<String, Property> rprop = new HashMap<String, Property>();
-					for (Property p: c.getAttribute()) {
-						rprop.put(p.getName(), p);
-					}
-					
-					// get the current properties (cprop) off the current element
-					Map<String, Property> cprop = new HashMap<String, Property>();
-					c = (Classifier) e;
-					for (Property p: c.getAttribute()) {
-						if (!rprop.containsKey(p.getName()) && !p.getName().startsWith(DEPPREFIX)) {
-							p.setName(DEPPREFIX + p.getName());
-							log.log("Property deprecated: " + c.getName() + " --- " + p.getName());
-						}
-						cprop.put(p.getName(), p);
-					}
-					
-					for (Property p: rprop.values()) {
-						if (!cprop.containsKey(p.getName())) {
-							Property np = ef.createPropertyInstance();
-							np.setName(p.getName());
-							np.setOwner(e);
-							np.setType(p.getType());
-							np.setAggregation(p.getAggregation());
-							np.getRedefinedProperty().add(p);
-							Utils.copyStereotypes(p, np);
-							log.log("Property created: " + c.getName() + " +++ " + p.getName());
-						}
-					}
+					MappingUtil.refactorProperties(ne, e, ef);
 				}
 			}
 		}
@@ -333,37 +319,38 @@ public class LibraryMapping extends Query {
 		Node<String, LibraryComponent> node = new Node<String, LibraryComponent>(cur.getID(), new LibraryComponent(cur.getName(), cur));
 		if (cur instanceof Package) {
 			for (Element e: cur.getOwnedElement()) {
-				if (e instanceof Package || StereotypesHelper.hasStereotypeOrDerived(e,  IMCECOMPONENT)||StereotypesHelper.hasStereotypeOrDerived(e,  COMPONENT)) {
+				if (e instanceof Package || StereotypesHelper.hasStereotypeOrDerived(e,  IMCECOMPONENT) ||
+						StereotypesHelper.hasStereotypeOrDerived(e, IMCECHARACTERIZABLE) ||
+						StereotypesHelper.hasStereotypeOrDerived(e,  COMPONENT)) {
 					node.addChild(fillComponent((NamedElement)e));
 				}
 			}
 		}
-		if (StereotypesHelper.hasStereotypeOrDerived(cur, IMCECOMPONENT)||StereotypesHelper.hasStereotypeOrDerived(cur, COMPONENT)){
+		if (StereotypesHelper.hasStereotypeOrDerived(cur, IMCECOMPONENT) ||
+				StereotypesHelper.hasStereotypeOrDerived(cur, IMCECHARACTERIZABLE) ||
+				StereotypesHelper.hasStereotypeOrDerived(cur, COMPONENT)){
 			fillComponentChars(cur, node.getData());
 		}
 		return node;
 	}
 	
 	private void fillComponentChars(NamedElement component, LibraryComponent com) {	
-		GUILog log = Application.getInstance().getGUILog();
+		List<Element> directedRelatedElements;
+		
 		if (IMCEPresent){
-			for (Element e: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(component, "analysis:characterizes", 2, true, 1)) {
-				if (chars.contains(e)) {
-					com.getCharacterizations().add((NamedElement)e);
-					usedChars.add((NamedElement)e);
-				}
-			
-			}
+			directedRelatedElements = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(component, IMCECHARACTERIZES, 2, true, 1);
 		}
 		else
 		{
-			for (Element e: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(component, "Characterizes", 2, true, 1)) {
-				if (chars.contains(e)) {
-					com.getCharacterizations().add((NamedElement)e);
-					usedChars.add((NamedElement)e);
-				}
-				
+			directedRelatedElements = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(component, CHARACTERIZES, 2, true, 1);
+		}
+
+		for (Element e: directedRelatedElements) {
+			if (chars.contains(e)) {
+				com.getCharacterizations().add((NamedElement)e);
+				usedChars.add((NamedElement)e);
 			}
+		
 		}
 	}
 	
@@ -382,9 +369,9 @@ public class LibraryMapping extends Query {
 		ModelHelper.setSupplierElement(d, to);
 		ModelHelper.setClientElement(d, from);
 		if(IMCEPresent)
-			StereotypesHelper.addStereotypeByString(d, "analysis:characterizes");
+			StereotypesHelper.addStereotypeByString(d, IMCECHARACTERIZES);
 		else
-			StereotypesHelper.addStereotypeByString(d, "Characterizes");
+			StereotypesHelper.addStereotypeByString(d, CHARACTERIZES);
 
 	}
 	

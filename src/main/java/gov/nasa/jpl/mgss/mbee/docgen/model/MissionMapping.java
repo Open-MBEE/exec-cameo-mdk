@@ -24,19 +24,13 @@ import java.util.Set;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
-import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
@@ -45,7 +39,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Relationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 import com.nomagic.uml2.impl.ElementsFactory;
 
@@ -65,6 +58,7 @@ public class MissionMapping extends Query {
 	private static final String COMPONENT = "Component";
 	private static final String IMCECOMPONENT= "mission:Component";
 	private static final String IMCECHAR = "analysis:Characterization";
+	private static final String IMCECHARACTERIZABLE = "analysis:CharacterizedElement";
 	private boolean IMCEPresent=false;
 	
 	private Node<String, MissionComponent> tree;
@@ -111,7 +105,9 @@ public class MissionMapping extends Query {
 						if (StereotypesHelper.hasStereotypeOrDerived(ee, CHAR) || StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHAR)) {
 							libraryCharPackage = (Package)e;
 							break;
-						} else if (StereotypesHelper.hasStereotypeOrDerived(ee, COMPONENT) || StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT)) {
+						} else if (StereotypesHelper.hasStereotypeOrDerived(ee, COMPONENT) || 
+								StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT) ||
+								StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHARACTERIZABLE)) {
 							libraryComponentPackage = (Package)e;
 							break;
 						}
@@ -194,71 +190,7 @@ public class MissionMapping extends Query {
 		GUILog log = Application.getInstance().getGUILog();
 		try {
 			sm.createSession("apply mission mapping");
-			for (Node<String, MissionComponent> mc: tree.getAllNodes()) {
-				NamedElement e = mc.getData().getElement();
-				if (e == null) {
-					e = ef.createClassInstance();
-					if (IMCEPresent){
-						StereotypesHelper.addStereotypeByString(e, IMCECOMPONENT);
-					}
-					else{
-						StereotypesHelper.addStereotypeByString(e, COMPONENT);
-					}
-			
-					e.setOwner(mc.getParent().getData().getElement());
-				}
-				if (!e.getName().equals(mc.getData().getName()))
-					e.setName(mc.getData().getName());
-				if (mc.getData().isPackage())
-					continue;
-				for (LibraryComponent lc: mc.getData().getAddedLib()) {
-					addSpecialization((Classifier)e, (Classifier)lc.getElement());
-				}
-				for (LibraryComponent lc: mc.getData().getRemovedLib()) {
-					removeSpecialization((Classifier)e, (Classifier)lc.getElement());
-				}
-				for (MissionCharacterization mmc: mc.getData().getAddedChar()) {
-					Classifier c = (Classifier)mmc.getElement();
-					if (existsProperty(e, c))
-						continue;
-					if (c == null) {
-						c = ef.createClassInstance();
-						c.setName(mmc.getName());
-						c.setOwner(e);
-						if(IMCEPresent){
-							StereotypesHelper.addStereotypeByString(c, IMCECHAR);
-						}
-						else {
-							StereotypesHelper.addStereotypeByString(c, CHAR);
-						}
-						
-						Generalization g = ef.createGeneralizationInstance();
-						g.setOwner(c);
-						g.setSpecific(c);
-						g.setGeneral((Classifier)mmc.getLibraryCharacterization());
-						Utils.copyStereotypes((Classifier)mmc.getLibraryCharacterization(), c);
-						bst((Class)c);
-					}
-					Association a = ef.createAssociationInstance();
-					a.setOwner(e.getOwner());
-					Property p1 = a.getMemberEnd().get(0);
-					Property p2 = a.getMemberEnd().get(1);
-					p1.setName(mmc.getName());
-					p1.setType(c);
-					p1.setOwner(e);
-					p1.setAggregation(AggregationKindEnum.COMPOSITE);
-					StereotypesHelper.addStereotypeByString(p1, "PartProperty");
-					p2.setType((Type)e);
-				}
-				for (MissionCharacterization mmc: mc.getData().getRemovedChar()) {
-					for (Property p: new HashSet<Property>(((Classifier)e).getAttribute())) {
-						if (p.getType() == mmc.getElement()) {
-							ModelElementsManager.getInstance().removeElement(p.getType());
-							ModelElementsManager.getInstance().removeElement(p);
-						}
-					}
-				}
-			}
+			applyInternal();
 			sm.closeSession();
 			log.log("saved");
 		} catch(Exception e) {
@@ -266,6 +198,98 @@ public class MissionMapping extends Query {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
+			log.log(sw.toString());
+			sm.cancelSession();
+		}
+	}
+	
+	private void applyInternal() throws Exception {
+		for (Node<String, MissionComponent> mc: tree.getAllNodes()) {
+			NamedElement e = mc.getData().getElement();
+			if (e == null) {
+				e = ef.createClassInstance();
+				if (IMCEPresent){
+					StereotypesHelper.addStereotypeByString(e, IMCECOMPONENT);
+				}
+				else{
+					StereotypesHelper.addStereotypeByString(e, COMPONENT);
+				}
+		
+				e.setOwner(mc.getParent().getData().getElement());
+			}
+			if (!e.getName().equals(mc.getData().getName()))
+				e.setName(mc.getData().getName());
+			if (mc.getData().isPackage())
+				continue;
+			for (LibraryComponent lc: mc.getData().getAddedLib()) {
+				addSpecialization((Classifier)e, (Classifier)lc.getElement());
+			}
+			for (LibraryComponent lc: mc.getData().getRemovedLib()) {
+				removeSpecialization((Classifier)e, (Classifier)lc.getElement());
+			}
+			for (MissionCharacterization mmc: mc.getData().getAddedChar()) {
+				Classifier c = (Classifier)mmc.getElement();
+				if (existsProperty(e, c))
+					continue;
+				if (c == null) {
+					c = ef.createClassInstance();
+					c.setName(mmc.getName());
+					c.setOwner(e);
+					if(IMCEPresent){
+						StereotypesHelper.addStereotypeByString(c, IMCECHAR);
+					}
+					else {
+						StereotypesHelper.addStereotypeByString(c, CHAR);
+					}
+					
+					Generalization g = ef.createGeneralizationInstance();
+					g.setOwner(c);
+					g.setSpecific(c);
+					g.setGeneral((Classifier)mmc.getLibraryCharacterization());
+					Utils.copyStereotypes((Classifier)mmc.getLibraryCharacterization(), c);
+					bst((Class)c);
+				}
+				Association a = ef.createAssociationInstance();
+				a.setOwner(e.getOwner());
+				Property p1 = a.getMemberEnd().get(0);
+				Property p2 = a.getMemberEnd().get(1);
+				p1.setName(mmc.getName());
+				p1.setType(c);
+				p1.setOwner(e);
+				p1.setAggregation(AggregationKindEnum.COMPOSITE);
+				StereotypesHelper.addStereotypeByString(p1, "PartProperty");
+				p2.setType((Type)e);
+			}
+			for (MissionCharacterization mmc: mc.getData().getRemovedChar()) {
+				for (Property p: new HashSet<Property>(((Classifier)e).getAttribute())) {
+					if (p.getType() == mmc.getElement()) {
+						ModelElementsManager.getInstance().removeElement(p.getType());
+						ModelElementsManager.getInstance().removeElement(p);
+					}
+				}
+			}
+		}
+
+	}
+	
+	public void refactor() {
+		GUILog log = Application.getInstance().getGUILog();
+
+		try {
+			sm.createSession("refactor mission mappings");
+			applyInternal();
+			
+			for (MissionCharacterization mc: missionCharMapping.values()) {
+				MappingUtil.refactorProperties(mc.getLibraryCharacterization(), mc.getElement(), ef);
+			}
+			
+			sm.closeSession();
+			log.log("Refactor changes successfully applied");
+		} catch (Exception ex) {
+			log.log("Refactor failed, make sure you have all necessary things locked");
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			ex.printStackTrace(pw);
 			log.log(sw.toString());
 			sm.cancelSession();
 		}
@@ -336,17 +360,23 @@ public class MissionMapping extends Query {
 		} 
 		if (libraryComponentPackage != null) {
 			for (Element e: Utils.collectOwnedElements(libraryComponentPackage, 0)) {
-				if (e instanceof Classifier && (StereotypesHelper.hasStereotypeOrDerived(e, COMPONENT)||StereotypesHelper.hasStereotypeOrDerived(e, IMCECOMPONENT))) {
+				if (e instanceof Classifier && (StereotypesHelper.hasStereotypeOrDerived(e, COMPONENT) ||
+						StereotypesHelper.hasStereotypeOrDerived(e, IMCECOMPONENT) ||
+						StereotypesHelper.hasStereotypeOrDerived(e, IMCECHARACTERIZABLE))) {
 					addLibraryComponent(e, true);
 				}
 			}
 		} 
 		for (Element e: Utils.collectOwnedElements(missionComponentPackage, 0)) {
-			if (e instanceof Classifier && (StereotypesHelper.hasStereotypeOrDerived(e, COMPONENT) || StereotypesHelper.hasStereotypeOrDerived(e, IMCECOMPONENT))) {
+			if (e instanceof Classifier && (StereotypesHelper.hasStereotypeOrDerived(e, COMPONENT) || 
+					StereotypesHelper.hasStereotypeOrDerived(e, IMCECOMPONENT) ||
+					StereotypesHelper.hasStereotypeOrDerived(e, IMCECHARACTERIZABLE))) {
 				for (Element g: ((Classifier)e).getGeneral()) {
 					if (libraryComponentMapping.containsKey(g))
 						continue;
-					if (g instanceof Classifier && (StereotypesHelper.hasStereotypeOrDerived(g, COMPONENT)||StereotypesHelper.hasStereotypeOrDerived(g, IMCECOMPONENT))) {
+					if (g instanceof Classifier && (StereotypesHelper.hasStereotypeOrDerived(g, COMPONENT) ||
+							StereotypesHelper.hasStereotypeOrDerived(g, IMCECOMPONENT) ||
+							StereotypesHelper.hasStereotypeOrDerived(g, IMCECHARACTERIZABLE))) {
 						if (libraryComponentPackage == null)
 							addLibraryComponent(g, true);
 						else
@@ -391,7 +421,7 @@ public class MissionMapping extends Query {
 		if (cur instanceof Package) {
 			if(IMCEPresent){
 				for (Element e: cur.getOwnedElement()) {
-					if (e instanceof Package || (e instanceof Classifier && StereotypesHelper.hasStereotypeOrDerived(e, IMCECOMPONENT))) {
+					if (e instanceof Package || (e instanceof Classifier && (StereotypesHelper.hasStereotypeOrDerived(e, IMCECOMPONENT) || StereotypesHelper.hasStereotypeOrDerived(e, IMCECHARACTERIZABLE)))) {
 						node.addChild(fillMission((NamedElement)e));
 					}
 				}
@@ -404,7 +434,9 @@ public class MissionMapping extends Query {
 				}
 			}
 				
-		} else if (StereotypesHelper.hasStereotypeOrDerived(cur, COMPONENT)||StereotypesHelper.hasStereotypeOrDerived(cur, IMCECOMPONENT)) {
+		} else if (StereotypesHelper.hasStereotypeOrDerived(cur, COMPONENT)||
+				StereotypesHelper.hasStereotypeOrDerived(cur, IMCECOMPONENT) ||
+				StereotypesHelper.hasStereotypeOrDerived(cur, IMCECHARACTERIZABLE)) {
 			fillComponentChars(cur, node.getData());
 			fillComponentLib(cur, node.getData());
 			node.getData().updateLibrary2MissionCharMapping();
