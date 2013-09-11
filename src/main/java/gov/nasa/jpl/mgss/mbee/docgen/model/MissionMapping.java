@@ -104,7 +104,7 @@ public class MissionMapping extends Query {
 					if (ee instanceof Classifier && hasCharacterizesDependency(ee)) {
 						if (StereotypesHelper.hasStereotypeOrDerived(ee, CHAR) || StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHAR)) {
 							libraryCharPackage = (Package)e;
-							break;
+							break; 
 						} else if (StereotypesHelper.hasStereotypeOrDerived(ee, COMPONENT) || 
 								StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT) ||
 								StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHARACTERIZABLE)) {
@@ -235,16 +235,14 @@ public class MissionMapping extends Query {
 					
 					if(IMCEPresent){
 						c = ef.createComponentInstance();
-						c.setName(mmc.getName());
-						c.setOwner(e);
 						StereotypesHelper.addStereotypeByString(c, IMCECHAR);
 					}
 					else {
 						c = ef.createClassInstance();
-						c.setName(mmc.getName());
-						c.setOwner(e);
 						StereotypesHelper.addStereotypeByString(c, CHAR);
 					}
+					c.setName(mmc.getName());
+					c.setOwner(e);
 					
 					Generalization g = ef.createGeneralizationInstance();
 					g.setOwner(c);
