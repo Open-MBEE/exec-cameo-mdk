@@ -45,7 +45,6 @@ import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
-import com.nomagic.magicdraw.validation.ValidationResultProvider;
 import com.nomagic.magicdraw.validation.ValidationRunData;
 import com.nomagic.magicdraw.validation.ui.ValidationResultsWindowManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -196,7 +195,7 @@ public class Utils {
         if (lower.equals("false")) return false;
 	    if ( strict ) return null;
 	    for ( String t : trueStrings ) {
-	        if ( lower.equals(trueStrings) ) return true;
+	        if ( lower.equals(t) ) return true;
 	    }
 	    return false;
 	}
@@ -936,7 +935,7 @@ public class Utils {
      * @param property
      * @return
      */
-	public static List sortByProperty(Collection<? extends Element>elem, Property prop) {
+	public static List<Element> sortByProperty(Collection<? extends Element>elem, Property prop) {
 		List<Element> list = new ArrayList<Element>(elem);
 		// Check if all numbers first
 		boolean isAllNumbers = true;
@@ -1125,7 +1124,7 @@ public class Utils {
 	
 	public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
 		Project project = Application.getInstance().getProject();
-        ValidationResultProvider provider = project.getValidationResultProvider();
+        //ValidationResultProvider provider = project.getValidationResultProvider();
         Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
@@ -1658,7 +1657,7 @@ public class Utils {
                 Object value = elem.refGetValue(prop.getName()); // i think this only works for derived properties
                 if ( value != null ) {
                 	if (value instanceof Collection)
-                		results.addAll((Collection)value );
+                		results.addAll((Collection<?>)value );
                 	else
                 		results.add(value);
                 }
@@ -2023,7 +2022,7 @@ public class Utils {
 	
 	public static boolean isLiteral(Object o) {
     	if (o instanceof Collection) {
-    		for (Object oo: (Collection)o) {
+    		for (Object oo: (Collection<?>)o) {
     			if (!isLiteral(oo))
     				return false;
     		}
