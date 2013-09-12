@@ -296,7 +296,6 @@ public class LibraryMapping extends Query {
 	}
 	
 	private void refactorCharacterizationProperties(Set<NamedElement> characterizations, Classifier classifier) {
-//		GUILog log = Application.getInstance().getGUILog();
 		for (Element e: classifier.getOwnedElement()) {
 			if (StereotypesHelper.hasStereotypeOrDerived(e, IMCECHAR) || StereotypesHelper.hasStereotypeOrDerived(e, CHAR)) {
 				NamedElement ne = hasCharacterization(characterizations, e);
