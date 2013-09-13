@@ -793,7 +793,7 @@ class SRChecker:
 
     def removeObsoleteRedefs(self):
         if Rolester is not None:
-            if not StereotypesHelper.hasStereotype(self.child, rolester):
+            if not StereotypesHelper.hasStereotype(self.child, Rolester):
                 for attr in self.obsoleteRedefs:
                     for redef in self.obsoleteRedefs[attr]:
                         gl.log('[Validation] Removing ' + redef.getQualifiedName() + ' from ' + attr.getQualifiedName() + ' \'s redefined list.')
