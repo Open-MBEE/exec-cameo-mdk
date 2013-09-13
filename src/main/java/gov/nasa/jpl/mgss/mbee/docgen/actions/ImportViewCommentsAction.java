@@ -77,7 +77,7 @@ public class ImportViewCommentsAction extends MDAction {
 				ViewEditUtils.setCredentials(client);
 				client.executeMethod(gm);
 				String json = gm.getResponseBodyAsString();	
-				gl.log(json);
+				//gl.log(json);
 				if (json.equals("{}") || json.contains("comments\": []")) {
 					gl.log("[INFO] There are no comments to import.");
 					return;
