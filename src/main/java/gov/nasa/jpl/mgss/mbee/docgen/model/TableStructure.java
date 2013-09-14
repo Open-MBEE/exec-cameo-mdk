@@ -142,7 +142,7 @@ public class TableStructure extends Table {
 				if (tc.bnode != null && tc.bnode.getOutgoing().iterator().hasNext()) { //should check next node is collect/filter node
 					ActivityNode n = tc.bnode.getOutgoing().iterator().next().getTarget();
 					Stack<List<Element>> in = new Stack<List<Element>>();
-					CollectFilterParser.setContext(new GenerationContext(in, n, Application.getInstance().getGUILog()));
+					CollectFilterParser.setContext(new GenerationContext(in, n, null, Application.getInstance().getGUILog()));
 					resultElements = CollectFilterParser.startCollectAndFilterSequence(n, startElements);
 				} else
 					resultElements = startElements;
@@ -196,40 +196,6 @@ public class TableStructure extends Table {
 		DBTable table = new DBTable();
 		
 		
-//<<<<<<< HEAD
-//		return rowsOut; // TODO: for some reason, this is always an empty list. Why?
-//	}
-//
-//	String irrelevantEntry = new String("--");
-//
-//	// TODO -- REVIEW -- Should parse*Column() and handle*Cell() methods not
-//	// evaluate expressions or find property values and do this in
-//	// DocBookOutputVisitor like other tables?
-//
-//	private void parseExpressionColumn( ActivityNode curNode, Object expression,
-//			List< Element > rows ) {
-//
-//		List<Object> curCol = new ArrayList<Object>();
-//
-//		for (Object r: rows) {
-//			if (r instanceof EObject) {
-//				curCol.add(OclEvaluator.evaluateQuery( (EObject)r, expression ) );
-//			} else if (r instanceof List<?>) {
-//				for (Object c: (List<Object>)r) {
-//					Object result = c;
-//					if (c instanceof EObject) {
-//						result = OclEvaluator.evaluateQuery( (EObject)c, expression );
-//					} else {
-//						// REVIEW -- TODO -- should be able to apply query to any object!
-//						Debug.error( "Error! TableExpressionColumn requires an EObject!" );
-//						result = c.toString();
-//					}
-//					if ( result instanceof List ) {
-//						curCol.add( result );
-//					} else {
-//						curCol.add( Utils2.newList( result ) );
-//					}
-//=======
 		List<List<DocumentElement>> tableheaders = new ArrayList<List<DocumentElement>>();
 		List<DocumentElement> header = new ArrayList<DocumentElement>();
 		for (String head: this.headers) {
@@ -245,7 +211,6 @@ public class TableStructure extends Table {
 				DBTableEntry entry = new DBTableEntry();
 				for (Reference cellPart: cell) {
 					Common.addReferenceToDBHasContent(cellPart, entry);
-//>>>>>>> 3c12172ddbf725a2db43bc76bdd5a349db8d3134
 				}
 				tableRow.add(entry);
 			}

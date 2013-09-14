@@ -294,7 +294,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 	 * @param e
 	 */
 	private void addViewQueryActions(ActionsCategory parent, NamedElement e) {
-		DocumentGenerator dg = new DocumentGenerator(e, null);
+		DocumentGenerator dg = new DocumentGenerator(e, null, null);
 		Document dge = dg.parseDocument(true, false);
 		CollectActionsVisitor cav = new CollectActionsVisitor();
 		dge.accept(cav);

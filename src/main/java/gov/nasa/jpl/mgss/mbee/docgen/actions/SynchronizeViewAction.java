@@ -12,7 +12,6 @@ import java.awt.event.ActionEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 import com.nomagic.magicdraw.actions.MDAction;
@@ -47,7 +46,7 @@ public class SynchronizeViewAction extends MDAction {
 			dv.printErrors();
 			if (dv.isFatal())
 				return;
-			DocumentGenerator dg = new DocumentGenerator(doc, null);
+			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
 			(new PostProcessor()).process(dge);
 			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(dge, doc, recurse, false, url), "Synchronizing View...", true, 0);

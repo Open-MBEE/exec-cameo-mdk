@@ -1,13 +1,10 @@
 package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
 import gov.nasa.jpl.mbee.docweb.JsonRequestEntity;
-import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentGenerator;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.PostProcessor;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
 import gov.nasa.jpl.mgss.mbee.docgen.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mgss.mbee.docgen.viewedit.ViewExporter;
 import gov.nasa.jpl.mgss.mbee.docgen.viewedit.ViewHierarchyVisitor;
 
 import java.awt.event.ActionEvent;
@@ -15,13 +12,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportViewHierarchyAction extends MDAction {
@@ -42,7 +37,7 @@ public class ExportViewHierarchyAction extends MDAction {
 			dv.printErrors();
 			if (dv.isFatal())
 				return;
-			DocumentGenerator dg = new DocumentGenerator(doc, null);
+			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, true);
 			ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
 			dge.accept(vhv);

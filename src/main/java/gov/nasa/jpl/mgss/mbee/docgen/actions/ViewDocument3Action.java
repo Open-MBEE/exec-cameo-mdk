@@ -38,7 +38,7 @@ public class ViewDocument3Action extends MDAction {
 			dv.printErrors();
 			if (dv.isFatal())
 				return;
-			DocumentGenerator dg = new DocumentGenerator(doc, null);
+			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument();
 			(new PostProcessor()).process(dge);
 			DocumentViewer.view(dge);

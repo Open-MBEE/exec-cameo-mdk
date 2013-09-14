@@ -53,7 +53,7 @@ public class ExportViewAction extends MDAction {
 			dv.printErrors();
 			if (dv.isFatal())
 				return;
-			DocumentGenerator dg = new DocumentGenerator(doc, null);
+			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
 			(new PostProcessor()).process(dge);
 			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(dge, doc, recurse, true, url), "Exporting View...", true, 0);

@@ -59,7 +59,11 @@ public class DocumentValidator {
 	
 	
 	
-	private Element start;
+	public ValidationRule getConstraintRule() {
+        return constraintRule;
+    }
+
+    private Element start;
 	private Set<Behavior> done;
 				
 	
@@ -96,7 +100,9 @@ public class DocumentValidator {
 	private ValidationRule missingOutgoingFlow = new ValidationRule("Missing outgoing flow", "Non-final node is missing outgoing flow!", warn);
 	private ValidationRule cycleError = new ValidationRule("Cycles in model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule activityNodeCycleError = new ValidationRule("Activity Node Cycles in Model", "There are loops in this document! Do not generate document!", fatalerror);
-	/*
+    private ValidationRule constraintRule = new ValidationRule("Constraint", "Model constraint violation", warn);
+
+    /*
 	 * Needed to use the utils.displayvalidationwindow
 	 */
 	 
@@ -148,6 +154,7 @@ public class DocumentValidator {
 		Validationui.addValidationRule(shouldNotBeSection);
 		Validationui.addValidationRule(cycleError);
 		Validationui.addValidationRule(activityNodeCycleError);
+        Validationui.addValidationRule(constraintRule);
 
 		
 		//Need Collection to use the utils.DisplayValidationWindow method
@@ -279,6 +286,7 @@ public class DocumentValidator {
 			graph.addVertex(n);
 			validateNode(n, graph);
 		}
+		
 		StrongConnectivityInspector<ActivityNode, ActivityEdge> sci = new StrongConnectivityInspector<ActivityNode, ActivityEdge>(graph);
 		List<Set<ActivityNode>> cycles = sci.stronglyConnectedSets();
 		if (!cycles.isEmpty()) {

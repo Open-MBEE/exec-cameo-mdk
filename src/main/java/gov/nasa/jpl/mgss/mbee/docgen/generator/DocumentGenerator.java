@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.generator;
 
+import gov.nasa.jpl.mbee.constraint.BasicConstraint;
+import gov.nasa.jpl.mbee.constraint.Constraint;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
@@ -24,6 +26,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
 import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
 import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageAssemblyTable;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -70,13 +73,14 @@ public class DocumentGenerator {
 	private Stereotype sysmlview;
 	private Stereotype product;
 			
-	public DocumentGenerator(Element e, PrintWriter wlog) {
+	public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
 		start = e;
 		sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
 		product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
 		StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
 		doc = new Document();
-		context = new GenerationContext(new Stack<List<Element>>(), null, Application.getInstance().getGUILog());
+		context = new GenerationContext(new Stack<List<Element>>(), null, dv,
+		                                Application.getInstance().getGUILog());
 	}
 
 	public Document parseDocument() {
@@ -210,29 +214,34 @@ public class DocumentGenerator {
 	 * parses activity/structured node - these usually indicate a new context of target elements
 	 * @param a
 	 * @param parent
+	 * @return the output of parsing the activity
 	 */
 	@SuppressWarnings("unchecked")
-	public void parseActivityOrStructuredNode(Element a, Container parent) {
+	public Object parseActivityOrStructuredNode(Element a, Container parent) {
 		InitialNode in = GeneratorUtils.findInitialNode(a);
 		if (in == null)
-			return;
+			return null;
 		Collection<ActivityEdge> outs = in.getOutgoing();
 		int pushed = 0;
 		ActivityNode next2 = in;
+        Object lastResults = null;
+		Object parseResults = null;
 		while (outs != null && outs.size() == 1) {
+		    parseResults = null;
 			ActivityNode next = outs.iterator().next().getTarget();
 			next2 = null;
 			if (next instanceof CallBehaviorAction || next instanceof StructuredActivityNode && StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.tableStructureStereotype)) { 
 				Behavior b = (next instanceof CallBehaviorAction)?((CallBehaviorAction)next).getBehavior():null;
 				if (StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.sectionStereotype) || b != null && StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.sectionStereotype)) {
-					parseSection((CallBehaviorAction)next, parent);
+					parseResults = parseSection((CallBehaviorAction)next, parent);
 					next2 = next;
 				} else if (StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.templateStereotype) || b != null && StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.templateStereotype)) {
-					parseQuery(next, parent);
+					parseResults = parseQuery(next, parent);
 					next2 = next;
 				} else if (StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.collectFilterStereotype) || b != null && StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.collectFilterStereotype)) {
 					CollectFilterParser.setContext(context);
 					List<Element> results = CollectFilterParser.startCollectAndFilterSequence(next, null);
+					parseResults = results;
 					this.context.pushTargets(results);
 					pushed++;
 					next2 = context.getCurrentNode();
@@ -247,14 +256,8 @@ public class DocumentGenerator {
 				List<String> titles = (List<String>)StereotypesHelper.getStereotypePropertyValue(next, DocGen3Profile.templateStereotype, "titles");
 				if (titles == null)
 					titles = new ArrayList<String>();
-				List<Element> targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(next, DocGen3Profile.templateStereotype, "targets");
-				if (targets == null || targets.isEmpty()) {
-					targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next, DocGen3Profile.queriesStereotype, 1, false, 1);
-					targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-				}
-				if (targets.isEmpty() && !this.context.targetsEmpty()) {
-					targets = this.context.peekTargets();
-				}
+				
+                List<Element> targets = getTargets(next, this.context);
 				if (!ignore) {
 					if (loop) {
 						int count = 0;
@@ -275,7 +278,7 @@ public class DocumentGenerator {
 								parent.addElement(sec);
 								con = sec;
 							}
-							parseActivityOrStructuredNode(next, con);
+							parseResults = parseActivityOrStructuredNode(next, con);
 							this.context.popTargets();
 							count++;
 						}
@@ -295,7 +298,7 @@ public class DocumentGenerator {
 							parent.addElement(sec);
 							con = sec;
 						}
-						parseActivityOrStructuredNode(next, con);
+						parseResults = parseActivityOrStructuredNode(next, con);
 						this.context.popTargets();
 					}
 				}
@@ -303,6 +306,7 @@ public class DocumentGenerator {
 			} else if (next instanceof ForkNode && StereotypesHelper.hasStereotype(next, DocGen3Profile.parallel)) {// REVIEW -- hasStereotypeOrDerived()?
 				CollectFilterParser.setContext(context);
 				List<Element> results = CollectFilterParser.startCollectAndFilterSequence(next, null);
+                parseResults = results;
 				this.context.pushTargets(results);
 				pushed++;
 				next2 = context.getCurrentNode();
@@ -310,16 +314,109 @@ public class DocumentGenerator {
 			if (next2 == null) {
 				next2 = next;
 			}
+			if ( parseResults == null ) parseResults = this.context.peekTargets();
+			if ( parseResults != null ) lastResults = parseResults;
+            // evaluate constraints on results
+            evaluateConstraints(next, parseResults, context);
 			outs = next2.getOutgoing();
 		} 
 		while(pushed > 0) {
 			this.context.popTargets();
 			pushed--;
 		}
+		return lastResults;
 	}
 	
-	//this is a section made using an activity and should be discouraged since it won't show up on view editor
-	private void parseSection(CallBehaviorAction cba, Container parent) {
+    public static List<Element> getTargets( Object obj, GenerationContext context ) {
+        ArrayList< Element > list = new ArrayList< Element >();
+        if ( obj instanceof ActivityNode ) {
+            list.addAll( DocumentGenerator.getTargets( (ActivityNode)obj, context ) );
+        }
+        if ( obj instanceof Collection ) {
+            for ( Object o : (Collection<?>)obj ) {
+                list.addAll( getTargets( o, context ) );
+            }
+        }
+        // REVIEW -- error if obj not one of above
+        return list;
+    }
+    
+	public static List< Element > getTargets( ActivityNode next,
+	                                          GenerationContext context ) {
+	    // TODO -- REVIEW -- shouldn't this be a list of Objects?!
+	    List< Element > targets =
+                StereotypesHelper.getStereotypePropertyValue( next,
+                                                              DocGen3Profile.templateStereotype,
+                                                              "targets" );
+        if (targets == null || targets.isEmpty()) {
+            targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next, DocGen3Profile.queriesStereotype, 1, false, 1);
+            targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
+        }
+        if ((targets == null || targets.isEmpty()) && next instanceof CallBehaviorAction && ((CallBehaviorAction)next).getBehavior() != null) {
+            targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(((CallBehaviorAction)next).getBehavior(), DocGen3Profile.templateStereotype, "targets");
+            if (targets == null || targets.isEmpty()) {
+                targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(((CallBehaviorAction)next).getBehavior(), DocGen3Profile.queriesStereotype, 1, false, 1);
+                targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(((CallBehaviorAction)next).getBehavior(), DocGen3Profile.oldQueriesStereotype, 1, false, 1));
+            }
+        }
+        if (targets.isEmpty() && !context.targetsEmpty()) {
+            targets = context.peekTargets();
+        }
+        return targets;
+    }
+
+    public static void evaluateConstraints( Object constrainedObject,
+                                            Object actionOutput,
+                                            GenerationContext context ) {
+        if ( context.getValidator() == null ) return;
+        List<Constraint> constraints = getConstraints(constrainedObject, actionOutput,
+                                                      context);
+        for ( Constraint constraint : constraints ) {
+            Boolean satisfied = constraint.evaluate();
+            if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
+                Element violatingElement = constraint.getViolatedConstraintElement();
+                ValidationRule rule = context.getValidator().getConstraintRule();
+                rule.addViolation( violatingElement,
+                                   "Constraint (" + constraint.getExpression()
+                                           + ") violated for "
+                                           + violatingElement );
+            }
+        }
+    }
+
+    public static List< Constraint > getConstraints( Object constrainedObject,
+                                                     Object actionOutput,
+                                                     GenerationContext context ) {
+        List<Constraint> constraints = new ArrayList< Constraint >();
+        List< Element > targets = getTargets( constrainedObject, context );
+        List< Element > constraintElements = getConstraintElements( constrainedObject );
+        for ( Element constraint : constraintElements  ) {
+            Constraint c = BasicConstraint.makeConstraint( constraint, actionOutput, targets, constrainedObject );
+            constraints.add( c );
+        }
+        return constraints;
+    }
+
+    public static List< Element > getConstraintElements( Object constrainedObject ) {
+        List<Element> constraintElements = new ArrayList< Element >();
+        if ( constrainedObject instanceof Element ) {
+            Element constrainedElement = ((Element)constrainedObject);
+            if (StereotypesHelper.hasStereotypeOrDerived(constrainedElement, DocGen3Profile.constraintStereotype) ) {
+                constraintElements.add( constrainedElement );
+            }
+            constraintElements.addAll( Utils.collectRelatedElementsByStereotypeString( constrainedElement, DocGen3Profile.constraintStereotype, 0, true, 1 ) );
+        }
+        if ( constrainedObject instanceof Collection ) {
+            for ( Object o : (Collection<?>)constrainedObject ) {
+                constraintElements.addAll( getConstraintElements( o ) );
+            }
+        }
+        return constraintElements;
+    }
+
+    //this is a section made using an activity and should be discouraged since it won't show up on view editor
+	private List<Section> parseSection(CallBehaviorAction cba, Container parent) {
+	    List<Section> sections = new ArrayList<Section>();
 		String titlePrefix = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype, "titlePrefix", "");
 		String titleSuffix = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype, "titleSuffix", "");
 		Boolean useContextNameAsTitle = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype, "useSectionNameAsTitle", false);
@@ -358,7 +455,9 @@ public class DocumentGenerator {
 					sec.setIgnore(ignore);
 					sec.setUseContextNameAsTitle(useContextNameAsTitle);
 					parent.addElement(sec);
+					sections.add(sec);
 					parseActivityOrStructuredNode(cba.getBehavior(), sec);
+					
 					context.popTargets();
 				}
 			}
@@ -373,12 +472,15 @@ public class DocumentGenerator {
 			sec.setIgnore(ignore);
 			sec.setUseContextNameAsTitle(useContextNameAsTitle);
 			parent.addElement(sec);
+            sections.add(sec);
 			parseActivityOrStructuredNode(cba.getBehavior(), sec);
 		}
+		return sections;
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void parseQuery(ActivityNode an, Container parent) {
+	private Object parseQuery(ActivityNode an, Container parent) {
+	    Object result = null;
 		String titlePrefix = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "titlePrefix", "");
 		String titleSuffix = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "titleSuffix", "");
 		Boolean useContextNameAsTitle = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype, "useSectionNameAsTitle", false);
@@ -388,24 +490,11 @@ public class DocumentGenerator {
 		boolean structured = false;
 		if (StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.structuredQueryStereotype) || (an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.structuredQueryStereotype)))
 			structured = true;
-		List<Element> targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(an, DocGen3Profile.templateStereotype, "targets");
-		if (targets == null || targets.isEmpty()) {
-			targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(an, DocGen3Profile.queriesStereotype, 1, false, 1);
-			targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(an, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-		}
-		if ((targets == null || targets.isEmpty()) && an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null) {
-			targets = (List<Element>)StereotypesHelper.getStereotypePropertyValue(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.templateStereotype, "targets");
-			if (targets == null || targets.isEmpty()) {
-				targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.queriesStereotype, 1, false, 1);
-				targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-			}
-		}
-		if (targets.isEmpty() && !this.context.targetsEmpty()) {
-			targets = this.context.peekTargets();
-		}		
+		List<Element> targets = getTargets( an, getContext() );
 		if (structured && !ignore && an instanceof CallBehaviorAction) {
 			Boolean createSections = (Boolean)GeneratorUtils.getObjectProperty(an, DocGen3Profile.structuredQueryStereotype, "createSections", false);
 			if (loop) {
+			    List<Section> sections = new ArrayList< Section >();
 				int count = 0;
 				for (Element e: targets) {
 					List<Element> target = new ArrayList<Element>();
@@ -422,11 +511,13 @@ public class DocumentGenerator {
 						sec.setTitleSuffix(titleSuffix);
 						sec.setDgElement(an);
 						parent.addElement(sec);
+						sections.add( sec );
 						con = sec;
 					}
 					parseActivityOrStructuredNode(((CallBehaviorAction)an).getBehavior(), con);
 					this.context.popTargets();
 				}
+				result = sections;
 			} else {
 				this.context.pushTargets(targets);
 				Container con = parent;
@@ -443,9 +534,12 @@ public class DocumentGenerator {
 					sec.setTitlePrefix(titlePrefix);
 					sec.setTitleSuffix(titleSuffix);
 					parent.addElement(sec);
+                    result = sec;
 					con = sec;
 				}
-				parseActivityOrStructuredNode(((CallBehaviorAction)an).getBehavior(), con);
+				
+				Object res = parseActivityOrStructuredNode(((CallBehaviorAction)an).getBehavior(), con);
+				if ( result == null ) result = res;
 				this.context.popTargets();
 			}
 		} else {
@@ -462,10 +556,11 @@ public class DocumentGenerator {
 				dge.initialize();
 				dge.parse();
 				parent.addElement(dge);
+				result = dge;
 			}
 		}
 		
-		
+		return result;
 	}
 	
 	/**

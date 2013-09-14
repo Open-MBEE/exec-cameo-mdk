@@ -18,15 +18,18 @@ public class GenerationContext {
 	
 	private Stack<List<Element>> targets;
 	private ActivityNode current;
+    private DocumentValidator validator;
 	private GUILog log;
 	
-	public GenerationContext(Stack<List<Element>> t, ActivityNode a, GUILog l) {
+	public GenerationContext(Stack<List<Element>> t, ActivityNode a,
+	                         DocumentValidator dv, GUILog l) {
 		targets = t;
 		current = a;
+        validator = dv;
 		log = l;
 	}
 	
-	public void pushTargets(List<Element> t) {
+    public void pushTargets(List<Element> t) {
 		targets.push(t);
 	}
 	
@@ -54,6 +57,10 @@ public class GenerationContext {
 		return current;
 	}
 	
+    public DocumentValidator getValidator() {
+        return validator;
+    }
+
 	public void log(String msg) {
 		log.log(msg);
 	}

@@ -78,6 +78,7 @@ public class DocGen3Profile {
 	public static final String includeChoosable = "IncludeChoosable";
 	public static final String nameChoosable = "NameChoosable";
 	public static final String diagramTypeChoosable = "DiagramTypeChoosable";
+    public static final String expressionChoosable = "ExpressionChoosable";
 	public static final String sortable = "Sortable";
 	
 	public static final String stereotypePropertyChoosable = "StereotypePropertiesChoosable";
@@ -111,4 +112,6 @@ public class DocGen3Profile {
 	
 	public static final String documentCommentStereotype = "DocumentComment";
 	public static final String viewCommentStereotype = "ViewComment";
+
+	public static final String constraintStereotype = "Constraint";
 }
