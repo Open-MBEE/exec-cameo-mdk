@@ -1,4 +1,6 @@
 from com.nomagic.magicdraw.core import Application
+from gov.nasa.jpl.mbee.lib import Utils
+
 import ValidateStructure
 reload(ValidateStructure)
 import DeSpecialize
@@ -40,7 +42,14 @@ if 'DocGenTargets' in scriptInput:
 #targets.extend(scriptInput['targets'])
     
 if len(targets) > 0:
-    if scriptInput['FixMode'] == 'FixNone':
+    fix = 'FixNone';
+    if 'FixMode' not in scriptInput:
+        fix = Utils.getUserDropdownSelectionForString("Choose Fix Mode", "Choose Fix Mode", ['FixNone', 'FixSelected', 'FixAll'], ['FixNone', 'FixSelected', 'FixAll']);
+        if fix == None:
+            fix = "FixNone";
+    else:
+        fix = scriptInput['FixMode'];
+    if fix == 'FixNone':
         options['checkOnly'] = True;
         for e in targets:
             checker = ValidateStructure.SRChecker(e, options)  

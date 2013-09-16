@@ -35,17 +35,18 @@ public class RunUserValidationScriptAction extends MDAction {
 	@SuppressWarnings("rawtypes")
 	public void actionPerformed(ActionEvent event) {
 		GUILog log = Application.getInstance().getGUILog();
-		String fix = "FixNone";
+		/*String fix = "FixNone";
 		List<String> fixes = new ArrayList<String>();
 		fixes.add("FixSelected");
 		fixes.add("FixAll");
 		fixes.add("FixNone");
-		fix = Utils.getUserDropdownSelectionForString("Choose Fix Mode", "Choose Fix Mode", fixes, fixes);
+	    fix = Utils.getUserDropdownSelectionForString("Choose Fix Mode", "Choose Fix Mode", fixes, fixes);
 		if (fix == null)
 			fix = "FixNone";
 		Map<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("FixMode", fix);
-	
+	*/
+		Map<String, Object> inputs = new HashMap<String, Object>();
 		Map o = scripti.getScriptOutput(inputs);
 		if (o != null && o.containsKey("DocGenValidationOutput")) {
 			Object l = o.get("DocGenValidationOutput");
