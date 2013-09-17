@@ -219,7 +219,7 @@ public class CollectFilterParser {
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectClassifierAttributes)) {
 				for (Element e: in)
 					res.addAll(Utils.getAttributes(e, inherited));
-        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectExpression)) {
+        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectExpressionStereotype)) {
             res.addAll(Utils.collectByExpression(in, cba));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterDiagramTypeStereotype)) {
 			res.addAll(Utils.filterDiagramsByDiagramTypes(in, diagramTypes, include));
@@ -229,7 +229,7 @@ public class CollectFilterParser {
 			res.addAll(Utils.filterElementsByNameRegex(in, names, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterStereotypeStereotype)) {
 			res.addAll(Utils.filterElementsByStereotypes(in, stereotypes, include, derived));
-        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterExpression)) {
+        } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterExpressionStereotype)) {
             res.addAll(Utils.filterElementsByExpression(in, cba, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectionStereotype)) {
 			res.addAll(collectAndFilterGroup((Activity)cba.getBehavior(), in));

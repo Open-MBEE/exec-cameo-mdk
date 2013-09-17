@@ -62,12 +62,12 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 	private JSONArray curContains;
 	private Stack<JSONArray> sibviews;
 	private Map<String, JSONObject> images;	// keep track of all images and corresponding metadata
-	private boolean recurse;
+	protected boolean recurse;
 	private GUILog gl;
-	
+	protected boolean alfresco;
 	private static String FILE_EXTENSION = ".svg";
 	
-	public DBEditDocwebVisitor(boolean recurse) {
+	public DBEditDocwebVisitor(boolean recurse, boolean alfresco) {
 		elements = new HashMap<String, JSONObject>();
 		views = new HashMap<String, JSONObject>();
 		view2view = new JSONObject();
@@ -75,6 +75,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 		this.recurse = recurse;
 		gl = Application.getInstance().getGUILog();
 		images = new HashMap<String, JSONObject>();
+		this.alfresco = alfresco;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -206,19 +207,30 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void visit(DBList list) {
-		DBHTMLVisitor html = new DBHTMLVisitor();
-		list.accept(html);
-		JSONObject entry = new JSONObject();
-		entry.put("source", "text");
-		entry.put("text", html.getOut());
-		entry.put("type", "Paragraph"); //just show as html for now
-		curContains.add(entry);
+	    if (alfresco) {
+	        DBEditListVisitor l = new DBEditListVisitor(recurse, elements);
+	        list.accept(l);
+	        curContains.add(l.getObject());
+	    } else {
+	        DBHTMLVisitor html = new DBHTMLVisitor();
+	        list.accept(html);
+	        JSONObject entry = new JSONObject();
+	        entry.put("source", "text");
+	        entry.put("text", html.getOut());
+	        entry.put("type", "Paragraph"); //just show as html for now
+	        curContains.add(entry);
+	    }
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void visit(DBParagraph para) {
-		JSONObject entry = new JSONObject();
+		JSONObject entry = getJSONForDBParagraph(para);
+		curContains.add(entry);
+	}
+
+    protected JSONObject getJSONForDBParagraph(DBParagraph para) {
+        JSONObject entry = new JSONObject();
 		if (para.getFrom() != null && para.getFromProperty() != null) {
 			this.addToElements(para.getFrom(), false);
 			entry.put("source", para.getFrom().getID());
@@ -228,13 +240,18 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 			entry.put("text", DocGenUtils.addP(DocGenUtils.fixString(para.getText(), false)));
 		}
 		entry.put("type", "Paragraph");
-		curContains.add(entry);
-	}
+        return entry;
+    }
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void visit(DBText text) {
-		JSONObject entry = new JSONObject();
+		JSONObject entry = getJSONForDBText(text);
+		curContains.add(entry);
+	}
+
+    protected JSONObject getJSONForDBText(DBText text) {
+        JSONObject entry = new JSONObject();
 		if (text.getFrom() != null && text.getFromProperty() != null) {
 			this.addToElements(text.getFrom(), false);
 			entry.put("source", text.getFrom().getID());
@@ -244,8 +261,8 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 			entry.put("text", DocGenUtils.addP(DocGenUtils.fixString(text.getText(), false)));
 		}
 		entry.put("type", "Paragraph");
-		curContains.add(entry);
-	}
+        return entry;
+    }
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -283,9 +300,15 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 
 	@Override
 	public void visit(DBTable table) {
-		DBEditTableVisitor v = new DBEditTableVisitor(this.recurse, this.elements);
-		table.accept(v);
-		curContains.add(v.getObject());
+	    if (alfresco){
+	        DBEditTableVisitor2 v = new DBEditTableVisitor2(this.recurse, elements);
+	        table.accept(v);
+	        curContains.add(v.getObject());
+	    } else {
+	        DBEditTableVisitor v = new DBEditTableVisitor(this.recurse, this.elements);
+	        table.accept(v);
+	        curContains.add(v.getObject());
+	    }
 	}
 	
 	@SuppressWarnings("unchecked")
