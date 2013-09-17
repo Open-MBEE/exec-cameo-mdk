@@ -142,7 +142,7 @@ public class TableStructure extends Table {
 				if (tc.bnode != null && tc.bnode.getOutgoing().iterator().hasNext()) { //should check next node is collect/filter node
 					ActivityNode n = tc.bnode.getOutgoing().iterator().next().getTarget();
 					Stack<List<Element>> in = new Stack<List<Element>>();
-					CollectFilterParser.setContext(new GenerationContext(in, n, Application.getInstance().getGUILog()));
+					CollectFilterParser.setContext(new GenerationContext(in, n, null, Application.getInstance().getGUILog()));
 					resultElements = CollectFilterParser.startCollectAndFilterSequence(n, startElements);
 				} else
 					resultElements = startElements;
@@ -194,7 +194,7 @@ public class TableStructure extends Table {
 		
 		buildTableReferences();
 		DBTable table = new DBTable();
-		
+
 		List<List<DocumentElement>> tableheaders = new ArrayList<List<DocumentElement>>();
 		List<DocumentElement> header = new ArrayList<DocumentElement>();
 		for (String head: this.headers) {

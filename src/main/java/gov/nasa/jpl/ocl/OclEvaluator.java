@@ -1,7 +1,10 @@
 package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.util.ArrayList;
@@ -30,6 +33,8 @@ import org.eclipse.ocl.lpg.AbstractLexer;
 import org.eclipse.ocl.lpg.AbstractParser;
 import org.eclipse.ocl.lpg.ProblemHandler;
 import org.eclipse.ocl.util.OCLUtil;
+
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  * Utility class for encapsulating the OCL query and constraint evaluations.
@@ -83,26 +88,55 @@ public class OclEvaluator {
 	private static OCL<?, EClassifier, ?, ?, ?, ?, ?, ?, ?, Constraint, EClass, EObject>	ocl;
 	private static QueryStatus																queryStatus = QueryStatus.NO_QUERY;
 	public static boolean isVerboseDefault = Debug.isOn();
-  protected static BasicDiagnostic basicDiagnostic = null;
-  protected static OCLHelper<EClassifier, ?, ?, Constraint> helper = null;
-  private static ProblemHandler problemHandler = null;
+	protected static BasicDiagnostic basicDiagnostic = null;
+	protected static OCLHelper<EClassifier, ?, ?, Constraint> helper = null;
+	private static ProblemHandler problemHandler = null;
 
-  protected static DgEnvironmentFactory envFactory = new DgEnvironmentFactory();  
+	protected static DgEnvironmentFactory envFactory = new DgEnvironmentFactory();  
   
 	public static void createOclInstance(DgEnvironmentFactory envFactory) {
 		ocl = OCL.newInstance(envFactory);
 	}
 
-	protected static String queryObjectToStringExpression(Object query) {
+	
+	public static String queryElementToStringExpression( Element query ) {
+        Object o = GeneratorUtils.getObjectProperty(query, DocGen3Profile.expressionChoosable,
+                                                    "expression", null);
+        return queryObjectToStringExpression( o );
+	}
+	
+    public static String queryCollectionToStringExpression(Collection<?> queryColl ) {
+        StringBuffer sb = new StringBuffer();
+        boolean first = true;
+        for ( Object q : queryColl ) {
+            if ( first ) first = false;
+            else sb.append( " and " ); 
+            String expr = queryObjectToStringExpression( q );
+            sb.append( "(" + expr + ")" ); // REVIEW -- Do parentheses work??!
+        }
+        String exprString = sb.toString();
+        return exprString;
+    }
+    
+	/**
+	 * 
+	 * @param query
+	 * @return
+	 */
+	public static String queryObjectToStringExpression(Object query) {
+	  if ( query == null ) return null;
       String exprString = null;
-      if (query instanceof String) {
+      if (query instanceof Element) {
+          Element element = (Element)query;
+          exprString = queryElementToStringExpression( element );
+      } else if (query instanceof String) {
         exprString = (String) query;
       } else if (query instanceof Collection) {
-        Collection<?> expList = (Collection<?>) query;
-        if (expList.size() == 1) {
-          return queryObjectToStringExpression(expList.iterator().next());
+        Collection<?> queryColl = (Collection<?>) query;
+        if (queryColl.size() == 1) {
+          exprString = queryObjectToStringExpression(queryColl.iterator().next());
         } else {
-          Debug.error("Error! Query cannot be a list of multiple things!");
+            //Debug.error("Error! Query cannot be a list of multiple things!");
         }
       } else if (query != null) {
         exprString = (String) query.toString();
@@ -117,7 +151,8 @@ public class OclEvaluator {
    * @param query object to convert to a valid OCL string to be evaluated in the context
    * @return        Object of the result whose type should be known by the caller
    */
-  public static Object evaluateQuery(EObject context, Object query) {
+  public static Object evaluateQuery(Object context, Object query) {
+  //  public static Object evaluateQuery(EObject context, Object query) {
     return evaluateQuery(context, queryObjectToStringExpression(query));
   }
 	
@@ -128,7 +163,8 @@ public class OclEvaluator {
    * @param queryString Valid OCL string that to be evaluated in the context
    * @return        Object of the result whose type should be known by the caller
    */
-  public static Object evaluateQuery(EObject context, String queryString) {
+  public static Object evaluateQuery(Object context, String queryString) {
+  //public static Object evaluateQuery(EObject context, String queryString) {
     return evaluateQuery( context, queryString, isVerboseDefault );
   }
   
@@ -140,17 +176,21 @@ public class OclEvaluator {
 	 * @param verbose		Turns on OCL debugging if true, off if false 
 	 * @return				Object of the result whose type should be known by the caller
 	 */
-	public static Object evaluateQuery(EObject context, String queryString,
+	public static Object evaluateQuery(Object context, String queryString,
 	                                   boolean verbose) {
     setupEnvironment();
 
 	  // create the ocl evaluator
     OclEvaluator.createOclInstance( envFactory );    
-
+      // boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
 	  setOclTracingEnabled(verbose);
 		queryStatus = QueryStatus.VALID_OCL;
 
-		getHelper().setContext(context == null ? null : context.eClass());
+		if ( context instanceof EObject ) {
+		    getHelper().setContext(context == null ? null : ((EObject)context).eClass());
+		} else if ( context instanceof Collection ) {
+	        getHelper().setContext(context == null ? null : OCLStandardLibraryImpl.INSTANCE.getCollection());
+		}
 		
 		Object result = null;
 		OCLExpression<EClassifier> query = null;
@@ -196,6 +236,8 @@ public class OclEvaluator {
 			}
 		}
 
+		Debug.outln("evaluateQuery(context=" + DocGenUtils.fixString(context) + ", queryString=" + queryString + ", verbose=" + verbose + ") = " + DocGenUtils.fixString(result));
+        // if ( !wasOn ) Debug.turnOff();
 		return result;
 	}
 

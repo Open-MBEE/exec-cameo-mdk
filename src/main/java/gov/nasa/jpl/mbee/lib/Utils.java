@@ -485,6 +485,17 @@ public class Utils {
         return res;
     }
     
+    /**
+     * Get elements returned by evaluating a query expression on an element.
+     * 
+     * @param element
+     *            the context of the query
+     * @param query
+     *            a query expression, such as OCL text in a String
+     * @return a list containing the result of the query if it is an Element,
+     *         the Elements in the result if it is a collection, or else an
+     *         empty list
+     */
     public static List<Element> collectByExpression(Element element, Object query) {
         List<Element> res = new ArrayList<Element>();
         Object o = OclEvaluator.evaluateQuery(element, query);
@@ -493,9 +504,13 @@ public class Utils {
     }
 
     /**
-     * Collect all objects of type Element in each of the results of evaluating the query expression on each of the elements.
-     * @param elements contexts for evaluating the expression
-     * @param cba the collect action containing the expression 
+     * Collect all objects of type Element in each of the results of evaluating
+     * the query expression on each of the elements.
+     * 
+     * @param elements
+     *            contexts for evaluating the expression
+     * @param cba
+     *            the collect action containing the expression
      * @return a List of Elements
      */
     public static List<Element> collectByExpression(List<Element> elements, CallBehaviorAction cba) {
@@ -504,11 +519,10 @@ public class Utils {
                                                         DocGen3Profile.collectExpressionStereotype,
                                                         "expression", null);
         for (Element e : elements) {
-            res.addAll(collectByExpression(e, query));
+            res.addAll(collectByExpression(e, query)); // REVIEW -- Should this be add() instead of addAll()?
         }
         return res;
     }
-
 
     /**
      * @param e needs to be a Classifier, else empty list will be returned
@@ -539,6 +553,238 @@ public class Utils {
     }
     
     /**
+     * This collects all relationships.
+     * 
+     * @param e
+     * @param direction
+     *            0 means any or no direction, 1 means e is the client/source, 2
+     *            means e is the supplier/target
+     * @return a list of relationships as Elements
+     */
+    public static List<Element> collectRelationships(Element e, int direction) {
+        if ( e == null ) return null;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectRelationships(element, direction)" );
+            direction = 0;
+        }
+        List<Element> res = new ArrayList<Element>();
+        if ( direction == 0 ) {
+            res = EmfUtils.getRelationships( e );
+        } else if ( direction == 1 ) {
+            res.addAll(e.get_directedRelationshipOfSource());
+        } if ( direction == 2 ) {
+            res.addAll(e.get_directedRelationshipOfTarget());
+        }
+        return res;
+    }
+    
+    /**
+     * This will consider all relationships that are also specializations of javaClasses
+     * @param e
+     * @param javaClasses this is the class of the relationships to consider
+     * @param direction 0 is both, 1 is outward, 2 is inward
+     * @param depth
+     * @return
+     */
+    public static List<Element> collectRelatedElementsByJavaClasses(Element e, Collection<java.lang.Class<?>> javaClasses, int direction, int depth) {
+        List<Element> res = new ArrayList<Element>();
+        if ( e == null ) return res;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectRelatedElementsByJavaClasses()" );
+            direction = 0;
+        }
+        collectRelatedElementsByJavaClassesRecursive(e, javaClasses, direction, depth, 1, res);
+        return res;
+    }
+    
+    // TODO -- refactor as collect( What.RelatedElements, Criteria.JavaClass, argMap );
+    private static void collectRelatedElementsByJavaClassesRecursive(Element e, Collection<java.lang.Class<?>> javaClasses, int direction, int depth, int curdepth, List<Element> res) {
+        if ( e == null ) return;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectRelatedElementsByJavaClassesRecursive()" );
+            direction = 0;
+        }
+        if (depth != 0 && curdepth > depth)
+            return;
+        List< Element > relationships = collectRelationships(e, direction);
+        if ( relationships == null ) return;
+        for ( Element r : relationships ) {
+            Element relatedElement = null;
+            //client: 0 is both, 1 is client, 2 is supplier
+            if (direction == 0 || direction == 1) {
+                relatedElement = ModelHelper.getSupplierElement(r);
+                if ( direction == 0 && relatedElement == e ) relatedElement = null;
+            }    
+            if ( (direction == 0 && relatedElement == null ) || direction == 2) {
+                relatedElement = ModelHelper.getClientElement(r);
+            }
+            if ( !res.contains(relatedElement) ) {
+                for (java.lang.Class<?> c: javaClasses) { // TODO -- make this line & next a utlity fcn
+                    if (c.isInstance(relatedElement)) {
+                        res.add(relatedElement);
+                        collectRelatedElementsByJavaClassesRecursive(relatedElement, javaClasses, direction, depth, curdepth+1, res);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * 
+     * @param e
+     * @param c
+     * @param direction 0 is both, 1 is outward, 2 is inward
+     * @param depth
+     * @return
+     */
+    public static List<Element> collectRelatedElementsByJavaClass(Element e, java.lang.Class<?> c, int direction, int depth) {
+        if ( e == null ) return Utils2.newList();
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectRelatedElementsByJavaClass()" );
+            direction = 0;
+        }
+        List<java.lang.Class<?>> classes = new ArrayList<java.lang.Class<?>>();
+        classes.add(c);
+        return collectRelatedElementsByJavaClasses(e, classes, direction, depth);
+    }
+    
+    /**
+     * 
+     * @param e
+     * @param c this is the class from magicdraw's uml profile
+     * @param direction 0 is both, 1 is outward, 2 is inward
+     * @param depth
+     * @return
+     */
+    public static List<Element> collectRelatedElementsByMetaclass(Element e, Class c, int direction, int depth) {
+        if ( e == null ) return null;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectRelatedElementsByMetaclass()" );
+            direction = 0;
+        }
+        java.lang.Class<?> java = StereotypesHelper.getClassOfMetaClass(c);
+        return collectRelatedElementsByJavaClass(e, java, direction, depth);
+    }
+
+    /**
+     * 
+     * @param e
+     * @param metaclasses these are the metaclass element classes from magicdraw's uml profile, this will always considered derived relationship metaclasses
+     * @param direction 0 means both, 1 means e is the client, 2 means e is the supplier
+     * @return
+     */
+    public static List<Element> collectRelatedElementsByMetaclasses(Element e, Collection<Class> metaclasses, int direction, int depth) {
+        if ( e == null ) return null;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectRelatedElementsByMetaclasses()" );
+            direction = 0;
+        }
+        List<java.lang.Class<?>> javaClasses = new ArrayList<java.lang.Class<?>>();
+        for (Class c: metaclasses)
+            javaClasses.add(StereotypesHelper.getClassOfMetaClass(c));
+        return collectRelatedElementsByJavaClasses(e, javaClasses, direction, depth);
+    }
+
+    /**
+     * 
+     * @param e
+     * @param stereotypes
+     * @param direction 0 means both, 1 means e is the client, 2 means e is the supplier
+     * @param derived whether to consider derived stereotypes
+     * @return
+     */
+    public static List<Element> collectRelatedElementsByStereotypes(Element e, Collection<Stereotype> stereotypes, int direction, boolean derived, int depth) {
+        List<Element> res = new ArrayList<Element>();
+        if ( e == null ) return res;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectRelatedElementsByStereotypes()" );
+            direction = 0;
+        }
+        //client: 0 is both, 1 is client, 2 is supplier
+        collectRelatedElementsByStereotypesRecursive(e, stereotypes, direction, derived, depth, 1, res);
+        return res;
+    }
+    
+    private static void collectRelatedElementsByStereotypesRecursive( Element e,
+                                                                      Collection< Stereotype > stereotypes,
+                                                                      int direction,
+                                                                      boolean derived,
+                                                                      int depth,
+                                                                      int curdepth,
+                                                                      List< Element > res ) {
+        if ( e == null ) return;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError(direction, "collectRelatedElementsByStereotypesRecursive()");
+            direction = 0;
+        }
+        if (depth != 0 && curdepth > depth)
+            return;
+        List< Element > relationships = collectRelationships(e, direction);
+        if ( relationships == null ) return;
+        for ( Element r : relationships ) {
+            Element relatedElement = null;
+            if (direction == 0 || direction == 1) {
+                relatedElement = ModelHelper.getSupplierElement(r);
+                if ( direction == 0 && relatedElement == e ) relatedElement = null;
+            }    
+            //client: 0 is both, 1 is client, 2 is supplier
+            if ( (direction == 0 && relatedElement == null ) || direction == 2) {
+                relatedElement = ModelHelper.getClientElement(r);
+            }
+            if (derived && StereotypesHelper.hasStereotypeOrDerived(relatedElement, stereotypes) ||
+                !derived && StereotypesHelper.hasStereotype(relatedElement, stereotypes)) {
+                if ( !res.contains(relatedElement) ) {
+                    res.add(relatedElement);
+                    collectRelatedElementsByStereotypesRecursive(relatedElement, stereotypes, direction, derived, depth, curdepth+1, res);
+                }
+            }
+        }
+    }
+
+    
+    /**
+     * 
+     * @param e
+     * @param stereotype
+     * @param direction direction 0 means both, 1 means e is the client, 2 means e is the supplier
+     * @param derived
+     * @param depth
+     * @return
+     */
+    public static List<Element> collectRelatedElementsByStereotype(Element e, Stereotype stereotype, int direction, boolean derived, int depth) {
+        if ( e == null ) return Utils2.newList();
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError(direction, "collectRelatedElementsByStereotype()");
+            direction = 0;
+        }
+        List<Stereotype> s = new ArrayList<Stereotype>();
+        s.add(stereotype);
+        return collectRelatedElementsByStereotypes(e, s, direction, derived, depth);
+    }
+    
+    /**
+     * 
+     * @param e
+     * @param stereotype
+     * @param direction direction 0 means both, 1 means e is the client, 2 means e is the supplier
+     * @param derived
+     * @param depth
+     * @return
+     */
+    public static List<Element> collectRelatedElementsByStereotypeString(Element e, String stereotype, int direction, boolean derived, int depth) {
+        if ( e == null ) return Utils2.newList();
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError(direction, "collectRelatedElementsByStereotypeString()");
+            direction = 0;
+        }
+        Stereotype s = StereotypesHelper.getStereotype(Application.getInstance().getProject(), stereotype);
+        if (s != null)
+            return collectRelatedElementsByStereotype(e, s, direction, derived, depth);
+        return Utils2.newList();
+    }
+
+    /**
      * This will consider all relationships that are also specializations of javaClasses
      * @param e
      * @param javaClasses this is the class of the relationships to consider
@@ -547,12 +793,22 @@ public class Utils {
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClasses(Element e, Collection<java.lang.Class<?>> javaClasses, int direction, int depth) {
-    	List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<Element>();
+        if ( e == null ) return res;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectDirectedRelatedElementsByRelationshipJavaClasses()" );
+            direction = 0;
+        }
     	collectDirectedRelatedElementsByRelationshipJavaClassesRecursive(e, javaClasses, direction, depth, 1, res);
     	return res;
     }
     
     private static void collectDirectedRelatedElementsByRelationshipJavaClassesRecursive(Element e, Collection<java.lang.Class<?>> javaClasses, int direction, int depth, int curdepth, List<Element> res) {
+        if ( e == null ) return;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectDirectedRelatedElementsByRelationshipJavaClassesRecursive()" );
+            direction = 0;
+        }
     	if (depth != 0 && curdepth > depth)
     		return;
     	if (direction == 0 || direction == 1) {
@@ -592,6 +848,11 @@ public class Utils {
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClass(Element e, java.lang.Class<?> c, int direction, int depth) {
+        if ( e == null ) return Utils2.newList();
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectDirectedRelatedElementsByRelationshipJavaClass()" );
+            direction = 0;
+        }
     	List<java.lang.Class<?>> classes = new ArrayList<java.lang.Class<?>>();
     	classes.add(c);
     	return collectDirectedRelatedElementsByRelationshipJavaClasses(e, classes, direction, depth);
@@ -606,6 +867,11 @@ public class Utils {
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipMetaclass(Element e, Class c, int direction, int depth) {
+        if ( e == null ) return null;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectDirectedRelatedElementsByRelationshipMetaclass()" );
+            direction = 0;
+        }
     	java.lang.Class<?> java = StereotypesHelper.getClassOfMetaClass(c);
     	return collectDirectedRelatedElementsByRelationshipJavaClass(e, java, direction, depth);
     }
@@ -617,6 +883,11 @@ public class Utils {
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipMetaclasses(Element e, Collection<Class> metaclasses, int direction, int depth) {
+        if ( e == null ) return null;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectDirectedRelatedElementsByRelationshipMetaclasses()" );
+            direction = 0;
+        }
     	List<java.lang.Class<?>> javaClasses = new ArrayList<java.lang.Class<?>>();
     	for (Class c: metaclasses)
     		javaClasses.add(StereotypesHelper.getClassOfMetaClass(c));
@@ -630,6 +901,11 @@ public class Utils {
      * @return
      */
     public static List<Element> collectDirectedRelatedElements(Element e, int direction) {
+        if ( e == null ) return null;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectDirectedRelatedElements(element, direction)" );
+            direction = 0;
+        }
     	List<Element> res = new ArrayList<Element>();
     	if (direction == 0 || direction == 1)
     		for (DirectedRelationship dr: e.get_directedRelationshipOfSource())
@@ -651,13 +927,23 @@ public class Utils {
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotypes(Element e, Collection<Stereotype> stereotypes, int direction, boolean derived, int depth) {
+        List<Element> res = new ArrayList<Element>();
+        if ( e == null ) return res;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError( direction, "collectDirectedRelatedElementsByRelationshipStereotypes()" );
+            direction = 0;
+        }
     	//client: 0 is both, 1 is client, 2 is supplier
-    	List<Element> res = new ArrayList<Element>();
     	collectDirectedRelatedElementsByRelationshipStereotypesRecursive(e, stereotypes, direction, derived, depth, 1, res);
     	return res;
     }
     
     private static void collectDirectedRelatedElementsByRelationshipStereotypesRecursive(Element e, Collection<Stereotype> stereotypes, int direction, boolean derived, int depth, int curdepth, List<Element> res) {
+        if ( e == null ) return;
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError(direction, "collectDirectedRelatedElementsByRelationshipStereotypesRecursive()");
+            direction = 0;
+        }
     	if (depth != 0 && curdepth > depth)
     		return;
     	//client: 0 is both, 1 is client, 2 is supplier
@@ -693,11 +979,22 @@ public class Utils {
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotype(Element e, Stereotype stereotype, int direction, boolean derived, int depth) {
+        if ( e == null ) return Utils2.newList();
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError(direction, "collectDirectedRelatedElementsByRelationshipStereotype()");
+            direction = 0;
+        }
     	List<Stereotype> s = new ArrayList<Stereotype>();
     	s.add(stereotype);
     	return collectDirectedRelatedElementsByRelationshipStereotypes(e, s, direction, derived, depth);
     }
     
+    protected static void badDirectionError( int direction, String methodSignature ) {
+        Debug.error( "Error! Bad direction " + direction + " for "
+                     + methodSignature
+                     + "; using direction = 0 (both directions)." );
+    }
+
     /**
      * 
      * @param e
@@ -708,10 +1005,15 @@ public class Utils {
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotypeString(Element e, String stereotype, int direction, boolean derived, int depth) {
+        if ( e == null ) return Utils2.newList();
+        if ( direction < 0 || direction > 2 ) {
+            badDirectionError(direction, "collectDirectedRelatedElementsByRelationshipStereotype()");
+            direction = 0;
+        }
     	Stereotype s = StereotypesHelper.getStereotype(Application.getInstance().getProject(), stereotype);
     	if (s != null)
     		return collectDirectedRelatedElementsByRelationshipStereotype(e, s, direction, derived, depth);
-    	return new ArrayList<Element>();
+    	return Utils2.newList();
     }
     
     /**

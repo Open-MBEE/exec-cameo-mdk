@@ -1,6 +1,12 @@
 package gov.nasa.jpl.mgss.mbee.docgen.generator;
 
+import gov.nasa.jpl.mbee.constraint.BasicConstraint;
+import gov.nasa.jpl.mbee.constraint.Constraint;
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.EmfUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 
 import java.io.PrintWriter;
@@ -59,7 +65,11 @@ public class DocumentValidator {
 	
 	
 	
-	private Element start;
+	public ValidationRule getConstraintRule() {
+        return constraintRule;
+    }
+
+    private Element start;
 	private Set<Behavior> done;
 				
 	
@@ -96,7 +106,9 @@ public class DocumentValidator {
 	private ValidationRule missingOutgoingFlow = new ValidationRule("Missing outgoing flow", "Non-final node is missing outgoing flow!", warn);
 	private ValidationRule cycleError = new ValidationRule("Cycles in model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule activityNodeCycleError = new ValidationRule("Activity Node Cycles in Model", "There are loops in this document! Do not generate document!", fatalerror);
-	/*
+    private ValidationRule constraintRule = new ValidationRule("Constraint", "Model constraint violation", warn);
+
+    /*
 	 * Needed to use the utils.displayvalidationwindow
 	 */
 	 
@@ -109,6 +121,7 @@ public class DocumentValidator {
 	private ActivityEdgeFactory aef;
 	private boolean fatal;
 	private Stereotype sysmlview;
+
 	public DocumentValidator(Element e) {
 		start = e;
 		
@@ -148,6 +161,7 @@ public class DocumentValidator {
 		Validationui.addValidationRule(shouldNotBeSection);
 		Validationui.addValidationRule(cycleError);
 		Validationui.addValidationRule(activityNodeCycleError);
+        Validationui.addValidationRule(constraintRule);
 
 		
 		//Need Collection to use the utils.DisplayValidationWindow method
@@ -279,6 +293,7 @@ public class DocumentValidator {
 			graph.addVertex(n);
 			validateNode(n, graph);
 		}
+		
 		StrongConnectivityInspector<ActivityNode, ActivityEdge> sci = new StrongConnectivityInspector<ActivityNode, ActivityEdge>(graph);
 		List<Set<ActivityNode>> cycles = sci.stronglyConnectedSets();
 		if (!cycles.isEmpty()) {
@@ -469,4 +484,89 @@ public class DocumentValidator {
 		else
 			pw.println("Validation done.");
 	}
+
+    public static Boolean evaluateConstraints( Object constrainedObject,
+                                               Object actionOutput,
+                                               GenerationContext context ) {
+        Boolean result = null;
+        if ( context.getValidator() == null ) return result;
+        result = true;
+        List<Constraint> constraints = getConstraints(constrainedObject, actionOutput,
+                                                      context);
+        if (constrainedObject instanceof Element) {
+            Element e = (Element)constrainedObject;
+            System.out.println( "constraints for " + e.getHumanName() + ", "
+                                + e.getID() + ": "
+                                + MoreToString.Helper.toString( constraints ) );
+        } else {
+            System.out.println( "constraints for " + constrainedObject + ": "
+                                + MoreToString.Helper.toString( constraints ) );
+        }
+        for ( Constraint constraint : constraints ) {
+            System.out.println("found constraint: " + MoreToString.Helper.toString( constraint ) );
+            Boolean satisfied = constraint.evaluate();
+            if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
+                result = false;
+                Element violatingElement = constraint.getViolatedConstraintElement();
+                ValidationRule rule = context.getValidator().getConstraintRule();
+                rule.addViolation( violatingElement,
+                                   "Constraint (" + constraint.getExpression() + ") on "
+                                           + EmfUtils.toString( constrainedObject )
+                                           + " is violated"
+                                           + ( constraint.getConstrainingElements().size() > 1
+                                               && !Utils2.isNullOrEmpty( violatingElement.getHumanName() )
+                                               ? " for " + violatingElement.getHumanName() : "" ) );
+            } else if ( satisfied == null && result != null
+                        && result.equals( Boolean.TRUE ) ) {
+                result = null;
+            }
+        }
+        return result;
+    }
+
+    public static List< Constraint > getConstraints( Object constrainedObject,
+                                                     Object actionOutput,
+                                                     GenerationContext context ) {
+        List<Constraint> constraints = new ArrayList< Constraint >();
+        List< Element > targets = DocumentGenerator.getTargets( constrainedObject, context );
+        List< Element > constraintElements = getConstraintElements( constrainedObject );
+        for ( Element constraint : constraintElements  ) {
+            Constraint c = BasicConstraint.makeConstraint( constraint, actionOutput, targets, constrainedObject );
+            constraints.add( c );
+        }
+        return constraints;
+    }
+
+    public static List<Element> getComments( Element source ) {
+        List<Element> results = new ArrayList< Element >();
+        results.addAll(source.get_commentOfAnnotatedElement());
+        if ( results.size() > 0 ) {
+            Debug.out("");
+        }
+        return results;
+    }
+    
+    public static List< Element > getConstraintElements( Object constrainedObject ) {
+        List<Element> constraintElements = new ArrayList< Element >();
+        if ( constrainedObject instanceof Element ) {
+            Element constrainedElement = ((Element)constrainedObject);
+            if (StereotypesHelper.hasStereotypeOrDerived(constrainedElement,
+                                                         DocGen3Profile.constraintStereotype) ) {
+                constraintElements.add( constrainedElement );
+            }
+            constraintElements.addAll( Utils.collectRelatedElementsByStereotypeString( constrainedElement, DocGen3Profile.constraintStereotype, 0, true, 1 ) );
+            for ( Element comment : getComments( constrainedElement ) ) {
+                if (StereotypesHelper.hasStereotypeOrDerived(comment, DocGen3Profile.constraintStereotype) ) {
+                    constraintElements.add( comment );
+                }
+            }
+        }
+        if ( constrainedObject instanceof Collection ) {
+            for ( Object o : (Collection<?>)constrainedObject ) {
+                constraintElements.addAll( getConstraintElements( o ) );
+            }
+        }
+        return constraintElements;
+    }
+
 }

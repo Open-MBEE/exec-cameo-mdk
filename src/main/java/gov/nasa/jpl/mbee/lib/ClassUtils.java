@@ -24,14 +24,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.nomagic.magicdraw.properties.PropertyID;
-
 import junit.framework.Assert;
 
-/**
- * @author bclement
- *
- */
 public class ClassUtils {
 
   /**
@@ -441,7 +435,7 @@ public class ClassUtils {
   public static Class< ? > classForName( String className ) throws ClassNotFoundException {
     Thread t = Thread.currentThread();
     ClassLoader cl = t.getContextClassLoader();
-    Class cls = cl.loadClass(className);
+    Class< ? > cls = cl.loadClass(className);
     return cls;
   }
 
@@ -758,7 +752,6 @@ public class ClassUtils {
   public static Constructor< ? > getConstructorForArgs( String className,
                                                         Object[] args,
                                                         String preferredPackage ) {
-    String foo = PropertyID.ASK_WHERE_TO_INSERT_SHAPE;
     Class< ? > classForName = getClassForName( className, preferredPackage, false );
     if ( classForName == null ) {
       System.err.println( "Couldn't find the class " + className
@@ -998,11 +991,11 @@ public class ClassUtils {
     //     org.apache.commons.lang.
     //     java.util?
     Class< ? >[] classes =
-        new Class< ? >[] { Math.class, //StringUtils2.class,
+        new Class< ? >[] { Math.class, //StringUtils.class,
                            Integer.class,
                            Double.class, Character.class, Boolean.class,
                            String.class,
-                           //org.apache.commons.lang.ArrayUtils2.class,
+                           //org.apache.commons.lang.ArrayUtils.class,
                            Arrays.class };
     for ( Class<?> c : classes ) {
       Method m = getMethodForArgTypes( c, functionName, argTypes );

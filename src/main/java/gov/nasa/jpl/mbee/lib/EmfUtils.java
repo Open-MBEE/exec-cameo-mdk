@@ -38,6 +38,15 @@ public final class EmfUtils {
   public static String spewObjectPrefix = "* * * * *";
   public static String spewObjectSuffix = spewObjectPrefix;
 
+  public static String toString( Object o ) {
+      if ( o instanceof Element ) {
+          Element e = (Element)o;
+          return e.getHumanName() + //":" + e.getHumanType() + ":" + 
+                 e.getID() + ":" + e.get_representationText();
+      }
+      return getName( o ) + ":" + getTypeNames( o ); 
+  }
+  
   public static String writeNameAndTypeOfEObject(Object o, String indent) {
     StringBuffer sb = new StringBuffer();
     sb.append(indent + spewObjectPrefix + "\n");
