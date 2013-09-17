@@ -32,7 +32,7 @@ public class ExportViewAction extends MDAction {
 	private Element doc;
 	public static final String actionid = "ExportView";
 	public ExportViewAction(Element e) {
-		super(actionid, "Export View (Overwrite VE)", null, null);
+		super(actionid, "Export View (Overwrite)", null, null);
 		doc = e;
 	}
 	

@@ -46,7 +46,7 @@ public class ImportViewAction extends MDAction {
 	public static final String actionid = "ImportView";
 	
 	public ImportViewAction(Element e) {
-		super(actionid, "Import View (Overwrite Model)", null, null);
+		super(actionid, "Import View (Overwrite)", null, null);
 		doc = e;
 	}
 	
