@@ -180,7 +180,7 @@ public class PELTable {
 				continue;
 			Type ptype = prop.getType();
 			//this is looking for products instead of power load products so running this on inherited workpackages won't screw up if the redefined work packages doesn't supply any powered products
-			if (ptype != null && ModelLib.isProduct(ptype) && prop.getAggregation() == AggregationKindEnum.COMPOSITE) {
+			if (ptype != null && ModelLib.isBaseProduct(ptype) && prop.getAggregation() == AggregationKindEnum.COMPOSITE) {
 				iterate2.add(prop);
 				//log.log("mul of " + prop.getName() + " is " + Utils.getMultiplicity(prop));
 				props.put(prop, Utils.getMultiplicity(prop));

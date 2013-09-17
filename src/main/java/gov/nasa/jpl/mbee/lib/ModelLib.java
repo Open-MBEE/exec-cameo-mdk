@@ -11,6 +11,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 public class ModelLib {
 	private static boolean isIMCE = false;
 	
+	public static String MASS_CHARACTERIZATION = "Launch Mass";
+
 	public static String CHARACTERIZES = "analysis:characterizes";
 	
 	public static boolean isWorkPackage(Element e){
@@ -44,18 +46,45 @@ public class ModelLib {
 	}
 	
 	public static boolean isProduct(Element p){
+		if (p == null)
+			return false;
+		
+		return (StereotypesHelper.hasStereotypeOrDerived(p, "Product") || StereotypesHelper.hasStereotypeOrDerived(p, "europa:HardwareComponent"));
+	}
+	
+	public static boolean isBaseProduct(Element p){
+		if (p == null)
+			return false;
+		
 		return (StereotypesHelper.hasStereotypeOrDerived(p, "Product") || StereotypesHelper.hasStereotypeOrDerived(p, "mission:Component"));
 	}
 	
 	public static boolean isPLProduct(Element p){
+		if (p == null)
+			return false;
+		
 		return (StereotypesHelper.hasStereotypeOrDerived(p, "Power Load Product") || StereotypesHelper.hasStereotypeOrDerived(p, "Power Load Component") || StereotypesHelper.hasStereotypeOrDerived(p,  "europa:PowerLoadComponent"));
 	}
 	
 	public static boolean isMassCharacterization(Element e){
+		if (e == null)
+			return false;
+		
 		if (!(e instanceof Classifier))
 			return false;
 
 		return (StereotypesHelper.hasStereotypeOrDerived(e, "analysis:Characterization") && extendsFromMass((Classifier) e));
+	
+	}
+		
+	public static boolean isCharacterization(Element e){
+		if (e == null)
+			return false;
+		
+		if (!(e instanceof Classifier))
+			return false;
+
+		return (StereotypesHelper.hasStereotypeOrDerived(e, "analysis:Characterization"));
 	
 	}
 		
@@ -65,7 +94,7 @@ public class ModelLib {
 	
 	public static boolean extendsFromMass(Classifier e){
 		for (Classifier g : e.getGeneral()){
-			if (g.getName().equals("Launch Mass"))
+			if (g.getName().equals(MASS_CHARACTERIZATION))
 				return true;
 				
 			extendsFromMass(g);
