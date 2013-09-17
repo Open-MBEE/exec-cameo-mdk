@@ -36,6 +36,7 @@ import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
 import com.nomagic.magicdraw.actions.DiagramContextToolbarAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
 import com.nomagic.magicdraw.uml.DiagramType;
@@ -739,11 +740,10 @@ public class Configurator implements ConfiguratorWithPriority,
     
     DiagramType dType = diagram.getDiagramType();
     Pair< Context, String > p =
-    //Configurator.Context context = 
-        getContextForType( DiagramContextAMConfigurator.class, diagram.getDiagramType().getType() );
+        getContextForType( DiagramContextAMConfigurator.class, dType.getType() );
     if ( p == null || p.first == null || p.second == null ) {
       Debug.errln( "Could not addElementActions: getContextForType( DiagramContextAMConfigurator.class, \"" +
-                   diagram.getDiagramType().getType() + "\") returned " + p );
+                   dType.getType() + "\") returned " + p );
     } else {
       if ( requestor != null ) {
         Element e = requestor.getElement();
@@ -788,7 +788,6 @@ public class Configurator implements ConfiguratorWithPriority,
       browserType = browser.getClass().getSimpleName();
     }
     Pair< Context, String > p =
-    //Configurator.Context context = 
         getContextForType( BrowserContextAMConfigurator.class, browserType );
     if ( p == null || p.first == null || p.second == null ) {
       Debug.errln( "Could not addElementActions: getContextForType( BrowserContextAMConfigurator.class, \"" + browser.getName() + "\") returned " + p );
@@ -820,27 +819,10 @@ public class Configurator implements ConfiguratorWithPriority,
     Debug.errln( "addElementActions( manager=" + manager + ", element=" + e
                  + ", actionCategories=" + actionCategories + ")" );
     if ( wasOn ) Debug.turnOn();
-//    ActionsCategory c = new MDActionsCategory("categoryId", "categoryName");
-//    try {
-//      c.addAction( makeMDAction( "CinYoung",
-//                                 "isAwesome",
-//                                 null,
-//                                 null,
-//                                 null,
-//                                 TestPlugin.ElementUtils.class.getDeclaredMethods()[ 0 ],
-//                                 null ) );
-//      c.setNested(true);
-//      manager.addCategory(0, c);
-//    } catch ( Exception ex ) {
-//      ex.printStackTrace();
-//    }
-//    Debug.errln( "CinYoungIsAwesomeBlawesomeness" );
-//    Debug.outln( "CinYoungIsAwesomeBlawesomeness" );
     for ( Entry< String, Map< String, MDAction > > category :
           actionCategories.entrySet() ) {
       ActionsCategory c =
           myCategory( manager, category.getKey(), category.getKey() );
-      //new ActionsCategory( category.getKey(), category.getKey() );
       for ( Entry< String, MDAction > action : category.getValue().entrySet() ) {
         c.addAction( action.getValue() );
       }
@@ -860,13 +842,12 @@ public class Configurator implements ConfiguratorWithPriority,
     Debug.outln( "myCategory( manager=" + manager + ", id=" + id
                  + ", name=" + name + ")" );
     if ( wasOn ) Debug.turnOn();
-    ActionsCategory category = (ActionsCategory) manager.getActionFor(id);
+    ActionsCategory category = (ActionsCategory) manager.getCategory(id); //.getActionFor(id);
     if (category == null) {
       category = new MDActionsCategory(id, name);
       category.setNested(true);
-//      manager.addCategory(category);
-      manager.addCategory(category);
-//      manager.addCategory(manager.getCategories().size()-1, category);
+      manager.addCategory(category); // by default, it adds to end
+//    manager.addCategory(0, category); // adds at front
     }
     return category;
   }
@@ -928,23 +909,8 @@ public class Configurator implements ConfiguratorWithPriority,
                          + ", group=" + category + " )" );
     if ( wasOn ) Debug.turnOn();
 
-//    Map< String, Map< String, MDAction > > categories = getMenus().get( c ).get( subcontext );
     Utils2.put( getMenus().get( c ), subcontext, category,
-               Utils2.isNullOrEmpty( id ) ? actionName : id, mdAction );
-//    if ( categories == null ) {
-//      categories = new TreeMap< String, Map<String,MDAction> >();
-//      getMenus().get( c ).put( subcontext, categories );
-//    }
-//    Map< String, MDAction > actions = categories.get( category ); 
-//    if ( actions == null ) {
-//      actions = new TreeMap< String, MDAction >();
-//      categories.put( category, actions );
-//    }
-//    if ( id == null || id.isEmpty() ) {
-//      actions.put( actionName, mdAction );
-//    } else {
-//      actions.put( id, mdAction );
-//    }
+                Utils2.isNullOrEmpty( id ) ? actionName : id, mdAction );
     return mdAction;
   }
 

@@ -58,6 +58,7 @@ public class OclEvaluatorPlugin extends MDPlugin {
     addConfiguration( "BaseDiagramContext", "SysML Block Definition Diagram", OclQueryAction.actionText, category, method, this );
     addConfiguration( "BaseDiagramContext", "SysML Internal Block Diagram", OclQueryAction.actionText, category, method, this );
     addConfiguration( "BaseDiagramContext", "DocGen 3 View Diagram", OclQueryAction.actionText, category, method, this );
+    addConfiguration( "BaseDiagramContext", "DocGen 3 Diagram", OclQueryAction.actionText, category, method, this );
     addConfiguration( "BaseDiagramContext", "View Diagram", OclQueryAction.actionText, category, method, this );
     addConfiguration( "BaseDiagramContext", "DocumentView", OclQueryAction.actionText, category, method, this );
 
