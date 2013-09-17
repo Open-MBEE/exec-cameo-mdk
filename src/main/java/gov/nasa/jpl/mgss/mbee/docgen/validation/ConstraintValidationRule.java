@@ -1,7 +1,7 @@
 /**
  * 
  */
-package gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.impl;
+package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;

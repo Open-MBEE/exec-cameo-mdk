@@ -29,6 +29,14 @@ public class GenerationContext {
 		log = l;
 	}
 	
+    public GenerationContext(Stack<List<Element>> t, ActivityNode a,
+                             GUILog l) {
+        targets = t;
+        current = a;
+        validator = null;
+        log = l;
+    }
+    
     public void pushTargets(List<Element> t) {
 		targets.push(t);
 	}

@@ -82,6 +82,16 @@ public class DocumentGenerator {
 		                                Application.getInstance().getGUILog());
 	}
 
+    public DocumentGenerator(Element e, PrintWriter wlog) {
+        start = e;
+        sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
+        product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
+        StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+        doc = new Document();
+        context = new GenerationContext(new Stack<List<Element>>(), null,
+                                        Application.getInstance().getGUILog());
+    }
+
 	public Document parseDocument() {
 		return this.parseDocument(false, true);
 	}
