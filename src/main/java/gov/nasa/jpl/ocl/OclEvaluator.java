@@ -182,7 +182,7 @@ public class OclEvaluator {
 
 	  // create the ocl evaluator
     OclEvaluator.createOclInstance( envFactory );    
-boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
+      // boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
 	  setOclTracingEnabled(verbose);
 		queryStatus = QueryStatus.VALID_OCL;
 
@@ -237,7 +237,7 @@ boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
 		}
 
 		Debug.outln("evaluateQuery(context=" + DocGenUtils.fixString(context) + ", queryString=" + queryString + ", verbose=" + verbose + ") = " + DocGenUtils.fixString(result));
-if ( !wasOn ) Debug.turnOff();
+        // if ( !wasOn ) Debug.turnOff();
 		return result;
 	}
 

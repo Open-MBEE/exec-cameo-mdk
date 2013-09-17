@@ -233,6 +233,7 @@ public class DocumentGenerator {
             Debug.outln( "next = " + next.getHumanName() + ", "
                                 + next.getID() );
 			next2 = null;
+            boolean evaluatedConstraintsForNext = false;
 			if (next instanceof CallBehaviorAction || next instanceof StructuredActivityNode && StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.tableStructureStereotype)) { 
 				Behavior b = (next instanceof CallBehaviorAction)?((CallBehaviorAction)next).getBehavior():null;
 				if (StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.sectionStereotype) || b != null && StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.sectionStereotype)) {
@@ -248,6 +249,7 @@ public class DocumentGenerator {
 					this.context.pushTargets(results);
 					pushed++;
 					next2 = context.getCurrentNode();
+					evaluatedConstraintsForNext = true;
 				}
 			} else if (next instanceof StructuredActivityNode) {
 				Boolean loop = (Boolean)GeneratorUtils.getObjectProperty(next, DocGen3Profile.templateStereotype, "loop", false);
@@ -320,7 +322,9 @@ public class DocumentGenerator {
 			if ( parseResults == null ) parseResults = this.context.peekTargets();
 			if ( parseResults != null ) lastResults = parseResults;
             // evaluate constraints on results
-            DocumentValidator.evaluateConstraints(next, parseResults, context);
+			if ( !evaluatedConstraintsForNext ) {
+			    DocumentValidator.evaluateConstraints(next, parseResults, context);
+			}
 			outs = next2.getOutgoing();
             Debug.outln( "outs = "
                                 + MoreToString.Helper.toLongString( outs )
