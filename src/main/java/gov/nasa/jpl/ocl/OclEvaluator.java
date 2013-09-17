@@ -2,7 +2,6 @@ package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
@@ -11,16 +10,11 @@ import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-
 import lpg.runtime.ParseTable;
 
 import org.eclipse.emf.common.util.BasicDiagnostic;
-import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.Diagnostic;
-import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
@@ -40,10 +34,7 @@ import org.eclipse.ocl.lpg.AbstractParser;
 import org.eclipse.ocl.lpg.ProblemHandler;
 import org.eclipse.ocl.util.OCLUtil;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.impl.ElementsFactory;
 
 /**
  * Utility class for encapsulating the OCL query and constraint evaluations.
@@ -191,20 +182,15 @@ public class OclEvaluator {
 
 	  // create the ocl evaluator
     OclEvaluator.createOclInstance( envFactory );    
-boolean wasOn = Debug.isOn(); Debug.turnOn();
+boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
 	  setOclTracingEnabled(verbose);
 		queryStatus = QueryStatus.VALID_OCL;
 
 		if ( context instanceof EObject ) {
 		    getHelper().setContext(context == null ? null : ((EObject)context).eClass());
 		} else if ( context instanceof Collection ) {
-		    // TODO -- does ocl library convert from java to ocl collections?
-		    EList< Object > eList = new BasicEList<Object>();
-		    eList.addAll( (Collection< ? >)context );
-		    //ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
-		    context = eList;
+	        getHelper().setContext(context == null ? null : OCLStandardLibraryImpl.INSTANCE.getCollection());
 		}
-        getHelper().setContext(context == null ? null : ((EObject)context).eClass());
 		
 		Object result = null;
 		OCLExpression<EClassifier> query = null;

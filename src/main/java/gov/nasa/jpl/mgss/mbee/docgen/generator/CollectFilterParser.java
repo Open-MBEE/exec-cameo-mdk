@@ -115,6 +115,7 @@ public class CollectFilterParser {
 				node.setResult(res);
 			}
 			context.setCurrentNode(node.getNode());
+            DocumentValidator.evaluateConstraints(node.getNode(), res, context);
 		}
 		return res;
 	}

@@ -219,7 +219,7 @@ public class Configurator implements ConfiguratorWithPriority,
 
     public static Context fromString( String contextString ) {
       for ( Context c : contexts ) {
-        if ( contextString.equals( c.toString() ) ) return c;
+        if ( contextString.toLowerCase().equals( c.toString().toLowerCase() ) ) return c;
       }
       return null;
     }
@@ -234,7 +234,7 @@ public class Configurator implements ConfiguratorWithPriority,
     CompositeStructure, //UML only
     Deployment, // UML only
     InteractionOverview, // UML Only
-    InternalBlock,
+    InternalBlockDefinition,
     Object,  // UML only
     Package,
     Parametric,  // SysML only
@@ -364,7 +364,7 @@ public class Configurator implements ConfiguratorWithPriority,
             DiagramContext.CompositeStructure, //UML only
             DiagramContext.Deployment, // UML only
             DiagramContext.InteractionOverview, // UML Only
-            DiagramContext.InternalBlock,
+            DiagramContext.InternalBlockDefinition,
             DiagramContext.Object,  // UML only
             DiagramContext.Package,
             DiagramContext.Parametric,  // SysML only

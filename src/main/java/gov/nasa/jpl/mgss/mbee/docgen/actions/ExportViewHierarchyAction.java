@@ -34,11 +34,13 @@ public class ExportViewHierarchyAction extends MDAction {
 		try {
 			DocumentValidator dv = new DocumentValidator(doc);
 			dv.validateDocument();
-			dv.printErrors();
-			if (dv.isFatal())
-				return;
+            if (dv.isFatal()) {
+                dv.printErrors();
+                return;
+            }
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, true);
+            dv.printErrors();
 			ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
 			dge.accept(vhv);
 			String post = vhv.getResult().toJSONString();

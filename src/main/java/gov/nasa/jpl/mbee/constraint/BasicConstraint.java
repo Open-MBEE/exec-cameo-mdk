@@ -3,20 +3,19 @@
  */
 package gov.nasa.jpl.mbee.constraint;
 
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentGenerator;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.GenerationContext;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
@@ -28,6 +27,7 @@ public class BasicConstraint implements Constraint {
     LinkedHashSet< Element > constrainingElements;
     LinkedHashSet< Element > constrainedElements;
     Element violatedConstraintElement = null;
+    Element violatedConstrainedElement = null;
     
     /**
      * @param constrainingElement
@@ -54,6 +54,9 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public Set< Element > getConstrainedElements() {
+        if ( constrainedElements == null ) {
+            constrainedElements = new LinkedHashSet< Element >();
+        }
         return //Collections.unmodifiableList( Utils2.toList( constrainedElements ) );
                 constrainedElements;
     }
@@ -63,6 +66,9 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public Set< Element > getConstrainingElements() {
+        if ( constrainingElements == null ) {
+            constrainingElements = new LinkedHashSet< Element >();
+        }
         return constrainingElements;
     }
 
@@ -71,6 +77,9 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public void addConstrainedElements( Collection< Element > elements ) {
+        if ( constrainedElements == null ) {
+            constrainedElements = new LinkedHashSet< Element >();
+        }
         constrainedElements.addAll( elements );
     }
 
@@ -79,6 +88,9 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public void addConstrainedElement( Element element ) {
+        if ( constrainedElements == null ) {
+            constrainedElements = new LinkedHashSet< Element >();
+        }
         constrainedElements.add( element );
     }
 
@@ -121,6 +133,9 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public void addConstrainingElement( Element constrainingElement ) {
+        if ( constrainingElements == null ) {
+            constrainingElements = new LinkedHashSet< Element >();
+        }
         constrainingElements.add( constrainingElement );
     }
 
@@ -129,6 +144,9 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public void addConstrainingElements( Collection< Element > elements ) {
+        if ( constrainingElements == null ) {
+            constrainingElements = new LinkedHashSet< Element >();
+        }
         constrainingElements.addAll( elements );
     }
 
@@ -137,8 +155,24 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public String getExpression() {
-        // TODO Auto-generated method stub
-        return null;
+        StringBuffer sb = new StringBuffer();
+        boolean first = true;
+        boolean multiple = getConstrainingElements().size() > 1;
+        for ( Element e : getConstrainingElements() ) {
+            if ( first ) first = false;
+            else sb.append(" and ");
+            if ( multiple ) sb.append( "(" );
+            String expr = getExpression( e );
+            if ( !Utils2.isNullOrEmpty( expr ) ) {
+                sb.append( expr );
+            } else if ( !Utils2.isNullOrEmpty( e.getHumanName() ) ) {
+                sb.append( e.getHumanName() );
+            } else {
+                sb.append( e.getHumanType() );
+            }
+            if ( multiple ) sb.append( ")" );
+        }
+        return sb.toString();
     }
 
     /* (non-Javadoc)
@@ -148,6 +182,7 @@ public class BasicConstraint implements Constraint {
     public Boolean evaluate() {
         // try to evaluate it as is first.
         violatedConstraintElement = null;
+        violatedConstrainedElement = null;
         
         // try evaluating constraint on elements as a collection
         Boolean satisfied = evaluate( getConstrainedElements() );
@@ -176,6 +211,9 @@ public class BasicConstraint implements Constraint {
                 gotNull = true;
             } else if ( !Utils.isTrue( res, false ) ) {
                 violatedConstraintElement = constraint;
+                if ( constrainedObject instanceof Element ) {
+                    violatedConstrainedElement = (Element)constrainedObject;
+                }
                 return false;
             }
         }
@@ -189,8 +227,30 @@ public class BasicConstraint implements Constraint {
         return violatedConstraintElement;
     }
 
+    public Element getViolatedConstrainedElement() {
+        if ( violatedConstrainedElement == null ) {
+            evaluate();
+        }
+        return violatedConstrainedElement;
+    }
+
     public static String getExpression( Object constraint ) {
-        String expr = OclEvaluator.queryObjectToStringExpression( constraint );
+        if ( constraint instanceof Constraint ) return ((Constraint)constraint).getExpression();
+        String expr = null;
+        if ( constraint instanceof Element ) {
+            Element e = (Element)constraint;
+            if ( e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint ) {
+                com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint c = 
+                        (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint)e;
+                expr = DocGenUtils.fixString( c.getSpecification() );
+            } else if ( GeneratorUtils.hasStereotypeByString(e, DocGen3Profile.constraintStereotype, true) ) {
+                Object v = GeneratorUtils.getObjectProperty( e, DocGen3Profile.constraintStereotype, "expression", null);
+                expr = v.toString();
+            }
+        }
+        if ( Utils2.isNullOrEmpty( expr ) ) {
+            expr = OclEvaluator.queryObjectToStringExpression( constraint );
+        }
         return expr;
     }
 
@@ -242,5 +302,12 @@ public class BasicConstraint implements Constraint {
         Boolean result = c.evaluate();
         return result;
     }
+    
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("Constraint:" + this.getExpression() + ",on:" + this.constrainedElements );
+        return sb.toString();
+    }
+    
 
 }

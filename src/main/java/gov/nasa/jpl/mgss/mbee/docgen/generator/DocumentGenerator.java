@@ -1,8 +1,8 @@
 package gov.nasa.jpl.mgss.mbee.docgen.generator;
 
-import gov.nasa.jpl.mbee.constraint.BasicConstraint;
-import gov.nasa.jpl.mbee.constraint.Constraint;
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
@@ -26,7 +26,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
 import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
 import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageAssemblyTable;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -218,6 +217,8 @@ public class DocumentGenerator {
 	 */
 	@SuppressWarnings("unchecked")
 	public Object parseActivityOrStructuredNode(Element a, Container parent) {
+	    Debug.outln( "parseActivityOrStructuredNode( " + a.getHumanName() + ", "
+                + a.getID() + ", " + parent.getStringIfEmpty() + ")" );
 		InitialNode in = GeneratorUtils.findInitialNode(a);
 		if (in == null)
 			return null;
@@ -229,6 +230,8 @@ public class DocumentGenerator {
 		while (outs != null && outs.size() == 1) {
 		    parseResults = null;
 			ActivityNode next = outs.iterator().next().getTarget();
+            Debug.outln( "next = " + next.getHumanName() + ", "
+                                + next.getID() );
 			next2 = null;
 			if (next instanceof CallBehaviorAction || next instanceof StructuredActivityNode && StereotypesHelper.hasStereotypeOrDerived(next, DocGen3Profile.tableStructureStereotype)) { 
 				Behavior b = (next instanceof CallBehaviorAction)?((CallBehaviorAction)next).getBehavior():null;
@@ -317,8 +320,12 @@ public class DocumentGenerator {
 			if ( parseResults == null ) parseResults = this.context.peekTargets();
 			if ( parseResults != null ) lastResults = parseResults;
             // evaluate constraints on results
-            evaluateConstraints(next, parseResults, context);
+            DocumentValidator.evaluateConstraints(next, parseResults, context);
 			outs = next2.getOutgoing();
+            Debug.outln( "outs = "
+                                + MoreToString.Helper.toLongString( outs )
+                                + " for next2 = " + next2.getHumanName() + ", "
+                                + next2.getID() );
 		} 
 		while(pushed > 0) {
 			this.context.popTargets();
@@ -363,55 +370,6 @@ public class DocumentGenerator {
             targets = context.peekTargets();
         }
         return targets;
-    }
-
-    public static void evaluateConstraints( Object constrainedObject,
-                                            Object actionOutput,
-                                            GenerationContext context ) {
-        if ( context.getValidator() == null ) return;
-        List<Constraint> constraints = getConstraints(constrainedObject, actionOutput,
-                                                      context);
-        for ( Constraint constraint : constraints ) {
-            Boolean satisfied = constraint.evaluate();
-            if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
-                Element violatingElement = constraint.getViolatedConstraintElement();
-                ValidationRule rule = context.getValidator().getConstraintRule();
-                rule.addViolation( violatingElement,
-                                   "Constraint (" + constraint.getExpression()
-                                           + ") violated for "
-                                           + violatingElement );
-            }
-        }
-    }
-
-    public static List< Constraint > getConstraints( Object constrainedObject,
-                                                     Object actionOutput,
-                                                     GenerationContext context ) {
-        List<Constraint> constraints = new ArrayList< Constraint >();
-        List< Element > targets = getTargets( constrainedObject, context );
-        List< Element > constraintElements = getConstraintElements( constrainedObject );
-        for ( Element constraint : constraintElements  ) {
-            Constraint c = BasicConstraint.makeConstraint( constraint, actionOutput, targets, constrainedObject );
-            constraints.add( c );
-        }
-        return constraints;
-    }
-
-    public static List< Element > getConstraintElements( Object constrainedObject ) {
-        List<Element> constraintElements = new ArrayList< Element >();
-        if ( constrainedObject instanceof Element ) {
-            Element constrainedElement = ((Element)constrainedObject);
-            if (StereotypesHelper.hasStereotypeOrDerived(constrainedElement, DocGen3Profile.constraintStereotype) ) {
-                constraintElements.add( constrainedElement );
-            }
-            constraintElements.addAll( Utils.collectRelatedElementsByStereotypeString( constrainedElement, DocGen3Profile.constraintStereotype, 0, true, 1 ) );
-        }
-        if ( constrainedObject instanceof Collection ) {
-            for ( Object o : (Collection<?>)constrainedObject ) {
-                constraintElements.addAll( getConstraintElements( o ) );
-            }
-        }
-        return constraintElements;
     }
 
     //this is a section made using an activity and should be discouraged since it won't show up on view editor

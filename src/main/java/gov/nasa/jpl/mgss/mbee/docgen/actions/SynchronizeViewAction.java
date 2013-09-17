@@ -43,11 +43,13 @@ public class SynchronizeViewAction extends MDAction {
 			gl.log("*** Starting synchronize view ***");
 			DocumentValidator dv = new DocumentValidator(doc);
 			dv.validateDocument();
-			dv.printErrors();
-			if (dv.isFatal())
-				return;
+            if (dv.isFatal()) {
+                dv.printErrors();
+                return;
+            }
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
+            dv.printErrors();
 			(new PostProcessor()).process(dge);
 			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(dge, doc, recurse, false, url), "Synchronizing View...", true, 0);
 		} catch (Exception ex) {

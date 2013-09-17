@@ -44,11 +44,13 @@ public class ExportViewCommentsAction extends MDAction {
 				return;
 			DocumentValidator dv = new DocumentValidator(doc);
 			dv.validateDocument();
-			dv.printErrors();
-			if (dv.isFatal())
-				return;
+            if (dv.isFatal()) {
+                dv.printErrors();
+                return;
+            }
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
+            dv.printErrors();
 			ViewCommentVisitor vcv = new ViewCommentVisitor();
 			dge.accept(vcv);
 			String json = vcv.getJSON();

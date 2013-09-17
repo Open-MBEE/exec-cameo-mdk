@@ -35,11 +35,13 @@ public class ViewDocument3Action extends MDAction {
 		try {
 			DocumentValidator dv = new DocumentValidator(doc);
 			dv.validateDocument();
-			dv.printErrors();
-			if (dv.isFatal())
-				return;
+            if (dv.isFatal()) {
+                dv.printErrors();
+                return;
+            }
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument();
+            dv.printErrors();
 			(new PostProcessor()).process(dge);
 			DocumentViewer.view(dge);
 		} catch (Exception ex) {
