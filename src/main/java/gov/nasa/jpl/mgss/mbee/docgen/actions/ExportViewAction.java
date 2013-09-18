@@ -32,7 +32,7 @@ public class ExportViewAction extends MDAction {
 	private Element doc;
 	public static final String actionid = "ExportView";
 	public ExportViewAction(Element e) {
-		super(actionid, "Export View (Overwrite VE)", null, null);
+		super(actionid, "Export View (Overwrite)", null, null);
 		doc = e;
 	}
 	
@@ -50,11 +50,13 @@ public class ExportViewAction extends MDAction {
 			gl.log("*** Starting export view ***");
 			DocumentValidator dv = new DocumentValidator(doc);
 			dv.validateDocument();
-			dv.printErrors();
-			if (dv.isFatal())
-				return;
-			DocumentGenerator dg = new DocumentGenerator(doc, null);
+            if (dv.isFatal()) {
+                dv.printErrors();
+                return;
+            }
+			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
+            dv.printErrors();
 			(new PostProcessor()).process(dge);
 			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(dge, doc, recurse, true, url), "Exporting View...", true, 0);
 		} catch (Exception ex) {

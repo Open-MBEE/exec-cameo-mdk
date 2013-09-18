@@ -1,12 +1,10 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.ModelLib;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
@@ -75,6 +73,48 @@ public abstract class WorkpackageTable extends Table {
 	}
 	public boolean isSortByName() {
 		return sortByName;
+	}
+	
+//
+	
+	public void findWorkPackage() {
+		if (this.workpackage == null) {
+			for (Element t: this.targets){
+				if (ModelLib.isWorkPackage(t)) {
+					this.workpackage = (NamedElement) t;
+				}
+			}
+		}
+	}
+	
+	public void findCharacterizationName(){
+		for (Element t : this.targets){
+			if (ModelLib.isCharacterization(t)){
+				ModelLib.MASS_CHARACTERIZATION = ((NamedElement) t).getName();
+				return;
+			}
+		}
+		// Default
+		ModelLib.MASS_CHARACTERIZATION = "Launch Mass";
+	}
+	
+	protected String massCharacterizationName;
+	public void setMassCharacterizationName(String name){
+		this.massCharacterizationName = name;
+	}
+	
+	public String getMassCharacterizationName(String name){
+		return massCharacterizationName;
+	}
+	
+	public Class findFirstClass() {
+		for (Element target: this.targets) {
+			if (!(target instanceof Class) || ModelLib.isWorkPackage(target) || ModelLib.isCharacterization(target)) {
+				continue;
+			}
+			return (Class)target;
+		}
+		return null;
 	}
 	
 	@Override

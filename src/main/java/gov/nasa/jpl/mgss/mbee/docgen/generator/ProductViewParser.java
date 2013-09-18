@@ -87,7 +87,7 @@ public class ProductViewParser {
 			Class type = (Class)prop.getType();
 			if (type == null || !StereotypesHelper.hasStereotypeOrDerived(type, dg.getView()) || excludeViews.contains(prop) || excludeViews.contains(type))
 				continue;
-			if (noSections.contains(type) || noSections.contains(type)) {
+			if (noSections.contains(prop) || noSections.contains(type)) {
 				childNoSections.add(type);
 			} else {
 				childSections.add(type);

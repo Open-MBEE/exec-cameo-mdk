@@ -62,7 +62,7 @@ public class Paragraph extends Query {
 	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
 		if (getIgnore())
 			return;
-		if (getText() != null && !getText().equals("")) { 
+		if (getText() != null) { 
 			if (forViewEditor || !getText().trim().equals("")) 
 				parent.addElement(new DBParagraph(getText(), getDgElement(), getFrom()));
 		} else if (getTargets() != null) {
@@ -87,7 +87,7 @@ public class Paragraph extends Query {
 	
 	@Override
 	public void initialize() {
-		String body = (String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.paragraphStereotype, "body", "");
+		String body = (String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.paragraphStereotype, "body", null);
 		setText(body);
 		setStereotypeProperties((List<Property>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>()));
 	}
