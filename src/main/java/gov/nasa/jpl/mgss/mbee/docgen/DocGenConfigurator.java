@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
-import gov.nasa.jpl.mbee.docweb.TeamworkProfile;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteDocumentAction;
@@ -26,7 +25,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserEditableTableAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserScriptAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserValidationScriptAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.SynchronizeViewAction;
-import gov.nasa.jpl.mgss.mbee.docgen.actions.UpdateDocWebAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ValidateDocument3Action;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ValidateViewStructureAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ViewDocument3Action;
@@ -63,7 +61,6 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class DocGenConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
@@ -112,7 +109,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
             us.setDgElement(e);
-            List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, "Queries", 1, false, 1);
+            List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.queriesStereotype, 1, false, 1);
+            targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(targets);
             if (manager.getActionFor("RunValidationScript0") == null) 
                 c.addAction(new RunUserValidationScriptAction(us, 0));
@@ -120,7 +118,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
             us.setDgElement(e);
-            List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, "Queries", 1, false, 1);
+            List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.queriesStereotype, 1, false, 1);
+            targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(targets);
             if (manager.getActionFor("RunUserScript0") == null) 
                 c.addAction(new RunUserScriptAction(us, 0));
@@ -219,12 +218,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 					c.addAction(new PublishDocWebAction((NamedElement)e));
 			}
 		}	
-		if (e instanceof Package && StereotypesHelper.hasStereotype(e, TeamworkProfile.updatePackage)) { // REVIEW -- hasStereotypeOrDerived()?
-			ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
-			NMAction act = manager.getActionFor(UpdateDocWebAction.actionid);
-			if (act == null)
-				c.addAction(new UpdateDocWebAction((Package)e));
-		}
 	
 		if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlviewpoint)) {
 			ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
