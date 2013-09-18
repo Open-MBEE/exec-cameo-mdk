@@ -59,6 +59,9 @@ public class MissionMapping extends Query {
 	private static final String IMCECOMPONENT= "mission:Component";
 	private static final String IMCECHAR = "analysis:Characterization";
 	private static final String IMCECHARACTERIZABLE = "analysis:CharacterizedElement";
+	private static final String IMCECHARACTERIZES = "analysis:characterizes";
+	private static final String CHARACTERIZES = "Characterizes";
+	private static final String DEPPREFIX = "zz_";
 	private boolean IMCEPresent=false;
 	
 	private Node<String, MissionComponent> tree;
@@ -73,9 +76,9 @@ public class MissionMapping extends Query {
 	
 	private boolean hasCharacterizesDependency(Element e) {
 		for (Relationship s: e.get_relationshipOfRelatedElement()) {
-			if (StereotypesHelper.hasStereotypeOrDerived(s, "Characterizes") )
+			if (StereotypesHelper.hasStereotypeOrDerived(s, CHARACTERIZES) )
 				return true;
-			else if (StereotypesHelper.hasStereotypeOrDerived(s, "analysis:characterizes")){
+			else if (StereotypesHelper.hasStereotypeOrDerived(s, IMCECHARACTERIZES)){
 				IMCEPresent=true;
 				return true;
 			}
@@ -167,6 +170,10 @@ public class MissionMapping extends Query {
 						log.log("\t\t\t\t" + cc.getName()); 
 					else
 						log.log("\t\t\t\t" + cc.getName() + " (Out of scope)");
+					log.log("\t\t\t\tCharacterizations:");
+					for (NamedElement chars: cc.getCharacterizations()) {
+						log.log("\t\t\t\t\t" + chars.getHumanName());
+					}
 				}
 				log.log("\t\t\tCharacterizations:");
 				for (MissionCharacterization e: lc.getMissionCharacterizations()) {
@@ -285,6 +292,54 @@ public class MissionMapping extends Query {
 				MappingUtil.refactorProperties(mc.getLibraryCharacterization(), mc.getElement(), ef);
 			}
 			
+			for (MissionComponent lc: tree.getAllData()) {
+				if (!lc.isPackage()) {
+					Set<String> libChars = new HashSet<String>();
+					Set<String> missionChars = new HashSet<String>();
+					for (LibraryComponent cc: lc.getLibraryComponents()) {
+						for (NamedElement c: cc.getCharacterizations()) {
+							libChars.add(c.getName());
+						}
+					}
+					Element elem = lc.getElement();
+					// find any characterizations that arent in library characterizations
+					for (Element c: elem.getOwnedElement()) {
+						if (StereotypesHelper.hasStereotypeOrDerived(c, IMCECHAR) || StereotypesHelper.hasStereotypeOrDerived(c, CHAR)) {
+							NamedElement ne = (NamedElement)c;
+							missionChars.add(ne.getName());
+							if (!libChars.contains(ne.getName())) {
+								deprecateName(ne);
+							}
+						}
+					}
+					// find any part properties that aren't in library characterizations
+					for (Element c: elem.getOwnedElement()) {
+						if (StereotypesHelper.hasStereotypeOrDerived(c, "PartProperty")) {
+							NamedElement ne = (NamedElement)c;
+							if (missionChars.contains(ne.getName())) {
+								if (!libChars.contains(ne.getName())) {
+									deprecateName(ne);
+								}
+							}
+						}
+					}					
+
+					// undeprecate if something was added back in
+					for (String libChar: libChars) {
+						if (!missionChars.contains(libChar)) {
+							for (Element c: elem.getOwnedElement()) {
+								if (c instanceof NamedElement) {
+									NamedElement ne = (NamedElement) c;
+									if (ne.getName().replace(DEPPREFIX, "").equals(libChar)) {
+										ne.setName(ne.getName().replace(DEPPREFIX, ""));
+										log.log("Undeprecated referenced characterization: " + ne.getHumanName());
+									}
+								}
+							}
+						}
+					}
+				}
+			}			
 			sm.closeSession();
 			log.log("Refactor changes successfully applied");
 		} catch (Exception ex) {
@@ -294,6 +349,17 @@ public class MissionMapping extends Query {
 			ex.printStackTrace(pw);
 			log.log(sw.toString());
 			sm.cancelSession();
+		}
+	}
+	
+	private void deprecateName(Element e) {
+		GUILog log = Application.getInstance().getGUILog();
+		if (e instanceof NamedElement) {
+			NamedElement ne = (NamedElement) e;
+			if (!ne.getName().startsWith(DEPPREFIX)) {
+				ne.setName(DEPPREFIX + ne.getName());
+				log.log("Deprecated unreferenced characterization: " + ne.getHumanName());
+			}
 		}
 	}
 	
@@ -393,7 +459,7 @@ public class MissionMapping extends Query {
 	private void addLibraryComponent(Element e, boolean inScope) {
 		LibraryComponent lc = new LibraryComponent(((NamedElement)e).getName(), (NamedElement)e);
 		if (IMCEPresent){
-			for (Element c: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, "analysis:characterizes", 2, true, 1)) {
+			for (Element c: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, IMCECHARACTERIZES, 2, true, 1)) {
 				if (StereotypesHelper.hasStereotypeOrDerived(c, IMCECHAR)) {
 					lc.getCharacterizations().add((NamedElement)c);
 					if  ((libraryChars.contains(c) || libraryCharPackage == null) && inScope) {
@@ -403,15 +469,14 @@ public class MissionMapping extends Query {
 			}
 		}
 		else{
-			
-		for (Element c: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, "Characterizes", 2, true, 1)) {
-			if (StereotypesHelper.hasStereotypeOrDerived(c, CHAR)) {
-				lc.getCharacterizations().add((NamedElement)c);
-				if  ((libraryChars.contains(c) || libraryCharPackage == null) && inScope) {
-					chars.add((NamedElement)c);
+			for (Element c: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, CHARACTERIZES, 2, true, 1)) {
+				if (StereotypesHelper.hasStereotypeOrDerived(c, CHAR)) {
+					lc.getCharacterizations().add((NamedElement)c);
+					if  ((libraryChars.contains(c) || libraryCharPackage == null) && inScope) {
+						chars.add((NamedElement)c);
+					}
 				}
 			}
-		}
 		}
 		libraryComponentMapping.put(e, lc);
 		if (inScope)
