@@ -495,15 +495,15 @@ public class DocumentValidator {
                                                       context);
         if (constrainedObject instanceof Element) {
             Element e = (Element)constrainedObject;
-            System.out.println( "constraints for " + e.getHumanName() + ", "
-                                + e.getID() + ": "
-                                + MoreToString.Helper.toString( constraints ) );
+            Debug.outln( "constraints for " + e.getHumanName() + ", "
+                         + e.getID() + ": "
+                         + MoreToString.Helper.toString( constraints ) );
         } else {
-            System.out.println( "constraints for " + constrainedObject + ": "
-                                + MoreToString.Helper.toString( constraints ) );
+            Debug.outln( "constraints for " + constrainedObject + ": "
+                         + MoreToString.Helper.toString( constraints ) );
         }
         for ( Constraint constraint : constraints ) {
-            System.out.println("found constraint: " + MoreToString.Helper.toString( constraint ) );
+            Debug.outln("found constraint: " + MoreToString.Helper.toString( constraint ) );
             Boolean satisfied = constraint.evaluate();
             if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
                 result = false;
