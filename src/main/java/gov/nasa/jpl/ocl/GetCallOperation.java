@@ -71,14 +71,13 @@ public class GetCallOperation implements CallOperation {
                              onlyOneForAll, unflattenedCollectionType );
     List< Object > resultList = new ArrayList< Object >();
     if ( source == null ) return resultList;
-    if ( recursionDepth < 0 ) return resultList;
     Object[] filterArgs = Utils2.join( alwaysFilter, args );
     if ( filter ) filter = !Utils2.isNullOrEmpty( filterArgs );
     Element elem = ( source instanceof Element ? (Element)source : null );
     Collection< ? > coll =
         ( source instanceof Collection ? (Collection< ? >)source : null );
     Object objectToAdd = null;
-    boolean loop = false;
+    boolean loop = coll != null && asCollection && recursionDepth > 0;
     //boolean doingAdd = true;
       switch (resultType) {
         case SELF:
@@ -93,7 +92,6 @@ public class GetCallOperation implements CallOperation {
           break;
         case NAME:
           //if ( onlyOnePer )
-          loop = coll != null && asCollection;
           if ( loop ) {
             objectToAdd = source;
           } else {
@@ -104,12 +102,11 @@ public class GetCallOperation implements CallOperation {
 //          }
           //added = adder.add( name, resultList );
           break;
-        case TYPE: // TODO -- Using asElement, asEObject, asElement??!!  Need to pass thru to EmfUtils
-          loop = coll != null && asCollection;
+        case TYPE: // TODO -- use asElement, asEObject, asElement!!  Need to pass thru to EmfUtils?
           if ( loop ) {
             objectToAdd = source;
           } else {
-            if ( onlyOnePer || onlyOneForAll ) {
+            if ( ( onlyOnePer || onlyOneForAll ) && Utils2.isNullOrEmpty( filterArgs ) ) {
               //objectToAdd = EmfUtils.getTypeName( source );
               objectToAdd = EmfUtils.getType( source );
               if ( !Utils2.isNullOrEmpty( objectToAdd ) ) {
@@ -125,11 +122,11 @@ public class GetCallOperation implements CallOperation {
                   Collection<Object> c = (Collection<Object>)objectToAdd;
                   for ( Stereotype s : sTypes ) {
                       if ( !c.contains( s ) ) c.add( s );
-                      if ( (onlyOnePer || onlyOneForAll) && c.size() > 0) {
+                      if ( (onlyOnePer || onlyOneForAll) && c.size() > 0 && Utils2.isNullOrEmpty( filterArgs ) ) {
                           break;
                       }
                   }
-                  if ( (onlyOnePer || onlyOneForAll) && c.size() > 0) {
+                  if ( (onlyOnePer || onlyOneForAll) && c.size() > 0 && Utils2.isNullOrEmpty( filterArgs ) ) {
                       break;
                   }
               } else {
@@ -138,7 +135,7 @@ public class GetCallOperation implements CallOperation {
                       list.add( 0, objectToAdd );
                   }
                   objectToAdd = list;
-                  if ( (onlyOnePer || onlyOneForAll) && list.size() > 0) {
+                  if ( (onlyOnePer || onlyOneForAll) && list.size() > 0 && Utils2.isNullOrEmpty( filterArgs ) ) {
                       break;
                   }
               }
@@ -151,17 +148,16 @@ public class GetCallOperation implements CallOperation {
           }
           break;
         case VALUE:
-          loop = coll != null && asCollection;
           if ( loop ) {
             objectToAdd = source;
           } else {
-            boolean one = onlyOneForAll || ( asCollection && coll != null && onlyOnePer );
+            boolean one = ( onlyOneForAll || ( asCollection && coll != null && onlyOnePer ) ) &&
+                          Utils2.isNullOrEmpty( filterArgs );
             objectToAdd = EmfUtils.getValues( source, null, true, true, one,
                                               false, null );
           }
           break;
         case MEMBER:
-          loop = coll != null && asCollection;
           if ( loop ) {
             objectToAdd = source;
           } else {
@@ -179,7 +175,6 @@ public class GetCallOperation implements CallOperation {
           }
           break;
         case RELATIONSHIP:
-          loop = coll != null && asCollection;
           if ( !loop ) {
             if ( asElement && elem != null ) {
               objectToAdd = EmfUtils.getRelationships( elem );
@@ -207,6 +202,7 @@ public class GetCallOperation implements CallOperation {
         ++adder.defaultFlattenDepth;
         objectToAdd = list;
       } else {
+        // TODO -- apply filter while collecting above for efficiency in case returning only one!
         if ( filter ) {
           objectToAdd =
               EmfUtils.collectOrFilter( adder, objectToAdd, !filter,

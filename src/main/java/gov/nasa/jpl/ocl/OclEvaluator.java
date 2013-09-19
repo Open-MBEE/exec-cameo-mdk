@@ -76,8 +76,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 		Object result = OclEvaluator.evaluateQuery(rootEObject, oclquery, verbose);
 
  * 
- * TODO: Need to expand so it can handle multiple contexts and add blackbox operations to the
- *       context.
+ * TODO: Need to expand so it can handle multiple contexts
  * @author cinyoung
  *
  */
@@ -245,12 +244,16 @@ public class OclEvaluator {
 		return result;
 	}
 
-	public static List<GetCallOperation> addOperation(String[] names, EClassifier callerType,
-	                                            EClassifier returnType, EClassifier parmType,
-	                                            String parmName,
-	                                            boolean zeroArgToo, CallReturnType opType,
-	                                            DgEnvironmentFactory envFactory) {
-//        GetCallOperation op = new GetCallOperation();
+    public static List< GetCallOperation > addOperation( String[] names,
+                                                         EClassifier callerType,
+                                                         EClassifier returnType,
+                                                         EClassifier parmType,
+                                                         String parmName,
+                                                         boolean zeroArgToo,
+                                                         boolean singularNameReturnsOnlyOne,
+                                                         CallReturnType opType,
+                                                         DgEnvironmentFactory envFactory ) {
+        //        GetCallOperation op = new GetCallOperation();
 //        op.resultType = opType;
         ArrayList<GetCallOperation> ops = new ArrayList< GetCallOperation >();
 	    
@@ -262,13 +265,16 @@ public class OclEvaluator {
         GetCallOperation op = null;
         
         boolean someEndWithS = false;
-        boolean notAllEndWithS = true;
-        for ( String name : names ) {
-            if ( !Utils2.isNullOrEmpty( name ) ) {
-                if ( name.trim().substring( name.length()-1 ).toLowerCase().equals( "s" )) {
-                    someEndWithS = true;
-                } else {
-                    notAllEndWithS = true;
+        boolean notAllEndWithS = false;
+        if ( singularNameReturnsOnlyOne ) {
+            for ( String name : names ) {
+                if ( !Utils2.isNullOrEmpty( name ) ) {
+                    if ( name.trim().substring( name.length() - 1 )
+                             .toLowerCase().equals( "s" ) ) {
+                        someEndWithS = true;
+                    } else {
+                        notAllEndWithS = true;
+                    }
                 }
             }
         }
@@ -276,9 +282,11 @@ public class OclEvaluator {
           op = new GetCallOperation();
           op.resultType = opType;
           boolean endsWithS = false;
+          boolean oneChar = false;
           if ( someEndWithS && notAllEndWithS ) {
+              oneChar = name.trim().length() == 1;
               endsWithS = name.trim().substring( name.length()-1 ).toLowerCase().equals( "s" );
-              if ( endsWithS ) {
+              if ( endsWithS && !oneChar ) {
                   op.onlyOneForAll = false;
                   op.onlyOnePer = false;
               } else {
@@ -296,9 +304,8 @@ public class OclEvaluator {
             // Create the zero-parameter operation
             op = new GetCallOperation();
             op.resultType = opType;
-            if ( someEndWithS && notAllEndWithS ) {
-                endsWithS = name.trim().substring( name.length()-1 ).toLowerCase().equals( "s" );
-                if ( endsWithS ) {
+            if ( singularNameReturnsOnlyOne && someEndWithS && notAllEndWithS ) {
+                if ( endsWithS && !oneChar ) {
                     op.onlyOneForAll = false;
                     op.onlyOnePer = false;
                 } else {
@@ -322,7 +329,7 @@ public class OclEvaluator {
 
     if ( newWay ) {
       addOperation( new String[] { "regexMatch", "match" }, stringType,
-                    stringType, stringType, "pattern", false,
+                    stringType, stringType, "pattern", false, false,
                     CallReturnType.SELF, envFactory );
 	    return;
 	  }
@@ -338,7 +345,7 @@ public class OclEvaluator {
     if ( newWay ) {
       addOperation( new String[] { "relationship", "relationships", "r" },
                     callerType, returnType, stringType, "relationship", true,
-                    CallReturnType.RELATIONSHIP, envFactory );
+                    true, CallReturnType.RELATIONSHIP, envFactory );
       return;
     }    
   }
@@ -351,7 +358,7 @@ public class OclEvaluator {
     if ( newWay ) {
       addOperation( new String[] { "member", "members", "m" },
                     callerType, returnType, stringType, "member", true,
-                    CallReturnType.MEMBER, envFactory );
+                    false, CallReturnType.MEMBER, envFactory );
       return;
     }
   }
@@ -364,7 +371,7 @@ public class OclEvaluator {
     if ( newWay ) {
       addOperation( new String[] { "type", "types", "t" },
                     callerType, returnType, stringType, "type", true,
-                    CallReturnType.TYPE, envFactory );
+                    true, CallReturnType.TYPE, envFactory );
       return;
     }
   }
@@ -375,9 +382,10 @@ public class OclEvaluator {
       EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
       EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
       if ( newWay ) {
-        List<GetCallOperation> ops = addOperation( new String[] { "stereotype", "stereotypes", "s" },
-                                            callerType, returnType, stringType, "stereotype",
-                                            true, CallReturnType.TYPE, envFactory );
+        List< GetCallOperation > ops =
+                addOperation( new String[] { "stereotype", "stereotypes","s" },
+                              callerType, returnType, stringType, "stereotype",
+                              true, true, CallReturnType.TYPE, envFactory );
         for ( GetCallOperation op : ops ) {
             op.alwaysFilter = new Object[] { "Stereotype" };
         }
@@ -392,7 +400,7 @@ public class OclEvaluator {
     EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
     if ( newWay ) {
       addOperation( new String[] { "name", "n" },
-                    callerType, returnType, stringType, "name", true,
+                    callerType, returnType, stringType, "name", true, true,
                     CallReturnType.NAME, envFactory );
       return;
     }
