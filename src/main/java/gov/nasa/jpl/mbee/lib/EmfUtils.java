@@ -1488,13 +1488,14 @@ public final class EmfUtils {
       return Utils2.newList( elements.toArray() );
     }
     for ( Object elem : elements ) {
+      boolean added = false;
       for ( Object filter : filters ) {
         if ( matches( elem, filter, useName, useType ) ) {
-          if ( adder.add( elem, resultList ) ) {
-            break;
-          }
+          added = adder.add( elem, resultList ); 
+          if ( added ) break;
         }
       }
+      if ( onlyOne && added ) break;
       if ( collect && elem instanceof Collection ) {
         --adder.defaultFlattenDepth;
         List< Object > childRes =
@@ -1503,8 +1504,8 @@ public final class EmfUtils {
 //                             useName, useType, filters );
         ++adder.defaultFlattenDepth;
         if ( childRes != null ) {
-          boolean added = adder.add( childRes, resultList );
-          if ( added && onlyOne ) break; 
+          added = adder.add( childRes, resultList );
+          if ( onlyOne && added ) break;
         }
       }
     }

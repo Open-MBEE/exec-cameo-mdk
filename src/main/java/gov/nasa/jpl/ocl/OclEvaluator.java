@@ -286,7 +286,7 @@ public class OclEvaluator {
           if ( someEndWithS && notAllEndWithS ) {
               oneChar = name.trim().length() == 1;
               endsWithS = name.trim().substring( name.length()-1 ).toLowerCase().equals( "s" );
-              if ( endsWithS && !oneChar ) {
+              if ( endsWithS || oneChar ) {
                   op.onlyOneForAll = false;
                   op.onlyOnePer = false;
               } else {
@@ -305,7 +305,7 @@ public class OclEvaluator {
             op = new GetCallOperation();
             op.resultType = opType;
             if ( singularNameReturnsOnlyOne && someEndWithS && notAllEndWithS ) {
-                if ( endsWithS && !oneChar ) {
+                if ( endsWithS || oneChar ) {
                     op.onlyOneForAll = false;
                     op.onlyOnePer = false;
                 } else {
