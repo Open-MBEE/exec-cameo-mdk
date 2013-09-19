@@ -17,8 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.ocl.ParserException;
-
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Project;
@@ -67,13 +65,22 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl {
                                Collection<? extends Element> paramCollection) {
         Set<Annotation> result = new HashSet<Annotation>();
         
+        boolean wasOn = Debug.isOn();
+        Debug.turnOn();        
+        
         // check constraint unless there is a collection of changed elements
         // that does not include a non-null context
         boolean check = context == null ||
                         Utils2.isNullOrEmpty(paramCollection) ||
                         paramCollection.contains(context);
-        if (!check) return result;
+        if (!check) {
+            if ( !wasOn ) Debug.turnOff();
+            return result;
+        }
 
+        Debug.outln( "run(Project, " + paramConstraint + " , "
+                     + paramCollection + ")" );
+        
         // TODO -- put these statements in accessor functions
         if ( constraintElement == null ) constraintElement = paramConstraint;
         if ( constraint == null ) constraint = paramConstraint;
@@ -112,6 +119,7 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl {
         }
 
         
+        if ( !wasOn ) Debug.turnOff();
         return result;
     }
 
