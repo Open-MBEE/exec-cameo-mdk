@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.ocl.ParserException;
 import org.eclipse.ocl.helper.ConstraintKind;
 import org.junit.Assert;
 
@@ -105,8 +106,13 @@ public class OclQueryAction extends MDAction {
 //          }
 //        }
 //      }
-          Object result =
-              OclEvaluator.evaluateQuery( contextEObject, oclString, true );
+          Object result = null;
+        try {
+            result = OclEvaluator.evaluateQuery( contextEObject, oclString, true );
+        } catch ( ParserException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
       
           // If the parse succeeds, return the result.
           if ( OclEvaluator.isValid() ) {
@@ -191,9 +197,10 @@ public class OclQueryAction extends MDAction {
 
         outputList.add( output );
       } catch ( Exception ex ) {
-        String errorStr = getStackTrace( ex );
-        Debug.outln( errorStr );
-        outputList.add( errorStr );
+        //String errorStr = getStackTrace( ex );
+        String errorMsg = ex.getLocalizedMessage();
+        Debug.errln( errorMsg );
+        outputList.add( "Error: " + errorMsg );
       }
       Debug.outln( OclEvaluator.commandCompletionChoiceStrings( null, elem,
                                                                 oclString )//, 3 )

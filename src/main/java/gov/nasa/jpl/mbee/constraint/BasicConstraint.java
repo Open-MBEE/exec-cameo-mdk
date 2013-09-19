@@ -3,6 +3,7 @@
  */
 package gov.nasa.jpl.mbee.constraint;
 
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -15,6 +16,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.eclipse.ocl.ParserException;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -205,8 +208,13 @@ public class BasicConstraint implements Constraint {
     protected Boolean evaluate( Object constrainedObject ) {
         boolean gotNull = false;
         for ( Element constraint : getConstrainingElements() ) {
-            Object res = OclEvaluator.evaluateQuery( constrainedObject,
-                                                     constraint );
+            Object res = null;
+            try {
+                res = OclEvaluator.evaluateQuery( constrainedObject,
+                                                         constraint );
+            } catch ( Exception e ) {
+                Debug.error( false, e.getLocalizedMessage() );
+            }
             if ( res == null ) {
                 gotNull = true;
             } else if ( !Utils.isTrue( res, false ) ) {

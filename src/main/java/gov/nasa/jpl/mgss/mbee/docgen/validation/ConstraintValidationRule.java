@@ -3,6 +3,7 @@
  */
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -14,6 +15,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.eclipse.ocl.ParserException;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -86,11 +89,15 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl {
                                                      "expression", null);
         } else if (constraint != null) {
             query = constraint.getSpecification();
-        } 
+        }
         
         Object evalResult = null;
         if ( query != null ) {
-            evalResult = OclEvaluator.evaluateQuery(context, query);
+            try {
+                evalResult = OclEvaluator.evaluateQuery(context, query);
+            } catch ( Exception e ) { // TODO make specific to two parse errors
+                Debug.error(false, e.getLocalizedMessage());
+            }
         }
         if ( !Utils.isTrue(evalResult, false) ) {
             // create the annotation
