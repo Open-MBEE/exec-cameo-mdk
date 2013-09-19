@@ -487,10 +487,16 @@ public final class EmfUtils {
     return results;
   }
 
+  public static Class<?> getType( Object o ) {
+      if ( o == null ) return null;
+      EObject eo = (EObject)( o instanceof EObject ? o : null );
+      Class< ? > c = ( eo != null ? getType( eo ) : o.getClass() );
+      return c;
+    }
+
   public static String getTypeName( Object o ) {
     if ( o == null ) return null;
-    EObject eo = (EObject)( o instanceof EObject ? o : null );
-    Class< ? > c = ( eo != null ? getType( eo ) : o.getClass() );
+    Class< ? > c = getType( o );
     if ( c == null ) return null;
     return c.getSimpleName();
   }
@@ -1146,7 +1152,28 @@ public final class EmfUtils {
     return cls;
   }
   
-  public static List< Class< ? > > getTypes( EObject eObj, boolean propagate,
+    public static List< Class< ? > > getTypes( EObject eObj, boolean propagate,
+                                               boolean strictMatch,
+                                               boolean justFirst,
+                                               boolean complainIfNotFound,
+                                               Seen< Object > seen ) {
+        List< Class< ? >> results = new ArrayList< Class< ? > >();
+        List< Object > typeObjects =
+                getTypeObjects( eObj, propagate, strictMatch, justFirst,
+                                complainIfNotFound, seen );
+        for ( Object typeObj : typeObjects ) {
+            if ( typeObj != null ) {
+                Class< ? > cls = asClass( typeObj, seen );
+                if ( cls != null ) {
+                    results.add( cls );
+                    if ( justFirst ) return results;
+                }
+            }
+        }
+        return results;
+    }
+
+  public static List< Object > getTypeObjects( EObject eObj, boolean propagate,
                                              boolean strictMatch,
                                              boolean justFirst,
                                              boolean complainIfNotFound,
@@ -1158,8 +1185,8 @@ public final class EmfUtils {
     if ( sp.first ) return Utils2.getEmptyList();
     seen = sp.second;
     
-    ArrayList< Class<?> > results = new ArrayList< Class<?> >();
-    results.add( eObj.eClass().getInstanceClass() );
+    ArrayList< Object > results = new ArrayList< Object >();
+    results.add( eObj.eClass() );
     if ( justFirst ) return results;
     
     TreeSet< String > wordsForTypeSet =
@@ -1183,9 +1210,9 @@ public final class EmfUtils {
       for ( EStructuralFeature f : features ) {
         if ( f != null ) {
           res  = eObj.eGet( f );
-          Class<?> cls = asClass( res, seen );
-          if ( cls != null ) {
-            results.add( cls );
+//          Class<?> cls = asClass( res, seen );
+          if ( res != null ) {
+            results.add( res );
             if ( justFirst ) return results;
           }
         }
@@ -1197,9 +1224,9 @@ public final class EmfUtils {
           String myName = getName( eo );
           if ( myName != null && wordsForTypeSet.contains( getName( eo ) ) ) {
             // Is the contained object itself represent a type? 
-            Class<?> cls = asClass( eo, seen );
-            if ( cls != null ) {
-              results.add( cls );
+//            Class<?> cls = asClass( eo, seen );
+            if ( eo != null ) {
+              results.add( eo );
               if ( justFirst ) return results;
               found = true;
             } else {
@@ -1209,9 +1236,9 @@ public final class EmfUtils {
                              justFirst, false, seen );
               for ( Object o : oList ) {
                 // TODO -- REVIEW -- have already seen o from getValues()?!!
-                cls = asClass( o, seen );
-                if ( cls != null ) {
-                  results.add( cls );
+//                cls = asClass( o, seen );
+                if ( o != null ) {
+                  results.add( o );
                   if ( justFirst ) return results;
                   found = true;
                 }
@@ -1222,9 +1249,9 @@ public final class EmfUtils {
             // non-strict name check
             for ( String name : wordsForType ) {
               if ( myName.toLowerCase().contains( name.toLowerCase() ) ) {
-                Class<?> cls = asClass( eo, seen ); // REVIEW seen correct here?
-                if ( cls != null ) {
-                  results.add( cls );
+//                Class<?> cls = asClass( eo, seen ); // REVIEW seen correct here?
+                if ( eo != null ) {
+                  results.add( eo );
                   if ( justFirst ) return results;
                   found = true;
 //                  break;
@@ -1236,8 +1263,8 @@ public final class EmfUtils {
           // get type of value
           if ( !found && !strictThisTime ){
             // get types of contents???
-            List< Class< ? > > resList =
-                getTypes( eo, propagate, strictMatch, justFirst, false, seen );
+            List< Object > resList =
+                getTypeObjects( eo, propagate, strictMatch, justFirst, false, seen );
             if ( !Utils2.isNullOrEmpty( resList ) ) {
               if ( justFirst ) return resList;
               results.addAll( resList );
@@ -1256,7 +1283,8 @@ public final class EmfUtils {
   
   public static String[] wordsForType = new String[] { "Type", "Class",
                                                        "Typename", "ClassName",
-                                                       "DefaultType", "eClass" };
+                                                       "DefaultType", "eClass",
+                                                       "Stereotype", "Metaclass" };
 
   public static String[] eWordsForValue = new String[] { "value",
       "StringExpression", "OpaqueExpression", "LiteralBoolean",

@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.Stack;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.ocl.ParserException;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -178,7 +179,11 @@ public class TableStructure extends Table {
 							//cell.add(new Reference(empty));
 							continue;
 						}
-						cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
+						try {
+                            cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
+                        } catch ( Exception e1 ) {// TODO make specific to two parse errors
+                            Debug.error(false, e1.getLocalizedMessage());
+                        }
 					}
 				}
 				row.add(cell);

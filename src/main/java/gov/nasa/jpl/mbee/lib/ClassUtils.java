@@ -1721,7 +1721,10 @@ public class ClassUtils {
       Debug.errln( "Warning! No evaluation of " + object + " with type " + cls.getName() + "!" );
       throw cce;
     }
-    return r;
+    if ( cls != null && cls.isInstance( r ) || ( r != null && cls == r.getClass() ) ) {
+      return r;
+    }
+    return null;
   }
   
   /**

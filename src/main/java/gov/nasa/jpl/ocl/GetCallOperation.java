@@ -3,22 +3,33 @@ package gov.nasa.jpl.ocl;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.CollectionAdder;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+
+/**
+ * A CallOperation implementing a blackbox function extension of the OCL library
+ * that accesses (gets) data in some specified relation to some specified
+ * object.
+ * 
+ */
 public class GetCallOperation implements CallOperation {
 
   public enum CallReturnType { SELF, NAME, TYPE, VALUE, MEMBER, RELATIONSHIP };
   
-  public boolean collect = true;
+  private boolean collect = true; // TODO
   public boolean filter = true; // REVIEW -- should always (collect == !filter)?
   public boolean onlyOneForAll = false;
-  public boolean onlyOnePer = true;
+  public boolean onlyOnePer = false;
   public int recursionDepth = 1;
 
   // List handling
@@ -38,8 +49,11 @@ public class GetCallOperation implements CallOperation {
   public boolean useName = true;
   public boolean useType = true;
   public boolean useValue = true;
-  public boolean matchNull = true; 
+  private boolean matchNull = true; // TODO
+  private boolean activityEdgeIsRelationship = true; // TODO
 
+  public Object[] alwaysFilter = null;
+  
   public CallReturnType resultType = CallReturnType.SELF;
   
   public GetCallOperation() {
@@ -53,15 +67,16 @@ public class GetCallOperation implements CallOperation {
   public Object callOperation( Object source, Object[] args ) {
     CollectionAdder adder =
         new CollectionAdder( mustFlatten, mayFlatten, flattenIfSizeOne,
-                         flattenToNullIfEmpty, defaultFlattenDepth, nullOk,
-                         onlyOneForAll, unflattenedCollectionType );
+                             flattenToNullIfEmpty, defaultFlattenDepth, nullOk,
+                             onlyOneForAll, unflattenedCollectionType );
     List< Object > resultList = new ArrayList< Object >();
     if ( source == null ) return resultList;
-    if ( filter ) filter = !Utils2.isNullOrEmpty( args );
+    if ( recursionDepth < 0 ) return resultList;
+    Object[] filterArgs = Utils2.join( alwaysFilter, args );
+    if ( filter ) filter = !Utils2.isNullOrEmpty( filterArgs );
     Element elem = ( source instanceof Element ? (Element)source : null );
     Collection< ? > coll =
         ( source instanceof Collection ? (Collection< ? >)source : null );
-    boolean one = onlyOneForAll || ( asCollection && coll != null && onlyOnePer );
     Object objectToAdd = null;
     boolean loop = false;
     //boolean doingAdd = true;
@@ -89,15 +104,49 @@ public class GetCallOperation implements CallOperation {
 //          }
           //added = adder.add( name, resultList );
           break;
-        case TYPE:
+        case TYPE: // TODO -- Using asElement, asEObject, asElement??!!  Need to pass thru to EmfUtils
           loop = coll != null && asCollection;
           if ( loop ) {
             objectToAdd = source;
           } else {
             if ( onlyOnePer || onlyOneForAll ) {
-              objectToAdd = EmfUtils.getTypeName( source );
+              //objectToAdd = EmfUtils.getTypeName( source );
+              objectToAdd = EmfUtils.getType( source );
+              if ( !Utils2.isNullOrEmpty( objectToAdd ) ) {
+                  break;
+              }
             } else {
               objectToAdd = EmfUtils.getTypes( source );
+            }
+            if ( asElement && elem != null ) {
+              // Stereotypes
+              List< Stereotype > sTypes = StereotypesHelper.getStereotypes(elem);
+              if ( objectToAdd instanceof Collection ) {
+                  Collection<Object> c = (Collection<Object>)objectToAdd;
+                  for ( Stereotype s : sTypes ) {
+                      if ( !c.contains( s ) ) c.add( s );
+                      if ( (onlyOnePer || onlyOneForAll) && c.size() > 0) {
+                          break;
+                      }
+                  }
+                  if ( (onlyOnePer || onlyOneForAll) && c.size() > 0) {
+                      break;
+                  }
+              } else {
+                  List<Object> list = Utils2.newList( sTypes.toArray() );
+                  if ( objectToAdd != null ) {
+                      list.add( 0, objectToAdd );
+                  }
+                  objectToAdd = list;
+                  if ( (onlyOnePer || onlyOneForAll) && list.size() > 0) {
+                      break;
+                  }
+              }
+
+              // Metaclasses -- TODO -- !!!!
+//              elem.m
+//              StereotypesHelper.getM
+
             }
           }
           break;
@@ -106,6 +155,7 @@ public class GetCallOperation implements CallOperation {
           if ( loop ) {
             objectToAdd = source;
           } else {
+            boolean one = onlyOneForAll || ( asCollection && coll != null && onlyOnePer );
             objectToAdd = EmfUtils.getValues( source, null, true, true, one,
                                               false, null );
           }
@@ -135,6 +185,7 @@ public class GetCallOperation implements CallOperation {
               objectToAdd = EmfUtils.getRelationships( elem );
             } else {
               // REVIEW -- TODO -- asEObject???!
+              // REVIEW -- TODO -- ActivityEdge?
               // REVIEW -- TODO -- complain???!
             }
           } else {
@@ -147,10 +198,12 @@ public class GetCallOperation implements CallOperation {
       if ( loop ) {
         ArrayList< Object > list = new ArrayList< Object >();
         --adder.defaultFlattenDepth;
+        --recursionDepth;
         for ( Object o : coll ) {
-          Object result = callOperation( o, args );
+          Object result = callOperation( o, filterArgs );
           adder.add( result, list );
         }
+        ++recursionDepth;
         ++adder.defaultFlattenDepth;
         objectToAdd = list;
       } else {
@@ -159,7 +212,7 @@ public class GetCallOperation implements CallOperation {
               EmfUtils.collectOrFilter( adder, objectToAdd, !filter,
                                         ( onlyOneForAll || ( isCollection && onlyOnePer ) ),
                                         useName, useType, useValue, asObject,
-                                        args );
+                                        filterArgs );
         }
       }
       if ( objectToAdd instanceof Collection ) {

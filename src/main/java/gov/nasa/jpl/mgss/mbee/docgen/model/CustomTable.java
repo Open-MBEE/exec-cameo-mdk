@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.ocl.ParserException;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
@@ -32,7 +33,7 @@ public class CustomTable extends Table {
 	  setSortElementsByName( true );
 	}
 	
-	public Object evaluateOcl( EObject o, String expression ) {
+	public Object evaluateOcl( EObject o, String expression ) throws ParserException {
 	  return OclEvaluator.evaluateQuery( o, expression, isOclEvaluationVerbose() );
 	}
 	
@@ -145,7 +146,13 @@ public class CustomTable extends Table {
               List<DocumentElement> row = new ArrayList<DocumentElement>();
               // construct cell for each column
               for (String oclExpr : this.getColumns()) {
-                  Object result = this.evaluateOcl(e, oclExpr);
+                  Object result = null;
+                try {
+                    result = this.evaluateOcl(e, oclExpr);
+                } catch ( ParserException e1 ) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
                   row.add(Common.getTableEntryFromObject(result));
               }
               body.add(row);

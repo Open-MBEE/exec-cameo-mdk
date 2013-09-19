@@ -163,6 +163,15 @@ public class Utils2 {
   }        
 
   
+  public static boolean isNullOrEmpty( Object s ) {
+    if ( s == null ) return true;
+    if ( s.getClass().isArray() ) return isNullOrEmpty( (Object[]) s );
+    if ( s instanceof String ) return isNullOrEmpty( (String) s ); 
+    if ( s instanceof Collection ) return isNullOrEmpty( (Collection<?>) s ); 
+    if ( s instanceof Map ) return isNullOrEmpty( (Map<?,?>) s );
+    return false;
+  }
+
   // Check if string has really got something.
   public static boolean isNullOrEmpty( String s ) {
     return ( s == null || s.isEmpty() ||
@@ -383,6 +392,40 @@ public class Utils2 {
     return set;
   }
 
+  /**
+   * @param arrays
+   * @return the sum of the lengths of the arrays, ignoring arrays that are
+   *         null (but counting null entries)
+   */
+  public static int totalSize( Object[]...arrays ) {
+      if ( arrays == null ) return 0;
+      int size = 0;
+      for ( Object[] array : arrays ) {
+          size += ( array == null ? 0 : array.length ); 
+      }
+      return size;
+  }
+
+  /**
+   * @param arrays
+   * @return the concatenation of the elements of the arrays into a new array,
+   *         ignoring arrays that are null (but including null entries in each
+   *         of the arrays)
+   */
+  public static Object[] join( Object[]...arrays ) {
+      int size = totalSize( arrays );
+      Object[] result = new Object[size];
+      int i = 0;
+      for ( Object[] array : arrays ) {
+          if ( array != null ) {
+              for ( int j = 0; j < array.length; ++j, ++i ) {
+                  result[i] = array[j];
+              }
+          }
+      }
+      return result;
+  }
+  
   public static <T1, T2> boolean toArrayOfType( T1[] source, T2[] target,
                                                 Class< T2 > newType ) {
     boolean succ = true;
