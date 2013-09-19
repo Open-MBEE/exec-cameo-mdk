@@ -5,6 +5,7 @@ package gov.nasa.jpl.mgss.mbee.docgen;
 
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -40,6 +41,8 @@ import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
+
+import org.eclipse.xtext.xbase.interpreter.impl.FinallyDidNotCompleteException;
 
 public class RepeatInputComboBoxDialog implements Runnable {
 
@@ -184,7 +187,9 @@ public class RepeatInputComboBoxDialog implements Runnable {
   public void run() {
     Object selectedItem = "";
     editableListPanel = null;
-
+    boolean wasVerbose = OclEvaluator.isVerboseDefault;
+    OclEvaluator.setVerboseDefault( true );
+    
     while ( selectedItem != null ) {
       if ( editableListPanel == null ) {
         editableListPanel = new EditableListPanel( (String)message, choices.toArray() );
@@ -207,12 +212,12 @@ public class RepeatInputComboBoxDialog implements Runnable {
       selectedItem = getSelectedItem( message );
       if (option == JOptionPane.CANCEL_OPTION) {
         selectedItem = null;
-        System.out.println( "CANCEL! EditableListPanel value: " + selectedItem );
+        Debug.outln( "CANCEL! EditableListPanel value: " + selectedItem );
       } else if (option == JOptionPane.CLOSED_OPTION) {
         selectedItem = null;
-        System.out.println( "CLOSED! EditableListPanel value: " + selectedItem );
+        Debug.outln( "CLOSED! EditableListPanel value: " + selectedItem );
       } else {
-        System.out.println( "EditableListPanel value: " + selectedItem );
+        Debug.outln( "EditableListPanel value: " + selectedItem );
       }
 
       if ( selectedItem == null || Utils2.isNullOrEmpty( selectedItem.toString() ) ) {
@@ -231,6 +236,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
         }
       }
     }
+    OclEvaluator.setVerboseDefault( wasVerbose );
   }
 
   public static Object[] getSelectedObjects(Component c) {
@@ -350,7 +356,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
 //    }
 
     public void setResultPanel( Object result ) {
-      System.out.println("setResultPanel(" + result + ")" );
+      Debug.outln("setResultPanel(" + result + ")" );
       if ( resultPane instanceof JEditorPane ) {
         if ( result == null ) result = "null";
         ( (JEditorPane)resultPane ).setText( //toHtml( 
@@ -637,7 +643,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
       Debug.outln("w=" + w);
       
       if ( win != w ) {
-          Debug.error(false, "win != w");
+          Debug.error(false, false, "win != w");
           if ( w != null ) {
               win = w;
               if ( w instanceof JDialog ) dialog = (JDialog)w;
@@ -691,7 +697,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
           Debug.outln( "dialog = " + dialog.toString() );
         } else if ( top != null ) {
           Debug.outln( "rootPane = " + component.getRootPane().toString() );
-          System.out.println( "top = " + top.toString() );
+          Debug.outln( "top = " + top.toString() );
         }
       }
       } catch ( NullPointerException npe ) {

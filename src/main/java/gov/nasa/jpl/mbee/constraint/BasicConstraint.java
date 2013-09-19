@@ -4,6 +4,7 @@
 package gov.nasa.jpl.mbee.constraint;
 
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -213,7 +214,10 @@ public class BasicConstraint implements Constraint {
                 res = OclEvaluator.evaluateQuery( constrainedObject,
                                                          constraint );
             } catch ( Exception e ) {
-                Debug.error( false, e.getLocalizedMessage() );
+                Debug.error( true, false, 
+                             e.getLocalizedMessage() + " for OCL query \""
+                             + OclEvaluator.queryObjectToStringExpression( constraint )
+                             + "\" on " + EmfUtils.toString( constrainedObject ) );
             }
             if ( res == null ) {
                 gotNull = true;
