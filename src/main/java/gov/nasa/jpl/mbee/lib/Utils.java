@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
+import org.eclipse.ocl.ParserException;
+
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -208,10 +210,16 @@ public class Utils {
                                                         DocGen3Profile.filterExpressionStereotype,
                                                         "expression", null);
         for (Element e : elements) {
-            Object o = OclEvaluator.evaluateQuery(e, query);
-            Boolean istrue = isTrue(o, false);
-            if (include == ((Boolean)(istrue == null ? false : istrue)).booleanValue()) {
-                res.add(e);
+            Object o = null;
+            try {
+                o = OclEvaluator.evaluateQuery(e, query);
+                Boolean istrue = isTrue(o, false);
+                if (include == ((Boolean)(istrue == null ? false : istrue)).booleanValue()) {
+                    res.add(e);
+                }
+            } catch ( ParserException e1 ) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
             }
         }
         return res;
@@ -498,8 +506,14 @@ public class Utils {
      */
     public static List<Element> collectByExpression(Element element, Object query) {
         List<Element> res = new ArrayList<Element>();
-        Object o = OclEvaluator.evaluateQuery(element, query);
-        res.addAll(getListOfType(o, Element.class));
+        Object o = null;
+        try {
+            o = OclEvaluator.evaluateQuery(element, query);
+            res.addAll(getListOfType(o, Element.class));
+        } catch ( ParserException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         return res;
     }
 
@@ -1620,7 +1634,13 @@ public class Utils {
         Map<Element, Object> resultMap = new HashMap<Element, Object>();
         Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
         for (Element e : list) {
-            Object result = OclEvaluator.evaluateQuery(e, o);
+            Object result = null;
+            try {
+                result = OclEvaluator.evaluateQuery(e, o);
+            } catch ( ParserException e1 ) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
             resultMap.put(e, result);
             if (!isAllNumbers) continue;
             Collection<?> coll = null;

@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.ocl.ParserException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,8 +72,12 @@ public class TestOcl {
       // oclquery = "self.appliedStereotypeInstance.classifier.attribute";
       // oclquery = "name.regexMatch('DocGen Templating') <> null";
 
-      Object result =
-          OclEvaluator.evaluateQuery( rootEObject, oclquery, verbose );
+      Object result = null;
+      try {
+        result = OclEvaluator.evaluateQuery( rootEObject, oclquery, verbose );
+      } catch ( ParserException e ) {
+        e.printStackTrace();
+      }
       Assert.assertNotNull( result );
 
       if ( result != null ) {

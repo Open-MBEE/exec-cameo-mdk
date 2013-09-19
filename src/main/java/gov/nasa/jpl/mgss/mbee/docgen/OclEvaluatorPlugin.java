@@ -10,7 +10,6 @@ import com.nomagic.actions.NMAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.OclQueryAction;
 
 public class OclEvaluatorPlugin extends MDPlugin {
