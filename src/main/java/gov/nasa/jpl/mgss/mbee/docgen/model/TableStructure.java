@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -182,7 +183,7 @@ public class TableStructure extends Table {
 						try {
                             cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
                         } catch ( Exception e1 ) {// TODO make specific to two parse errors
-                            Debug.error(false, e1.getLocalizedMessage());
+                            Debug.error(true, false, e1.getLocalizedMessage() + " for OCL query \"" + expr + "\" on " + EmfUtils.toString( re ) );
                         }
 					}
 				}

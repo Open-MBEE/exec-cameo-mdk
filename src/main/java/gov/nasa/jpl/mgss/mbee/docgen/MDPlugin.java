@@ -304,7 +304,7 @@ public abstract class MDPlugin extends Plugin {
         ActionsConfiguratorsManager.getInstance();
 
     if ( acm == null ) {
-      Debug.error( "Error! addConfigurator(): No ActionsConfiguratorsManager!" );
+      Debug.error( true, true, "Error! addConfigurator(): No ActionsConfiguratorsManager!" );
       return;
     }
  
@@ -312,7 +312,7 @@ public abstract class MDPlugin extends Plugin {
     // corresponding to this context.
     Method addMethod = context.getAddConfiguratorMethod( subcontext );
     if ( addMethod == null ) {
-      Debug.error( "Error! addConfigurator(" + cfgtor + ", " + context + ", " +
+      Debug.error( true, false, "Error! addConfigurator(" + cfgtor + ", " + context + ", " +
                    subcontext +
                    "): Could not find add-configurator method for context=" +
                    context + " and subcontext=" + subcontext );
@@ -332,7 +332,7 @@ public abstract class MDPlugin extends Plugin {
           pType.isInstance( cfgtor ) ) {
         arguments.add( cfgtor );
       } else {
-        Debug.error( true,
+        Debug.error( true, true,
                      "Error! addConfigurator(" + cfgtor + ", " + context + ", "
                          + subcontext + "): Unexpected "
                          + pType.getSimpleName()

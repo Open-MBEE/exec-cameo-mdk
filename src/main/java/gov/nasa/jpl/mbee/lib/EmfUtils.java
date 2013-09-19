@@ -41,8 +41,11 @@ public final class EmfUtils {
   public static String toString( Object o ) {
       if ( o instanceof Element ) {
           Element e = (Element)o;
-          return e.getHumanName() + //":" + e.getHumanType() + ":" + 
-                 e.getID() + ":" + e.get_representationText();
+          String repText = e.get_representationText();
+          if ( Utils2.isNullOrEmpty( repText ) ) repText = "";
+          else repText = ":" + repText;
+          return e.getHumanName() + ":" + //e.getHumanType() + ":" + 
+                 e.getID() + repText; 
       }
       return getName( o ) + ":" + getTypeNames( o ); 
   }

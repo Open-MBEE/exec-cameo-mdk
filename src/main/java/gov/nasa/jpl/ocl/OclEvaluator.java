@@ -135,7 +135,7 @@ public class OclEvaluator {
         if (queryColl.size() == 1) {
           exprString = queryObjectToStringExpression(queryColl.iterator().next());
         } else {
-            //Debug.error("Error! Query cannot be a list of multiple things!");
+          Debug.error(false, false, "Error! Query cannot be a list of multiple things!");
         }
       } else if (query != null) {
         exprString = (String) query.toString();

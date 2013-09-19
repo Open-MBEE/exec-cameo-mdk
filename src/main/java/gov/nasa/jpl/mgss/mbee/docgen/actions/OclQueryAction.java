@@ -197,10 +197,13 @@ public class OclQueryAction extends MDAction {
 
         outputList.add( output );
       } catch ( Exception ex ) {
-        //String errorStr = getStackTrace( ex );
         String errorMsg = ex.getLocalizedMessage();
-        Debug.errln( errorMsg );
         outputList.add( "Error: " + errorMsg );
+        errorMsg = errorMsg 
+                + " for OCL query \""
+                + OclEvaluator.queryObjectToStringExpression( oclString )
+                + "\" on " + EmfUtils.toString( elem );
+        Debug.error( false, false, errorMsg );
       }
       Debug.outln( OclEvaluator.commandCompletionChoiceStrings( null, elem,
                                                                 oclString )//, 3 )

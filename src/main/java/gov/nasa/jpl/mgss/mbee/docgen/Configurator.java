@@ -197,7 +197,7 @@ public class Configurator implements ConfiguratorWithPriority,
       
       Method[] addMethods = ClassUtils.getMethodsForName( ActionsConfiguratorsManager.class, addMethodString );
       if ( addMethods == null || addMethods.length == 0 ) {
-        Debug.error( true, "Error! " + toString() + ".getAddConfiguratorMethod("
+        Debug.error( true, true, "Error! " + toString() + ".getAddConfiguratorMethod("
                            + subcontext + "): add method, " + addMethodString
                            + ", for context " + toString() + " not found" );
         return null;
@@ -303,7 +303,7 @@ public class Configurator implements ConfiguratorWithPriority,
                || c.equals( EventObject.class ) ) {
             args.add( actionEvent );
           } else {
-            Debug.error( false, "Warning! Action " + actionMethod
+            Debug.error( true, false, "Warning! Action " + actionMethod
                                 + " passing null for " + c + "!" );
             args.add( null );
           }
@@ -889,7 +889,7 @@ public class Configurator implements ConfiguratorWithPriority,
     if ( mdAction == null ) return null;
     Context c = Context.fromString( context );
     if ( c == null ) {
-      Debug.error( true, "Error! addConfiguration( context=" + context
+      Debug.error( true, true, "Error! addConfiguration( context=" + context
                          + ", actionName=" + actionName + ", category="
                          + category + ", actionMethod=" + actionMethod
                          + ", objectInvokingMethod=" + objectInvokingMethod

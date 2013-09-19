@@ -643,7 +643,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
       Debug.outln("w=" + w);
       
       if ( win != w ) {
-          Debug.error(false, "win != w");
+          Debug.error(false, false, "win != w");
           if ( w != null ) {
               win = w;
               if ( w instanceof JDialog ) dialog = (JDialog)w;
