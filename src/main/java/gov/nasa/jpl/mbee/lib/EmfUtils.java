@@ -41,8 +41,11 @@ public final class EmfUtils {
   public static String toString( Object o ) {
       if ( o instanceof Element ) {
           Element e = (Element)o;
-          return e.getHumanName() + //":" + e.getHumanType() + ":" + 
-                 e.getID() + ":" + e.get_representationText();
+          String repText = e.get_representationText();
+          if ( Utils2.isNullOrEmpty( repText ) ) repText = "";
+          else repText = ":" + repText;
+          return e.getHumanName() + ":" + //e.getHumanType() + ":" + 
+                 e.getID() + repText; 
       }
       return getName( o ) + ":" + getTypeNames( o ); 
   }
@@ -1488,13 +1491,14 @@ public final class EmfUtils {
       return Utils2.newList( elements.toArray() );
     }
     for ( Object elem : elements ) {
+      boolean added = false;
       for ( Object filter : filters ) {
         if ( matches( elem, filter, useName, useType ) ) {
-          if ( adder.add( elem, resultList ) ) {
-            break;
-          }
+          added = adder.add( elem, resultList ); 
+          if ( added ) break;
         }
       }
+      if ( onlyOne && added ) break;
       if ( collect && elem instanceof Collection ) {
         --adder.defaultFlattenDepth;
         List< Object > childRes =
@@ -1503,8 +1507,8 @@ public final class EmfUtils {
 //                             useName, useType, filters );
         ++adder.defaultFlattenDepth;
         if ( childRes != null ) {
-          boolean added = adder.add( childRes, resultList );
-          if ( added && onlyOne ) break; 
+          added = adder.add( childRes, resultList );
+          if ( onlyOne && added ) break;
         }
       }
     }

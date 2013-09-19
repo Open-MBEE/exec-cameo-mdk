@@ -272,7 +272,7 @@ public class CollectFilterParser {
         boolean isExpr = sortStereotype.equals(DocGen3Profile.sortByExpression);
         boolean isName = sortStereotype.equals(DocGen3Profile.sortByName);
         if ( !isProp && !isAttr && !isName && !isExpr ) {
-            Debug.error(false, "Error! Trying to sort by unknown sort type: "
+            Debug.error(true, false, "Error! Trying to sort by unknown sort type: "
                     + sortStereotype);
             return ordered;
         }
@@ -294,7 +294,7 @@ public class CollectFilterParser {
         } else if (isName) {
             ordered = Utils.sortByName(in);
         } else {
-            Debug.error(false, "Error! Trying to sort as " + 
+            Debug.error(true, false, "Error! Trying to sort as " + 
                         sortStereotype +
                         ", but the property/attribute is the wrong type: " + o);
             return ordered;

@@ -4,6 +4,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -96,7 +97,10 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl {
             try {
                 evalResult = OclEvaluator.evaluateQuery(context, query);
             } catch ( Exception e ) { // TODO make specific to two parse errors
-                Debug.error(false, e.getLocalizedMessage());
+                String errorMsg = e.getLocalizedMessage() + " for OCL query \""
+                        + OclEvaluator.queryObjectToStringExpression( query )
+                        + "\" on " + EmfUtils.toString( context );
+                Debug.error( true, false, errorMsg );
             }
         }
         if ( !Utils.isTrue(evalResult, false) ) {

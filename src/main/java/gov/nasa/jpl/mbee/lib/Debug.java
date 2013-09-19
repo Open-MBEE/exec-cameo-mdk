@@ -279,6 +279,10 @@ public class Debug {
    */
   public static boolean errorOnNull( boolean stackTrace, String msg,
                                      Object... maybeNullObjects ) {
+      return errorOnNull( stackTrace, stackTrace, msg, maybeNullObjects );
+  }
+  public static boolean errorOnNull( boolean forceOutput, boolean stackTrace, String msg,
+                                     Object... maybeNullObjects ) {
     try {
       if ( maybeNullObjects == null ) throw new Exception();
       for ( Object o : maybeNullObjects ) {
@@ -287,8 +291,9 @@ public class Debug {
         } 
       }
     } catch ( Exception e ) {
+      boolean wasOn = isOn();
+      if ( forceOutput ) turnOn();
       Debug.errln( msg );
-      //System.err.println( msg );
       if ( stackTrace ) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
@@ -299,6 +304,7 @@ public class Debug {
           //breakpoint();
         }
       }
+      if ( forceOutput && !wasOn ) turnOff(); 
       return true;
     }
     return false;
@@ -321,5 +327,8 @@ public class Debug {
    */
   public static void error( boolean stackTrace, String msg ) {
     errorOnNull( stackTrace, msg, (Object[])null );
+  }
+  public static void error( boolean forceOutput, boolean stackTrace, String msg ) {
+    errorOnNull( forceOutput, stackTrace, msg, (Object[])null );
   }
 }
