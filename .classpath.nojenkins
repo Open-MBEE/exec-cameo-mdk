@@ -150,11 +150,6 @@
 	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/woodstox-core-asl-4.0.7.jar"/>
 	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/reportwizard_api.jar"/>
 	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/reportwizard.jar"/>
-	<classpathentry kind="lib" path="lib/json_simple-1.1.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="http://www.json.org/javadoc/"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="var" path="MD1701/lib/graphics/clibwrapper_jiio.jar"/>
 	<classpathentry kind="var" path="MD1701/lib/graphics/freehep-base.jar"/>
 	<classpathentry kind="var" path="MD1701/lib/graphics/freehep-graphics2d.jar"/>

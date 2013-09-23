@@ -111,7 +111,7 @@ public class ViewExporter implements RunnableWithProgress{
 			pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
 			pm.setRequestEntity(JsonRequestEntity.create(json));
 			HttpClient client = new HttpClient();
-			ViewEditUtils.setCredentials(client);
+			ViewEditUtils.setCredentials(client, baseurl);
 			gl.log("[INFO] Sending...");
 			client.executeMethod(pm);
 			String response = pm.getResponseBodyAsString();
@@ -177,7 +177,7 @@ public class ViewExporter implements RunnableWithProgress{
 			int status = 0;
 			try {
 				HttpClient client = new HttpClient();
-				ViewEditUtils.setCredentials(client);
+				ViewEditUtils.setCredentials(client, baseurl);
 				gl.log("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
 				client.executeMethod(get);
 				
@@ -200,7 +200,7 @@ public class ViewExporter implements RunnableWithProgress{
 						post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile), imageFile.length()));
 					}
 					HttpClient client = new HttpClient();
-					ViewEditUtils.setCredentials(client);
+					ViewEditUtils.setCredentials(client, baseurl);
 					gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
 					client.executeMethod(post);
 					

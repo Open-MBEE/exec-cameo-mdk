@@ -58,8 +58,6 @@ import java.util.Stack;
 import javax.lang.model.util.Elements;
 import javax.script.ScriptException;
 
-import org.jboss.util.property.PropertyManager;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;

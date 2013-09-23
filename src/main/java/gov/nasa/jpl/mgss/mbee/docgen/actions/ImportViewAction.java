@@ -90,7 +90,7 @@ public class ImportViewAction extends MDAction {
 				else
 					gl.log("*** Starting consistency check ***");
 				HttpClient client = new HttpClient();
-				ViewEditUtils.setCredentials(client);
+				ViewEditUtils.setCredentials(client, geturl);
 				client.executeMethod(gm);
 				String json = gm.getResponseBodyAsString();	
 				//gl.log(json);

@@ -37,7 +37,7 @@ public class DeleteDocumentAction extends MDAction {
 			//Protocol easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
 			//Protocol.registerProtocol("https", easyhttps);
 			HttpClient client = new HttpClient();
-			ViewEditUtils.setCredentials(client);
+			ViewEditUtils.setCredentials(client, url);
 			client.executeMethod(pm);
 			String code = pm.getResponseBodyAsString();
 			if (code.equals("ok"))

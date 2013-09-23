@@ -68,7 +68,7 @@ public class ExportViewCommentsAction extends MDAction {
 				pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
 				pm.setRequestEntity(JsonRequestEntity.create(json));
 				HttpClient client = new HttpClient();
-				ViewEditUtils.setCredentials(client);
+				ViewEditUtils.setCredentials(client, url);
 				client.executeMethod(pm);
 				response = pm.getResponseBodyAsString();
 				//gl.log(response);
