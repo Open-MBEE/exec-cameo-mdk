@@ -129,26 +129,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             // There may be no view query actions to add, in which case we need
             // to avoid adding an empty menu category, so the category is
             // removed in this case.
-            boolean alreadyAdded = manager.getCategory( "ViewInteraction" ) != null;
-            ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
-            NMAction action = null;
-            action = manager.getActionFor("ViewQueries");
-            if (action == null) {
-                boolean added = addViewQueryActions(c, (NamedElement)e);
-                if (!alreadyAdded && !added) {
-                    manager.removeCategory( c );
-                }
+            ActionsCategory category = (ActionsCategory) manager.getActionFor("ViewInteraction"); 
+            if (category == null) {
+                category = new MDActionsCategory("ViewInteraction", "View Interaction");
+                category.setNested(true);
+                boolean added = addViewQueryActions(category, (NamedElement)e);
+                if (added)
+                    manager.addCategory(0, category);
             }
-    //        //ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
-    //        NMAction action = manager.getActionFor("ViewQueries");
-    //        if (action == null) {
-    //            MDActionsCategory c = new MDActionsCategory("ViewInteraction", "View Interaction");
-    //            boolean added = addViewQueryActions(c, (NamedElement)e);
-    //            if (added) {
-    //                c.setNested(true);
-    //                manager.addCategory(0, c);
-    //            }
-    //        }
         }
     
         // View Editor menu
@@ -320,27 +308,15 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 		Document dge = dg.parseDocument(true, false);
 		CollectActionsVisitor cav = new CollectActionsVisitor();
 		dge.accept(cav);
-		ActionsCategory c = null;
-		if ( Utils2.isNullOrEmpty( parent.getCategories() ) ) {
-		    c = parent;
-		} else {
-		    c = new ActionsCategory("ViewQueries", "View Query Actions");
-		}
+		
 		boolean added = false;
 		if (cav.getActions().size() > 0) {
 		    for (MDAction a: cav.getActions()) {
-		        c.addAction(a);
+		        parent.addAction(a);
 		    }
 		    added = true;
 		}
-
-		c.setNested(true);
-		if (added && parent != c) {
-			synchronized (this) {
-				parent.addAction(c);
-				parent.getCategories().add(c);
-			}
-		}
+		parent.setNested(true);
 		return added;
 	}
 

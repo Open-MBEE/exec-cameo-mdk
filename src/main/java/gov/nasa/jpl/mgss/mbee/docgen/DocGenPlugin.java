@@ -12,6 +12,10 @@
 
 package gov.nasa.jpl.mgss.mbee.docgen;
 
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
@@ -20,6 +24,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewPackage;
 import gov.nasa.jpl.mgss.mbee.docgen.sync.ApplicationSyncEventSubscriber;
 
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
@@ -77,6 +82,7 @@ public class DocGenPlugin extends Plugin {
 		}
 		QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
 		QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
+		loadExtensionJars(); //people can actaully just create a new plugin and let magicdraw's classloader load it?
 		//QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore", "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
 	}
 
@@ -104,5 +110,30 @@ public class DocGenPlugin extends Plugin {
 				runEmbeddedServer = false;
 			}
 		}
+	}
+	
+	private void loadExtensionJars() {
+	    File extensionDir = new File(getDescriptor().getPluginDirectory(), "extension");
+	    if (!extensionDir.exists())
+	        return;
+	    for (File file : extensionDir.listFiles()) {
+           /* URLClassLoader ucl = new URLClassLoader(new URL[] {file.toURI().toURL()}, DocGenPlugin.class.getClassLoader());
+            Enumeration<JarEntry> jarEntries = new JarFile(file).entries();
+            while (jarEntries.hasMoreElements()) {
+                JarEntry jarEntry = jarEntries.nextElement();
+                if (jarEntry.getName().endsWith(".class")) {
+                    String className = jarEntry.getName().replace("/",
+                            ".").substring(0,
+                            jarEntry.getName().indexOf(".class"));
+                    Class c = Class.forName(className, true, ucl);
+                    for (Class i : c.getInterfaces()) {
+                        if ("myproject.api.Hello".equals(i.getName())) {
+                            Hello hello = (Hello) c.newInstance();
+                            System.out.println(hello.getMessage());
+                        }
+                    }
+                }
+            }*/
+        } 
 	}
 }

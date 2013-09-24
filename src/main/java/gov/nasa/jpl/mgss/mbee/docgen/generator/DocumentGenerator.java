@@ -575,8 +575,22 @@ public class DocumentGenerator {
 			dge = new MissionMapping();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.libraryChooserStereotype)) {
 			dge = new LibraryMapping();
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.javaExtensionStereotype, true)) {
+		    Element e = an;
+	        if (!StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.javaExtensionStereotype)) {
+	            if (an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null && 
+	                    StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.javaExtensionStereotype))
+	                e = ((CallBehaviorAction)an).getBehavior();
+	        } 
+	        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, DocGen3Profile.javaExtensionStereotype);
+	        String javaClazz = s.getName();
+	        try {
+                java.lang.Class clazz = java.lang.Class.forName(javaClazz);
+                dge = (Query)clazz.newInstance();
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            } 
 		}
-		//add a check for user java extension and dynamically load and create the java class that should subclass Query
 		return dge;
 	}
 	
