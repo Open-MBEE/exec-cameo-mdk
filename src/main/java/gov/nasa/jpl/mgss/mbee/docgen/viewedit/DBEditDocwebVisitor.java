@@ -348,7 +348,8 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 		}
 		if (e instanceof NamedElement) {
 			o.put("name", ((NamedElement)e).getName());
-		}
+			o.put("qualifiedName", ((NamedElement)e).getQualifiedName());
+		} 
 		String doc = ModelHelper.getComment(e);
 		if (e instanceof Comment) {
 			o.put("type", "Comment");
