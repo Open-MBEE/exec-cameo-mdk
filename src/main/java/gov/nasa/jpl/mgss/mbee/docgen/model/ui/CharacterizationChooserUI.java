@@ -7,7 +7,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -16,6 +15,8 @@ import java.util.EventObject;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -198,14 +199,11 @@ public class CharacterizationChooserUI {
 
 		treeTable.expandAll();
 		treeTable.getColumn(0).setMinWidth(200);
-		JPanel panel = new JPanel();
-		frame.getContentPane().add(panel, BorderLayout.SOUTH);
 
 		// Add new row to table
 		JButton btnAdd = new JButton("Add");
 		btnAdd.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-
 				// Find selected row if exists
 				Object selectedNode = null;
 				TreeSelectionModel selectModel = treeTable
@@ -235,11 +233,18 @@ public class CharacterizationChooserUI {
 				treeTable.updateUI();
 			}
 		});
-		panel.setLayout(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-		panel.add(btnAdd);
 
+		JButton btnRefactor = new JButton("Save and Refactor");
+		btnRefactor.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent paramActionEvent) {
+				mapping.refactor();
+				frame.dispose();
+			}
+		});
+		
+		
 		JButton btnSave = new JButton("Save");
-		panel.add(btnSave);
 		btnSave.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent paramActionEvent) {
@@ -249,19 +254,26 @@ public class CharacterizationChooserUI {
 		});
 
 		JButton btnCancel = new JButton("Cancel");
-		panel.add(btnCancel);
 		btnCancel.addActionListener(new ActionListener() {
-
 			@Override
 			public void actionPerformed(ActionEvent paramActionEvent) {
 				frame.dispose();
 			}
 		});
 
+		// define layout after all buttons have been created
+		JPanel panel = new JPanel();
+		frame.getContentPane().add(panel, BorderLayout.SOUTH);
+		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+		panel.add(btnAdd);
+		panel.add(Box.createHorizontalGlue());
+		panel.add(btnRefactor);
+		panel.add(btnSave);
+		panel.add(btnCancel);
+
 		// 'esc' to close out box
 		KeyStroke stroke = KeyStroke.getKeyStroke("ESCAPE");
-		Action actionListner = new AbstractAction() {
-
+		Action actionListener = new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent paramActionEvent) {
 				frame.dispose();
@@ -270,9 +282,9 @@ public class CharacterizationChooserUI {
 		InputMap inputMap = scrollPane
 				.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		inputMap.put(stroke, "ESCAPE");
-		scrollPane.getActionMap().put("ESCAPE", actionListner);
+		scrollPane.getActionMap().put("ESCAPE", actionListener);
 	}
-
+	
 	public JFrame getFrame() {
 		return frame;
 	}

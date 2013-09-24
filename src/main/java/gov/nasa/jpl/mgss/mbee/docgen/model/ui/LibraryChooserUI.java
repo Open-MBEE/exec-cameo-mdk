@@ -9,11 +9,18 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.border.EtchedBorder;
 
 import org.jdesktop.swingx.JXTreeTable;
@@ -22,6 +29,9 @@ public class LibraryChooserUI {
 
 	private JFrame frame;
 	private final LibraryMapping libraryMapping;
+	private JXTreeTable treeTable;
+	private JButton	btnExpandAll;
+	private JButton btnRefactor;
 
 	/**
 	 * Launch the application.
@@ -66,39 +76,76 @@ public class LibraryChooserUI {
 		JScrollPane scrollPane = new JScrollPane();
 		frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
 		LibraryTreeTableModel treeTableModel = new LibraryTreeTableModel(libraryMapping);
-		JXTreeTable treeTable = new JXTreeTable(treeTableModel);
+		treeTable = new JXTreeTable(treeTableModel);
 		scrollPane.setViewportView(treeTable);
 		treeTable.setHorizontalScrollEnabled(true);
 		treeTable.setShowGrid(true);
 		treeTable.setGridColor(Color.LIGHT_GRAY);
 		treeTable.setBorder(new EtchedBorder(EtchedBorder.RAISED));  
 		
-		JPanel panel = new JPanel();
-		FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-		flowLayout.setAlignment(FlowLayout.RIGHT);
-		frame.getContentPane().add(panel, BorderLayout.SOUTH);
+		btnExpandAll = new JButton("Expand All");
+		btnExpandAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent paramActionEvent) {
+				String  text = btnExpandAll.getText();
+				if (text.equalsIgnoreCase("Expand All")) {
+					treeTable.expandAll();
+					btnExpandAll.setText("Collapse All");
+				} else {
+					treeTable.collapseAll();
+					btnExpandAll.setText("Expand All");
+				}
+			}
+		});
+		
+		btnRefactor = new JButton("Save and Refactor");
+		btnRefactor.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent paramActionEvent) {
+				libraryMapping.refactor();
+				frame.dispose();
+			}
+		});
 		
 		JButton btnOk = new JButton("Save");
-		panel.add(btnOk);
-		btnOk.addActionListener(new ActionListener() {
-			
+		btnOk.addActionListener(new ActionListener() {			
 			@Override
 			public void actionPerformed(ActionEvent paramActionEvent) {
 				libraryMapping.apply();
 				frame.dispose();
 			}
 		});
-		
-		
+				
 		JButton btnCancel = new JButton("Cancel");
-		panel.add(btnCancel);
 		btnCancel.addActionListener(new ActionListener() {
-
 			@Override
 			public void actionPerformed(ActionEvent paramActionEvent) {
 				frame.dispose();
 			}
 		});
+
+		// define layout after all buttons have been created
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+		frame.getContentPane().add(panel, BorderLayout.SOUTH);
+		panel.add(btnExpandAll);
+		panel.add(Box.createHorizontalGlue());
+		panel.add(btnRefactor);
+		panel.add(btnOk);
+		panel.add(btnCancel);
+		
+		// 'esc' to close out box
+		KeyStroke stroke = KeyStroke.getKeyStroke("ESCAPE");
+		Action actionListener = new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent paramActionEvent) {
+				frame.dispose();
+			}
+		};
+		InputMap inputMap = scrollPane
+				.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		inputMap.put(stroke, "ESCAPE");
+		scrollPane.getActionMap().put("ESCAPE", actionListener);		
 	}
 
 	public JFrame getFrame() {

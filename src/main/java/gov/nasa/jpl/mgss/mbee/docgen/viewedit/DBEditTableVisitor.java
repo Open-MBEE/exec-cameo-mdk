@@ -18,6 +18,9 @@ import java.util.Map;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+
 public class DBEditTableVisitor extends DBEditDocwebVisitor {
 	
 	private JSONObject tablejson;
@@ -26,8 +29,10 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 	private int rowspan;
 	private int colspan;
 	
+	//private GUILog gl = Application.getInstance().getGUILog();
+	
 	public DBEditTableVisitor(boolean recurse, Map<String, JSONObject> elements) {
-		super(recurse);
+		super(recurse, false);
 		this.elements = elements;
 		tablejson = new JSONObject();
 		tableelements = new JSONArray();
@@ -71,11 +76,12 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 		tablejson.put("title", table.getTitle());
 		tablejson.put("type", "Table");
 		tablejson.put("sources", tableelements);
+		//gl.log( "tablejson =\n" + tablejson );
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void visit(DBTableEntry tableentry) {
+	public void visit(DBTableEntry tableentry) { //TODO; check for informaltable and ignore it
 		if (tableentry.getMorerows() > 0) {
 			rowspan = tableentry.getMorerows() + 1;
 		}
@@ -100,6 +106,12 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 			curRow.add(entry);
 		} else if (!tableentry.getChildren().isEmpty()){
 			tableentry.getChildren().get(0).accept(this);
+		} else {
+			JSONObject entry = new JSONObject();
+			entry.put("source", "text");
+			entry.put("text", "");
+			addSpans(entry);
+			curRow.add(entry);
 		}
 		
 	}

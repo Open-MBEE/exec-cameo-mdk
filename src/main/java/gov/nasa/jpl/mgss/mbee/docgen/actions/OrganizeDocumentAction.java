@@ -58,11 +58,12 @@ public class OrganizeDocumentAction extends MDAction {
 		url += "/rest/projects/document/" + doc.getID();
 		PostMethod pm = new PostMethod(url);
 		try {
-			pm.setRequestHeader("Content-Type", "text/json");
+			pm.setRequestHeader("Content-Type", "text/plain");
 			pm.setRequestEntity(JsonRequestEntity.create(vol.getID()));
 			//Protocol easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
 			//Protocol.registerProtocol("https", easyhttps);
 			HttpClient client = new HttpClient();
+			ViewEditUtils.setCredentials(client);
 			client.executeMethod(pm);
 			String code = pm.getResponseBodyAsString();
 			if (code.equals("ok"))

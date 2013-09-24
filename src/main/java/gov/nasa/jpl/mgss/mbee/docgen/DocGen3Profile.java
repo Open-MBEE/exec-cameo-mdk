@@ -22,6 +22,11 @@ public class DocGen3Profile {
 	public static final String combinedMatrixStereotype = "CombinedMatrix3";
 	
 	public static final String customTableStereotype = "CustomTable";
+	public static final String tableStructureStereotype = "TableStructure";					
+	public static final String tablePropertyColumnStereotype = "TablePropertyColumn";		
+	public static final String tableExpressionColumnStereotype = "TableExpressionColumn";
+	public static final String tableAttributeColumnStereotype = "TableAttributeColumn";		
+	public static final String tableSumRowStereotype = "TableSumRow";						
 	
 	public static final String dependencyMatrixStereotype = "DependencyMatrix3";
 	public static final String genericTableStereotype = "GenericTable3";
@@ -40,11 +45,17 @@ public class DocGen3Profile {
 	public static final String collectionStereotype = "CollectionAndFilterGroup";
 	public static final String documentMetaStereotype = "DocumentMeta";
 	public static final String documentViewStereotype = "DocumentView";
+	public static final String accountableForStereotype = "accountableFor";
+	public static final String approvesStereotype = "approves";
+	public static final String concursStereotype = "concurs";
+	public static final String projectStaffStereotype = "ProjectStaff";
+	public static final String roleStereotype = "Role";
 	
 	public static final String filterDiagramTypeStereotype = "FilterByDiagramType";
 	public static final String filterNameStereotype = "FilterByNames";
 	public static final String filterMetaclassStereotype = "FilterByMetaclasses";
 	public static final String filterStereotypeStereotype = "FilterByStereotypes";
+    public static final String filterExpressionStereotype = "FilterByExpression";
 	public static final String collectRelMetaclassStereotype = "CollectByDirectedRelationshipMetaclasses";
 	public static final String collectRelStereotypeStereotype = "CollectByDirectedRelationshipStereotypes";
 	public static final String collectStereotypePropStereotype = "CollectByStereotypeProperties";
@@ -54,6 +65,7 @@ public class DocGen3Profile {
 	public static final String collectTypeStereotype = "CollectTypes";
 	public static final String collectDiagram = "CollectThingsOnDiagram";
 	public static final String collectClassifierAttributes = "CollectClassifierAttributes";
+    public static final String collectExpressionStereotype = "CollectByExpression";
 	
 	public static final String associationChoosable = "AssociationTypeChoosable";
 	public static final String depthChoosable = "DepthChoosable";
@@ -64,6 +76,8 @@ public class DocGen3Profile {
 	public static final String includeChoosable = "IncludeChoosable";
 	public static final String nameChoosable = "NameChoosable";
 	public static final String diagramTypeChoosable = "DiagramTypeChoosable";
+    public static final String expressionChoosable = "ExpressionChoosable";
+	public static final String sortable = "Sortable";
 	
 	public static final String stereotypePropertyChoosable = "StereotypePropertiesChoosable";
 	public static final String documentationChoosable = "DocumentationChoosable";
@@ -78,7 +92,11 @@ public class DocGen3Profile {
 	public static final String intersection = "Intersection";
 	public static final String union = "Union";
 	public static final String removeDuplicates = "RemoveDuplicates";
+	
 	public static final String sortByName = "SortByName";
+	public static final String sortByAttribute = "SortByAttribute";
+	public static final String sortByProperty = "SortByProperty";
+    public static final String sortByExpression = "SortByExpression";
 	
 	public static final String conformStereotype = "Conform";
 	
@@ -92,4 +110,6 @@ public class DocGen3Profile {
 	
 	public static final String documentCommentStereotype = "DocumentComment";
 	public static final String viewCommentStereotype = "ViewComment";
+
+	public static final String constraintStereotype = "Constraint";
 }

@@ -4,14 +4,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 import gov.nasa.jpl.mbee.tree.Node;
 import gov.nasa.jpl.mgss.mbee.docgen.model.LibraryMapping;
 
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
 public class LibraryTreeTableModel extends AbstractTreeTableModel {
 
@@ -121,6 +123,19 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
 			component.removeCharacterization(characterization);
 	}
 
+	/**
+	 * Need to override isLeaf so Packages are never shown as leaves.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean isLeaf(Object node) {
+		Node<String, LibraryComponent> lnode = (Node<String, LibraryComponent>) node;
+		if (lnode.getData().getElement() instanceof Package) {
+			return false;
+		} 
+        return getChildCount(node) == 0;
+	}
+	
 	public LibraryMapping getLibraryMapping() {
 		return libraryMapping;
 	}

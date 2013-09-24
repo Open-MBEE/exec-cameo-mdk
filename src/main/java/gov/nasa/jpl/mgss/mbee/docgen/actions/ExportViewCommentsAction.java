@@ -44,11 +44,13 @@ public class ExportViewCommentsAction extends MDAction {
 				return;
 			DocumentValidator dv = new DocumentValidator(doc);
 			dv.validateDocument();
-			dv.printErrors();
-			if (dv.isFatal())
-				return;
-			DocumentGenerator dg = new DocumentGenerator(doc, null);
+            if (dv.isFatal()) {
+                dv.printErrors();
+                return;
+            }
+			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
+            dv.printErrors();
 			ViewCommentVisitor vcv = new ViewCommentVisitor();
 			dge.accept(vcv);
 			String json = vcv.getJSON();
@@ -65,9 +67,10 @@ public class ExportViewCommentsAction extends MDAction {
 			PostMethod pm = new PostMethod(url);
 			try {
 				gl.log("[INFO] Sending...");
-				pm.setRequestHeader("Content-Type", "text/json;charset=utf-8");
+				pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
 				pm.setRequestEntity(JsonRequestEntity.create(json));
 				HttpClient client = new HttpClient();
+				ViewEditUtils.setCredentials(client);
 				client.executeMethod(pm);
 				response = pm.getResponseBodyAsString();
 				//gl.log(response);

@@ -74,9 +74,11 @@ public class ImportViewCommentsAction extends MDAction {
 			PostMethod pm = new PostMethod(url + "/rest/comments/committed");
 			try {	
 				HttpClient client = new HttpClient();
+				ViewEditUtils.setCredentials(client);
 				client.executeMethod(gm);
 				String json = gm.getResponseBodyAsString();	
-				if (json.equals("{}")) {
+				//gl.log(json);
+				if (json.equals("{}") || json.contains("comments\": []")) {
 					gl.log("[INFO] There are no comments to import.");
 					return;
 				}
@@ -86,7 +88,7 @@ public class ImportViewCommentsAction extends MDAction {
 				}
 				JSONObject changed = change(json);
 				gl.log("[INFO] Notifying view editor of imported comments");
-				pm.setRequestHeader("Content-Type", "text/json");
+				pm.setRequestHeader("Content-Type", "application/json");
 				pm.setRequestEntity(JsonRequestEntity.create(changed.toJSONString()));
 				//gl.log(changed.toJSONString());
 				client.executeMethod(pm);

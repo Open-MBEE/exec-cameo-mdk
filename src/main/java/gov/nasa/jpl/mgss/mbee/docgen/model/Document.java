@@ -31,6 +31,10 @@ public class Document extends Container {
 	private boolean UseDefaultStylesheet;
 	private String JPLProjectTitle;
 	private String LogoSize;
+	private String InstLogo;
+	private String InstLogoSize;
+	private String InstTxt1;
+	private String InstTxt2;
 	
 	private boolean chunkFirstSections;
 	private int chunkSectionDepth;
@@ -38,6 +42,16 @@ public class Document extends Container {
 	
 	private boolean genNewImage;
 	
+	private boolean product;
+	
+	public boolean isProduct() {
+		return product;
+	}
+
+	public void setProduct(boolean product) {
+		this.product = product;
+	}
+
 	public String getHeader() {
 		return header;
 	}
@@ -162,7 +176,23 @@ public class Document extends Container {
 	public String getLogoSize(){
 		return LogoSize;
 	}
-
+	
+	public String getInstLogo(){
+		return InstLogo;
+	}
+	
+	public String getInstLogoSize(){
+		return InstLogoSize;
+	}
+	
+	public String getInstTxt1(){
+		return InstTxt1;
+	}
+	
+	public String getInstTxt2(){
+		return InstTxt2;
+	}
+	
 	public Diagram getCoverimage() {
 		return coverimage;
 	}
@@ -232,6 +262,22 @@ public class Document extends Container {
 	}
 	public void setLogoSize(String s){
 		LogoSize=s;
+	}
+	
+	public void setInstLogo(String s){
+		InstLogo=s;
+	}
+	
+	public void setInstLogoSize(String s){
+		InstLogoSize=s;
+	}
+	
+	public void setInstTxt1(String s){
+		InstTxt1=s;
+	}
+	
+	public void setInstTxt2(String s){
+		InstTxt2=s;
 	}
 	
 	public void setSubtitle(String s) {

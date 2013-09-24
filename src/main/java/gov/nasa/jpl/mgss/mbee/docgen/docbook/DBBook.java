@@ -33,7 +33,11 @@ public class DBBook extends DBHasContent {
 	private String JPLProjectTitle;
 	private boolean UseDefaultStylesheet;
 	private String LogoSize;
-
+	private String InstLogo;
+	private String InstLogoSize;
+	private String InstTxt1;
+	private String InstTxt2;
+	
 	public DBBook() {
 		subtitle = "";
 		}
@@ -114,7 +118,19 @@ public class DBBook extends DBHasContent {
 	public Diagram getCoverimage() {
 		return coverimage;
 	}
-
+	public String getInstLogo(){
+		return InstLogo;
+	}
+	public String getInstLogoSize(){
+		return InstLogoSize;
+	}
+	public String getInstTxt1(){
+		return InstTxt1;
+	}
+	public String getInstTxt2(){
+		return InstTxt2;
+	}
+	
 	public void setIndex(boolean index) {
 		this.index = index;
 	}
@@ -128,6 +144,18 @@ public class DBBook extends DBHasContent {
 	}
 	public void setLogoSize(String s){
 		LogoSize=s;
+	}
+	public void setInstLogo(String s){
+		InstLogo=s;
+	}
+	public void setInstLogoSize(String s){
+		InstLogoSize=s;
+	}
+	public void setInstTxt1(String s){
+		InstTxt1=s;
+	}
+	public void setInstTxt2(String s){
+		InstTxt2=s;
 	}
 	public void setDocumentID(String s){
 		DocumentID = s;

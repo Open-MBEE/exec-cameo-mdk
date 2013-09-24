@@ -1,42 +1,82 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSimpleList;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 
+/**
+ * Common is a collection of utility functions for creating DocumentElements
+ * from model Elements.
+ */
 public class Common {
-
-	public static DBTableEntry getStereotypePropertyEntry(Element e, Property p, boolean forViewEditor) {
-		List<Object> results = Utils.getStereotypePropertyValues(e, p);
-		return getEntryFromList(results, false, forViewEditor);
-	}
-	
-	public static DBTableEntry getEntryFromList(List<Object> results, boolean simple, boolean forViewEditor) {
-		DBTableEntry entry = new DBTableEntry();
-		if (simple) {
-			DBSimpleList sl = new DBSimpleList();
-			sl.setContent(results);
-			entry.addElement(sl);
-		} else {
-			DBList parent = new DBList();
-			for (Object o: results) {
-				if (forViewEditor)
-					parent.addElement(new DBText(DocGenUtils.fixString(o, false)));
-				else
-					parent.addElement(new DBText(DocGenUtils.addDocbook(DocGenUtils.fixString(o))));
+ 
+    public static void addReferenceToDBHasContent(Reference ref, DBHasContent parent) {
+		if (ref.result == null)
+			return;
+		if (!ref.isResultEditable()) { 
+			if (ref.result instanceof Collection) {
+				for (Object res: (Collection)ref.result) {
+					parent.addElement(new DBParagraph(res));
+				}
+			} else {
+				parent.addElement(new DBParagraph(ref.result));
 			}
-			entry.addElement(parent);
+		} else {
+			if (ref.result instanceof Collection && !((Collection)ref.result).isEmpty()) {
+				parent.addElement(new DBParagraph(((Collection)ref.result).iterator().next(), ref.element, ref.from));
+			} else {
+				parent.addElement(new DBParagraph(ref.result, ref.element, ref.from));
+			}
 		}
-		
-		return entry;
-		
 	}
+    
+    
+    /**
+     * This set is used to prevent infinite recursion while traversing nested
+     * collections of model elements.
+     */
+    public static Set<Object> seen = Collections.synchronizedSet(new HashSet<Object>());
+
+    public static DBTableEntry getStereotypePropertyEntry(Element e, Property p) {
+    	DBTableEntry res = new DBTableEntry();
+    	addReferenceToDBHasContent(Reference.getPropertyReference(e, p), res);
+    	return res;
+    }
+   
+    /**
+     * This assumes no context for what object is or how it can be editable, should not be used except in old queries like GenericTable
+     * @param o
+     * @return
+     */
+    public static DBTableEntry getTableEntryFromObject(Object o) {
+    	DBTableEntry res = new DBTableEntry();
+    	if (o instanceof Collection) {
+    		for (Object r: (Collection)o) {
+    			res.addElement(new DBParagraph(r));
+    		}
+    	} else
+    		res.addElement(new DBParagraph(o));
+    	return res;
+    	
+    }
 }

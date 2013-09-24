@@ -46,7 +46,7 @@ public class ImportViewAction extends MDAction {
 	public static final String actionid = "ImportView";
 	
 	public ImportViewAction(Element e) {
-		super(actionid, "Import View (Overwrite Model)", null, null);
+		super(actionid, "Import View (Overwrite)", null, null);
 		doc = e;
 	}
 	
@@ -83,13 +83,14 @@ public class ImportViewAction extends MDAction {
 			if (recurse)
 				geturl += "?recurse=true";
 			GetMethod gm = new GetMethod(geturl);
-			PostMethod pm = new PostMethod(url + "/rest/views/committed");
+			//PostMethod pm = new PostMethod(url + "/rest/views/committed");
 			try {	
 				if (willchange)
 					gl.log("*** Starting import view ***");
 				else
 					gl.log("*** Starting consistency check ***");
 				HttpClient client = new HttpClient();
+				ViewEditUtils.setCredentials(client);
 				client.executeMethod(gm);
 				String json = gm.getResponseBodyAsString();	
 				//gl.log(json);
@@ -102,7 +103,7 @@ public class ImportViewAction extends MDAction {
 					return;
 				}
 				JSONArray changed = change(json, willchange, nameChange, notLocked, docChange, valueChange);
-				if (willchange) {
+				/*if (willchange) {
 					//gl.log("[INFO] Notifying view editor of imported changes.");
 					pm.setRequestHeader("Content-Type", "text/json");
 					pm.setRequestEntity(JsonRequestEntity.create(changed.toJSONString()));
@@ -112,10 +113,10 @@ public class ImportViewAction extends MDAction {
 						//gl.log("[INFO] Imported changes are marked as imported on view editor.");
 					else
 						gl.log(res);
-				}
+				}*/
 			} finally {
 				gm.releaseConnection();
-				pm.releaseConnection();
+				//pm.releaseConnection();
 			}	
 		} catch (Exception ex) {
 			StringWriter sw = new StringWriter();

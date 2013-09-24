@@ -5,7 +5,6 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ImportViewAction;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
@@ -26,6 +25,9 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -37,7 +39,6 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class ViewExporter implements RunnableWithProgress{
 
@@ -88,7 +89,8 @@ public class ViewExporter implements RunnableWithProgress{
 			return;
 		String user = Utils.getUsername();
 		baseurl += "?user=" + user;
-		DBEditDocwebVisitor v = new DBEditDocwebVisitor(recurse);
+		boolean alfresco = baseurl.contains("service");
+		DBEditDocwebVisitor v = new DBEditDocwebVisitor(recurse, alfresco);
 		book.accept(v);
 		String json = v.getJSON();
 		//gl.log(json);
@@ -101,14 +103,17 @@ public class ViewExporter implements RunnableWithProgress{
 				params.add("doc=true");
 			if (force)
 				params.add("force=true");
+			if (dge.isProduct())
+				params.add("product=true");
 			baseurl += Utils.join(params, "&");
 		}
+		
 		PostMethod pm = new PostMethod(baseurl);
 		try {
-			//gl.log(json);
 			pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
 			pm.setRequestEntity(JsonRequestEntity.create(json));
 			HttpClient client = new HttpClient();
+			ViewEditUtils.setCredentials(client);
 			gl.log("[INFO] Sending...");
 			client.executeMethod(pm);
 			String response = pm.getResponseBodyAsString();
@@ -153,19 +158,28 @@ public class ViewExporter implements RunnableWithProgress{
 		// Upload images to view editor (JSON keys are specified in DBEditDocwebVisitor
 		gl.log("[INFO] Updating Images...");
 		Map<String, JSONObject> images = v.getImages();
+		boolean isAlfresco = false;
+		if (url.indexOf("service") >= 0) {
+			isAlfresco = true;
+		}
 		for (String key: images.keySet()) {
 			String filename = (String)images.get(key).get("abspath");
 			String cs = (String)images.get(key).get("cs");
 			String extension = (String)images.get(key).get("extension");
 			
 			File imageFile = new File(filename);
-			baseurl = url + "/rest/images/" + key + "?cs=" + cs + "&extension=" + extension;
+			if (isAlfresco) {
+				baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
+			} else {
+				baseurl = url + "/rest/images/" + key + "?cs=" + cs + "&extension=" + extension;
+			}
 			
 			// check whether the image already exists
 			GetMethod get = new GetMethod(baseurl);
 			int status = 0;
 			try {
 				HttpClient client = new HttpClient();
+				ViewEditUtils.setCredentials(client);
 				gl.log("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
 				client.executeMethod(get);
 				
@@ -181,8 +195,14 @@ public class ViewExporter implements RunnableWithProgress{
 			} else {
 				PostMethod post = new PostMethod(baseurl);
 				try {
-					post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile), imageFile.length()));
+					if (isAlfresco) {
+						Part[] parts = { new FilePart("content", imageFile) };
+						post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
+					} else {
+						post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile), imageFile.length()));
+					}
 					HttpClient client = new HttpClient();
+					ViewEditUtils.setCredentials(client);
 					gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
 					client.executeMethod(post);
 					

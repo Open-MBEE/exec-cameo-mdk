@@ -25,10 +25,20 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.m2m.qvt.oml.project.QVTOBuilder</name>
+			<arguments>
+				<dictionary>
+					<key>src_container</key>
+					<value>DocGenUserScripts/Test</value>
+				</dictionary>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>org.python.pydev.pythonNature</nature>
 		<nature>org.eclipse.pde.PluginNature</nature>
+		<nature>org.eclipse.m2m.qvt.oml.project.QVTONature</nature>
 	</natures>
 </projectDescription>

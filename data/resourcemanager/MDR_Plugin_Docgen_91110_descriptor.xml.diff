@@ -1,3 +1,7 @@
 In original, missing from final:
-	from="profiles/MDK/IMCE Extensions.mdxml"
+	from="DocGenUserScripts/Test/InterfaceCSVcompleteness.qvto"
+	from="DocGenUserScripts/Test/InterfaceCSVcompleteness.qvtox"
+	from="DocGenUserScripts/Test/interfaceTable.qvto"
+	from="DocGenUserScripts/Test/interfaceTable.qvtox"
 In final, missing from original:
+	from="data/defaults/data/diagrams/View Class Diagram/descriptor.xml"

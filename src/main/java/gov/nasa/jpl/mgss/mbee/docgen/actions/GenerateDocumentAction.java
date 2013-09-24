@@ -42,11 +42,13 @@ public class GenerateDocumentAction  extends MDAction {
 		try {
 			DocumentValidator dv = new DocumentValidator(doc);
 			dv.validateDocument();
-			dv.printErrors();
-			if (dv.isFatal())
+			if (dv.isFatal()) {
+	            dv.printErrors();
 				return;
-			DocumentGenerator dg = new DocumentGenerator(doc, null);
+			}
+			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument();
+            dv.printErrors();
 			boolean genNewImage = dge.getGenNewImage();
 			(new PostProcessor()).process(dge);
 			JFileChooser choose = new JFileChooser();
