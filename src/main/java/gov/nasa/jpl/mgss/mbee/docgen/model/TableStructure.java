@@ -194,9 +194,10 @@ public class TableStructure extends Table {
 	}
 	
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+        List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (ignore)
-			return;
+			return res;
 		
 		buildTableReferences();
 		DBTable table = new DBTable();
@@ -226,7 +227,8 @@ public class TableStructure extends Table {
 			titles.add(title);
 		}
 		setTableThings(table);
-		parent.addElement(table);
+		res.add(table);
+		return res;
 	}
 
 
@@ -265,9 +267,4 @@ public class TableStructure extends Table {
 	
 */
 
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
-	}
 }

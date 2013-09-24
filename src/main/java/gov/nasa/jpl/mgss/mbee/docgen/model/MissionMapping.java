@@ -3,6 +3,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.tree.Node;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.MapMissionAction;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
@@ -69,10 +71,6 @@ public class MissionMapping extends Query {
 	private Map<NamedElement, Set<MissionCharacterization>> library2missionChars;
 	private Set<NamedElement> chars; //actual possible chars given library components available from scope
 	
-	@Override
-	public void accept(IModelVisitor v) {	
-		v.visit(this);
-	}
 	
 	private boolean hasCharacterizesDependency(Element e) {
 		for (Relationship s: e.get_relationshipOfRelatedElement()) {
@@ -574,9 +572,10 @@ public class MissionMapping extends Query {
 	}
 	
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+	    List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (!init())
-			return;
+			return res;
 		DBTable table = new DBTable();
 		Node<String, MissionComponent> root = getRoot();
 		List<Element> chars = Utils.sortByName(getLibraryCharacterizations());
@@ -595,7 +594,8 @@ public class MissionMapping extends Query {
 		table.setHeaders(headers);
 		table.setCols(headerrow.size());
 		table.setTitle("Component Characterizations");
-		parent.addElement(table);
+		res.add(table);
+		return res;
 	}
 	
 	private void addMissionRows(Node<String, MissionComponent> cur, List<Element> chars, List<List<DocumentElement>> grid, int depth) {
@@ -628,6 +628,13 @@ public class MissionMapping extends Query {
 		for (Node<String, MissionComponent> child: cur.getChildrenAsList()) {
 			addMissionRows(child, chars, grid, depth+1);
 		}
+	}
+	
+	@Override
+	public List<MDAction> getActions() {
+	    List<MDAction> res = new ArrayList<MDAction>();
+	    res.add(new MapMissionAction(this));
+	    return res;
 	}
 	
 }

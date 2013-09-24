@@ -576,6 +576,7 @@ public class DocumentGenerator {
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.libraryChooserStereotype)) {
 			dge = new LibraryMapping();
 		}
+		//add a check for user java extension and dynamically load and create the java class that should subclass Query
 		return dge;
 	}
 	

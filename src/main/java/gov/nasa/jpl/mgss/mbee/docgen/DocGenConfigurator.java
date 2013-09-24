@@ -51,6 +51,7 @@ import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
 import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.browser.Node;
@@ -113,7 +114,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(targets);
             if (manager.getActionFor("RunValidationScript0") == null) 
-                c.addAction(new RunUserValidationScriptAction(us, 0));
+                c.addAction(new RunUserValidationScriptAction(us));
         } else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
@@ -122,7 +123,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(targets);
             if (manager.getActionFor("RunUserScript0") == null) 
-                c.addAction(new RunUserScriptAction(us, 0));
+                c.addAction(new RunUserScriptAction(us));
         }
         if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
             // There may be no view query actions to add, in which case we need
@@ -325,48 +326,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 		} else {
 		    c = new ActionsCategory("ViewQueries", "View Query Actions");
 		}
-		int nump = 1;
 		boolean added = false;
-		for (PropertiesTableByAttributes pta: cav.getPropertiesTables()) {
-		    c.addAction(new EditPropertiesTableAction(pta, nump));
-			added = true;
-			nump++;
+		if (cav.getActions().size() > 0) {
+		    for (MDAction a: cav.getActions()) {
+		        c.addAction(a);
+		    }
+		    added = true;
 		}
-		nump = 1;
-		for (WorkpackageTable wt: cav.getWorkpackageTables()) {
-			c.addAction(new EditWorkpackageTableAction(wt, nump));
-			if (wt instanceof DeploymentTable || wt instanceof BillOfMaterialsTable) {
-			    c.addAction(new RollupWorkpackageTableAction(wt, nump));
-			}
-			nump++;
-			added = true;
-		}
-		nump = 1;
-		List<UserScript> editableTables = cav.getUserEditableTables();
-		List<UserScript> validations = cav.getUserValidationScripts();
-		for (UserScript us: cav.getUserScripts()) {
-			if (editableTables.contains(us))
-				c.addAction(new RunUserEditableTableAction(us, nump));
-			if (validations.contains(us)) {
-				c.addAction(new RunUserValidationScriptAction(us, nump));
-			}
-			if (!editableTables.contains(us) && !validations.contains(us))
-				c.addAction(new RunUserScriptAction(us, nump));
-			nump++;
-			added = true;
-		}
-		nump = 1;
-		for (MissionMapping charmap: cav.getMissionMappings()) {
-			c.addAction(new MapMissionAction(charmap, nump));
-			added = true;
-			nump++;
-		}
-		nump = 1;
-		for (LibraryMapping charmap: cav.getLibraryMappings()) {
-			c.addAction(new MapLibraryAction(charmap, nump));
-			added = true;
-			nump++;
-		}
+
 		c.setNested(true);
 		if (added && parent != c) {
 			synchronized (this) {

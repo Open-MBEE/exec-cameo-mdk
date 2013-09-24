@@ -16,8 +16,8 @@ public class MapMissionAction extends MDAction {
 
 	private MissionMapping mapping;
 	
-	public MapMissionAction(MissionMapping table, int number) {
-		super("missionMapper" + number, "Map Mission", null, null);
+	public MapMissionAction(MissionMapping table) {
+		super(null, "Map Mission", null, null);
 		mapping = table;
 	}
 	

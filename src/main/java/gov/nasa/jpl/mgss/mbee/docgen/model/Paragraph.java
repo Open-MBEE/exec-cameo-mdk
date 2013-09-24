@@ -51,20 +51,15 @@ public class Paragraph extends Query {
 	public From getFrom() {
 		return fromProperty;
 	}
-	
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
-	}
 
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+        List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (getIgnore())
-			return;
+			return res;
 		if (getText() != null) { 
 			if (forViewEditor || !getText().trim().equals("")) 
-				parent.addElement(new DBParagraph(getText(), getDgElement(), getFrom()));
+				res.add(new DBParagraph(getText(), getDgElement(), getFrom()));
 		} else if (getTargets() != null) {
 	    List< Element > targets =
 	        isSortElementsByName() ? Utils.sortByName( getTargets() )
@@ -72,7 +67,7 @@ public class Paragraph extends Query {
 	    for (Element e: targets) {
 				if (getStereotypeProperties() != null && !getStereotypeProperties().isEmpty()) {
 					for (Property p: getStereotypeProperties()) {
-						Common.addReferenceToDBHasContent(Reference.getPropertyReference(e, p), parent);
+						res.addAll(Common.getReferenceAsDocumentElements(Reference.getPropertyReference(e, p)));
 						//List<Object> ob = Utils.getStereotypePropertyValues(e, p, true);
 						//for (Object o: ob) {
 						//	if (o instanceof String)
@@ -80,9 +75,10 @@ public class Paragraph extends Query {
 						//}
 					}
 				} else 
-					parent.addElement(new DBParagraph(ModelHelper.getComment(e), e, From.DOCUMENTATION));
+					res.add(new DBParagraph(ModelHelper.getComment(e), e, From.DOCUMENTATION));
 			}
 		}
+		return res;
 	}
 	
 	@Override

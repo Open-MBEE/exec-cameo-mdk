@@ -81,16 +81,17 @@ public class BillOfMaterialsTable extends WorkpackageTable {
 	}
 
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+	    List<DocumentElement> res = new ArrayList<DocumentElement>();
 		findCharacterizationName();
 		findWorkPackage();
 
 		if (!(ModelLib.isWorkPackage(this.workpackage)))
-			return;
+			return res;
 
 		Class _class = findFirstClass();
 		if (_class == null)
-			return;
+			return res;
 
 		int i = 0;
 		
@@ -104,7 +105,7 @@ public class BillOfMaterialsTable extends WorkpackageTable {
 		WorkpackageRollups roll = getBOMRollup(bom, (Class)_class, false, false, body);
 
 		if (roll.isBad()) {
-			parent.addElement(new DBParagraph("<emphasis role=\"bold\">The Bill of Materials Mass Rollup did not pass validation!</emphasis>"));
+			res.add(new DBParagraph("<emphasis role=\"bold\">The Bill of Materials Mass Rollup did not pass validation!</emphasis>"));
 			DBTable validation = new DBTable();
 			validation.setBody(body);
 			validation.setTitle("Mass Rollup Validation for Bill of Materials Table - " + ((NamedElement)getWorkpackage()).getName());
@@ -117,7 +118,7 @@ public class BillOfMaterialsTable extends WorkpackageTable {
 			header.add(headerline);
 			validation.setHeaders(header);
 			validation.setCols(4);
-			parent.addElement(validation);	
+			res.add(validation);	
 		} 
 		if (!roll.isBad() || forViewEditor) {
 			EditableTable et = bom.getBOMEditableTable();
@@ -134,10 +135,10 @@ public class BillOfMaterialsTable extends WorkpackageTable {
 			dta.setTitle(title);
 			if (getCaptions() != null && getCaptions().size() > i && isShowCaptions())
 				dta.setCaption(getCaptions().get(i));
-			parent.addElement(dta);
+			res.add(dta);
 		}
 		if (rolld.isBad()) {
-			parent.addElement(new DBParagraph("<emphasis role=\"bold\">The deployment for " + ((NamedElement)_class).getName() + " did not pass mass rollup validation!</emphasis>"));
+			res.add(new DBParagraph("<emphasis role=\"bold\">The deployment for " + ((NamedElement)_class).getName() + " did not pass mass rollup validation!</emphasis>"));
 			DBTable validation = new DBTable();
 			validation.setBody(bodyd);
 			validation.setTitle("Mass Rollup Validation For " + ((NamedElement)_class).getName());
@@ -150,15 +151,9 @@ public class BillOfMaterialsTable extends WorkpackageTable {
 			header.add(headerline);
 			validation.setHeaders(header);
 			validation.setCols(4);
-			parent.addElement(validation);
+			res.add(validation);
 		}
 		i++;
+		return res;
 	}
-
-
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-	}
-
 }
