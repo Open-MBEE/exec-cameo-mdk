@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenPlugin;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BillOfMaterialsTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BulletedList;
@@ -584,12 +585,14 @@ public class DocumentGenerator {
 	        } 
 	        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, DocGen3Profile.javaExtensionStereotype);
 	        String javaClazz = s.getName();
-	        try {
-                java.lang.Class clazz = java.lang.Class.forName(javaClazz);
-                dge = (Query)clazz.newInstance();
-            } catch (Exception e1) {
-                e1.printStackTrace();
-            } 
+	        if (DocGenPlugin.extensionsClassloader != null) {
+	            try {
+	                java.lang.Class clazz = java.lang.Class.forName(javaClazz, true, DocGenPlugin.extensionsClassloader);
+	                dge = (Query)clazz.newInstance();
+	            } catch (Exception e1) {
+	                e1.printStackTrace();
+	            }
+	        }
 		}
 		return dge;
 	}
