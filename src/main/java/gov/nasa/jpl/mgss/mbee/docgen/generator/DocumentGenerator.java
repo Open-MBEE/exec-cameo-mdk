@@ -103,7 +103,7 @@ public class DocumentGenerator {
 	 */
 	public Document parseDocument(boolean singleView, boolean recurse) {
 		if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
-			if (start instanceof Package || StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype) || 
+			if (start instanceof Package || start instanceof Diagram || StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype) || 
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype) != null || 
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nextStereotype) != null ||
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nosectionStereotype) != null) {
