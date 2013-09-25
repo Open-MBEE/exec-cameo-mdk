@@ -29,12 +29,14 @@ public class ViewEditUtils {
 	private static boolean passwordSet = false;
 	private static final List<String> servers = Arrays.asList("http://docgen.jpl.nasa.gov:8080/editor", 
 															  "http://docgen.jpl.nasa.gov:8080/europa", 
+															  "https://europaems:8443/alfresco/service",
 															  "http://docgen.jpl.nasa.gov:8080/staging", 
 															  "http://localhost:8080/editor",
 															  "http://localhost:8080/view-repo/service",
 															  "Other");
 	private static final List<String> displays = Arrays.asList("Community: http://docgen:8080/editor",
 															   "Europa: http://docgen:8080/europa",
+															   "Europa Alfresco: https://europaems:8443/alfresco/service",
 															   "Staging: http://docgen:8080/staging",
 															   "Local-dev: http://localhost:8080/editor",
 															   "Local-alfresco: http://localhost:8080/view-repo/service",
