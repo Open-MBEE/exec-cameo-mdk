@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGenPlugin;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BillOfMaterialsTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BulletedList;
@@ -575,6 +576,23 @@ public class DocumentGenerator {
 			dge = new MissionMapping();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.libraryChooserStereotype)) {
 			dge = new LibraryMapping();
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.javaExtensionStereotype, true)) {
+		    Element e = an;
+	        if (!StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.javaExtensionStereotype)) {
+	            if (an instanceof CallBehaviorAction && ((CallBehaviorAction)an).getBehavior() != null && 
+	                    StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)an).getBehavior(), DocGen3Profile.javaExtensionStereotype))
+	                e = ((CallBehaviorAction)an).getBehavior();
+	        } 
+	        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, DocGen3Profile.javaExtensionStereotype);
+	        String javaClazz = s.getName();
+	        if (DocGenPlugin.extensionsClassloader != null) {
+	            try {
+	                java.lang.Class clazz = java.lang.Class.forName(javaClazz, true, DocGenPlugin.extensionsClassloader);
+	                dge = (Query)clazz.newInstance();
+	            } catch (Exception e1) {
+	                e1.printStackTrace();
+	            }
+	        }
 		}
 		return dge;
 	}

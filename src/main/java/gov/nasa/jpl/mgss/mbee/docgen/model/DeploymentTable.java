@@ -59,7 +59,8 @@ public class DeploymentTable extends WorkpackageTable {
 	}
 
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+	    List<DocumentElement> res = new ArrayList<DocumentElement>();
 		findCharacterizationName();		
 
 		int i = 0;
@@ -70,7 +71,7 @@ public class DeploymentTable extends WorkpackageTable {
 		List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
 		WorkpackageRollups roll = getRollup(deployment, (Class)_class, false, false, body);
 		if (roll.isBad()) {
-			parent.addElement(new DBParagraph("<emphasis role=\"bold\">The deployment for " + ((Class)_class).getName() + " did not pass mass rollup validation!</emphasis>"));
+			res.add(new DBParagraph("<emphasis role=\"bold\">The deployment for " + ((Class)_class).getName() + " did not pass mass rollup validation!</emphasis>"));
 			DBTable validation = new DBTable();
 			validation.setBody(body);
 			validation.setTitle("Mass Rollup Validation for Deployment Table - " + ((Class)_class).getName());
@@ -83,7 +84,7 @@ public class DeploymentTable extends WorkpackageTable {
 			header.add(headerline);
 			validation.setHeaders(header);
 			validation.setCols(4);
-			parent.addElement(validation);
+			res.add(validation);
 		} 
 		if (!roll.isBad() || forViewEditor) {
 
@@ -101,17 +102,11 @@ public class DeploymentTable extends WorkpackageTable {
 			dta.setTitle(title);
 			if (getCaptions() != null && getCaptions().size() > i && isShowCaptions())
 				dta.setCaption(getCaptions().get(i));
-			parent.addElement(dta);
+			res.add(dta);
 			dta.setStyle(getStyle());
 		}
 		i++;
-	}
-
-
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-
+		return res;
 	}
 
 }

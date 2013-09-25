@@ -20,8 +20,8 @@ public class RollupWorkpackageTableAction extends MDAction {
 
 private WorkpackageTable cba;
 	
-	public RollupWorkpackageTableAction(WorkpackageTable e, int i) {
-		super("wptablerollup" + i, "Rollup Deployment Table " + i, null, null);
+	public RollupWorkpackageTableAction(WorkpackageTable e) {
+		super(null, "Rollup Deployment Table", null, null);
 		if (e instanceof DeploymentTable)
 			this.setName("Rollup Deployment Table");
 		if (e instanceof BillOfMaterialsTable)

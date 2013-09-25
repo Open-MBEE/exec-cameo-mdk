@@ -1,12 +1,12 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.Generatable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public abstract class Query extends DocGenElement implements Generatable {
@@ -38,14 +38,28 @@ public abstract class Query extends DocGenElement implements Generatable {
     this.sortElementsByName = sortElementsByName;
   }
 	
+  @Override
   public void initialize() {
 	  
   }
   
-  public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+  @Override
+  public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+      return new ArrayList<DocumentElement>();
   }
 	
+  @Override
   public void parse() {
 	  
+  }
+  
+  @Override
+  public List<MDAction> getActions() {
+      return new ArrayList<MDAction>();
+  }
+  
+  @Override
+  public void accept(IModelVisitor visitor) {
+      visitor.visit(this);
   }
 }

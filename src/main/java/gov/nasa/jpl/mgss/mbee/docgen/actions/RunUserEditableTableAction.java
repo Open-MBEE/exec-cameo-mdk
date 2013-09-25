@@ -17,8 +17,8 @@ import com.nomagic.magicdraw.core.GUILog;
 public class RunUserEditableTableAction extends MDAction{
 	private UserScript scripti;
 
-	public RunUserEditableTableAction(UserScript us, int i) {
-		super("Run Editable Table Script" + i, "Run Editable Script", null, null);
+	public RunUserEditableTableAction(UserScript us) {
+		super(null, "Run Editable Script", null, null);
 		scripti = us;
 		String name = scripti.getStereotypeName();
 		if (name != null)

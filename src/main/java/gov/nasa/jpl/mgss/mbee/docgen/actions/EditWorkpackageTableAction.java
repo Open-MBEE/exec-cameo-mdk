@@ -18,8 +18,8 @@ import com.nomagic.magicdraw.core.GUILog;
 public class EditWorkpackageTableAction extends MDAction {
 	private WorkpackageTable cba;
 	
-	public EditWorkpackageTableAction(WorkpackageTable e, int i) {
-		super("wptable" + i, "Edit Deployment Table " + i, null, null);
+	public EditWorkpackageTableAction(WorkpackageTable e) {
+		super(null, "Edit Deployment Table", null, null);
 		if (e instanceof DeploymentTable)
 			this.setName("Edit Deployment Table");
 		if (e instanceof WorkpackageAssemblyTable)

@@ -31,25 +31,30 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 public class Common {
  
     public static void addReferenceToDBHasContent(Reference ref, DBHasContent parent) {
-		if (ref.result == null)
-			return;
-		if (!ref.isResultEditable()) { 
-			if (ref.result instanceof Collection) {
-				for (Object res: (Collection)ref.result) {
-					parent.addElement(new DBParagraph(res));
-				}
-			} else {
-				parent.addElement(new DBParagraph(ref.result));
-			}
-		} else {
-			if (ref.result instanceof Collection && !((Collection)ref.result).isEmpty()) {
-				parent.addElement(new DBParagraph(((Collection)ref.result).iterator().next(), ref.element, ref.from));
-			} else {
-				parent.addElement(new DBParagraph(ref.result, ref.element, ref.from));
-			}
-		}
+        parent.addElements(getReferenceAsDocumentElements(ref));
 	}
     
+    public static List<DocumentElement> getReferenceAsDocumentElements(Reference ref) {
+        List<DocumentElement> res = new ArrayList<DocumentElement>();
+        if (ref.result == null)
+            return res;
+        if (!ref.isResultEditable()) { 
+            if (ref.result instanceof Collection) {
+                for (Object r: (Collection)ref.result) {
+                    res.add(new DBParagraph(r));
+                }
+            } else {
+                res.add(new DBParagraph(ref.result));
+            }
+        } else {
+            if (ref.result instanceof Collection && !((Collection)ref.result).isEmpty()) {
+                res.add(new DBParagraph(((Collection)ref.result).iterator().next(), ref.element, ref.from));
+            } else {
+                res.add(new DBParagraph(ref.result, ref.element, ref.from));
+            }
+        }
+        return res;
+    }
     
     /**
      * This set is used to prevent infinite recursion while traversing nested

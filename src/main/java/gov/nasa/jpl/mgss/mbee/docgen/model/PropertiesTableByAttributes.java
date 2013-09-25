@@ -4,6 +4,7 @@ import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.EditPropertiesTableAction;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -21,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -365,20 +367,15 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 	}
 
 	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
-	}
-
-	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+        List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (getIgnore())
-			return;
+			return res;
 		if (forViewEditor) {
 			EditableTable et = getEditableTable();
 			DBTable dtable = Utils.getDBTableFromEditableTable(et, true);
 			dtable.setStyle(getStyle());
-			parent.addElement(dtable);
+			res.add(dtable);
 		} else {
 			List<DocumentElement> results = getDocumentElement();
 			for (DocumentElement de: results) {
@@ -386,8 +383,9 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 					((DBTable)de).setStyle(getStyle());
 				}
 			}
-			parent.addElements(results);
+			res.addAll(results);
 		}
+		return res;
 	}
 	
 	@Override
@@ -419,6 +417,13 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 		setShowMultiplicity(showMultiplicity);
 		setDoRollup(doRollup);
 		setRollupProperty(rollupProperty);
+	}
+	
+	@Override
+	public List<MDAction> getActions() {
+	    List<MDAction> res =  new ArrayList<MDAction>();
+	    res.add(new EditPropertiesTableAction(this));
+	    return res;
 	}
 
 

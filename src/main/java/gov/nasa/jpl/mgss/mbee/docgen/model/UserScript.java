@@ -4,6 +4,9 @@ import gov.nasa.jpl.mbee.lib.ScriptRunner;
 import gov.nasa.jpl.mgss.mbee.docgen.DgvalidationDBSwitch;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserEditableTableAction;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserScriptAction;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserValidationScriptAction;
 import gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.Suite;
 import gov.nasa.jpl.mgss.mbee.docgen.dgview.ViewElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
@@ -20,6 +23,7 @@ import java.util.Map;
 
 import javax.script.ScriptException;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -76,9 +80,10 @@ public class UserScript extends Query {
 	}
 	
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+        List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (getIgnore())
-			return;
+			return res;
 		Map<String, Object> inputs = new HashMap<String, Object>();
 		inputs.put("FixMode", "FixNone");
 		inputs.put("ForViewEditor", forViewEditor);
@@ -92,18 +97,18 @@ public class UserScript extends Query {
 			if (l instanceof List) {
 				for (Object oo: (List<?>)l) {
 					if (oo instanceof DocumentElement)
-						parent.addElement((DocumentElement)oo);
+						res.add((DocumentElement)oo);
 				}
 			}
 		}
 		if (o != null && o.containsKey("docgenOutput")) {
 			Object result = o.get("docgenOutput");
 			if (result instanceof List) {
-				for (Object res: (List<?>)result) {
-					if (res instanceof NamedElement) {
-						parent.addElement(new DBText(((NamedElement)res).getName())); 
-					} else if (res instanceof ViewElement) {
-						parent.addElement(DocGenUtils.ecoreTranslateView((ViewElement)res, forViewEditor));
+				for (Object r: (List<?>)result) {
+					if (r instanceof NamedElement) {
+						res.add(new DBText(((NamedElement)r).getName())); 
+					} else if (r instanceof ViewElement) {
+						res.add(DocGenUtils.ecoreTranslateView((ViewElement)r, forViewEditor));
 					}
 				}
 			} 
@@ -113,7 +118,7 @@ public class UserScript extends Query {
 			if (l instanceof List) {
 				for (Object oo: (List<?>)l) {
 					if (oo instanceof ValidationSuite)
-						parent.addElements(((ValidationSuite)oo).getDocBook());
+						res.addAll(((ValidationSuite)oo).getDocBook());
 				}
 			}
 		}
@@ -123,17 +128,33 @@ public class UserScript extends Query {
 				DgvalidationDBSwitch s = new DgvalidationDBSwitch();
 				for (Object object: (List<?>)l) {
 					if (object instanceof Suite)
-						parent.addElements(((ValidationSuite)s.doSwitch((Suite)object)).getDocBook());
+						res.addAll(((ValidationSuite)s.doSwitch((Suite)object)).getDocBook());
 				}
 			}
 		}
-	}
-	
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
+		return res;
 	}
 
+	@Override
+	public List<MDAction> getActions() {
+	    List<MDAction> res = new ArrayList<MDAction>();
+	    Element action = getDgElement();
+	    boolean added = false;
+        if (StereotypesHelper.hasStereotypeOrDerived(action, DocGen3Profile.editableTableStereotype) || 
+                ((action instanceof CallBehaviorAction) && ((CallBehaviorAction)action).getBehavior() != null && 
+                StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)action).getBehavior(), DocGen3Profile.editableTableStereotype))) {
+            res.add(new RunUserEditableTableAction(this));
+            added = true;
+        }
+        if (StereotypesHelper.hasStereotypeOrDerived(action, DocGen3Profile.validationScriptStereotype) || 
+                ((action instanceof CallBehaviorAction) && ((CallBehaviorAction)action).getBehavior() != null && 
+                StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction)action).getBehavior(), DocGen3Profile.validationScriptStereotype))) {
+            res.add(new RunUserValidationScriptAction(this));
+            added = true;
+        }
+        if (!added)
+            res.add(new RunUserScriptAction(this));
+	    return res;
+	}
 
 }
