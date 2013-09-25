@@ -54,10 +54,4 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
 			result.put(sec.getDgElement().getID(), curChildren.pop());
 		}
 	}
-
-	@Override
-	public void visit(TableStructure ts) {
-		// TODO Auto-generated method stub
-		
-	}
 }

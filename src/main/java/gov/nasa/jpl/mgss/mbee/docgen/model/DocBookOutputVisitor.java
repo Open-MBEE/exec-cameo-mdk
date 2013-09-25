@@ -76,68 +76,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 	}
 	
 	@Override
-	public void visit(BulletedList bl) {
-		bl.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	@Override
-	public void visit(BillOfMaterialsTable bom) {
-		bom.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	@Override
-	public void visit(CombinedMatrix cm) {
-		cm.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	@Override
-	public void visit(CustomTable customTable) {
-	  customTable.visit(forViewEditor, parent.peek(), outputDir);
+	public void visit(Query q) {
+	    parent.peek().addElements(q.visit(forViewEditor, outputDir));
 	}
 	
-	@Override
-	public void visit(DependencyMatrix dm) {
-	}
-
-	@Override
-	public void visit(DeploymentTable dt) {
-		dt.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	@Override
-	public void visit(GenericTable gt) {
-		gt.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	@Override
-	public void visit(PropertiesTableByAttributes pt) {
-		pt.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	@Override
-	public void visit(Paragraph para) {
-		para.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	public void visit(TableStructure ts) {
-		ts.visit(forViewEditor, parent.peek(), outputDir);
-	}
-	
-	@Override
-	public void visit(UserScript us) {
-		us.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	@Override
-	public void visit(WorkpackageAssemblyTable wat) {
-		wat.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
-	@Override
-	public void visit(Image image) {
-		image.visit(forViewEditor, parent.peek(), outputDir);
-	}
-
 	@Override
 	public void visit(Document doc) {
 		DBBook book = new DBBook();
@@ -215,16 +157,4 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		}
 		parent.peek().addElement(sec);
 	}
-
-	@Override
-	public void visit(MissionMapping cm) {
-		cm.visit(forViewEditor, parent.peek(), outputDir);
-	}
-	
-	@Override
-	public void visit(LibraryMapping cm) {
-		cm.visit(forViewEditor, parent.peek(), outputDir);
-		
-	}
-	
 }

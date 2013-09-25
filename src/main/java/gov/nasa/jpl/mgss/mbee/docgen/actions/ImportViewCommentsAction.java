@@ -74,7 +74,7 @@ public class ImportViewCommentsAction extends MDAction {
 			PostMethod pm = new PostMethod(url + "/rest/comments/committed");
 			try {	
 				HttpClient client = new HttpClient();
-				ViewEditUtils.setCredentials(client);
+				ViewEditUtils.setCredentials(client, geturl);
 				client.executeMethod(gm);
 				String json = gm.getResponseBodyAsString();	
 				//gl.log(json);

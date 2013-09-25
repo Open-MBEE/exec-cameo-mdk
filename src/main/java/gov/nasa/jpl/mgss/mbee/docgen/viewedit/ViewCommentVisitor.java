@@ -108,9 +108,4 @@ public class ViewCommentVisitor extends AbstractModelVisitor {
 		return username;
 	}
 
-	@Override
-	public void visit(TableStructure ts) {
-		// TODO Auto-generated method stub
-		
-	}
 }

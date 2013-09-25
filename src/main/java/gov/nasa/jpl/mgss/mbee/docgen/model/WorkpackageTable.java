@@ -1,9 +1,15 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.ModelLib;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.EditWorkpackageTableAction;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.RollupWorkpackageTableAction;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
@@ -137,5 +143,15 @@ public abstract class WorkpackageTable extends Table {
 		setSortByName(sortByName);
 		setShowProducts(showProducts);
 		setShowMassMargin(showMassMargin);
+	}
+	
+	@Override
+	public List<MDAction> getActions() {
+	    List<MDAction> res = new ArrayList<MDAction>();
+	    res.add(new EditWorkpackageTableAction(this));
+	    if (this instanceof DeploymentTable || this instanceof BillOfMaterialsTable) {
+	        res.add(new RollupWorkpackageTableAction(this));
+	    }
+	    return res;
 	}
 }

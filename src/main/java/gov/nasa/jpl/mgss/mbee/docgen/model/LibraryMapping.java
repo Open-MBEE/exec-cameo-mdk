@@ -3,6 +3,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.model;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.tree.Node;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.MapLibraryAction;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
@@ -55,12 +57,6 @@ public class LibraryMapping extends Query {
 	private Node<String, LibraryComponent> tree;
 	
 	private Set<NamedElement> usedChars;
-
-	@Override
-	
-	public void accept(IModelVisitor v) {	
-		v.visit(this);
-	}
 
 	public boolean init() {
 		chars = new HashSet<NamedElement>();
@@ -375,9 +371,10 @@ public class LibraryMapping extends Query {
 	}
 	
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+	    List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (!init())
-			return;
+			return res;
 		DBTable table = new DBTable();
 		Node<String, LibraryComponent> root = getRoot();
 		List<Element> chars = Utils.sortByName(getUsedChars());
@@ -394,7 +391,8 @@ public class LibraryMapping extends Query {
 		table.setHeaders(headers);
 		table.setCols(headerrow.size());
 		table.setTitle("Possible Component Characterizations");
-		parent.addElement(table);
+		res.add(table);
+		return res;
 	}
 	
 	private void addLibraryRows(Node<String, LibraryComponent> cur, List<Element> chars, List<List<DocumentElement>> grid, int depth) {
@@ -419,4 +417,10 @@ public class LibraryMapping extends Query {
 		}
 	}
 
+	@Override
+	public List<MDAction> getActions() {
+	    List<MDAction> res = new ArrayList<MDAction>();
+	    res.add(new MapLibraryAction(this));
+	    return res;
+	}
 }

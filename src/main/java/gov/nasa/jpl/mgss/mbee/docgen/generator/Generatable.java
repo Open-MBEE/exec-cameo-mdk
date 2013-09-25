@@ -1,13 +1,10 @@
 package gov.nasa.jpl.mgss.mbee.docgen.generator;
 
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 
 import java.util.List;
 
-import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.magicdraw.actions.MDAction;
 
 /**
  * <p>Hopefully this provides a unified way of dealing with presentation elements.</p>
@@ -19,6 +16,7 @@ public interface Generatable {
 	
 	public void initialize();
 	public void parse();
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir);
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir);
+	public List<MDAction> getActions();
 	
 }

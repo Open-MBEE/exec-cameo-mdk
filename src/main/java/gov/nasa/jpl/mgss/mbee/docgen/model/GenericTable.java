@@ -97,18 +97,13 @@ public class GenericTable extends Table {
 	public void setHeaders(List<String> h) {
 		headers = h;
 	}
-
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
-	}
 	
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+	    List<DocumentElement> res = new ArrayList<DocumentElement>();
 		DiagramTableTool dtt = new DiagramTableTool();
 		if (getIgnore())
-			return;
+			return res;
 		int tableCount = 0;
 		List< Element > targets =
         isSortElementsByName() ? Utils.sortByName( getTargets() )
@@ -132,13 +127,14 @@ public class GenericTable extends Table {
 						t.setCaption(ModelHelper.getComment(e));
 					}
 					t.setCols(columnIds.size() -1);
-					parent.addElement(t);
+					res.add(t);
 					t.setStyle(getStyle());
 					tableCount++;
 				}
 			}
 		}
 		dtt.closeOpenedTables();
+		return res;
 	}
 
 	@Override

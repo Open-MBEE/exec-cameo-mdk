@@ -211,6 +211,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 	        DBEditListVisitor l = new DBEditListVisitor(recurse, elements);
 	        list.accept(l);
 	        curContains.add(l.getObject());
+	        
 	    } else {
 	        DBHTMLVisitor html = new DBHTMLVisitor();
 	        list.accept(html);
@@ -348,7 +349,8 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 		}
 		if (e instanceof NamedElement) {
 			o.put("name", ((NamedElement)e).getName());
-		}
+			o.put("qualifiedName", ((NamedElement)e).getQualifiedName().replaceAll("::", "."));
+		} 
 		String doc = ModelHelper.getComment(e);
 		if (e instanceof Comment) {
 			o.put("type", "Comment");

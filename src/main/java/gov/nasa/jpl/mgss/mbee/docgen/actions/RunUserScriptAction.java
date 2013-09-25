@@ -20,8 +20,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 public class RunUserScriptAction extends MDAction {
 	private UserScript scripti;
 
-	public RunUserScriptAction(UserScript e, int i) {
-		super("RunUserScript" + i, "Run User Script", null, null);
+	public RunUserScriptAction(UserScript e) {
+		super(null, "Run User Script", null, null);
 		scripti = e;
 		String name = e.getStereotypeName();
 		if (name != null)
