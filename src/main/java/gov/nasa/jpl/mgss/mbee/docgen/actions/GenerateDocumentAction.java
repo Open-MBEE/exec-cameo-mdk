@@ -39,8 +39,8 @@ public class GenerateDocumentAction  extends MDAction {
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
 		
+        DocumentValidator dv = new DocumentValidator(doc);
 		try {
-			DocumentValidator dv = new DocumentValidator(doc);
 			dv.validateDocument();
 			if (dv.isFatal()) {
 	            dv.printErrors();
@@ -48,7 +48,6 @@ public class GenerateDocumentAction  extends MDAction {
 			}
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument();
-            dv.printErrors();
 			boolean genNewImage = dge.getGenNewImage();
 			(new PostProcessor()).process(dge);
 			JFileChooser choose = new JFileChooser();
@@ -73,5 +72,6 @@ public class GenerateDocumentAction  extends MDAction {
 			gl.log(sw.toString()); // stack trace as a string
 			ex.printStackTrace();
 		}
+		dv.printErrors();
 	}
 }

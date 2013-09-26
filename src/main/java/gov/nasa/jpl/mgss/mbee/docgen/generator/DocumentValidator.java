@@ -485,6 +485,37 @@ public class DocumentValidator {
 			pw.println("Validation done.");
 	}
 
+    // REVIEW -- should this function always be called instead of
+    // ValidationRule.addViolation()? Consider making all rules a subclass of
+    // ValidationRule that uses a subclass of ValidationRuleViolation that
+    // implements Comparable so that set inclusion is efficient/elegant.
+    /**
+     * Add a violation for the rule only if none of the rules existing
+     * violations have the same element and comment.
+     * 
+     * @param rule
+     * @param element
+     * @param comment
+     * @return whether a violation was added
+     */
+	public static boolean addViolationIfUnique( ValidationRule rule, Element element, String comment ) {
+	    if ( rule == null ) return false;
+        List< ValidationRuleViolation > violations = rule.getViolations();
+        boolean alreadyAdded = false;
+        if ( violations != null ) {
+            for ( ValidationRuleViolation v : violations ) {
+                if ( Utils2.valuesEqual( v.getElement(), element )
+                     && Utils2.valuesEqual( v.getComment(), comment ) ) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+        }
+        if ( alreadyAdded ) return false;
+        rule.addViolation( element, comment );
+        return true;
+	}
+	
     public static Boolean evaluateConstraints( Object constrainedObject,
                                                Object actionOutput,
                                                GenerationContext context ) {
@@ -507,15 +538,15 @@ public class DocumentValidator {
             Boolean satisfied = constraint.evaluate();
             if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
                 result = false;
-                Element violatingElement = constraint.getViolatedConstraintElement();
                 ValidationRule rule = context.getValidator().getConstraintRule();
-                rule.addViolation( violatingElement,
-                                   "Constraint (" + constraint.getExpression() + ") on "
-                                           + EmfUtils.toString( constrainedObject )
-                                           + " is violated"
-                                           + ( constraint.getConstrainingElements().size() > 1
-                                               && !Utils2.isNullOrEmpty( violatingElement.getHumanName() )
-                                               ? " for " + violatingElement.getHumanName() : "" ) );
+                Element violatingElement = constraint.getViolatedConstraintElement();
+                String comment = "Constraint (" + constraint.getExpression() + ") on "
+                        + EmfUtils.toString( constrainedObject )
+                        + " is violated"
+                        + ( constraint.getConstrainingElements().size() > 1
+                            && !Utils2.isNullOrEmpty( violatingElement.getHumanName() )
+                            ? " for " + violatingElement.getHumanName() : "" );
+                addViolationIfUnique( rule, violatingElement, comment );
             } else if ( satisfied == null && result != null
                         && result.equals( Boolean.TRUE ) ) {
                 result = null;
@@ -529,44 +560,12 @@ public class DocumentValidator {
                                                      GenerationContext context ) {
         List<Constraint> constraints = new ArrayList< Constraint >();
         List< Element > targets = DocumentGenerator.getTargets( constrainedObject, context );
-        List< Element > constraintElements = getConstraintElements( constrainedObject );
+        List< Element > constraintElements = BasicConstraint.getConstraintElements( constrainedObject );
         for ( Element constraint : constraintElements  ) {
             Constraint c = BasicConstraint.makeConstraint( constraint, actionOutput, targets, constrainedObject );
             constraints.add( c );
         }
         return constraints;
-    }
-
-    public static List<Element> getComments( Element source ) {
-        List<Element> results = new ArrayList< Element >();
-        results.addAll(source.get_commentOfAnnotatedElement());
-        if ( results.size() > 0 ) {
-            Debug.out("");
-        }
-        return results;
-    }
-    
-    public static List< Element > getConstraintElements( Object constrainedObject ) {
-        List<Element> constraintElements = new ArrayList< Element >();
-        if ( constrainedObject instanceof Element ) {
-            Element constrainedElement = ((Element)constrainedObject);
-            if (StereotypesHelper.hasStereotypeOrDerived(constrainedElement,
-                                                         DocGen3Profile.constraintStereotype) ) {
-                constraintElements.add( constrainedElement );
-            }
-            constraintElements.addAll( Utils.collectRelatedElementsByStereotypeString( constrainedElement, DocGen3Profile.constraintStereotype, 0, true, 1 ) );
-            for ( Element comment : getComments( constrainedElement ) ) {
-                if (StereotypesHelper.hasStereotypeOrDerived(comment, DocGen3Profile.constraintStereotype) ) {
-                    constraintElements.add( comment );
-                }
-            }
-        }
-        if ( constrainedObject instanceof Collection ) {
-            for ( Object o : (Collection<?>)constrainedObject ) {
-                constraintElements.addAll( getConstraintElements( o ) );
-            }
-        }
-        return constraintElements;
     }
 
 }

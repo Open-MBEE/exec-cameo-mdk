@@ -351,7 +351,7 @@ public class DocumentGenerator {
     public static List<Element> getTargets( Object obj, GenerationContext context ) {
         ArrayList< Element > list = new ArrayList< Element >();
         if ( obj instanceof ActivityNode ) {
-            list.addAll( DocumentGenerator.getTargets( (ActivityNode)obj, context ) );
+            list.addAll( getTargets( (ActivityNode)obj, context ) );
         }
         if ( obj instanceof Collection ) {
             for ( Object o : (Collection<?>)obj ) {
@@ -556,7 +556,7 @@ public class DocumentGenerator {
 			dge = new GenericTable();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.tableStructureStereotype)) {
 			// Get all the variables or whatever
-			dge = new TableStructure();
+			dge = new TableStructure(context.getValidator());
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.combinedMatrixStereotype)) {
 			dge = new CombinedMatrix();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.customTableStereotype)) { 

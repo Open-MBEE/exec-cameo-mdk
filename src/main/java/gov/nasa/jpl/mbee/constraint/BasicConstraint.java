@@ -13,13 +13,13 @@ import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.ocl.ParserException;
-
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
@@ -320,6 +320,55 @@ public class BasicConstraint implements Constraint {
         sb.append("Constraint:" + this.getExpression() + ",on:" + this.constrainedElements );
         return sb.toString();
     }
+
+    public static List<Element> getComments( Element source ) {
+        List<Element> results = new ArrayList< Element >();
+        results.addAll(source.get_commentOfAnnotatedElement());
+        if ( results.size() > 0 ) {
+            Debug.out("");
+        }
+        return results;
+    }
+
+    public static List< Element > getConstraintElements( Object constrainedObject ) {
+        List<Element> constraintElements = new ArrayList< Element >();
+        if ( constrainedObject instanceof Element ) {
+            Element constrainedElement = ((Element)constrainedObject);
+            if (StereotypesHelper.hasStereotypeOrDerived(constrainedElement,
+                                                         DocGen3Profile.constraintStereotype) ) {
+                constraintElements.add( constrainedElement );
+            }
+            if ( constrainedElement instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint ) {
+                constraintElements.add( constrainedElement );
+            }
+            Collection< com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint > constrs = 
+                    constrainedElement.get_constraintOfConstrainedElement();
+            if ( constrs != null ) constraintElements.addAll( constrs );
+            constraintElements.addAll( Utils.collectRelatedElementsByStereotypeString( constrainedElement, DocGen3Profile.constraintStereotype, 0, true, 1 ) );
+            for ( Element comment : BasicConstraint.getComments( constrainedElement ) ) {
+                if (StereotypesHelper.hasStereotypeOrDerived(comment, DocGen3Profile.constraintStereotype) ) {
+                    constraintElements.add( comment );
+                }
+            }
+        }
+        if ( constrainedObject instanceof Collection ) {
+            for ( Object o : (Collection<?>)constrainedObject ) {
+                constraintElements.addAll( getConstraintElements( o ) );
+            }
+        }
+        return constraintElements;
+    }
     
+    public static List< Constraint > getConstraints( Object constrainedObject ) {
+        List<Constraint> constraints = new ArrayList< Constraint >();
+        List< Element > constraintElements = getConstraintElements( constrainedObject );
+        for ( Element constraint : constraintElements  ) {
+            Constraint c = BasicConstraint.makeConstraint( constraint, constrainedObject );
+            constraints.add( c );
+        }
+        return constraints;
+    }
+
+
 
 }
