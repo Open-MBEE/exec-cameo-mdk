@@ -28,15 +28,15 @@ public class ViewEditUtils {
 	private static String alf_ticket = "";
 	private static boolean passwordSet = false;
 	private static final List<String> servers = Arrays.asList("http://docgen.jpl.nasa.gov:8080/editor", 
-															  "http://docgen.jpl.nasa.gov:8080/europa", 
 															  "https://europaems:8443/alfresco/service",
+															  "http://docgen.jpl.nasa.gov:8080/europa",   
 															  "http://docgen.jpl.nasa.gov:8080/staging", 
 															  "http://localhost:8080/editor",
 															  "http://localhost:8080/view-repo/service",
 															  "Other");
 	private static final List<String> displays = Arrays.asList("Community: http://docgen:8080/editor",
-															   "Europa: http://docgen:8080/europa",
-															   "Europa Alfresco: https://europaems:8443/alfresco/service",
+			                          						   "Europa Alfresco: https://europaems:8443/alfresco/service",
+			                          						   "Europa: http://docgen:8080/europa",											
 															   "Staging: http://docgen:8080/staging",
 															   "Local-dev: http://localhost:8080/editor",
 															   "Local-alfresco: http://localhost:8080/view-repo/service",
@@ -55,11 +55,6 @@ public class ViewEditUtils {
 			return other;
 		}
 		return url;
-	}
-
-	@Deprecated
-	public static void setCredentials(HttpClient client) {
-		setCredentials(client, "http://127.0.0.1:8080");
 	}
 	
 	/**
