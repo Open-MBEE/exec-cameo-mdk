@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -14,6 +15,7 @@ import java.lang.reflect.Field;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -189,46 +191,116 @@ public class Debug {
     if ( Debug.isOn() ) out( "" );
   }
   
+  protected static boolean isGuiThread() {
+      return javax.swing.SwingUtilities.isEventDispatchThread();
+  }
+  
   public static void out( String s ) {
-    if (on) {
-      if ( gl != null ) {
-        glBuf.append( s );
-      }
-      System.out.print( s );
-    }
+      log( s, false, false );
+//    if (on) {
+//      if ( gl != null ) {
+//        glBuf.append( s );
+//      }
+//      System.out.print( s );
+//    }
   }
   public static void outln( String s ) {
-    if (on) {
-      if ( gl != null ) {
-        gl.log( glBuf.toString() + s );
-      }
-      System.out.println( s );
-      glBuf = new StringBuffer();
-    }
+      log( s, true, false );
+//    if (on) {
+//      if ( gl != null ) {
+//        gl.log( glBuf.toString() + s );
+//      }
+//      System.out.println( s );
+//      glBuf = new StringBuffer();
+//    }
   }
   public static void err( String s ) {
-    if (on) {
-      if ( gl != null ) {
-        glErrBuf.append( s );
-      }
-      System.err.print( s );
-    }
-    //if (on) System.err.print( s );
+      log( s, false, true );
+//    if (on) {
+//      if ( gl != null ) {
+//        glErrBuf.append( s );
+//      }
+//      System.err.print( s );
+//    }
   }
   public static void errln( String s ) {
-    if (on) {
-      if ( gl != null ) {
-        //gl.showError( "ERR: " + glErrBuf.toString() + s );
-        logWithColor( "ERR: " + glErrBuf.toString() + s + "\n", Color.RED );
-      }
-      System.err.println( s );
-      glErrBuf = new StringBuffer();
-    }
-    //if (on) System.err.println( s );
+      log( s, true, true, Color.RED );
+//    if (on) {
+//      if ( gl != null ) {
+//        //gl.showError( "ERR: " + glErrBuf.toString() + s );
+//        logWithColor( "ERR: " + glErrBuf.toString() + s + "\n", Color.RED );
+//      }
+//      System.err.println( s );
+//      glErrBuf = new StringBuffer();
+//    }
   }
   public static boolean isOn() {
     return on;
   }
+
+    public static void logUnsafe( final String s, final boolean addNewLine,
+                                  final boolean isErr, final Color color ) {
+        if ( !isOn() ) return;
+        String ss = s;
+        Color newColor = color;
+        StringBuffer sb = ( isErr ? glErrBuf : glBuf );
+
+        if ( addNewLine ) {
+            ss = sb.toString() + ss + "\n";
+        }
+        if ( isErr && addNewLine ) {
+            if ( newColor == null ) {
+                newColor = Color.RED;
+            }
+            ss = "ERR: " + ss;
+        } else {
+            if ( newColor == null ) {
+                newColor = Color.BLACK;
+            }
+        }
+
+        if ( !addNewLine ) {
+            sb.append( ss );
+        } else if ( gl != null ) {
+            if ( newColor != Color.BLACK ) {
+                logWithColor( ss, newColor );
+            } else {
+                gl.log( ss );
+            }
+            if ( isErr ) glErrBuf = new StringBuffer();
+            else glBuf = new StringBuffer();
+        }
+
+        PrintStream stream = ( isErr ? System.err : System.out );
+        stream.print( ss );
+        stream.flush();
+    }
+  
+    public static void log( final String s ) {
+        log( s, true, false );
+    }
+    public static void log( final String s, final boolean addNewLine,
+                            final boolean isErr ) {
+        log( s, addNewLine, isErr, null );
+    }
+    public static void log( final String s, final boolean addNewLine,
+                            final boolean isErr, final Color color ) {
+        if ( !on ) return;
+        if ( isGuiThread() ) {
+            logUnsafe( s, addNewLine, isErr, color );
+            return;
+        }
+        try {
+            SwingUtilities.invokeAndWait( new Runnable() {
+                @Override
+                public void run() {
+                    logUnsafe(s, addNewLine, isErr, color);
+                }
+            } );
+        } catch ( Exception e ) {
+            System.err.println(e.getLocalizedMessage());
+        }
+    }
 
   public static void logWithColor( String msg, Color color ) {
     JDialog log = gl.getLog();

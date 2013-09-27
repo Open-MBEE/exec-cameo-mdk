@@ -1,13 +1,8 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
-import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
-import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
@@ -15,21 +10,18 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.GenerationContext;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.Stack;
 
-import org.eclipse.emf.ecore.EObject;
-import org.eclipse.ocl.ParserException;
-
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
@@ -39,7 +31,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 
 /**
  * This class contains methods for parsing and visiting 
@@ -55,6 +46,19 @@ public class TableStructure extends Table {
 		public String name = "";
 		public boolean simpleList = false; //not implemented whether a cell should display simple list if content is a list
 		public InitialNode bnode;
+		public ActivityNode activityNode;
+		public GenerationContext context = null;
+        public GenerationContext makeContext() {
+            ActivityNode n = null;
+            if (bnode != null && bnode.getOutgoing().iterator().hasNext()) { //should check next node is collect/filter node
+                n = bnode.getOutgoing().iterator().next().getTarget();
+            }
+            Stack<List<Element> > in = new Stack<List<Element>>();
+//          in.add( targets );
+            context = new GenerationContext(in, n, getValidator(),
+                                            Application.getInstance().getGUILog());
+            return context;
+        }
 	}
 	
 	private class TableAttributeColumn extends TableColumn {
@@ -82,7 +86,17 @@ public class TableStructure extends Table {
 	private String empty = "no entry";
 	
 	private List<List<List<Reference>>> tableContent = new ArrayList<List<List<Reference>>>();
-	
+
+    private Map< TableColumn, Integer > columnIndex =
+            new HashMap< TableStructure.TableColumn, Integer >();
+    
+    protected DocumentValidator validator = null; 
+
+    public TableStructure( DocumentValidator validator ) {
+        super();
+        this.validator = validator;
+    }
+    
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -122,6 +136,7 @@ public class TableStructure extends Table {
 				outs = curNode.getOutgoing();
 				continue;
 			}
+			col.activityNode = curNode;
 			if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
 				col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
 			} else if (curNode instanceof StructuredActivityNode) {
@@ -130,6 +145,7 @@ public class TableStructure extends Table {
 			col.name = curNode.getName();
 			headers.add(curNode.getName());
 			columns.add(col);
+            columnIndex.put( col, columnIndex.size() );
 			outs = curNode.getOutgoing();
 		}
 	}
@@ -137,18 +153,18 @@ public class TableStructure extends Table {
 	private void buildTableReferences() {
 		for (Element e: targets) {
 			List<List<Reference>> row = new ArrayList<List<Reference>>();
+            List<Element> startElements = new ArrayList<Element>();
+            startElements.add(e);
 			for (TableColumn tc: columns) {
-				List<Element> startElements = new ArrayList<Element>();
-				startElements.add(e);
 				List<Element> resultElements;
-				if (tc.bnode != null && tc.bnode.getOutgoing().iterator().hasNext()) { //should check next node is collect/filter node
-					ActivityNode n = tc.bnode.getOutgoing().iterator().next().getTarget();
-					Stack<List<Element>> in = new Stack<List<Element>>();
-					CollectFilterParser.setContext(new GenerationContext(in, n, null, Application.getInstance().getGUILog()));
-					resultElements = CollectFilterParser.startCollectAndFilterSequence(n, startElements);
-				} else
+                GenerationContext context = tc.makeContext();
+				if (context.getCurrentNode() != null) { //should check next node is collect/filter node
+					CollectFilterParser.setContext(context);
+					resultElements = CollectFilterParser.startCollectAndFilterSequence(context.getCurrentNode(),
+					                                                                   startElements);
+				} else {
 					resultElements = startElements;
-				
+				}
 				List<Reference> cell = new ArrayList<Reference>();
 				for (Element re: resultElements) {
 					if (tc instanceof TableAttributeColumn) {
@@ -180,14 +196,23 @@ public class TableStructure extends Table {
 							//cell.add(new Reference(empty));
 							continue;
 						}
-						try {
-                            cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
-                        } catch ( Exception e1 ) {// TODO make specific to two parse errors
-                            Debug.error(true, false, e1.getLocalizedMessage() + " for OCL query \"" + expr + "\" on " + EmfUtils.toString( re ) );
+						Object result = DocumentValidator.evaluate( expr, re, getValidator(), true );
+                        if ( OclEvaluator.isValid() ) {
+                            cell.add(new Reference(result));
                         }
+//						try {
+//                            cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
+//                        } catch ( Exception e1 ) {// TODO make specific to two parse errors
+//                            Debug.error(true, false, e1.getLocalizedMessage() + " for OCL query \"" + expr + "\" on " + EmfUtils.toString( re ) );
+//                        }
 					}
 				}
 				row.add(cell);
+
+				// check constraints
+                DocumentValidator.evaluateConstraints( tc.activityNode,
+                                                       getCellData( row, tc ),
+                                                       context, true, true );
 			}
 			tableContent.add(row);
 		}
@@ -231,8 +256,25 @@ public class TableStructure extends Table {
 		return res;
 	}
 
+	public List<Reference> getCellReferences( List< List< Reference > > row, TableColumn col ) {
+	    List< Reference > colData = row.get( getColumnIndex( col ) );
+	    return colData;
+	}
 
-	/*
+    public List<Object> getCellData( List< List< Reference > > row, TableColumn col ) {
+        List< Reference > colRefs = getCellReferences( row, col );
+        List< Object > colData = new ArrayList< Object >();
+        for ( Reference r : colRefs ) {
+            colData.add( r.result );
+        }
+        return colData;
+    }
+
+	protected int getColumnIndex( TableColumn col ) {
+        return columnIndex .get(col);
+    }
+
+    /*
 	@SuppressWarnings("unchecked")
 	public void addSumRow() {
 		List<Object> sumRow = new ArrayList<Object>();
@@ -266,5 +308,13 @@ public class TableStructure extends Table {
 	}
 	
 */
+
+    public DocumentValidator getValidator() {
+        return validator;
+    }
+
+    public void setValidator( DocumentValidator validator ) {
+        this.validator = validator;
+    }
 
 }

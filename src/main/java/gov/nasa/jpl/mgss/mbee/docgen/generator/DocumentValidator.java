@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import org.eclipse.ocl.ParserException;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.EdgeFactory;
 import org.jgrapht.alg.StrongConnectivityInspector;
@@ -50,6 +50,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.ocl.OclEvaluator;
 
 /**
  * validates docgen 3 document
@@ -59,11 +60,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
  * Changelog: Document Validator updated to use Validationsuite. 
  */
 public class DocumentValidator {
-
-	
-
-	
-	
 	
 	public ValidationRule getConstraintRule() {
         return constraintRule;
@@ -485,10 +481,146 @@ public class DocumentValidator {
 			pw.println("Validation done.");
 	}
 
+    // REVIEW -- should this function always be called instead of
+    // ValidationRule.addViolation()? Consider making all rules a subclass of
+    // ValidationRule that uses a subclass of ValidationRuleViolation that
+    // implements Comparable so that set inclusion is efficient/elegant.
+    /**
+     * Add a violation for the rule only if none of the rules existing
+     * violations have the same element and comment.
+     * 
+     * @param rule
+     * @param element
+     * @param comment
+     * @return whether a violation was added
+     */
+	public static boolean addViolationIfUnique( ValidationRule rule, Element element, String comment ) {
+	    if ( rule == null ) return false;
+        List< ValidationRuleViolation > violations = rule.getViolations();
+        boolean alreadyAdded = false;
+        if ( violations != null ) {
+            for ( ValidationRuleViolation v : violations ) {
+                if ( Utils2.valuesEqual( v.getElement(), element )
+                     && Utils2.valuesEqual( v.getComment(), comment ) ) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+        }
+        if ( alreadyAdded ) return false;
+        rule.addViolation( element, comment );
+        return true;
+	}
+	
+    /**
+     * Evaluate the expression and, if the violationIfConsistent flag is true
+     * and the validator is not null, add a validation rule violation if the
+     * expression is inconsistent.
+     * 
+     * @param expression
+     * @param context
+     * @param validator
+     * @param violationIfInconsistent
+     * @return the result of the evaluation
+     */
+    public static Object evaluate( Object expression, Element context, DocumentValidator validator,
+                                   boolean violationIfInconsistent ) {
+        if ( expression == null ) return null;
+        Object result = null;
+        try {
+            result = OclEvaluator.evaluateQuery(context, expression);
+        } catch ( ParserException e ) {
+            if ( violationIfInconsistent ) {
+                String errorMessage = e.getLocalizedMessage() +
+                    " for OCL query \"" + expression + 
+                    "\" on " +
+                    EmfUtils.toString( context );
+                if ( validator != null ) {
+                    addViolationIfUnique( validator.getConstraintRule(),
+                                          context, errorMessage );
+                }
+                Debug.error( violationIfInconsistent, false, errorMessage );
+            }
+        }
+        return result;
+    }
+	
+    /**
+     * Evaluate the constraint and, if the constraint is inconsistent and the
+     * violatedIfConsistent flag is true and the validator is not null, add a
+     * validation rule violation. If the constraint evaluates to false, and the
+     * validator is not null, add a violation.
+     * 
+     * @param constraint
+     * @param validator
+     * @param violatedIfInconsistent
+     * @return the result of the evaluation
+     */
+    public static Boolean evaluateConstraint( Constraint constraint,
+                                              DocumentValidator validator,
+                                              boolean violatedIfInconsistent ) {
+	    if ( constraint == null ) return null;
+        Boolean satisfied = constraint.evaluate();
+        if ( validator == null ) return satisfied;
+        // check if constraint is violated
+        if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
+            Element violatingElement = constraint.getViolatedConstraintElement();
+            Object target = constraint.getConstrainedObjects();
+            String comment = "Constraint " + constraint.getExpression() + " on "
+                    + EmfUtils.toString( target )
+                    + " is violated"
+                    + ( constraint.getConstrainingElements().size() > 1
+                        && !Utils2.isNullOrEmpty( violatingElement.getHumanName() )
+                        ? " for " + violatingElement.getHumanName() : "" );
+            addViolationIfUnique( validator.getConstraintRule(), violatingElement, comment );
+        } else if ( violatedIfInconsistent ) {
+            // check if inconsistent
+            // TODO -- not yet checking if the constraint is self-contradictory
+            // (always false independent of context)
+            Element constrainingElement =
+                    ( Utils2.isNullOrEmpty( constraint.getConstrainingElements() )
+                            ? null
+                            : constraint.getConstrainingElements().iterator().next() );
+            if ( !constraint.isConsistent()
+                 && constrainingElement instanceof Element
+                 && StereotypesHelper.hasStereotypeOrDerived( constrainingElement,
+                                                              DocGen3Profile.constraintStereotype )
+                 && constraint instanceof BasicConstraint ) {
+                String msg = ( (BasicConstraint)constraint ).getErrorMessage();
+                if ( Utils2.isNullOrEmpty( msg ) ) {
+                    msg = constraint.toString() + " is inconsistent";
+                }
+                addViolationIfUnique( validator.getConstraintRule(),
+                                      constrainingElement, msg );
+            }
+        }
+        return satisfied;
+	}
+	
+    /**
+     * Evaluate all constraints on the execution of the constrainedObject. For
+     * each constraint, add validation rule violations if evaluated to false and
+     * addViolations is true or if inconsistent (because malformed or
+     * self-contradictory) and addViolationForInconsistency is true.
+     * 
+     * @param constrainedObject
+     * @param actionOutput
+     *            the result of executing the constrainedObject as an action, to
+     *            which the constraints may applied
+     * @param context
+     *            the execution context, providing target elements that passed
+     *            through, to which the constraints may be applied
+     * @param addViolations
+     * @param addViolationForInconsistency
+     * @return the conjunction of the constraint evaluations (false if any are
+     *         false; otherwise null if any are null, else true)
+     */
     public static Boolean evaluateConstraints( Object constrainedObject,
                                                Object actionOutput,
-                                               GenerationContext context ) {
-        Boolean result = null;
+                                               GenerationContext context,
+                                               boolean addViolations,
+                                               boolean addViolationForInconsistency ) {
+        Boolean result = true; // false if any false; else, null if any null, else true 
         if ( context.getValidator() == null ) return result;
         result = true;
         List<Constraint> constraints = getConstraints(constrainedObject, actionOutput,
@@ -502,71 +634,47 @@ public class DocumentValidator {
             Debug.outln( "constraints for " + constrainedObject + ": "
                          + MoreToString.Helper.toString( constraints ) );
         }
+        DocumentValidator dv = addViolations ? context.getValidator() : null;
+        // If generating validation rule violations, evaluate all. 
+        // Result is false if any false; else, null if any null, else true. 
         for ( Constraint constraint : constraints ) {
             Debug.outln("found constraint: " + MoreToString.Helper.toString( constraint ) );
-            Boolean satisfied = constraint.evaluate();
+            if ( Utils2.isNullOrEmpty( constraint.getExpression() ) ) continue;
+            Boolean satisfied = evaluateConstraint( constraint, dv, addViolationForInconsistency );
             if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
                 result = false;
-                Element violatingElement = constraint.getViolatedConstraintElement();
-                ValidationRule rule = context.getValidator().getConstraintRule();
-                rule.addViolation( violatingElement,
-                                   "Constraint (" + constraint.getExpression() + ") on "
-                                           + EmfUtils.toString( constrainedObject )
-                                           + " is violated"
-                                           + ( constraint.getConstrainingElements().size() > 1
-                                               && !Utils2.isNullOrEmpty( violatingElement.getHumanName() )
-                                               ? " for " + violatingElement.getHumanName() : "" ) );
-            } else if ( satisfied == null && result != null
-                        && result.equals( Boolean.TRUE ) ) {
+                if ( dv == null ) break;
+            } else if ( satisfied == null && Boolean.TRUE.equals( result ) ) {
                 result = null;
             }
         }
         return result;
     }
 
+    /**
+     * Gather all constraints applicable to the output or input of the
+     * constrainedObject or the constrainedObject itself.
+     * 
+     * @param constrainedObject
+     * @param actionOutput
+     *            the result of executing the constrainedObject as an action, to
+     *            which the constraints may applied
+     * @param context
+     *            the execution context, providing target elements that passed
+     *            through, to which the constraints may be applied
+     * @return a list of constraints
+     */
     public static List< Constraint > getConstraints( Object constrainedObject,
                                                      Object actionOutput,
                                                      GenerationContext context ) {
         List<Constraint> constraints = new ArrayList< Constraint >();
         List< Element > targets = DocumentGenerator.getTargets( constrainedObject, context );
-        List< Element > constraintElements = getConstraintElements( constrainedObject );
+        List< Element > constraintElements = BasicConstraint.getConstraintElements( constrainedObject );
         for ( Element constraint : constraintElements  ) {
             Constraint c = BasicConstraint.makeConstraint( constraint, actionOutput, targets, constrainedObject );
             constraints.add( c );
         }
         return constraints;
-    }
-
-    public static List<Element> getComments( Element source ) {
-        List<Element> results = new ArrayList< Element >();
-        results.addAll(source.get_commentOfAnnotatedElement());
-        if ( results.size() > 0 ) {
-            Debug.out("");
-        }
-        return results;
-    }
-    
-    public static List< Element > getConstraintElements( Object constrainedObject ) {
-        List<Element> constraintElements = new ArrayList< Element >();
-        if ( constrainedObject instanceof Element ) {
-            Element constrainedElement = ((Element)constrainedObject);
-            if (StereotypesHelper.hasStereotypeOrDerived(constrainedElement,
-                                                         DocGen3Profile.constraintStereotype) ) {
-                constraintElements.add( constrainedElement );
-            }
-            constraintElements.addAll( Utils.collectRelatedElementsByStereotypeString( constrainedElement, DocGen3Profile.constraintStereotype, 0, true, 1 ) );
-            for ( Element comment : getComments( constrainedElement ) ) {
-                if (StereotypesHelper.hasStereotypeOrDerived(comment, DocGen3Profile.constraintStereotype) ) {
-                    constraintElements.add( comment );
-                }
-            }
-        }
-        if ( constrainedObject instanceof Collection ) {
-            for ( Object o : (Collection<?>)constrainedObject ) {
-                constraintElements.addAll( getConstraintElements( o ) );
-            }
-        }
-        return constraintElements;
     }
 
 }

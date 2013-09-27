@@ -1,5 +1,6 @@
 package gov.nasa.jpl.ocl;
 
+import gov.nasa.jpl.mbee.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -35,6 +36,9 @@ import org.eclipse.ocl.lpg.ProblemHandler;
 import org.eclipse.ocl.util.OCLUtil;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 
 /**
  * Utility class for encapsulating the OCL query and constraint evaluations.
@@ -97,11 +101,45 @@ public class OclEvaluator {
 		ocl = OCL.newInstance(envFactory);
 	}
 
+    protected static boolean notNullOrEndInQuestion( String expr ) {
+        return ( !Utils2.isNullOrEmpty( expr ) && 
+                 expr.trim().lastIndexOf( "?" ) < expr.trim().length() - 1 );
+    }
 	
 	public static String queryElementToStringExpression( Element query ) {
-        Object o = GeneratorUtils.getObjectProperty(query, DocGen3Profile.expressionChoosable,
-                                                    "expression", null);
-        return queryObjectToStringExpression( o );
+	    String expr = null;
+	    Object o = GeneratorUtils.getObjectProperty(query, DocGen3Profile.expressionChoosable,
+	                                                "expression", null);
+	    expr = queryObjectToStringExpression( o );
+        if ( notNullOrEndInQuestion(expr) ) return expr;
+	    if ( query instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint ) {
+	        com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint c = (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint)query;
+            ValueSpecification v = c.getSpecification();
+            if ( v != null ) {
+                expr = DocGenUtils.fixString( v );
+                if ( notNullOrEndInQuestion(expr) ) return expr;
+                expr = v.get_representationText();
+                if ( notNullOrEndInQuestion(expr) ) return expr;
+                expr = v.toString();
+                if ( notNullOrEndInQuestion(expr) ) return expr;
+                if ( v instanceof OpaqueExpression ) {
+                    OpaqueExpression oe = (OpaqueExpression)v;
+                    List<String> list = oe.getBody();
+                    if (!Utils2.isNullOrEmpty( list )) {
+                        expr = queryCollectionToStringExpression( list );
+                        if ( notNullOrEndInQuestion(expr) ) return expr;
+                    }
+                    Expression x = oe.getExpression();
+                    if ( x != null ) {
+                        expr = x.get_representationText();
+                        if ( notNullOrEndInQuestion(expr) ) return expr;
+                        expr = x.toString();
+                        if ( notNullOrEndInQuestion(expr) ) return expr;
+                    }
+                }
+            }
+	    }
+	    return expr;
 	}
 	
     public static String queryCollectionToStringExpression(Collection<?> queryColl ) {
@@ -132,11 +170,7 @@ public class OclEvaluator {
         exprString = (String) query;
       } else if (query instanceof Collection) {
         Collection<?> queryColl = (Collection<?>) query;
-        if (queryColl.size() == 1) {
-          exprString = queryObjectToStringExpression(queryColl.iterator().next());
-        } else {
-          Debug.error(false, false, "Error! Query cannot be a list of multiple things!");
-        }
+        exprString = queryCollectionToStringExpression( queryColl );
       } else if (query != null) {
         exprString = (String) query.toString();
       }
@@ -182,6 +216,8 @@ public class OclEvaluator {
 	                                   boolean verbose) throws ParserException {
     setupEnvironment();
 
+    if ( queryString == null ) return null; 
+    
 	  // create the ocl evaluator
     OclEvaluator.createOclInstance( envFactory );    
       // boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
