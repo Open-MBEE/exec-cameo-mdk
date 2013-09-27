@@ -39,15 +39,50 @@ public final class EmfUtils {
   public static String spewObjectSuffix = spewObjectPrefix;
 
   public static String toString( Object o ) {
+      if ( o instanceof Collection ) {
+          Collection<?> c = (Collection<?>)o;
+          int count = 0;
+          while ( c.size() == 1 && c != c.iterator().next() && count++ < 5 ) {
+              o = c.iterator().next();
+              if ( o instanceof Collection ) {
+                  c = (Collection<?>)o;
+              }
+          }
+          if ( c == o && c.size() != 1 ) {
+              StringBuffer sb = new StringBuffer();
+              sb.append("(");
+              boolean first = true;
+              for ( Object oo : c ) {
+                  if ( first ) first = false;
+                  else sb.append(", ");
+                  sb.append(toString(oo));
+              }
+              sb.append(")");
+              return sb.toString();
+          }
+      }
+      String result = null;
+      String name = getName( o );
+      if ( Utils2.isNullOrEmpty( name ) ) name = "";
+      else name = name + ":";
       if ( o instanceof Element ) {
           Element e = (Element)o;
           String repText = e.get_representationText();
           if ( Utils2.isNullOrEmpty( repText ) ) repText = "";
           else repText = ":" + repText;
-          return e.getHumanName() + ":" + //e.getHumanType() + ":" + 
-                 e.getID() + repText; 
+          result = name + //e.getHumanType() + ":" +
+                  (Debug.isOn() ? e.getID() : "") + repText; 
+          if ( Debug.isOn() ) {
+              Debug.out( "" );
+          }
+          return result.replaceFirst( "::", ":" );
       }
-      return getName( o ) + ":" + getTypeNames( o ); 
+      if ( Utils2.isNullOrEmpty( name ) ) {
+          result = o.toString();
+      } else {
+          result = name + getTypeNames( o );
+      }
+      return result;
   }
   
   public static String writeNameAndTypeOfEObject(Object o, String indent) {
@@ -521,15 +556,21 @@ public final class EmfUtils {
     if ( eo != null ) {
       if ( o instanceof EClassifier ) {
         name = ( (EClassifier)o ).getInstanceClassName();
-      }; 
-      if ( Utils2.isNullOrEmpty( name ) && eo instanceof ENamedElement ) {
-        name = ( (ENamedElement)eo ).getName();
       }
       if ( Utils2.isNullOrEmpty( name ) ) {
-        EStructuralFeature nameFeature =
-            eo.eClass().getEStructuralFeature( "name" );
-        if ( nameFeature != null ) {
-          name = (String)eo.eGet( nameFeature );
+          EStructuralFeature nameFeature =
+              eo.eClass().getEStructuralFeature( "name" );
+          if ( nameFeature != null ) {
+            name = (String)eo.eGet( nameFeature );
+          }
+        }
+      if ( Utils2.isNullOrEmpty( name ) ) {
+        if ( eo instanceof Element ) {
+          if ( eo instanceof ENamedElement ) {
+            name = ( (ENamedElement)eo ).getName();
+          } else {
+            name = ( (Element)eo ).getHumanName();
+          }
         }
       }
     }

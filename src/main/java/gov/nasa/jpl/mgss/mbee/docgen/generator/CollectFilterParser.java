@@ -52,6 +52,12 @@ public class CollectFilterParser {
 	public static void setContext(GenerationContext gc) {
 		context = gc;
 	}
+    public static GenerationContext getContext() {
+        return context;
+    }
+    public static DocumentValidator getValidator() {
+        return context == null ? null : context.getValidator();
+    }
 	
 	/**
 	 * gets a graph of the collect/filter actions that starts from a, evaluates and executes actions topologically and return result
@@ -115,7 +121,7 @@ public class CollectFilterParser {
 				node.setResult(res);
 			}
 			context.setCurrentNode(node.getNode());
-            DocumentValidator.evaluateConstraints(node.getNode(), res, context);
+            DocumentValidator.evaluateConstraints(node.getNode(), res, context, true, true);
 		}
 		return res;
 	}

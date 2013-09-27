@@ -61,8 +61,32 @@ public class OclQueryAction extends MDAction {
     return sw.toString();
   }
   
-  private class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
+  public static class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
 
+    private List< Element > context = null;
+     
+    public ProcessOclQuery() {
+        super();
+    }
+    public ProcessOclQuery( Collection< Element > selectedElements ) {
+        super();
+        setContext( selectedElements );
+    }
+    public ArrayList< Object > parseAndProcess( Object input, List< Element > context ) {
+        setContext( context );
+        return parseAndProcess( input );
+    }
+    public List< Element > getContext() {
+        if ( Utils2.isNullOrEmpty( context ) ) {
+            if ( context == null ) context = new ArrayList< Element >();
+            
+        }
+        return context;
+    }
+    public void setContext( Collection< Element > context ) {
+        getContext().clear();
+        getContext().addAll( context );
+    }
     /**
      * Parse and evaluate OCL and additional helper syntax:
      * <ol>
@@ -314,7 +338,7 @@ public class OclQueryAction extends MDAction {
     Debug.turnOn();
     RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog( "Enter an OCL expression:",
                                                              "OCL Evaluation",
-                                                             new ProcessOclQuery());
+                                                             new ProcessOclQuery(selectedElements));
     if ( !wasOn ) Debug.turnOff();
   }
   

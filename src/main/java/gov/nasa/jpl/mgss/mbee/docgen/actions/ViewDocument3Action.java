@@ -31,9 +31,10 @@ public class ViewDocument3Action extends MDAction {
 	
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
-		
+
+		DocumentValidator dv = null;
 		try {
-			DocumentValidator dv = new DocumentValidator(doc);
+			dv = new DocumentValidator(doc);
 			dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
@@ -41,7 +42,6 @@ public class ViewDocument3Action extends MDAction {
             }
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument();
-            dv.printErrors();
 			(new PostProcessor()).process(dge);
 			DocumentViewer.view(dge);
 		} catch (Exception ex) {
@@ -51,5 +51,6 @@ public class ViewDocument3Action extends MDAction {
 			gl.log(sw.toString()); // stack trace as a string
 			ex.printStackTrace();
 		}
+        if ( dv != null ) dv.printErrors();
 	}
 }

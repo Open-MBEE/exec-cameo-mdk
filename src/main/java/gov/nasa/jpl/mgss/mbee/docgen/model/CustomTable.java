@@ -10,6 +10,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.GenerationContext;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
@@ -142,6 +145,8 @@ public class CustomTable extends Table {
               // construct cell for each column
               for (String oclExpr : this.getColumns()) {
                   Object result = null;
+                  DocumentValidator dv = CollectFilterParser.getValidator();
+                  DocumentValidator.evaluate( oclExpr, e, dv, true );
                 try {
                     result = this.evaluateOcl(e, oclExpr);
                 } catch ( ParserException e1 ) {

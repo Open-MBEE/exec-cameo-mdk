@@ -32,6 +32,7 @@ public class SynchronizeViewAction extends MDAction {
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
 		GetMethod gm = null;
+		DocumentValidator dv = null;
 		try {
 			String response = null;
 			Boolean recurse = Utils.getUserYesNoAnswer("Synchronize views recursively?");
@@ -41,7 +42,7 @@ public class SynchronizeViewAction extends MDAction {
 			if (url == null)
 				return;
 			gl.log("*** Starting synchronize view ***");
-			DocumentValidator dv = new DocumentValidator(doc);
+			dv = new DocumentValidator(doc);
 			dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
@@ -49,7 +50,6 @@ public class SynchronizeViewAction extends MDAction {
             }
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
-            dv.printErrors();
 			(new PostProcessor()).process(dge);
 			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(dge, doc, recurse, false, url), "Synchronizing View...", true, 0);
 		} catch (Exception ex) {
@@ -62,5 +62,6 @@ public class SynchronizeViewAction extends MDAction {
 			if (gm != null)
 				gm.releaseConnection();
 		}
+        if ( dv != null ) dv.printErrors();
 	}
 }

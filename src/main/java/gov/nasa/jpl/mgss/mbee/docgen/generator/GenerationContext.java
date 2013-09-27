@@ -69,6 +69,10 @@ public class GenerationContext {
         return validator;
     }
 
+    public void setValidator( DocumentValidator validator ) {
+        this.validator = validator;
+    }
+
 	public void log(String msg) {
 		log.log(msg);
 	}
