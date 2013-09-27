@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -193,22 +194,120 @@ public class Utils2 {
     return ( s == null || s.isEmpty() );
   }
 
-  // generic map<X, map<Y, Z> >.put(x, y, z)
-  public static <T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 > T3 put( Map< T1, Map< T2, T3 > > map, T1 t1, T2 t2, T3 t3 ) {
+  // generic map<X, Set<Y>>.add(x, y)
+  public static < T1, T2 > boolean addToSet( Map< T1, Set<T2> > map, T1 t1, T2 t2 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.add() with null argument!",
+                            map, t1, t2 ) ) {
+      return false;
+    }
+    boolean affected = false;
+    Set<T2> innerCollection = map.get( t1 );
+    if ( innerCollection == null ) {
+        innerCollection = new TreeSet< T2 >(CompareUtils.GenericComparator.instance());
+        map.put( t1, innerCollection );
+    }
+    affected = innerCollection.add( t2 );
+    return affected;
+  }
+
+  // generic map<X, Collection<Y>>.add(x, y)
+  public static < T1, T2 > boolean add( Map< T1, Collection<T2> > map, T1 t1, T2 t2 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.add() with null argument!",
+                            map, t1, t2 ) ) {
+      return false;
+    }
+    boolean affected = false;
+    Collection<T2> innerCollection = map.get( t1 );
+    if ( innerCollection == null ) {
+        innerCollection = new ArrayList< T2 >();
+        map.put( t1, innerCollection );
+    }
+    affected = innerCollection.add( t2 );
+    return affected;
+  }
+
+  // generic map<X, Set<Y>>.addAll(x, y)
+  public static < T1, T2 > boolean addAllToSet( Map< T1, Set<T2> > map, T1 t1, Collection<T2> t2Collection ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.add() with null argument!",
+                            map, t1, t2Collection ) ) {
+      return false;
+    }
+    boolean affected = false;
+    Set<T2> innerCollection = map.get( t1 );
+    if ( innerCollection == null ) {
+        innerCollection = new HashSet< T2 >();
+        map.put( t1, innerCollection );
+    }
+    affected = innerCollection.addAll( t2Collection );
+    return affected;
+  }
+
+  // generic map<X, Collection<Y>>.addAll(x, y)
+  public static < T1, T2 > boolean addAll( Map< T1, Collection<T2> > map, T1 t1, Collection<T2> t2Collection ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.add() with null argument!",
+                            map, t1, t2Collection ) ) {
+      return false;
+    }
+    boolean affected = false;
+    Collection<T2> innerCollection = map.get( t1 );
+    if ( innerCollection == null ) {
+        innerCollection = new ArrayList< T2 >();
+        map.put( t1, innerCollection );
+    }
+    affected = innerCollection.addAll( t2Collection );
+    return affected;
+  }
+
+  // generic map<X, map<Y, Z>>.put(x, y, z)
+  public static < T1, T2, T3 > T3 put( Map< T1, Map< T2, T3 > > map, T1 t1, T2 t2, T3 t3 ) {
     if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
                             map, t1, t2, t3 ) ) {
       return null;
     }
     Map< T2, T3 > innerMap = map.get( t1 );
     if ( innerMap == null ) {
-      innerMap = new TreeMap< T2, T3 >();
+      innerMap = new TreeMap< T2, T3 >(CompareUtils.GenericComparator.instance());
       map.put( t1, innerMap );
     }
     return innerMap.put( t2, t3 );
   }
 
+  // generic map<X, map<Y, Collection<Z>>>.add(x, y, z)
+  public static < T1, T2, T3 > boolean add( Map< T1, Map< T2, Collection<T3> > > map, T1 t1, T2 t2, T3 t3 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.add() with null argument!",
+                            map, t1, t2, t3 ) ) {
+      return false;
+    }
+    boolean affected = false;
+    Collection<T3> innerCollection = get( map, t1, t2 );
+    if ( innerCollection == null ) {
+        innerCollection = new ArrayList< T3 >();
+        put( map, t1, t2, innerCollection );
+    }
+    if ( !innerCollection.contains( t3 ) ) {
+        affected = innerCollection.add( t3 );
+    }
+    return affected;
+  }
+
+  // generic map<X, map<Y, Collection<Z>>>.add(x, y, z)
+  public static < T1, T2, T3 > boolean addAll( Map< T1, Map< T2, Collection<T3> > > map, T1 t1, T2 t2, Collection<T3> t3Collection ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.add() with null argument!",
+                            map, t1, t2, t3Collection ) ) {
+      return false;
+    }
+    boolean affected = false;
+    Collection<T3> innerCollection = get( map, t1, t2 );
+    if ( innerCollection == null ) {
+        innerCollection = new HashSet< T3 >();
+        put( map, t1, t2, innerCollection );
+    }
+    affected = innerCollection.addAll( t3Collection );
+    return affected;
+  }
+
   // generic map<X, map<Y, Z> >.get(x, y) --> z
-  public static <T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 > T3 get( Map< T1, Map< T2, T3 > > map, T1 t1, T2 t2 ) {
+  public static < T1, T2, T3 > T3 get( Map< T1, Map< T2, T3 > > map, T1 t1, T2 t2 ) {
     if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
                             map, t1, t2 ) ) {
       return null;
@@ -221,21 +320,21 @@ public class Utils2 {
   }
 
   // generic map< W, map<X, map<Y, Z> >.put(w, x, y, z)
-  public static <T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 extends Comparable<T3>, T4 > T4 put( Map< T1, Map< T2, Map< T3, T4 > > > map, T1 t1, T2 t2, T3 t3, T4 t4 ) {
+  public static < T1, T2, T3, T4 > T4 put( Map< T1, Map< T2, Map< T3, T4 > > > map, T1 t1, T2 t2, T3 t3, T4 t4 ) {
     if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
                             map, t1, t2, t3, t4 ) ) {
       return null;
     }
     Map< T2, Map< T3, T4 > > innerMap = map.get( t1 );
     if ( innerMap == null ) {
-      innerMap = new TreeMap< T2, Map< T3, T4 > >();
+      innerMap = new TreeMap< T2, Map< T3, T4 > >( CompareUtils.GenericComparator.instance() );
       map.put( t1, innerMap );
     }
     return put( innerMap, t2, t3, t4 );
   }
 
   // generic map< W, map<X, map<Y, Z> >.get(w, x, y) --> z
-  public static <T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 extends Comparable<T3>, T4 > T4 get( Map< T1, Map< T2, Map< T3, T4 > > > map, T1 t1, T2 t2, T3 t3 ) {
+  public static < T1, T2, T3, T4 > T4 get( Map< T1, Map< T2, Map< T3, T4 > > > map, T1 t1, T2 t2, T3 t3 ) {
     if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
                             map, t1, t2, t3 ) ) {
       return null;
@@ -246,8 +345,8 @@ public class Utils2 {
     }
     return null;
   }
-  
-   /**
+
+  /**
     * Manages a "seen" set for avoiding infinite recursion.
     * @param o is the object visited
     * @param recursive is whether infinite recursion is possible 

@@ -13,13 +13,13 @@ import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.ocl.ParserException;
-
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
@@ -27,42 +27,53 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  * constraints and elements that are constrained.
  */
 public class BasicConstraint implements Constraint {
-
+    
     LinkedHashSet< Element > constrainingElements;
-    LinkedHashSet< Element > constrainedElements;
+    //private LinkedHashSet< Element > constrainedElements;
+    private LinkedHashSet< Object > constrainedObjects; // must contain constrainedElements
     Element violatedConstraintElement = null;
     Element violatedConstrainedElement = null;
+    protected Boolean isConsistent = null;
+    protected String errorMessage = null;
     
-    /**
-     * @param constrainingElement
-     * @param constrainedElement
-     */
-    public BasicConstraint( Element constrainingElement,
-                               Element constrainedElement ) {
-        addConstrainedElement( constrainedElement );
-        addConstrainingElement( constrainingElement );
-    }
+//    /**
+//     * @param constrainingElement
+//     * @param constrainedElement
+//     */
+//    public BasicConstraint( Element constrainingElement,
+//                               Element constrainedElement ) {
+//        addConstrainedElement( constrainedElement );
+//        addConstrainingElement( constrainingElement );
+//    }
 
     /**
      * @param constrainingElement
      * @param constrainedElement
      */
     public BasicConstraint( Object constraint,
-                               Object constrained ) {
+                            Object constrained ) {
         addConstrainingObject( constraint );
         addConstrainedObject( constrained );
     }
 
-    /* (non-Javadoc)
-     * @see gov.nasa.jpl.mbee.constraint.Constraint#getConstrainedElements()
-     */
+//    /* (non-Javadoc)
+//     * @see gov.nasa.jpl.mbee.constraint.Constraint#getConstrainedElements()
+//     */
+//    @Override
+//    public Set< Element > getConstrainedElements() {
+//        if ( constrainedElements == null ) {
+//            constrainedElements = new LinkedHashSet< Element >();
+//        }
+//        return //Collections.unmodifiableList( Utils2.toList( constrainedElements ) );
+//                constrainedElements;
+//    }
+
     @Override
-    public Set< Element > getConstrainedElements() {
-        if ( constrainedElements == null ) {
-            constrainedElements = new LinkedHashSet< Element >();
+    public Set< Object > getConstrainedObjects() {
+        if ( constrainedObjects == null ) {
+            constrainedObjects = new LinkedHashSet< Object >();
         }
-        return //Collections.unmodifiableList( Utils2.toList( constrainedElements ) );
-                constrainedElements;
+        return constrainedObjects;
     }
 
     /* (non-Javadoc)
@@ -76,43 +87,58 @@ public class BasicConstraint implements Constraint {
         return constrainingElements;
     }
 
-    /* (non-Javadoc)
-     * @see gov.nasa.jpl.mbee.constraint.Constraint#addConstrainedElements(java.util.List)
-     */
+//    /* (non-Javadoc)
+//     * @see gov.nasa.jpl.mbee.constraint.Constraint#addConstrainedElements(java.util.List)
+//     */
+//    @Override
+//    public void addConstrainedElements( Collection< Element > elements ) {
+//        getConstrainedElements().addAll( elements );
+//    }
+//
+//    /* (non-Javadoc)
+//     * @see gov.nasa.jpl.mbee.constraint.Constraint#addConstrainedElement(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element)
+//     */
+//    @Override
+//    public void addConstrainedElement( Element element ) {
+//        getConstrainedElements().add( element );
+//    }
+
     @Override
-    public void addConstrainedElements( Collection< Element > elements ) {
-        if ( constrainedElements == null ) {
-            constrainedElements = new LinkedHashSet< Element >();
-        }
-        constrainedElements.addAll( elements );
+    public void addConstrainedObjects( Collection< Object > objects ) {
+        getConstrainedObjects().addAll( objects );
     }
 
-    /* (non-Javadoc)
-     * @see gov.nasa.jpl.mbee.constraint.Constraint#addConstrainedElement(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element)
-     */
     @Override
-    public void addConstrainedElement( Element element ) {
-        if ( constrainedElements == null ) {
-            constrainedElements = new LinkedHashSet< Element >();
-        }
-        constrainedElements.add( element );
-    }
-
     public void addConstrainedObject( Object obj ) {
-        addConstrainedObject( obj, null );
-    }
-    public void addConstrainedObject( Object obj, Set<Object> seen ) {
-        Pair< Boolean, Set< Object >> p = Utils2.seen( obj, true, seen );
-        if ( p.first ) return;
-        seen = p.second;
-        if ( obj instanceof Element ) {
-            addConstrainedElement( (Element)obj );
-        }
-        if ( obj instanceof Collection ) {
-            for ( Object o : (Collection<?>)obj ) {
-                addConstrainedObject( o );
-            }
-        }
+////        addConstrainedObject( obj, null );
+////    }
+////    public void addConstrainedObject( Object obj, Set<Object> seen ) {
+////        Pair< Boolean, Set< Object > > p = Utils2.seen( obj, true, seen );
+////        if ( p.first ) return;
+////        seen = p.second;
+        getConstrainedObjects().add( obj );
+//        if ( obj instanceof Element ) {
+//            addConstrainedElement( (Element)obj );
+//            getConstrainedObjects().add( obj );
+//        } else if ( obj instanceof Collection ) {
+//            boolean allElements = true;
+//            for ( Object o : (Collection<?>)obj ) {
+//                if ( !( o instanceof Element ) ) {
+//                    allElements = false;
+//                    break;
+//                }
+//            }
+//            if ( allElements && !((Collection<?>)obj).isEmpty() ) {
+//                for ( Object o : (Collection<?>)obj ) {
+//                    addConstrainedElement( (Element)o );
+//                    getConstrainedObjects().add( obj );
+//                }
+//            } else {
+//                getConstrainedObjects().add( obj );
+//            }
+//        } else {
+//            getConstrainedObjects().add( obj );
+//        }
     }
 
     public void addConstrainingObject( Object obj ) {
@@ -184,40 +210,86 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public Boolean evaluate() {
+        return evaluate(true);
+    }
+
+    public Boolean evaluate( boolean complainIfFails ) {
         // try to evaluate it as is first.
         violatedConstraintElement = null;
         violatedConstrainedElement = null;
         
         // try evaluating constraint on elements as a collection
-        Boolean satisfied = evaluate( getConstrainedElements() );
-        if ( satisfied != null ) return satisfied;
+        Boolean satisfied = evaluate( getConstrainedObjects(), false );
+        if ( Boolean.TRUE.equals(satisfied) ) return satisfied;
 
-        // try evaluating elements of a collection separately as a
+        Boolean oldSatisfied = satisfied;
+        boolean oldIsConsistent = isConsistent();
+        boolean newIsConsistent = !Utils2.isNullOrEmpty( getConstrainedObjects() );
+        String oldErrorMessage = errorMessage; 
+        if ( newIsConsistent ) satisfied = true;
+        
+        // try evaluating targets of a collection separately as a
         // conjunction of constraints
         boolean gotNull = false;
-        for ( Element element : getConstrainedElements() ) {
-            satisfied = evaluate( element );
+        for ( Object target : getConstrainedObjects() ) {
+            satisfied = evaluate( target, false );
+            if ( !isConsistent() ) { 
+                newIsConsistent = false;
+//                if ( !Utils2.isNullOrEmpty( errorMessage ) ) {
+//                    newErrorMsg =
+//                            newErrorMsg + ( newErrorMsg.length() > 0
+//                                            ? "" + Character.LINE_SEPARATOR
+//                                            : "" ) + errorMessage;
+//                }
+            }
             if ( satisfied == null ) {
                 gotNull = true;
             } else if ( satisfied.equals( Boolean.FALSE ) ) {
-                return false;
+//                isConsistent = newIsConsistent;
+////                errorMessage = newErrorMsg;
+//                if ( !isConsistent() && !Utils2.isNullOrEmpty( errorMessage ) ) {
+//                    Debug.error( complainIfFails, false, errorMessage );
+//                }
+//                return false;
+                break;
             }
         }
+        isConsistent = newIsConsistent || oldIsConsistent;
+        if ( !isConsistent() ) {
+            errorMessage = oldErrorMessage;
+            if ( !Utils2.isNullOrEmpty( errorMessage ) ) {
+                Debug.error( complainIfFails, false, errorMessage );
+            }
+        }
+        //        errorMessage = newErrorMsg;
+        if ( satisfied != null ) return satisfied;
+        if ( oldIsConsistent ) satisfied = oldSatisfied;
         return gotNull ? null : true;
     }
 
     protected Boolean evaluate( Object constrainedObject ) {
+        return evaluate( constrainedObject, true );
+    }
+    protected Boolean evaluate( Object constrainedObject, boolean complainIfFails ) {
         boolean gotNull = false;
+        isConsistent = true;
+        errorMessage = null;
         for ( Element constraint : getConstrainingElements() ) {
             Object res = null;
             try {
                 res = OclEvaluator.evaluateQuery( constrainedObject,
                                                          constraint );
+                if ( isConsistent ) isConsistent = OclEvaluator.isValid();
             } catch ( Exception e ) {
-                Debug.error( true, false, 
-                             e.getLocalizedMessage() + " for OCL query \""
-                             + OclEvaluator.queryObjectToStringExpression( constraint )
-                             + "\" on " + EmfUtils.toString( constrainedObject ) );
+                this.errorMessage = e.getLocalizedMessage() + " for OCL query \""
+                        + getExpression( constraint ) //OclEvaluator.queryObjectToStringExpression( constraint )
+                        + "\" on " + EmfUtils.toString( constrainedObject );
+                try {
+                    Debug.error( complainIfFails, false, this.errorMessage );
+                } catch ( Exception ex ) {
+                    System.err.println(this.errorMessage);
+                }
+                isConsistent = false;
             }
             if ( res == null ) {
                 gotNull = true;
@@ -281,27 +353,26 @@ public class BasicConstraint implements Constraint {
      */
     public static BasicConstraint makeConstraint( Object constraintElement,
                                                   Object...candidateContexts) {
-//                                                  Object constrained1,
-//                                                  Object constrained2 ) {
-//
         BasicConstraint c = null;
-        for ( Object constrained : candidateContexts ) {
-            c = new BasicConstraint( constraintElement, constrained );
-            Boolean result = c.evaluate();
-            if ( result != null ) {
-                break;
+        if ( !Utils2.isNullOrEmpty( candidateContexts ) ) {
+            BasicConstraint firstNull = null;
+            Boolean result = null;
+            for ( Object constrained : candidateContexts ) {
+                c = new BasicConstraint( constraintElement, constrained );
+                result = c.evaluate();
+                if ( result != null ) {
+                    break;
+                } else if ( firstNull == null ||
+                            ( Utils2.isNullOrEmpty( firstNull.getConstrainedObjects() ) &&
+                              !Utils2.isNullOrEmpty( c.getConstrainedObjects() ) ) ) {
+                    firstNull = c;
+                }
             }
-//            c.getConstrainedElements().clear();
-//            c.addConstrainedObject(constrained2);
-//            result = c.evaluate();
-//            if ( result == null ) {
-//                c.getConstrainedElements().clear();
-//                c.addConstrainedObject(constrained1);
-//            }
+            if ( result == null ) c = firstNull;
         }
         if ( c == null ) {
             Object constrained =
-                    Utils2.isNullOrEmpty( candidateContexts ) ? null
+                    Utils2.isNullOrEmpty( candidateContexts ) ? null // REVIEW -- isn't this always true?
                                                         : candidateContexts[ 0 ];
             c = new BasicConstraint( constraintElement, constrained );
         }
@@ -309,7 +380,7 @@ public class BasicConstraint implements Constraint {
     }
     
     public static Boolean evaluateAgainst( Object constraint, Object constrained,
-                                           List<Element> targets ) {
+                                           List<Object> targets ) {
         BasicConstraint c = makeConstraint( constraint, targets, constrained );
         Boolean result = c.evaluate();
         return result;
@@ -317,9 +388,72 @@ public class BasicConstraint implements Constraint {
     
     public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append("Constraint:" + this.getExpression() + ",on:" + this.constrainedElements );
+        sb.append("Constraint:" + this.getExpression() + ",on:" + EmfUtils.toString( this.constrainedObjects ) );
         return sb.toString();
     }
+
+    public static List<Element> getComments( Element source ) {
+        List<Element> results = new ArrayList< Element >();
+        results.addAll(source.get_commentOfAnnotatedElement());
+        if ( results.size() > 0 ) {
+            Debug.out("");
+        }
+        return results;
+    }
+
+    public static List< Element > getConstraintElements( Object constrainedObject ) {
+        List<Element> constraintElements = new ArrayList< Element >();
+        if ( constrainedObject instanceof Element ) {
+            Element constrainedElement = ((Element)constrainedObject);
+            if (StereotypesHelper.hasStereotypeOrDerived(constrainedElement,
+                                                         DocGen3Profile.constraintStereotype) ) {
+                constraintElements.add( constrainedElement );
+            }
+            if ( constrainedElement instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint ) {
+                constraintElements.add( constrainedElement );
+            }
+            Collection< com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint > constrs = 
+                    constrainedElement.get_constraintOfConstrainedElement();
+            if ( constrs != null ) constraintElements.addAll( constrs );
+            constraintElements.addAll( Utils.collectRelatedElementsByStereotypeString( constrainedElement, DocGen3Profile.constraintStereotype, 0, true, 1 ) );
+            for ( Element comment : BasicConstraint.getComments( constrainedElement ) ) {
+                if (StereotypesHelper.hasStereotypeOrDerived(comment, DocGen3Profile.constraintStereotype) ) {
+                    constraintElements.add( comment );
+                }
+            }
+        }
+        if ( constrainedObject instanceof Collection ) {
+            for ( Object o : (Collection<?>)constrainedObject ) {
+                constraintElements.addAll( getConstraintElements( o ) );
+            }
+        }
+        return constraintElements;
+    }
     
+    public static List< Constraint > getConstraints( Object constrainedObject ) {
+        List<Constraint> constraints = new ArrayList< Constraint >();
+        List< Element > constraintElements = getConstraintElements( constrainedObject );
+        for ( Element constraint : constraintElements  ) {
+            Constraint c = BasicConstraint.makeConstraint( constraint, constrainedObject );
+            constraints.add( c );
+        }
+        return constraints;
+    }
+
+    @Override
+    public boolean isConsistent() {
+        if ( isConsistent == null ) evaluate();
+        return isConsistent ;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage( String errorMessage ) {
+        this.errorMessage = errorMessage;
+    }
+
+
 
 }

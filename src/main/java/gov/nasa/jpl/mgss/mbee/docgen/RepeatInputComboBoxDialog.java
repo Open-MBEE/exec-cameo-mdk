@@ -672,7 +672,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
         if ( sizeOnClose != null ) {
             win.setSize( sizeOnClose );
         }
-//        win.setMinimumSize( new Dimension(200,100) );
+        win.setMinimumSize( new Dimension(300,200) );
         
         // add listeners
         boolean found = false;

@@ -119,6 +119,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 		para.visit(forViewEditor, parent.peek(), outputDir);
 	}
 
+	@Override
 	public void visit(TableStructure ts) {
 		ts.visit(forViewEditor, parent.peek(), outputDir);
 	}

@@ -31,9 +31,10 @@ public class ExportViewHierarchyAction extends MDAction {
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
 		PostMethod pm = null;
+        DocumentValidator dv = null;
 		try {
-			DocumentValidator dv = new DocumentValidator(doc);
-			dv.validateDocument();
+		    dv = new DocumentValidator(doc);
+		    dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
                 return;
@@ -45,8 +46,10 @@ public class ExportViewHierarchyAction extends MDAction {
 			dge.accept(vhv);
 			String post = vhv.getResult().toJSONString();
 			String url = ViewEditUtils.getUrl();
-			if (url == null)
+			if (url == null) {
+                dv.printErrors();
 				return;
+			}
 			gl.log("*** Starting export view hierarchy ***");
 			String posturl = url + "/rest/views/" + doc.getID() + "/hierarchy";
 			pm = new PostMethod(posturl);
@@ -73,5 +76,6 @@ public class ExportViewHierarchyAction extends MDAction {
 			if (pm != null)
 				pm.releaseConnection();
 		}
+		if ( dv != null ) dv.printErrors();
 	}
 }

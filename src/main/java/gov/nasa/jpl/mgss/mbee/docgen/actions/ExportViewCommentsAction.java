@@ -37,12 +37,13 @@ public class ExportViewCommentsAction extends MDAction {
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
 		
+        DocumentValidator dv = null;
 		try {
 			String response = null;
 			Boolean recurse = Utils.getUserYesNoAnswer("Publish view comments recursively?");
 			if (recurse == null)
 				return;
-			DocumentValidator dv = new DocumentValidator(doc);
+			dv = new DocumentValidator(doc);
 			dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
@@ -50,15 +51,16 @@ public class ExportViewCommentsAction extends MDAction {
             }
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
-            dv.printErrors();
 			ViewCommentVisitor vcv = new ViewCommentVisitor();
 			dge.accept(vcv);
 			String json = vcv.getJSON();
 			
 			//gl.log(json);
 			String url = ViewEditUtils.getUrl();
-			if (url == null)
+			if (url == null) {
+	            dv.printErrors();
 				return;
+			}
 			url += "/rest/views/" + doc.getID() + "/comments";
 			if (recurse) {
 				url += "?recurse=true";
@@ -92,6 +94,7 @@ public class ExportViewCommentsAction extends MDAction {
 			gl.log(sw.toString()); // stack trace as a string
 			ex.printStackTrace();
 		}
+		if ( dv != null ) dv.printErrors();
 	}
 
 }

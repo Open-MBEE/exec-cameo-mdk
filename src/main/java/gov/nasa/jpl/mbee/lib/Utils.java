@@ -8,6 +8,8 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
+import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
@@ -211,15 +213,17 @@ public class Utils {
                                                         "expression", null);
         for (Element e : elements) {
             Object o = null;
-            try {
-                o = OclEvaluator.evaluateQuery(e, query);
+            DocumentValidator dv = CollectFilterParser.getValidator();
+            o = DocumentValidator.evaluate( query, e, dv, true );
+            if ( OclEvaluator.isValid() ) {
+//            try {
+//                o = OclEvaluator.evaluateQuery(e, query);
                 Boolean istrue = isTrue(o, false);
                 if (include == ((Boolean)(istrue == null ? false : istrue)).booleanValue()) {
                     res.add(e);
                 }
-            } catch ( ParserException e1 ) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
+//            } catch ( ParserException e1 ) {
+//                e1.printStackTrace();
             }
         }
         return res;
@@ -507,13 +511,17 @@ public class Utils {
     public static List<Element> collectByExpression(Element element, Object query) {
         List<Element> res = new ArrayList<Element>();
         Object o = null;
-        try {
-            o = OclEvaluator.evaluateQuery(element, query);
+        DocumentValidator dv = CollectFilterParser.getValidator();
+        o = DocumentValidator.evaluate( query, element, dv, true );
+//        try {
+//            o = OclEvaluator.evaluateQuery(element, query);
+        if ( OclEvaluator.isValid() ) {
             res.addAll(getListOfType(o, Element.class));
-        } catch ( ParserException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
+//        } catch ( ParserException e ) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
         return res;
     }
 
@@ -1635,12 +1643,14 @@ public class Utils {
         Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
         for (Element e : list) {
             Object result = null;
-            try {
-                result = OclEvaluator.evaluateQuery(e, o);
-            } catch ( ParserException e1 ) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
+            DocumentValidator dv = CollectFilterParser.getValidator();
+            result = DocumentValidator.evaluate( o, e, dv, true );
+//            try {
+//                result = OclEvaluator.evaluateQuery(e, o);
+//            } catch ( ParserException e1 ) {
+//                // TODO Auto-generated catch block
+//                e1.printStackTrace();
+//            }
             resultMap.put(e, result);
             if (!isAllNumbers) continue;
             Collection<?> coll = null;

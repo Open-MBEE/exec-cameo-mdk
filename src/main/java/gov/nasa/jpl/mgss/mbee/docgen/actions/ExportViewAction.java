@@ -39,6 +39,7 @@ public class ExportViewAction extends MDAction {
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
 		GetMethod gm = null;
+		DocumentValidator dv = null;
 		try {
 			String response = null;
 			Boolean recurse = Utils.getUserYesNoAnswer("Export views recursively?");
@@ -48,7 +49,7 @@ public class ExportViewAction extends MDAction {
 			if (url == null)
 				return;
 			gl.log("*** Starting export view ***");
-			DocumentValidator dv = new DocumentValidator(doc);
+			dv = new DocumentValidator(doc);
 			dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
@@ -56,7 +57,6 @@ public class ExportViewAction extends MDAction {
             }
 			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
 			Document dge = dg.parseDocument(true, recurse);
-            dv.printErrors();
 			(new PostProcessor()).process(dge);
 			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(dge, doc, recurse, true, url), "Exporting View...", true, 0);
 		} catch (Exception ex) {
@@ -68,6 +68,7 @@ public class ExportViewAction extends MDAction {
 		} finally {
 			if (gm != null)
 				gm.releaseConnection();
+			if ( dv != null ) dv.printErrors();
 		}
 	}
 }
