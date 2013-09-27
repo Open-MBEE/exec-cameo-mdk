@@ -7,7 +7,6 @@ import gov.nasa.jpl.mbee.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
@@ -48,11 +46,7 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
     
     public ConstraintValidationRule() {
         super();
-
-        boolean wasOn = Debug.isOn();
-        Debug.turnOn();                
         Debug.outln( "ConstraintValidationRule()" );
-        if ( !wasOn ) Debug.turnOff();
     }
     
 //    public ConstraintValidationRule( Element constraintElement, Element context, Constraint constraint ) {
@@ -70,8 +64,6 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
      */
     @Override
     public void init(Project paramProject, Constraint paramConstraint) {
-        boolean wasOn = Debug.isOn();
-        Debug.turnOn();                
         Debug.outln( "init(Project=" + paramProject + ", Constraint="
                      + paramConstraint + ")" );
         if ( constraintElement == null ) constraintElement = paramConstraint;
@@ -96,7 +88,6 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
 //                elem = elem.getObjectParent();
 //            }
         }
-        if ( !wasOn ) Debug.turnOff();
     }
 
     public Collection< gov.nasa.jpl.mbee.constraint.Constraint >
@@ -118,8 +109,8 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
                                Collection<? extends Element> paramCollection) {
         Set<Annotation> result = new HashSet<Annotation>();
         
-        boolean wasOn = Debug.isOn();
-        Debug.turnOn();
+//        boolean wasOn = Debug.isOn();
+//        Debug.turnOn();
         
         Debug.outln( "run(Project, " + paramConstraint + " , "
                 + paramCollection + ")" );
@@ -139,7 +130,7 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
             }
         }
         
-        if ( !wasOn ) Debug.turnOff();
+//        if ( !wasOn ) Debug.turnOff();
         return result;
     }
 
@@ -148,12 +139,6 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
      */
     @Override
     public void dispose() {
-        boolean wasOn = Debug.isOn();
-        Debug.turnOn();                
-        Debug.outln( "init()" );
-        if ( !wasOn ) Debug.turnOff();
-
-        // TODO Auto-generated method stub
     }
 
     @Override

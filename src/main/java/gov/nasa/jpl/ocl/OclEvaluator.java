@@ -1,6 +1,5 @@
 package gov.nasa.jpl.ocl;
 
-import gov.nasa.jpl.mbee.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -113,7 +112,8 @@ public class OclEvaluator {
 	    expr = queryObjectToStringExpression( o );
         if ( notNullOrEndInQuestion(expr) ) return expr;
 	    if ( query instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint ) {
-	        com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint c = (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint)query;
+	        com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint c = 
+	                (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint)query;
             ValueSpecification v = c.getSpecification();
             if ( v != null ) {
                 expr = DocGenUtils.fixString( v );
