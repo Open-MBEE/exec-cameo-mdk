@@ -333,7 +333,7 @@ public class DocumentGenerator {
 			if ( parseResults != null ) lastResults = parseResults;
             // evaluate constraints on results
 			if ( !evaluatedConstraintsForNext ) {
-			    DocumentValidator.evaluateConstraints(next, parseResults, context);
+			    DocumentValidator.evaluateConstraints(next, parseResults, context, true, true);
 			}
 			outs = next2.getOutgoing();
             Debug.outln( "outs = "

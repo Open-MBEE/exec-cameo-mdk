@@ -1,7 +1,5 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
-import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
@@ -23,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import org.eclipse.emf.ecore.EObject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
@@ -50,6 +47,18 @@ public class TableStructure extends Table {
 		public boolean simpleList = false; //not implemented whether a cell should display simple list if content is a list
 		public InitialNode bnode;
 		public ActivityNode activityNode;
+		public GenerationContext context = null;
+        public GenerationContext makeContext() {
+            ActivityNode n = null;
+            if (bnode != null && bnode.getOutgoing().iterator().hasNext()) { //should check next node is collect/filter node
+                n = bnode.getOutgoing().iterator().next().getTarget();
+            }
+            Stack<List<Element> > in = new Stack<List<Element>>();
+//          in.add( targets );
+            context = new GenerationContext(in, n, getValidator(),
+                                            Application.getInstance().getGUILog());
+            return context;
+        }
 	}
 	
 	private class TableAttributeColumn extends TableColumn {
@@ -144,15 +153,15 @@ public class TableStructure extends Table {
 	private void buildTableReferences() {
 		for (Element e: targets) {
 			List<List<Reference>> row = new ArrayList<List<Reference>>();
+            List<Element> startElements = new ArrayList<Element>();
+            startElements.add(e);
 			for (TableColumn tc: columns) {
-				List<Element> startElements = new ArrayList<Element>();
-				startElements.add(e);
 				List<Element> resultElements;
-				if (tc.bnode != null && tc.bnode.getOutgoing().iterator().hasNext()) { //should check next node is collect/filter node
-					ActivityNode n = tc.bnode.getOutgoing().iterator().next().getTarget();
-					Stack<List<Element>> in = new Stack<List<Element>>();
-					CollectFilterParser.setContext(new GenerationContext(in, n, null, Application.getInstance().getGUILog()));
-					resultElements = CollectFilterParser.startCollectAndFilterSequence(n, startElements);
+                GenerationContext context = tc.makeContext();
+				if (context.getCurrentNode() != null) { //should check next node is collect/filter node
+					CollectFilterParser.setContext(context);
+					resultElements = CollectFilterParser.startCollectAndFilterSequence(context.getCurrentNode(),
+					                                                                   startElements);
 				} else {
 					resultElements = startElements;
 				}
@@ -187,27 +196,26 @@ public class TableStructure extends Table {
 							//cell.add(new Reference(empty));
 							continue;
 						}
-						try {
-                            cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
-                        } catch ( Exception e1 ) {// TODO make specific to two parse errors
-                            Debug.error(true, false, e1.getLocalizedMessage() + " for OCL query \"" + expr + "\" on " + EmfUtils.toString( re ) );
+						Object result = DocumentValidator.evaluate( expr, re, getValidator(), true );
+                        if ( OclEvaluator.isValid() ) {
+                            cell.add(new Reference(result));
                         }
+//						try {
+//                            cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
+//                        } catch ( Exception e1 ) {// TODO make specific to two parse errors
+//                            Debug.error(true, false, e1.getLocalizedMessage() + " for OCL query \"" + expr + "\" on " + EmfUtils.toString( re ) );
+//                        }
 					}
 				}
 				row.add(cell);
+
+				// check constraints
+                DocumentValidator.evaluateConstraints( tc.activityNode,
+                                                       getCellData( row, tc ),
+                                                       context, true, true );
 			}
 			tableContent.add(row);
 		}
-        for (TableColumn tc: columns) {
-            ActivityNode n = null;
-            if ( tc.bnode != null && tc.bnode.getOutgoing().iterator().hasNext() ) {
-                n = tc.bnode.getOutgoing().iterator().next().getTarget();
-            }
-            Stack<List<Element>> in = new Stack<List<Element>>();
-            GenerationContext context = new GenerationContext(in, n, getValidator(), Application.getInstance().getGUILog());
-//            in.add( targets );
-            DocumentValidator.evaluateConstraints(tc.activityNode, getColumnData(tc), context);
-        }
 	}
 	
 	@Override
@@ -246,21 +254,20 @@ public class TableStructure extends Table {
 		parent.addElement(table);
 	}
 
-	public List<Reference> getColumnReferences( TableColumn col ) {
-	    List< Reference > colData = tableContent.get(0).get( getColumnIndex( col ) );
+	public List<Reference> getCellReferences( List< List< Reference > > row, TableColumn col ) {
+	    List< Reference > colData = row.get( getColumnIndex( col ) );
 	    return colData;
 	}
-	
-    public List<Object> getColumnData( TableColumn col ) {
-        List< Reference > colRefs = tableContent.get(0).get( getColumnIndex( col ) );
+
+    public List<Object> getCellData( List< List< Reference > > row, TableColumn col ) {
+        List< Reference > colRefs = getCellReferences( row, col );
         List< Object > colData = new ArrayList< Object >();
         for ( Reference r : colRefs ) {
-            colData.add( r.result ); // WARNING! This is already 
+            colData.add( r.result );
         }
         return colData;
     }
-    
-	
+
 	protected int getColumnIndex( TableColumn col ) {
         return columnIndex .get(col);
     }
