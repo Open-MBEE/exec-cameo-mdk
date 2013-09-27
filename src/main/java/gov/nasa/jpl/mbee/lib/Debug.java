@@ -291,7 +291,7 @@ public class Debug {
             return;
         }
         try {
-            SwingUtilities.invokeAndWait( new Runnable() {
+            SwingUtilities.invokeLater( new Runnable() {
                 @Override
                 public void run() {
                     logUnsafe(s, addNewLine, isErr, color);
@@ -376,7 +376,7 @@ public class Debug {
           //breakpoint();
         }
       }
-      if ( forceOutput && !wasOn ) turnOff(); 
+      if ( !wasOn ) turnOff(); 
       return true;
     }
     return false;
