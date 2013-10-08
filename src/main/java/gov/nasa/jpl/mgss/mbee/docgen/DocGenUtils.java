@@ -64,7 +64,7 @@ public class DocGenUtils {
 			put("<s>|<strike>|<s [^>]*>|<strike [^>]*>", "<emphasis role=\"strikethrough\">");
 			put("<i>|<i [^>]*>", "<emphasis>");
 			put("<u>|<u [^>]*>", "<emphasis role=\"underline\">");
-			put("<span>|<span [^>]*>|</span>|<br>|<br/>|</br>", "");
+			put("<span>|<span [^>]*>|</span>|<br>|<br/>|</br>|<br />", "");
 			put("</b>|</i>|</u>|</strong>|</em>|</s>|</strike>", "</emphasis>");
 			put("<font [^>]*>|</font>", "");
 			put("<sup>|<sup [^>]*>", "<superscript>");
@@ -77,6 +77,8 @@ public class DocGenUtils {
 			put("<a href=\"mdel://([^\"&^\\?]+)(\\?[^\"]*)?\">([^<]*)</a>", "<link linkend=\"$1\">$3</link>");
 			put("<pre>|<pre [^>]*>", "<screen>");
 			put("</pre>", "</screen>");
+			put("<svg", "<mediaobject><imageobject><imagedata><svg");
+			put("</svg>", "</svg></imagedata></imageobject></mediaobject>");
 			put("&nbsp;", "&#160;");
 			put("&sup2;", "<superscript>2</superscript>");
 			put("&sup3;", "<superscript>3</superscript>");

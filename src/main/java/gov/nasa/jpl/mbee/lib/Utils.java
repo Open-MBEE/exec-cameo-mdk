@@ -2281,7 +2281,7 @@ public class Utils {
      */
     public static String addHtmlWrapper(String s) {
 		if (!s.startsWith("<html")
-				&& (s.contains("</") || (s.contains("/>")))) {
+				&& (s.contains("</") || s.contains("/>") || s.contains("<br>"))) {
 			return "<html>\n<body>\n" + s + "</body>\n</html>";
 		}
 		return s;
