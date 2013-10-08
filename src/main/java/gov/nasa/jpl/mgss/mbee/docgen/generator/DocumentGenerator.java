@@ -7,13 +7,11 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenPlugin;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-import gov.nasa.jpl.mgss.mbee.docgen.model.BillOfMaterialsTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BulletedList;
 import gov.nasa.jpl.mgss.mbee.docgen.model.CombinedMatrix;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Container;
 import gov.nasa.jpl.mgss.mbee.docgen.model.CustomTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.DependencyMatrix;
-import gov.nasa.jpl.mgss.mbee.docgen.model.DeploymentTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.DocGenElement;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
 import gov.nasa.jpl.mgss.mbee.docgen.model.GenericTable;
@@ -26,7 +24,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Query;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
 import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
-import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageAssemblyTable;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -566,12 +563,6 @@ public class DocumentGenerator {
 			dge = new UserScript();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.propertiesTableByAttributesStereotype)) {
 			dge = new PropertiesTableByAttributes();
-		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.billOfMaterialsStereotype)) {
-			dge = new BillOfMaterialsTable();
-		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.deploymentStereotype)) {
-			dge = new DeploymentTable();
-		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.workpakcageAssemblyStereotype)) {
-			dge = new WorkpackageAssemblyTable();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.missionMappingStereotype)) {
 			dge = new MissionMapping();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.libraryChooserStereotype)) {
