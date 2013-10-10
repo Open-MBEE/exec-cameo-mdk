@@ -53,6 +53,7 @@ public class DocumentWriter implements RunnableWithProgress {
 				DBSerializeVisitor v = new DBSerializeVisitor(genNewImage, dir, arg0);
 				book.accept(v);
 				writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+				writer.write("<!DOCTYPE doc [\n<!ENTITY % iso-lat1 PUBLIC \"ISO 8879:1986//ENTITIES Added Latin 1//EN//XML\" \"http://www.oasis-open.org/docbook/xmlcharent/0.3/iso-lat1.ent\">\n %iso-lat1;]>");
 				writer.write(v.getOut());
 			}
 			writer.flush();
