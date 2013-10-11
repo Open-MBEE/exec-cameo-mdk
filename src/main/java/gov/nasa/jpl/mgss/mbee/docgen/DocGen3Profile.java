@@ -20,6 +20,7 @@ public class DocGen3Profile {
 	public static final String tableStereotype = "Table";
 	public static final String bulletedListStereotype = "BulletedList3";
 	public static final String combinedMatrixStereotype = "CombinedMatrix3";
+	public static final String methodStereotype = "Method";
 	
 	public static final String customTableStereotype = "CustomTable";
 	public static final String tableStructureStereotype = "TableStructure";					
