@@ -166,7 +166,7 @@ public class DocumentGenerator {
 				}
 			}
 			if (b != null) { //parse and execute viewpoint behavior, giving it the imported/queried elements
-			    Boolean addVPElements = (Boolean)GeneratorUtils.getObjectProperty(b, DocGen3Profile.methodStereotype, "addViewpointElements", false);;
+			    Boolean addVPElements = (Boolean)GeneratorUtils.getObjectProperty(b, DocGen3Profile.methodStereotype, "includeViewpointElements", false);;
 			   
 				List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, ElementImport.class, 1, 1);
 				List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, PackageImport.class, 1, 1);
