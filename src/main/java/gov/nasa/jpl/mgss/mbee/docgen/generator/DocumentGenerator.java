@@ -167,7 +167,7 @@ public class DocumentGenerator {
 			}
 			if (b != null) { //parse and execute viewpoint behavior, giving it the imported/queried elements
 			    Boolean addVPElements = (Boolean)GeneratorUtils.getObjectProperty(b, DocGen3Profile.methodStereotype, "includeViewpointElements", false);;
-			   
+			    
 				List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, ElementImport.class, 1, 1);
 				List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, PackageImport.class, 1, 1);
 				List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.queriesStereotype, 1, false, 1);
@@ -178,6 +178,11 @@ public class DocumentGenerator {
 				if (queries != null) elementImports.addAll(queries); //all three import/queries relationships are interpreted the same
 				if (elementImports.isEmpty())
 					elementImports.add(view); //if view does not import/query anything, give the view element itself to the viewpoint
+				if (addVPElements) {
+				    elementImports.add(viewpoint);
+				    elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(viewpoint, "AddressedTo", 1, false, 1));
+				    elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(viewpoint, "Covers", 1, false, 1));
+				}
 				context.pushTargets(elementImports); //this becomes the context of the activity going in
 				if (b instanceof Activity) {
 					parseActivityOrStructuredNode(b, viewSection);
