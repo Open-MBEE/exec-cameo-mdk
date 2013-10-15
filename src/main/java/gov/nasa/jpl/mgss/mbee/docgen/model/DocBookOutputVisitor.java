@@ -1,56 +1,13 @@
 package gov.nasa.jpl.mgss.mbee.docgen.model;
 
-import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.ModelLib;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mbee.tree.Node;
-import gov.nasa.jpl.mgss.mbee.docgen.DgvalidationDBSwitch;
-import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
-import gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.Suite;
-import gov.nasa.jpl.mgss.mbee.docgen.dgview.ViewElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBImage;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSection;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.DiagramTableTool;
-import gov.nasa.jpl.mgss.mbee.docgen.model.ui.LibraryComponent;
-import gov.nasa.jpl.mgss.mbee.docgen.model.ui.MissionComponent;
-import gov.nasa.jpl.mgss.mbee.docgen.table.BillOfMaterials;
-import gov.nasa.jpl.mgss.mbee.docgen.table.Deployment;
-import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
-import gov.nasa.jpl.mgss.mbee.docgen.table.WorkPackageAssembly;
-import gov.nasa.jpl.mgss.mbee.docgen.table.WorkpackageRollups;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
-
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.core.ApplicationEnvironment;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class DocBookOutputVisitor extends AbstractModelVisitor {
 
