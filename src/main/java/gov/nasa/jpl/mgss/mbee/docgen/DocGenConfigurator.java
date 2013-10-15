@@ -86,8 +86,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 		Project prj = Project.getProject(e);
 		if (prj == null)
 			return;
-		Stereotype sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
-		Stereotype sysmlviewpoint = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+		Stereotype sysmlview = Utils.getViewStereotype();
+		Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
 		if (e == null)
 			return;
 		

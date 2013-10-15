@@ -2,6 +2,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.sync;
 
 import static gov.nasa.jpl.mgss.mbee.docgen.sync.CommentUtil.*;
 
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 
 import java.beans.PropertyChangeEvent;
@@ -96,7 +97,7 @@ public class CommentChangeListener implements TransactionCommitListener {
 	}
 
 	private boolean inDocument(Comment comment) {
-		Stereotype sysmlView = StereotypesHelper.getStereotype(Project.getProject(comment), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
+		Stereotype sysmlView = Utils.getViewStereotype();
 		if (ModelHelper.getComment(comment.getOwner()).equals(comment.getBody()))
 			return false; //this is to prevent adding stereotype to documentation of elements - magicdraw treats element documentation as comments too
 		return StereotypesHelper.hasStereotypeOrDerived(comment.getOwner(), sysmlView);
