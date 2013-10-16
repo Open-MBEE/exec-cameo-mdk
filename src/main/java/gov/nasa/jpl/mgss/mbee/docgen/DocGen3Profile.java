@@ -33,10 +33,7 @@ public class DocGen3Profile {
 	public static final String genericTableStereotype = "GenericTable3";
 	public static final String hierarchicalPropertiesTableStereotype = "HierarchicalPropertiesTable3";
 	public static final String propertiesTableByAttributesStereotype = "PropertiesTableByAttributes3";
-	public static final String workpackageTablesStereotype = "WorkpackageTables";
-	public static final String workpakcageAssemblyStereotype = "WorkpackageAssemblyTable";
-	public static final String deploymentStereotype = "DeploymentTable";
-	public static final String billOfMaterialsStereotype = "BillOfMaterialsTable";
+	
 	public static final String userScriptStereotype = "UserScript";
 	public static final String userScriptCFStereotype = "Collect/Filter UserScript";
 	public static final String validationScriptStereotype = "ValidationScript";
