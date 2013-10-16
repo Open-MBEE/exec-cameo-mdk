@@ -124,8 +124,8 @@ public class GeneratorUtils {
 		String JPLProjectTitle =(String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Formal Project Title");
 		
 		String LogoSize = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Logo Size");
-		Object UseDefaultStylesheetO =StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "UseDefaultStylesheet");
-		boolean UseDefaultStylesheet=(UseDefaultStylesheetO instanceof Boolean && !(Boolean)UseDefaultStylesheetO || UseDefaultStylesheetO instanceof String && UseDefaultStylesheetO.equals("false")) ? false : true;
+		//Object UseDefaultStylesheetO =StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "SupressMetadata");
+		//boolean UseDefaultStylesheet=(UseDefaultStylesheetO instanceof Boolean && !(Boolean)UseDefaultStylesheetO || UseDefaultStylesheetO instanceof String && UseDefaultStylesheetO.equals("false")) ? false : true;
 		
     	
     	Object genO = StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "genNewImages");
@@ -278,7 +278,7 @@ public class GeneratorUtils {
 		doc.setConcurrance(Concurrence);
 		doc.setJPLProjectTitle(JPLProjectTitle);
 		doc.setRevisionHistory(RevisionHistory);
-		doc.setUseDefaultStylesheet(UseDefaultStylesheet);
+		doc.setUseDefaultStylesheet(false);
 		doc.setLogoSize(LogoSize);
 		doc.setInstLogo(instLogo);
 		doc.setInstLogoSize(instLogoSize);
