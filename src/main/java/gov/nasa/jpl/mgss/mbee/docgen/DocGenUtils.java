@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
+import gov.nasa.jpl.mbee.lib.HtmlManipulator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.dgview.FromProperty;
 import gov.nasa.jpl.mgss.mbee.docgen.dgview.ViewElement;
@@ -112,11 +113,11 @@ public class DocGenUtils {
     	if (s instanceof String) {
     		if (((String) s).contains("<html>"))
     			if (convertHtml)
-    				return html2docbook((String)s);
+    				return HtmlManipulator.replaceHtmlEntities(html2docbook((String)s));
     			else
     				return Utils.stripHtmlWrapper((String)s);
     		else
-    			return ((String)s).replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1").replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;");
+    			return HtmlManipulator.replaceHtmlEntities(((String)s).replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1").replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"));
     	} else if (s instanceof Integer)
     		return Integer.toString((Integer)s);
     	else if (s instanceof InstanceValue) {
