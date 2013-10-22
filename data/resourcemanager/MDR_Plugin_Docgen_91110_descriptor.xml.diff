@@ -1,7 +1,6 @@
 In original, missing from final:
-	from="DocGenUserScripts/Test/InterfaceCSVcompleteness.qvto"
-	from="DocGenUserScripts/Test/InterfaceCSVcompleteness.qvtox"
-	from="DocGenUserScripts/Test/interfaceTable.qvto"
-	from="DocGenUserScripts/Test/interfaceTable.qvtox"
+	from="profiles/MDK/BPMN Extensions.mdxml"
+	from="profiles/MDK/CoP Extensions.mdxml"
+	from="profiles/MDK/Common Extensions.mdxml"
+	from="profiles/MDK/ISO 42010 Profile.mdxml"
 In final, missing from original:
-	from="data/defaults/data/diagrams/View Class Diagram/descriptor.xml"
