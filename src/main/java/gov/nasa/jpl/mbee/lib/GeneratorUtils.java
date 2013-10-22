@@ -34,6 +34,16 @@ public class GeneratorUtils {
 		return null;
 	}
 	
+	public static Element findStereotypedRelationship(Element e, Stereotype s) {
+        List<Stereotype> ss = new ArrayList<Stereotype>();
+        ss.add(s);
+        List<Element> es = Utils.collectDirectedRelatedElementsByRelationshipStereotypes(e, ss, 1, true, 1);
+        if (es.size() > 0) {
+            return es.get(0);
+        }
+        return null;
+    }
+	
 	public static InitialNode findInitialNode(Element a) {
 		for (Element e: a.getOwnedElement())
 			if (e instanceof InitialNode)

@@ -48,8 +48,8 @@ public class InstanceViewpointAction extends MDAction {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
-		sysmlView = StereotypesHelper.getStereotype(Project.getProject(viewpoint), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
-		sysmlViewpoint = StereotypesHelper.getStereotype(Project.getProject(viewpoint), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+		sysmlView = Utils.getViewStereotype();
+		sysmlViewpoint = Utils.getViewpointStereotype();
 		ef = Project.getProject(viewpoint).getElementsFactory();
 		if (sysmlView == null) {
 			gl.log("The sysml view stereotype cannot be found");
@@ -85,7 +85,7 @@ public class InstanceViewpointAction extends MDAction {
 		view.setName(name);
 		StereotypesHelper.addStereotype(view, sysmlView);
 		Dependency conforms = ef.createDependencyInstance();
-		StereotypesHelper.addStereotypeByString(conforms, DocGen3Profile.conformStereotype, DocGen3Profile.sysmlProfile);
+		StereotypesHelper.addStereotype(conforms, Utils.getConformsStereotype());
 		ModelHelper.setClientElement(conforms, view);
 		ModelHelper.setSupplierElement(conforms, vp);
 		conforms.setOwner(view);

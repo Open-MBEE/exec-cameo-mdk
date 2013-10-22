@@ -67,14 +67,13 @@ public class DocumentGenerator {
 	private GenerationContext context; // Easier for modular implementation. Contains previous three variables.
 	private Element start;
 	private Document doc;
-	private Stereotype sysmlview;
+	private Stereotype sysmlview = Utils.getViewStereotype();
 	private Stereotype product;
+	private Stereotype conforms = Utils.getConformsStereotype();
 			
 	public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
 		start = e;
-		sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
 		product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
-		StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
 		doc = new Document();
 		context = new GenerationContext(new Stack<List<Element>>(), null, dv,
 		                                Application.getInstance().getGUILog());
@@ -82,9 +81,7 @@ public class DocumentGenerator {
 
     public DocumentGenerator(Element e, PrintWriter wlog) {
         start = e;
-        sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
         product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
-        StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
         doc = new Document();
         context = new GenerationContext(new Stack<List<Element>>(), null,
                                         Application.getInstance().getGUILog());
@@ -125,7 +122,7 @@ public class DocumentGenerator {
 	}
 	
 	public Section parseView(Element view) {
-		Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.conformStereotype);
+		Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
 		
 		Section viewSection = new Section(); //Section is a misnomer, should be View
 		viewSection.setView(true);

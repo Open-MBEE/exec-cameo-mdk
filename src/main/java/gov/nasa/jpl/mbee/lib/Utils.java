@@ -1323,6 +1323,38 @@ public class Utils {
     	return res;
     }
     
+    public static Element getElementByQualifiedName(String qualifiedName) {
+        String[] path = qualifiedName.split("::");
+        Element curElement = Application.getInstance().getProject().getModel();
+        for (int i = 0; i < path.length; i++) {
+            curElement = findChildByName(curElement, path[i]);
+            if (curElement == null)
+                return null;
+        }
+        return curElement;
+    }
+    
+    public static Element findChildByName(Element owner, String name) {
+        for (Element e: owner.getOwnedElement()) {
+            if (e instanceof NamedElement) {
+                if (((NamedElement)e).getName().equals(name))
+                    return e;
+            }
+        }
+        return null;
+    }
+    
+    public static Stereotype getViewpointStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Viewpoint");
+    }
+    
+    public static Stereotype getViewStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::View");
+    }
+    
+    public static Stereotype getConformsStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Conform");
+    }
     /********************************************* User interaction ****************************************************/
     
     /**
