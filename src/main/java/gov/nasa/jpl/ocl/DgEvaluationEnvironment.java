@@ -61,6 +61,17 @@ public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
 		dgOperations.add(dgOperation);
 	}
 	
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.ocl.ecore.EcoreEvaluationEnvironment#getJavaMethodFor(org
+     * .eclipse.emf.ecore.EOperation, java.lang.Object)
+     * 
+     * This is overridden because the EString EClass instance wasn't mapping
+     * it's Java instance class to String.class as it should, resulting in a
+     * NullPointer exception
+     */
 	@Override
 	protected Method getJavaMethodFor(EOperation operation, Object receiver)
 	{
