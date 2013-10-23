@@ -203,6 +203,9 @@ public class OclQueryAction extends MDAction {
         if ( elem == null ) return null;
         result = OclEvaluator.evaluateQuery( elem, oclString, true );
         output = toString(result);
+        if ( !OclEvaluator.isValid() ) {
+            output = output + "\nOclInvalid\nThis may be the result of a problem with a shortcut/blackbox function.";
+        }
         String type = null;
         
         //EmfUtils.getTypeName( result ); // TODO -- THIS LINE REPLACES BELOW
