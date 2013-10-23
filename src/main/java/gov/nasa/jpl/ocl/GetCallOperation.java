@@ -2,6 +2,7 @@ package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.CollectionAdder;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 
@@ -162,7 +163,10 @@ public class GetCallOperation implements CallOperation {
             objectToAdd = source;
           } else {
             if ( asElement && elem != null ) {
-              objectToAdd = elem.getOwnedElement();
+              ArrayList<Element> members = new ArrayList< Element >();
+              if ( elem.getOwnedElement() != null ) members.addAll( elem.getOwnedElement() );
+              members.addAll( Utils.getSlots( elem ) );
+              objectToAdd = members;
 //            } else if ( coll != null && !asCollection ) {
 //              objectToAdd = source;
             } else if ( asEObject && source instanceof EObject ) {

@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import lpg.runtime.ParseTable;
 
 import org.eclipse.emf.common.util.BasicDiagnostic;
@@ -357,46 +360,51 @@ public class OclEvaluator {
         return ops;
 	}
 	
-	private static boolean newWay = true;
-	
-	protected static void addRegexMatchOperation(DgEnvironmentFactory envFactory) {
-	  
-    EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+    protected static void addRegexMatchOperation( DgEnvironmentFactory envFactory ) {
 
-    if ( newWay ) {
-      addOperation( new String[] { "regexMatch", "match" }, stringType,
-                    stringType, stringType, "pattern", false, false,
-                    CallReturnType.SELF, envFactory );
-	    return;
-	  }
-	}
+        // create custom operation
+        DgOperationInstance doi = new DgOperationInstance();
+        doi.setName( "regexMatch" );
+        doi.setAnnotationName( "DocGenEnvironment" );
+        EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
+        parm.setName( "pattern" );
+        doi.addParameter( parm );
+
+        // essentially set the actual operation as function pointer
+        doi.setOperation( new CallOperation() {
+            @Override
+            public Object callOperation( Object source, Object[] args ) {
+                Pattern pattern = Pattern.compile( (String)args[ 0 ] );
+                Matcher matcher = pattern.matcher( (String)source );
+
+                return matcher.matches() ? matcher.group() : null;
+            }
+        } );
+
+        // add custom operation to environment and evaluation environment
+        envFactory.getDgEnvironment().addDgOperation( doi );
+        envFactory.getDgEvaluationEnvironment().addDgOperation( doi );
+    }
 	
 	static EClassifier getGenericCallerType() { return OCLStandardLibraryImpl.INSTANCE.getOclAny(); }
 	
 	protected static void addROperation(DgEnvironmentFactory envFactory) {
-	  
-    EClassifier callerType = getGenericCallerType();
-    EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
-    EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
-    if ( newWay ) {
+	  EClassifier callerType = getGenericCallerType();
+      EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
+      EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
       addOperation( new String[] { "relationship", "relationships", "r" },
                     callerType, returnType, stringType, "relationship", true,
                     true, CallReturnType.RELATIONSHIP, envFactory );
-      return;
-    }    
-  }
+    }
   
   protected static void addMOperation(DgEnvironmentFactory envFactory) {
     
     EClassifier callerType = getGenericCallerType();
     EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
     EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
-    if ( newWay ) {
-      addOperation( new String[] { "member", "members", "m" },
-                    callerType, returnType, stringType, "member", true,
-                    false, CallReturnType.MEMBER, envFactory );
-      return;
-    }
+    addOperation( new String[] { "member", "members", "m" },
+                  callerType, returnType, stringType, "member", true,
+                  false, CallReturnType.MEMBER, envFactory );
   }
 
   protected static void addTOperation(DgEnvironmentFactory envFactory) {
@@ -404,12 +412,9 @@ public class OclEvaluator {
     EClassifier callerType = getGenericCallerType();
     EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
     EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
-    if ( newWay ) {
-      addOperation( new String[] { "type", "types", "t" },
-                    callerType, returnType, stringType, "type", true,
-                    true, CallReturnType.TYPE, envFactory );
-      return;
-    }
+    addOperation( new String[] { "type", "types", "t" },
+                  callerType, returnType, stringType, "type", true,
+                  true, CallReturnType.TYPE, envFactory );
   }
 
   protected static void addSOperation(DgEnvironmentFactory envFactory) {
@@ -417,15 +422,12 @@ public class OclEvaluator {
       EClassifier callerType = getGenericCallerType();
       EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
       EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
-      if ( newWay ) {
-        List< GetCallOperation > ops =
-                addOperation( new String[] { "stereotype", "stereotypes","s" },
-                              callerType, returnType, stringType, "stereotype",
-                              true, true, CallReturnType.TYPE, envFactory );
-        for ( GetCallOperation op : ops ) {
-            op.alwaysFilter = new Object[] { "Stereotype" };
-        }
-        return;
+      List< GetCallOperation > ops =
+              addOperation( new String[] { "stereotype", "stereotypes","s" },
+                            callerType, returnType, stringType, "stereotype",
+                            true, true, CallReturnType.TYPE, envFactory );
+      for ( GetCallOperation op : ops ) {
+          op.alwaysFilter = new Object[] { "Stereotype" };
       }
     }
 
@@ -434,12 +436,9 @@ public class OclEvaluator {
     EClassifier callerType = getGenericCallerType();
     EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
     EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
-    if ( newWay ) {
-      addOperation( new String[] { "name", "n" },
-                    callerType, returnType, stringType, "name", true, true,
-                    CallReturnType.NAME, envFactory );
-      return;
-    }
+    addOperation( new String[] { "name", "n" },
+                  callerType, returnType, stringType, "name", true, true,
+                  CallReturnType.NAME, envFactory );
   }
 
   protected static DgEnvironmentFactory setupEnvironment() {
@@ -447,7 +446,7 @@ public class OclEvaluator {
     // create custom environment factory
     DgEnvironmentFactory.reset();
     envFactory = new DgEnvironmentFactory();
-    addRegexMatchOperation( envFactory );
+    //addRegexMatchOperation( envFactory );
     addROperation( envFactory );
     addMOperation( envFactory );
     addTOperation( envFactory );

@@ -66,6 +66,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -1924,6 +1925,17 @@ public class Utils {
             }
         }
         return null;
+    }
+    
+    /**
+     * @param elem
+     * @return all slots for the element's applied stereotype instance
+     */
+    public static List<Slot> getSlots( Element elem ) {
+        List<Slot> slots = new ArrayList< Slot >();
+        InstanceSpecification localInstanceSpecification = elem.getAppliedStereotypeInstance();
+        slots.addAll( localInstanceSpecification.getSlot() );
+        return slots;
     }
 	
 	/**

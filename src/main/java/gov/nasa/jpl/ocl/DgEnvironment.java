@@ -85,10 +85,13 @@ public class DgEnvironment extends EcoreEnvironment {
 			
       type = dgOperation.getCallerType();
       if ( type == null ) type = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+          try {
 			addHelperOperation( dgOperation.getCallerType(), eoperation );
-			
-			operationNames.add(dgOperation.getName());
-			operations.add( dgOperation );
+            operationNames.add(dgOperation.getName());
+            operations.add( dgOperation );
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
 		}
 	}
 }
