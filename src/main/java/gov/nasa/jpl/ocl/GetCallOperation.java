@@ -53,6 +53,9 @@ public class GetCallOperation implements CallOperation {
   private boolean matchNull = true; // TODO
   private boolean activityEdgeIsRelationship = true; // TODO
 
+  /**
+   * Always filter on these; i.e. collected elements should match all Objects in alwaysFilter.
+   */
   public Object[] alwaysFilter = null;
   
   public CallReturnType resultType = CallReturnType.SELF;
@@ -208,11 +211,21 @@ public class GetCallOperation implements CallOperation {
       } else {
         // TODO -- apply filter while collecting above for efficiency in case returning only one!
         if ( filter ) {
-          objectToAdd =
-              EmfUtils.collectOrFilter( adder, objectToAdd, !filter,
-                                        ( onlyOneForAll || ( isCollection && onlyOnePer ) ),
-                                        useName, useType, useValue, asObject,
-                                        filterArgs );
+          if ( !Utils2.isNullOrEmpty( args ) ) {
+            objectToAdd =
+                    EmfUtils.collectOrFilter( adder, objectToAdd, !filter,
+                                              ( onlyOneForAll ||
+                                                ( isCollection && onlyOnePer ) ),
+                                              useName, useType, useValue, asObject,
+                                              args );
+          }
+          if ( !Utils2.isNullOrEmpty( alwaysFilter ) ) {
+            objectToAdd = EmfUtils.collectOrFilter( adder, objectToAdd, false,
+                                                    ( onlyOneForAll ||
+                                                      ( isCollection && onlyOnePer ) ),
+                                                    useName, useType, useValue, asObject,
+                                                    alwaysFilter );
+          }
         }
       }
       if ( objectToAdd instanceof Collection ) {
