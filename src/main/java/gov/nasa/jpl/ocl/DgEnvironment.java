@@ -1,5 +1,7 @@
 package gov.nasa.jpl.ocl;
 
+import gov.nasa.jpl.mbee.lib.Debug;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -86,6 +88,10 @@ public class DgEnvironment extends EcoreEnvironment {
       type = dgOperation.getCallerType();
       if ( type == null ) type = OCLStandardLibraryImpl.INSTANCE.getOclAny();
           try {
+            if ( dgOperation.getCallerType() == null ) {
+                Debug.error(false,"Error! Null callerType for DgOperation " + dgOperation + "! Setting to OclAny." );
+                dgOperation.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+            }
 			addHelperOperation( dgOperation.getCallerType(), eoperation );
             operationNames.add(dgOperation.getName());
             operations.add( dgOperation );

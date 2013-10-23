@@ -368,7 +368,12 @@ public class OclEvaluator {
         doi.setAnnotationName( "DocGenEnvironment" );
         EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
         parm.setName( "pattern" );
-        doi.addParameter( parm );
+        parm.setEType( OCLStandardLibraryImpl.INSTANCE.getString() );
+        doi.addStringParameter( parm );
+        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getString());
+        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getString());
+//        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+//        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
 
         // essentially set the actual operation as function pointer
         doi.setOperation( new CallOperation() {
@@ -376,10 +381,11 @@ public class OclEvaluator {
             public Object callOperation( Object source, Object[] args ) {
                 Pattern pattern = Pattern.compile( (String)args[ 0 ] );
                 Matcher matcher = pattern.matcher( (String)source );
-
+                
                 return matcher.matches() ? matcher.group() : null;
             }
         } );
+        
 
         // add custom operation to environment and evaluation environment
         envFactory.getDgEnvironment().addDgOperation( doi );
@@ -446,7 +452,7 @@ public class OclEvaluator {
     // create custom environment factory
     DgEnvironmentFactory.reset();
     envFactory = new DgEnvironmentFactory();
-    //addRegexMatchOperation( envFactory );
+    addRegexMatchOperation( envFactory );
     addROperation( envFactory );
     addMOperation( envFactory );
     addTOperation( envFactory );
