@@ -177,7 +177,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
     if ( RequestFocusListener.sizeOnClose  != null ) w.setSize( RequestFocusListener.sizeOnClose );// else w.setLocation(1000,1000);
     //if ( RequestFocusListener.size != null ) w.setSize( RequestFocusListener.size );
     if ( w instanceof Dialog ) ((Dialog)w).setResizable( true );
-    Debug.outln("w=" + w);
+    //Debug.outln("w=" + w);
   }
 
   public void run() {
@@ -636,7 +636,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
       Window win = (dialog == null ? top : dialog );
       //Window w = SwingUtilities.getWindowAncestor( e.getComponent() );
       Window w = win;
-      Debug.outln("w=" + w);
+      //Debug.outln("w=" + w);
       
       if ( win != w ) {
           Debug.error(false, false, "win != w");
