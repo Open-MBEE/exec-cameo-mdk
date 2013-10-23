@@ -31,8 +31,7 @@ public class ViewStructureValidator {
 	
 	public ViewStructureValidator(Element view) {
 		gl = Application.getInstance().getGUILog();
-		StereotypesHelper.getStereotype(Project.getProject(view), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
-		sysmlViewpoint = StereotypesHelper.getStereotype(Project.getProject(view), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+		sysmlViewpoint = Utils.getViewpointStereotype();
 		missing = new ArrayList<Element>();
 	}
 	
@@ -82,7 +81,7 @@ public class ViewStructureValidator {
 	}
 	
 	private Element getConforms(Element v) {
-		List<Element> conforms = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(v, DocGen3Profile.conformStereotype, 1, false, 1);
+		List<Element> conforms = Utils.collectDirectedRelatedElementsByRelationshipStereotype(v, Utils.getConformsStereotype(), 1, false, 1);
 		if (conforms.isEmpty())
 			return null;
 		return conforms.get(0);
@@ -91,7 +90,7 @@ public class ViewStructureValidator {
 	private Set<Element> getChildrenConforms(List<Element> views) {
 		Set<Element> res = new HashSet<Element>();
 		for (Element e: views) {
-			res.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.conformStereotype, 1, false, 1));
+			res.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, Utils.getConformsStereotype(), 1, false, 1));
 		}
 		return res;
 	}

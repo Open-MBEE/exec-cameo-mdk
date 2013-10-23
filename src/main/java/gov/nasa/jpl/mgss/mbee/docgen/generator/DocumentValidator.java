@@ -117,6 +117,7 @@ public class DocumentValidator {
 	private ActivityEdgeFactory aef;
 	private boolean fatal;
 	private Stereotype sysmlview;
+	private Stereotype conforms;
 
 	public DocumentValidator(Element e) {
 		start = e;
@@ -130,8 +131,8 @@ public class DocumentValidator {
 		done = new HashSet<Behavior>();
 		aef = new ActivityEdgeFactory();
 		dg = new DefaultDirectedGraph<NamedElement, DirectedRelationship>(new ViewDependencyEdgeFactory());
-		sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
-		StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+		sysmlview = Utils.getViewStereotype();
+		conforms = Utils.getConformsStereotype();
 		
 		
 
@@ -204,7 +205,7 @@ public class DocumentValidator {
 		if (dg.containsVertex(view))
 			return;
 		dg.addVertex(view);
-		List<Element> viewpoints = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.conformStereotype, 1, false, 1);
+		List<Element> viewpoints = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, conforms, 1, false, 1);
 		if (viewpoints.size() > 1)
 			multipleViewpoints.addViolation(view, multipleViewpoints.getDescription());
 		for (Element viewpoint: viewpoints) {

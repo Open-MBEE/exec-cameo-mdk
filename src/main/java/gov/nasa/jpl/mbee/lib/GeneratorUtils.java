@@ -34,6 +34,16 @@ public class GeneratorUtils {
 		return null;
 	}
 	
+	public static Element findStereotypedRelationship(Element e, Stereotype s) {
+        List<Stereotype> ss = new ArrayList<Stereotype>();
+        ss.add(s);
+        List<Element> es = Utils.collectDirectedRelatedElementsByRelationshipStereotypes(e, ss, 1, true, 1);
+        if (es.size() > 0) {
+            return es.get(0);
+        }
+        return null;
+    }
+	
 	public static InitialNode findInitialNode(Element a) {
 		for (Element e: a.getOwnedElement())
 			if (e instanceof InitialNode)
@@ -124,8 +134,8 @@ public class GeneratorUtils {
 		String JPLProjectTitle =(String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Formal Project Title");
 		
 		String LogoSize = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Logo Size");
-		//Object UseDefaultStylesheetO =StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "SupressMetadata");
-		//boolean UseDefaultStylesheet=(UseDefaultStylesheetO instanceof Boolean && !(Boolean)UseDefaultStylesheetO || UseDefaultStylesheetO instanceof String && UseDefaultStylesheetO.equals("false")) ? false : true;
+		Object UseDefaultStylesheetO =StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "SupressMetadata");
+		boolean UseDefaultStylesheet=(UseDefaultStylesheetO instanceof Boolean && !(Boolean)UseDefaultStylesheetO || UseDefaultStylesheetO instanceof String && UseDefaultStylesheetO.equals("false")) ? false : true;
 		
     	
     	Object genO = StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "genNewImages");
@@ -278,7 +288,7 @@ public class GeneratorUtils {
 		doc.setConcurrance(Concurrence);
 		doc.setJPLProjectTitle(JPLProjectTitle);
 		doc.setRevisionHistory(RevisionHistory);
-		doc.setUseDefaultStylesheet(false);
+		doc.setUseDefaultStylesheet(UseDefaultStylesheet);
 		doc.setLogoSize(LogoSize);
 		doc.setInstLogo(instLogo);
 		doc.setInstLogoSize(instLogoSize);
