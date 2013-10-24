@@ -149,6 +149,7 @@ def ProxyResolver(profile):
                             gl.log("Error the element you are trying to delete is not editable")
                 disposeOrphanProxy=True 
             if isinstance(proxy,Package):
+                p=proxy
                 packSelect=MDUtils.getUserSelections([Package], profileSysML, False,'Select Package to Replace Orphan Package (used in redefinition)==>'+proxy.getQualifiedName(),[Package,Package,Class,Interface])
                 if packSelect is not None:
                     #StereoCollect[proxyID]=stereo.getID()
@@ -161,7 +162,7 @@ def ProxyResolver(profile):
                         #StereotypesHelper.removeStereotype(elem,proxy)
                     fileProperty.write(str(ProxyId)+","+"0"+"\n")
                     #need to add flag here
-                    
+                    #mem.removeElement(p)
                 
                 #need to add how to handle ports properties associations...whatever we can get
                     
