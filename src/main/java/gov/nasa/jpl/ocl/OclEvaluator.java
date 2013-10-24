@@ -1,7 +1,10 @@
 package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
@@ -37,10 +40,13 @@ import org.eclipse.ocl.lpg.AbstractParser;
 import org.eclipse.ocl.lpg.ProblemHandler;
 import org.eclipse.ocl.util.OCLUtil;
 
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 /**
  * Utility class for encapsulating the OCL query and constraint evaluations.
@@ -206,6 +212,51 @@ public class OclEvaluator {
     return evaluateQuery( context, queryString, isVerboseDefault );
   }
   
+    public static Object evaluateQueryNoSetup( Object context, String queryString,
+                                               boolean verbose ) throws ParserException {
+        Object result = null;
+        OCLExpression< EClassifier > query = null;
+        try {
+            query = getHelper().createQuery( queryString );
+        } catch ( ParserException e ) {
+            queryStatus = QueryStatus.PARSE_EXCEPTION;
+            if ( verbose ) {
+                e.printStackTrace();
+                Debug.outln( "my diag = " + getBasicDiagnostic() );
+                Object analyzer = getBasicDiagnostic().getData().get( 0 );
+                Debug.outln( "analyzer = " + analyzer );
+                Debug.outln( "ProblemHandler = " + getProblemHandler() );
+                if ( getProblemHandler() != null ) {
+                    int offset = getProblemHandler().getErrorReportLineOffset();
+                    Debug.outln( "getErrorReportLineOffset() = " + offset );
+                    Debug.outln( "Error messages = "
+                                 + Utils2.toString( ProblemHandler.ERROR_MESSAGES ) );
+                    AbstractParser parser = getProblemHandler().getParser();
+                    Debug.outln( "parser = " + parser );
+                    if ( parser != null ) {
+                        ParseTable pt = parser.getParseTable();
+                        Debug.outln( "ParseTable = " + pt );
+                        AbstractLexer lexer = parser.getLexer();
+                        Debug.outln( "lexer = " + lexer );
+                        if ( lexer != null ) {
+                            pt = lexer.getParseTable();
+                            Debug.outln( "lexer ParseTable = " + pt );
+                        }
+                    }
+                }
+            }
+            throw new ParserException( getBasicDiagnostic() );
+        }
+
+        if ( query != null ) {
+            result = getOcl().evaluate( context, query );
+            if ( getOcl().isInvalid( result ) ) {
+                queryStatus = QueryStatus.INVALID_OCL;
+            }
+        }
+        return result;
+    }
+  
 	/**
 	 * Evaluates the specified query given a particular context
 	 * 
@@ -234,55 +285,17 @@ public class OclEvaluator {
 		}
 		
 		Object result = null;
-		OCLExpression<EClassifier> query = null;
 
 		basicDiagnostic = null;
 		problemHandler = null;
 		
-    try {
-      query = getHelper().createQuery( queryString );
-    } catch ( ParserException e ) {
-      queryStatus = QueryStatus.PARSE_EXCEPTION;
-      if ( verbose ) {
-        e.printStackTrace();
-        Debug.outln( "my diag = " + getBasicDiagnostic() );
-        Object analyzer = getBasicDiagnostic().getData().get( 0 );
-        Debug.outln( "analyzer = " + analyzer );
-        Debug.outln( "ProblemHandler = " + getProblemHandler() );
-        if ( getProblemHandler() != null ) {
-          int offset = getProblemHandler().getErrorReportLineOffset();
-          Debug.outln( "getErrorReportLineOffset() = " + offset );
-          Debug.outln( "Error messages = "
-                       + Utils2.toString( ProblemHandler.ERROR_MESSAGES ) );
-          AbstractParser parser = getProblemHandler().getParser();
-          Debug.outln( "parser = " + parser );
-          if ( parser != null ) {
-            ParseTable pt = parser.getParseTable();
-            Debug.outln( "ParseTable = " + pt );
-            AbstractLexer lexer = parser.getLexer();
-            Debug.outln( "lexer = " + lexer );
-            if ( lexer != null ) {
-              pt = lexer.getParseTable();
-              Debug.outln( "lexer ParseTable = " + pt );
-            }
-          }
-        }
-      }
-      throw new ParserException( getBasicDiagnostic() );
-    }
+		result = evaluateQueryNoSetup( context, queryString, verbose );
 		
-		if (query != null) {
-			result = getOcl().evaluate(context, query);
-			if (getOcl().isInvalid(result)) {
-				queryStatus = QueryStatus.INVALID_OCL;
-			}
-		}
-
 		Debug.outln("evaluateQuery(context=" + DocGenUtils.fixString(context) + ", queryString=" + queryString + ", verbose=" + verbose + ") = " + DocGenUtils.fixString(result));
         // if ( !wasOn ) Debug.turnOff();
 		return result;
 	}
-
+	
     public static List< GetCallOperation > addOperation( String[] names,
                                                          EClassifier callerType,
                                                          EClassifier returnType,
@@ -368,7 +381,6 @@ public class OclEvaluator {
         doi.setAnnotationName( "DocGenEnvironment" );
         EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
         parm.setName( "pattern" );
-        parm.setEType( OCLStandardLibraryImpl.INSTANCE.getString() );
         doi.addStringParameter( parm );
         doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getString());
         doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getString());
@@ -391,7 +403,39 @@ public class OclEvaluator {
         envFactory.getDgEnvironment().addDgOperation( doi );
         envFactory.getDgEvaluationEnvironment().addDgOperation( doi );
     }
-	
+
+    protected static void addExpressionOperation( final String opName, final String expression,
+                                                  DgEnvironmentFactory envFactory ) {
+        // create custom operation
+        DgOperationInstance doi = new DgOperationInstance();
+        doi.setName( opName );
+        doi.setAnnotationName( "DocGenEnvironment" );
+        
+        // REVIEW -- Can we do better than OclAny? Would it help avoid needing
+        // to add oclAsType() before and after?
+        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+
+        // essentially set the actual operation as function pointer
+        doi.setOperation( new CallOperation() {
+            @Override
+            public Object callOperation( Object source, Object[] args ) {
+                Object result = null; 
+                try {
+                    result = evaluateQueryNoSetup( source, expression, isVerboseDefault() );
+                } catch ( Throwable e ) {
+                    
+                }
+                return result;
+            }
+        } );
+        
+
+        // add custom operation to environment and evaluation environment
+        envFactory.getDgEnvironment().addDgOperation( doi );
+        envFactory.getDgEvaluationEnvironment().addDgOperation( doi );
+    }
+    
 	static EClassifier getGenericCallerType() { return OCLStandardLibraryImpl.INSTANCE.getOclAny(); }
 	
 	protected static void addROperation(DgEnvironmentFactory envFactory) {
@@ -437,6 +481,10 @@ public class OclEvaluator {
       }
     }
 
+  /**
+   * Add n(), name(), and names() OCL shortcuts with and without arguments.
+   * @param envFactory
+   */
   protected static void addNOperation(DgEnvironmentFactory envFactory) {
     
     EClassifier callerType = getGenericCallerType();
@@ -447,6 +495,58 @@ public class OclEvaluator {
                   CallReturnType.NAME, envFactory );
   }
 
+  /**
+   * @param exprString an OCL expression
+   * @return an error message if the parse failed; otherwise return null
+   */
+  public static String checkParsable( String exprString ) {
+      try {
+          OCLExpression< EClassifier > query = getHelper().createQuery( exprString );
+          if ( query == null ) throw new Exception();
+      } catch ( ParserException e ) {
+          return e.getLocalizedMessage();
+      } catch ( Throwable e ) {
+          return "query is null: \"" + exprString + "\"";
+      }
+      return null;
+  }
+  
+  /**
+   * Find Expressions in ExpressionLibraries and add them as blackbox shortcuts.
+   * @param envFactory
+   */
+  protected static void addExpressionOperations( DgEnvironmentFactory envFactory ) {
+      ArrayList<Element> expressions = new ArrayList< Element >();
+      // get reference to entire model, and
+      // find packages with the ExpressionLibrary stereotype
+      List< Package > pkgs = Utils.getPackagesOfType( DocGen3Profile.expressionLibrary );
+      Stereotype exprStereotype = Utils.getStereotype( DocGen3Profile.expressionChoosable );
+      for ( Package pkg : pkgs ) {
+          List< Element > owned = Utils.collectOwnedElements( pkg, 0 );
+          List< Element > moreExprs = 
+                  Utils.filterElementsByStereotype( owned, exprStereotype,
+                                                    true, true );
+          expressions.addAll( moreExprs );
+      }
+      // add each of the elements with the Expression stereotype as shortcut/blackbox functions
+      for ( Element expr : expressions ) {
+          String name = Utils.getName( expr );
+          String exprString = queryElementToStringExpression( expr );
+          String errorMsg = checkParsable( exprString );
+          if ( !Utils2.isNullOrEmpty( name ) && errorMsg == null ) try {
+              addExpressionOperation( name, exprString, envFactory );
+          } catch ( Throwable e ) {
+              errorMsg = e.getLocalizedMessage();
+          }
+          if ( errorMsg != null ) {
+                Debug.error( true, false, "Could not add " + name
+                                          + " OCL shortcut with expression \""
+                                          + exprString + "\". " + errorMsg );
+          }
+      }
+  }
+
+  
   protected static DgEnvironmentFactory setupEnvironment() {
     // set up the customized environment
     // create custom environment factory
@@ -458,9 +558,11 @@ public class OclEvaluator {
     addTOperation( envFactory );
     addSOperation( envFactory );
     addNOperation( envFactory );
+    addExpressionOperations( envFactory );
     
     return envFactory;
   }
+
 
   public static List< Choice >
       commandCompletionChoices( OCLHelper< EClassifier, ?, ?, Constraint > helper,

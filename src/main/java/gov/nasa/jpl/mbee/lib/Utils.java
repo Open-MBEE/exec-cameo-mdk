@@ -16,7 +16,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.ocl.GetCallOperation;
 import gov.nasa.jpl.ocl.OclEvaluator;
+import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -1324,6 +1326,76 @@ public class Utils {
     	return res;
     }
     
+    public static boolean isTypeOf( Object o, String typeName ) {
+        GetCallOperation op = new GetCallOperation( CallReturnType.TYPE, true, true );
+        Object result = op.callOperation( o, new Object[] { typeName } );
+        return EmfUtils.matches( result, typeName );
+    }
+
+    /**
+     * @return the element at the top of the MagicDraw containment tree 
+     */
+    public static Element getRootElement() {
+        Element root = Application.getInstance().getProject().getModel();
+        return root;
+    }
+
+    public static List<Package> getPackagesOfType( String typeName ) {
+        return getPackagesOfType( null, typeName );
+    }
+    public static List<Package> getPackagesOfType( Element root, String typeName ) {
+        return getPackagesOfType( root, typeName, null );
+    }
+
+    /**
+     * @param root
+     * @param typeName
+     *            the name or regular expression pattern of the type name on
+     *            which to filter collected packages; this type name could be
+     *            a stereotype, EClass, or Java class name
+     * @param seen
+     *            a set of already visited Elements to avoid revisiting them in
+     *            infinite cycles
+     * @return all Packages, including root, top-level Packages within root, and
+     *         their nested packages, that also have a type matching typeName
+     *         (exactly or as a pattern)
+     */
+    public static List<Package> getPackagesOfType( Element root, String typeName, Set<Element> seen ) {
+        if ( root == null ) root = getRootElement();
+        if ( root == null ) return null; // REVIEW -- error?
+        if ( root instanceof Package ) {
+            return getPackagesOfType( root, typeName, seen );
+        }
+        Pair< Boolean, Set< Element > > p = Utils2.seen( root, true, seen );
+        if ( p.first ) return Utils2.getEmptyList();
+        seen = p.second;
+        List<Package> pkgs = new ArrayList< Package >();
+        for ( Element elmt : root.getOwnedElement() ) {
+            pkgs.addAll( getPackagesOfType( elmt, typeName, seen ) );
+        }
+        return pkgs;
+    }
+    
+    
+    public static List< Package > getPackagesOfType( Package root,
+                                                     String typeName,
+                                                     Set< Element > seen ) {
+        if ( root == null ) return null; // REVIEW -- error?
+        Pair< Boolean, Set< Element > > p = Utils2.seen( root, true, seen );
+        if ( p.first ) return Utils2.getEmptyList();
+        seen = p.second;
+        List<Package> pkgs = new ArrayList< Package >();
+        if ( isTypeOf( root, typeName ) ) {
+            pkgs.add(root);
+        }
+        if ( root.getNestedPackage() != null ) {
+            for ( Package pkg : root.getNestedPackage() ) {
+                pkgs.addAll( getPackagesOfType( pkg, typeName, seen ) );
+            }
+        }
+        return pkgs;
+    }
+    
     public static Element getElementByQualifiedName(String qualifiedName) {
         String[] path = qualifiedName.split("::");
         Element curElement = Application.getInstance().getProject().getModel();
@@ -1344,7 +1416,14 @@ public class Utils {
         }
         return null;
     }
-    
+
+    public static Project getProject() {
+        return Application.getInstance().getProject();
+    }
+        
+    public static Stereotype getStereotype( String stereotypeName ) {
+        return StereotypesHelper.getStereotype( getProject(), stereotypeName );
+    }
     public static Stereotype getViewpointStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Viewpoint");
     }
@@ -2364,6 +2443,31 @@ public class Utils {
     		builder.append(delimiter);
     	}
     	return builder.toString();
+    }
+    
+    /**
+     * @param obj
+     * @return a name associated with this object whether a NameElement, an
+     *         Element with a humanName, an EObject with a name property, or a
+     *         Java Object with a name member.
+     */
+    public static String getName(Object obj) {
+        if ( obj instanceof NamedElement ) {
+            return ((NamedElement)obj).getName();
+        }
+        if ( obj instanceof Element ) {
+            String humanName = ((Element)obj).getHumanName();
+            String[] arr = humanName.trim().split( " " );
+            if ( arr != null ) {
+                if ( arr.length == 2 ) {
+                    if ( !Utils2.isNullOrEmpty( arr[0] ) && !Utils2.isNullOrEmpty( arr[1] ) ) {
+                        return arr[1];
+                    }
+                }
+            }
+            // REVIEW -- this seems like a bad place to be -- error messages?
+        }
+        return EmfUtils.getName( obj );
     }
     
     /**

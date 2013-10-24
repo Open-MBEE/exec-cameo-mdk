@@ -60,10 +60,19 @@ public class GetCallOperation implements CallOperation {
   
   public CallReturnType resultType = CallReturnType.SELF;
   
-  public GetCallOperation() {
+  public GetCallOperation( CallReturnType opType,
+                           boolean onlyOneForAll,
+                           boolean onlyOnePer) {
     super();
+    this.resultType = opType;
+    this.onlyOneForAll = onlyOneForAll;
+    this.onlyOnePer = onlyOnePer;
   }
   
+  public GetCallOperation() {
+      super();
+    }
+    
   /* (non-Javadoc)
    * @see gov.nasa.jpl.ocl.CallOperation#callOperation(java.lang.Object, java.lang.Object[])
    */
@@ -210,6 +219,7 @@ public class GetCallOperation implements CallOperation {
         objectToAdd = list;
       } else {
         // TODO -- apply filter while collecting above for efficiency in case returning only one!
+        // REVIEW -- this todo above may already be done
         if ( filter ) {
           if ( !Utils2.isNullOrEmpty( args ) ) {
             objectToAdd =
@@ -231,9 +241,6 @@ public class GetCallOperation implements CallOperation {
       if ( objectToAdd instanceof Collection ) {
         objectToAdd = adder.fix( (Collection< ? >)objectToAdd );
       }
-//      if ( objectToAdd instanceof Collection ) {
-//        return CollectionUtil.asSequence( (Collection< ? >)objectToAdd );
-//      }
       return objectToAdd;
   }
   
