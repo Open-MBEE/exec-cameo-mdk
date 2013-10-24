@@ -38,6 +38,7 @@ public class RunnablePatternStamperWithProgress implements RunnableWithProgress 
 		try {
 			progressStatus.init("Stamping pattern...", 0, 100);
 			CopyPasting.copyPasteElements(patternElements, targetDiagram.getObjectParent(), targetDiagram, true, false);
+			targetDiagram.getDiagramSurface().repaint();
 		} catch(Exception e) {
 			success = false;
 		}
