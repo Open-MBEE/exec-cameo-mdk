@@ -384,8 +384,6 @@ public class OclEvaluator {
         doi.addStringParameter( parm );
         doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getString());
         doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getString());
-//        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
-//        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
 
         // essentially set the actual operation as function pointer
         doi.setOperation( new CallOperation() {
@@ -422,9 +420,9 @@ public class OclEvaluator {
             public Object callOperation( Object source, Object[] args ) {
                 Object result = null; 
                 try {
-                    result = evaluateQueryNoSetup( source, expression, isVerboseDefault() );
+                    result = evaluateQuery( source, expression, isVerboseDefault() );
                 } catch ( Throwable e ) {
-                    
+                    Debug.error(true, false, e.getLocalizedMessage() );
                 }
                 return result;
             }
@@ -532,7 +530,8 @@ public class OclEvaluator {
       for ( Element expr : expressions ) {
           String name = Utils.getName( expr );
           String exprString = queryElementToStringExpression( expr );
-          String errorMsg = checkParsable( exprString );
+//          String errorMsg = checkParsable( exprString );
+          String errorMsg = null;
           if ( !Utils2.isNullOrEmpty( name ) && errorMsg == null ) try {
               addExpressionOperation( name, exprString, envFactory );
           } catch ( Throwable e ) {

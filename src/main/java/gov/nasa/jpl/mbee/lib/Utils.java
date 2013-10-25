@@ -1326,10 +1326,42 @@ public class Utils {
     	return res;
     }
     
-    public static boolean isTypeOf( Object o, String typeName ) {
+    /**
+     * @param object
+     *            the object to test for a match
+     * @param typeName
+     *            regular expression String according to Pattern
+     * @return whether the name of the object's Stereotype, EClass, or Java
+     *         class matches the typeName regular expression pattern
+     */
+    public static boolean isTypeOf( Object object, String typeName ) {
         GetCallOperation op = new GetCallOperation( CallReturnType.TYPE, true, true );
-        Object result = op.callOperation( o, new Object[] { typeName } );
-        return EmfUtils.matches( result, typeName );
+        Object result = op.callOperation( object, new Object[] { typeName } );
+        if ( result instanceof Collection && ((Collection<?>)result).size() == 1 ) {
+            if ( matches( ((Collection<?>)result).iterator().next(), typeName ) ) return true;
+        }
+        return matches( result, typeName );
+    }
+
+    /**
+     * See if the object matches the regular expression pattern by its name,
+     * type, or string value.
+     * 
+     * @param object
+     *            the object to test
+     * @param pattern
+     *            a Pattern regular expression string to match to the object
+     * @return whether the name, type, or String value of the object matches the
+     *         regular expression pattern
+     */
+    private static boolean matches( Object object, String pattern ) {
+        // TODO -- types are limited to Stereotypes, EClasses, and Java Classes,
+        // but metaclasses/base classes are left out here and in other methods
+        // here that use regex patterns.
+        String name = getName(object);
+        if ( EmfUtils.matches( name, pattern ) ) return true;
+        boolean matched = EmfUtils.matches( object, pattern );
+        return matched;
     }
 
     /**
@@ -1364,7 +1396,7 @@ public class Utils {
         if ( root == null ) root = getRootElement();
         if ( root == null ) return null; // REVIEW -- error?
         if ( root instanceof Package ) {
-            return getPackagesOfType( root, typeName, seen );
+            return getPackagesOfType( (Package)root, typeName, seen );
         }
         Pair< Boolean, Set< Element > > p = Utils2.seen( root, true, seen );
         if ( p.first ) return Utils2.getEmptyList();
@@ -1377,6 +1409,19 @@ public class Utils {
     }
     
     
+    /**
+     * @param root top-level Package
+     * @param typeName
+     *            the name or regular expression pattern of the type name on
+     *            which to filter collected packages; this type name could be
+     *            a stereotype, EClass, or Java class name
+     * @param seen
+     *            a set of already visited Elements to avoid revisiting them in
+     *            infinite cycles
+     * @return all Packages, including root, top-level Packages within root, and
+     *         their nested packages, that also have a type matching typeName
+     *         (exactly or as a pattern)
+     */
     public static List< Package > getPackagesOfType( Package root,
                                                      String typeName,
                                                      Set< Element > seen ) {
@@ -2479,7 +2524,7 @@ public class Utils {
     	List<String> names = new ArrayList<String>();
     	for (NamedElement e: elements) {
     		names.add(e.getName());
-    	} 
+    	}
     	return names;
     }
     

@@ -243,5 +243,5 @@ public class GetCallOperation implements CallOperation {
       }
       return objectToAdd;
   }
-  
+
 }
