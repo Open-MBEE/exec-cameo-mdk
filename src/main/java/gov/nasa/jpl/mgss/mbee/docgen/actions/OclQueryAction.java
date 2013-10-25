@@ -337,11 +337,18 @@ public class OclQueryAction extends MDAction {
     Collection< Element > selectedElements = MDUtils.getSelection( e );
     setContext( selectedElements );
 
+    //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
+    OclEvaluator.opsCache = null;
+    
     boolean wasOn = Debug.isOn();
     Debug.turnOn();
+    try {
     RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog( "Enter an OCL expression:",
                                                              "OCL Evaluation",
                                                              new ProcessOclQuery(selectedElements));
+    } catch (Throwable t) {
+        t.printStackTrace();
+    }
     if ( !wasOn ) Debug.turnOff();
   }
   

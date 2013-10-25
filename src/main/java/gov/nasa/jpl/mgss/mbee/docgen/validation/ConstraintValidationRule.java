@@ -69,11 +69,14 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
         Debug.outln( "init(Project=" + paramProject + ", Constraint="
                      + paramConstraint + ")" );
         if ( constraintElement == null ) constraintElement = paramConstraint;
-        // collect all constraints and the objects they constrain
-        Collection< String > ids = paramProject.getAllIDS();
+
+        //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
         OclEvaluator.opsCache = null;
         OclEvaluator.useCachedOps = true;
-        try {
+
+        // collect all constraints and the objects they constrain
+        Collection< String > ids = paramProject.getAllIDS();
+
         for ( String id : ids ) {
             BaseElement elem = paramProject.getElementByID( id );
             if ( elem == null ) continue;
@@ -93,10 +96,6 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
 //                elem = elem.getObjectParent();
 //            }
         }
-        } finally {
-            OclEvaluator.useCachedOps = false;
-        }
-        OclEvaluator.useCachedOps = false;
     }
 
     public Collection< gov.nasa.jpl.mbee.constraint.Constraint >
@@ -145,8 +144,6 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
                 Debug.error(true, false, "ConstraintValidationRule: " + e.getLocalizedMessage() );
             }
         }
-
-        OclEvaluator.useCachedOps = false;
 
 //        if ( !wasOn ) Debug.turnOff();
         return result;

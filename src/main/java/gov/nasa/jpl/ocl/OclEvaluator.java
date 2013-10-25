@@ -106,7 +106,7 @@ public class OclEvaluator {
 
 	protected static DgEnvironmentFactory envFactory = new DgEnvironmentFactory();
     public static Set< DgOperation > opsCache = null;
-    public static boolean useCachedOps = false;  
+    public static boolean useCachedOps = true;  
   
 	public static void createOclInstance(DgEnvironmentFactory envFactory) {
 		ocl = OCL.newInstance(envFactory);
@@ -217,8 +217,6 @@ public class OclEvaluator {
   
     public static Object evaluateQueryNoSetup( Object context, String queryString,
                                                boolean verbose ) throws ParserException {
-        boolean wasCaching = useCachedOps;
-        useCachedOps = true;
         Object result = null;
         OCLExpression< EClassifier > query = null;
         try {
@@ -250,21 +248,15 @@ public class OclEvaluator {
                     }
                 }
             }
-            useCachedOps = wasCaching;
             throw e;//new ParserException( getBasicDiagnostic() );
         }
 
         if ( query != null ) {
-            try {
             result = getOcl().evaluate( context, query );
             if ( getOcl().isInvalid( result ) ) {
                 queryStatus = QueryStatus.INVALID_OCL;
             }
-            } catch ( Throwable e ) {
-                e.printStackTrace();
-            }
         }
-        useCachedOps = wasCaching;
         return result;
     }
   
