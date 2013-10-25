@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,7 +104,9 @@ public class OclEvaluator {
 	protected static OCLHelper<EClassifier, ?, ?, Constraint> helper = null;
 	private static ProblemHandler problemHandler = null;
 
-	protected static DgEnvironmentFactory envFactory = new DgEnvironmentFactory();  
+	protected static DgEnvironmentFactory envFactory = new DgEnvironmentFactory();
+    public static Set< DgOperation > opsCache = null;
+    public static boolean useCachedOps = false;  
   
 	public static void createOclInstance(DgEnvironmentFactory envFactory) {
 		ocl = OCL.newInstance(envFactory);
@@ -214,6 +217,8 @@ public class OclEvaluator {
   
     public static Object evaluateQueryNoSetup( Object context, String queryString,
                                                boolean verbose ) throws ParserException {
+        boolean wasCaching = useCachedOps;
+        useCachedOps = true;
         Object result = null;
         OCLExpression< EClassifier > query = null;
         try {
@@ -245,15 +250,21 @@ public class OclEvaluator {
                     }
                 }
             }
-            throw new ParserException( getBasicDiagnostic() );
+            useCachedOps = wasCaching;
+            throw e;//new ParserException( getBasicDiagnostic() );
         }
 
         if ( query != null ) {
+            try {
             result = getOcl().evaluate( context, query );
             if ( getOcl().isInvalid( result ) ) {
                 queryStatus = QueryStatus.INVALID_OCL;
             }
+            } catch ( Throwable e ) {
+                e.printStackTrace();
+            }
         }
+        useCachedOps = wasCaching;
         return result;
     }
   
@@ -273,7 +284,7 @@ public class OclEvaluator {
     if ( queryString == null ) return null; 
     
 	  // create the ocl evaluator
-    OclEvaluator.createOclInstance( envFactory );    
+    OclEvaluator.createOclInstance( envFactory );
       // boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
 	  setOclTracingEnabled(verbose);
 		queryStatus = QueryStatus.VALID_OCL;
@@ -551,14 +562,19 @@ public class OclEvaluator {
     // create custom environment factory
     DgEnvironmentFactory.reset();
     envFactory = new DgEnvironmentFactory();
-    addRegexMatchOperation( envFactory );
-    addROperation( envFactory );
-    addMOperation( envFactory );
-    addTOperation( envFactory );
-    addSOperation( envFactory );
-    addNOperation( envFactory );
-    addExpressionOperations( envFactory );
-    
+    if ( useCachedOps  && !Utils2.isNullOrEmpty( opsCache ) ) {
+        envFactory.getDgEnvironment().operations = opsCache;
+    } else {
+        addRegexMatchOperation( envFactory );
+        addROperation( envFactory );
+        addMOperation( envFactory );
+        addTOperation( envFactory );
+        addSOperation( envFactory );
+        addNOperation( envFactory );
+        addExpressionOperations( envFactory );
+        
+        opsCache = envFactory.getDgEnvironment().operations;
+    }
     return envFactory;
   }
 
