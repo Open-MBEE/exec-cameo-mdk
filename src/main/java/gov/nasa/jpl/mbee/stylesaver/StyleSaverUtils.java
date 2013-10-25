@@ -28,6 +28,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
  * @author Benjamin Inada, JPL/Caltech
  */
 public class StyleSaverUtils {
+	private static String classname = null;
+	private static List<DiagramPresentationElement>  dpels;
+	
 	/**
 	 * Returns the correct View or derived stereotype necessary for saving styles in this project.
 	 * 
@@ -168,18 +171,26 @@ public class StyleSaverUtils {
 	/**
 	 * Utility for providing context for all the Validation classes since the Validation menu in MD
 	 * doesn't provide context.
+	 * 
+	 * @param	clazz	Class used to determine when the dialog should be popped up
 	 */
-	public static Collection<DiagramPresentationElement> findDiagramPresentationElements(Collection<? extends Element> elements) {
-		List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
-		types.add(Package.class);
+	public static Collection<DiagramPresentationElement> findDiagramPresentationElements(Class cl) {
+		if (classname == null) {
+			classname = cl.getName();
+		}
 		
-		List<BaseElement> selected = Utils.getUserSelections(types, "Context for Pattern and Style Validation (use Add recursively)");
-		List<DiagramPresentationElement> dpels = new ArrayList<DiagramPresentationElement>();
-		
-		for (BaseElement be: selected) {
-			Package pkg = (Package)be;
-			for (Diagram diag: pkg.getOwnedDiagram()) {
-				dpels.add(Application.getInstance().getProject().getDiagram(diag));
+		if (classname.equals(cl.getName())) {
+			List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
+			types.add(Package.class);
+			
+			List<BaseElement> selected = Utils.getUserSelections(types, "Context for Pattern and Style Validation Suite");
+			dpels = new ArrayList<DiagramPresentationElement>();
+			
+			for (BaseElement be: selected) {
+				Package pkg = (Package)be;
+				for (Diagram diag: pkg.getOwnedDiagram()) {
+					dpels.add(Application.getInstance().getProject().getDiagram(diag));
+				}
 			}
 		}
 		
