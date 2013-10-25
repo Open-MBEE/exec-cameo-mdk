@@ -7,13 +7,12 @@ import java.util.List;
 import com.nomagic.magicdraw.actions.MDAction;
 
 /**
- * <p>Hopefully this provides a unified way of dealing with presentation elements.</p>
- * <p>Should perhaps be renamed "Presentable" or something like that.</p>
- * @author bcompane
+ * <p>Interface for all DocGen queries.</p>
+ * @see gov.nasa.jpl.mgss.mbee.docgen.model.Query for writing java extensions
  *
  */
 public interface Generatable {
-	
+
 	public void initialize();
 	public void parse();
 	public List<DocumentElement> visit(boolean forViewEditor, String outputDir);
