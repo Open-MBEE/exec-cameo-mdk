@@ -1,18 +1,26 @@
 package gov.nasa.jpl.mbee.stylesaver;
 
+import gov.nasa.jpl.mbee.lib.Utils;
+
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
 /**
  * Utility functions for the Styler should be put here.
@@ -155,5 +163,26 @@ public class StyleSaverUtils {
 		}
 		
 		return (JSONObject) obj;
+	}
+	
+	/**
+	 * Utility for providing context for all the Validation classes since the Validation menu in MD
+	 * doesn't provide context.
+	 */
+	public static Collection<DiagramPresentationElement> findDiagramPresentationElements(Collection<? extends Element> elements) {
+		List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
+		types.add(Package.class);
+		
+		List<BaseElement> selected = Utils.getUserSelections(types, "Context for Pattern and Style Validation (use Add recursively)");
+		List<DiagramPresentationElement> dpels = new ArrayList<DiagramPresentationElement>();
+		
+		for (BaseElement be: selected) {
+			Package pkg = (Package)be;
+			for (Diagram diag: pkg.getOwnedDiagram()) {
+				dpels.add(Application.getInstance().getProject().getDiagram(diag));
+			}
+		}
+		
+		return (Collection<DiagramPresentationElement>) dpels;
 	}
 }
