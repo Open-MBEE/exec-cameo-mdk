@@ -53,7 +53,7 @@ public class DocumentWriter implements RunnableWithProgress {
 				DBSerializeVisitor v = new DBSerializeVisitor(genNewImage, dir, arg0);
 				book.accept(v);
 				writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-				writer.write("<!DOCTYPE book [\n<!ENTITY % sgml.features \"IGNORE\">\n<!ENTITY % xml.features \"INCLUDE\">\n<!ENTITY % dbcent PUBLIC \"-//OASIS//ENTITIES DocBook Character Entities\nV4.4//EN\" \"dbcentx.mod\">\n%dbcent;\n]>");
+				//writer.write("<!DOCTYPE book [\n<!ENTITY % sgml.features \"IGNORE\">\n<!ENTITY % xml.features \"INCLUDE\">\n<!ENTITY % dbcent PUBLIC \"-//OASIS//ENTITIES DocBook Character Entities\nV4.4//EN\" \"dbcentx.mod\">\n%dbcent;\n]>");
 				writer.write(v.getOut());
 			}
 			writer.flush();
