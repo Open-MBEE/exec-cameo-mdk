@@ -136,6 +136,7 @@ def ProxyFinish(proxyMan, fileStereoMap):
                         else:
                             gl.log("Error the element you are trying to delete is not editable")
                 disposeOrphanProxy=True 
+                
 #------------------------------------------------------------------------  
             if isinstance(proxy,Property) and not isinstance(proxy,Port):
                 propSelect=None
@@ -168,6 +169,11 @@ def ProxyFinish(proxyMan, fileStereoMap):
                         else:
                             gl.log("Error the element you are trying to delete is not editable")
                 disposeOrphanProxy=True 
+                
+            if isinstance(proxy,Package):
+                p=proxy
+                disposeOrphanProxy=True
+                p.dispose()
 
             if disposeOrphanProxy==True:
                     #decide whether or not we want to dispose of orphan proxy
@@ -177,6 +183,21 @@ def ProxyFinish(proxyMan, fileStereoMap):
             else: #if we are not just getting rid of orphan need to have the fix cases
                 gl.log("if we come here we will make something not a proxy anymore")
                 #proxyMan.makeNotProxy(proxy) ------this does very scary things
+                proxy.dispose()
+            
+                    #need to add flag here
+                    #mem.removeElement(p)
+                
+                #need to add how to handle ports properties associations...whatever we can get
+                    
+                #get all elements that are stereotyped this
+            #check to make sure you have lock on full project
+            #first created, creates you a mapping
+            #remember what to replace with and what to delete and re-run with lists of items
+           # if disposeOrphanProxy==True:
+                    #decide whether or not we want to dispose of orphan proxy
+                    #gl.log("***********************If we come here we will dispose of an orphan")
+                    
     #gl.log("Final Count of generalization====>"+str(count))
     gl.log("************************LIST OF PROPERTIES DELETED**********************")
     for p in listProp:
@@ -196,16 +217,14 @@ def ProxyFinish(proxyMan, fileStereoMap):
 
 
 
-if len(scriptInput['target'])>0:
-    package = scriptInput['target'][0]
-    if len(scriptInput['Profile'])>0:
-        profile = scriptInput['Profile'][0]
-        gl.log("===========Orphan Fixing==============")
-        ProxyFinish(proxyMan,fileStereoMap)
-    else:
-        gl.log("**ERROR** No Profile Provided")
+
+if len(scriptInput['Profile'])>0:
+    profile = scriptInput['Profile'][0]
+    gl.log("===========Orphan Fixing==============")
+    ProxyFinish(proxyMan,fileStereoMap)
 else:
-    gl.log("**ERROR** No Target Provided!")
+    gl.log("**ERROR** No Profile Provided")
+
 
 
 
