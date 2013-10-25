@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.patternloader;
 
 import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchAll;
 import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchSelect;
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
 import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
 
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
 		Set<Annotation> result = new HashSet<Annotation>();
 		
 		// get all the diagrams in the project
-		Collection<DiagramPresentationElement> projectDiagrams = project.getDiagrams();
+		Collection<DiagramPresentationElement> projectDiagrams = StyleSaverUtils.findDiagramPresentationElements(this.getClass());
 		
 		for(DiagramPresentationElement currDiagram : projectDiagrams) {
 			// try to find a good requester on the diagram
