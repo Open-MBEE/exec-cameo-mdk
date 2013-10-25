@@ -50,10 +50,14 @@ PropCollect={}
 
 def ProxyFinish(proxyMan, fileStereoMap):
     for line in fileStereoMap:
-        [proxyID,stereoID]=line.split(',')
-        stereoID=stereoID.split()
-        stereoID=stereoID[0]
-        StereoCollect[proxyID]=stereoID
+        #gl.log(str(line))
+        try:
+            [proxyID,stereoID]=line.split(',')
+            stereoID=stereoID.split()
+            stereoID=stereoID[0]
+            StereoCollect[proxyID]=stereoID
+        except:
+            pass
         
     proxies=proxyMan.getProxies() #returns all registered proxies
     count=0
@@ -206,11 +210,6 @@ def ProxyFinish(proxyMan, fileStereoMap):
     for q in listPort:
         gl.log("Port Deleted===>  "+q.getQualifiedName())
     
-
-    fileStereoMap.close()
-    filePropMap.close()
-    filePortMap.close()
-    
     return None
 
 
@@ -222,6 +221,11 @@ if len(scriptInput['Profile'])>0:
     profile = scriptInput['Profile'][0]
     gl.log("===========Orphan Fixing==============")
     ProxyFinish(proxyMan,fileStereoMap)
+    ProxyFinish(proxyMan,filePortMap)
+    ProxyFinish(proxyMan,filePropMap)
+    fileStereoMap.close()
+    filePropMap.close()
+    filePortMap.close()
 else:
     gl.log("**ERROR** No Profile Provided")
 
