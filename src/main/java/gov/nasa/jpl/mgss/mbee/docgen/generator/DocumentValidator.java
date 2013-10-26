@@ -527,6 +527,22 @@ public class DocumentValidator {
      */
     public static Object evaluate( Object expression, Element context, DocumentValidator validator,
                                    boolean violationIfInconsistent ) {
+        ValidationRule rule = validator == null ? null : validator.getConstraintRule();
+        return evaluate( expression, context, rule, violationIfInconsistent );
+    }
+    /**
+     * Evaluate the expression and, if the violationIfConsistent flag is true
+     * and the validator is not null, add a validation rule violation if the
+     * expression is inconsistent.
+     * 
+     * @param expression
+     * @param context
+     * @param rule
+     * @param violationIfInconsistent
+     * @return the result of the evaluation
+     */
+    public static Object evaluate( Object expression, Element context, ValidationRule rule,
+                                   boolean violationIfInconsistent ) {
         if ( expression == null ) return null;
         Object result = null;
         try {
@@ -537,8 +553,8 @@ public class DocumentValidator {
                     " for OCL query \"" + expression + 
                     "\" on " +
                     EmfUtils.toString( context );
-                if ( validator != null ) {
-                    addViolationIfUnique( validator.getConstraintRule(),
+                if ( rule != null ) {
+                    addViolationIfUnique( rule,
                                           context, errorMessage );
                 }
                 Debug.error( violationIfInconsistent, false, errorMessage );
@@ -561,9 +577,27 @@ public class DocumentValidator {
     public static Boolean evaluateConstraint( Constraint constraint,
                                               DocumentValidator validator,
                                               boolean violatedIfInconsistent ) {
+        ValidationRule rule = validator.getConstraintRule();
+        return evaluateConstraint( constraint, rule, violatedIfInconsistent );
+    }
+
+    /**
+     * Evaluate the constraint and, if the constraint is inconsistent and the
+     * violatedIfConsistent flag is true and the validation rule is not null, add a
+     * rule violation. If the constraint evaluates to false, and the
+     * rule is not null, add a violation.
+     * 
+     * @param constraint
+     * @param rule
+     * @param violatedIfInconsistent
+     * @return the result of the evaluation
+     */
+    public static Boolean evaluateConstraint( Constraint constraint,
+                                              ValidationRule rule,
+                                              boolean violatedIfInconsistent ) {
 	    if ( constraint == null ) return null;
         Boolean satisfied = constraint.evaluate();
-        if ( validator == null ) return satisfied;
+        if ( rule == null ) return satisfied;
         // check if constraint is violated
         if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
             Element violatingElement = constraint.getViolatedConstraintElement();
@@ -574,7 +608,7 @@ public class DocumentValidator {
                     + ( constraint.getConstrainingElements().size() > 1
                         && !Utils2.isNullOrEmpty( violatingElement.getHumanName() )
                         ? " for " + violatingElement.getHumanName() : "" );
-            addViolationIfUnique( validator.getConstraintRule(), violatingElement, comment );
+            addViolationIfUnique( rule, violatingElement, comment );
         } else if ( violatedIfInconsistent ) {
             // check if inconsistent
             // TODO -- not yet checking if the constraint is self-contradictory
@@ -592,7 +626,7 @@ public class DocumentValidator {
                 if ( Utils2.isNullOrEmpty( msg ) ) {
                     msg = constraint.toString() + " is inconsistent";
                 }
-                addViolationIfUnique( validator.getConstraintRule(),
+                addViolationIfUnique( rule,
                                       constrainingElement, msg );
             }
         }

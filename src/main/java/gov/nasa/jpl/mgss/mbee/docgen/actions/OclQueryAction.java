@@ -47,7 +47,7 @@ public class OclQueryAction extends MDAction {
   
   public OclQueryAction( Element context ) {
     super(actionid, actionText, null, null);
-    getContext().add( context ); 
+    if ( context != null ) getContext().add( context ); 
   }
   public OclQueryAction() {
     this(null);
