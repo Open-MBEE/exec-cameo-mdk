@@ -1,12 +1,9 @@
 package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
-import gov.nasa.jpl.logfire.RunnableSessionWrapperWithResult;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ConstraintValidationRule;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.event.ActionEvent;
@@ -20,6 +17,11 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateConstraints extends MDAction {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 2202161655434764023L;
+
     protected List< Element > context = new ArrayList< Element >();
 
     public static final String actionid = "ValidateConstraints";
