@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1603,51 +1604,90 @@ public class Utils {
 		return username;
 	}
 	
+    public static Set<Annotation> getAnnotations( ValidationRule vr, Project project, Constraint cons ) {
+        Set< Annotation > annotations = new LinkedHashSet< Annotation >();
+        List<RuleViolationResult> results = getRuleViolations( vr, project, cons );
+        for ( RuleViolationResult violation : results ) {
+            annotations.add( violation.getAnnotation() );
+        }
+        return annotations;
+    }
+
+    public static Set<Annotation> getAnnotations( Collection<ValidationSuite> vss ) {
+        Set< Annotation > annotations = new LinkedHashSet< Annotation >();
+        List<RuleViolationResult> results = getRuleViolations( vss );
+        for ( RuleViolationResult violation : results ) {
+            annotations.add( violation.getAnnotation() );
+        }
+        return annotations;
+    }
+
+    public static List<RuleViolationResult> getRuleViolations( ValidationRule vr, Project project, Constraint cons ) {
+        List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
+        //Project project = getProject();
+        //Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+
+        EnumerationLiteral severity;
+        /*
+         * Switch added by Peter Di Pasquale 02/15/2013
+         * Changelog: switch statement added, selects element highlight and icon color according to severity of error. 
+         */
+        
+        switch (vr.getSeverity()){
+        case WARNING: 
+            severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
+            cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        break;
+        case ERROR: 
+            severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
+            cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
+        break;
+        case FATAL: 
+            severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
+            cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
+        break;
+        case INFO: 
+            severity = Annotation.getSeverityLevel(project, Annotation.INFO);
+            cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
+        break;
+        default: severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
+        break;
+        }
+        for (ValidationRuleViolation vrv: vr.getViolations()) {
+            Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
+            results.add(new RuleViolationResult(anno, cons));
+        }
+        return results;
+
+    }
+
+    public static List<RuleViolationResult> getRuleViolations( Collection<ValidationSuite> vss ) {
+        List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
+        Project project = getProject();
+        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        for (ValidationSuite vs: vss) {
+            for (ValidationRule vr: vs.getValidationRules()) {
+                results.addAll( getRuleViolations( vr, project, cons ) );
+            }
+        }
+        
+        return results;
+    }
+
 	public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
-		Project project = Application.getInstance().getProject();
-        //ValidationResultProvider provider = project.getValidationResultProvider();
-        Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
+        List<RuleViolationResult> results = getRuleViolations( vss );
+        Set<BaseElement> elements = new LinkedHashSet<BaseElement>();
+        for ( RuleViolationResult violation : results ) {
+            elements.add(violation.getElement());
+        }
+        
+        
+        Project project = getProject();
+//        //ValidationResultProvider provider = project.getValidationResultProvider();
+//        Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-        
-        if (dummyvs == null || cons == null)
-        	return;
-        Set<Element> elements = new HashSet<Element>();
-		for (ValidationSuite vs: vss) {
-			for (ValidationRule vr: vs.getValidationRules()) {
-				EnumerationLiteral severity;
-				/*
-				 * Switch added by Peter Di Pasquale 02/15/2013
-				 * Changelog: switch statement added, selects element highlight and icon color according to severity of error. 
-				 */
-				
-				switch (vr.getSeverity()){
-				case WARNING: 
-					severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-					cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-				break;
-				case ERROR: 
-					severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
-					cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
-				break;
-				case FATAL: 
-					severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
-					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
-				break;
-				case INFO: 
-					severity = Annotation.getSeverityLevel(project, Annotation.INFO);
-					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
-				break;
-				default: severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-				break;
-				}
-				for (ValidationRuleViolation vrv: vr.getViolations()) {
-					Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
-					results.add(new RuleViolationResult(anno, cons));
-					elements.add(vrv.getElement());
-				}
-			}
-		}
+
 		EnumerationLiteral severitylevel =Annotation.getSeverityLevel(project, Annotation.WARNING);
 		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
 //		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
@@ -1657,7 +1697,6 @@ public class Utils {
 		//provider.setValidationResults(id, results);
 		//provider.update();
 		ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
-		
 	}
 	
     /************************************************ Existence check **************************************/

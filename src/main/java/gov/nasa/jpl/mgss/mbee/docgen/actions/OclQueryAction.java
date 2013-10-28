@@ -47,7 +47,7 @@ public class OclQueryAction extends MDAction {
   
   public OclQueryAction( Element context ) {
     super(actionid, actionText, null, null);
-    getContext().add( context ); 
+    if ( context != null ) getContext().add( context ); 
   }
   public OclQueryAction() {
     this(null);
@@ -248,6 +248,7 @@ public class OclQueryAction extends MDAction {
 //      } else {
 //        return outputList;
 //      }
+      OclEvaluator.opsCache = null;
       if ( Utils2.isNullOrEmpty( getContext() ) ) {
         outputList = process( null, oclString );
       } else for ( Element elem : getContext() ) {
