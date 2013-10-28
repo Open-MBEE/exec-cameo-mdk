@@ -67,7 +67,7 @@ public class PreviouslySavedValidation implements ElementValidationRuleImpl, Sma
 		Set<Annotation> result = new HashSet<Annotation>();
 		
 		// get all the diagrams in this project
-		Collection<DiagramPresentationElement> diagCollection = project.getDiagrams();
+		Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(this.getClass());
 		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
 		
 		for(DiagramPresentationElement diag : diagCollection) {

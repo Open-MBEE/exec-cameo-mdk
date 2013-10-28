@@ -14,6 +14,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixNone;
 import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixStyleMismatchRestore;
 import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixStyleMismatchUpdate;
 
@@ -69,7 +70,7 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
 		Set<Annotation> result = new HashSet<Annotation>();
 		
 		// get all the diagrams in the project
-		Collection<DiagramPresentationElement> diagCollection = project.getDiagrams();
+		Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(this.getClass()); 
 		
 		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
 		
@@ -97,6 +98,7 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
 		            
 		            List<NMAction> actionList = new ArrayList<NMAction>();
 		            actionList.add(styleMismatchUpdate);
+		            actionList.add(new FixNone(null));
 		            actionList.add(styleMismatchRestore);
 		            
 		            // create the annotation
