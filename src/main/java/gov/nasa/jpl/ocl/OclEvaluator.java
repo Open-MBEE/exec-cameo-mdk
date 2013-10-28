@@ -555,7 +555,7 @@ public class OclEvaluator {
     DgEnvironmentFactory.reset();
     envFactory = new DgEnvironmentFactory();
     if ( useCachedOps  && !Utils2.isNullOrEmpty( opsCache ) ) {
-        envFactory.getDgEnvironment().operations = opsCache;
+        envFactory.getDgEnvironment().operations.addAll( opsCache );
     } else {
         addRegexMatchOperation( envFactory );
         addROperation( envFactory );

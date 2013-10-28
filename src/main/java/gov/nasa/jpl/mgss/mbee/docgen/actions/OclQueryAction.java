@@ -248,6 +248,7 @@ public class OclQueryAction extends MDAction {
 //      } else {
 //        return outputList;
 //      }
+      OclEvaluator.opsCache = null;
       if ( Utils2.isNullOrEmpty( getContext() ) ) {
         outputList = process( null, oclString );
       } else for ( Element elem : getContext() ) {
