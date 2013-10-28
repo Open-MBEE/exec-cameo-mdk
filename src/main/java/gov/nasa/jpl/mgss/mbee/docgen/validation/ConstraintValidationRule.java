@@ -30,6 +30,7 @@ import com.nomagic.uml2.ext.jmi.smartlistener.SmartListenerConfig;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
 /**
  * A constraint in some context of the model, whose violation will be posted in
@@ -147,17 +148,20 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             try {
             Boolean satisfied = DocumentValidator.evaluateConstraint( constraint, this, false );
             //Boolean satisfied = constraint.evaluate();
-            if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
-                //List<NMAction> actionList = new ArrayList<NMAction>();
-                //actionList.add(styleAdd);
-                Annotation annotation =
-                        new Annotation( constraint.getViolatedConstraintElement(), paramConstraint );
-                result.add(annotation);
-            }
+//            if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
+//                //List<NMAction> actionList = new ArrayList<NMAction>();
+//                //actionList.add(styleAdd);
+//                Annotation annotation =
+//                        new Annotation( constraint.getViolatedConstraintElement(), paramConstraint );
+//                result.add(annotation);
+//            }
             } catch(Throwable e ) {
                 Debug.error(true, false, "ConstraintValidationRule: " + e.getLocalizedMessage() );
             }
         }
+        Project project = Utils.getProject();
+        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        result = Utils.getAnnotations( this, project, cons );
         annotations = result;
 
 //        if ( !wasOn ) Debug.turnOff();
