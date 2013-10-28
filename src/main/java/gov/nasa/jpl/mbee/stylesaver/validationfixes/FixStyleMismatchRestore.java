@@ -6,6 +6,7 @@ import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.ui.EnvironmentLockManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.ui.BaseProgressMonitor;
@@ -83,36 +84,43 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
      * Performs the actual load on the diagram.
      */
     private void performLoad() {
-    	SessionManager.getInstance().createSession("Loading...");
-    	
-        Project project = Application.getInstance().getProject();
-        
-    	// ensure the diagram is locked for edit
-    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
-    		SessionManager.getInstance().cancelSession();
-			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
-    		return;
+    	boolean wasLocked = EnvironmentLockManager.isLocked();
+    	try {
+    		EnvironmentLockManager.setLocked(true);
+			
+	    	SessionManager.getInstance().createSession("Loading...");
+	    	
+	        Project project = Application.getInstance().getProject();
+	        
+	    	// ensure the diagram is locked for edit
+	    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
+	    		SessionManager.getInstance().cancelSession();
+				JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+	    		return;
+	    	}
+	    	
+	    	// get the main style string from the view stereotype tag "style"
+	    	Object tag = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StyleSaverUtils.getWorkingStereotype(project), "style");
+	    	String styleStr = StereotypesHelper.getStereotypePropertyStringValue(tag);
+	    	
+			JSONObject style = StyleSaverUtils.parse(styleStr); 
+			
+	    	// get the elements on the diagram to load styles into
+	    	List<PresentationElement> list = this.diagToFix.getPresentationElements();
+	    	
+	    	// run the loader with a progress bar
+			RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(list, style);
+			BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
+			
+			if(runnable.getSuccess()) {
+				SessionManager.getInstance().closeSession();
+				JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			} else {
+				SessionManager.getInstance().cancelSession();
+				JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			}
+    	} finally {
+    		EnvironmentLockManager.setLocked(wasLocked);
     	}
-    	
-    	// get the main style string from the view stereotype tag "style"
-    	Object tag = StereotypesHelper.getStereotypePropertyFirst(this.diagToFix.getElement(), StyleSaverUtils.getWorkingStereotype(project), "style");
-    	String styleStr = StereotypesHelper.getStereotypePropertyStringValue(tag);
-    	
-		JSONObject style = StyleSaverUtils.parse(styleStr); 
-		
-    	// get the elements on the diagram to load styles into
-    	List<PresentationElement> list = this.diagToFix.getPresentationElements();
-    	
-    	// run the loader with a progress bar
-		RunnableLoaderWithProgress runnable = new RunnableLoaderWithProgress(list, style);
-		BaseProgressMonitor.executeWithProgress(runnable, "Load Progress", true);
-		
-		if(runnable.getSuccess()) {
-			SessionManager.getInstance().closeSession();
-			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-		} else {
-			SessionManager.getInstance().cancelSession();
-			JOptionPane.showMessageDialog(null, "Load cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
-		}
     }
 }
