@@ -77,10 +77,9 @@ public class DgOperationInstance implements DgOperation {
     envFactory.getDgEvaluationEnvironment().addDgOperation( this );
   }
   
-	public void addStringParameter(EParameter parameter) {
-		addParameter(parameter, OCLStandardLibraryImpl.INSTANCE.getString());
-		this.parameters.add(parameter);
-	}
+  public void addStringParameter( EParameter parameter ) {
+    addParameter( parameter, OCLStandardLibraryImpl.INSTANCE.getString() );
+  }
 
   @Override
   public void addParameter(EParameter parameter, EClassifier type) {
@@ -146,10 +145,12 @@ public class DgOperationInstance implements DgOperation {
     return callerType;
   }
 
+  @Override
   public void setCallerType( EClassifier callerType ) {
     this.callerType = callerType;
   }
 
+  @Override
   public void setReturnType( EClassifier returnType ) {
     this.returnType = returnType;
   }

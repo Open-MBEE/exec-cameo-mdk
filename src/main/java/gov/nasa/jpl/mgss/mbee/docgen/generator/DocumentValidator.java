@@ -134,8 +134,9 @@ public class DocumentValidator {
 		sysmlview = Utils.getViewStereotype();
 		conforms = Utils.getConformsStereotype();
 		
-		
-
+        // Reset cache in OclEvaluator to ensure user-defined shortcut functions
+        // are updated
+        OclEvaluator.opsCache = null;
 		
 		//List of Validation Rules
 		Validationui.addValidationRule(multipleFirstErrors);

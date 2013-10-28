@@ -203,6 +203,9 @@ public class OclQueryAction extends MDAction {
         if ( elem == null ) return null;
         result = OclEvaluator.evaluateQuery( elem, oclString, true );
         output = toString(result);
+        if ( !OclEvaluator.isValid() ) {
+            output = output + "\nOclInvalid\nThis may be the result of a problem with a shortcut/blackbox function.";
+        }
         String type = null;
         
         //EmfUtils.getTypeName( result ); // TODO -- THIS LINE REPLACES BELOW
@@ -334,11 +337,18 @@ public class OclQueryAction extends MDAction {
     Collection< Element > selectedElements = MDUtils.getSelection( e );
     setContext( selectedElements );
 
+    //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
+    OclEvaluator.opsCache = null;
+    
     boolean wasOn = Debug.isOn();
     Debug.turnOn();
+    try {
     RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog( "Enter an OCL expression:",
                                                              "OCL Evaluation",
                                                              new ProcessOclQuery(selectedElements));
+    } catch (Throwable t) {
+        t.printStackTrace();
+    }
     if ( !wasOn ) Debug.turnOff();
   }
   

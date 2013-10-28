@@ -76,7 +76,10 @@ public class DocGen3Profile {
 	public static final String nameChoosable = "NameChoosable";
 	public static final String diagramTypeChoosable = "DiagramTypeChoosable";
     public static final String expressionChoosable = "ExpressionChoosable";
+    public static final String expression = "Expression";
 	public static final String sortable = "Sortable";
+	
+	public static final String expressionLibrary = "ExpressionLibrary";
 	
 	public static final String stereotypePropertyChoosable = "StereotypePropertiesChoosable";
 	public static final String documentationChoosable = "DocumentationChoosable";

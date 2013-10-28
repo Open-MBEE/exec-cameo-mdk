@@ -303,9 +303,14 @@ public class Configurator implements ConfiguratorWithPriority,
                || c.equals( EventObject.class ) ) {
             args.add( actionEvent );
           } else {
-            Debug.error( true, false, "Warning! Action " + actionMethod
-                                + " passing null for " + c + "!" );
-            args.add( null );
+            if ( c.equals( Element.class ) ) {
+                // passs null for Element
+                args.add( null );
+            } else {
+                // unrecognized argument
+                Debug.error( true, false, "Warning! Action " + actionMethod.getName()
+                             + " is getting passed null " + c.getSimpleName() + "!" );
+            }
           }
         }
       }

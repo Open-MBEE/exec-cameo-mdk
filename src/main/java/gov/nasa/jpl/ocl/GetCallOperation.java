@@ -2,6 +2,7 @@ package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.CollectionAdder;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 
@@ -52,14 +53,26 @@ public class GetCallOperation implements CallOperation {
   private boolean matchNull = true; // TODO
   private boolean activityEdgeIsRelationship = true; // TODO
 
+  /**
+   * Always filter on these; i.e. collected elements should match all Objects in alwaysFilter.
+   */
   public Object[] alwaysFilter = null;
   
   public CallReturnType resultType = CallReturnType.SELF;
   
-  public GetCallOperation() {
+  public GetCallOperation( CallReturnType opType,
+                           boolean onlyOneForAll,
+                           boolean onlyOnePer) {
     super();
+    this.resultType = opType;
+    this.onlyOneForAll = onlyOneForAll;
+    this.onlyOnePer = onlyOnePer;
   }
   
+  public GetCallOperation() {
+      super();
+    }
+    
   /* (non-Javadoc)
    * @see gov.nasa.jpl.ocl.CallOperation#callOperation(java.lang.Object, java.lang.Object[])
    */
@@ -162,7 +175,10 @@ public class GetCallOperation implements CallOperation {
             objectToAdd = source;
           } else {
             if ( asElement && elem != null ) {
-              objectToAdd = elem.getOwnedElement();
+              ArrayList<Element> members = new ArrayList< Element >();
+              if ( elem.getOwnedElement() != null ) members.addAll( elem.getOwnedElement() );
+              members.addAll( Utils.getSlots( elem ) );
+              objectToAdd = members;
 //            } else if ( coll != null && !asCollection ) {
 //              objectToAdd = source;
             } else if ( asEObject && source instanceof EObject ) {
@@ -203,21 +219,29 @@ public class GetCallOperation implements CallOperation {
         objectToAdd = list;
       } else {
         // TODO -- apply filter while collecting above for efficiency in case returning only one!
+        // REVIEW -- this todo above may already be done
         if ( filter ) {
-          objectToAdd =
-              EmfUtils.collectOrFilter( adder, objectToAdd, !filter,
-                                        ( onlyOneForAll || ( isCollection && onlyOnePer ) ),
-                                        useName, useType, useValue, asObject,
-                                        filterArgs );
+          if ( !Utils2.isNullOrEmpty( args ) ) {
+            objectToAdd =
+                    EmfUtils.collectOrFilter( adder, objectToAdd, !filter,
+                                              ( onlyOneForAll ||
+                                                ( isCollection && onlyOnePer ) ),
+                                              useName, useType, useValue, asObject,
+                                              args );
+          }
+          if ( !Utils2.isNullOrEmpty( alwaysFilter ) ) {
+            objectToAdd = EmfUtils.collectOrFilter( adder, objectToAdd, false,
+                                                    ( onlyOneForAll ||
+                                                      ( isCollection && onlyOnePer ) ),
+                                                    useName, useType, useValue, asObject,
+                                                    alwaysFilter );
+          }
         }
       }
       if ( objectToAdd instanceof Collection ) {
         objectToAdd = adder.fix( (Collection< ? >)objectToAdd );
       }
-//      if ( objectToAdd instanceof Collection ) {
-//        return CollectionUtil.asSequence( (Collection< ? >)objectToAdd );
-//      }
       return objectToAdd;
   }
-  
+
 }

@@ -37,15 +37,17 @@ public interface DgOperation extends Comparable<DgOperation> {
 	public String getAnnotationName();
 	
 	public String getName();
+    public void setName(String name); 
 	
 	public List<EParameter> getParameters();
 	
 	public void setAnnotationName(String annotationName);
 	
-	public void setName(String name); 
-
 	public void setOperation(CallOperation operation);
 	
 	public EClassifier getReturnType();
-  public EClassifier getCallerType();
+    public void setReturnType( EClassifier classifier );
+    
+	public EClassifier getCallerType();
+	public void setCallerType( EClassifier classifier );
 }

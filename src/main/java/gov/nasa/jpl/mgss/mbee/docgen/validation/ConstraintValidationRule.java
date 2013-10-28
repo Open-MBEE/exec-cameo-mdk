@@ -7,6 +7,8 @@ import gov.nasa.jpl.mbee.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.ocl.OclEvaluator;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,8 +69,14 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
         Debug.outln( "init(Project=" + paramProject + ", Constraint="
                      + paramConstraint + ")" );
         if ( constraintElement == null ) constraintElement = paramConstraint;
+
+        //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
+        OclEvaluator.opsCache = null;
+        OclEvaluator.useCachedOps = true;
+
         // collect all constraints and the objects they constrain
         Collection< String > ids = paramProject.getAllIDS();
+
         for ( String id : ids ) {
             BaseElement elem = paramProject.getElementByID( id );
             if ( elem == null ) continue;
@@ -115,11 +123,15 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
         Debug.outln( "run(Project, " + paramConstraint + " , "
                 + paramCollection + ")" );
    
+        OclEvaluator.opsCache = null;
+        OclEvaluator.useCachedOps = true;
+
         Collection< gov.nasa.jpl.mbee.constraint.Constraint > constraints =(Collection<gov.nasa.jpl.mbee.constraint.Constraint>)
                 ( Utils2.isNullOrEmpty( paramCollection ) ? (constraintToElementMap == null ? Utils2.newList() : constraintToElementMap.keySet() )
                                                   : getAffectedConstraints( paramCollection ) );
-        
+
         for ( gov.nasa.jpl.mbee.constraint.Constraint constraint : constraints ) {
+            try {
             Boolean satisfied = constraint.evaluate();
             if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
                 //List<NMAction> actionList = new ArrayList<NMAction>();
@@ -128,8 +140,11 @@ public class ConstraintValidationRule implements ElementValidationRuleImpl, Smar
                         new Annotation( constraint.getViolatedConstraintElement(), paramConstraint );
                 result.add(annotation);
             }
+            } catch(Throwable e ) {
+                Debug.error(true, false, "ConstraintValidationRule: " + e.getLocalizedMessage() );
+            }
         }
-        
+
 //        if ( !wasOn ) Debug.turnOff();
         return result;
     }

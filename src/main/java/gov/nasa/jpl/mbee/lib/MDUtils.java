@@ -179,10 +179,10 @@ public class MDUtils {
 //    return res;
 //  }
   
-  public static Constraint getConstraint( Element elemt ) {
-    Constraint c = null;
-    elemt.get_constraintOfConstrainedElement();
-    return c;
-  }
+//  public static Constraint getConstraint( Element elemt ) {
+//    Constraint c = null;
+//    elemt.get_constraintOfConstrainedElement();
+//    return c;
+//  }
   
 }
