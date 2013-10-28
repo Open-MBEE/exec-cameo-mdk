@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.stylesaver;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.ui.EnvironmentLockManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.validation.ElementValidationRuleImpl;
 import com.nomagic.magicdraw.validation.SmartListenerConfigurationProvider;
@@ -64,27 +65,34 @@ public class ViewStereotypeSetValidation implements ElementValidationRuleImpl, S
     @Override
 	public Set<Annotation> run(Project project, Constraint constraint, Collection<? extends Element> elements) {
     	Set<Annotation> result = new HashSet<Annotation>();
-		
-		// get all the diagrams in the project
-		Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(this.getClass());
-		
-		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
-		
-		// iterate over each diagram checking if the view stereotype is applied
-		for(DiagramPresentationElement diag : diagCollection) {
-	    	if(!StyleSaverUtils.isGoodStereotype(diag, workingStereotype)) {
-	            // add a fix for diagrams without the view stereotype
-	            NMAction noView = new FixNoViewStereotype(diag);
-	            
-	            List<NMAction> actionList = new ArrayList<NMAction>();
 
-	            actionList.add(noView);
-	            
-	            // create the annotation
-	    	    Annotation annotation = new Annotation(diag, constraint, actionList);
-	            result.add(annotation);
-	    	}
-		}
+    	boolean wasLocked = EnvironmentLockManager.isLocked();
+    	try {
+    		EnvironmentLockManager.setLocked(true);
+			
+			// get all the diagrams in the project
+			Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(this.getClass());
+			
+			Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
+			
+			// iterate over each diagram checking if the view stereotype is applied
+			for(DiagramPresentationElement diag : diagCollection) {
+		    	if(!StyleSaverUtils.isGoodStereotype(diag, workingStereotype)) {
+		            // add a fix for diagrams without the view stereotype
+		            NMAction noView = new FixNoViewStereotype(diag);
+		            
+		            List<NMAction> actionList = new ArrayList<NMAction>();
+	
+		            actionList.add(noView);
+		            
+		            // create the annotation
+		    	    Annotation annotation = new Annotation(diag, constraint, actionList);
+		            result.add(annotation);
+		    	}
+			}
+    	} finally {
+    		EnvironmentLockManager.setLocked(wasLocked);
+    	}
 		
         return result;
     }
