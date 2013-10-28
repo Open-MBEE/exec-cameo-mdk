@@ -11,6 +11,7 @@ import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.ui.EnvironmentLockManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 
 /**
@@ -71,7 +72,14 @@ public class FixPatternMismatchAll extends NMAction implements AnnotationAction 
 	 * Performs a sync on all elements on the diagram.
 	 */
 	private void syncAll() {
-		PatternLoader pl = new PatternLoader(null, null, 0, null, diagToFix);
-		pl.prepAndRun(true);
+    	boolean wasLocked = EnvironmentLockManager.isLocked();
+    	try {
+    		EnvironmentLockManager.setLocked(true);
+			
+			PatternLoader pl = new PatternLoader(null, null, 0, null, diagToFix);
+			pl.prepAndRun(true);
+    	} finally {
+    		EnvironmentLockManager.setLocked(wasLocked);
+    	}
 	}
 }

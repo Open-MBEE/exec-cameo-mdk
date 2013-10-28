@@ -20,7 +20,7 @@
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
-                <custom description="Product" id="IDaction_1378760972112_50537_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
+                <custom description="Document" id="IDaction_1378760972112_50537_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
                     <stereotype id="_17_0_2_3_87b0275_1371477871400_792964_43374"/>
                     <defaults>
                         <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
@@ -47,8 +47,8 @@
             </actions>
         </category>
     </toolbarConfiguration>
-    <module location="/Applications/MagicDraw UML 17.0.2/profiles/MDK/CoP Extensions.mdxml" name="CoP Extensions.mdxml">
-        <root id="_17_0_2_3_e9f034d_1372781831901_334575_29028"/>
+    <module location="/Applications/MagicDraw UML 17.0.2/profiles/MDK/SysML Extensions.mdxml" name="SysML Extensions.mdxml">
+        <root id="_17_0_1_2_8c20286_1339022620435_958581_14857"/>
     </module>
     <module location="/Applications/MagicDraw UML 17.0.2/profiles/UML_Standard_Profile.mdzip" name="UML_Standard_Profile.mdzip">
         <root id="magicdraw_uml_standard_profile_v_0001"/>

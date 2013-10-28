@@ -95,7 +95,7 @@
         <category expandedByDefault="true" id="action_category_1157006094171_471519_0" name="Package Diagram">
             <icon filename="packagediagram.gif" size="16" type="menu">47494638396110001000A20500FEFECCFFFFFF4D4D4D878787DDCD9EFFFFFF00000000000021F90401000005002C000000001000100000034238BABCF583C8494718906A626F8984206ADD1509402AAECDB9A66A75C2B42087F06B4F0A0EA0AA95AD0714D6382E112D87A400974390E479EC4D84D8E666DBEA3212003B</icon>
             <actions>
-                <custom description="Package«DocumentView»" id="IDaction_1331674110589_704454_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package">
+                <custom description="Package«Product»" id="IDaction_1331674110589_704454_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package">
                     <stereotype id="_17_0_1_407019f_1326996604350_494231_11646"/>
                     <defaults>
                         <PropertyVisitorAcceptor xmlns:xmi="http://schema.omg.org/spec/XMI/2.1">

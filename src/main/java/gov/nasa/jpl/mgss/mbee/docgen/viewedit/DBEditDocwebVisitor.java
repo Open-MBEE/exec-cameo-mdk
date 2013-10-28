@@ -284,6 +284,19 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 			}
 			
 			sibviews.pop();
+		} else {
+		    //addToViews(fake, false)
+		    //gen fakeid
+		    //sibviews.peek().add(fakeid);
+		    //JSONArray childViews = new JSONArray();
+		    //sibviews.push(childViews);
+		    //view2view.put(fakeid, childViews);
+		    //for (DocumentElement de: section.getChildren()) {
+                //if (recurse || !(de instanceof DBSection))
+             //       de.accept(this);
+            //}
+            
+            //sibviews.pop();
 		}
 	}
 
@@ -349,7 +362,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 		}
 		if (e instanceof NamedElement) {
 			o.put("name", ((NamedElement)e).getName());
-			o.put("qualifiedName", ((NamedElement)e).getQualifiedName().replaceAll("::", "."));
+			o.put("qualifiedName", ((NamedElement)e).getQualifiedName().trim().replaceAll("::", ".").replaceAll("[^A-Za-z0-9_\\-\\. ]", "_"));
 		} 
 		String doc = ModelHelper.getComment(e);
 		if (e instanceof Comment) {

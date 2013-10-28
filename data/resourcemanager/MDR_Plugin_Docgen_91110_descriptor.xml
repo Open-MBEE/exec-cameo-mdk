@@ -129,10 +129,6 @@
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-core-7.0.16.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-core-7.0.16.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-jasper.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-jasper.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-logging-juli-7.0.37.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-logging-juli-7.0.37.jar"/>
-	<file from="profiles/MDK/BPMN Extensions.mdxml" to="profiles/MDK/BPMN Extensions.mdxml"/>
-	<file from="profiles/MDK/Common Extensions.mdxml" to="profiles/MDK/Common Extensions.mdxml"/>
-	<file from="profiles/MDK/CoP Extensions.mdxml" to="profiles/MDK/CoP Extensions.mdxml"/>
-	<file from="profiles/MDK/ISO 42010 Profile.mdxml" to="profiles/MDK/ISO 42010 Profile.mdxml"/>
 	<file from="profiles/MDK/SysML Extensions.mdxml" to="profiles/MDK/SysML Extensions.mdxml"/>
 
   </installation>

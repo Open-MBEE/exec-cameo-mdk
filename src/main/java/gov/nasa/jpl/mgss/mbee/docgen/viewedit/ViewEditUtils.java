@@ -30,16 +30,10 @@ public class ViewEditUtils {
 	private static final List<String> servers = Arrays.asList("http://docgen.jpl.nasa.gov:8080/editor", 
 															  "https://europaems:8443/alfresco/service",
 															  "http://docgen.jpl.nasa.gov:8080/europa",   
-															  "http://docgen.jpl.nasa.gov:8080/staging", 
-															  "http://localhost:8080/editor",
-															  "http://localhost:8080/view-repo/service",
 															  "Other");
 	private static final List<String> displays = Arrays.asList("Community: http://docgen:8080/editor",
 			                          						   "Europa Alfresco: https://europaems:8443/alfresco/service",
-			                          						   "Europa: http://docgen:8080/europa",											
-															   "Staging: http://docgen:8080/staging",
-															   "Local-dev: http://localhost:8080/editor",
-															   "Local-alfresco: http://localhost:8080/view-repo/service",
+			                          						   "Europa Old: http://docgen:8080/europa",	
 															   "Other");
 	public static String getUrl() {
 		String chosen = editorurl == null ? DEFAULT_EDITOR_CHOICE : editorurl;

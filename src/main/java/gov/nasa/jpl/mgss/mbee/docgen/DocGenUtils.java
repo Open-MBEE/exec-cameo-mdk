@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
+import gov.nasa.jpl.mbee.lib.HtmlManipulator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.dgview.FromProperty;
 import gov.nasa.jpl.mgss.mbee.docgen.dgview.ViewElement;
@@ -64,7 +65,7 @@ public class DocGenUtils {
 			put("<s>|<strike>|<s [^>]*>|<strike [^>]*>", "<emphasis role=\"strikethrough\">");
 			put("<i>|<i [^>]*>", "<emphasis>");
 			put("<u>|<u [^>]*>", "<emphasis role=\"underline\">");
-			put("<span>|<span [^>]*>|</span>|<br>|<br/>|</br>", "");
+			put("<span>|<span [^>]*>|</span>|<br>|<br/>|</br>|<br />", "");
 			put("</b>|</i>|</u>|</strong>|</em>|</s>|</strike>", "</emphasis>");
 			put("<font [^>]*>|</font>", "");
 			put("<sup>|<sup [^>]*>", "<superscript>");
@@ -77,6 +78,8 @@ public class DocGenUtils {
 			put("<a href=\"mdel://([^\"&^\\?]+)(\\?[^\"]*)?\">([^<]*)</a>", "<link linkend=\"$1\">$3</link>");
 			put("<pre>|<pre [^>]*>", "<screen>");
 			put("</pre>", "</screen>");
+			put("<svg", "<mediaobject><imageobject><imagedata><svg");
+			put("</svg>", "</svg></imagedata></imageobject></mediaobject>");
 			put("&nbsp;", "&#160;");
 			put("&sup2;", "<superscript>2</superscript>");
 			put("&sup3;", "<superscript>3</superscript>");
@@ -110,11 +113,11 @@ public class DocGenUtils {
     	if (s instanceof String) {
     		if (((String) s).contains("<html>"))
     			if (convertHtml)
-    				return html2docbook((String)s);
+    				return HtmlManipulator.replaceHtmlEntities(html2docbook((String)s));
     			else
     				return Utils.stripHtmlWrapper((String)s);
     		else
-    			return ((String)s).replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1").replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;");
+    			return HtmlManipulator.replaceHtmlEntities(((String)s).replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1").replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"));
     	} else if (s instanceof Integer)
     		return Integer.toString((Integer)s);
     	else if (s instanceof InstanceValue) {

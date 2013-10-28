@@ -28,6 +28,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.ui.EnvironmentLockManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 
@@ -73,9 +74,9 @@ public class FixPatternMismatchSelect extends NMAction implements AnnotationActi
 
 	@Override
 	public void actionPerformed(ActionEvent paramActionEvent) {
-		SessionManager.getInstance().createSession("Fixing mismatch");
+//		SessionManager.getInstance().createSession("Fixing mismatch");
 		syncSelection();
-		SessionManager.getInstance().closeSession();
+//		SessionManager.getInstance().closeSession();
 	}
 	
 	private void syncSelection() {
@@ -138,32 +139,38 @@ public class FixPatternMismatchSelect extends NMAction implements AnnotationActi
 		
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
-			// ensure the diagram is locked for edit
-	    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
-				JOptionPane.showMessageDialog(null, "The target diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
-	    		return;
+	    	boolean wasLocked = EnvironmentLockManager.isLocked();
+	    	try {
+	    		EnvironmentLockManager.setLocked(true);
+				
+				// ensure the diagram is locked for edit
+		    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
+					JOptionPane.showMessageDialog(null, "The target diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+		    	} else {
+					Object[] userSelections = cbl.getCheckBoxListSelectedValues();
+					
+					List<PresentationElement> loadList = new ArrayList<PresentationElement>();
+					for(PresentationElement elem : diagToFix.getPresentationElements()) {
+						if(Arrays.asList(userSelections).contains(elem.getHumanType())) {
+							loadList.add(elem);
+						}
+					}
+					
+					SessionManager.getInstance().createSession("Loading pattern...");
+					try {
+						PatternLoader.loadPattern(loadList, pattern, null);
+					} catch(RuntimeException e) {
+						e.printStackTrace();
+						SessionManager.getInstance().cancelSession();
+						return;
+					}
+					JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+					SessionManager.getInstance().closeSession();
+		    	}
+	    	} finally {
+	    		EnvironmentLockManager.setLocked(wasLocked);
 	    	}
-			
-			Object[] userSelections = cbl.getCheckBoxListSelectedValues();
-			
-			List<PresentationElement> loadList = new ArrayList<PresentationElement>();
-			for(PresentationElement elem : diagToFix.getPresentationElements()) {
-				if(Arrays.asList(userSelections).contains(elem.getHumanType())) {
-					loadList.add(elem);
-				}
-			}
-			
-			SessionManager.getInstance().createSession("Loading pattern...");
-			try {
-				PatternLoader.loadPattern(loadList, pattern, null);
-			} catch(RuntimeException e) {
-				e.printStackTrace();
-				SessionManager.getInstance().cancelSession();
-				return;
-			}
-			JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-			SessionManager.getInstance().closeSession();
-			
+	    	
 			frame.dispose();
 		}
 	}

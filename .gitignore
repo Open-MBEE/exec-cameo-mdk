@@ -4,3 +4,4 @@
 /bin
 *.jresult
 *.diff
+/build-nojenkins.xml

@@ -34,6 +34,16 @@ public class GeneratorUtils {
 		return null;
 	}
 	
+	public static Element findStereotypedRelationship(Element e, Stereotype s) {
+        List<Stereotype> ss = new ArrayList<Stereotype>();
+        ss.add(s);
+        List<Element> es = Utils.collectDirectedRelatedElementsByRelationshipStereotypes(e, ss, 1, true, 1);
+        if (es.size() > 0) {
+            return es.get(0);
+        }
+        return null;
+    }
+	
 	public static InitialNode findInitialNode(Element a) {
 		for (Element e: a.getOwnedElement())
 			if (e instanceof InitialNode)
@@ -80,6 +90,7 @@ public class GeneratorUtils {
 	}
 	
 	public static void docMetadata(Document doc, Element start) {
+	    Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGen3Profile.documentViewStereotype, "Document Profile");
 		// documentMeta Backwards Compatibility 
 		String title = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "title");
 		String subtitle = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentMetaStereotype, "subtitle");
@@ -107,24 +118,25 @@ public class GeneratorUtils {
     	if (chunkSectionDepthO != null && chunkSectionDepthO instanceof String)
     		chunkSectionDepth = Integer.parseInt((String)chunkSectionDepthO);
     	
+    	
     	//Document View Settings
-		String DocumentID = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Document ID");
-		String DocumentVersion = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Version");
-		String LogoAlignment = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Logo Alignment");
-		String LogoLocation = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Logo Location");
-		String AbbreviatedProjectName= (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Project Acronym");
-		String DocushareLink= (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Docushare Link");
-		String AbbreiviatedTitle = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Document Acronym");
-		String TitlePageLegalNotice = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Title Page Legal Notice");
-		String FooterLegalNotice = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Footer Legal Notice");
-		String RemoveBlankPages = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Remove Blank Pages");
+		String DocumentID = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Document ID");
+		String DocumentVersion = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Version");
+		String LogoAlignment = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Logo Alignment");
+		String LogoLocation = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Logo Location");
+		String AbbreviatedProjectName= (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Project Acronym");
+		String DocushareLink= (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Docushare Link");
+		String AbbreiviatedTitle = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Document Acronym");
+		String TitlePageLegalNotice = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Title Page Legal Notice");
+		String FooterLegalNotice = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Footer Legal Notice");
+		String RemoveBlankPages = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Remove Blank Pages");
 		
-		List <String> CollaboratorEmail = StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Collaborator Email");
-		List <String> RevisionHistory = StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Revision History");
-		String JPLProjectTitle =(String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Formal Project Title");
+		List <String> CollaboratorEmail = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView, "Collaborator Email");
+		List <String> RevisionHistory = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView, "Revision History");
+		String JPLProjectTitle =(String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Formal Project Title");
 		
-		String LogoSize = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Logo Size");
-		Object UseDefaultStylesheetO =StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "UseDefaultStylesheet");
+		String LogoSize = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Logo Size");
+		Object UseDefaultStylesheetO =StereotypesHelper.getStereotypePropertyFirst(start, documentView, "SupressMetadata");
 		boolean UseDefaultStylesheet=(UseDefaultStylesheetO instanceof Boolean && !(Boolean)UseDefaultStylesheetO || UseDefaultStylesheetO instanceof String && UseDefaultStylesheetO.equals("false")) ? false : true;
 		
     	
@@ -133,15 +145,15 @@ public class GeneratorUtils {
 		
     	if (title == null || title.equals(""))
     		title = ((NamedElement)start).getName();
-    	Stereotype stereotype = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGen3Profile.documentViewStereotype);
+    	
       if (FooterLegalNotice == null || FooterLegalNotice.equals("")){
-    		Property propertyByName = StereotypesHelper.getPropertyByName(stereotype, "Footer Legal Notice");
+    		Property propertyByName = StereotypesHelper.getPropertyByName(documentView, "Footer Legal Notice");
         if ( propertyByName != null ) {
           FooterLegalNotice= propertyByName.getDefault();
         }    	
     	}
     	if (TitlePageLegalNotice == null || TitlePageLegalNotice.equals("")){
-    		Property propertyByName = StereotypesHelper.getPropertyByName(stereotype, "Title Page Legal Notice");
+    		Property propertyByName = StereotypesHelper.getPropertyByName(documentView, "Title Page Legal Notice");
     		if ( propertyByName != null ) {
     		  TitlePageLegalNotice = propertyByName.getDefault();
     		}
@@ -149,13 +161,13 @@ public class GeneratorUtils {
     	}
     	
     	//Institutional Logo setup
-    	String instLogo = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "InstLogo");
-		String instLogoSize = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "InstLogoSize");
-		String instTxt1= (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Insttxt1");
-		String instTxt2 = (String)StereotypesHelper.getStereotypePropertyFirst(start, DocGen3Profile.documentViewStereotype, "Insttxt2");
+    	String instLogo = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "InstLogo");
+		String instLogoSize = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "InstLogoSize");
+		String instTxt1= (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Insttxt1");
+		String instTxt2 = (String)StereotypesHelper.getStereotypePropertyFirst(start, documentView, "Insttxt2");
     	
     	//Collect author information
-    	List <String> Author= StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Author");
+    	List <String> Author= StereotypesHelper.getStereotypePropertyValueAsString(start, documentView, "Author");
 		
     	List<String> authorCollect = new ArrayList<String>();
     	List <Element> roles = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start, DocGen3Profile.accountableForStereotype, 2, false, 1);
@@ -184,7 +196,7 @@ public class GeneratorUtils {
 		}
     	
     	//Collect approver information
-		List <String> Approver = StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Approver");
+		List <String> Approver = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView, "Approver");
 		List<String> approverCollect = new ArrayList<String>();
 		
 		List<Element> aprvrs = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start, DocGen3Profile.approvesStereotype, 1, false, 1);
@@ -216,7 +228,7 @@ public class GeneratorUtils {
 		}
 		
 		//Collect concurrence information
-		List <String> Concurrence = StereotypesHelper.getStereotypePropertyValueAsString(start, DocGen3Profile.documentViewStereotype, "Concurrence");
+		List <String> Concurrence = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView, "Concurrence");
 		List<String> concurCollect = new ArrayList<String>();
 		
 		List<Element> cncr = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start, DocGen3Profile.concursStereotype, 1, false, 1);

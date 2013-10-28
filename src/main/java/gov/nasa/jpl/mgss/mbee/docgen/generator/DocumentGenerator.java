@@ -7,13 +7,11 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenPlugin;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-import gov.nasa.jpl.mgss.mbee.docgen.model.BillOfMaterialsTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.BulletedList;
 import gov.nasa.jpl.mgss.mbee.docgen.model.CombinedMatrix;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Container;
 import gov.nasa.jpl.mgss.mbee.docgen.model.CustomTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.DependencyMatrix;
-import gov.nasa.jpl.mgss.mbee.docgen.model.DeploymentTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.DocGenElement;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
 import gov.nasa.jpl.mgss.mbee.docgen.model.GenericTable;
@@ -26,7 +24,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Query;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
 import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
-import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageAssemblyTable;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -70,14 +67,13 @@ public class DocumentGenerator {
 	private GenerationContext context; // Easier for modular implementation. Contains previous three variables.
 	private Element start;
 	private Document doc;
-	private Stereotype sysmlview;
+	private Stereotype sysmlview = Utils.getViewStereotype();
 	private Stereotype product;
+	private Stereotype conforms = Utils.getConformsStereotype();
 			
 	public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
 		start = e;
-		sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
-		product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
-		StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+		product = StereotypesHelper.getStereotype(Project.getProject(e), "Document", "SysML Extensions");
 		doc = new Document();
 		context = new GenerationContext(new Stack<List<Element>>(), null, dv,
 		                                Application.getInstance().getGUILog());
@@ -85,9 +81,7 @@ public class DocumentGenerator {
 
     public DocumentGenerator(Element e, PrintWriter wlog) {
         start = e;
-        sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
-        product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
-        StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+        product = StereotypesHelper.getStereotype(Project.getProject(e), "Document", "SysML Extensions");
         doc = new Document();
         context = new GenerationContext(new Stack<List<Element>>(), null,
                                         Application.getInstance().getGUILog());
@@ -104,7 +98,7 @@ public class DocumentGenerator {
 	 */
 	public Document parseDocument(boolean singleView, boolean recurse) {
 		if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
-			if (start instanceof Package || start instanceof Diagram || StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype) || 
+			if (start instanceof Package || start instanceof Diagram || StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype, "Document Profile") || 
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype) != null || 
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nextStereotype) != null ||
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nosectionStereotype) != null) {
@@ -128,7 +122,7 @@ public class DocumentGenerator {
 	}
 	
 	public Section parseView(Element view) {
-		Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.conformStereotype);
+		Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
 		
 		Section viewSection = new Section(); //Section is a misnomer, should be View
 		viewSection.setView(true);
@@ -166,6 +160,8 @@ public class DocumentGenerator {
 				}
 			}
 			if (b != null) { //parse and execute viewpoint behavior, giving it the imported/queried elements
+			    Boolean addVPElements = (Boolean)GeneratorUtils.getObjectProperty(b, DocGen3Profile.methodStereotype, "includeViewpointElements", false);;
+			    
 				List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, ElementImport.class, 1, 1);
 				List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view, PackageImport.class, 1, 1);
 				List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.queriesStereotype, 1, false, 1);
@@ -176,6 +172,12 @@ public class DocumentGenerator {
 				if (queries != null) elementImports.addAll(queries); //all three import/queries relationships are interpreted the same
 				if (elementImports.isEmpty())
 					elementImports.add(view); //if view does not import/query anything, give the view element itself to the viewpoint
+				if (addVPElements) {
+				    elementImports.add(viewpoint);
+				    elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(viewpoint, "AddressedTo", 1, false, 1));
+				    elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(viewpoint, "Covers", 1, false, 1));
+				    elementImports.add(b);
+				}
 				context.pushTargets(elementImports); //this becomes the context of the activity going in
 				if (b instanceof Activity) {
 					parseActivityOrStructuredNode(b, viewSection);
@@ -566,12 +568,6 @@ public class DocumentGenerator {
 			dge = new UserScript();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.propertiesTableByAttributesStereotype)) {
 			dge = new PropertiesTableByAttributes();
-		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.billOfMaterialsStereotype)) {
-			dge = new BillOfMaterialsTable();
-		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.deploymentStereotype)) {
-			dge = new DeploymentTable();
-		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.workpakcageAssemblyStereotype)) {
-			dge = new WorkpackageAssemblyTable();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.missionMappingStereotype)) {
 			dge = new MissionMapping();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.libraryChooserStereotype)) {

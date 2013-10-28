@@ -1,5 +1,8 @@
 package gov.nasa.jpl.ocl;
 
+import gov.nasa.jpl.mbee.lib.Debug;
+
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +25,7 @@ public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
 	private List<DgOperation> dgOperations = new ArrayList<DgOperation>();
 	
 	@SuppressWarnings("deprecation")
+	
 	DgEvaluationEnvironment() {
 		super();
 	}
@@ -56,4 +60,39 @@ public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
 	public void addDgOperation(DgOperation dgOperation) {
 		dgOperations.add(dgOperation);
 	}
+	
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.ocl.ecore.EcoreEvaluationEnvironment#getJavaMethodFor(org
+     * .eclipse.emf.ecore.EOperation, java.lang.Object)
+     * 
+     * This is overridden because the EString EClass instance wasn't mapping
+     * it's Java instance class to String.class as it should, resulting in a
+     * NullPointer exception
+     */
+	@Override
+	protected Method getJavaMethodFor(EOperation operation, Object receiver)
+	{
+	    Method result = null;
+    	try {
+    	    result = super.getJavaMethodFor( operation, receiver );
+    	} catch ( Throwable e ) {
+    	    if ( operation != null && operation.getEContainingClass() != null ) {
+    	        EClass container = operation.getEContainingClass();
+    	        Class<?> containerClass = container.getInstanceClass();
+    	        if ( containerClass == null ) {
+    	            if ( container.getName().startsWith( "String" ) ) {
+    	                container.setInstanceClass( String.class );
+    	            }
+    	            return getJavaMethodFor( operation, receiver );
+    	        }
+    	    }
+    	    Debug.error(true, true, "Couldn't get java method for EOperation, " + operation);
+    	}
+    	
+    	return result;
+	}
+	
 }

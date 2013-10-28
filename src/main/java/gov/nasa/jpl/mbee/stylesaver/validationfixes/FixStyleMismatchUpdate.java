@@ -6,6 +6,7 @@ import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.ui.EnvironmentLockManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 
 
@@ -77,25 +78,32 @@ public class FixStyleMismatchUpdate extends NMAction implements AnnotationAction
      * Performs the actual save on the diagram. 
      */
     private void performSave() {
-    	SessionManager.getInstance().createSession("Saving...");
+    	boolean wasLocked = EnvironmentLockManager.isLocked();
+    	try {
+    		EnvironmentLockManager.setLocked(true);
+			
+    		SessionManager.getInstance().createSession("Saving...");
     	
-        Project project = Application.getInstance().getProject();
-        
-    	// ensure the diagram is locked for edit
-    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
-    		SessionManager.getInstance().cancelSession();
-			JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
-    		return;
+	        Project project = Application.getInstance().getProject();
+	        
+	    	// ensure the diagram is locked for edit
+	    	if(!StyleSaverUtils.isDiagramLocked(project, diagToFix.getElement())) {
+	    		SessionManager.getInstance().cancelSession();
+				JOptionPane.showMessageDialog(null, "This diagram is not locked for edit. Lock it before running this function.", "Error", JOptionPane.ERROR_MESSAGE);
+	    		return;
+	    	}
+	    	
+	        String JSONStr = ViewSaver.save(project, this.diagToFix, false);
+	        
+			if(JSONStr != null) {
+				SessionManager.getInstance().closeSession();
+				JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			} else {
+				SessionManager.getInstance().cancelSession();
+				JOptionPane.showMessageDialog(null, "Save cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			}
+    	} finally {
+    		EnvironmentLockManager.setLocked(wasLocked);
     	}
-    	
-        String JSONStr = ViewSaver.save(project, this.diagToFix, false);
-        
-		if(JSONStr != null) {
-			SessionManager.getInstance().closeSession();
-			JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-		} else {
-			SessionManager.getInstance().cancelSession();
-			JOptionPane.showMessageDialog(null, "Save cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
-		}
     }
 }

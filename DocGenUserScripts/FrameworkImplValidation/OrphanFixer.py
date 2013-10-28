@@ -8,7 +8,7 @@ from com.nomagic.magicdraw.openapi.uml import ModelElementsManager
 from com.nomagic.uml2.ext.jmi.helpers import ModelHelper
 from com.nomagic.uml2.ext.magicdraw.classes.mdkernel import *
 from com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces import Interface
-from com.nomagic.uml2.ext.magicdraw.mdprofiles import Stereotype
+from com.nomagic.uml2.ext.magicdraw.mdprofiles import *
 
 #from com.nomagic.uml2.ext.magicdraw.classes.mdkernel import Property
 #from com.nomagic.uml2.ext.magicdraw.classes.mdkernel import Package
@@ -37,12 +37,15 @@ ef = project.getElementsFactory()
 mem = ModelElementsManager.getInstance()
 sm = SessionManager.getInstance()
 disposeOrphanProxy=False
+profileSysML=StereotypesHelper.getProfile(project,"SysML")#profile of selection and base sysml
+gl.log(profileSysML.getName())
 #CSAF=StereotypesHelper.getProfile(project,"Mission Service Architecture Framework")
 listPort={}
 listProp={}
-
-def ProxyResolver(profile):
+#test
+wModel=project.getModel()
     
+def ProxyResolver(profile):
     proxies=proxyMan.getProxies() #returns all registered proxies
     count=0
     StereoCollect=[]
@@ -57,7 +60,7 @@ def ProxyResolver(profile):
     proxies=StereotypesHelper.filterByProfile(proxies,profile)
     for proxy in proxies:
         #first need to check if orphan proxy
-        #only want to work on proxies in the msaf
+        #only want to work on proxies in the msaf m  lkn
         
         if True==proxyMan.isGhostProxy(proxy):
             disposeOrphanProxy=False
@@ -75,7 +78,7 @@ def ProxyResolver(profile):
                 #get control service framework
                 for elem in elemSt:
                     gl.log("This element==>  "+elem.getQualifiedName()+"   is using the orphan proxy===>  "+proxy.getQualifiedName())
-                stereo=MDUtils.getUserSelections([Stereotype], profile, False,'Select Stereotype to Replace Orphan Stereotype==>'+proxy.getName(),[Stereotype,Package])
+                stereo=MDUtils.getUserSelections([Stereotype], wModel, False,'Select Stereotype to Replace Orphan Stereotype==>'+proxy.getName(),[Stereotype,Package,Profile])
                 for elem in elemSt:
                     if stereo is not None:
                         #StereoCollect[proxyID]=stereo.getID()
@@ -96,7 +99,7 @@ def ProxyResolver(profile):
                 for port in portNew:
                     
                     gl.log("This port==>  "+port.getQualifiedName()+"   is using the orphan proxy===>  "+proxy.getQualifiedName())
-                portSelect=MDUtils.getUserSelections([Port], profile, False,'Select Port to Replace Orphan Port (used in redefintion)==>'+proxy.getQualifiedName(),[Port,Package,Class,Interface])
+                portSelect=MDUtils.getUserSelections([Port], wModel, False,'Select Port to Replace Orphan Port (used in redefintion)==>'+proxy.getQualifiedName(),[Port,Package,Class,Interface,Profile])
                 for port in portNew:
                     #gl.log("I just want to see what ports we are getting here====>"+port.getQualifiedName())
                     #this gets all ports that are using the orphan port as a redefinition
@@ -124,7 +127,7 @@ def ProxyResolver(profile):
                 propNew=list(propertyRedef)
                 for prop in propNew:
                     gl.log("This property==>  "+prop.getQualifiedName()+"   is using the orphan proxy===>  "+proxy.getQualifiedName())
-                propSelect=MDUtils.getUserSelections([Property], profile, False,'Select Property to Replace Orphan Property (used in redefinition)==>'+proxy.getQualifiedName(),[Property,Package,Class,Interface])
+                propSelect=MDUtils.getUserSelections([Property], wModel, False,'Select Property to Replace Orphan Property (used in redefinition)==>'+proxy.getQualifiedName(),[Property,Package,Class,Interface,Profile])
                 for prop in propNew:
                     #gl.log("I just want to see what ports we are getting here====>"+port.getQualifiedName())
                     #this gets all ports that are using the orphan port as a redefinition
@@ -147,13 +150,30 @@ def ProxyResolver(profile):
                         else:
                             gl.log("Error the element you are trying to delete is not editable")
                 disposeOrphanProxy=True 
+            if isinstance(proxy,Package):
+                p=proxy
+                packSelect=MDUtils.getUserSelections([Package], wModel, False,'Select Package to Replace Orphan Package (used in redefinition)==>'+proxy.getQualifiedName(),[Package,Package,Class,Interface,Profile])
+                if packSelect is not None:
+                    #StereoCollect[proxyID]=stereo.getID()
+                    gl.log("This package is orphaned"+proxy.getName()+ "  and will be replaced with selected package===>"+packSelect.getQualifiedName())
+                    redefList.add(packSelect)
+                    fileProperty.write(str(ProxyId)+","+str(packSelect.getID())+"\n")
+                    proxy.dispose()
+                else:
+                    #StereoCollect[proxyID]=None
+                    gl.log("Cancel was selected for the Package Selection, so the package will be deleted======>"+proxy.getName())
+                        #StereotypesHelper.removeStereotype(elem,proxy)
+                    fileProperty.write(str(ProxyId)+","+"0"+"\n")
+                    #need to add flag here
+                    #mem.removeElement(p)
+                
                 #need to add how to handle ports properties associations...whatever we can get
                     
                 #get all elements that are stereotyped this
             #check to make sure you have lock on full project
             #first created, creates you a mapping
             #remember what to replace with and what to delete and re-run with lists of items
-            if disposeOrphanProxy==True:
+           # if disposeOrphanProxy==True:
                     #decide whether or not we want to dispose of orphan proxy
                     #gl.log("***********************If we come here we will dispose of an orphan")
                     proxy.dispose()
