@@ -88,6 +88,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 			return;
 		Stereotype sysmlview = Utils.getViewStereotype();
 		Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
+		Stereotype documentView = StereotypesHelper.getStereotype(prj, DocGen3Profile.documentViewStereotype, "Document Profile");
 		if (e == null)
 			return;
 		
@@ -146,11 +147,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 c.addAction(new DeleteProjectAction(e));
         }
         if (StereotypesHelper.hasStereotype(e, DocWebProfile.document) ||
-            StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentViewStereotype)) {
+            StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             NMAction act = manager.getActionFor(DeleteDocumentAction.actionid);
             if (act ==  null)
                 c.addAction(new DeleteDocumentAction(e));
+            if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
+                act = manager.getActionFor(OrganizeDocumentAction.actionid);
+                if (act ==  null)
+                    c.addAction(new OrganizeDocumentAction(e));
+            }
         }
         
         // DocGen menu
@@ -175,24 +181,22 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             if (act == null)
                 c.addAction(new GenerateDocumentAction(e));
             
-			if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentViewStereotype)) {
-				act = manager.getActionFor(PublishDocWebAction.actionid);
+			if (StereotypesHelper.hasStereotype(e, documentView)) {
+				/*act = manager.getActionFor(PublishDocWebAction.actionid);
 				if (act == null)
 					c.addAction(new PublishDocWebAction((NamedElement)e));
-				
+				*/
 				act = manager.getActionFor(NumberDependencyAction.actionid);
 				if (act == null)
 					c.addAction(new NumberDependencyAction(e));
 				
-				act = manager.getActionFor(OrganizeDocumentAction.actionid);
-				if (act ==  null)
-					c.addAction(new OrganizeDocumentAction(e));
+				
 			}
-			if (e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentStereotype)) {
+			/*if (e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentStereotype)) {
 				act = manager.getActionFor(PublishDocWebAction.actionid);
 				if (act == null)
 					c.addAction(new PublishDocWebAction((NamedElement)e));
-			}
+			}*/
 		}	
 	
 		if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlviewpoint)) {

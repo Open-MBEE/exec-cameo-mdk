@@ -39,6 +39,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ViewExporter implements RunnableWithProgress{
 
@@ -78,8 +79,8 @@ public class ViewExporter implements RunnableWithProgress{
 
 		// first post view information View Editor
 		baseurl += "/rest/views/" + doc.getID();
-		
-		if (StereotypesHelper.hasStereotypeOrDerived(doc, DocGen3Profile.documentViewStereotype))
+		Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGen3Profile.documentViewStereotype, "Document Profile");
+		if (StereotypesHelper.hasStereotypeOrDerived(doc, documentView))
 			document = true;		
 		
 		DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);

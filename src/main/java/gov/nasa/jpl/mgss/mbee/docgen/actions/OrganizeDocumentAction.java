@@ -32,7 +32,7 @@ public class OrganizeDocumentAction extends MDAction {
 	public static final String actionid = "OrganizeDocument";
 	
 	public OrganizeDocumentAction(Element e) {
-		super(actionid, "Organize Document", null, null);
+		super(actionid, "Add To View Editor", null, null);
 		doc = e;
 	}
 	

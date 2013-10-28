@@ -20,7 +20,7 @@
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
-                <custom description="Product" id="IDaction_1378760972112_50537_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
+                <custom description="Document" id="IDaction_1378760972112_50537_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
                     <stereotype id="_17_0_2_3_87b0275_1371477871400_792964_43374"/>
                     <defaults>
                         <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">

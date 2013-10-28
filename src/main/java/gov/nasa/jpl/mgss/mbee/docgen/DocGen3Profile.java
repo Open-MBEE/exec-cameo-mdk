@@ -1,16 +1,16 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
 public class DocGen3Profile {
-	public static final String sectionStereotype = "Section3";
-	public static final String paragraphStereotype = "Paragraph3";
-	public static final String documentStereotype = "Document3";
-	public static final String imageStereotype = "Image3";
+	public static final String sectionStereotype = "Dynamic View";
+	public static final String paragraphStereotype = "Paragraph";
+	public static final String documentStereotype = "zzDocument";
+	public static final String imageStereotype = "Image";
 	public static final String nextStereotype = "Next";
 	public static final String firstStereotype = "First";
   public static final String oldQueriesStereotype = "Queries";
 	public static final String queriesStereotype = "Expose";
 	public static final String nosectionStereotype = "NoSection";
-	public static final String appendixStereotype = "Appendix3";
+	public static final String appendixStereotype = "zzAppendix";
 	public static final String viewpointStereotype = "Viewpoint";
 	public static final String viewStereotype = "View";
 	public static final String dgviewStereotype = "view";
@@ -18,21 +18,21 @@ public class DocGen3Profile {
 	public static final String appendixViewStereotype = "AppendixView";
 	public static final String structuredQueryStereotype = "StructuredQuery";
 	public static final String tableStereotype = "Table";
-	public static final String bulletedListStereotype = "BulletedList3";
-	public static final String combinedMatrixStereotype = "CombinedMatrix3";
+	public static final String bulletedListStereotype = "BulletedList";
+	public static final String combinedMatrixStereotype = "zzCombinedMatrix";
 	public static final String methodStereotype = "Method";
 	
-	public static final String customTableStereotype = "CustomTable";
+	public static final String customTableStereotype = "zzCustomTable";
 	public static final String tableStructureStereotype = "TableStructure";					
 	public static final String tablePropertyColumnStereotype = "TablePropertyColumn";		
 	public static final String tableExpressionColumnStereotype = "TableExpressionColumn";
 	public static final String tableAttributeColumnStereotype = "TableAttributeColumn";		
 	public static final String tableSumRowStereotype = "TableSumRow";						
 	
-	public static final String dependencyMatrixStereotype = "DependencyMatrix3";
-	public static final String genericTableStereotype = "GenericTable3";
-	public static final String hierarchicalPropertiesTableStereotype = "HierarchicalPropertiesTable3";
-	public static final String propertiesTableByAttributesStereotype = "PropertiesTableByAttributes3";
+	public static final String dependencyMatrixStereotype = "zzDependencyMatrix";
+	public static final String genericTableStereotype = "GenericTable";
+	public static final String hierarchicalPropertiesTableStereotype = "HierarchicalPropertiesTable";
+	public static final String propertiesTableByAttributesStereotype = "PropertiesTableByAttributes";
 	
 	public static final String userScriptStereotype = "UserScript";
 	public static final String userScriptCFStereotype = "Collect/Filter UserScript";
@@ -43,7 +43,7 @@ public class DocGen3Profile {
 	
 	public static final String collectionStereotype = "CollectionAndFilterGroup";
 	public static final String documentMetaStereotype = "DocumentMeta";
-	public static final String documentViewStereotype = "DocumentView";
+	public static final String documentViewStereotype = "Product";
 	public static final String accountableForStereotype = "accountableFor";
 	public static final String approvesStereotype = "approves";
 	public static final String concursStereotype = "concurs";
