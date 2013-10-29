@@ -25,12 +25,20 @@ public class RunUserValidationScriptAction extends MDAction {
 	private UserScript scripti;
 	public static final String actionid = "RunValidationScript";
 	public RunUserValidationScriptAction(UserScript us) {
-		super(actionid, "Run Validation Script", null, null);
+		super(null, "Run Validation Script", null, null);
 		scripti = us;
 		String name = scripti.getStereotypeName();
 		if (name != null)
 			this.setName("Run " + name + " Validation");
 	}
+	
+	public RunUserValidationScriptAction(UserScript us, boolean useid) {
+        super(actionid, "Run Validation Script", null, null);
+        scripti = us;
+        String name = scripti.getStereotypeName();
+        if (name != null)
+            this.setName("Run " + name + " Validation");
+    }
 	
 	@SuppressWarnings("rawtypes")
 	public void actionPerformed(ActionEvent event) {
