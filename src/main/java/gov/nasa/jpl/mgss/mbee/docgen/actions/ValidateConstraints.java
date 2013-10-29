@@ -22,7 +22,7 @@ public class ValidateConstraints extends MDAction {
      */
     private static final long serialVersionUID = 2202161655434764023L;
 
-    protected List< Element > context = new ArrayList< Element >();
+    protected List< Element > context = new ArrayList< Element >(); // REVIEW -- Is this being used?
 
     public static final String actionid = "ValidateConstraints";
     
@@ -48,6 +48,11 @@ public class ValidateConstraints extends MDAction {
     @Override
     public void actionPerformed( ActionEvent e ) {
         Collection< Element > selectedElements = MDUtils.getSelection( e );
+//        for ( Element elem : new ArrayList<Element>( selectedElements ) ) {
+//            if ( elem instanceof Package ) {
+//                selectedElements.addAll( Utils.collectOwnedElements( elem, 0 ) );
+//            }
+//        }
         setContext( selectedElements );
 
         //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
