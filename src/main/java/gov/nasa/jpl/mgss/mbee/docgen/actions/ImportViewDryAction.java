@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
+import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
+
 import java.awt.event.ActionEvent;
 
 import com.nomagic.magicdraw.actions.MDAction;
@@ -16,6 +18,11 @@ public class ImportViewDryAction extends MDAction {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
+	    DocumentValidator dv = new DocumentValidator(doc);
+	    dv.validateDocument();
+        dv.printErrors();
+        if (dv.isFatal())
+            return;
 		ImportViewAction.doImportView(doc, false, null, null);
 	}
 }
