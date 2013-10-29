@@ -237,7 +237,7 @@ public class CollectFilterParser {
 			res.addAll(Utils.filterElementsByStereotypes(in, stereotypes, include, derived));
         } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterExpressionStereotype)) {
             res.addAll(Utils.filterElementsByExpression(in, cba, include));
-		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectionStereotype)) {
+		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectionStereotype) && cba.getBehavior() != null) {
 			res.addAll(collectAndFilterGroup((Activity)cba.getBehavior(), in));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.removeDuplicates)) {
 			res.addAll(Utils.removeDuplicates(in));
