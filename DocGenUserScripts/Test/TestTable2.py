@@ -13,7 +13,7 @@ model = []                          #this is for the editable table body
 headers = ['Document', 'Doc ID']    #this is for the editable table header
 editable = [True, True]             #this is whether the table cells are editable
 prop = [PropertyEnum.NAME, PropertyEnum.VALUE]       #this is what should be edited for each cell
-stereotype = StereotypesHelper.getStereotype(proj, "DocumentView") #this is needed to get the slots
+stereotype = StereotypesHelper.getStereotype(proj, "Product", "Document Profile") #this is needed to get the slots
 
 for t in targets:
     for doc in t.getOwnedElement():

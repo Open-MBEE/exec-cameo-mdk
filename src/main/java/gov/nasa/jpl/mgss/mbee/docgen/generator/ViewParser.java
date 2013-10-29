@@ -6,8 +6,10 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Container;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 /**
  * This parses the view structure constructed using First, Next, NoSection dependencies
@@ -31,7 +33,8 @@ public class ViewParser {
 	}
 	
 	public void parse() {
-		if (StereotypesHelper.hasStereotypeOrDerived(start, DocGen3Profile.documentViewStereotype)) {
+	    Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGen3Profile.documentViewStereotype, "Document Profile");
+		if (StereotypesHelper.hasStereotypeOrDerived(start, documentView)) {
 			doc.setDgElement(start); //only set the DgElement if this is actually a document view, this affects processing down the line for various things (like docweb visitors)
 			Element first = GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype);
 			if (first != null)

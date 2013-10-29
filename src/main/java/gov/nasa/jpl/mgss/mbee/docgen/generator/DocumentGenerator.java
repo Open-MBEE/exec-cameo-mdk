@@ -73,7 +73,7 @@ public class DocumentGenerator {
 			
 	public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
 		start = e;
-		product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
+		product = StereotypesHelper.getStereotype(Project.getProject(e), "Document", "SysML Extensions");
 		doc = new Document();
 		context = new GenerationContext(new Stack<List<Element>>(), null, dv,
 		                                Application.getInstance().getGUILog());
@@ -81,7 +81,7 @@ public class DocumentGenerator {
 
     public DocumentGenerator(Element e, PrintWriter wlog) {
         start = e;
-        product = StereotypesHelper.getStereotype(Project.getProject(e), "Product", "Project Profile");
+        product = StereotypesHelper.getStereotype(Project.getProject(e), "Document", "SysML Extensions");
         doc = new Document();
         context = new GenerationContext(new Stack<List<Element>>(), null,
                                         Application.getInstance().getGUILog());
@@ -98,7 +98,7 @@ public class DocumentGenerator {
 	 */
 	public Document parseDocument(boolean singleView, boolean recurse) {
 		if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
-			if (start instanceof Package || start instanceof Diagram || StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype) || 
+			if (start instanceof Package || start instanceof Diagram || StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype, "Document Profile") || 
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype) != null || 
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nextStereotype) != null ||
 					GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nosectionStereotype) != null) {

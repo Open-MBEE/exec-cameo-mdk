@@ -178,6 +178,7 @@
 	<classpathentry kind="var" path="MD1701/lib/commons-compress-1.3.jar"/>
 	<classpathentry kind="var" path="MD1701/lib/truezip-driver-zip-7.4.3.jar"/>
 	<classpathentry kind="var" path="MD1701/lib/truezip-kernel-7.4.3.jar"/>
+	<classpathentry kind="var" path="MD1701//plugins/com.nomagic.magicdraw.automaton/engines/groovy-1.7.10/lib/groovy-1.7.10.jar"/>
 	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.jpython/jpython_api.jar"/>
 	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.jpython/jython2.5.1/jython.jar"/>
 <classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/com.google.guava_11.0.1.jar"/>

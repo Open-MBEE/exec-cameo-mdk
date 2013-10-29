@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.stylesaver;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.ui.EnvironmentLockManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.validation.ElementValidationRuleImpl;
 import com.nomagic.magicdraw.validation.SmartListenerConfigurationProvider;
@@ -66,30 +67,37 @@ public class PreviouslySavedValidation implements ElementValidationRuleImpl, Sma
 	public Set<Annotation> run(Project project, Constraint constraint, Collection<? extends Element> elements) {
 		Set<Annotation> result = new HashSet<Annotation>();
 		
-		// get all the diagrams in this project
-		Collection<DiagramPresentationElement> diagCollection = project.getDiagrams();
-		Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
-		
-		for(DiagramPresentationElement diag : diagCollection) {
-			// check that the working stereotype is usable
-			if(StyleSaverUtils.isGoodStereotype(diag, workingStereotype)) {
-		    	// get the style currently in the tag
-		        String tagStyle = (String) StereotypesHelper.getStereotypePropertyFirst(diag.getElement(), workingStereotype, "style");
-
-		        // there is nothing in this style tag yet
-		        if(tagStyle == null) {
-		        	// add a fix -- save the style
-		        	NMAction styleAdd = new FixNotSaved(diag);
-		        	
-		        	List<NMAction> actionList = new ArrayList<NMAction>();
-		        	actionList.add(styleAdd);
-		        	
-		            // create the annotation
-					Annotation annotation = new Annotation(diag, constraint, actionList);
-			        result.add(annotation);	
-			    }
+    	boolean wasLocked = EnvironmentLockManager.isLocked();
+    	try {
+    		EnvironmentLockManager.setLocked(true);
+			
+			// get all the diagrams in this project
+			Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(this.getClass());
+			Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
+			
+			for(DiagramPresentationElement diag : diagCollection) {
+				// check that the working stereotype is usable
+				if(StyleSaverUtils.isGoodStereotype(diag, workingStereotype)) {
+			    	// get the style currently in the tag
+			        String tagStyle = (String) StereotypesHelper.getStereotypePropertyFirst(diag.getElement(), workingStereotype, "style");
+	
+			        // there is nothing in this style tag yet
+			        if(tagStyle == null) {
+			        	// add a fix -- save the style
+			        	NMAction styleAdd = new FixNotSaved(diag);
+			        	
+			        	List<NMAction> actionList = new ArrayList<NMAction>();
+			        	actionList.add(styleAdd);
+			        	
+			            // create the annotation
+						Annotation annotation = new Annotation(diag, constraint, actionList);
+				        result.add(annotation);	
+				    }
+				}
 			}
-		}
+    	} finally {
+    		EnvironmentLockManager.setLocked(wasLocked);
+    	}
 
         return result;
     }

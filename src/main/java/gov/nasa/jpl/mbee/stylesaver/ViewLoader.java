@@ -146,9 +146,6 @@ public class ViewLoader extends MDAction {
     			return false;
     		}
     		
-    		// recursively load the style of the element's children
-    		loadChildren(elem, style);
-    		
     		// parse the style string for the correct style of the current element
     		String elemStyle = StyleSaverUtils.getStyleStringForElement(elem, style);
     		
@@ -160,6 +157,9 @@ public class ViewLoader extends MDAction {
     		// load the style of the current element
     		setStyle(elem, elemStyle);
     		elem.getDiagramSurface().repaint();
+    		
+    		// recursively load the style of the element's children after parents have been moved
+    		loadChildren(elem, style);
     		
     		style.remove(elem.getID());
 
@@ -178,9 +178,6 @@ public class ViewLoader extends MDAction {
 	 */
 	public static void load(List<PresentationElement> elemList, JSONObject style) {
     	for(PresentationElement elem : elemList) {
-    		// recursively load the style of the element's children
-    		loadChildren(elem, style);
-    		
     		// parse the style string for the correct style of the current element
     		String elemStyle = StyleSaverUtils.getStyleStringForElement(elem, style);
     		
@@ -192,6 +189,9 @@ public class ViewLoader extends MDAction {
     		// load the style of the current element
     		setStyle(elem, elemStyle);
     		elem.getDiagramSurface().repaint();
+
+    		// recursively load the style of the element's children after parent is moved
+    		loadChildren(elem, style);
 
     		style.remove(elem.getID());
        	}
