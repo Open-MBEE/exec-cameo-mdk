@@ -2129,7 +2129,9 @@ public class Utils {
     public static List<Slot> getSlots( Element elem ) {
         List<Slot> slots = new ArrayList< Slot >();
         InstanceSpecification localInstanceSpecification = elem.getAppliedStereotypeInstance();
-        slots.addAll( localInstanceSpecification.getSlot() );
+        if ( localInstanceSpecification != null ) {
+            slots.addAll( localInstanceSpecification.getSlot() );
+        }
         return slots;
     }
 	

@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +45,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     protected Element context = null;
     protected Constraint constraint = null;
 
+    protected Set<BaseElement> elementsWithConstraints = new LinkedHashSet< BaseElement >();
     protected Map< BaseElement, Set< gov.nasa.jpl.mbee.constraint.Constraint > > elementToConstraintMap =
             new TreeMap< BaseElement, Set< gov.nasa.jpl.mbee.constraint.Constraint > >(CompareUtils.GenericComparator.instance());
     protected Map< gov.nasa.jpl.mbee.constraint.Constraint, Set< BaseElement > > constraintToElementMap =
@@ -83,6 +85,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     protected void initConstraintMaps(Project paramProject, Collection<? extends Element> paramCollection) {
         elementToConstraintMap.clear();
         constraintToElementMap.clear();
+        elementsWithConstraints.clear();
         
         if ( Utils2.isNullOrEmpty( paramCollection ) ) {
             paramCollection = Utils2.newList( Utils.getRootElement() );
@@ -100,6 +103,9 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             for ( Element elem : subElems ) {
                 List< gov.nasa.jpl.mbee.constraint.Constraint > constraints =
                         BasicConstraint.getConstraints( elem );
+                if ( !Utils2.isNullOrEmpty( constraints ) ) {
+                    elementsWithConstraints.add( elem );
+                }
                 Utils2.addAllToSet( elementToConstraintMap, elem, constraints );
                 for ( gov.nasa.jpl.mbee.constraint.Constraint constr : constraints ) {
                     Utils2.addToSet( constraintToElementMap, constr, elem );
@@ -109,10 +115,10 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     }
     
     public Collection< gov.nasa.jpl.mbee.constraint.Constraint >
-            getAffectedConstraints( Collection<? extends Element> affectedElements ) {
+            getAffectedConstraints( Collection< BaseElement > elements ) {
         Set< gov.nasa.jpl.mbee.constraint.Constraint > constraints =
                 new TreeSet< gov.nasa.jpl.mbee.constraint.Constraint >( CompareUtils.GenericComparator.instance() );
-        for ( Element elem : affectedElements ) {
+        for ( BaseElement elem : elements ) {
             constraints.addAll( elementToConstraintMap.get( elem ) );
         }
         return constraints;
@@ -140,9 +146,11 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 
         initConstraintMaps( paramProject, paramCollection );
         
+        //Set< BaseElement > elements = elementToConstraintMap.keySet();
+        
         Collection< gov.nasa.jpl.mbee.constraint.Constraint > constraints = (Collection<gov.nasa.jpl.mbee.constraint.Constraint>)
-                ( Utils2.isNullOrEmpty( paramCollection ) ? (constraintToElementMap == null ? Utils2.newList() : constraintToElementMap.keySet() )
-                                                  : getAffectedConstraints( paramCollection ) );
+                ( Utils2.isNullOrEmpty( elementsWithConstraints ) ? (constraintToElementMap == null ? Utils2.newList() : constraintToElementMap.keySet() )
+                                                  : getAffectedConstraints( elementsWithConstraints ) );
 
         for ( gov.nasa.jpl.mbee.constraint.Constraint constraint : constraints ) {
             try {
