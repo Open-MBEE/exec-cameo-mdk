@@ -175,8 +175,10 @@ public class StyleSaverUtils {
 	public static Collection<DiagramPresentationElement> findDiagramPresentationElements(Collection<? extends Element> elements) {
 		List<DiagramPresentationElement> dpels = new ArrayList<DiagramPresentationElement>();
 		for (Element e: elements) {
-			Diagram d = (Diagram) e;
-			dpels.add(Application.getInstance().getProject().getDiagram(d));
+			if (e instanceof Diagram) {
+				Diagram d = (Diagram) e;
+				dpels.add(Application.getInstance().getProject().getDiagram(d));
+			}
 		}
 		
 		return (Collection<DiagramPresentationElement>) dpels;
