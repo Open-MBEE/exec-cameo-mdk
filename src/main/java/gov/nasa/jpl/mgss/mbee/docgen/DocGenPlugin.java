@@ -75,8 +75,8 @@ public class DocGenPlugin extends Plugin {
 		
 		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 
-    getOclPlugin().init();
-    getVcPlugin().init();
+        getOclPlugin().init();
+        getVcPlugin().init();
 
 		ApplicationSyncEventSubscriber.subscribe();
 		

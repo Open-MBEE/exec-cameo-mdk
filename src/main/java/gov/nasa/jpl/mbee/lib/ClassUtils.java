@@ -83,13 +83,19 @@ public class ClassUtils {
                                        referenceArgsLength ); ++i ) {
           if ( referenceArgTypes[ i ] == null ) {
             if ( Debug.isOn() ) Debug.outln( "null arg[ " + i + " ]" );
+            ++numNull;
+            ++numDeps;
+            //++numMatching;
             continue;
           }
           if ( candidateArgTypes[ i ] == null ) {
             if ( Debug.isOn() ) Debug.outln( "null arg for args[ " + i
                 + " ].getClass()=" + referenceArgTypes[ i ] );
-            ++numNull;
-            ++numDeps;
+            Debug.error(false, true, "null arg for args[ " + i
+                + " ].getClass()=" + referenceArgTypes[ i ] );
+            //++numNull;
+            //++numDeps;
+            continue;
           } else if ( candidateArgTypes[ i ].isAssignableFrom( referenceArgTypes[ i ] ) ) {
               if ( Debug.isOn() ) Debug.outln( "argTypes1[ " + i + " ]="
                            + candidateArgTypes[ i ] + " matches args[ " + i
@@ -883,7 +889,7 @@ public class ClassUtils {
     for ( Entry< T, Pair< Class< ? >[], Boolean > > e : candidates.entrySet() ) {
       atc.compare( e.getKey(), e.getValue().first, e.getValue().second );
     }
-    if ( atc.best != null && !atc.allArgsMatched ) {
+    if ( atc.best != null && !atc.allNonNullArgsMatched ) {
       System.err.println( "constructor returned (" + atc.best
                           + ") only matches " + atc.mostMatchingArgs
                           + " args: " + Utils2.toString( argTypes, false ) );
@@ -901,7 +907,7 @@ public class ClassUtils {
       for ( Constructor< ? > aCtor : ctors) {
         atc.compare( aCtor, aCtor.getParameterTypes(), aCtor.isVarArgs() );
       }
-      if ( atc.best != null && !atc.allArgsMatched ) {
+      if ( atc.best != null && !atc.allNonNullArgsMatched ) {
         System.err.println( "constructor returned (" + atc.best
                             + ") only matches " + atc.mostMatchingArgs
                             + " args: " + Utils2.toString( argTypes, false ) );
