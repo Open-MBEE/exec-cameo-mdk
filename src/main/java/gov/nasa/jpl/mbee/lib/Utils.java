@@ -209,25 +209,38 @@ public class Utils {
 	}
 	
     public static List<Element> filterElementsByExpression(Collection<Element> elements,
-                                                           CallBehaviorAction cba,
-                                                           boolean include) {
+                                                           String query,
+                                                           boolean include, boolean iterate) {
         List<Element> res = new ArrayList<Element>();
-        Object query = GeneratorUtils.getObjectProperty(cba,
-                                                        DocGen3Profile.filterExpressionStereotype,
-                                                        "expression", null);
-        for (Element e : elements) {
+        if (!iterate) {
             Object o = null;
             DocumentValidator dv = CollectFilterParser.getValidator();
-            o = DocumentValidator.evaluate( query, e, dv, true );
+            o = DocumentValidator.evaluate( query, elements, dv, true );
             if ( OclEvaluator.isValid() ) {
 //            try {
 //                o = OclEvaluator.evaluateQuery(e, query);
                 Boolean istrue = isTrue(o, false);
                 if (include == ((Boolean)(istrue == null ? false : istrue)).booleanValue()) {
-                    res.add(e);
+                    res.addAll(elements);
                 }
 //            } catch ( ParserException e1 ) {
 //                e1.printStackTrace();
+            }
+        } else {
+            for (Element e : elements) {
+                Object o = null;
+                DocumentValidator dv = CollectFilterParser.getValidator();
+                o = DocumentValidator.evaluate( query, e, dv, true );
+                if ( OclEvaluator.isValid() ) {
+//              try {
+//                    o = OclEvaluator.evaluateQuery(e, query);
+                    Boolean istrue = isTrue(o, false);
+                    if (include == ((Boolean)(istrue == null ? false : istrue)).booleanValue()) {
+                        res.add(e);
+                    }
+//              } catch ( ParserException e1 ) {
+//                    e1.printStackTrace();
+                }
             }
         }
         return res;
@@ -512,7 +525,7 @@ public class Utils {
      *         the Elements in the result if it is a collection, or else an
      *         empty list
      */
-    public static List<Element> collectByExpression(Element element, Object query) {
+    public static List<Element> collectByExpression(Object element, Object query) {
         List<Element> res = new ArrayList<Element>();
         Object o = null;
         DocumentValidator dv = CollectFilterParser.getValidator();
@@ -539,13 +552,14 @@ public class Utils {
      *            the collect action containing the expression
      * @return a List of Elements
      */
-    public static List<Element> collectByExpression(List<Element> elements, CallBehaviorAction cba) {
+    public static List<Element> collectByExpression(List<Element> elements, String query, boolean iterate) {
         List<Element> res = new ArrayList<Element>();
-        Object query = GeneratorUtils.getObjectProperty(cba,
-                                                        DocGen3Profile.collectExpressionStereotype,
-                                                        "expression", null);
-        for (Element e : elements) {
-            res.addAll(collectByExpression(e, query)); // REVIEW -- Should this be add() instead of addAll()?
+        if (iterate)
+            res.addAll(collectByExpression(elements, query));
+        else {
+            for (Element e : elements) {
+                res.addAll(collectByExpression(e, query)); // REVIEW -- Should this be add() instead of addAll()?
+            }
         }
         return res;
     }
