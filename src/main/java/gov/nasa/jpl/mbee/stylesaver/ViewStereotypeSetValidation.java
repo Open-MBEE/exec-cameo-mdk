@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.stylesaver;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.EnvironmentLockManager;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
@@ -70,8 +71,8 @@ public class ViewStereotypeSetValidation implements ElementValidationRuleImpl, S
     	try {
     		EnvironmentLockManager.setLocked(true);
 			
-			// get all the diagrams in the project
-			Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(this.getClass());
+			// Note that validation rule has to constrain elements to Diagrams otherwise scope will break
+			Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(elements);
 			
 			Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
 			
