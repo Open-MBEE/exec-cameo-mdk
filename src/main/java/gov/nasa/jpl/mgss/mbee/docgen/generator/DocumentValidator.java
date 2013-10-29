@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.eclipse.ocl.ParserException;
@@ -549,10 +550,10 @@ public class DocumentValidator {
             result = OclEvaluator.evaluateQuery(context, expression);
         } catch ( ParserException e ) {
             if ( violationIfInconsistent ) {
-                String errorMessage = e.getLocalizedMessage() +
-                    " for OCL query \"" + expression + 
-                    "\" on " +
-                    EmfUtils.toString( context );
+                String errorMessage =
+                    e.getLocalizedMessage() + " for OCL query \"" + expression + 
+                    "\" on " + Utils.getName( context ) +
+                    (showElementIds ? "[" + context.getID() + "]" : "" );
                 if ( rule != null ) {
                     addViolationIfUnique( rule,
                                           context, errorMessage );
@@ -581,6 +582,9 @@ public class DocumentValidator {
         return evaluateConstraint( constraint, rule, violatedIfInconsistent );
     }
 
+    public static int maxNumberOfViolatingElementsToShow = Integer.MAX_VALUE;
+    public static boolean showElementIds = true;
+    
     /**
      * Evaluate the constraint and, if the constraint is inconsistent and the
      * violatedIfConsistent flag is true and the validation rule is not null, add a
@@ -600,15 +604,15 @@ public class DocumentValidator {
         if ( rule == null ) return satisfied;
         // check if constraint is violated
         if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
-            Element violatingElement = constraint.getViolatedConstraintElement();
-            Object target = constraint.getConstrainedObjects();
-            String comment = "Constraint " + constraint.getExpression() + " on "
-                    + EmfUtils.toString( target )
-                    + " is violated"
-                    + ( constraint.getConstrainingElements().size() > 1
-                        && !Utils2.isNullOrEmpty( violatingElement.getHumanName() )
-                        ? " for " + violatingElement.getHumanName() : "" );
-            addViolationIfUnique( rule, violatingElement, comment );
+            Element violatedElement = constraint.getViolatedConstraintElement();
+            String comment;
+            if ( constraint instanceof BasicConstraint ) {
+                comment = ( (BasicConstraint)constraint ).toStringViolated(maxNumberOfViolatingElementsToShow,
+                                                                           showElementIds);
+            } else {
+                comment = constraint.toString();
+            }
+            addViolationIfUnique( rule, violatedElement, comment );
         } else if ( violatedIfInconsistent ) {
             // check if inconsistent
             // TODO -- not yet checking if the constraint is self-contradictory
@@ -618,16 +622,21 @@ public class DocumentValidator {
                             ? null
                             : constraint.getConstrainingElements().iterator().next() );
             if ( !constraint.isConsistent()
-                 && constrainingElement instanceof Element
                  && StereotypesHelper.hasStereotypeOrDerived( constrainingElement,
-                                                              DocGen3Profile.constraintStereotype )
-                 && constraint instanceof BasicConstraint ) {
+                                                              DocGen3Profile.constraintStereotype ) ) {
                 String msg = ( (BasicConstraint)constraint ).getErrorMessage();
                 if ( Utils2.isNullOrEmpty( msg ) ) {
-                    msg = constraint.toString() + " is inconsistent";
+                    msg = "inconsistent ";
+                } else {
+                    msg = msg + " for ";
                 }
-                addViolationIfUnique( rule,
-                                      constrainingElement, msg );
+                if ( constraint instanceof BasicConstraint ) {
+                    msg = msg + ((BasicConstraint)constraint).toString( maxNumberOfViolatingElementsToShow,
+                                                                        showElementIds );
+                } else {
+                    msg = msg + "constraint " + constraint; 
+                }
+                addViolationIfUnique( rule, constrainingElement, msg );
             }
         }
         return satisfied;

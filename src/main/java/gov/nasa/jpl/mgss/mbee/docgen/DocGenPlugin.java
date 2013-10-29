@@ -40,6 +40,7 @@ public class DocGenPlugin extends Plugin {
 	private DocGenEmbeddedServer	embeddedServer;
 	private boolean					runEmbeddedServer = false;
 	protected OclEvaluatorPlugin oclPlugin = null;
+    protected ValidateConstraintsPlugin vcPlugin = null;
 	public static URLClassLoader extensionsClassloader = null;
 	
 	public DocGenPlugin() {
@@ -74,7 +75,8 @@ public class DocGenPlugin extends Plugin {
 		
 		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 
-    getOclPlugin().init();
+        getOclPlugin().init();
+        getVcPlugin().init();
 
 		ApplicationSyncEventSubscriber.subscribe();
 		
@@ -100,6 +102,13 @@ public class DocGenPlugin extends Plugin {
 	  return oclPlugin;
 	}
 	
+    public ValidateConstraintsPlugin getVcPlugin() {
+        if ( vcPlugin == null ) {
+          vcPlugin = new ValidateConstraintsPlugin();
+        }
+        return vcPlugin;
+      }
+      
 	@Override
 	public boolean isSupported() {
 		return true;
