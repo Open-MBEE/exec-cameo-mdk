@@ -101,7 +101,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(targets);
-            if (manager.getActionFor("RunValidationScript0") == null) 
+            if (manager.getActionFor(RunUserValidationScriptAction.actionid) == null) 
                 c.addAction(new RunUserValidationScriptAction(us));
         } else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
@@ -110,7 +110,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(targets);
-            if (manager.getActionFor("RunUserScript0") == null) 
+            if (manager.getActionFor(RunUserScriptAction.actionid) == null) 
                 c.addAction(new RunUserScriptAction(us));
         }
         if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {

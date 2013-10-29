@@ -19,9 +19,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 @SuppressWarnings("serial")
 public class RunUserScriptAction extends MDAction {
 	private UserScript scripti;
-
+	public static final String actionid = "RunUserScript";
 	public RunUserScriptAction(UserScript e) {
-		super(null, "Run User Script", null, null);
+		super(actionid, "Run User Script", null, null);
 		scripti = e;
 		String name = e.getStereotypeName();
 		if (name != null)
