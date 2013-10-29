@@ -6,6 +6,7 @@ package gov.nasa.jpl.mbee.constraint;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -15,6 +16,7 @@ import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -387,9 +389,75 @@ public class BasicConstraint implements Constraint {
     }
     
     public String toString() {
+        return toShortString();
+    }
+    
+    public String toShortString() {
         StringBuffer sb = new StringBuffer();
-        sb.append("Constraint:" + this.getExpression() + ",on:" + EmfUtils.toString( this.constrainedObjects ) );
+        sb.append("Constraint:\"" + this.getExpression() + "\" on " +
+                  EmfUtils.toString( this.constrainedObjects ) );
         return sb.toString();
+    }
+    
+    protected static String toString( Object o, boolean showElementId ) {
+        if ( o instanceof Element ) return toString( (Element)o, showElementId );
+        return MoreToString.Helper.toString( o );
+    }
+    protected static String toString( Element e, boolean showElementId ) {
+        return Utils.getName( e ) + (showElementId ? "[" + e.getID() + "]" : "" );
+    }
+    protected static String toString( Collection<? extends Object> coll, boolean showElementId ) {
+        return toString( coll, Integer.MAX_VALUE, showElementId );
+    }
+    protected static String toString( Collection<? extends Object> coll, int maxNumber, boolean showElementId ) {
+        if ( maxNumber <= 0 || Utils2.isNullOrEmpty( coll ) ) return "";
+        if ( coll.size() == 1 ) return toString(coll.iterator().next(), showElementId );
+        StringBuffer sb = new StringBuffer();
+        sb.append("( ");
+        int ct = 0;
+        for ( Object o : coll ) {
+            String oStr = toString( o, showElementId );
+            if ( Utils2.isNullOrEmpty( oStr ) ) continue;
+            if ( ct > 0 ) sb.append(", ");
+            sb.append( oStr );
+            ct++;
+            if ( ct >= maxNumber ) break;
+        }
+        if ( ct < coll.size() ) {
+            if ( ct > 0 ) sb.append(", ");
+            sb.append( "and " + (coll.size() - ct ) + " more" );
+        }
+        sb.append(" )");
+        return sb.toString();
+    }
+    
+    public String toString( int maxNumber, boolean showElementIds ) {
+        StringBuffer sb = new StringBuffer();
+        Element constrainingElement =
+                ( Utils2.isNullOrEmpty( getConstrainingElements() )
+                        ? null : getConstrainingElements().iterator().next() );
+        sb.append( "Constraint "
+                   + toString( constrainingElement, showElementIds )
+                   + " with expression, \"" + this.getExpression() + "\" on "
+                   + toString( this.constrainedObjects, maxNumber, showElementIds ) );
+        return sb.toString();
+    }
+    
+    public String toStringViolated(int maxNumberOfViolatingElementsToShow,
+                                   boolean showElementIds) {
+        Element violatedElement = this.getViolatedConstraintElement();
+        Set<Object> target = this.getConstrainedObjects();
+        StringBuffer comment = new StringBuffer();
+        comment.append( "constraint " + toString( violatedElement, showElementIds ) );
+        comment.append( " with expression, \"" + getExpression() + "\"" );
+        comment.append( " is violated" );
+        if ( maxNumberOfViolatingElementsToShow > 0 &&
+             !Utils2.isNullOrEmpty( target ) ) {
+            comment.append( " for " +
+                            toString( target, maxNumberOfViolatingElementsToShow,
+                                      showElementIds ) );
+        }
+        return comment.toString();
     }
 
     public static List<Element> getComments( Element source ) {
