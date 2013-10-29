@@ -554,7 +554,7 @@ public class Utils {
      */
     public static List<Element> collectByExpression(List<Element> elements, String query, boolean iterate) {
         List<Element> res = new ArrayList<Element>();
-        if (iterate)
+        if (!iterate)
             res.addAll(collectByExpression(elements, query));
         else {
             for (Element e : elements) {
