@@ -45,6 +45,7 @@ public class GeneratorUtils {
     }
 	
 	public static InitialNode findInitialNode(Element a) {
+	    if (a == null) return null;
 		for (Element e: a.getOwnedElement())
 			if (e instanceof InitialNode)
 				return (InitialNode)e;

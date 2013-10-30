@@ -55,8 +55,8 @@ public class ValidateConstraints extends MDAction {
 //        }
         setContext( selectedElements );
 
-        //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
-        OclEvaluator.opsCache = null;
+        // Ensure user-defined shortcut functions are updated
+        OclEvaluator.resetEnvironment();
         
         //ConstraintValidationRule rule = new ConstraintValidationRule();
         constraintRule.init( Utils.getProject(), null );

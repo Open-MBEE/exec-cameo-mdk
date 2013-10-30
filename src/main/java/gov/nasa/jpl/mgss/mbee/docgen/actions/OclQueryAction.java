@@ -248,7 +248,9 @@ public class OclQueryAction extends MDAction {
 //      } else {
 //        return outputList;
 //      }
-      OclEvaluator.opsCache = null;
+      // Ensure user-defined shortcut functions are updated
+      OclEvaluator.resetEnvironment();
+
       if ( Utils2.isNullOrEmpty( getContext() ) ) {
         outputList = process( null, oclString );
       } else for ( Element elem : getContext() ) {
@@ -338,8 +340,8 @@ public class OclQueryAction extends MDAction {
     Collection< Element > selectedElements = MDUtils.getSelection( e );
     setContext( selectedElements );
 
-    //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
-    OclEvaluator.opsCache = null;
+    // Ensure user-defined shortcut functions are updated
+    OclEvaluator.resetEnvironment();
     
     boolean wasOn = Debug.isOn();
     Debug.turnOn();
