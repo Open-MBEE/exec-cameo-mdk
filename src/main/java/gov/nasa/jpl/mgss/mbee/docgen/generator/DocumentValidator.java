@@ -96,10 +96,10 @@ public class DocumentValidator {
 	private ValidationRule multipleInitialNode = new ValidationRule("Muliple Initial Nodes", "Has multiple initial nodes!", error);
 	private ValidationRule multipleOutgoingFlows = new ValidationRule("Multiple Outgoing Flows", "Has multiple outgoing flows!", error);
 	private ValidationRule multipleIncomingFlows = new ValidationRule("Multple Incoming Flows", "Has multiple incoming flows!", warn);
-	private ValidationRule missingInitialNode = new ValidationRule("Missing Initial Node", "Is missing and initial node!", warn);
+	private ValidationRule missingInitialNode = new ValidationRule("Missing Initial Node", "Is missing an initial node!", error);
 	private ValidationRule multipleStereotypes = new ValidationRule("Multiple Stereotypes", "Element and/or its behavior has multiple stereotypes!", error);
 	private ValidationRule mismatchStereotypeErrors = new ValidationRule("Mismatched Stereotypes", "Element and its behavior have mismatched sterotypes!", error);
-	private ValidationRule missingStereotype = new ValidationRule("Missing stereotype", "Element and its behavior (if present) is missing a document stereotype!", warn);
+	private ValidationRule missingStereotype = new ValidationRule("Missing stereotype", "Element and its behavior (if present) is missing a document stereotype!", error);
 	private ValidationRule missingOutgoingFlow = new ValidationRule("Missing outgoing flow", "Non-final node is missing outgoing flow!", warn);
 	private ValidationRule cycleError = new ValidationRule("Cycles in model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule activityNodeCycleError = new ValidationRule("Activity Node Cycles in Model", "There are loops in this document! Do not generate document!", fatalerror);
@@ -329,11 +329,11 @@ public class DocumentValidator {
 				bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGen3Profile.tableColumnStereotype));
 				if (napplied.isEmpty() && bapplied.isEmpty())
 					missingStereotype.addViolation(n, missingStereotype.getDescription());
-				else if (bapplied.isEmpty())
-					mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
+				//else if (bapplied.isEmpty())
+				//	mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
 				else if (napplied.size() > 1 || bapplied.size() > 1)
 					multipleStereotypes.addViolation(n, multipleStereotypes.getDescription());
-				else if (!napplied.isEmpty() && napplied.iterator().next() != bapplied.iterator().next())
+				else if (!napplied.isEmpty() && !bapplied.isEmpty() && napplied.iterator().next() != bapplied.iterator().next())
 					mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
 				/*if (StereotypesHelper.hasStereotype(b, DocGen3Profile.sectionStereotype) || 
 						StereotypesHelper.hasStereotype(b, DocGen3Profile.structuredQueryStereotype) ||
