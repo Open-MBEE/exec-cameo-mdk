@@ -19,6 +19,10 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 public class ViewEditUtils {
 	private static final String DEFAULT_EDITOR_CHOICE = "Community: http://docgen:8080/editor";
 	private static String editorurl = null;
@@ -28,26 +32,44 @@ public class ViewEditUtils {
 	private static String alf_ticket = "";
 	private static boolean passwordSet = false;
 	private static final List<String> servers = Arrays.asList("http://docgen.jpl.nasa.gov:8080/editor", 
-															  "https://europaems:8443/alfresco/service",
+															 // "https://europaems:8443/alfresco/service",
 															  "http://docgen.jpl.nasa.gov:8080/europa",   
 															  "Other");
 	private static final List<String> displays = Arrays.asList("Community: http://docgen:8080/editor",
-			                          						   "Europa Alfresco: https://europaems:8443/alfresco/service",
+			                          						//   "Europa Alfresco: https://europaems:8443/alfresco/service",
 			                          						   "Europa Old: http://docgen:8080/europa",	
 															   "Other");
 	public static String getUrl() {
-		String chosen = editorurl == null ? DEFAULT_EDITOR_CHOICE : editorurl;
-		String url = Utils.getUserDropdownSelectionForString("Choose", "Choose View Editor Server", servers, displays, chosen);
-		if (url == null) {
-			return url;
-		}
-		editorurl = displays.get(servers.indexOf(url));
-		if (url.equals("Other")) {
-			String other = JOptionPane.showInputDialog("Enter the editor URL:", otherurl);
-			if (other != null)
-				otherurl = other;
-			return other;
-		}
+	    Boolean old = Utils.getUserYesNoAnswer("Use old view editor?");
+	    if (old == null)
+	        return null;
+	    String url = null;
+	    if (old) {
+	        String chosen = editorurl == null ? DEFAULT_EDITOR_CHOICE : editorurl;
+	        url = Utils.getUserDropdownSelectionForString("Choose", "Choose View Editor Server", servers, displays, chosen);
+	        if (url == null) {
+	            return url;
+	        }
+	        editorurl = displays.get(servers.indexOf(url));
+	        if (url.equals("Other")) {
+	            String other = JOptionPane.showInputDialog("Enter the editor URL:", otherurl);
+	            if (other != null)
+	                otherurl = other;
+	            return other;
+	        }
+	    } else {
+	        Element model = Application.getInstance().getProject().getModel();
+	        if (StereotypesHelper.hasStereotype(model, "AlfrescoViewEditor")) {
+	            url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "AlfrescoViewEditor", "url");
+	            if (url == null || url.equals("")) {
+	                JOptionPane.showMessageDialog(null, "Your project root element doesn't have AlfrescoViewEditor url stereotype property set!");
+	                return null;
+	            }
+	        } else {
+	            JOptionPane.showMessageDialog(null, "Your project root element doesn't have AlfrescoViewEditor url stereotype property set!");
+	            return null;
+	        }
+	    }
 		return url;
 	}
 	
