@@ -82,7 +82,7 @@ public class ViewEditUtils {
 		try {
 			URL url = new URL(urlstring);
 			
-			if (url.getProtocol().toLowerCase().equals("https") && !passwordSet) {
+			if (url.getProtocol().toLowerCase().equals("https")) {
 				// Pop up one time dialog for logging into Alfresco
 				JPanel userPanel = new JPanel();
 				userPanel.setLayout(new GridLayout(2,2));
@@ -97,6 +97,13 @@ public class ViewEditUtils {
 				userPanel.add(usernameFld);
 				userPanel.add(passwordLbl);
 				userPanel.add(passwordFld);
+				
+				if (username != null) {
+					usernameFld.setText(username);
+				}
+				if (password != null) {
+					passwordFld.setText(password);
+				}
 		
 				JOptionPane.showConfirmDialog(null, userPanel, "Enter your username and password for ViewEditor:"
 		                      ,JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
