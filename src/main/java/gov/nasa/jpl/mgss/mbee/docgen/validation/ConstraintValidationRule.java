@@ -76,9 +76,8 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
                      + paramConstraint + ")" );
         if ( constraintElement == null ) constraintElement = paramConstraint;
 
-        //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
-        OclEvaluator.opsCache = null;
-        OclEvaluator.useCachedOps = true;
+        // Ensure user-defined shortcut functions are updated
+        OclEvaluator.resetEnvironment();
 
     }
 
@@ -141,8 +140,8 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         System.out.println( "run(Project, " + paramConstraint + " , "
                             + paramCollection + ")" );
    
-        OclEvaluator.opsCache = null;
-        OclEvaluator.useCachedOps = true;
+        // Ensure user-defined shortcut functions are updated
+        OclEvaluator.resetEnvironment();
 
         initConstraintMaps( paramProject, paramCollection );
         

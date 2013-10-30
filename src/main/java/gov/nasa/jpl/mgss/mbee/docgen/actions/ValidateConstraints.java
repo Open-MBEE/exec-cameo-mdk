@@ -2,6 +2,7 @@ package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.Configurator;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ConstraintValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.ocl.OclEvaluator;
@@ -47,7 +48,7 @@ public class ValidateConstraints extends MDAction {
 
     @Override
     public void actionPerformed( ActionEvent e ) {
-        Collection< Element > selectedElements = MDUtils.getSelection( e );
+        Collection< Element > selectedElements = MDUtils.getSelection( e, Configurator.lastContextIsDiagram );
 //        for ( Element elem : new ArrayList<Element>( selectedElements ) ) {
 //            if ( elem instanceof Package ) {
 //                selectedElements.addAll( Utils.collectOwnedElements( elem, 0 ) );
@@ -55,8 +56,8 @@ public class ValidateConstraints extends MDAction {
 //        }
         setContext( selectedElements );
 
-        //Reset cache in OclEvaluator to ensure user-defined shortcut functions are updated
-        OclEvaluator.opsCache = null;
+        // Ensure user-defined shortcut functions are updated
+        OclEvaluator.resetEnvironment();
         
         //ConstraintValidationRule rule = new ConstraintValidationRule();
         constraintRule.init( Utils.getProject(), null );
