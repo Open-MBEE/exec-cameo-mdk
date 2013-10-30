@@ -12,9 +12,11 @@ import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.eclipse.ocl.ParserException;
 import org.jgrapht.DirectedGraph;
@@ -72,6 +74,18 @@ public class DocumentValidator {
 	
 	private ValidationSuite Validationui = new ValidationSuite("Validationui");
 	
+	private static final Map<String, String> requiredTags = new HashMap<String, String>() {
+        {
+            
+            put(DocGen3Profile.metaclassChoosable, "metaclasses");
+            put(DocGen3Profile.stereotypeChoosable, "stereotypes");
+            put(DocGen3Profile.nameChoosable, "names");
+            put(DocGen3Profile.diagramTypeChoosable, "diagramTypes");
+            put(DocGen3Profile.expressionChoosable, "expression");
+            put(DocGen3Profile.propertyChoosable, "desiredProperty");
+            put(DocGen3Profile.attributeChoosable, "desiredAttribute");
+        }
+    };
 	/*
 	 *Statuses possible, currently error, warning, and fatal error. 		
 	 */
@@ -96,13 +110,14 @@ public class DocumentValidator {
 	private ValidationRule multipleInitialNode = new ValidationRule("Muliple Initial Nodes", "Has multiple initial nodes!", error);
 	private ValidationRule multipleOutgoingFlows = new ValidationRule("Multiple Outgoing Flows", "Has multiple outgoing flows!", error);
 	private ValidationRule multipleIncomingFlows = new ValidationRule("Multple Incoming Flows", "Has multiple incoming flows!", warn);
-	private ValidationRule missingInitialNode = new ValidationRule("Missing Initial Node", "Is missing an initial node!", error);
+	private ValidationRule missingInitialNode = new ValidationRule("Missing Initial Node", "Is missing an initial node!", warn);
 	private ValidationRule multipleStereotypes = new ValidationRule("Multiple Stereotypes", "Element and/or its behavior has multiple stereotypes!", error);
 	private ValidationRule mismatchStereotypeErrors = new ValidationRule("Mismatched Stereotypes", "Element and its behavior have mismatched sterotypes!", error);
 	private ValidationRule missingStereotype = new ValidationRule("Missing stereotype", "Element and its behavior (if present) is missing a document stereotype!", error);
 	private ValidationRule missingOutgoingFlow = new ValidationRule("Missing outgoing flow", "Non-final node is missing outgoing flow!", warn);
 	private ValidationRule cycleError = new ValidationRule("Cycles in model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule activityNodeCycleError = new ValidationRule("Activity Node Cycles in Model", "There are loops in this document! Do not generate document!", fatalerror);
+	private ValidationRule missingTagValue = new ValidationRule("Missing tag", "An action is missing required tag value", error);
     private ValidationRule constraintRule = new ValidationRule("Constraint", "Model constraint violation", warn);
 
     /*
@@ -159,6 +174,7 @@ public class DocumentValidator {
 		Validationui.addValidationRule(shouldNotBeSection);
 		Validationui.addValidationRule(cycleError);
 		Validationui.addValidationRule(activityNodeCycleError);
+		Validationui.addValidationRule(missingTagValue);
         Validationui.addValidationRule(constraintRule);
 
 		
@@ -345,13 +361,16 @@ public class DocumentValidator {
 					}
 				//}
 			}
+			validateTags(n, b);
 		} else if (n instanceof StructuredActivityNode) {
 			if (!StereotypesHelper.hasStereotype(n, DocGen3Profile.structuredQueryStereotype) && 
 			        !StereotypesHelper.hasStereotype(n, DocGen3Profile.tableStructureStereotype) && 
 			        StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.tableColumnStereotype).isEmpty())
 				missingStereotype.addViolation(n, missingStereotype.getDescription());
 			validateActivity(n);
+			validateTags(n, null);
 		}
+		
 		for (ActivityEdge out: outs) {
 			ActivityNode next = out.getTarget();
 			if (graph.containsVertex(next)) {
@@ -363,6 +382,25 @@ public class DocumentValidator {
 				validateNode(next, graph);
 			}
 		}
+	}
+	
+	private void validateTags(ActivityNode node, Behavior b) {
+	    for (String stereotype: requiredTags.keySet()) {
+	        String tag = requiredTags.get(stereotype);
+	        if (StereotypesHelper.hasStereotypeOrDerived(node, stereotype) && 
+	                StereotypesHelper.getStereotypePropertyFirst(node, stereotype, tag) == null) {
+	            if (b == null) {
+	                missingTagValue.addViolation(node, missingTagValue.getDescription());
+	                return;
+	            } else {
+	                if (StereotypesHelper.hasStereotypeOrDerived(b,  stereotype) &&
+	                        StereotypesHelper.getStereotypePropertyFirst(b, stereotype, tag) == null) {
+	                    missingTagValue.addViolation(b, missingTagValue.getDescription());
+	                    return;
+	                }
+	            }
+	        }
+	    }
 	}
 	
 	private List<InitialNode> findInitialNodes(NamedElement e) {
