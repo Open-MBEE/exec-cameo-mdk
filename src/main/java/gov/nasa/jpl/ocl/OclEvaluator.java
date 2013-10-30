@@ -104,9 +104,9 @@ public class OclEvaluator {
 	protected static OCLHelper<EClassifier, ?, ?, Constraint> helper = null;
 	private static ProblemHandler problemHandler = null;
 
-	protected static DgEnvironmentFactory envFactory = new DgEnvironmentFactory();
-    public static Set< DgOperation > opsCache = null;
-    public static boolean useCachedOps = true;  
+	protected static DgEnvironmentFactory environmentFactory = new DgEnvironmentFactory();
+//    public static Set< DgOperation > opsCache = null;
+//    public static boolean useCachedOps = true;  
   
 	public static void createOclInstance(DgEnvironmentFactory envFactory) {
 		ocl = OCL.newInstance(envFactory);
@@ -271,14 +271,16 @@ public class OclEvaluator {
 	 */
 	public static Object evaluateQuery(Object context, String queryString,
 	                                   boolean verbose) throws ParserException {
-    setupEnvironment();
+	    if ( needEnvironmentSetup() ) {
+	        resetEnvironment();
+	        setupEnvironment();
+	    }
 
-    if ( queryString == null ) return null; 
+	    if ( queryString == null ) return null; 
     
-	  // create the ocl evaluator
-    OclEvaluator.createOclInstance( envFactory );
-      // boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
-	  setOclTracingEnabled(verbose);
+	    // create the ocl evaluator
+	    // boolean wasOn = Debug.isOn(); Debug.turnOn(); verbose = true;
+	    setOclTracingEnabled(verbose);
 		queryStatus = QueryStatus.VALID_OCL;
 
 		if ( context instanceof EObject ) {
@@ -299,6 +301,14 @@ public class OclEvaluator {
 		return result;
 	}
 	
+    public static boolean needEnvironmentSetup() {
+        if ( environmentFactory == null || environmentFactory.getDgEnvironment() == null ||
+             ocl == null || helper == null ) {
+            return true;
+        }
+        return false;
+    }
+
     public static List< GetCallOperation > addOperation( String[] names,
                                                          EClassifier callerType,
                                                          EClassifier returnType,
@@ -548,26 +558,45 @@ public class OclEvaluator {
       }
   }
 
+  public static DgEnvironmentFactory getEnvironmentFactory() {
+      if ( environmentFactory == null ) environmentFactory = new DgEnvironmentFactory();
+      return environmentFactory;
+  }
+  public static DgEvaluationEnvironment getEvaluationEnvironment() {
+      return getEnvironmentFactory().getDgEvaluationEnvironment();
+  }
+  public static DgEnvironment getEnvironment() {
+      return getEnvironmentFactory().getDgEnvironment();
+  }
+  
+  public static void resetEnvironment() {
+      DgEnvironmentFactory.reset();
+      environmentFactory = null;//new DgEnvironmentFactory();
+      //helper = null;
+//      opsCache = null;
+      ocl = null;
+      helper = null;
+  }
   
   protected static DgEnvironmentFactory setupEnvironment() {
     // set up the customized environment
     // create custom environment factory
-    DgEnvironmentFactory.reset();
-    envFactory = new DgEnvironmentFactory();
-    if ( useCachedOps  && !Utils2.isNullOrEmpty( opsCache ) ) {
-        envFactory.getDgEnvironment().operations.addAll( opsCache );
-    } else {
-        addRegexMatchOperation( envFactory );
-        addROperation( envFactory );
-        addMOperation( envFactory );
-        addTOperation( envFactory );
-        addSOperation( envFactory );
-        addNOperation( envFactory );
-        addExpressionOperations( envFactory );
+//    DgEnvironmentFactory.reset();
+//    envFactory = new DgEnvironmentFactory();
+////    if ( useCachedOps  && !Utils2.isNullOrEmpty( opsCache ) ) {
+////        envFactory.getDgEnvironment().operations.addAll( opsCache );
+////    } else {
+        addRegexMatchOperation( getEnvironmentFactory() );
+        addROperation( getEnvironmentFactory() );
+        addMOperation( getEnvironmentFactory() );
+        addTOperation( getEnvironmentFactory() );
+        addSOperation( getEnvironmentFactory() );
+        addNOperation( getEnvironmentFactory() );
+        addExpressionOperations( getEnvironmentFactory() );
         
-        opsCache = envFactory.getDgEnvironment().operations;
-    }
-    return envFactory;
+//        opsCache = getEnvironment().operations;
+//    }
+    return getEnvironmentFactory();
   }
 
 
@@ -664,7 +693,7 @@ public class OclEvaluator {
 
 		queryStatus = QueryStatus.VALID_OCL;
 
-		OCLHelper<EClassifier, ?, ?, Constraint> helper = ocl.createOCLHelper();
+		OCLHelper<EClassifier, ?, ?, Constraint> helper = getOcl().createOCLHelper();
 		helper.setContext(context.eClass());
 		
 		boolean ok = false;
@@ -678,7 +707,7 @@ public class OclEvaluator {
 		}
 		
 		if (constraint != null) {
-			Query<EClassifier, EClass, EObject> eval = ocl.createQuery(constraint);
+			Query<EClassifier, EClass, EObject> eval = getOcl().createQuery(constraint);
 			ok = eval.check(context);
 		}
 
@@ -715,11 +744,9 @@ public class OclEvaluator {
 		}
 	}
 
-  public static
-      OCL< ?, EClassifier, ?, ?, ?, ?, ?, ?, ?, Constraint, EClass, EObject >
-      getOcl() {
+  public static OCL< ?, EClassifier, ?, ?, ?, ?, ?, ?, ?, Constraint, EClass, EObject > getOcl() {
     if ( ocl == null ) {
-      setOcl( OCL.newInstance( envFactory ) );
+        createOclInstance( getEnvironmentFactory() );
     }
     return ocl;
   }
