@@ -312,10 +312,11 @@ public class DocumentValidator {
 			missingOutgoingFlow.addViolation(n, missingOutgoingFlow.getDescription());
 		if (!(n instanceof MergeNode) && !(n instanceof JoinNode) && !(n instanceof DecisionNode) && n.getIncoming().size() > 1)
 			multipleIncomingFlows.addViolation(n, multipleIncomingFlows.getDescription());
-		if (n instanceof CallBehaviorAction || StereotypesHelper.hasStereotypeOrDerived(n, DocGen3Profile.tableStructureStereotype)) {
+		if (n instanceof CallBehaviorAction) {
 			Behavior b = n instanceof CallBehaviorAction ? ((CallBehaviorAction)n).getBehavior() : null;
 			Collection<Stereotype> napplied = new HashSet<Stereotype>(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.collectFilterStereotype));
 			napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.ignorableStereotype));
+			napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.tableColumnStereotype));
 			if (b == null) {
 				if (napplied.isEmpty()) {
 					missingStereotype.addViolation(n, missingStereotype.getDescription());
@@ -325,6 +326,7 @@ public class DocumentValidator {
 			} else {
 				Collection<Stereotype> bapplied = new HashSet<Stereotype>(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGen3Profile.collectFilterStereotype));
 				bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGen3Profile.ignorableStereotype));
+				bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGen3Profile.tableColumnStereotype));
 				if (napplied.isEmpty() && bapplied.isEmpty())
 					missingStereotype.addViolation(n, missingStereotype.getDescription());
 				else if (bapplied.isEmpty())
@@ -333,17 +335,20 @@ public class DocumentValidator {
 					multipleStereotypes.addViolation(n, multipleStereotypes.getDescription());
 				else if (!napplied.isEmpty() && napplied.iterator().next() != bapplied.iterator().next())
 					mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
-				if (StereotypesHelper.hasStereotype(b, DocGen3Profile.sectionStereotype) || 
+				/*if (StereotypesHelper.hasStereotype(b, DocGen3Profile.sectionStereotype) || 
 						StereotypesHelper.hasStereotype(b, DocGen3Profile.structuredQueryStereotype) ||
-						StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.collectionStereotype)) {
+						StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.collectionStereotype) ||
+						StereotypesHelper.hasStereotype(b, DocGen3Profile.tableStructureStereotype)) {*/
 					if (!this.done.contains(b)) {
 						this.done.add(b);
 						validateActivity(b);
 					}
-				}
+				//}
 			}
 		} else if (n instanceof StructuredActivityNode) {
-			if (!StereotypesHelper.hasStereotype(n, DocGen3Profile.structuredQueryStereotype))
+			if (!StereotypesHelper.hasStereotype(n, DocGen3Profile.structuredQueryStereotype) && 
+			        !StereotypesHelper.hasStereotype(n, DocGen3Profile.tableStructureStereotype) && 
+			        StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.tableColumnStereotype).isEmpty())
 				missingStereotype.addViolation(n, missingStereotype.getDescription());
 			validateActivity(n);
 		}
