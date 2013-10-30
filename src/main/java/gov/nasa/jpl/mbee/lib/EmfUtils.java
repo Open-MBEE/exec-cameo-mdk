@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -518,7 +517,7 @@ public final class EmfUtils {
     if ( o == null ) return null;
     EObject eo = (EObject)( o instanceof EObject ? o : null );
     
-    Collection<Class<?>> results = new HashSet< Class<?> >();
+    Collection<Class<?>> results = new LinkedHashSet< Class<?> >();
     if ( eo != null ) results.addAll( getTypes( eo, true, true, true, true, null ) );
     //results.add( o.getClass() );
     results.addAll( ClassUtils.getAllClasses( o ) );
@@ -608,7 +607,7 @@ public final class EmfUtils {
   }
 
   public static Set<EObject> getEObjectsOfType(EObject o, Class<?> type) {
-    Set<EObject> set = new HashSet<EObject>();
+    Set<EObject> set = new LinkedHashSet<EObject>();
     getEObjectsOfType(o, type, set);
     return set;
   }
@@ -1362,7 +1361,7 @@ public final class EmfUtils {
       "Interval" };
 
   public static List<Element> getRelationships( Element elem ) {
-    HashSet< Element > elements = new HashSet< Element >();
+    LinkedHashSet< Element > elements = new LinkedHashSet< Element >();
     elements.addAll( elem.get_relationshipOfRelatedElement() );
     elements.addAll( elem.get_directedRelationshipOfSource() );
     elements.addAll( elem.get_directedRelationshipOfTarget() );
