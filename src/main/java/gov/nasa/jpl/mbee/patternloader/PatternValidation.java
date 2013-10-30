@@ -85,10 +85,10 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
     	try {
     		EnvironmentLockManager.setLocked(true);
 			
-			// get all the diagrams in the project
-			Collection<DiagramPresentationElement> projectDiagrams = StyleSaverUtils.findDiagramPresentationElements(this.getClass());
+			// Note that validation rule has to constrain elements to Diagrams otherwise scope will break
+			Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(elements);
 			
-			for(DiagramPresentationElement currDiagram : projectDiagrams) {
+			for(DiagramPresentationElement currDiagram : diagCollection) {
 				// try to find a good requester on the diagram
 				PresentationElement requester = locateTarget(currDiagram, project);
 				

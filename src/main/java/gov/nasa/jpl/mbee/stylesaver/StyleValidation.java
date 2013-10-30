@@ -12,6 +12,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.jmi.smartlistener.SmartListenerConfig;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 
@@ -74,8 +75,8 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
     	try {
     		EnvironmentLockManager.setLocked(true);
 			
-			// get all the diagrams in the project
-			Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(this.getClass()); 
+			// Note that validation rule has to constrain elements to Diagrams otherwise scope will break
+			Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils.findDiagramPresentationElements(elements);
 			
 			Stereotype workingStereotype = StyleSaverUtils.getWorkingStereotype(project);
 			
