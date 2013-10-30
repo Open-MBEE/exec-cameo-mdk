@@ -115,7 +115,7 @@ public class OclEvaluatorDialog extends JDialog {
         editableListPanel =
                 new RepeatInputComboBoxDialog.EditableListPanel( "Enter an OCL expression:",
                                                                  choices.toArray() );
-        Collection< Element > selectedElements = MDUtils.getSelection( null );
+        Collection< Element > selectedElements = MDUtils.getSelection( null, Configurator.lastContextIsDiagram );
         processor = new OclQueryAction.ProcessOclQuery( selectedElements );
         if ( lastInput != null ) {
             Object result = processor.process( lastInput );

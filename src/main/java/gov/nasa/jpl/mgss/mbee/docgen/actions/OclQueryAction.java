@@ -7,6 +7,7 @@ import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mgss.mbee.docgen.Configurator;
 import gov.nasa.jpl.mgss.mbee.docgen.RepeatInputComboBoxDialog;
 import gov.nasa.jpl.ocl.OCLSyntaxHelper;
 import gov.nasa.jpl.ocl.OclEvaluator;
@@ -337,7 +338,7 @@ public class OclQueryAction extends MDAction {
   
 
   public void actionPerformed(ActionEvent e) {
-    Collection< Element > selectedElements = MDUtils.getSelection( e );
+    Collection< Element > selectedElements = MDUtils.getSelection( e, Configurator.lastContextIsDiagram );
     setContext( selectedElements );
 
     // Ensure user-defined shortcut functions are updated
