@@ -525,7 +525,7 @@ public class DocumentValidator {
      * @param violationIfInconsistent
      * @return the result of the evaluation
      */
-    public static Object evaluate( Object expression, Element context, DocumentValidator validator,
+    public static Object evaluate( Object expression, Object context, DocumentValidator validator,
                                    boolean violationIfInconsistent ) {
         ValidationRule rule = validator == null ? null : validator.getConstraintRule();
         return evaluate( expression, context, rule, violationIfInconsistent );
@@ -541,7 +541,7 @@ public class DocumentValidator {
      * @param violationIfInconsistent
      * @return the result of the evaluation
      */
-    public static Object evaluate( Object expression, Element context, ValidationRule rule,
+    public static Object evaluate( Object expression, Object context, ValidationRule rule,
                                    boolean violationIfInconsistent ) {
         if ( expression == null ) return null;
         Object result = null;
@@ -549,13 +549,14 @@ public class DocumentValidator {
             result = OclEvaluator.evaluateQuery(context, expression);
         } catch ( ParserException e ) {
             if ( violationIfInconsistent ) {
+                String id = context instanceof Element ? ((Element)context).getID() : context.toString();
                 String errorMessage =
                     e.getLocalizedMessage() + " for OCL query \"" + expression + 
                     "\" on " + Utils.getName( context ) +
-                    (showElementIds ? "[" + context.getID() + "]" : "" );
-                if ( rule != null ) {
+                    (showElementIds ? "[" + id + "]" : "" );
+                if ( rule != null && context instanceof Element) { //need further fixes to allow context be a collection
                     addViolationIfUnique( rule,
-                                          context, errorMessage );
+                                          (Element)context, errorMessage );
                 }
                 Debug.error( violationIfInconsistent, false, errorMessage );
             }

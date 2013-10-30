@@ -28,7 +28,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
  * @author Benjamin Inada, JPL/Caltech
  */
 public class StyleSaverUtils {
-	private static String classname = null;
 	private static List<DiagramPresentationElement>  dpels;
 	
 	/**
@@ -169,28 +168,16 @@ public class StyleSaverUtils {
 	}
 	
 	/**
-	 * Utility for providing context for all the Validation classes since the Validation menu in MD
-	 * doesn't provide context.
-	 * 
-	 * @param	clazz	Class used to determine when the dialog should be popped up
+	 * Utility for converting collection of Diagrams into DiagramPresentationElements.
+	 * @param	elements	Collection of diagrams to convert
+	 * @return				Collection of DiagramPresentationElements
 	 */
-	public static Collection<DiagramPresentationElement> findDiagramPresentationElements(Class cl) {
-		if (classname == null) {
-			classname = cl.getName();
-		}
-		
-		if (classname.equals(cl.getName())) {
-			List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
-			types.add(Package.class);
-			
-			List<BaseElement> selected = Utils.getUserSelections(types, "Context for Pattern and Style Validation Suite");
-			dpels = new ArrayList<DiagramPresentationElement>();
-			
-			for (BaseElement be: selected) {
-				Package pkg = (Package)be;
-				for (Diagram diag: pkg.getOwnedDiagram()) {
-					dpels.add(Application.getInstance().getProject().getDiagram(diag));
-				}
+	public static Collection<DiagramPresentationElement> findDiagramPresentationElements(Collection<? extends Element> elements) {
+		List<DiagramPresentationElement> dpels = new ArrayList<DiagramPresentationElement>();
+		for (Element e: elements) {
+			if (e instanceof Diagram) {
+				Diagram d = (Diagram) e;
+				dpels.add(Application.getInstance().getProject().getDiagram(d));
 			}
 		}
 		
