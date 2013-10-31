@@ -28,6 +28,7 @@ public class DocGen3Profile {
 	public static final String tableExpressionColumnStereotype = "TableExpressionColumn";
 	public static final String tableAttributeColumnStereotype = "TableAttributeColumn";		
 	public static final String tableSumRowStereotype = "TableSumRow";						
+	public static final String tableColumnStereotype = "TableColumn";
 	
 	public static final String dependencyMatrixStereotype = "zzDependencyMatrix";
 	public static final String genericTableStereotype = "GenericTable";
@@ -78,6 +79,8 @@ public class DocGen3Profile {
     public static final String expressionChoosable = "ExpressionChoosable";
     public static final String expression = "Expression";
 	public static final String sortable = "Sortable";
+	public static final String propertyChoosable = "PropertyChoosable";
+	public static final String attributeChoosable = "AttributeChoosable";
 	
 	public static final String expressionLibrary = "ExpressionLibrary";
 	
