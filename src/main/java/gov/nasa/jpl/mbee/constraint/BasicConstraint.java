@@ -282,7 +282,8 @@ public class BasicConstraint implements Constraint {
             try {
                 res = OclEvaluator.evaluateQuery( constrainedObject,
                                                          constraint );
-                if ( isConsistent ) isConsistent = OclEvaluator.isValid();
+                OclEvaluator evaluator = OclEvaluator.instance;
+                if ( isConsistent ) isConsistent = evaluator.isValid();
             } catch ( Exception e ) {
                 this.errorMessage = e.getLocalizedMessage() + " for OCL query \""
                         + getExpression( constraint ) //OclEvaluator.queryObjectToStringExpression( constraint )

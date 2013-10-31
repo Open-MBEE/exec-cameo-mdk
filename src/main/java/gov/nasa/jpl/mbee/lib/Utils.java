@@ -212,11 +212,13 @@ public class Utils {
                                                            String query,
                                                            boolean include, boolean iterate) {
         List<Element> res = new ArrayList<Element>();
+        OclEvaluator evaluator = null;
         if (!iterate) {
             Object o = null;
             DocumentValidator dv = CollectFilterParser.getValidator();
             o = DocumentValidator.evaluate( query, elements, dv, true );
-            if ( OclEvaluator.isValid() ) {
+            evaluator = OclEvaluator.instance;
+            if ( evaluator != null && evaluator.isValid() ) {
 //            try {
 //                o = OclEvaluator.evaluateQuery(e, query);
                 Boolean istrue = isTrue(o, false);
@@ -231,7 +233,7 @@ public class Utils {
                 Object o = null;
                 DocumentValidator dv = CollectFilterParser.getValidator();
                 o = DocumentValidator.evaluate( query, e, dv, true );
-                if ( OclEvaluator.isValid() ) {
+                if ( evaluator != null && evaluator.isValid() ) {
 //              try {
 //                    o = OclEvaluator.evaluateQuery(e, query);
                     Boolean istrue = isTrue(o, false);
@@ -530,9 +532,10 @@ public class Utils {
         Object o = null;
         DocumentValidator dv = CollectFilterParser.getValidator();
         o = DocumentValidator.evaluate( query, element, dv, true );
+        OclEvaluator evaluator = OclEvaluator.instance;
 //        try {
 //            o = OclEvaluator.evaluateQuery(element, query);
-        if ( OclEvaluator.isValid() ) {
+        if ( evaluator.isValid() ) {
             res.addAll(getListOfType(o, Element.class));
         }
 //        } catch ( ParserException e ) {
