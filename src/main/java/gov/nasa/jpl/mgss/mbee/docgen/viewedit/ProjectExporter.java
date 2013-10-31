@@ -66,12 +66,16 @@ public class ProjectExporter {
 			//Protocol.registerProtocol("https", easyhttps);
 			HttpClient client = new HttpClient();
 			ViewEditUtils.setCredentials(client, url);
-			client.executeMethod(pm);
-			String code = pm.getResponseBodyAsString();
-			if (code.equals("ok"))
+			int code = client.executeMethod(pm);
+			if (code == 401) {
+                log.log("Unauthorized: you may have entered wrong credentials. Logout view editor and try again");
+                return;
+            }
+			String response = pm.getResponseBodyAsString();
+			if (response.equals("ok"))
 				log.log("[INFO] Export Successful.");
 			else
-				log.log(code);
+				log.log(response);
 		} catch (MalformedURLException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {

@@ -132,15 +132,17 @@ public class OclQueryAction extends MDAction {
 //        }
 //      }
           Object result = null;
+          OclEvaluator evaluator = null;
         try {
             result = OclEvaluator.evaluateQuery( contextEObject, oclString, true );
+            evaluator = OclEvaluator.instance;
         } catch ( ParserException e ) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
       
           // If the parse succeeds, return the result.
-          if ( OclEvaluator.isValid() ) {
+          if ( evaluator != null && evaluator.isValid() ) {
             // return result;
             outputList.add( result );
           } else {
@@ -149,7 +151,7 @@ public class OclQueryAction extends MDAction {
       
           // Get the evaluation result up to the point where parse failed.
           syntaxHelper =
-              new OCLSyntaxHelper( OclEvaluator.getOcl().getEnvironment() );
+              new OCLSyntaxHelper( evaluator.getOcl().getEnvironment() );
           List completions =
               syntaxHelper.getSyntaxHelp( ConstraintKind.INVARIANT, oclString );
           Debug.outln( "completions = " + completions );
@@ -200,11 +202,13 @@ public class OclQueryAction extends MDAction {
       ArrayList<Object> outputList = new ArrayList< Object >(); 
       Object result = null;
       String output = null;
+      OclEvaluator evaluator = null;
       try {
         if ( elem == null ) return null;
         result = OclEvaluator.evaluateQuery( elem, oclString, true );
+        evaluator = OclEvaluator.instance;
         output = toString(result);
-        if ( !OclEvaluator.isValid() ) {
+        if ( !evaluator.isValid() ) {
             output = output + "\nOclInvalid\nThis may be the result of a problem with a shortcut/blackbox function.";
         }
         String type = null;
@@ -233,8 +237,8 @@ public class OclQueryAction extends MDAction {
                 + "\" on " + EmfUtils.toString( elem );
         Debug.error( false, false, errorMsg );
       }
-      Debug.outln( OclEvaluator.commandCompletionChoiceStrings( null, elem,
-                                                                oclString )//, 3 )
+      if ( evaluator != null ) Debug.outln( evaluator.commandCompletionChoiceStrings( null, elem,
+                                                             oclString )//, 3 )
                                .toString() );
       return outputList;
     }

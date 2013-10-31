@@ -8,6 +8,7 @@ import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
@@ -27,11 +28,14 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.validation.ElementValidationRuleImpl;
 import com.nomagic.magicdraw.validation.SmartListenerConfigurationProvider;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.jmi.smartlistener.SmartListenerConfig;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 
 /**
  * A constraint in some context of the model, whose violation will be posted in
@@ -123,6 +127,38 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         return constraints;
     }
     
+    public static Element getConstraintObject( gov.nasa.jpl.mbee.constraint.Constraint constraint) {
+        if ( constraint == null ||
+                Utils2.isNullOrEmpty( constraint.getConstrainingElements() ) ) {
+            return null;
+        }
+        return constraint.getConstrainingElements().iterator().next();
+    }
+    
+    public static boolean isUml(gov.nasa.jpl.mbee.constraint.Constraint constraint) {
+        Element constrObj = getConstraintObject( constraint ); 
+        return ( constrObj != null && constrObj instanceof Constraint );
+    }
+    public static boolean isDocGenConstraint(gov.nasa.jpl.mbee.constraint.Constraint constraint) {
+        Element constrObj = getConstraintObject( constraint ); 
+        return ( constrObj != null && StereotypesHelper.hasStereotypeOrDerived( constrObj, DocGen3Profile.constraintStereotype ) );
+    }
+    private static boolean isLanguageOcl( gov.nasa.jpl.mbee.constraint.Constraint constraint ) {
+        if ( isDocGenConstraint( constraint ) ) return true;
+        if ( !isUml( constraint ) ) return false; // complain??
+        ValueSpecification spec = ((Constraint)getConstraintObject( constraint )).getSpecification();
+        if ( !( spec instanceof OpaqueExpression ) ) return false;
+        OpaqueExpression expr = (OpaqueExpression)spec;
+        List< String > languages = expr.getLanguage();
+        for ( String lang : languages ) {
+            if ( lang.trim().equalsIgnoreCase( "ocl" ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
     /* (non-Javadoc)
      * @see com.nomagic.magicdraw.validation.ElementValidationRuleImpl#run(com.nomagic.magicdraw.core.Project, com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint, java.util.Collection)
      */
@@ -153,7 +189,10 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 
         for ( gov.nasa.jpl.mbee.constraint.Constraint constraint : constraints ) {
             try {
-            Boolean satisfied = DocumentValidator.evaluateConstraint( constraint, this, false );
+                Boolean satisfied =
+                        DocumentValidator.evaluateConstraint( constraint,
+                                                              this,
+                                                              isLanguageOcl( constraint ) );
             //Boolean satisfied = constraint.evaluate();
 //            if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
 //                //List<NMAction> actionList = new ArrayList<NMAction>();

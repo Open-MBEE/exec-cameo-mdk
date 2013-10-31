@@ -38,11 +38,11 @@ public class StyleSaverUtils {
 	 */
 	public static Stereotype getWorkingStereotype(Project proj) {
 		Stereotype workingStereotype = null;
-		String[] possStereotypes = { "view", "DGView", "View" };
+		String[] possStereotypes = { "view" };
 		int index = 0;
 		
 		while((workingStereotype == null) && (index < possStereotypes.length)) {			
-			workingStereotype = StereotypesHelper.getStereotype(proj, possStereotypes[index], "Document Profile 3");
+			workingStereotype = StereotypesHelper.getStereotype(proj, possStereotypes[index], "Document Profile");
 			
 			index++;
 		}

@@ -73,7 +73,7 @@ public class CollectFilterParser {
 		List<CollectFilterNode> toposort = new ArrayList<CollectFilterNode>(reverse);
 		Collections.reverse(toposort);
 
-		List<Element> res = null;
+		List<Element> res = in;
 		for (CollectFilterNode node: toposort) {
 			Set<CollectFilterNode> incomings = new HashSet<CollectFilterNode>();
 			for (DirectedEdgeVector<CollectFilterNode> edge: graph.findEdgesWithTargetVertex(node)) {

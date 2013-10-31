@@ -64,14 +64,18 @@ public class OrganizeDocumentAction extends MDAction {
 			//Protocol.registerProtocol("https", easyhttps);
 			HttpClient client = new HttpClient();
 			ViewEditUtils.setCredentials(client, url);
-			client.executeMethod(pm);
-			String code = pm.getResponseBodyAsString();
-			if (code.equals("ok"))
+			int code = client.executeMethod(pm);
+			if (code == 401) {
+                gl.log("Unauthorized: you may have entered wrong credentials. Logout view editor and try again");
+                return;
+            }
+			String response = pm.getResponseBodyAsString();
+			if (response.equals("ok"))
 				gl.log("[INFO] Export Successful.");
-			else if (code.equals("NotFound"))
+			else if (response.equals("NotFound"))
 				gl.log("[ERROR] Volume not found, export project hierarchy first");
 			else
-				gl.log(code);
+				gl.log(response);
 		} catch (MalformedURLException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {
