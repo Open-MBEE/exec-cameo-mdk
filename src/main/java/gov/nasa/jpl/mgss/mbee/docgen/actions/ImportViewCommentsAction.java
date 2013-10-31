@@ -75,7 +75,11 @@ public class ImportViewCommentsAction extends MDAction {
 			try {	
 				HttpClient client = new HttpClient();
 				ViewEditUtils.setCredentials(client, geturl);
-				client.executeMethod(gm);
+				int code = client.executeMethod(gm);
+				if (code == 401) {
+	                gl.log("Unauthorized: you may have entered wrong credentials. Logout view editor and try again");
+	                return;
+	            }
 				String json = gm.getResponseBodyAsString();	
 				//gl.log(json);
 				if (json.equals("{}") || json.contains("comments\": []")) {
