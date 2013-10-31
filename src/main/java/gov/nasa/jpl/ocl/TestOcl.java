@@ -30,41 +30,6 @@ public class TestOcl {
   public static void testOcl( Project project, EObject rootEObject ) {
     boolean verbose = true;
 
-    // set up the customized environment
-    // create custom environment factory
-    DgEnvironmentFactory envFactory = new DgEnvironmentFactory();
-
-    // create custom operation
-    DgOperationInstance doi = new DgOperationInstance();
-    doi.setName( "regexMatch" );
-    doi.setAnnotationName( "DocGenEnvironment" );
-    EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
-    parm.setName( "pattern" );
-    doi.addStringParameter( parm );
-
-    // essentially set the actual operation as function pointer
-    doi.setOperation( new CallOperation() {
-      @Override
-      public Object callOperation( Object source, Object[] args ) {
-        Pattern pattern = Pattern.compile( (String)args[ 0 ] );
-        Matcher matcher = pattern.matcher( (String)source );
-
-        return matcher.matches() ? matcher.group() : null;
-      }
-    } );
-
-    Assert.assertNotNull( project );
-    Assert.assertNotNull( rootEObject );
-
-    if ( project != null && rootEObject != null ) {
-
-      // add custom operation to environment and evaluation environment
-      envFactory.getDgEnvironment().addDgOperation( doi );
-      envFactory.getDgEvaluationEnvironment().addDgOperation( doi );
-
-      // create the ocl evaluator
-      OclEvaluator.createOclInstance( envFactory );
-
       // create query and evaluate
       String oclquery = "name.regexMatch('DocGen Templating') <> null";
       // oclquery = "name <> 'DocGen Templating'"; //"ownedType->asSet()";
@@ -95,7 +60,6 @@ public class TestOcl {
           }
         }
       }
-    }
   }
   
   /**

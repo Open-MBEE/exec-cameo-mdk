@@ -29,7 +29,7 @@ import org.eclipse.ocl.ecore.internal.OCLStandardLibraryImpl;
 
 public class DgEnvironment extends EcoreEnvironment {
 	Set<String> operationNames = new HashSet<String>();
-	Set<DgOperation> operations = new TreeSet<DgOperation>();
+	Set<DgOperationInstance> operations = new TreeSet<DgOperationInstance>();
 	
 	// this constructor is used to initialize the root environment
 	@SuppressWarnings("deprecation")
@@ -70,7 +70,7 @@ public class DgEnvironment extends EcoreEnvironment {
 	 * Utility for adding custom OCL operations (defined by a DgOperation)
 	 * @param dgOperation
 	 */
-	public void addDgOperation(DgOperation dgOperation) {
+	public void addDgOperation(DgOperationInstance dgOperation) {
 		// check that the operation has not already been added
     if ( !operations.contains( dgOperation ) ) {
 			EOperation eoperation = EcoreFactory.eINSTANCE.createEOperation();

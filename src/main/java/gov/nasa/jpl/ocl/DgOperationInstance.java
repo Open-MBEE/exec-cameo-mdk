@@ -46,6 +46,24 @@ public class DgOperationInstance implements DgOperation {
     addToEnvironment(envFactory);
   }
 
+  public DgOperationInstance( DgOperationInstance dgi, DgEnvironmentFactory envFactory ) {
+      
+      this.name = dgi.name;
+      this.annotationName = dgi.annotationName;
+      this.operation = dgi.operation;
+      this.callerType = dgi.callerType;
+      this.returnType = dgi.returnType;
+      for ( EParameter ep : dgi.parameters ) {
+        addParameter( ep );
+      }
+      addToEnvironment(envFactory);
+  }
+  
+  public static DgOperationInstance addOperation( DgOperationInstance dgi,
+                                                  DgEnvironmentFactory envFactory ) {
+      return new DgOperationInstance( dgi, envFactory );
+  }
+  
   public static DgOperationInstance
       addOperation( String name, String annotationName,
                     DgEnvironmentFactory envFactory, CallOperation operation,

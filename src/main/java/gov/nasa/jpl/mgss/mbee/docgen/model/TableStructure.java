@@ -172,7 +172,8 @@ public class TableStructure extends Table {
 				    String expr = ((TableExpressionColumn)tc).expression;
                     if (expr != null) {
                         Object result = DocumentValidator.evaluate( expr, resultElements, getValidator(), true );
-                        if ( OclEvaluator.isValid() ) {
+                        OclEvaluator evaluator = OclEvaluator.instance;
+                        if ( evaluator.isValid() ) {
                             cell.add(new Reference(result));
                         }
                     }
@@ -208,7 +209,8 @@ public class TableStructure extends Table {
     							continue;
     						}
     						Object result = DocumentValidator.evaluate( expr, re, getValidator(), true );
-                            if ( OclEvaluator.isValid() ) {
+                            OclEvaluator evaluator = OclEvaluator.instance;
+                            if ( evaluator.isValid() ) {
                                 cell.add(new Reference(result));
                             }
     //						try {
