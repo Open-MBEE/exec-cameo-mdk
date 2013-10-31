@@ -362,7 +362,7 @@ public class BasicConstraint implements Constraint {
             Boolean result = null;
             for ( Object constrained : candidateContexts ) {
                 c = new BasicConstraint( constraintElement, constrained );
-                result = c.evaluate();
+                result = c.evaluate(false);
                 if ( result != null ) {
                     break;
                 } else if ( firstNull == null ||

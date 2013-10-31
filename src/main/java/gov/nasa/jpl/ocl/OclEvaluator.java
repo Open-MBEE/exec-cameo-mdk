@@ -105,7 +105,7 @@ public class OclEvaluator {
 	private static ProblemHandler problemHandler = null;
 
 	protected static DgEnvironmentFactory environmentFactory = new DgEnvironmentFactory();
-//    public static Set< DgOperation > opsCache = null;
+    public static Set< DgOperationInstance > opsCache = null;
 //    public static boolean useCachedOps = true;  
   
 	public static void createOclInstance(DgEnvironmentFactory envFactory) {
@@ -271,10 +271,10 @@ public class OclEvaluator {
 	 */
 	public static Object evaluateQuery(Object context, String queryString,
 	                                   boolean verbose) throws ParserException {
-	    if ( needEnvironmentSetup() ) {
-	        resetEnvironment();
+//	    if ( needEnvironmentSetup() ) {
+	        resetEnvironment( false );
 	        setupEnvironment();
-	    }
+//	    }
 
 	    if ( queryString == null ) return null; 
     
@@ -522,25 +522,38 @@ public class OclEvaluator {
       return null;
   }
   
+//  static List< Package > packages = null;
+//  static List< Package > getPkgs() {
+//      if ( packages == null ) packages = Utils.getPackagesOfType( DocGen3Profile.expressionLibrary );
+//      return packages;
+//  }
+  static ArrayList<Element> expressions = null;
+  static ArrayList<Element> getExpressions() {
+      if ( expressions == null ) {
+          expressions = new ArrayList< Element >();
+          // get reference to entire model, and
+          // find packages with the ExpressionLibrary stereotype
+          List< Package > pkgs = Utils.getPackagesOfType( DocGen3Profile.expressionLibrary );//getPkgs();
+          Stereotype exprStereotype = Utils.getStereotype( DocGen3Profile.expressionChoosable );
+          for ( Package pkg : pkgs ) {
+              List< Element > owned = Utils.collectOwnedElements( pkg, 0 );
+              List< Element > moreExprs = 
+                      Utils.filterElementsByStereotype( owned, exprStereotype,
+                                                        true, true );
+              expressions.addAll( moreExprs );
+          }
+      }
+      return expressions;
+  }
+  
   /**
    * Find Expressions in ExpressionLibraries and add them as blackbox shortcuts.
    * @param envFactory
    */
   protected static void addExpressionOperations( DgEnvironmentFactory envFactory ) {
-      ArrayList<Element> expressions = new ArrayList< Element >();
-      // get reference to entire model, and
-      // find packages with the ExpressionLibrary stereotype
-      List< Package > pkgs = Utils.getPackagesOfType( DocGen3Profile.expressionLibrary );
-      Stereotype exprStereotype = Utils.getStereotype( DocGen3Profile.expressionChoosable );
-      for ( Package pkg : pkgs ) {
-          List< Element > owned = Utils.collectOwnedElements( pkg, 0 );
-          List< Element > moreExprs = 
-                  Utils.filterElementsByStereotype( owned, exprStereotype,
-                                                    true, true );
-          expressions.addAll( moreExprs );
-      }
+      ArrayList<Element> exprs = getExpressions();
       // add each of the elements with the Expression stereotype as shortcut/blackbox functions
-      for ( Element expr : expressions ) {
+      for ( Element expr : exprs ) {
           String name = Utils.getName( expr );
           String exprString = queryElementToStringExpression( expr );
 //          String errorMsg = checkParsable( exprString );
@@ -569,23 +582,37 @@ public class OclEvaluator {
       return getEnvironmentFactory().getDgEnvironment();
   }
   
-  public static void resetEnvironment() {
-      DgEnvironmentFactory.reset();
-      environmentFactory = null;//new DgEnvironmentFactory();
-      //helper = null;
-//      opsCache = null;
-      ocl = null;
-      helper = null;
+  public static void resetEnvironment( boolean resetOpsCache ) {
+//      DgEnvironmentFactory.reset();
+//      environmentFactory = null;//new DgEnvironmentFactory();
+      if ( resetOpsCache ) {
+          opsCache = null;
+          expressions = null;
+      }
+//      ocl = null;
+//      helper = null;
   }
+
+  public static void resetEnvironment() {
+      resetEnvironment( true );
+  }
+
+  protected static int cacheHits = 0;
+  protected static int cacheMisses = 0;
   
   protected static DgEnvironmentFactory setupEnvironment() {
+      Debug.turnOn();
     // set up the customized environment
     // create custom environment factory
-//    DgEnvironmentFactory.reset();
-//    envFactory = new DgEnvironmentFactory();
-////    if ( useCachedOps  && !Utils2.isNullOrEmpty( opsCache ) ) {
-////        envFactory.getDgEnvironment().operations.addAll( opsCache );
-////    } else {
+    resetEnvironment( false );
+    DgEnvironmentFactory.reset();
+    environmentFactory = new DgEnvironmentFactory();
+//    if ( !Utils2.isNullOrEmpty( opsCache ) ) {
+//        for ( DgOperationInstance op : opsCache ) {
+//            DgOperationInstance.addOperation( op, getEnvironmentFactory() );
+//        }
+//        ++cacheHits;
+//    } else {
         addRegexMatchOperation( getEnvironmentFactory() );
         addROperation( getEnvironmentFactory() );
         addMOperation( getEnvironmentFactory() );
@@ -594,7 +621,8 @@ public class OclEvaluator {
         addNOperation( getEnvironmentFactory() );
         addExpressionOperations( getEnvironmentFactory() );
         
-//        opsCache = getEnvironment().operations;
+        opsCache = getEnvironment().operations;
+//        ++cacheMisses;
 //    }
     return getEnvironmentFactory();
   }
