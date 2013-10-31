@@ -3,6 +3,7 @@ package gov.nasa.jpl.mgss.mbee.docgen;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteDocumentAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteProjectAction;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.EMSLogoutAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ExportViewAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ExportViewCommentsAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ExportViewHierarchyAction;
@@ -263,6 +264,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 		c.addAction(new ExportViewCommentsAction(e));
 		c.addAction(new ImportViewCommentsAction(e));
 		c.addAction(new ViewViewCommentsAction(e));
+		c.addAction(new EMSLogoutAction());
 //		c.setNested(true);
 //		synchronized (this) { // saw a concurrency error at some point
 //			parent.addAction(c);

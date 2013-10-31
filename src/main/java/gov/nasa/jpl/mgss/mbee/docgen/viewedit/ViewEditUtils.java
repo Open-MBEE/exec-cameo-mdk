@@ -82,7 +82,7 @@ public class ViewEditUtils {
 		try {
 			URL url = new URL(urlstring);
 			
-			if (url.getProtocol().toLowerCase().equals("https")) {
+			if (url.getProtocol().toLowerCase().equals("https") && !passwordSet) {
 				// Pop up one time dialog for logging into Alfresco
 				JPanel userPanel = new JPanel();
 				userPanel.setLayout(new GridLayout(2,2));
@@ -120,4 +120,10 @@ public class ViewEditUtils {
 		}
 		
 	}	
+	
+	public static void clearCredentials() {
+	    passwordSet = false;
+	    username = "";
+	    password = "";
+	}
 }
