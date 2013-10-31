@@ -73,7 +73,11 @@ public class ExportViewCommentsAction extends MDAction {
 				pm.setRequestEntity(JsonRequestEntity.create(json));
 				HttpClient client = new HttpClient();
 				ViewEditUtils.setCredentials(client, url);
-				client.executeMethod(pm);
+				int code = client.executeMethod(pm);
+				if (code == 401) {
+	                gl.log("Unauthorized: you may have entered wrong credentials. Logout view editor and try again");
+	                return;
+	            }
 				response = pm.getResponseBodyAsString();
 				//gl.log(response);
 				if (response.equals("NotFound")) 
