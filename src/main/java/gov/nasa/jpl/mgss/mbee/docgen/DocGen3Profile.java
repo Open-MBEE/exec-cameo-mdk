@@ -37,6 +37,7 @@ public class DocGen3Profile {
 	public static final String hierarchicalPropertiesTableStereotype = "HierarchicalPropertiesTable";
 	public static final String propertiesTableByAttributesStereotype = "PropertiesTableByAttributes";
 	
+	public static final String viewpointConstraintStereotype = "ViewpointConstraint";
 	public static final String userScriptStereotype = "UserScript";
 	public static final String userScriptCFStereotype = "Collect/Filter UserScript";
 	public static final String validationScriptStereotype = "ValidationScript";
