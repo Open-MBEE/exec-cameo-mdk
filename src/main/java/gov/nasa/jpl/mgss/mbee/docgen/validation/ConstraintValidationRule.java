@@ -230,7 +230,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
                         String errorMsg = "";
                         OclEvaluator e = OclEvaluator.instance;
                         if ( e != null ) errorMsg = e.errorMessage;
-                        MdDebug.logForce( "  Not OCL parsable: " + constraint + " " + errorMsg );
+                        MdDebug.logForce( "  Not OCL parsable: " + constraint + "; " + errorMsg );
                     } else if ( satisfied ) {
                         MdDebug.logForce( "            Passed: " + constraint );
                     } else {

@@ -2615,7 +2615,7 @@ public class Utils {
         
         // if list, call recursively
         if ( o instanceof Collection || o instanceof Map || o.getClass().isArray() ||
-              o instanceof Entry ) {
+             o instanceof Entry ) {
             StringBuffer sb = new StringBuffer();
             sb.append("( ");
             boolean first = true;
@@ -2642,45 +2642,26 @@ public class Utils {
             return sb.toString();
         }
         
-//        MoreToString mts = new MoreToString() {
-//            @Override
-//            public String toString( boolean withHash, boolean deep,
-//                                    Set< Object > seen,
-//                                    Map< String, Object > otherOptions ) {
-//                if ( o == null ) return "null";
-//                if ( o instanceof Collection || o instanceof Set || o instanceof Map || o.getClass().isArray() ) {
-//                    
-//                }
         // Not a list
-                String name = ("" + getName( o )).trim();
-                String type = ("" + EmfUtils.getTypeName( o )).trim();
-                String s = name;
-                if ( !Utils2.isNullOrEmpty( name ) ) {
-                    if ( !Utils2.isNullOrEmpty( type ) ) {
-                        s = s + ":" + type;
-                    }
-                } else s = type;
-                if (includeId && o instanceof BaseElement ) {
-                    s = s + "[" + ((BaseElement)o).getID() + "]";
-                }
-                if ( useToStringIfNull && Utils2.isNullOrEmpty( s ) ) {
-                    s = MoreToString.Helper.toString( o );
-//                                                       , withHash, deep,
-//                                                      seen, false,
-//                                                      otherOptions );
-                }
-                return s;
-//            }
-//            @Override
-//            public String toString( boolean withHash, boolean deep, Set< Object > seen ) {
-//                return toString( withHash, deep, seen, null );
-//            }
-//            @Override
-//            public String toShortString() {
-//                return MoreToString.Helper.toShortString( o );
-//            }
-//        };
-//        return mts.toString(false, true, null, null);
+        String name = ( "" + getName( o ) ).trim();
+        String type = ( "" + getTypeName( o ) ).trim();
+        String s = name;
+        if ( !Utils2.isNullOrEmpty( name ) ) {
+            if ( !Utils2.isNullOrEmpty( type ) ) {
+                s = s + ":" + type;
+            }
+        } else s = type;
+        if ( includeId && o instanceof BaseElement ) {
+            if ( !Utils2.isNullOrEmpty( s ) ) {
+                s = s + ":" + ( (BaseElement)o ).getID();
+            } else {
+                s = ( (BaseElement)o ).getID();
+            }
+        }
+        if ( useToStringIfNull && Utils2.isNullOrEmpty( s ) ) {
+            s = MoreToString.Helper.toString( o );
+        }
+        return s;
     }
     
     /**

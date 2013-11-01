@@ -473,7 +473,7 @@ public class BasicConstraint implements Constraint {
     public String toShortString() {
         StringBuffer sb = new StringBuffer();
         sb.append("Constraint:\"" + this.getExpression() + "\" on " +
-                  Utils.toStringNameAndType( this.constrainedObjects, false, true ));
+                  Utils.toStringNameAndType( this.constrainedObjects, true, true ));
         return sb.toString();
     }
     
