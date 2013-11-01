@@ -4,8 +4,10 @@
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
 import gov.nasa.jpl.mbee.constraint.BasicConstraint;
+import gov.nasa.jpl.mbee.constraint.BasicConstraint.Type;
 import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.MdDebug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
@@ -56,6 +58,9 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             new TreeMap< gov.nasa.jpl.mbee.constraint.Constraint, Set< BaseElement > >(CompareUtils.GenericComparator.instance());
     protected Set< Annotation > annotations = null;
     
+    public BasicConstraint.Type constraintType = Type.ANY;
+    public boolean loggingResults = true;
+    
     public ConstraintValidationRule() {
         super("Constraint", "Model constraint violation", ViolationSeverity.WARNING);
         Debug.outln( "ConstraintValidationRule()" );
@@ -99,20 +104,46 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 //
 //        for ( String id : ids ) {
 //            BaseElement elem = paramProject.getElementByID( id );
+
         for ( Element elemt : paramCollection ) {
             if ( elemt == null ) continue;
+            
+            // Get all constraints on this element since it was specifically
+            // selected.
+            List< gov.nasa.jpl.mbee.constraint.Constraint > constraints =
+                    BasicConstraint.getConstraints( elemt, constraintType );
+            if ( !Utils2.isNullOrEmpty( constraints ) ) {
+                elementsWithConstraints.add( elemt );
+            }
+            Utils2.addAllToSet( elementToConstraintMap, elemt, constraints );
+            for ( gov.nasa.jpl.mbee.constraint.Constraint constr : constraints ) {
+                Utils2.addToSet( constraintToElementMap, constr, elemt );
+            }
+
+            // Now look to see if it or its children are constraints
             List<Element> subElems = Utils2.newList( elemt );
-            if ( elemt instanceof Package ) subElems.addAll( Utils.collectOwnedElements( elemt, 0 ) );
+            if ( elemt instanceof Package ) {
+                subElems.addAll( Utils.collectOwnedElements( elemt, 0 ) );
+            }
             for ( Element elem : subElems ) {
-                List< gov.nasa.jpl.mbee.constraint.Constraint > constraints =
-                        BasicConstraint.getConstraints( elem );
-                if ( !Utils2.isNullOrEmpty( constraints ) ) {
-                    elementsWithConstraints.add( elem );
+                
+                // Make a Constraint if elem is a constraint element and add it
+                // with its constrained elements.
+                if ( BasicConstraint.constraintIsType( elem, constraintType ) ) { //elementIsConstraint( elem ) ) {
+                    List< Object > constrained = 
+                            BasicConstraint.getConstrainedObjectsFromConstraintElement( elem );
+                    gov.nasa.jpl.mbee.constraint.Constraint constr = 
+                            new BasicConstraint( elem, constrained );
+                    for ( Object o : constrained ) {
+                        if ( o instanceof BaseElement ) {
+                            BaseElement baseElem = (BaseElement)o;
+                            elementsWithConstraints.add( baseElem );
+                            Utils2.addToSet( constraintToElementMap, constr, baseElem );
+                            Utils2.addToSet( elementToConstraintMap, baseElem, constr );
+                        }
+                    }
                 }
-                Utils2.addAllToSet( elementToConstraintMap, elem, constraints );
-                for ( gov.nasa.jpl.mbee.constraint.Constraint constr : constraints ) {
-                    Utils2.addToSet( constraintToElementMap, constr, elem );
-                }
+
             }
         }
     }
@@ -168,19 +199,20 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
                                Collection<? extends Element> paramCollection) {
         Set<Annotation> result = new HashSet<Annotation>();
         
+        MdDebug.logForce( "*** Starting MDK Validate Constraints: " + constraintType + " ***" );
 //        boolean wasOn = Debug.isOn();
 //        Debug.turnOn();
         
 //        Debug.outln( "run(Project, " + paramConstraint + " , "
 //                + paramCollection + ")" );
-        System.out.println( "run(Project, " + paramConstraint + " , "
-                            + paramCollection + ")" );
    
         // Ensure user-defined shortcut functions are updated
         OclEvaluator.resetEnvironment();
 
         initConstraintMaps( paramProject, paramCollection );
         
+        OclEvaluator.resetEnvironment();
+
         //Set< BaseElement > elements = elementToConstraintMap.keySet();
         
         Collection< gov.nasa.jpl.mbee.constraint.Constraint > constraints = (Collection<gov.nasa.jpl.mbee.constraint.Constraint>)
@@ -193,6 +225,18 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
                         DocumentValidator.evaluateConstraint( constraint,
                                                               this,
                                                               isLanguageOcl( constraint ) );
+                if ( loggingResults  ) {
+                    if ( satisfied == null ) {
+                        String errorMsg = "";
+                        OclEvaluator e = OclEvaluator.instance;
+                        if ( e != null ) errorMsg = e.errorMessage;
+                        MdDebug.logForce( "  Not OCL parsable: " + constraint + " " + errorMsg );
+                    } else if ( satisfied ) {
+                        MdDebug.logForce( "            Passed: " + constraint );
+                    } else {
+                        MdDebug.logForce( "            Failed: " + constraint );
+                    }
+                }
             //Boolean satisfied = constraint.evaluate();
 //            if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
 //                //List<NMAction> actionList = new ArrayList<NMAction>();
@@ -203,12 +247,15 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 //            }
             } catch(Throwable e ) {
                 Debug.error(true, false, "ConstraintValidationRule: " + e.getLocalizedMessage() );
+                e.printStackTrace();
             }
         }
         Project project = Utils.getProject();
         Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
         result = Utils.getAnnotations( this, project, cons );
         annotations = result;
+
+        MdDebug.logForce( "*** Finished MDK Validate Constraints: " + constraintType + " ***" );
 
 //        if ( !wasOn ) Debug.turnOff();
         return result;

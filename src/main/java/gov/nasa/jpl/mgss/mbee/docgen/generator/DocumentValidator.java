@@ -60,12 +60,12 @@ import gov.nasa.jpl.ocl.OclEvaluator;
  * uses jgrapht to detect cycles in the document and various other potential errors
  * this only checks for static model structure and does not actually try to execute the document
  * @author dlam
- * Changelog: Document Validator updated to use Validationsuite. 
+ * Changelog: Document Validator updated to use Validationsuite.
  */
 public class DocumentValidator {
 	
-	public ValidationRule getConstraintRule() {
-        return constraintRule;
+	public ValidationRule getViewpointConstraintRule() {
+        return viewpointConstraintRule;
     }
 
     private Element start;
@@ -73,6 +73,8 @@ public class DocumentValidator {
 				
 	
 	private ValidationSuite Validationui = new ValidationSuite("Validationui");
+    private ValidationSuite dynamicExpressionValidation =
+            new ValidationSuite("ExpressionValidation");
 	
 	private static final Map<String, String> requiredTags = new HashMap<String, String>() {
         {
@@ -118,7 +120,8 @@ public class DocumentValidator {
 	private ValidationRule cycleError = new ValidationRule("Cycles in model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule activityNodeCycleError = new ValidationRule("Activity Node Cycles in Model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule missingTagValue = new ValidationRule("Missing tag", "An action is missing required tag value", error);
-    private ValidationRule constraintRule = new ValidationRule("Constraint", "Model constraint violation", warn);
+
+	private ValidationRule viewpointConstraintRule = new ValidationRule("Viewpoint constraint", "Viewpoint constraint violation", warn);
 
     /*
 	 * Needed to use the utils.displayvalidationwindow
@@ -137,7 +140,6 @@ public class DocumentValidator {
 
 	public DocumentValidator(Element e) {
 		start = e;
-		
 		
 
 		log = Application.getInstance().getGUILog();
@@ -175,12 +177,13 @@ public class DocumentValidator {
 		Validationui.addValidationRule(cycleError);
 		Validationui.addValidationRule(activityNodeCycleError);
 		Validationui.addValidationRule(missingTagValue);
-        Validationui.addValidationRule(constraintRule);
+		
+		dynamicExpressionValidation.addValidationRule(viewpointConstraintRule);
 
 		
 		//Need Collection to use the utils.DisplayValidationWindow method
 		ValidationOutput.add(Validationui);
-
+        ValidationOutput.add(dynamicExpressionValidation);
 
 	}
 	
@@ -570,7 +573,7 @@ public class DocumentValidator {
      */
     public static Object evaluate( Object expression, Object context, DocumentValidator validator,
                                    boolean violationIfInconsistent ) {
-        ValidationRule rule = validator == null ? null : validator.getConstraintRule();
+        ValidationRule rule = validator == null ? null : validator.getViewpointConstraintRule();
         return evaluate( expression, context, rule, violationIfInconsistent );
     }
     /**
@@ -621,7 +624,7 @@ public class DocumentValidator {
     public static Boolean evaluateConstraint( Constraint constraint,
                                               DocumentValidator validator,
                                               boolean violatedIfInconsistent ) {
-        ValidationRule rule = validator.getConstraintRule();
+        ValidationRule rule = validator.getViewpointConstraintRule();
         return evaluateConstraint( constraint, rule, violatedIfInconsistent );
     }
 
@@ -643,7 +646,12 @@ public class DocumentValidator {
                                               ValidationRule rule,
                                               boolean violatedIfInconsistent ) {
 	    if ( constraint == null ) return null;
-        Boolean satisfied = constraint.evaluate();
+        Boolean satisfied = null;
+        if ( constraint instanceof BasicConstraint ) {
+            satisfied = ((BasicConstraint)constraint).evaluate( false );
+        } else {
+            satisfied = constraint.evaluate();
+        }
         if ( rule == null ) return satisfied;
         // check if constraint is violated
         if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
@@ -756,10 +764,18 @@ public class DocumentValidator {
                                                      Object actionOutput,
                                                      GenerationContext context ) {
         List<Constraint> constraints = new ArrayList< Constraint >();
-        List< Element > targets = DocumentGenerator.getTargets( constrainedObject, context );
-        List< Element > constraintElements = BasicConstraint.getConstraintElements( constrainedObject );
+        List< Element > targets =
+                DocumentGenerator.getTargets( constrainedObject,
+                                              context );
+        List< Element > constraintElements =
+                BasicConstraint.getConstraintElements( constrainedObject,
+                                                       BasicConstraint.Type.DYNAMIC );
         for ( Element constraint : constraintElements  ) {
-            Constraint c = BasicConstraint.makeConstraint( constraint, actionOutput, targets, constrainedObject );
+            Constraint c =
+                    BasicConstraint.makeConstraintFromAlternativeContexts( constraint,
+                                                                           actionOutput,
+                                                                           targets,
+                                                                           constrainedObject );
             constraints.add( c );
         }
         return constraints;

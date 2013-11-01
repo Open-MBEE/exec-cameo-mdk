@@ -4,8 +4,6 @@ import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.CollectionAdder;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -131,7 +129,7 @@ public class GetCallOperation implements CallOperation {
             if ( asElement && elem != null ) {
               // Stereotypes
               List< Stereotype > sTypes = StereotypesHelper.getStereotypes(elem);
-              if ( objectToAdd instanceof Collection ) {
+              if ( !Utils2.isNullOrEmpty( sTypes ) && objectToAdd instanceof Collection ) {
                   Collection<Object> c = (Collection<Object>)objectToAdd;
                   for ( Stereotype s : sTypes ) {
                       if ( !c.contains( s ) ) c.add( s );

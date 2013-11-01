@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.lib;
 
-import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -22,6 +21,7 @@ import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,12 +31,11 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
-
-import org.eclipse.ocl.ParserException;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -2558,8 +2557,8 @@ public class Utils {
         if ( obj instanceof NamedElement ) {
             return ((NamedElement)obj).getName();
         }
-        if ( obj instanceof Element ) {
-            String humanName = ((Element)obj).getHumanName();
+        if ( obj instanceof BaseElement ) {
+            String humanName = ((BaseElement)obj).getHumanName();
             String[] arr = humanName.trim().split( " " );
             if ( arr != null ) {
                 if ( arr.length == 2 ) {
@@ -2571,6 +2570,117 @@ public class Utils {
             // REVIEW -- this seems like a bad place to be -- error messages?
         }
         return EmfUtils.getName( obj );
+    }
+    
+    
+    public static String getTypeName( Object obj ) {
+        if ( obj instanceof BaseElement ) {
+            String humanType = ("" + ((BaseElement)obj).getHumanType()).trim();
+            if ( !Utils2.isNullOrEmpty( humanType ) ) return humanType;
+            String humanName = ((BaseElement)obj).getHumanName();
+            String[] arr = humanName.trim().split( " " );
+            if ( arr != null ) {
+                if ( arr.length == 2 ) {
+                    if ( !Utils2.isNullOrEmpty( arr[0] ) && !Utils2.isNullOrEmpty( arr[1] ) ) {
+                        return arr[0];
+                    }
+                }
+            }
+            // REVIEW -- this seems like a bad place to be -- error messages?
+        }
+        // try stereotype
+        if ( obj instanceof Element ) {
+            Element elem = (Element)obj;
+            List< Stereotype > sTypes = StereotypesHelper.getStereotypes(elem);
+            if ( !Utils2.isNullOrEmpty( sTypes ) ) {
+                for ( Stereotype st : sTypes ) {
+                    String t = st.getName();
+                    if ( !Utils2.isNullOrEmpty( t ) ) {
+                        return t;
+                    }
+                }
+            }
+        }
+        return EmfUtils.getTypeName( obj );
+    }
+    
+    public static String toStringNameAndType( final Object o ) {
+        return toStringNameAndType( o, false, false );
+    }
+
+    public static String toStringNameAndType( final Object o,
+                                              final boolean includeId,
+                                              final boolean useToStringIfNull ) {
+        if ( o == null ) return "null";
+        
+        // if list, call recursively
+        if ( o instanceof Collection || o instanceof Map || o.getClass().isArray() ||
+              o instanceof Entry ) {
+            StringBuffer sb = new StringBuffer();
+            sb.append("( ");
+            boolean first = true;
+            Collection<?> c = null;
+            String sep = ", ";
+            if ( o instanceof Collection ) {
+                c = (Collection<?>)o;
+            } else if ( o instanceof Map ) {
+                c = ((Map<?,?>)o).entrySet();
+            } else if ( o.getClass().isArray() ) {
+                c = Arrays.asList( (Object[])o );
+            } else if ( o instanceof Entry ) {
+                Entry<?,?> entry = (Entry<?,?>)o;
+                c = Utils2.newList( entry.getKey(), entry.getValue() );
+                sep = " = ";
+            }
+            // TODO -- avoid infinite recursion with Utils2.seen()
+            for ( Object i : c ) {
+                if ( first ) first = false;
+                else sb.append( sep );
+                sb.append( toStringNameAndType( i, includeId, useToStringIfNull ) );
+            }
+            sb.append( " )" );
+            return sb.toString();
+        }
+        
+//        MoreToString mts = new MoreToString() {
+//            @Override
+//            public String toString( boolean withHash, boolean deep,
+//                                    Set< Object > seen,
+//                                    Map< String, Object > otherOptions ) {
+//                if ( o == null ) return "null";
+//                if ( o instanceof Collection || o instanceof Set || o instanceof Map || o.getClass().isArray() ) {
+//                    
+//                }
+        // Not a list
+                String name = ("" + getName( o )).trim();
+                String type = ("" + EmfUtils.getTypeName( o )).trim();
+                String s = name;
+                if ( !Utils2.isNullOrEmpty( name ) ) {
+                    if ( !Utils2.isNullOrEmpty( type ) ) {
+                        s = s + ":" + type;
+                    }
+                } else s = type;
+                if (includeId && o instanceof BaseElement ) {
+                    s = s + "[" + ((BaseElement)o).getID() + "]";
+                }
+                if ( useToStringIfNull && Utils2.isNullOrEmpty( s ) ) {
+                    s = MoreToString.Helper.toString( o );
+//                                                       , withHash, deep,
+//                                                      seen, false,
+//                                                      otherOptions );
+                }
+                return s;
+//            }
+//            @Override
+//            public String toString( boolean withHash, boolean deep, Set< Object > seen ) {
+//                return toString( withHash, deep, seen, null );
+//            }
+//            @Override
+//            public String toShortString() {
+//                return MoreToString.Helper.toShortString( o );
+//            }
+//        };
+//        return mts.toString(false, true, null, null);
     }
     
     /**

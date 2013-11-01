@@ -4,7 +4,7 @@
 package gov.nasa.jpl.mbee.constraint;
 
 import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.EmfUtils;
+//import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Pair;
@@ -13,6 +13,9 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.ocl.OclEvaluator;
+
+import gov.nasa.jpl.mbee.constraint.BasicConstraint.Type;
+import gov.nasa.jpl.mbee.constraint.Constraint;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +33,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  * constraints and elements that are constrained.
  */
 public class BasicConstraint implements Constraint {
+    
+    public enum Type { UML, STATIC, DYNAMIC, CONSTRAINT_ST, VIEWPOINT_CONSTRAINT_ST, ANY };
     
     LinkedHashSet< Element > constrainingElements;
     //private LinkedHashSet< Element > constrainedElements;
@@ -59,6 +64,16 @@ public class BasicConstraint implements Constraint {
         addConstrainedObject( constrained );
     }
 
+    /**
+     * @param constrainingElement
+     * @param constrainedElement
+     */
+    public BasicConstraint( Object constraint,
+                            Collection< Object > constrained ) {
+        addConstrainingObject( constraint );
+        addConstrainedObjects( (Collection< Object >)constrained );
+    }
+
 //    /* (non-Javadoc)
 //     * @see gov.nasa.jpl.mbee.constraint.Constraint#getConstrainedElements()
 //     */
@@ -70,6 +85,47 @@ public class BasicConstraint implements Constraint {
 //        return //Collections.unmodifiableList( Utils2.toList( constrainedElements ) );
 //                constrainedElements;
 //    }
+    
+    /**
+     * Determines whether the input Constraint, constraint element, or all
+     * constraints in a collection are of the specified type. This establishes a
+     * policy for how the different kinds of constraints can be used.
+     * 
+     * @param constraint
+     * @param type
+     * @return true iff the constraint is of the specified type
+     */
+    public static boolean constraintIsType( Object constraint, Type type ) {
+        if ( constraint instanceof Constraint ) {
+            return constraintIsType( ( (Constraint)constraint ).getConstrainingElements(),
+                                     type );
+        }
+        if ( constraint instanceof Collection ) {
+            for ( Object c : (Collection<?>)constraint ) {
+                if ( constraintIsType( c, type ) ) {
+                    return true;
+                }
+            }
+        }
+        if ( constraint instanceof Element ) {
+            Element elem = (Element)constraint;
+            if ( !elementIsConstraint( elem ) ) return false;
+            switch ( type ) {
+                case ANY: return true;
+                
+                case UML: return elementIsUmlConstraint( elem );
+                
+                case CONSTRAINT_ST: return elementIsDocGenConstraint( elem );
+                
+                case VIEWPOINT_CONSTRAINT_ST:
+                case DYNAMIC: return elementIsViewpointConstraint( elem );
+                
+                case STATIC: return !elementIsViewpointConstraint( elem );
+                default: return false;
+            }
+        }
+        return false;
+    }
 
     @Override
     public Set< Object > getConstrainedObjects() {
@@ -84,10 +140,20 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public Set< Element > getConstrainingElements() {
+        return getConstrainingElements( Type.ANY );
+    }
+    public Set< Element > getConstrainingElements( Type type ) {
         if ( constrainingElements == null ) {
             constrainingElements = new LinkedHashSet< Element >();
         }
-        return constrainingElements;
+        if ( type == Type.ANY ) return constrainingElements;
+        Set< Element > filtered = new LinkedHashSet< Element >();
+        for ( Element c : constrainingElements ) {
+            if ( constraintIsType( c, type ) ) {
+                filtered.add( c );
+            }
+        }
+        return filtered;
     }
 
 //    /* (non-Javadoc)
@@ -217,12 +283,17 @@ public class BasicConstraint implements Constraint {
     }
 
     public Boolean evaluate( boolean complainIfFails ) {
-        // try to evaluate it as is first.
         violatedConstraintElement = null;
         violatedConstrainedElement = null;
         
         // try evaluating constraint on elements as a collection
-        Boolean satisfied = evaluate( getConstrainedObjects(), false );
+        Boolean satisfied = false;
+        try {
+            satisfied = evaluate( getConstrainedObjects(), false );
+        } catch (Throwable e) {
+            Debug.error(true, true, "Didn't work on elements as a collection:\n");
+            e.printStackTrace();
+        }
         if ( Boolean.TRUE.equals(satisfied) ) return satisfied;
 
         Boolean oldSatisfied = satisfied;
@@ -287,7 +358,7 @@ public class BasicConstraint implements Constraint {
             } catch ( Exception e ) {
                 this.errorMessage = e.getLocalizedMessage() + " for OCL query \""
                         + getExpression( constraint ) //OclEvaluator.queryObjectToStringExpression( constraint )
-                        + "\" on " + EmfUtils.toString( constrainedObject );
+                        + "\" on " + Utils.toStringNameAndType( constrainedObject, true, true );
                 try {
                     Debug.error( complainIfFails, false, this.errorMessage );
                 } catch ( Exception ex ) {
@@ -327,10 +398,8 @@ public class BasicConstraint implements Constraint {
         String expr = null;
         if ( constraint instanceof Element ) {
             Element e = (Element)constraint;
-            if ( e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint ) {
-                com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint c = 
-                        (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint)e;
-                expr = DocGenUtils.fixString( c.getSpecification() );
+            if ( elementIsUmlConstraint( e ) ) {
+                expr = DocGenUtils.fixString( asUmlConstraint( e ).getSpecification() );
             } else if ( GeneratorUtils.hasStereotypeByString(e, DocGen3Profile.constraintStereotype, true) ) {
                 Object v = GeneratorUtils.getObjectProperty( e, DocGen3Profile.constraintStereotype, "expression", null);
                 expr = v.toString();
@@ -355,8 +424,8 @@ public class BasicConstraint implements Constraint {
      *         or the evaluation does not work with the second candidate;
      *         otherwise return a BasicConstraint on the second candidate.
      */
-    public static BasicConstraint makeConstraint( Object constraintElement,
-                                                  Object...candidateContexts) {
+    public static BasicConstraint makeConstraintFromAlternativeContexts( Object constraintElement,
+                                                                         Object...candidateContexts) {
         BasicConstraint c = null;
         if ( !Utils2.isNullOrEmpty( candidateContexts ) ) {
             BasicConstraint firstNull = null;
@@ -382,10 +451,17 @@ public class BasicConstraint implements Constraint {
         }
         return c;
     }
-    
+
+    public static BasicConstraint makeConstraint( Element constraintElement ) {
+        if ( !elementIsConstraint( constraintElement ) ) return null;
+        List< Object > constrained = getConstrainedObjectsFromConstraintElement( constraintElement );
+        BasicConstraint c = new BasicConstraint( constraintElement, constrained );
+        return c;
+    }
+
     public static Boolean evaluateAgainst( Object constraint, Object constrained,
                                            List<Object> targets ) {
-        BasicConstraint c = makeConstraint( constraint, targets, constrained );
+        BasicConstraint c = makeConstraintFromAlternativeContexts( constraint, targets, constrained );
         Boolean result = c.evaluate();
         return result;
     }
@@ -397,7 +473,7 @@ public class BasicConstraint implements Constraint {
     public String toShortString() {
         StringBuffer sb = new StringBuffer();
         sb.append("Constraint:\"" + this.getExpression() + "\" on " +
-                  EmfUtils.toString( this.constrainedObjects ) );
+                  Utils.toStringNameAndType( this.constrainedObjects, false, true ));
         return sb.toString();
     }
     
@@ -472,85 +548,156 @@ public class BasicConstraint implements Constraint {
     }
 
     /**
-     * Return the constraints on this element.
-     * 
-     * Below, C is a constraint (UML or <<Constraint>>), and X is an element.
-     * <ol>
-     * <li>Not dealing with connectors for parameterizing constraints (such as
-     * in parametric diagrams), so these may be processed incorrectly.
-     * <li>If C has an association A with X, and A’s member end, M, is C, or
-     * M.type is C, then C constrains X.
-     * <li>If C is a comment or owned by a comment, and X is an annotated
-     * element of the comment, then C constrains X.
-     * <li>Otherwise, C does not constrain X.
-     * 
-     * <li>C is evaluated on collection X both as a whole and on each element.
-     * <ol>
-     * <li>C is evaluated against the collection of constrained elements first.
-     * <li>If C is not satisfied, it is evaluated against each element and
-     * returns false if any return false, true if all return true, and null
-     * (invalid) otherwise.
-     * </ol>
-     * <li>If X is a DocGen action/activity, C is evaluated against the output
-     * of X (as a single list or as individuals as stated above).
-     * <ul>
-     * <li>There is no means, yet, of distinguishing whether C is intended for X
-     * or its DocGen output, so it is evaluated for both contexts.
-     * <li>Since these contexts (DocGen and “static”) are evaluated separately,
-     * it is likely to fail in the unintended context.
-     * </ul>
-     * </ol>
+     * Get the elements that constrain this element.
      * 
      * @param constrainedObject
      * @return a list of constraint elements that constrain the
      *         constrainedObject
      */
     public static List< Element > getConstraintElements( Object constrainedObject ) {
+        return getConstraintElements( constrainedObject, Type.ANY );
+    }
+    public static List< Element > getConstraintElements( Object constrainedObject,
+                                                         Type type ) {
+
         LinkedHashSet< Element > constraintElements = new LinkedHashSet< Element >();
         if ( constrainedObject instanceof Element ) {
             Element constrainedElement = ((Element)constrainedObject);
             
             // Is the element stereotyped as <<Constraint>> or a UML Constraint?
-            if ( StereotypesHelper.hasStereotypeOrDerived( constrainedElement,
-                                                           DocGen3Profile.constraintStereotype ) ||
-                 constrainedElement instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint ) {
-                // Add the element as a constraint on itself if it is not a
-                // constraint on another element, to which it is anchored or
-                // associated, possibly inside a Constraint block.
-                if ( !( constrainedElement instanceof Comment ) ||
-                     Utils2.isNullOrEmpty( ( (Comment)constrainedElement ).getAnnotatedElement() ) ) {
+            if ( elementIsConstraintOnItself( constrainedElement ) ) {
+                if ( constraintIsType( constrainedElement, type ) ) {
                     constraintElements.add( constrainedElement );
                 }
-                
             }
-//            if ( constrainedElement instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint ) {
-//                constraintElements.add( constrainedElement );
-//            }
+
+            // Get the constraints MD finds 
             Collection< com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint > constrs =
                     constrainedElement.get_constraintOfConstrainedElement();
-            if ( constrs != null ) constraintElements.addAll( constrs );
+            if ( constrs != null ) {
+                for ( Element c : constrs ) { 
+                    if ( constraintIsType( c, type ) ) {
+                        constraintElements.add( c );
+                    }
+                }
+            }
 
-//            constraintElements.addAll( Utils.collectRelatedElementsByStereotypeString( constrainedElement, DocGen3Profile.constraintStereotype, 0, true, 1 ) );
+            // Add any comment constraints annotating this element
             for ( Element comment : BasicConstraint.getComments( constrainedElement ) ) {
-                if (StereotypesHelper.hasStereotypeOrDerived(comment, DocGen3Profile.constraintStereotype) ) {
-                    constraintElements.add( comment );
+                if ( elementIsDocGenConstraint( comment ) ) {
+                    if ( constraintIsType( comment, type ) ) {
+                        constraintElements.add( comment );
+                    }
                 }
             }
         }
+        // Collect constraints from each item in the object as a Collection
+        // TODO -- infinite loop if element contains itself!  Use Utils2.seen()
         if ( constrainedObject instanceof Collection ) {
             for ( Object o : (Collection<?>)constrainedObject ) {
-                constraintElements.addAll( getConstraintElements( o ) );
+                constraintElements.addAll( getConstraintElements( o, type ) );
             }
         }
         return Utils2.toList( constraintElements );
     }
     
+    
+    /**
+     * Get the elements that the input element constrains, if a constraint. 
+     * @param elem
+     * @return
+     */
+    public static List< Object > getConstrainedObjectsFromConstraintElement( Element elem ) {
+        Set< Object > constrained = new LinkedHashSet< Object >();
+        if ( elementIsDocGenConstraint( elem ) ) {
+            if ( elem instanceof Comment ) {
+                Collection< Element > annotatedElems = ((Comment)elem).getAnnotatedElement();
+                if ( Utils2.isNullOrEmpty( annotatedElems ) ) {
+                    constrained.add( elem );
+                } else {
+                    constrained.addAll( annotatedElems );
+                }
+            }
+        }
+        if ( elementIsUmlConstraint( elem ) ) {
+            constrained.addAll( asUmlConstraint( elem ).getConstrainedElement() );
+        }
+        return Utils2.toList( constrained );
+    }
+    
+    public static com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint
+            asUmlConstraint( Element elem ) {
+        if ( elementIsUmlConstraint( elem ) ) return (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint)elem;
+        return null;
+    }
+    
+    public static boolean elementIsUmlConstraint( Element elem ) {
+        return elem instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
+    }
+    
+    public static boolean elementIsDocGenConstraint( Element elem ) {
+        if ( elem == null ) return false;
+        if ( StereotypesHelper.hasStereotypeOrDerived( elem,
+                                                       DocGen3Profile.constraintStereotype ) ) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean elementIsViewpointConstraint( Element elem ) {
+        if ( elem == null ) return false;
+        if ( StereotypesHelper.hasStereotypeOrDerived( elem,
+                                                       DocGen3Profile.viewpointConstraintStereotype ) ) {
+            return true;
+        }
+        return false;
+    }
+   
+    public static boolean elementIsConstraint( Element elem ) {
+        return ( elementIsUmlConstraint( elem ) ||
+                 elementIsDocGenConstraint( elem ) ||
+                 elementIsViewpointConstraint( elem ) );
+    }
+    
+    /**
+     * Determines whether the element is a constraint on itself 
+     * 
+     * @param elem
+     * @return true iff it is not a constraint or constrains only other elements
+     */
+    public static boolean elementIsConstraintOnItself( Element elem ) {
+        // If a <<Constraint>>, then it constrains self if it is not a Comment,
+        // or it is included in the elements it annotates (as a Comment).
+        if ( elementIsDocGenConstraint( elem ) ) {
+            if ( !( elem instanceof Comment ) ) return true;
+            Comment comment = (Comment)elem;
+            return !Utils2.isNullOrEmpty( comment.getAnnotatedElement() ) &&
+                   comment.getAnnotatedElement().contains( elem );
+        }
+        if ( elementIsUmlConstraint( elem ) ) {
+            com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint umlConstr =
+                    (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint)elem;
+            List< Element > constrained = umlConstr.getConstrainedElement();
+            return constrained.contains( elem );
+        }
+        return false;
+    }
+    
+    /**
+     * @param constrainedObject the object for which constraints are sought
+     * 
+     * @return constraints on the constrainedObject, only including the
+     *         constrainedObject if it is a constraint on itself
+     */
     public static List< Constraint > getConstraints( Object constrainedObject ) {
+        return getConstraints( constrainedObject, Type.ANY );
+    }
+    public static List< Constraint > getConstraints( Object constrainedObject, Type type ) {
         List<Constraint> constraints = new ArrayList< Constraint >();
-        List< Element > constraintElements = getConstraintElements( constrainedObject );
-        for ( Element constraint : constraintElements  ) {
-            Constraint c = BasicConstraint.makeConstraint( constraint, constrainedObject );
-            constraints.add( c );
+        List< Element > constraintElements = getConstraintElements( constrainedObject, type );
+        for ( Element constraint : constraintElements ) {
+            Constraint c = BasicConstraint.makeConstraint( constraint );//, constrainedObject );
+            if ( c != null ) constraints.add( c );
         }
         return constraints;
     }
@@ -568,7 +715,5 @@ public class BasicConstraint implements Constraint {
     public void setErrorMessage( String errorMessage ) {
         this.errorMessage = errorMessage;
     }
-
-
 
 }

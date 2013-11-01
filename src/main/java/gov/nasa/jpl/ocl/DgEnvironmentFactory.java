@@ -25,8 +25,8 @@ import org.eclipse.ocl.ecore.SendSignalAction;
 import gov.nasa.jpl.ocl.DgEnvironmentFactory;
 
 public class DgEnvironmentFactory extends EcoreEnvironmentFactory {
-	private static DgEnvironment env;
-	private static DgEvaluationEnvironment	evalEnv;
+	private DgEnvironment env;
+	private DgEvaluationEnvironment	evalEnv;
 	
   /**
    * 
@@ -92,7 +92,7 @@ public class DgEnvironmentFactory extends EcoreEnvironmentFactory {
 		return evalEnv;
 	}
 
-  public static void reset() {
+  public void reset() {
     env = null;
     evalEnv = null;
   }

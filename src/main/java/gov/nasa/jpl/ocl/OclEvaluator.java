@@ -55,7 +55,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  * checkConstraint.
  * 
  * Here's an example of how to use OclEvaluator, setting up the environment as well
-  		// create custom environment factory
+  		// create custom environment facto
   		DgEnvironmentFactory	envFactory 	= new DgEnvironmentFactory();
   		
   		// create custom operation
@@ -104,11 +104,18 @@ public class OclEvaluator {
 	protected BasicDiagnostic basicDiagnostic = null;
 	protected OCLHelper<EClassifier, ?, ?, Constraint> helper = null;
 	private ProblemHandler problemHandler = null;
-
 	protected DgEnvironmentFactory environmentFactory = new DgEnvironmentFactory();
-    public static Set< DgOperationInstance > opsCache = null;
+	public String errorMessage = "";
+//    public static Set< DgOperationInstance > opsCache = null;
 //    public static boolean useCachedOps = true;  
   
+    public OclEvaluator() {
+        // make sure order is correct
+        getEnvironmentFactory();
+        getEnvironment();
+        getOcl();
+    }
+    
 	public void createOclInstance(DgEnvironmentFactory envFactory) {
 		ocl = OCL.newInstance(envFactory);
 	}
@@ -233,8 +240,8 @@ public class OclEvaluator {
                 if ( getProblemHandler() != null ) {
                     int offset = getProblemHandler().getErrorReportLineOffset();
                     Debug.outln( "getErrorReportLineOffset() = " + offset );
-                    Debug.outln( "Error messages = "
-                                 + Utils2.toString( ProblemHandler.ERROR_MESSAGES ) );
+                    this.errorMessage = Utils2.toString( ProblemHandler.ERROR_MESSAGES );
+                    Debug.outln( "Error messages = " + errorMessage );
                     AbstractParser parser = getProblemHandler().getParser();
                     Debug.outln( "parser = " + parser );
                     if ( parser != null ) {
@@ -249,6 +256,9 @@ public class OclEvaluator {
                     }
                 }
             }
+//            if ( !this.errorMessage.matches( ".*[A-Za-z]" ) ) {
+                this.errorMessage = e.getLocalizedMessage();
+//            }
             throw e;//new ParserException( getBasicDiagnostic() );
         }
 
@@ -588,7 +598,7 @@ public class OclEvaluator {
 //      DgEnvironmentFactory.reset();
 //      environmentFactory = null;//new DgEnvironmentFactory();
       if ( resetOpsCache ) {
-          opsCache = null;
+//          opsCache = null;
           expressions = null;
       }
 //      ocl = null;
@@ -606,8 +616,8 @@ public class OclEvaluator {
     // set up the customized environment
     // create custom environment factory
     resetEnvironment( false );
-    DgEnvironmentFactory.reset();
-    environmentFactory = new DgEnvironmentFactory();
+    //DgEnvironmentFactory.reset();
+    //environmentFactory = new DgEnvironmentFactory();
 //    if ( !Utils2.isNullOrEmpty( opsCache ) ) {
 //        for ( DgOperationInstance op : opsCache ) {
 //            DgOperationInstance.addOperation( op, getEnvironmentFactory() );
@@ -622,7 +632,7 @@ public class OclEvaluator {
         addNOperation( getEnvironmentFactory() );
         addExpressionOperations( getEnvironmentFactory() );
         
-        opsCache = getEnvironment().operations;
+//        opsCache = getEnvironment().operations;
 //        ++cacheMisses;
 //    }
     return getEnvironmentFactory();
