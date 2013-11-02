@@ -120,5 +120,4 @@ public class DocGen3Profile {
 	public static final String viewCommentStereotype = "ViewComment";
 
 	public static final String constraintStereotype = "Constraint";
-    public static final String viewpointConstraintStereotype = "ViewpointConstraint";
 }
