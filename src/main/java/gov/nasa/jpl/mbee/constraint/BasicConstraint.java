@@ -1,10 +1,7 @@
-/**
- * 
- */
 package gov.nasa.jpl.mbee.constraint;
 
+
 import gov.nasa.jpl.mbee.lib.Debug;
-//import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Pair;
@@ -14,12 +11,10 @@ import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
-import gov.nasa.jpl.mbee.constraint.BasicConstraint.Type;
 import gov.nasa.jpl.mbee.constraint.Constraint;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,7 +38,7 @@ public class BasicConstraint implements Constraint {
     Element violatedConstrainedElement = null;
     protected Boolean isConsistent = null;
     protected String errorMessage = null;
-    
+    protected boolean reported = false;
 //    /**
 //     * @param constrainingElement
 //     * @param constrainedElement
@@ -53,7 +48,7 @@ public class BasicConstraint implements Constraint {
 //        addConstrainedElement( constrainedElement );
 //        addConstrainingElement( constrainingElement );
 //    }
-
+    
     /**
      * @param constrainingElement
      * @param constrainedElement
@@ -74,6 +69,34 @@ public class BasicConstraint implements Constraint {
         addConstrainedObjects( (Collection< Object >)constrained );
     }
 
+//    public static Boolean getBooleanPropertyValue( Element vpConstraint, String stereotypeName, String propName ) {
+//        // try to get default for the iterate property
+//        Property prop = StereotypesHelper.getPropertyByName( StereotypesHelper.getStereotype( Utils.getProject(), stereotypeName ), propName );
+//        ValueSpecification defaultVal = prop.getDefaultValue();
+//        // now get the property value
+//        Object propVal = GeneratorUtils.getObjectProperty( vpConstraint, stereotypeName, propName, defaultVal );
+//        Boolean boolVal = Utils.isTrue( DocGenUtils.fixString( propVal, false ), true );
+//        return boolVal;
+//    }
+    public static boolean iterateViewpointConstrraint( Element vpConstraint ) {
+        Boolean iterate =
+                (Boolean)GeneratorUtils.getObjectProperty( vpConstraint,
+                                                           DocGen3Profile.viewpointConstraintStereotype,
+                                                           "iterate", true );
+//        Boolean iterate = getBooleanPropertyValue( vpConstraint, DocGen3Profile.expressionChoosable, "iterate" );
+        boolean result = !Boolean.FALSE.equals(iterate);
+        return result;
+    }
+    
+    public static boolean reportedViewpointConstrraint( Element vpConstraint ) {
+        Boolean report =
+                (Boolean)GeneratorUtils.getObjectProperty( vpConstraint,
+                                                           DocGen3Profile.viewpointConstraintStereotype,
+                                                           "validationReport", false );
+        boolean result = Boolean.TRUE.equals(report);
+        return result;
+    }
+    
 //    /* (non-Javadoc)
 //     * @see gov.nasa.jpl.mbee.constraint.Constraint#getConstrainedElements()
 //     */
@@ -236,6 +259,9 @@ public class BasicConstraint implements Constraint {
             constrainingElements = new LinkedHashSet< Element >();
         }
         constrainingElements.add( constrainingElement );
+        if ( !reported && elementIsViewpointConstraint( constrainingElement ) ) {
+            setReported( reportedViewpointConstrraint( constrainingElement ) );
+        }
     }
 
     /* (non-Javadoc)
@@ -243,10 +269,9 @@ public class BasicConstraint implements Constraint {
      */
     @Override
     public void addConstrainingElements( Collection< Element > elements ) {
-        if ( constrainingElements == null ) {
-            constrainingElements = new LinkedHashSet< Element >();
+        for ( Element e : elements ) {
+            addConstrainingElement( e );
         }
-        constrainingElements.addAll( elements );
     }
 
     /* (non-Javadoc)
@@ -450,6 +475,49 @@ public class BasicConstraint implements Constraint {
             c = new BasicConstraint( constraintElement, constrained );
         }
         return c;
+    }
+
+    /**
+     * Expression evaluation expects a list of targets. Make sure the targets
+     * are in a list and not buried in an extra list.
+     * 
+     * @param targets
+     * @return
+     */
+    public static Object fixTargets( Object targets ) {//, Element vpConstraint ) {
+        if ( targets == null ) return null;
+//        if ( vpConstraint == null ) return targets;
+
+        Object constrained = targets;
+        // See if the constraint is supposed to be iteratively applied to each
+        // in a list or to the list as a whole.
+////        if ( iterateViewpointConstrraint( vpConstraint ) ) {
+            // If iterating, be sure that list isn't buried in another list.
+            if ( constrained instanceof Collection ) {
+                Collection< ? > coll = (Collection<?>)constrained;
+                if ( !coll.isEmpty() ) {
+                    Object first = coll.iterator().next();
+                    if ( first instanceof Collection && coll.size() == 1 ) {
+                        constrained = first;
+                    }
+                }
+            }
+////        } else {
+            // Expecting targets to be processed as a single list
+            if ( constrained instanceof Element ) {
+                constrained = Utils2.newList(constrained);
+            }
+//            if ( constrained instanceof Collection ) {
+//                Collection< ? > coll = (Collection<?>)constrained;
+//                if ( !coll.isEmpty() ) {
+//                    Object first = coll.iterator().next();
+//                    if ( first instanceof Element ) {
+//                        constrained = Utils2.newList(constrained);
+//                    }
+//                }
+//            }
+////        }
+        return constrained;
     }
 
     public static BasicConstraint makeConstraint( Element constraintElement ) {
@@ -680,6 +748,9 @@ public class BasicConstraint implements Constraint {
             List< Element > constrained = umlConstr.getConstrainedElement();
             return constrained.contains( elem );
         }
+        if ( elementIsViewpointConstraint( elem ) ) {
+            return true;
+        }
         return false;
     }
     
@@ -714,6 +785,15 @@ public class BasicConstraint implements Constraint {
 
     public void setErrorMessage( String errorMessage ) {
         this.errorMessage = errorMessage;
+    }
+
+    @Override
+    public boolean isReported() {
+        return false;
+    }
+
+    public void setReported( boolean b ) {
+        reported = b;
     }
 
 }

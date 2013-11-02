@@ -567,6 +567,8 @@ public class OclEvaluator {
       // add each of the elements with the Expression stereotype as shortcut/blackbox functions
       for ( Element expr : exprs ) {
           String name = Utils.getName( expr );
+          // function name can't have spaces and strange characters; e.g. the name "four+five" would be parsed as a sum operation.
+          name = name.replaceAll( "[^A-Za-z0-9_]+", "" ); 
           String exprString = queryElementToStringExpression( expr );
 //          String errorMsg = checkParsable( exprString );
           String errorMsg = null;

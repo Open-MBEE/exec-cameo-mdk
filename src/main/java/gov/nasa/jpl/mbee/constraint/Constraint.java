@@ -33,6 +33,7 @@ public interface Constraint {
     public void addConstrainingElement( Element element );
     public Element getViolatedConstraintElement();
     
+    public boolean isReported();
     /**
      * @return a text expression of the constraint
      */

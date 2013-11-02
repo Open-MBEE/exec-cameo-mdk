@@ -56,6 +56,8 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             new TreeMap< BaseElement, Set< gov.nasa.jpl.mbee.constraint.Constraint > >(CompareUtils.GenericComparator.instance());
     protected Map< gov.nasa.jpl.mbee.constraint.Constraint, Set< BaseElement > > constraintToElementMap =
             new TreeMap< gov.nasa.jpl.mbee.constraint.Constraint, Set< BaseElement > >(CompareUtils.GenericComparator.instance());
+    protected Map< BaseElement, Set< ValidationRuleViolation >> constraintElementToViolationMap =
+            new TreeMap< BaseElement, Set< ValidationRuleViolation > >( CompareUtils.GenericComparator.instance() );
     protected Set< Annotation > annotations = null;
     
     public BasicConstraint.Type constraintType = Type.ANY;
@@ -76,6 +78,31 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 ////        this.context.addAll( context );
 ////    }
     
+    @Override
+    public ValidationRuleViolation addViolation( ValidationRuleViolation v ) {
+        if ( v == null ) return null;
+        Utils2.addToSet( constraintElementToViolationMap, v.getElement(), v );
+        return super.addViolation( v );
+    }
+
+    @Override
+    public ValidationRuleViolation addViolation( Element e, String comment ) {
+        ValidationRuleViolation v = super.addViolation( e, comment );
+        Utils2.addToSet( constraintElementToViolationMap, v.getElement(), v );
+        return v;
+    }
+
+    @Override
+    public ValidationRuleViolation addViolation( Element e, String comment, boolean reported ) {
+        ValidationRuleViolation v = super.addViolation( e, comment, reported );
+        Utils2.addToSet( constraintElementToViolationMap, v.getElement(), v );
+        return v;
+    }
+
+    public Set<ValidationRuleViolation> getViolations( Element constraintElement ) {
+        return constraintElementToViolationMap.get( constraintElement );
+    }
+    
     /* (non-Javadoc)
      * @see com.nomagic.magicdraw.validation.ElementValidationRuleImpl#init(com.nomagic.magicdraw.core.Project, com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint)
      */
@@ -94,6 +121,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         elementToConstraintMap.clear();
         constraintToElementMap.clear();
         elementsWithConstraints.clear();
+        constraintElementToViolationMap.clear();
         
         if ( Utils2.isNullOrEmpty( paramCollection ) ) {
             paramCollection = Utils2.newList( Utils.getRootElement() );
@@ -226,16 +254,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
                                                               this,
                                                               isLanguageOcl( constraint ) );
                 if ( loggingResults  ) {
-                    if ( satisfied == null ) {
-                        String errorMsg = "";
-                        OclEvaluator e = OclEvaluator.instance;
-                        if ( e != null ) errorMsg = e.errorMessage;
-                        MdDebug.logForce( "  Not OCL parsable: " + constraint + "; " + errorMsg );
-                    } else if ( satisfied ) {
-                        MdDebug.logForce( "            Passed: " + constraint );
-                    } else {
-                        MdDebug.logForce( "            Failed: " + constraint );
-                    }
+                    logResults( satisfied, constraint );
                 }
             //Boolean satisfied = constraint.evaluate();
 //            if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
@@ -259,6 +278,20 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 
 //        if ( !wasOn ) Debug.turnOff();
         return result;
+    }
+
+    public static void logResults( Boolean satisfied,
+                                   gov.nasa.jpl.mbee.constraint.Constraint constraint ) {
+        if ( satisfied == null ) {
+            String errorMsg = "";
+            OclEvaluator e = OclEvaluator.instance;
+            if ( e != null ) errorMsg = e.errorMessage;
+            MdDebug.logForce( "  Not OCL parsable: " + constraint + "; " + errorMsg );
+        } else if ( satisfied ) {
+            MdDebug.logForce( "            Passed: " + constraint );
+        } else {
+            MdDebug.logForce( "            Failed: " + constraint );
+        }
     }
 
     /* (non-Javadoc)
