@@ -24,6 +24,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.model.Query;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Section;
 import gov.nasa.jpl.mgss.mbee.docgen.model.TableStructure;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
+import gov.nasa.jpl.mgss.mbee.docgen.model.ViewpointConstraint;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -572,6 +573,8 @@ public class DocumentGenerator {
 			dge = new MissionMapping();
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.libraryChooserStereotype)) {
 			dge = new LibraryMapping();
+		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.viewpointConstraintStereotype)) {
+		    dge = new ViewpointConstraint(context.getValidator());
 		} else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.javaExtensionStereotype, true)) {
 		    Element e = an;
 	        if (!StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.javaExtensionStereotype)) {
@@ -586,6 +589,7 @@ public class DocumentGenerator {
 	                java.lang.Class clazz = java.lang.Class.forName(javaClazz, true, DocGenPlugin.extensionsClassloader);
 	                dge = (Query)clazz.newInstance();
 	            } catch (Exception e1) {
+	            	Application.getInstance().getGUILog().log("[ERROR] Cannot instantiate Java extension class " + javaClazz);
 	                e1.printStackTrace();
 	            }
 	        }

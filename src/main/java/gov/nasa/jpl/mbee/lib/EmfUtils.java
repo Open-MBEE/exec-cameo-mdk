@@ -38,6 +38,7 @@ public final class EmfUtils {
   public static String spewObjectSuffix = spewObjectPrefix;
 
   public static String toString( Object o ) {
+      if ( o == null ) return "null";
       if ( o instanceof Collection ) {
           Collection<?> c = (Collection<?>)o;
           int count = 0;
@@ -59,6 +60,11 @@ public final class EmfUtils {
               sb.append(")");
               return sb.toString();
           }
+      } else if ( o.getClass().isArray() ) {
+          Object[] arr = (Object[])o;
+          if (arr.length == 1 ) return toString(arr[0]);
+          // TODO -- potential infinite loop -- use Utils2.seen()
+          return toString( Arrays.asList( arr ) );
       }
       String result = null;
       String name = getName( o );
@@ -71,16 +77,18 @@ public final class EmfUtils {
           else repText = ":" + repText;
           result = name + //e.getHumanType() + ":" +
                   (Debug.isOn() ? e.getID() : "") + repText; 
-          if ( Debug.isOn() ) {
-              Debug.out( "" );
-          }
-          return result.replaceFirst( "::", ":" );
+          result = result.replaceFirst( "::", ":" );
+          result = result.trim().replaceAll( "^:", "" );
+          result = result.trim().replaceAll( ":$", "" );
+          return result;
       }
       if ( Utils2.isNullOrEmpty( name ) ) {
           result = o.toString();
       } else {
           result = name + getTypeNames( o );
       }
+      result = result.trim().replaceAll( "^:", "" );
+      result = result.trim().replaceAll( ":$", "" );
       return result;
   }
   

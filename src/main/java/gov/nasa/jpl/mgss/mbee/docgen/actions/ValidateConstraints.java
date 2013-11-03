@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
+import gov.nasa.jpl.mbee.constraint.BasicConstraint.Type;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.MdDebug;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -49,7 +50,6 @@ public class ValidateConstraints extends MDAction {
 
     @Override
     public void actionPerformed( ActionEvent e ) {
-        MdDebug.log( "*** Starting MDK Validate Constraints ***" );
         Collection< Element > selectedElements = MDUtils.getSelection( e, Configurator.lastContextIsDiagram );
 //        for ( Element elem : new ArrayList<Element>( selectedElements ) ) {
 //            if ( elem instanceof Package ) {
@@ -62,8 +62,9 @@ public class ValidateConstraints extends MDAction {
         OclEvaluator.resetEnvironment();
         
         //ConstraintValidationRule rule = new ConstraintValidationRule();
+        constraintRule.constraintType = Type.STATIC;
         constraintRule.init( Utils.getProject(), null );
-        Set< Annotation > annotations = constraintRule.run( Utils.getProject(), null, selectedElements );
+        constraintRule.run( Utils.getProject(), null, selectedElements );
 //        RunnableSessionWrapperWithResult< Boolean > checkForRepairs =
 //                new RunnableSessionWrapperWithResult<Boolean>(String.format("%s - (iteration=%d)", message, iterations)) {
 //
@@ -73,7 +74,6 @@ public class ValidateConstraints extends MDAction {
 //                    }
 //                };
         Utils.displayValidationWindow(validationOutput, "User Validation Script Results");  
-        MdDebug.log( "*** Finished MDK Validate Constraints ***" );
     }
 
     @Override

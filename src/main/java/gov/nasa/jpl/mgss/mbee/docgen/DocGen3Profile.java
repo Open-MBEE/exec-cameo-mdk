@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+
 public class DocGen3Profile {
 	public static final String sectionStereotype = "Dynamic View";
 	public static final String paragraphStereotype = "Paragraph";
@@ -35,6 +37,7 @@ public class DocGen3Profile {
 	public static final String hierarchicalPropertiesTableStereotype = "HierarchicalPropertiesTable";
 	public static final String propertiesTableByAttributesStereotype = "PropertiesTableByAttributes";
 	
+	public static final String viewpointConstraintStereotype = "ViewpointConstraint";
 	public static final String userScriptStereotype = "UserScript";
 	public static final String userScriptCFStereotype = "Collect/Filter UserScript";
 	public static final String validationScriptStereotype = "ValidationScript";
