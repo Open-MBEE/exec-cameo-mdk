@@ -589,6 +589,7 @@ public class DocumentGenerator {
 	                java.lang.Class clazz = java.lang.Class.forName(javaClazz, true, DocGenPlugin.extensionsClassloader);
 	                dge = (Query)clazz.newInstance();
 	            } catch (Exception e1) {
+	            	Application.getInstance().getGUILog().log("[ERROR] Cannot instantiate Java extension class " + javaClazz);
 	                e1.printStackTrace();
 	            }
 	        }
