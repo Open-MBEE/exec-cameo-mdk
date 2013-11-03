@@ -166,6 +166,9 @@ public class MdDebug extends Debug {
     public static void logUnsafe( final String s, final boolean addNewLine,
                                   final boolean isErr, final Color color ) {
         if ( !Debug.isOn() ) return;
+    }
+    public static void logUnsafeForce( final String s, final boolean addNewLine,
+                                       final boolean isErr, final Color color ) {
         String ss = s;
         Color newColor = color;
         StringBuffer sb = ( isErr ? glErrBuf : glBuf );
@@ -204,6 +207,9 @@ public class MdDebug extends Debug {
     public static void log( final String s ) {
         log( s, true, false );
     }
+    public static void logForce( final String s ) {
+        logForce( s, true, false, null );
+    }
 
     public static void log( final String s, final boolean addNewLine,
                             final boolean isErr ) {
@@ -213,15 +219,19 @@ public class MdDebug extends Debug {
     public static void log( final String s, final boolean addNewLine,
                             final boolean isErr, final Color color ) {
         if ( !Debug.on ) return;
+        logForce( s, addNewLine, isErr, color );
+    }
+    public static void logForce( final String s, final boolean addNewLine,
+                                 final boolean isErr, final Color color ) {
         if ( isGuiThread() ) {
-            logUnsafe( s, addNewLine, isErr, color );
+            logUnsafeForce( s, addNewLine, isErr, color );
             return;
         }
         try {
             SwingUtilities.invokeLater( new Runnable() {
                 @Override
                 public void run() {
-                    logUnsafe(s, addNewLine, isErr, color);
+                    logUnsafeForce(s, addNewLine, isErr, color);
                 }
             } );
         } catch ( Exception e ) {

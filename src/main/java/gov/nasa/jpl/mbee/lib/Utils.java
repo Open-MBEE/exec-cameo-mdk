@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.lib;
 
-import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -22,6 +21,7 @@ import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,12 +31,11 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
-
-import org.eclipse.ocl.ParserException;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -1195,10 +1194,13 @@ public class Utils {
 			@SuppressWarnings("unchecked")
 			@Override
 			public int compare(Element o1, Element o2) {
+                if ( o1 == o2 ) return 0;
+                if ( o1 == null ) return -1;
+                if ( o2 == null ) return 1;
 				if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
-					return ((NamedElement)o1).compareTo((NamedElement)o2);
+					return ((NamedElement)o1).getName().compareTo(((NamedElement)o2).getName());
 				}
-				return 0;
+				return CompareUtils.compare( o1, o2 );
 			}
     	});
     	return n;
@@ -1241,33 +1243,28 @@ public class Utils {
     	
     	return new Comparator<Element>() {
     		public int compare(Element A, Element B) {
+    		    if ( A == B ) return 0;
+    		    if ( A == null ) return -1;
+    		    if ( B == null ) return 1;
     			Object a = getElementAttribute(A, attribute);
     			Object b = getElementAttribute(B, attribute);
+                if ( a == b ) return 0;
+                if ( a == null ) return -1;
+                if ( b == null ) return 1;
     			switch (attribute) {
     			case Name:
-    				if (a instanceof String && b instanceof String) {
-    					return ((String)a).compareTo((String)b);
-    				} else {
-    					return 0;
-    				}
+    			    return CompareUtils.compare( a.toString(), b.toString() );
     			case Documentation:
-    				if (a instanceof String && b instanceof String) {
-    					return ((String)a).length() - ((String)b).length();
-    				} else {
-    					return 0;
-    				}
+                    return CompareUtils.compare( a.toString().length(), b.toString().length() );
     			case Value:
     				if (allNums) {
-    					Double da = Double.parseDouble(DocGenUtils.fixString(a));
-    					Double db = Double.parseDouble(DocGenUtils.fixString(b));
-    					return da.compareTo(db);
-    				} else if (a instanceof String && b instanceof String) {
-    					return ((String)a).compareTo((String)b);
-    				} else {
-    					return 0;
+    					Double da = Utils2.toDouble(DocGenUtils.fixString(a));
+    					Double db = Utils2.toDouble(DocGenUtils.fixString(b));
+                        return CompareUtils.compare( da, db );
     				}
+                    return CompareUtils.compare( a, b );
     			default:
-    				return 0;
+                    return CompareUtils.compare( a, b );
     			}
     		}
     	};
@@ -1308,19 +1305,25 @@ public class Utils {
     	
     	return new Comparator<Element>() {
     		public int compare(Element A, Element B) {
-    			List<Object> a = getElementPropertyValues(A, property, true);
-    			List<Object> b = getElementPropertyValues(B, property, true);
+                if ( A == B ) return 0;
+                if ( A == null ) return -1;
+                if ( B == null ) return 1;
+                List<Object> a = getElementPropertyValues(A, property, true);
+                List<Object> b = getElementPropertyValues(B, property, true);
+                if ( a == b ) return 0;
+                if ( a == null ) return -1;
+                if ( b == null ) return 1;
     			if (a.size() == 1 && b.size() == 1) {
     				Object a0 = a.get(0);
     				Object b0 = b.get(0);
     				String as = DocGenUtils.fixString(a0);
     				String bs = DocGenUtils.fixString(b0);
     				if (allNums) {
-    					Double da0 = Double.parseDouble(as);
-    					Double db0 = Double.parseDouble(bs);
-    					return da0.compareTo(db0);
+    					Double da0 = Utils2.toDouble(as);
+    					Double db0 = Utils2.toDouble(bs);
+    					return CompareUtils.compare( da0, db0 );
     				} else {
-    					return as.compareTo(bs);
+                        return CompareUtils.compare( as, bs );
     				}
     			} else {
     				return a.size() - b.size();
@@ -1924,8 +1927,15 @@ public class Utils {
     }
 
     private static int docgenCompare( Object a0, Object b0, boolean asNumbers ) {
+        if ( a0 == b0 ) return 0;
+        if ( a0 == null ) return -1;
+        if ( b0 == null ) return 1;
+
         String as = DocGenUtils.fixString(a0);
         String bs = DocGenUtils.fixString(b0);
+        if ( as == bs ) return 0;
+        if ( as == null ) return -1;
+        if ( bs == null ) return 1;
         if (asNumbers) {
             Double da0 = Utils2.toDouble(as);
             Double db0 = Utils2.toDouble(bs);
@@ -2558,8 +2568,8 @@ public class Utils {
         if ( obj instanceof NamedElement ) {
             return ((NamedElement)obj).getName();
         }
-        if ( obj instanceof Element ) {
-            String humanName = ((Element)obj).getHumanName();
+        if ( obj instanceof BaseElement ) {
+            String humanName = ((BaseElement)obj).getHumanName();
             String[] arr = humanName.trim().split( " " );
             if ( arr != null ) {
                 if ( arr.length == 2 ) {
@@ -2571,6 +2581,98 @@ public class Utils {
             // REVIEW -- this seems like a bad place to be -- error messages?
         }
         return EmfUtils.getName( obj );
+    }
+    
+    
+    public static String getTypeName( Object obj ) {
+        if ( obj instanceof BaseElement ) {
+            String humanType = ("" + ((BaseElement)obj).getHumanType()).trim();
+            if ( !Utils2.isNullOrEmpty( humanType ) ) return humanType;
+            String humanName = ((BaseElement)obj).getHumanName();
+            String[] arr = humanName.trim().split( " " );
+            if ( arr != null ) {
+                if ( arr.length == 2 ) {
+                    if ( !Utils2.isNullOrEmpty( arr[0] ) && !Utils2.isNullOrEmpty( arr[1] ) ) {
+                        return arr[0];
+                    }
+                }
+            }
+            // REVIEW -- this seems like a bad place to be -- error messages?
+        }
+        // try stereotype
+        if ( obj instanceof Element ) {
+            Element elem = (Element)obj;
+            List< Stereotype > sTypes = StereotypesHelper.getStereotypes(elem);
+            if ( !Utils2.isNullOrEmpty( sTypes ) ) {
+                for ( Stereotype st : sTypes ) {
+                    String t = st.getName();
+                    if ( !Utils2.isNullOrEmpty( t ) ) {
+                        return t;
+                    }
+                }
+            }
+        }
+        return EmfUtils.getTypeName( obj );
+    }
+    
+    public static String toStringNameAndType( final Object o ) {
+        return toStringNameAndType( o, false, false );
+    }
+
+    public static String toStringNameAndType( final Object o,
+                                              final boolean includeId,
+                                              final boolean useToStringIfNull ) {
+        if ( o == null ) return "null";
+        
+        // if list, call recursively
+        if ( o instanceof Collection || o instanceof Map || o.getClass().isArray() ||
+             o instanceof Entry ) {
+            StringBuffer sb = new StringBuffer();
+            sb.append("( ");
+            boolean first = true;
+            Collection<?> c = null;
+            String sep = ", ";
+            if ( o instanceof Collection ) {
+                c = (Collection<?>)o;
+            } else if ( o instanceof Map ) {
+                c = ((Map<?,?>)o).entrySet();
+            } else if ( o.getClass().isArray() ) {
+                c = Arrays.asList( (Object[])o );
+            } else if ( o instanceof Entry ) {
+                Entry<?,?> entry = (Entry<?,?>)o;
+                c = Utils2.newList( entry.getKey(), entry.getValue() );
+                sep = " = ";
+            }
+            // TODO -- avoid infinite recursion with Utils2.seen()
+            for ( Object i : c ) {
+                if ( first ) first = false;
+                else sb.append( sep );
+                sb.append( toStringNameAndType( i, includeId, useToStringIfNull ) );
+            }
+            sb.append( " )" );
+            return sb.toString();
+        }
+        
+        // Not a list
+        String name = ( "" + getName( o ) ).trim();
+        String type = ( "" + getTypeName( o ) ).trim();
+        String s = name;
+        if ( !Utils2.isNullOrEmpty( name ) ) {
+            if ( !Utils2.isNullOrEmpty( type ) ) {
+                s = s + ":" + type;
+            }
+        } else s = type;
+        if ( includeId && o instanceof BaseElement ) {
+            if ( !Utils2.isNullOrEmpty( s ) ) {
+                s = s + ":" + ( (BaseElement)o ).getID();
+            } else {
+                s = ( (BaseElement)o ).getID();
+            }
+        }
+        if ( useToStringIfNull && Utils2.isNullOrEmpty( s ) ) {
+            s = MoreToString.Helper.toString( o );
+        }
+        return s;
     }
     
     /**

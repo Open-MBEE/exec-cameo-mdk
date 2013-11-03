@@ -94,6 +94,17 @@ public class Debug {
     return errorOnNull( true, msg, maybeNullObjects );
   }
 
+  public static String stackTrace() {
+      Exception e = new Exception();
+      return stackTrace( e );
+  }
+  public static String stackTrace( Throwable e ) {
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      e.printStackTrace(pw);
+      return sw.toString();
+  }
+  
   /**
    * Throws and catches an exception if any of the input objects are null. It
    * prints a supplied message and, optionally, a stack trace to stderr.

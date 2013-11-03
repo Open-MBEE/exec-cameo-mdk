@@ -4,6 +4,7 @@ import gov.nasa.jpl.mbee.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.constraint.Constraint;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
+import gov.nasa.jpl.mbee.lib.MdDebug;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -49,6 +50,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ConstraintValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
@@ -60,12 +62,12 @@ import gov.nasa.jpl.ocl.OclEvaluator;
  * uses jgrapht to detect cycles in the document and various other potential errors
  * this only checks for static model structure and does not actually try to execute the document
  * @author dlam
- * Changelog: Document Validator updated to use Validationsuite. 
+ * Changelog: Document Validator updated to use Validationsuite.
  */
 public class DocumentValidator {
 	
-	public ValidationRule getConstraintRule() {
-        return constraintRule;
+	public ValidationRule getViewpointConstraintRule() {
+        return viewpointConstraintRule;
     }
 
     private Element start;
@@ -73,6 +75,8 @@ public class DocumentValidator {
 				
 	
 	private ValidationSuite Validationui = new ValidationSuite("Validationui");
+    private ValidationSuite dynamicExpressionValidation =
+            new ValidationSuite("ExpressionValidation");
 	
 	private static final Map<String, String> requiredTags = new HashMap<String, String>() {
         {
@@ -118,7 +122,8 @@ public class DocumentValidator {
 	private ValidationRule cycleError = new ValidationRule("Cycles in model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule activityNodeCycleError = new ValidationRule("Activity Node Cycles in Model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule missingTagValue = new ValidationRule("Missing tag", "An action is missing required tag value", error);
-    private ValidationRule constraintRule = new ValidationRule("Constraint", "Model constraint violation", warn);
+
+	private ValidationRule viewpointConstraintRule = new ConstraintValidationRule();
 
     /*
 	 * Needed to use the utils.displayvalidationwindow
@@ -137,7 +142,6 @@ public class DocumentValidator {
 
 	public DocumentValidator(Element e) {
 		start = e;
-		
 		
 
 		log = Application.getInstance().getGUILog();
@@ -175,12 +179,13 @@ public class DocumentValidator {
 		Validationui.addValidationRule(cycleError);
 		Validationui.addValidationRule(activityNodeCycleError);
 		Validationui.addValidationRule(missingTagValue);
-        Validationui.addValidationRule(constraintRule);
+		
+		dynamicExpressionValidation.addValidationRule(viewpointConstraintRule);
 
 		
 		//Need Collection to use the utils.DisplayValidationWindow method
 		ValidationOutput.add(Validationui);
-
+        ValidationOutput.add(dynamicExpressionValidation);
 
 	}
 	
@@ -539,7 +544,10 @@ public class DocumentValidator {
      * @param comment
      * @return whether a violation was added
      */
-	public static boolean addViolationIfUnique( ValidationRule rule, Element element, String comment ) {
+	public static boolean addViolationIfUnique( ValidationRule rule,
+	                                            Element element,
+	                                            String comment,
+	                                            boolean reported) {
 	    if ( rule == null ) return false;
         List< ValidationRuleViolation > violations = rule.getViolations();
         boolean alreadyAdded = false;
@@ -553,7 +561,7 @@ public class DocumentValidator {
             }
         }
         if ( alreadyAdded ) return false;
-        rule.addViolation( element, comment );
+        rule.addViolation( element, comment, reported );
         return true;
 	}
 	
@@ -570,7 +578,7 @@ public class DocumentValidator {
      */
     public static Object evaluate( Object expression, Object context, DocumentValidator validator,
                                    boolean violationIfInconsistent ) {
-        ValidationRule rule = validator == null ? null : validator.getConstraintRule();
+        ValidationRule rule = validator == null ? null : validator.getViewpointConstraintRule();
         return evaluate( expression, context, rule, violationIfInconsistent );
     }
     /**
@@ -598,8 +606,7 @@ public class DocumentValidator {
                     "\" on " + Utils.getName( context ) +
                     (showElementIds ? "[" + id + "]" : "" );
                 if ( rule != null && context instanceof Element) { //need further fixes to allow context be a collection
-                    addViolationIfUnique( rule,
-                                          (Element)context, errorMessage );
+                    addViolationIfUnique( rule, (Element)context, errorMessage, false );
                 }
                 Debug.error( violationIfInconsistent, false, errorMessage );
             }
@@ -621,12 +628,13 @@ public class DocumentValidator {
     public static Boolean evaluateConstraint( Constraint constraint,
                                               DocumentValidator validator,
                                               boolean violatedIfInconsistent ) {
-        ValidationRule rule = validator.getConstraintRule();
+        ValidationRule rule = validator.getViewpointConstraintRule();
         return evaluateConstraint( constraint, rule, violatedIfInconsistent );
     }
 
     public static int maxNumberOfViolatingElementsToShow = Integer.MAX_VALUE;
     public static boolean showElementIds = true;
+    protected static boolean loggingResults = true;
     
     /**
      * Evaluate the constraint and, if the constraint is inconsistent and the
@@ -643,7 +651,12 @@ public class DocumentValidator {
                                               ValidationRule rule,
                                               boolean violatedIfInconsistent ) {
 	    if ( constraint == null ) return null;
-        Boolean satisfied = constraint.evaluate();
+        Boolean satisfied = null;
+        if ( constraint instanceof BasicConstraint ) {
+            satisfied = ((BasicConstraint)constraint).evaluate( false );
+        } else {
+            satisfied = constraint.evaluate();
+        }
         if ( rule == null ) return satisfied;
         // check if constraint is violated
         if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
@@ -655,7 +668,8 @@ public class DocumentValidator {
             } else {
                 comment = constraint.toString();
             }
-            addViolationIfUnique( rule, violatedElement, comment );
+            addViolationIfUnique( rule, violatedElement, comment,
+                                  constraint.isReported() );
         } else if ( violatedIfInconsistent ) {
             // check if inconsistent
             // TODO -- not yet checking if the constraint is self-contradictory
@@ -664,9 +678,7 @@ public class DocumentValidator {
                     ( Utils2.isNullOrEmpty( constraint.getConstrainingElements() )
                             ? null
                             : constraint.getConstrainingElements().iterator().next() );
-            if ( !constraint.isConsistent()
-                 && StereotypesHelper.hasStereotypeOrDerived( constrainingElement,
-                                                              DocGen3Profile.constraintStereotype ) ) {
+            if ( !constraint.isConsistent() ) {
                 String msg = ( (BasicConstraint)constraint ).getErrorMessage();
                 if ( Utils2.isNullOrEmpty( msg ) ) {
                     msg = "inconsistent ";
@@ -679,7 +691,7 @@ public class DocumentValidator {
                 } else {
                     msg = msg + "constraint " + constraint; 
                 }
-                addViolationIfUnique( rule, constrainingElement, msg );
+                addViolationIfUnique( rule, constrainingElement, msg, constraint.isReported() );
             }
         }
         return satisfied;
@@ -725,10 +737,16 @@ public class DocumentValidator {
         DocumentValidator dv = addViolations ? context.getValidator() : null;
         // If generating validation rule violations, evaluate all. 
         // Result is false if any false; else, null if any null, else true. 
+        //MdDebug.logForce( "*** Starting MDK Validate Viewpoint Constraints ***" );
         for ( Constraint constraint : constraints ) {
             Debug.outln("found constraint: " + MoreToString.Helper.toString( constraint ) );
             if ( Utils2.isNullOrEmpty( constraint.getExpression() ) ) continue;
             Boolean satisfied = evaluateConstraint( constraint, dv, addViolationForInconsistency );
+            
+            if ( loggingResults ) {
+                ConstraintValidationRule.logResults( satisfied, constraint );
+            }
+            
             if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
                 result = false;
                 if ( dv == null ) break;
@@ -736,6 +754,7 @@ public class DocumentValidator {
                 result = null;
             }
         }
+        //MdDebug.logForce( "*** Finished MDK Validate Viewpoint Constraints ***" );
         return result;
     }
 
@@ -756,11 +775,52 @@ public class DocumentValidator {
                                                      Object actionOutput,
                                                      GenerationContext context ) {
         List<Constraint> constraints = new ArrayList< Constraint >();
-        List< Element > targets = DocumentGenerator.getTargets( constrainedObject, context );
-        List< Element > constraintElements = BasicConstraint.getConstraintElements( constrainedObject );
-        for ( Element constraint : constraintElements  ) {
-            Constraint c = BasicConstraint.makeConstraint( constraint, actionOutput, targets, constrainedObject );
-            constraints.add( c );
+        List< Element > targets =
+                DocumentGenerator.getTargets( constrainedObject,
+                                              context );
+        //targets = (List< Element >)BasicConstraint.fixTargets( targets );
+
+        List< Element > constraintElements =
+                BasicConstraint.getConstraintElements( constrainedObject,
+                                                       BasicConstraint.Type.DYNAMIC );
+        Object[] alternativeContexts =
+                new Object[] { actionOutput, targets, constrainedObject };
+        //Object[] vpcAlternativeContexts = new Object[] { targets };
+        Object[] contexts = null;
+
+        //constrained = fixTargets( constrained );
+        for ( Element constraintElement : constraintElements  ) {
+            List<Object> separatelyConstrained = Utils2.newList();
+            boolean isVpConstraint =
+                    BasicConstraint.elementIsViewpointConstraint( (Element)constraintElement );
+            boolean isExpressionChoosable =
+                    StereotypesHelper.hasStereotypeOrDerived( constraintElement,
+                                                              DocGen3Profile.expressionChoosable );
+            //            if ( isVpConstraint) {
+
+            Element vpConstraint = (Element)constraintElement;
+                //contexts = vpcAlternativeContexts;
+                if ( !isExpressionChoosable || 
+                     BasicConstraint.iterateViewpointConstrraint( vpConstraint ) ) {
+                    separatelyConstrained.addAll( targets );
+                } else {
+                    separatelyConstrained.add( targets );
+                }
+//            } else {
+//                separatelyConstrained.add( constrainedObject );
+//                contexts = alternativeContexts;
+//            }
+            for ( Object constrained : separatelyConstrained ) {
+                if ( isVpConstraint ) {
+                    contexts = new Object[]{ constrained };
+                } else {
+                    contexts = alternativeContexts;
+                }
+                Constraint c =
+                    BasicConstraint.makeConstraintFromAlternativeContexts( constraintElement,
+                                                                           contexts );
+                constraints.add( c );
+            }
         }
         return constraints;
     }
