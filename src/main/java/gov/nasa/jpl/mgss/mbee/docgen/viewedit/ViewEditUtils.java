@@ -126,4 +126,8 @@ public class ViewEditUtils {
 	    username = "";
 	    password = "";
 	}
+	
+	public static void showUnauthroziedMessage() {
+	    Application.getInstance().getGUILog().log("[ERROR] Unauthorized:  YOU MAY HAVE ENTERED THE WRONG CREDENTIALS: PLEASE RIGHT CLICK ON A VIEW IN YOUR DOCUMENT AND GO TO THE VIEWEDITOR MENU TO SELECT LOGOUT, AND THEN TRY AGAIN");
+	}
 }

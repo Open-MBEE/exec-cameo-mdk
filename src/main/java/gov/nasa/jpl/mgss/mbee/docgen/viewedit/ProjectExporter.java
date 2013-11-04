@@ -68,7 +68,7 @@ public class ProjectExporter {
 			ViewEditUtils.setCredentials(client, url);
 			int code = client.executeMethod(pm);
 			if (code == 401) {
-                log.log("Unauthorized: you may have entered wrong credentials. Logout view editor and try again");
+			    ViewEditUtils.showUnauthroziedMessage();
                 return;
             }
 			String response = pm.getResponseBodyAsString();
