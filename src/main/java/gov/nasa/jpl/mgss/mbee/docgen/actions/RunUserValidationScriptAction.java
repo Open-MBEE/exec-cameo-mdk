@@ -40,7 +40,6 @@ public class RunUserValidationScriptAction extends MDAction {
             this.setName("Run " + name + " Validation");
     }
 	
-	@SuppressWarnings("rawtypes")
 	public void actionPerformed(ActionEvent event) {
 		GUILog log = Application.getInstance().getGUILog();
 		/*String fix = "FixNone";
@@ -55,18 +54,18 @@ public class RunUserValidationScriptAction extends MDAction {
 		inputs.put("FixMode", fix);
 	*/
 		Map<String, Object> inputs = new HashMap<String, Object>();
-		Map o = scripti.getScriptOutput(inputs);
+		Map<?,?> o = scripti.getScriptOutput(inputs);
 		if (o != null && o.containsKey("DocGenValidationOutput")) {
 			Object l = o.get("DocGenValidationOutput");
 			if (l instanceof List) {
-				Utils.displayValidationWindow((Collection<ValidationSuite>)l, "User Validation Script Results");
+				Utils.displayValidationWindow((List<ValidationSuite>)l, "User Validation Script Results");
 			}
 		} else if (o != null && o.containsKey("docgenValidationOutput")) {
 			Object l = o.get("docgenValidationOutput");
 			if (l instanceof List) {
 				DgvalidationDBSwitch s = new DgvalidationDBSwitch();
 				List<ValidationSuite> vs = new ArrayList<ValidationSuite>();
-				for (Object object: (List)l) {
+				for (Object object: (List<?>)l) {
 					if (object instanceof Suite)
 						vs.add((ValidationSuite)s.doSwitch((Suite)object));
 				}
