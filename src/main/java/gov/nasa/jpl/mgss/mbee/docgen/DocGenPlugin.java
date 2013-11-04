@@ -13,6 +13,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -41,7 +42,7 @@ public class DocGenPlugin extends Plugin {
 	private boolean					runEmbeddedServer = false;
 	protected OclEvaluatorPlugin oclPlugin = null;
     protected ValidateConstraintsPlugin vcPlugin = null;
-	public static URLClassLoader extensionsClassloader = null;
+	public static ClassLoader extensionsClassloader = null;
 	
 	public DocGenPlugin() {
 	  super();
@@ -130,14 +131,25 @@ public class DocGenPlugin extends Plugin {
 	
 	private void loadExtensionJars() {
 	    File extensionDir = new File(getDescriptor().getPluginDirectory(), "extensions");
-	    if (!extensionDir.exists())
+	    if (!extensionDir.exists()) {
+	        extensionsClassloader = DocGenPlugin.class.getClassLoader();
 	        return;
+	    }
 	    List<URL> extensions = new ArrayList<URL>();
-	  
+	    try {
+            extensions.add(extensionDir.toURI().toURL());
+        } catch (MalformedURLException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
         for (File file : extensionDir.listFiles()) {
             try {
+                JarFile jarFile = new JarFile(file); //only add if file is a jar file
                 extensions.add(file.toURI().toURL());
             } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
                 e.printStackTrace();
             }  
         }

@@ -62,7 +62,7 @@ public class ExportViewHierarchyAction extends MDAction {
 			gl.log("[INFO] Sending...");
 			int code = client.executeMethod(pm);
 			if (code == 401) {
-                gl.log("Unauthorized: you may have entered wrong credentials. Logout view editor and try again");
+			    ViewEditUtils.showUnauthroziedMessage();
                 return;
             }
 			String response = pm.getResponseBodyAsString();

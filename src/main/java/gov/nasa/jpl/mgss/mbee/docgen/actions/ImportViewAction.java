@@ -93,7 +93,7 @@ public class ImportViewAction extends MDAction {
 				ViewEditUtils.setCredentials(client, geturl);
 				int code = client.executeMethod(gm);
 				if (code == 401) {
-	                gl.log("Unauthorized: you may have entered wrong credentials. Logout view editor and try again");
+				    ViewEditUtils.showUnauthroziedMessage();
 	                return;
 	            }
 				String json = gm.getResponseBodyAsString();	

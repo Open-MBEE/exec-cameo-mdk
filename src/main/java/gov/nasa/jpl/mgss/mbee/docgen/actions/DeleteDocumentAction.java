@@ -45,7 +45,7 @@ public class DeleteDocumentAction extends MDAction {
 			ViewEditUtils.setCredentials(client, url);
 			int code = client.executeMethod(pm);
 			if (code == 401) {
-                gl.log("Unauthorized: you may have entered wrong credentials. Logout view editor and try again");
+			    ViewEditUtils.showUnauthroziedMessage();
                 return;
             }
 			String response = pm.getResponseBodyAsString();

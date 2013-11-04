@@ -346,6 +346,14 @@
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
+                <custom description="ViewpointConstraint" id="IDaction_1383599191103_493373_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_2_3_407019f_1383246724224_41450_29079"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
                 <custom description="CombinedMatrix [Dep.]" id="IDaction_1326673898547_833383_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
                     <stereotype id="_17_0_1_244d03ea_1319497133286_670328_26584"/>
                     <defaults>
