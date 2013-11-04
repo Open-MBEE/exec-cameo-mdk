@@ -146,6 +146,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             act = manager.getActionFor(DeleteProjectAction.actionid);
             if (act == null)
                 c.addAction(new DeleteProjectAction(e));
+            act = manager.getActionFor(EMSLogoutAction.actionid);
+            if (act == null)
+                c.addAction(new EMSLogoutAction());
         }
         if (StereotypesHelper.hasStereotype(e, DocWebProfile.document) ||
             StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
