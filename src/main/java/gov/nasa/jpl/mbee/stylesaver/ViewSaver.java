@@ -1,8 +1,10 @@
 package gov.nasa.jpl.mbee.stylesaver;
 
+import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
+import com.nomagic.magicdraw.uml.symbols.shapes.TextAreaView;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.Application;
@@ -18,8 +20,13 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.MissingResourceException;
 
 import javax.swing.JOptionPane;
@@ -143,9 +150,15 @@ public class ViewSaver extends MDAction {
     	}
 
     	// get all the elements in the diagram and store them into a list
-    	List<PresentationElement> elemList;
+    	List<PresentationElement> elemList = new ArrayList<PresentationElement>();
     	try {
-    		elemList = diagram.getPresentationElements();
+    		for (PresentationElement pe: diagram.getPresentationElements()) {
+    			// TextAreViews are generated dynamically on diagram, so don't save
+    			if (!(pe instanceof TextAreaView)) {
+    				elemList.add(pe);
+    			}
+    		}
+    		Collections.sort(elemList, PresentationElementComparator);
     	} catch(NullPointerException e) {
     		if(!suppressOutput) {
     			JOptionPane.showMessageDialog(null, "Save cancelled. There are no elements in the diagram.", "Info", JOptionPane.INFORMATION_MESSAGE);
@@ -155,7 +168,9 @@ public class ViewSaver extends MDAction {
     	}
     	
     	// get a JSON style string from each element and store them into a main store for this diagram
-    	JSONObject mainStore = new JSONObject();
+    	// Use LinkedHashMap instead of JSONObject so JSON is always serialized in same order
+    	@SuppressWarnings("rawtypes")
+		Map mainStore = new LinkedHashMap();
     	
     	// display a progress bar if output is not being suppressed, otherwise just execute the save
     	if(!suppressOutput) {
@@ -181,7 +196,7 @@ public class ViewSaver extends MDAction {
 	 * @return			the style string.
 	 */
 	@SuppressWarnings("unchecked")
-	private static String executeSave(List<PresentationElement> elemList, JSONObject mainStore) {
+	private static String executeSave(List<PresentationElement> elemList, Map mainStore) {
        	for(PresentationElement elem : elemList) {
        		// save the element's style properties
 			try {
@@ -203,7 +218,7 @@ public class ViewSaver extends MDAction {
        		getStyleChildren(elem, mainStore, null);
 		}
        	
-       	return mainStore.toJSONString();
+       	return JSONValue.toJSONString(mainStore);
 	}
 	
 	/**
@@ -280,9 +295,16 @@ public class ViewSaver extends MDAction {
 	 * @param mainStore	the JSONObject to store style information into.
 	 */
 	@SuppressWarnings("unchecked") // for JSONObject put() method
-	public static void getStyleChildren(PresentationElement parent, JSONObject mainStore, ProgressStatus progressStatus) {
+	public static void getStyleChildren(PresentationElement parent, Map mainStore, ProgressStatus progressStatus) {
 		// get the parent element's children
-		List<PresentationElement> children = parent.getPresentationElements();
+		List<PresentationElement> children = new ArrayList<PresentationElement>(); // parent.getPresentationElements();
+		for (PresentationElement pe: parent.getPresentationElements()) {
+			// TextAreViews are generated dynamically on diagram, so don't save
+			if (!(pe instanceof TextAreaView)) {
+				children.add(pe);
+			}
+		}
+		Collections.sort(children, PresentationElementComparator);
 		
 		// base case -- no children
 		if(children.isEmpty()) {
@@ -319,4 +341,10 @@ public class ViewSaver extends MDAction {
 			}
 		}
 	}
+	
+	public static Comparator<PresentationElement> PresentationElementComparator = new Comparator<PresentationElement>() {
+		public int compare(PresentationElement pe1, PresentationElement pe2) {
+			return pe1.getID().compareTo(pe2.getID());
+		}
+	};
 }
