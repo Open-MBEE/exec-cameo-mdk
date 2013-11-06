@@ -59,14 +59,14 @@ public class ViewEditUtils {
 	        }
 	    } else {
 	        Element model = Application.getInstance().getProject().getModel();
-	        if (StereotypesHelper.hasStereotype(model, "AlfrescoViewEditor")) {
-	            url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "AlfrescoViewEditor", "url");
+	        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
+	            url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "url");
 	            if (url == null || url.equals("")) {
-	                JOptionPane.showMessageDialog(null, "Your project root element doesn't have AlfrescoViewEditor url stereotype property set!");
+	                JOptionPane.showMessageDialog(null, "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
 	                return null;
 	            }
 	        } else {
-	            JOptionPane.showMessageDialog(null, "Your project root element doesn't have AlfrescoViewEditor url stereotype property set!");
+	            JOptionPane.showMessageDialog(null, "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
 	            return null;
 	        }
 	    }
