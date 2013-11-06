@@ -127,7 +127,13 @@ public class ViewEditUtils {
 	    password = "";
 	}
 	
-	public static void showUnauthroziedMessage() {
-	    Application.getInstance().getGUILog().log("[ERROR] Unauthorized:  YOU MAY HAVE ENTERED THE WRONG CREDENTIALS: PLEASE RIGHT CLICK ON A VIEW IN YOUR DOCUMENT AND GO TO THE VIEWEDITOR MENU TO SELECT LOGOUT, AND THEN TRY AGAIN");
+	public static boolean showErrorMessage(int code) {
+	    if (code == 401)
+	        Application.getInstance().getGUILog().log("[ERROR] Unauthorized:  YOU MAY HAVE ENTERED THE WRONG CREDENTIALS: PLEASE RIGHT CLICK ON A VIEW IN YOUR DOCUMENT AND GO TO THE VIEWEDITOR MENU TO SELECT LOGOUT, AND THEN TRY AGAIN");
+	    else if (code == 500)
+	        Application.getInstance().getGUILog().log("[ERROR] Error: Server error occured, you may not have permission to modify view(s) or their contents");
+	    if (code == 401 || code == 500)
+	        return true;
+	    return false;
 	}
 }

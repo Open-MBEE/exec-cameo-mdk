@@ -65,10 +65,8 @@ public class OrganizeDocumentAction extends MDAction {
 			HttpClient client = new HttpClient();
 			ViewEditUtils.setCredentials(client, url);
 			int code = client.executeMethod(pm);
-			if (code == 401) {
-			    ViewEditUtils.showUnauthroziedMessage();
-			    return;
-            }
+			if (ViewEditUtils.showErrorMessage(code))
+                return;
 			String response = pm.getResponseBodyAsString();
 			if (response.equals("ok"))
 				gl.log("[INFO] Export Successful.");

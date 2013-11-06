@@ -76,10 +76,8 @@ public class ImportViewCommentsAction extends MDAction {
 				HttpClient client = new HttpClient();
 				ViewEditUtils.setCredentials(client, geturl);
 				int code = client.executeMethod(gm);
-				if (code == 401) {
-				    ViewEditUtils.showUnauthroziedMessage();
+				if (ViewEditUtils.showErrorMessage(code))
 	                return;
-	            }
 				String json = gm.getResponseBodyAsString();	
 				//gl.log(json);
 				if (json.equals("{}") || json.contains("comments\": []")) {

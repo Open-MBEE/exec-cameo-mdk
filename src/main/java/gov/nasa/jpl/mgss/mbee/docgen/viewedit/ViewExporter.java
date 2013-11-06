@@ -117,10 +117,8 @@ public class ViewExporter implements RunnableWithProgress{
 			ViewEditUtils.setCredentials(client, baseurl);
 			gl.log("[INFO] Sending...");
 			int code = client.executeMethod(pm);
-			if (code == 401) {
-			    ViewEditUtils.showUnauthroziedMessage();
+			if (ViewEditUtils.showErrorMessage(code))
 			    return;
-			}
 			String response = pm.getResponseBodyAsString();
 			if (response.equals("ok"))
 				gl.log("[INFO] Export Successful.");

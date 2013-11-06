@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<diagram abbreviation="DocGen3" baseType="Activity Diagram" category="zzMBEE DocGen" type="DocGen 3 Diagram" version="7">
+<diagram abbreviation="VMD" baseType="Activity Diagram" category="MDK" type="Viewpoint Method Diagram" version="7">
     <toolbarConfiguration>
         <baseCategory expandedByDefault="true" id="COMMON_ELEMENTS_DYNAMIC" parentCategoryID="COMMON_ELEMENTS_DYNAMIC"/>
-        <category expandedByDefault="true" id="action_category_1326673754018_667011_1" name="DocGen 3 Common">
+        <category expandedByDefault="true" id="action_category_1326673754018_667011_1" name="Common">
             <actions>
                 <standard action="ADD_INITIAL_NODE" shortcut="pressed T "/>
                 <standard action="ADD_FINAL_NODE" shortcut="pressed D "/>
@@ -27,7 +27,7 @@
                 </custom>
             </actions>
         </category>
-        <category expandedByDefault="true" id="action_category_1326671921803_43207_0" name="DocGen 3 Collect and Filter">
+        <category expandedByDefault="true" id="action_category_1326671921803_43207_0" name="Collect/Filter/Sort">
             <actions>
                 <custom description="CollectOwnedElements" id="IDaction_1326672341991_219226_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
                     <stereotype id="_17_0_1_244d03ea_1319490805237_397889_23292"/>
@@ -248,7 +248,7 @@
                 </custom>
             </actions>
         </category>
-        <category expandedByDefault="true" id="action_category_1375479517681_1829_1" name="DocGen 3 TableStructure">
+        <category expandedByDefault="true" id="action_category_1375479517681_1829_1" name="Table Structure">
             <actions>
                 <custom description="TableStructure" id="IDaction_1375479598910_216457_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode">
                     <stereotype id="_17_0_2_3_eac0346_1374701945748_238477_29309"/>
@@ -314,7 +314,7 @@
                 </group>
             </actions>
         </category>
-        <category expandedByDefault="true" id="action_category_1326673608860_693478_0" name="DocGen 3 Templates">
+        <category expandedByDefault="true" id="action_category_1326673608860_693478_0" name="Templates">
             <actions>
                 <custom description="Paragraph" id="IDaction_1326673837268_353562_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
                     <stereotype id="_17_0_1_244d03ea_1319496280368_246829_25514"/>

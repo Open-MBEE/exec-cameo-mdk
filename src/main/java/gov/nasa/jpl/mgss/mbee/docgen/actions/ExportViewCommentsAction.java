@@ -74,10 +74,8 @@ public class ExportViewCommentsAction extends MDAction {
 				HttpClient client = new HttpClient();
 				ViewEditUtils.setCredentials(client, url);
 				int code = client.executeMethod(pm);
-				if (code == 401) {
-				    ViewEditUtils.showUnauthroziedMessage();
+				if (ViewEditUtils.showErrorMessage(code))
 	                return;
-	            }
 				response = pm.getResponseBodyAsString();
 				//gl.log(response);
 				if (response.equals("NotFound")) 
