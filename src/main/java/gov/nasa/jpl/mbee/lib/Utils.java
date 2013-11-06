@@ -232,6 +232,7 @@ public class Utils {
                 Object o = null;
                 DocumentValidator dv = CollectFilterParser.getValidator();
                 o = DocumentValidator.evaluate( query, e, dv, true );
+                evaluator = OclEvaluator.instance;
                 if ( evaluator != null && evaluator.isValid() ) {
 //              try {
 //                    o = OclEvaluator.evaluateQuery(e, query);
