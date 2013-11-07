@@ -75,8 +75,6 @@ def ProxyFinish(proxyMan, fileStereoMap):
             ids=proxy.getID()
             elementProxy=project.getElementByID(ids)
             #gl.log("what up what up the id of the proxy is===>"+str(ids))
-            if isinstance(proxy,NamedElement):
-               # gl.log("What did we get from the orphan proxy thing====>"+proxy.getName())
             if isinstance(proxy,Generalization):  #this works
                 count+=1
                 disposeOrphanProxy=True
