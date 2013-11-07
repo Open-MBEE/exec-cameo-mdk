@@ -76,16 +76,16 @@ def ProxyFinish(proxyMan, fileStereoMap):
             elementProxy=project.getElementByID(ids)
             #gl.log("what up what up the id of the proxy is===>"+str(ids))
             if isinstance(proxy,NamedElement):
-                gl.log("What did we get from the orphan proxy thing====>"+proxy.getName())
+               # gl.log("What did we get from the orphan proxy thing====>"+proxy.getName())
             if isinstance(proxy,Generalization):  #this works
                 count+=1
                 disposeOrphanProxy=True
-                gl.log("Removing orphan generalizations")
+                #gl.log("Removing orphan generalizations")
             if isinstance(proxy,Stereotype):
                 proxyId=proxy.getID()
                 ####the name of the proxy gotten by element
-                gl.log("Name of proxy gotten by element ID====>"+elementProxy.getQualifiedName())
-                gl.log("The name of the orphaned stereotype=====>"+proxy.getQualifiedName())
+                #gl.log("Name of proxy gotten by element ID====>"+elementProxy.getQualifiedName())
+                #gl.log("The name of the orphaned stereotype=====>"+proxy.getQualifiedName())
                 elemSt=StereotypesHelper.getExtendedElements(proxy)
                 #stereos=
                 #get control service framework
