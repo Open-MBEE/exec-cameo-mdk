@@ -84,9 +84,10 @@ public class CombinedMatrix extends Table {
 	}
 
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+	    List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (getIgnore())
-			return;
+			return res;
 		DBTable dbTable = new DBTable();
 		List<List<DocumentElement>> hs = new ArrayList<List<DocumentElement>>();
 		if (!getHeaders().isEmpty()) {
@@ -165,15 +166,10 @@ public class CombinedMatrix extends Table {
 		if (colwidths != null && colwidths.isEmpty())
 			colwidths.add(".4*");
 		setTableThings(dbTable);
-		parent.addElement(dbTable);
+		res.add(dbTable);
+		return res;
 	}
 	
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
-	}
-
 	@Override
 	public void initialize() {
 		super.initialize();

@@ -17,26 +17,25 @@ import com.nomagic.magicdraw.core.GUILog;
 public class RunUserEditableTableAction extends MDAction{
 	private UserScript scripti;
 
-	public RunUserEditableTableAction(UserScript us, int i) {
-		super("Run Editable Table Script" + i, "Run Editable Script", null, null);
+	public RunUserEditableTableAction(UserScript us) {
+		super(null, "Run Editable Script", null, null);
 		scripti = us;
 		String name = scripti.getStereotypeName();
 		if (name != null)
 			this.setName("Edit " + name + " Table");
 	}
 	
-	@SuppressWarnings("rawtypes")
 	public void actionPerformed(ActionEvent event) {
 		GUILog log = Application.getInstance().getGUILog();
-		Map o = scripti.getScriptOutput(null);
+		Map<?,?> o = scripti.getScriptOutput(null);
 		if (o != null && o.containsKey("EditableTable")) {
-			Object l = ((Map)o).get("EditableTable");
+			Object l = ((Map<?,?>)o).get("EditableTable");
 			if (l instanceof EditableTable) {
 				((EditableTable) l).showTable();
 			}
 		} else if (o != null && o.containsKey("editableTable")) {
 			if (o.get("editableTable") instanceof List) {
-				for (Object object: (List)o.get("editableTable")) {
+				for (Object object: (List<?>)o.get("editableTable")) {
 					if (object instanceof MDEditableTable) {
 						DgviewDBSwitch.convertEditableTable((MDEditableTable)object).showTable();
 					}

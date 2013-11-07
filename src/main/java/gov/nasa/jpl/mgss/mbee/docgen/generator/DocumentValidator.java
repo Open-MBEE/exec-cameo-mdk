@@ -4,6 +4,7 @@ import gov.nasa.jpl.mbee.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.constraint.Constraint;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
+import gov.nasa.jpl.mbee.lib.MdDebug;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -12,8 +13,11 @@ import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.eclipse.ocl.ParserException;
 import org.jgrapht.DirectedGraph;
@@ -46,6 +50,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ConstraintValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
@@ -57,12 +62,12 @@ import gov.nasa.jpl.ocl.OclEvaluator;
  * uses jgrapht to detect cycles in the document and various other potential errors
  * this only checks for static model structure and does not actually try to execute the document
  * @author dlam
- * Changelog: Document Validator updated to use Validationsuite. 
+ * Changelog: Document Validator updated to use Validationsuite.
  */
 public class DocumentValidator {
 	
-	public ValidationRule getConstraintRule() {
-        return constraintRule;
+	public ValidationRule getViewpointConstraintRule() {
+        return viewpointConstraintRule;
     }
 
     private Element start;
@@ -70,7 +75,21 @@ public class DocumentValidator {
 				
 	
 	private ValidationSuite Validationui = new ValidationSuite("Validationui");
+    private ValidationSuite dynamicExpressionValidation =
+            new ValidationSuite("ExpressionValidation");
 	
+	private static final Map<String, String> requiredTags = new HashMap<String, String>() {
+        {
+            
+            put(DocGen3Profile.metaclassChoosable, "metaclasses");
+            put(DocGen3Profile.stereotypeChoosable, "stereotypes");
+            put(DocGen3Profile.nameChoosable, "names");
+            put(DocGen3Profile.diagramTypeChoosable, "diagramTypes");
+            put(DocGen3Profile.expressionChoosable, "expression");
+            put(DocGen3Profile.propertyChoosable, "desiredProperty");
+            put(DocGen3Profile.attributeChoosable, "desiredAttribute");
+        }
+    };
 	/*
 	 *Statuses possible, currently error, warning, and fatal error. 		
 	 */
@@ -95,14 +114,16 @@ public class DocumentValidator {
 	private ValidationRule multipleInitialNode = new ValidationRule("Muliple Initial Nodes", "Has multiple initial nodes!", error);
 	private ValidationRule multipleOutgoingFlows = new ValidationRule("Multiple Outgoing Flows", "Has multiple outgoing flows!", error);
 	private ValidationRule multipleIncomingFlows = new ValidationRule("Multple Incoming Flows", "Has multiple incoming flows!", warn);
-	private ValidationRule missingInitialNode = new ValidationRule("Missing Initial Node", "Is missing and initial node!", warn);
+	private ValidationRule missingInitialNode = new ValidationRule("Missing Initial Node", "Is missing an initial node!", warn);
 	private ValidationRule multipleStereotypes = new ValidationRule("Multiple Stereotypes", "Element and/or its behavior has multiple stereotypes!", error);
 	private ValidationRule mismatchStereotypeErrors = new ValidationRule("Mismatched Stereotypes", "Element and its behavior have mismatched sterotypes!", error);
-	private ValidationRule missingStereotype = new ValidationRule("Missing stereotype", "Element and its behavior (if present) is missing a document stereotype!", warn);
+	private ValidationRule missingStereotype = new ValidationRule("Missing stereotype", "Element and its behavior (if present) is missing a document stereotype!", error);
 	private ValidationRule missingOutgoingFlow = new ValidationRule("Missing outgoing flow", "Non-final node is missing outgoing flow!", warn);
 	private ValidationRule cycleError = new ValidationRule("Cycles in model", "There are loops in this document! Do not generate document!", fatalerror);
 	private ValidationRule activityNodeCycleError = new ValidationRule("Activity Node Cycles in Model", "There are loops in this document! Do not generate document!", fatalerror);
-    private ValidationRule constraintRule = new ValidationRule("Constraint", "Model constraint violation", warn);
+	private ValidationRule missingTagValue = new ValidationRule("Missing tag", "An action is missing required tag value", error);
+
+	private ValidationRule viewpointConstraintRule = new ConstraintValidationRule();
 
     /*
 	 * Needed to use the utils.displayvalidationwindow
@@ -117,10 +138,10 @@ public class DocumentValidator {
 	private ActivityEdgeFactory aef;
 	private boolean fatal;
 	private Stereotype sysmlview;
+	private Stereotype conforms;
 
 	public DocumentValidator(Element e) {
 		start = e;
-		
 		
 
 		log = Application.getInstance().getGUILog();
@@ -130,11 +151,11 @@ public class DocumentValidator {
 		done = new HashSet<Behavior>();
 		aef = new ActivityEdgeFactory();
 		dg = new DefaultDirectedGraph<NamedElement, DirectedRelationship>(new ViewDependencyEdgeFactory());
-		sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
-		StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+		sysmlview = Utils.getViewStereotype();
+		conforms = Utils.getConformsStereotype();
 		
-		
-
+	    // Ensure user-defined shortcut functions are updated
+	    OclEvaluator.resetEnvironment();
 		
 		//List of Validation Rules
 		Validationui.addValidationRule(multipleFirstErrors);
@@ -157,12 +178,14 @@ public class DocumentValidator {
 		Validationui.addValidationRule(shouldNotBeSection);
 		Validationui.addValidationRule(cycleError);
 		Validationui.addValidationRule(activityNodeCycleError);
-        Validationui.addValidationRule(constraintRule);
+		Validationui.addValidationRule(missingTagValue);
+		
+		dynamicExpressionValidation.addValidationRule(viewpointConstraintRule);
 
 		
 		//Need Collection to use the utils.DisplayValidationWindow method
 		ValidationOutput.add(Validationui);
-
+        ValidationOutput.add(dynamicExpressionValidation);
 
 	}
 	
@@ -204,7 +227,7 @@ public class DocumentValidator {
 		if (dg.containsVertex(view))
 			return;
 		dg.addVertex(view);
-		List<Element> viewpoints = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view, DocGen3Profile.conformStereotype, 1, false, 1);
+		List<Element> viewpoints = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, conforms, 1, false, 1);
 		if (viewpoints.size() > 1)
 			multipleViewpoints.addViolation(view, multipleViewpoints.getDescription());
 		for (Element viewpoint: viewpoints) {
@@ -310,10 +333,11 @@ public class DocumentValidator {
 			missingOutgoingFlow.addViolation(n, missingOutgoingFlow.getDescription());
 		if (!(n instanceof MergeNode) && !(n instanceof JoinNode) && !(n instanceof DecisionNode) && n.getIncoming().size() > 1)
 			multipleIncomingFlows.addViolation(n, multipleIncomingFlows.getDescription());
-		if (n instanceof CallBehaviorAction || StereotypesHelper.hasStereotypeOrDerived(n, DocGen3Profile.tableStructureStereotype)) {
+		if (n instanceof CallBehaviorAction) {
 			Behavior b = n instanceof CallBehaviorAction ? ((CallBehaviorAction)n).getBehavior() : null;
 			Collection<Stereotype> napplied = new HashSet<Stereotype>(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.collectFilterStereotype));
 			napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.ignorableStereotype));
+			napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.tableColumnStereotype));
 			if (b == null) {
 				if (napplied.isEmpty()) {
 					missingStereotype.addViolation(n, missingStereotype.getDescription());
@@ -323,28 +347,35 @@ public class DocumentValidator {
 			} else {
 				Collection<Stereotype> bapplied = new HashSet<Stereotype>(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGen3Profile.collectFilterStereotype));
 				bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGen3Profile.ignorableStereotype));
+				bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGen3Profile.tableColumnStereotype));
 				if (napplied.isEmpty() && bapplied.isEmpty())
 					missingStereotype.addViolation(n, missingStereotype.getDescription());
-				else if (bapplied.isEmpty())
-					mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
+				//else if (bapplied.isEmpty())
+				//	mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
 				else if (napplied.size() > 1 || bapplied.size() > 1)
 					multipleStereotypes.addViolation(n, multipleStereotypes.getDescription());
-				else if (!napplied.isEmpty() && napplied.iterator().next() != bapplied.iterator().next())
+				else if (!napplied.isEmpty() && !bapplied.isEmpty() && napplied.iterator().next() != bapplied.iterator().next())
 					mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
-				if (StereotypesHelper.hasStereotype(b, DocGen3Profile.sectionStereotype) || 
+				/*if (StereotypesHelper.hasStereotype(b, DocGen3Profile.sectionStereotype) || 
 						StereotypesHelper.hasStereotype(b, DocGen3Profile.structuredQueryStereotype) ||
-						StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.collectionStereotype)) {
+						StereotypesHelper.hasStereotypeOrDerived(b, DocGen3Profile.collectionStereotype) ||
+						StereotypesHelper.hasStereotype(b, DocGen3Profile.tableStructureStereotype)) {*/
 					if (!this.done.contains(b)) {
 						this.done.add(b);
 						validateActivity(b);
 					}
-				}
+				//}
 			}
+			validateTags(n, b);
 		} else if (n instanceof StructuredActivityNode) {
-			if (!StereotypesHelper.hasStereotype(n, DocGen3Profile.structuredQueryStereotype))
+			if (!StereotypesHelper.hasStereotype(n, DocGen3Profile.structuredQueryStereotype) && 
+			        !StereotypesHelper.hasStereotype(n, DocGen3Profile.tableStructureStereotype) && 
+			        StereotypesHelper.checkForAllDerivedStereotypes(n, DocGen3Profile.tableColumnStereotype).isEmpty())
 				missingStereotype.addViolation(n, missingStereotype.getDescription());
 			validateActivity(n);
+			validateTags(n, null);
 		}
+		
 		for (ActivityEdge out: outs) {
 			ActivityNode next = out.getTarget();
 			if (graph.containsVertex(next)) {
@@ -356,6 +387,25 @@ public class DocumentValidator {
 				validateNode(next, graph);
 			}
 		}
+	}
+	
+	private void validateTags(ActivityNode node, Behavior b) {
+	    for (String stereotype: requiredTags.keySet()) {
+	        String tag = requiredTags.get(stereotype);
+	        if (StereotypesHelper.hasStereotypeOrDerived(node, stereotype) && 
+	                StereotypesHelper.getStereotypePropertyFirst(node, stereotype, tag) == null) {
+	            if (b == null) {
+	                missingTagValue.addViolation(node, missingTagValue.getDescription());
+	                return;
+	            } else {
+	                if (StereotypesHelper.hasStereotypeOrDerived(b,  stereotype) &&
+	                        StereotypesHelper.getStereotypePropertyFirst(b, stereotype, tag) == null) {
+	                    missingTagValue.addViolation(b, missingTagValue.getDescription());
+	                    return;
+	                }
+	            }
+	        }
+	    }
 	}
 	
 	private List<InitialNode> findInitialNodes(NamedElement e) {
@@ -494,7 +544,10 @@ public class DocumentValidator {
      * @param comment
      * @return whether a violation was added
      */
-	public static boolean addViolationIfUnique( ValidationRule rule, Element element, String comment ) {
+	public static boolean addViolationIfUnique( ValidationRule rule,
+	                                            Element element,
+	                                            String comment,
+	                                            boolean reported) {
 	    if ( rule == null ) return false;
         List< ValidationRuleViolation > violations = rule.getViolations();
         boolean alreadyAdded = false;
@@ -508,7 +561,7 @@ public class DocumentValidator {
             }
         }
         if ( alreadyAdded ) return false;
-        rule.addViolation( element, comment );
+        rule.addViolation( element, comment, reported );
         return true;
 	}
 	
@@ -523,7 +576,23 @@ public class DocumentValidator {
      * @param violationIfInconsistent
      * @return the result of the evaluation
      */
-    public static Object evaluate( Object expression, Element context, DocumentValidator validator,
+    public static Object evaluate( Object expression, Object context, DocumentValidator validator,
+                                   boolean violationIfInconsistent ) {
+        ValidationRule rule = validator == null ? null : validator.getViewpointConstraintRule();
+        return evaluate( expression, context, rule, violationIfInconsistent );
+    }
+    /**
+     * Evaluate the expression and, if the violationIfConsistent flag is true
+     * and the validator is not null, add a validation rule violation if the
+     * expression is inconsistent.
+     * 
+     * @param expression
+     * @param context
+     * @param rule
+     * @param violationIfInconsistent
+     * @return the result of the evaluation
+     */
+    public static Object evaluate( Object expression, Object context, ValidationRule rule,
                                    boolean violationIfInconsistent ) {
         if ( expression == null ) return null;
         Object result = null;
@@ -531,13 +600,13 @@ public class DocumentValidator {
             result = OclEvaluator.evaluateQuery(context, expression);
         } catch ( ParserException e ) {
             if ( violationIfInconsistent ) {
-                String errorMessage = e.getLocalizedMessage() +
-                    " for OCL query \"" + expression + 
-                    "\" on " +
-                    EmfUtils.toString( context );
-                if ( validator != null ) {
-                    addViolationIfUnique( validator.getConstraintRule(),
-                                          context, errorMessage );
+                String id = context instanceof Element ? ((Element)context).getID() : context.toString();
+                String errorMessage =
+                    e.getLocalizedMessage() + " for OCL query \"" + expression + 
+                    "\" on " + Utils.getName( context ) +
+                    (showElementIds ? "[" + id + "]" : "" );
+                if ( rule != null && context instanceof Element) { //need further fixes to allow context be a collection
+                    addViolationIfUnique( rule, (Element)context, errorMessage, false );
                 }
                 Debug.error( violationIfInconsistent, false, errorMessage );
             }
@@ -559,20 +628,48 @@ public class DocumentValidator {
     public static Boolean evaluateConstraint( Constraint constraint,
                                               DocumentValidator validator,
                                               boolean violatedIfInconsistent ) {
+        ValidationRule rule = validator.getViewpointConstraintRule();
+        return evaluateConstraint( constraint, rule, violatedIfInconsistent );
+    }
+
+    public static int maxNumberOfViolatingElementsToShow = Integer.MAX_VALUE;
+    public static boolean showElementIds = true;
+    protected static boolean loggingResults = true;
+    
+    /**
+     * Evaluate the constraint and, if the constraint is inconsistent and the
+     * violatedIfConsistent flag is true and the validation rule is not null, add a
+     * rule violation. If the constraint evaluates to false, and the
+     * rule is not null, add a violation.
+     * 
+     * @param constraint
+     * @param rule
+     * @param violatedIfInconsistent
+     * @return the result of the evaluation
+     */
+    public static Boolean evaluateConstraint( Constraint constraint,
+                                              ValidationRule rule,
+                                              boolean violatedIfInconsistent ) {
 	    if ( constraint == null ) return null;
-        Boolean satisfied = constraint.evaluate();
-        if ( validator == null ) return satisfied;
+        Boolean satisfied = null;
+        if ( constraint instanceof BasicConstraint ) {
+            satisfied = ((BasicConstraint)constraint).evaluate( false );
+        } else {
+            satisfied = constraint.evaluate();
+        }
+        if ( rule == null ) return satisfied;
         // check if constraint is violated
         if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
-            Element violatingElement = constraint.getViolatedConstraintElement();
-            Object target = constraint.getConstrainedObjects();
-            String comment = "Constraint " + constraint.getExpression() + " on "
-                    + EmfUtils.toString( target )
-                    + " is violated"
-                    + ( constraint.getConstrainingElements().size() > 1
-                        && !Utils2.isNullOrEmpty( violatingElement.getHumanName() )
-                        ? " for " + violatingElement.getHumanName() : "" );
-            addViolationIfUnique( validator.getConstraintRule(), violatingElement, comment );
+            Element violatedElement = constraint.getViolatedConstraintElement();
+            String comment;
+            if ( constraint instanceof BasicConstraint ) {
+                comment = ( (BasicConstraint)constraint ).toStringViolated(maxNumberOfViolatingElementsToShow,
+                                                                           showElementIds);
+            } else {
+                comment = constraint.toString();
+            }
+            addViolationIfUnique( rule, violatedElement, comment,
+                                  constraint.isReported() );
         } else if ( violatedIfInconsistent ) {
             // check if inconsistent
             // TODO -- not yet checking if the constraint is self-contradictory
@@ -581,17 +678,20 @@ public class DocumentValidator {
                     ( Utils2.isNullOrEmpty( constraint.getConstrainingElements() )
                             ? null
                             : constraint.getConstrainingElements().iterator().next() );
-            if ( !constraint.isConsistent()
-                 && constrainingElement instanceof Element
-                 && StereotypesHelper.hasStereotypeOrDerived( constrainingElement,
-                                                              DocGen3Profile.constraintStereotype )
-                 && constraint instanceof BasicConstraint ) {
+            if ( !constraint.isConsistent() ) {
                 String msg = ( (BasicConstraint)constraint ).getErrorMessage();
                 if ( Utils2.isNullOrEmpty( msg ) ) {
-                    msg = constraint.toString() + " is inconsistent";
+                    msg = "inconsistent ";
+                } else {
+                    msg = msg + " for ";
                 }
-                addViolationIfUnique( validator.getConstraintRule(),
-                                      constrainingElement, msg );
+                if ( constraint instanceof BasicConstraint ) {
+                    msg = msg + ((BasicConstraint)constraint).toString( maxNumberOfViolatingElementsToShow,
+                                                                        showElementIds );
+                } else {
+                    msg = msg + "constraint " + constraint; 
+                }
+                addViolationIfUnique( rule, constrainingElement, msg, constraint.isReported() );
             }
         }
         return satisfied;
@@ -637,10 +737,16 @@ public class DocumentValidator {
         DocumentValidator dv = addViolations ? context.getValidator() : null;
         // If generating validation rule violations, evaluate all. 
         // Result is false if any false; else, null if any null, else true. 
+        //MdDebug.logForce( "*** Starting MDK Validate Viewpoint Constraints ***" );
         for ( Constraint constraint : constraints ) {
             Debug.outln("found constraint: " + MoreToString.Helper.toString( constraint ) );
             if ( Utils2.isNullOrEmpty( constraint.getExpression() ) ) continue;
             Boolean satisfied = evaluateConstraint( constraint, dv, addViolationForInconsistency );
+            
+            if ( loggingResults ) {
+                ConstraintValidationRule.logResults( satisfied, constraint );
+            }
+            
             if ( satisfied != null && satisfied.equals( Boolean.FALSE ) ) {
                 result = false;
                 if ( dv == null ) break;
@@ -648,6 +754,7 @@ public class DocumentValidator {
                 result = null;
             }
         }
+        //MdDebug.logForce( "*** Finished MDK Validate Viewpoint Constraints ***" );
         return result;
     }
 
@@ -668,11 +775,52 @@ public class DocumentValidator {
                                                      Object actionOutput,
                                                      GenerationContext context ) {
         List<Constraint> constraints = new ArrayList< Constraint >();
-        List< Element > targets = DocumentGenerator.getTargets( constrainedObject, context );
-        List< Element > constraintElements = BasicConstraint.getConstraintElements( constrainedObject );
-        for ( Element constraint : constraintElements  ) {
-            Constraint c = BasicConstraint.makeConstraint( constraint, actionOutput, targets, constrainedObject );
-            constraints.add( c );
+        List< Element > targets =
+                DocumentGenerator.getTargets( constrainedObject,
+                                              context );
+        //targets = (List< Element >)BasicConstraint.fixTargets( targets );
+
+        List< Element > constraintElements =
+                BasicConstraint.getConstraintElements( constrainedObject,
+                                                       BasicConstraint.Type.DYNAMIC );
+        Object[] alternativeContexts =
+                new Object[] { actionOutput, targets, constrainedObject };
+        //Object[] vpcAlternativeContexts = new Object[] { targets };
+        Object[] contexts = null;
+
+        //constrained = fixTargets( constrained );
+        for ( Element constraintElement : constraintElements  ) {
+            List<Object> separatelyConstrained = Utils2.newList();
+            boolean isVpConstraint =
+                    BasicConstraint.elementIsViewpointConstraint( (Element)constraintElement );
+            boolean isExpressionChoosable =
+                    StereotypesHelper.hasStereotypeOrDerived( constraintElement,
+                                                              DocGen3Profile.expressionChoosable );
+            //            if ( isVpConstraint) {
+
+            Element vpConstraint = (Element)constraintElement;
+                //contexts = vpcAlternativeContexts;
+                if ( !isExpressionChoosable || 
+                     BasicConstraint.iterateViewpointConstrraint( vpConstraint ) ) {
+                    separatelyConstrained.addAll( targets );
+                } else {
+                    separatelyConstrained.add( targets );
+                }
+//            } else {
+//                separatelyConstrained.add( constrainedObject );
+//                contexts = alternativeContexts;
+//            }
+            for ( Object constrained : separatelyConstrained ) {
+                if ( isVpConstraint ) {
+                    contexts = new Object[]{ constrained };
+                } else {
+                    contexts = alternativeContexts;
+                }
+                Constraint c =
+                    BasicConstraint.makeConstraintFromAlternativeContexts( constraintElement,
+                                                                           contexts );
+                constraints.add( c );
+            }
         }
         return constraints;
     }

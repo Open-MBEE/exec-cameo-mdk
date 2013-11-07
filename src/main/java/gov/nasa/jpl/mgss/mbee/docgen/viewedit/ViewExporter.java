@@ -39,6 +39,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ViewExporter implements RunnableWithProgress{
 
@@ -78,8 +79,8 @@ public class ViewExporter implements RunnableWithProgress{
 
 		// first post view information View Editor
 		baseurl += "/rest/views/" + doc.getID();
-		
-		if (StereotypesHelper.hasStereotypeOrDerived(doc, DocGen3Profile.documentViewStereotype))
+		Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGen3Profile.documentViewStereotype, "Document Profile");
+		if (StereotypesHelper.hasStereotypeOrDerived(doc, documentView))
 			document = true;		
 		
 		DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
@@ -113,9 +114,11 @@ public class ViewExporter implements RunnableWithProgress{
 			pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
 			pm.setRequestEntity(JsonRequestEntity.create(json));
 			HttpClient client = new HttpClient();
-			ViewEditUtils.setCredentials(client);
+			ViewEditUtils.setCredentials(client, baseurl);
 			gl.log("[INFO] Sending...");
-			client.executeMethod(pm);
+			int code = client.executeMethod(pm);
+			if (ViewEditUtils.showErrorMessage(code))
+			    return;
 			String response = pm.getResponseBodyAsString();
 			if (response.equals("ok"))
 				gl.log("[INFO] Export Successful.");
@@ -179,7 +182,7 @@ public class ViewExporter implements RunnableWithProgress{
 			int status = 0;
 			try {
 				HttpClient client = new HttpClient();
-				ViewEditUtils.setCredentials(client);
+				ViewEditUtils.setCredentials(client, baseurl);
 				gl.log("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
 				client.executeMethod(get);
 				
@@ -202,7 +205,7 @@ public class ViewExporter implements RunnableWithProgress{
 						post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile), imageFile.length()));
 					}
 					HttpClient client = new HttpClient();
-					ViewEditUtils.setCredentials(client);
+					ViewEditUtils.setCredentials(client, baseurl);
 					gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
 					client.executeMethod(post);
 					

@@ -42,15 +42,17 @@ public class DeleteDocumentAction extends MDAction {
 			//Protocol easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
 			//Protocol.registerProtocol("https", easyhttps);
 			HttpClient client = new HttpClient();
-			ViewEditUtils.setCredentials(client);
-			client.executeMethod(pm);
-			String code = pm.getResponseBodyAsString();
-			if (code.equals("ok"))
+			ViewEditUtils.setCredentials(client, url);
+			int code = client.executeMethod(pm);
+			if (ViewEditUtils.showErrorMessage(code))
+                return;
+			String response = pm.getResponseBodyAsString();
+			if (response.equals("ok"))
 				gl.log("[INFO] Remove Successful.");
-			else if (code.equals("NotFound"))
+			else if (response.equals("NotFound"))
 				gl.log("[ERROR] Document not found.");
 			else
-				gl.log(code);
+				gl.log(response);
 		} catch (MalformedURLException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {

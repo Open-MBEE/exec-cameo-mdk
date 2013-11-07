@@ -39,6 +39,7 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
 	        DBEditListVisitor inner = new DBEditListVisitor(recurse, this.elements);
 	        list.accept(inner);
 	        curitem.add(inner.getObject());
+	        listelements.addAll(inner.getListElements());
 	    } else {
 	        listjson.put("type", "List");
 	        if (list.isOrdered())

@@ -36,7 +36,6 @@ import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
 import com.nomagic.magicdraw.actions.DiagramContextToolbarAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
 import com.nomagic.magicdraw.uml.DiagramType;
@@ -148,6 +147,10 @@ public class Configurator implements ConfiguratorWithPriority,
     
   }
   */
+    
+    public static Context lastContext = null;
+    public static boolean lastContextIsDiagram = false;
+    
   /**
    * A Context is a place from which the user accesses menus that are populated
    * by configurators.
@@ -303,9 +306,14 @@ public class Configurator implements ConfiguratorWithPriority,
                || c.equals( EventObject.class ) ) {
             args.add( actionEvent );
           } else {
-            Debug.error( true, false, "Warning! Action " + actionMethod
-                                + " passing null for " + c + "!" );
-            args.add( null );
+            if ( c.equals( Element.class ) ) {
+                // passs null for Element
+                args.add( null );
+            } else {
+                // unrecognized argument
+                Debug.error( true, false, "Warning! Action " + actionMethod.getName()
+                             + " is getting passed null " + c.getSimpleName() + "!" );
+            }
           }
         }
       }
@@ -498,12 +506,16 @@ public class Configurator implements ConfiguratorWithPriority,
     Debug.errln( "configure(manager=" + manager + ", diagram=" + diagram
                  + ") for DiagramContextToolbarAMConfigurator" );
     if ( wasOn ) Debug.turnOn();
+    lastContext = Context.DiagramContext;
+    lastContextIsDiagram = true;
     if ( diagram instanceof DiagramPresentationElement ) {
 //    Configurator.Context context =
 //        getContextForType( DiagramContextToolbarAMConfigurator.class );
       Pair< Context, String > p =
           getContextForType( DiagramContextAMConfigurator.class,
                              ( (DiagramPresentationElement)diagram ).getDiagramType().getType() );
+      lastContext = p.first;
+      lastContextIsDiagram = true;
       addDiagramActions( manager, diagram, getMenus().get( p.first ).get( p.second ) );
     } else {
       Assert.assertTrue( false );
@@ -708,6 +720,8 @@ public class Configurator implements ConfiguratorWithPriority,
     if ( wasOn ) Debug.turnOn();
     Pair< Context, String > p =
         getContextForType( AMConfigurator.class, manager.getClass().getSimpleName() );
+    lastContext = p.first;
+    lastContextIsDiagram = false;
     if ( p == null || p.first == null || p.second == null ) {
       Debug.errln( "Could not addElementActions: getContextForType( AMConfigurator.class, \"" + manager.getClass().getSimpleName() + "\") returned " + p );
     } else {
@@ -741,6 +755,8 @@ public class Configurator implements ConfiguratorWithPriority,
     DiagramType dType = diagram.getDiagramType();
     Pair< Context, String > p =
         getContextForType( DiagramContextAMConfigurator.class, dType.getType() );
+    lastContext = p.first;
+    lastContextIsDiagram = true;
     if ( p == null || p.first == null || p.second == null ) {
       Debug.errln( "Could not addElementActions: getContextForType( DiagramContextAMConfigurator.class, \"" +
                    dType.getType() + "\") returned " + p );
@@ -772,6 +788,8 @@ public class Configurator implements ConfiguratorWithPriority,
                  + ") for BrowserContextAMConfigurator" );
     if ( wasOn ) Debug.turnOn();
     Node no = browser.getSelectedNode();
+    lastContext = null;
+    lastContextIsDiagram = false;
     if ( no == null ) {
       Debug.errln("No selected node for adding action.");
       return;
@@ -789,6 +807,8 @@ public class Configurator implements ConfiguratorWithPriority,
     }
     Pair< Context, String > p =
         getContextForType( BrowserContextAMConfigurator.class, browserType );
+    lastContext = p.first;
+    lastContextIsDiagram = false;
     if ( p == null || p.first == null || p.second == null ) {
       Debug.errln( "Could not addElementActions: getContextForType( BrowserContextAMConfigurator.class, \"" + browser.getName() + "\") returned " + p );
     } else {
@@ -801,6 +821,7 @@ public class Configurator implements ConfiguratorWithPriority,
                                     Map< String, Map< String, MDAction > > actionCategories ) {
     if (diagram == null) return;
     Element element = diagram.getActualElement();
+
     if (element == null)
       return;
     Element owner = element.getOwner();

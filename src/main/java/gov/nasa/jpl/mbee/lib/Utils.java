@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.lib;
 
-import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -16,24 +15,27 @@ import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.ocl.GetCallOperation;
 import gov.nasa.jpl.ocl.OclEvaluator;
+import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
-
-import org.eclipse.ocl.ParserException;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -66,6 +68,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -205,25 +208,41 @@ public class Utils {
 	}
 	
     public static List<Element> filterElementsByExpression(Collection<Element> elements,
-                                                           CallBehaviorAction cba,
-                                                           boolean include) {
+                                                           String query,
+                                                           boolean include, boolean iterate) {
         List<Element> res = new ArrayList<Element>();
-        Object query = GeneratorUtils.getObjectProperty(cba,
-                                                        DocGen3Profile.filterExpressionStereotype,
-                                                        "expression", null);
-        for (Element e : elements) {
+        OclEvaluator evaluator = null;
+        if (!iterate) {
             Object o = null;
             DocumentValidator dv = CollectFilterParser.getValidator();
-            o = DocumentValidator.evaluate( query, e, dv, true );
-            if ( OclEvaluator.isValid() ) {
+            o = DocumentValidator.evaluate( query, elements, dv, true );
+            evaluator = OclEvaluator.instance;
+            if ( evaluator != null && evaluator.isValid() ) {
 //            try {
 //                o = OclEvaluator.evaluateQuery(e, query);
                 Boolean istrue = isTrue(o, false);
                 if (include == ((Boolean)(istrue == null ? false : istrue)).booleanValue()) {
-                    res.add(e);
+                    res.addAll(elements);
                 }
 //            } catch ( ParserException e1 ) {
 //                e1.printStackTrace();
+            }
+        } else {
+            for (Element e : elements) {
+                Object o = null;
+                DocumentValidator dv = CollectFilterParser.getValidator();
+                o = DocumentValidator.evaluate( query, e, dv, true );
+                evaluator = OclEvaluator.instance;
+                if ( evaluator != null && evaluator.isValid() ) {
+//              try {
+//                    o = OclEvaluator.evaluateQuery(e, query);
+                    Boolean istrue = isTrue(o, false);
+                    if (include == ((Boolean)(istrue == null ? false : istrue)).booleanValue()) {
+                        res.add(e);
+                    }
+//              } catch ( ParserException e1 ) {
+//                    e1.printStackTrace();
+                }
             }
         }
         return res;
@@ -508,14 +527,15 @@ public class Utils {
      *         the Elements in the result if it is a collection, or else an
      *         empty list
      */
-    public static List<Element> collectByExpression(Element element, Object query) {
+    public static List<Element> collectByExpression(Object element, Object query) {
         List<Element> res = new ArrayList<Element>();
         Object o = null;
         DocumentValidator dv = CollectFilterParser.getValidator();
         o = DocumentValidator.evaluate( query, element, dv, true );
+        OclEvaluator evaluator = OclEvaluator.instance;
 //        try {
 //            o = OclEvaluator.evaluateQuery(element, query);
-        if ( OclEvaluator.isValid() ) {
+        if ( evaluator.isValid() ) {
             res.addAll(getListOfType(o, Element.class));
         }
 //        } catch ( ParserException e ) {
@@ -535,13 +555,14 @@ public class Utils {
      *            the collect action containing the expression
      * @return a List of Elements
      */
-    public static List<Element> collectByExpression(List<Element> elements, CallBehaviorAction cba) {
+    public static List<Element> collectByExpression(List<Element> elements, String query, boolean iterate) {
         List<Element> res = new ArrayList<Element>();
-        Object query = GeneratorUtils.getObjectProperty(cba,
-                                                        DocGen3Profile.collectExpressionStereotype,
-                                                        "expression", null);
-        for (Element e : elements) {
-            res.addAll(collectByExpression(e, query)); // REVIEW -- Should this be add() instead of addAll()?
+        if (!iterate)
+            res.addAll(collectByExpression(elements, query));
+        else {
+            for (Element e : elements) {
+                res.addAll(collectByExpression(e, query)); // REVIEW -- Should this be add() instead of addAll()?
+            }
         }
         return res;
     }
@@ -1174,10 +1195,13 @@ public class Utils {
 			@SuppressWarnings("unchecked")
 			@Override
 			public int compare(Element o1, Element o2) {
+                if ( o1 == o2 ) return 0;
+                if ( o1 == null ) return -1;
+                if ( o2 == null ) return 1;
 				if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
-					return ((NamedElement)o1).compareTo((NamedElement)o2);
+					return ((NamedElement)o1).getName().compareTo(((NamedElement)o2).getName());
 				}
-				return 0;
+				return CompareUtils.compare( o1, o2 );
 			}
     	});
     	return n;
@@ -1220,33 +1244,28 @@ public class Utils {
     	
     	return new Comparator<Element>() {
     		public int compare(Element A, Element B) {
+    		    if ( A == B ) return 0;
+    		    if ( A == null ) return -1;
+    		    if ( B == null ) return 1;
     			Object a = getElementAttribute(A, attribute);
     			Object b = getElementAttribute(B, attribute);
+                if ( a == b ) return 0;
+                if ( a == null ) return -1;
+                if ( b == null ) return 1;
     			switch (attribute) {
     			case Name:
-    				if (a instanceof String && b instanceof String) {
-    					return ((String)a).compareTo((String)b);
-    				} else {
-    					return 0;
-    				}
+    			    return CompareUtils.compare( a.toString(), b.toString() );
     			case Documentation:
-    				if (a instanceof String && b instanceof String) {
-    					return ((String)a).length() - ((String)b).length();
-    				} else {
-    					return 0;
-    				}
+                    return CompareUtils.compare( a.toString().length(), b.toString().length() );
     			case Value:
     				if (allNums) {
-    					Double da = Double.parseDouble(DocGenUtils.fixString(a));
-    					Double db = Double.parseDouble(DocGenUtils.fixString(b));
-    					return da.compareTo(db);
-    				} else if (a instanceof String && b instanceof String) {
-    					return ((String)a).compareTo((String)b);
-    				} else {
-    					return 0;
+    					Double da = Utils2.toDouble(DocGenUtils.fixString(a));
+    					Double db = Utils2.toDouble(DocGenUtils.fixString(b));
+                        return CompareUtils.compare( da, db );
     				}
+                    return CompareUtils.compare( a, b );
     			default:
-    				return 0;
+                    return CompareUtils.compare( a, b );
     			}
     		}
     	};
@@ -1287,19 +1306,25 @@ public class Utils {
     	
     	return new Comparator<Element>() {
     		public int compare(Element A, Element B) {
-    			List<Object> a = getElementPropertyValues(A, property, true);
-    			List<Object> b = getElementPropertyValues(B, property, true);
+                if ( A == B ) return 0;
+                if ( A == null ) return -1;
+                if ( B == null ) return 1;
+                List<Object> a = getElementPropertyValues(A, property, true);
+                List<Object> b = getElementPropertyValues(B, property, true);
+                if ( a == b ) return 0;
+                if ( a == null ) return -1;
+                if ( b == null ) return 1;
     			if (a.size() == 1 && b.size() == 1) {
     				Object a0 = a.get(0);
     				Object b0 = b.get(0);
     				String as = DocGenUtils.fixString(a0);
     				String bs = DocGenUtils.fixString(b0);
     				if (allNums) {
-    					Double da0 = Double.parseDouble(as);
-    					Double db0 = Double.parseDouble(bs);
-    					return da0.compareTo(db0);
+    					Double da0 = Utils2.toDouble(as);
+    					Double db0 = Utils2.toDouble(bs);
+    					return CompareUtils.compare( da0, db0 );
     				} else {
-    					return as.compareTo(bs);
+                        return CompareUtils.compare( as, bs );
     				}
     			} else {
     				return a.size() - b.size();
@@ -1323,6 +1348,160 @@ public class Utils {
     	return res;
     }
     
+    /**
+     * @param object
+     *            the object to test for a match
+     * @param typeName
+     *            regular expression String according to Pattern
+     * @return whether the name of the object's Stereotype, EClass, or Java
+     *         class matches the typeName regular expression pattern
+     */
+    public static boolean isTypeOf( Object object, String typeName ) {
+        GetCallOperation op = new GetCallOperation( CallReturnType.TYPE, true, true );
+        Object result = op.callOperation( object, new Object[] { typeName } );
+        if ( result instanceof Collection && ((Collection<?>)result).size() == 1 ) {
+            if ( matches( ((Collection<?>)result).iterator().next(), typeName ) ) return true;
+        }
+        return matches( result, typeName );
+    }
+
+    /**
+     * See if the object matches the regular expression pattern by its name,
+     * type, or string value.
+     * 
+     * @param object
+     *            the object to test
+     * @param pattern
+     *            a Pattern regular expression string to match to the object
+     * @return whether the name, type, or String value of the object matches the
+     *         regular expression pattern
+     */
+    private static boolean matches( Object object, String pattern ) {
+        // TODO -- types are limited to Stereotypes, EClasses, and Java Classes,
+        // but metaclasses/base classes are left out here and in other methods
+        // here that use regex patterns.
+        String name = getName(object);
+        if ( EmfUtils.matches( name, pattern ) ) return true;
+        boolean matched = EmfUtils.matches( object, pattern );
+        return matched;
+    }
+
+    /**
+     * @return the element at the top of the MagicDraw containment tree 
+     */
+    public static Element getRootElement() {
+        Element root = Application.getInstance().getProject().getModel();
+        return root;
+    }
+
+    public static List<Package> getPackagesOfType( String typeName ) {
+        return getPackagesOfType( null, typeName );
+    }
+    public static List<Package> getPackagesOfType( Element root, String typeName ) {
+        return getPackagesOfType( root, typeName, null );
+    }
+
+    /**
+     * @param root
+     * @param typeName
+     *            the name or regular expression pattern of the type name on
+     *            which to filter collected packages; this type name could be
+     *            a stereotype, EClass, or Java class name
+     * @param seen
+     *            a set of already visited Elements to avoid revisiting them in
+     *            infinite cycles
+     * @return all Packages, including root, top-level Packages within root, and
+     *         their nested packages, that also have a type matching typeName
+     *         (exactly or as a pattern)
+     */
+    public static List<Package> getPackagesOfType( Element root, String typeName, Set<Element> seen ) {
+        if ( root == null ) root = getRootElement();
+        if ( root == null ) return null; // REVIEW -- error?
+        if ( root instanceof Package ) {
+            return getPackagesOfType( (Package)root, typeName, seen );
+        }
+        Pair< Boolean, Set< Element > > p = Utils2.seen( root, true, seen );
+        if ( p.first ) return Utils2.getEmptyList();
+        seen = p.second;
+        List<Package> pkgs = new ArrayList< Package >();
+        for ( Element elmt : root.getOwnedElement() ) {
+            pkgs.addAll( getPackagesOfType( elmt, typeName, seen ) );
+        }
+        return pkgs;
+    }
+    
+    
+    /**
+     * @param root top-level Package
+     * @param typeName
+     *            the name or regular expression pattern of the type name on
+     *            which to filter collected packages; this type name could be
+     *            a stereotype, EClass, or Java class name
+     * @param seen
+     *            a set of already visited Elements to avoid revisiting them in
+     *            infinite cycles
+     * @return all Packages, including root, top-level Packages within root, and
+     *         their nested packages, that also have a type matching typeName
+     *         (exactly or as a pattern)
+     */
+    public static List< Package > getPackagesOfType( Package root,
+                                                     String typeName,
+                                                     Set< Element > seen ) {
+        if ( root == null ) return null; // REVIEW -- error?
+        Pair< Boolean, Set< Element > > p = Utils2.seen( root, true, seen );
+        if ( p.first ) return Utils2.getEmptyList();
+        seen = p.second;
+        List<Package> pkgs = new ArrayList< Package >();
+        if ( isTypeOf( root, typeName ) ) {
+            pkgs.add(root);
+        }
+        if ( root.getNestedPackage() != null ) {
+            for ( Package pkg : root.getNestedPackage() ) {
+                pkgs.addAll( getPackagesOfType( pkg, typeName, seen ) );
+            }
+        }
+        return pkgs;
+    }
+    
+    public static Element getElementByQualifiedName(String qualifiedName) {
+        String[] path = qualifiedName.split("::");
+        Element curElement = Application.getInstance().getProject().getModel();
+        for (int i = 0; i < path.length; i++) {
+            curElement = findChildByName(curElement, path[i]);
+            if (curElement == null)
+                return null;
+        }
+        return curElement;
+    }
+    
+    public static Element findChildByName(Element owner, String name) {
+        for (Element e: owner.getOwnedElement()) {
+            if (e instanceof NamedElement) {
+                if (((NamedElement)e).getName().equals(name))
+                    return e;
+            }
+        }
+        return null;
+    }
+
+    public static Project getProject() {
+        return Application.getInstance().getProject();
+    }
+        
+    public static Stereotype getStereotype( String stereotypeName ) {
+        return StereotypesHelper.getStereotype( getProject(), stereotypeName );
+    }
+    public static Stereotype getViewpointStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Viewpoint");
+    }
+    
+    public static Stereotype getViewStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::View");
+    }
+    
+    public static Stereotype getConformsStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Conform");
+    }
     /********************************************* User interaction ****************************************************/
     
     /**
@@ -1446,51 +1625,90 @@ public class Utils {
 		return username;
 	}
 	
+    public static Set<Annotation> getAnnotations( ValidationRule vr, Project project, Constraint cons ) {
+        Set< Annotation > annotations = new LinkedHashSet< Annotation >();
+        List<RuleViolationResult> results = getRuleViolations( vr, project, cons );
+        for ( RuleViolationResult violation : results ) {
+            annotations.add( violation.getAnnotation() );
+        }
+        return annotations;
+    }
+
+    public static Set<Annotation> getAnnotations( Collection<ValidationSuite> vss ) {
+        Set< Annotation > annotations = new LinkedHashSet< Annotation >();
+        List<RuleViolationResult> results = getRuleViolations( vss );
+        for ( RuleViolationResult violation : results ) {
+            annotations.add( violation.getAnnotation() );
+        }
+        return annotations;
+    }
+
+    public static List<RuleViolationResult> getRuleViolations( ValidationRule vr, Project project, Constraint cons ) {
+        List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
+        //Project project = getProject();
+        //Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+
+        EnumerationLiteral severity;
+        /*
+         * Switch added by Peter Di Pasquale 02/15/2013
+         * Changelog: switch statement added, selects element highlight and icon color according to severity of error. 
+         */
+        
+        switch (vr.getSeverity()){
+        case WARNING: 
+            severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
+            cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        break;
+        case ERROR: 
+            severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
+            cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
+        break;
+        case FATAL: 
+            severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
+            cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
+        break;
+        case INFO: 
+            severity = Annotation.getSeverityLevel(project, Annotation.INFO);
+            cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
+        break;
+        default: severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
+        break;
+        }
+        for (ValidationRuleViolation vrv: vr.getViolations()) {
+            Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
+            results.add(new RuleViolationResult(anno, cons));
+        }
+        return results;
+
+    }
+
+    public static List<RuleViolationResult> getRuleViolations( Collection<ValidationSuite> vss ) {
+        List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
+        Project project = getProject();
+        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        for (ValidationSuite vs: vss) {
+            for (ValidationRule vr: vs.getValidationRules()) {
+                results.addAll( getRuleViolations( vr, project, cons ) );
+            }
+        }
+        
+        return results;
+    }
+
 	public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
-		Project project = Application.getInstance().getProject();
-        //ValidationResultProvider provider = project.getValidationResultProvider();
-        Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
+        List<RuleViolationResult> results = getRuleViolations( vss );
+        Set<BaseElement> elements = new LinkedHashSet<BaseElement>();
+        for ( RuleViolationResult violation : results ) {
+            elements.add(violation.getElement());
+        }
+        
+        
+        Project project = getProject();
+//        //ValidationResultProvider provider = project.getValidationResultProvider();
+//        Collection<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-        
-        if (dummyvs == null || cons == null)
-        	return;
-        Set<Element> elements = new HashSet<Element>();
-		for (ValidationSuite vs: vss) {
-			for (ValidationRule vr: vs.getValidationRules()) {
-				EnumerationLiteral severity;
-				/*
-				 * Switch added by Peter Di Pasquale 02/15/2013
-				 * Changelog: switch statement added, selects element highlight and icon color according to severity of error. 
-				 */
-				
-				switch (vr.getSeverity()){
-				case WARNING: 
-					severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-					cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-				break;
-				case ERROR: 
-					severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
-					cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
-				break;
-				case FATAL: 
-					severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
-					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
-				break;
-				case INFO: 
-					severity = Annotation.getSeverityLevel(project, Annotation.INFO);
-					cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
-				break;
-				default: severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-				break;
-				}
-				for (ValidationRuleViolation vrv: vr.getViolations()) {
-					Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
-					results.add(new RuleViolationResult(anno, cons));
-					elements.add(vrv.getElement());
-				}
-			}
-		}
+
 		EnumerationLiteral severitylevel =Annotation.getSeverityLevel(project, Annotation.WARNING);
 		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
 //		ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
@@ -1500,7 +1718,6 @@ public class Utils {
 		//provider.setValidationResults(id, results);
 		//provider.update();
 		ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
-		
 	}
 	
     /************************************************ Existence check **************************************/
@@ -1711,8 +1928,15 @@ public class Utils {
     }
 
     private static int docgenCompare( Object a0, Object b0, boolean asNumbers ) {
+        if ( a0 == b0 ) return 0;
+        if ( a0 == null ) return -1;
+        if ( b0 == null ) return 1;
+
         String as = DocGenUtils.fixString(a0);
         String bs = DocGenUtils.fixString(b0);
+        if ( as == bs ) return 0;
+        if ( as == null ) return -1;
+        if ( bs == null ) return 1;
         if (asNumbers) {
             Double da0 = Utils2.toDouble(as);
             Double db0 = Utils2.toDouble(bs);
@@ -1924,6 +2148,19 @@ public class Utils {
             }
         }
         return null;
+    }
+    
+    /**
+     * @param elem
+     * @return all slots for the element's applied stereotype instance
+     */
+    public static List<Slot> getSlots( Element elem ) {
+        List<Slot> slots = new ArrayList< Slot >();
+        InstanceSpecification localInstanceSpecification = elem.getAppliedStereotypeInstance();
+        if ( localInstanceSpecification != null ) {
+            slots.addAll( localInstanceSpecification.getSlot() );
+        }
+        return slots;
     }
 	
 	/**
@@ -2281,7 +2518,7 @@ public class Utils {
      */
     public static String addHtmlWrapper(String s) {
 		if (!s.startsWith("<html")
-				&& (s.contains("</") || (s.contains("/>")))) {
+				&& (s.contains("</") || s.contains("/>") || s.contains("<br>"))) {
 			return "<html>\n<body>\n" + s + "</body>\n</html>";
 		}
 		return s;
@@ -2323,6 +2560,123 @@ public class Utils {
     }
     
     /**
+     * @param obj
+     * @return a name associated with this object whether a NameElement, an
+     *         Element with a humanName, an EObject with a name property, or a
+     *         Java Object with a name member.
+     */
+    public static String getName(Object obj) {
+        if ( obj instanceof NamedElement ) {
+            return ((NamedElement)obj).getName();
+        }
+        if ( obj instanceof BaseElement ) {
+            String humanName = ((BaseElement)obj).getHumanName();
+            String[] arr = humanName.trim().split( " " );
+            if ( arr != null ) {
+                if ( arr.length == 2 ) {
+                    if ( !Utils2.isNullOrEmpty( arr[0] ) && !Utils2.isNullOrEmpty( arr[1] ) ) {
+                        return arr[1];
+                    }
+                }
+            }
+            // REVIEW -- this seems like a bad place to be -- error messages?
+        }
+        return EmfUtils.getName( obj );
+    }
+    
+    
+    public static String getTypeName( Object obj ) {
+        if ( obj instanceof BaseElement ) {
+            String humanType = ("" + ((BaseElement)obj).getHumanType()).trim();
+            if ( !Utils2.isNullOrEmpty( humanType ) ) return humanType;
+            String humanName = ((BaseElement)obj).getHumanName();
+            String[] arr = humanName.trim().split( " " );
+            if ( arr != null ) {
+                if ( arr.length == 2 ) {
+                    if ( !Utils2.isNullOrEmpty( arr[0] ) && !Utils2.isNullOrEmpty( arr[1] ) ) {
+                        return arr[0];
+                    }
+                }
+            }
+            // REVIEW -- this seems like a bad place to be -- error messages?
+        }
+        // try stereotype
+        if ( obj instanceof Element ) {
+            Element elem = (Element)obj;
+            List< Stereotype > sTypes = StereotypesHelper.getStereotypes(elem);
+            if ( !Utils2.isNullOrEmpty( sTypes ) ) {
+                for ( Stereotype st : sTypes ) {
+                    String t = st.getName();
+                    if ( !Utils2.isNullOrEmpty( t ) ) {
+                        return t;
+                    }
+                }
+            }
+        }
+        return EmfUtils.getTypeName( obj );
+    }
+    
+    public static String toStringNameAndType( final Object o ) {
+        return toStringNameAndType( o, false, false );
+    }
+
+    public static String toStringNameAndType( final Object o,
+                                              final boolean includeId,
+                                              final boolean useToStringIfNull ) {
+        if ( o == null ) return "null";
+        
+        // if list, call recursively
+        if ( o instanceof Collection || o instanceof Map || o.getClass().isArray() ||
+             o instanceof Entry ) {
+            StringBuffer sb = new StringBuffer();
+            sb.append("( ");
+            boolean first = true;
+            Collection<?> c = null;
+            String sep = ", ";
+            if ( o instanceof Collection ) {
+                c = (Collection<?>)o;
+            } else if ( o instanceof Map ) {
+                c = ((Map<?,?>)o).entrySet();
+            } else if ( o.getClass().isArray() ) {
+                c = Arrays.asList( (Object[])o );
+            } else if ( o instanceof Entry ) {
+                Entry<?,?> entry = (Entry<?,?>)o;
+                c = Utils2.newList( entry.getKey(), entry.getValue() );
+                sep = " = ";
+            }
+            // TODO -- avoid infinite recursion with Utils2.seen()
+            for ( Object i : c ) {
+                if ( first ) first = false;
+                else sb.append( sep );
+                sb.append( toStringNameAndType( i, includeId, useToStringIfNull ) );
+            }
+            sb.append( " )" );
+            return sb.toString();
+        }
+        
+        // Not a list
+        String name = ( "" + getName( o ) ).trim();
+        String type = ( "" + getTypeName( o ) ).trim();
+        String s = name;
+        if ( !Utils2.isNullOrEmpty( name ) ) {
+            if ( !Utils2.isNullOrEmpty( type ) ) {
+                s = s + ":" + type;
+            }
+        } else s = type;
+        if ( includeId && o instanceof BaseElement ) {
+            if ( !Utils2.isNullOrEmpty( s ) ) {
+                s = s + ":" + ( (BaseElement)o ).getID();
+            } else {
+                s = ( (BaseElement)o ).getID();
+            }
+        }
+        if ( useToStringIfNull && Utils2.isNullOrEmpty( s ) ) {
+            s = MoreToString.Helper.toString( o );
+        }
+        return s;
+    }
+    
+    /**
      * return names of a collection of named elements
      * @param elements
      * @return
@@ -2331,7 +2685,7 @@ public class Utils {
     	List<String> names = new ArrayList<String>();
     	for (NamedElement e: elements) {
     		names.add(e.getName());
-    	} 
+    	}
     	return names;
     }
     

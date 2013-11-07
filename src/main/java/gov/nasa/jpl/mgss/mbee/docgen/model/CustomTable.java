@@ -71,30 +71,25 @@ public class CustomTable extends Table {
   }
 
   @Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
-	}
-
-  @Override
-  public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+  public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+      List<DocumentElement> res = new ArrayList<DocumentElement>();
       Debug.outln("entering visit(CustomTable): " + this);
       if (this==null) {
         Debug.errln( "Can't create DocBook table from null CustomTable!" );
-        return;
+        return res;
       }
       if (this.getIgnore()) {
-        return;
+        return res;
       }
       if (Utils2.isNullOrEmpty(this.getColumns())) {
         Debug.errln( "No columns specified for CustomTable! "
                      + this.getColumns() );
-        return;
+        return res;
       }
       if (Utils2.isNullOrEmpty(this.getTargets())) {
         Debug.errln( "No targets specified for CustomTable! "
                      + this.getTargets() );
-        return;
+        return res;
       }
       Debug.outln( "visiting custom table " + this );
           DBTable dbTable = new DBTable();
@@ -185,8 +180,9 @@ public class CustomTable extends Table {
           // set style
           dbTable.setStyle(this.getStyle());
 
-          parent.addElement(dbTable);
+          res.add(dbTable);
           Debug.outln("got custom DBTable " + dbTable);
+          return res;
   }
   
   @Override

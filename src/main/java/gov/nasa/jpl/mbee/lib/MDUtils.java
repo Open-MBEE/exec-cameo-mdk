@@ -5,12 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.eclipse.emf.ecore.EObject;
-import org.junit.Assert;
-
-import com.nomagic.actions.ActionsMenuCreator;
-import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.browser.BrowserTabTree;
@@ -18,11 +12,7 @@ import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 
 /**
  * A collection of utility functions for accessing the MagicDraw (MD)
@@ -44,15 +34,32 @@ public class MDUtils {
    * @return the {@link Element}s selected in MD's GUI.
    */
   public static Collection< Element > getSelection(ActionEvent event) {
+      return getSelection( event, true );
+  }
+
+  /**
+   * @param event 
+   * @param fromDiagram 
+   * @return the {@link Element}s selected in MD's GUI.
+   */
+  public static Collection< Element > getSelection(ActionEvent event, boolean fromDiagram) {
     // TODO -- the input event seems useless since its not unique to the context
     Collection< Element > coll = Utils2.getEmptyList();
     boolean b = getActiveBrowser( false ) != null;
     boolean d = getActiveDiagram( false ) != null;
-    if ( d ) {
+    //Component focus = Application.getInstance().getMainFrame().getFocusOwner();
+    //System.out.println("focus = " + focus);
+    if ( b && d ) {
+        if ( fromDiagram ) coll = getSelectionInDiagram();
+        else coll = getSelectionInContainmentBrowser();
+    } else {
+    //Frame frame = Application.getInstance().getMainFrame().getActiveFrame();
+    if ( d && fromDiagram) {
       coll = getSelectionInDiagram();
     }
     if ( b && ( !d || Utils2.isNullOrEmpty( coll ) ) ) {
       coll = getSelectionInContainmentBrowser();
+    }
     }
     return coll;
   }
@@ -169,7 +176,7 @@ public class MDUtils {
     
     return type;
   }
-  
+
 //  public static Object getValue( BaseElement elem ) {
 //    Object res = null;
 //    if ( elem instanceof EObject ) {
@@ -179,10 +186,10 @@ public class MDUtils {
 //    return res;
 //  }
   
-  public static Constraint getConstraint( Element elemt ) {
-    Constraint c = null;
-    elemt.get_constraintOfConstrainedElement();
-    return c;
-  }
+//  public static Constraint getConstraint( Element elemt ) {
+//    Constraint c = null;
+//    elemt.get_constraintOfConstrainedElement();
+//    return c;
+//  }
   
 }

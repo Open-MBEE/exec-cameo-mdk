@@ -13,6 +13,9 @@ public abstract class DocGenElement implements IDocGenElement {
 	protected String titleSuffix;
 	protected String titlePrefix;
 	protected boolean useContextNameAsTitle;
+	/**
+	 * this is usually the call behavior action element in a viewpoint method
+	 */
 	protected Element dgElement;
 	
 	public DocGenElement() {

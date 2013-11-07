@@ -12,6 +12,17 @@
 
 package gov.nasa.jpl.mgss.mbee.docgen;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
@@ -20,6 +31,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewPackage;
 import gov.nasa.jpl.mgss.mbee.docgen.sync.ApplicationSyncEventSubscriber;
 
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
@@ -29,6 +41,8 @@ public class DocGenPlugin extends Plugin {
 	private DocGenEmbeddedServer	embeddedServer;
 	private boolean					runEmbeddedServer = false;
 	protected OclEvaluatorPlugin oclPlugin = null;
+    protected ValidateConstraintsPlugin vcPlugin = null;
+	public static ClassLoader extensionsClassloader = null;
 	
 	public DocGenPlugin() {
 	  super();
@@ -62,7 +76,8 @@ public class DocGenPlugin extends Plugin {
 		
 		EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 
-    getOclPlugin().init();
+        getOclPlugin().init();
+        getVcPlugin().init();
 
 		ApplicationSyncEventSubscriber.subscribe();
 		
@@ -77,6 +92,7 @@ public class DocGenPlugin extends Plugin {
 		}
 		QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
 		QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
+		loadExtensionJars(); //people can actaully just create a new plugin and let magicdraw's classloader load it?
 		//QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore", "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
 	}
 
@@ -87,6 +103,13 @@ public class DocGenPlugin extends Plugin {
 	  return oclPlugin;
 	}
 	
+    public ValidateConstraintsPlugin getVcPlugin() {
+        if ( vcPlugin == null ) {
+          vcPlugin = new ValidateConstraintsPlugin();
+        }
+        return vcPlugin;
+      }
+      
 	@Override
 	public boolean isSupported() {
 		return true;
@@ -104,5 +127,32 @@ public class DocGenPlugin extends Plugin {
 				runEmbeddedServer = false;
 			}
 		}
+	}
+	
+	private void loadExtensionJars() {
+	    File extensionDir = new File(getDescriptor().getPluginDirectory(), "extensions");
+	    if (!extensionDir.exists()) {
+	        extensionsClassloader = DocGenPlugin.class.getClassLoader();
+	        return;
+	    }
+	    List<URL> extensions = new ArrayList<URL>();
+	    try {
+            extensions.add(extensionDir.toURI().toURL());
+        } catch (MalformedURLException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        for (File file : extensionDir.listFiles()) {
+            try {
+                JarFile jarFile = new JarFile(file); //only add if file is a jar file
+                extensions.add(file.toURI().toURL());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }  
+        }
+        extensionsClassloader = new URLClassLoader(extensions.toArray(new URL[]{}), DocGenPlugin.class.getClassLoader());
 	}
 }

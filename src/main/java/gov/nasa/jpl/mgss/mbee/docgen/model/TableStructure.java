@@ -71,6 +71,7 @@ public class TableStructure extends Table {
 	
 	private class TableExpressionColumn extends TableColumn {
 		public String expression;
+		public Boolean iterate;
 	}
 		
 	private List<String> headers = new ArrayList<String>();
@@ -129,6 +130,7 @@ public class TableStructure extends Table {
 			} else if (GeneratorUtils.hasStereotypeByString(curNode, DocGen3Profile.tableExpressionColumnStereotype)) {
 				col = new TableExpressionColumn();
 				((TableExpressionColumn)col).expression = (String)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
+				((TableExpressionColumn)col).iterate = (Boolean)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableExpressionColumnStereotype, "iterate", true);
 			} else if (GeneratorUtils.hasStereotypeByString(curNode, DocGen3Profile.tablePropertyColumnStereotype)) {
 				col = new TablePropertyColumn();
 				((TablePropertyColumn)col).property = (Property)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
@@ -166,47 +168,59 @@ public class TableStructure extends Table {
 					resultElements = startElements;
 				}
 				List<Reference> cell = new ArrayList<Reference>();
-				for (Element re: resultElements) {
-					if (tc instanceof TableAttributeColumn) {
-						Utils.AvailableAttribute at = ((TableAttributeColumn)tc).attribute;
-						if (at == null) {
-							//cell.add(new Reference(empty));
-							continue;
-						}
-						Object attr = Utils.getElementAttribute(re, at); //attr can be string, value spec, or list of value spec if element is a slot
-						if (attr != null)
-							cell.add(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn)tc).attribute), attr));
-						//else
-							//cell.add(new Reference(empty));
-					} else if (tc instanceof TablePropertyColumn) {
-						Property prop = ((TablePropertyColumn)tc).property;
-						if (prop == null) {
-							//cell.add(new Reference(empty));
-							continue;
-						}
-						Element slotOrProperty = Utils.getElementProperty(re, prop);
-						List<Object> values = Utils.getElementPropertyValues(re, prop, true);
-						if (slotOrProperty != null) {
-							cell.add(new Reference(slotOrProperty, From.DVALUE, values));
-						} else
-							cell.add(new Reference(values));
-					} else {
-						String expr = ((TableExpressionColumn)tc).expression;
-						if (expr == null) {
-							//cell.add(new Reference(empty));
-							continue;
-						}
-						Object result = DocumentValidator.evaluate( expr, re, getValidator(), true );
-                        if ( OclEvaluator.isValid() ) {
+				if (tc instanceof TableExpressionColumn && !((TableExpressionColumn)tc).iterate) {
+				    String expr = ((TableExpressionColumn)tc).expression;
+                    if (expr != null) {
+                        Object result = DocumentValidator.evaluate( expr, resultElements, getValidator(), true );
+                        OclEvaluator evaluator = OclEvaluator.instance;
+                        if ( evaluator.isValid() ) {
                             cell.add(new Reference(result));
                         }
-//						try {
-//                            cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
-//                        } catch ( Exception e1 ) {// TODO make specific to two parse errors
-//                            Debug.error(true, false, e1.getLocalizedMessage() + " for OCL query \"" + expr + "\" on " + EmfUtils.toString( re ) );
-//                        }
-					}
-				}
+                    }
+				} else {
+    				for (Element re: resultElements) {
+    					if (tc instanceof TableAttributeColumn) {
+    						Utils.AvailableAttribute at = ((TableAttributeColumn)tc).attribute;
+    						if (at == null) {
+    							//cell.add(new Reference(empty));
+    							continue;
+    						}
+    						Object attr = Utils.getElementAttribute(re, at); //attr can be string, value spec, or list of value spec if element is a slot
+    						if (attr != null)
+    							cell.add(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn)tc).attribute), attr));
+    						//else
+    							//cell.add(new Reference(empty));
+    					} else if (tc instanceof TablePropertyColumn) {
+    						Property prop = ((TablePropertyColumn)tc).property;
+    						if (prop == null) {
+    							//cell.add(new Reference(empty));
+    							continue;
+    						}
+    						Element slotOrProperty = Utils.getElementProperty(re, prop);
+    						List<Object> values = Utils.getElementPropertyValues(re, prop, true);
+    						if (slotOrProperty != null) {
+    							cell.add(new Reference(slotOrProperty, From.DVALUE, values));
+    						} else
+    							cell.add(new Reference(values));
+    					} else {
+    						String expr = ((TableExpressionColumn)tc).expression;
+    						if (expr == null) {
+    							//cell.add(new Reference(empty));
+    							continue;
+    						}
+    						Object result = DocumentValidator.evaluate( expr, re, getValidator(), true );
+                            OclEvaluator evaluator = OclEvaluator.instance;
+                            if ( evaluator.isValid() ) {
+                                cell.add(new Reference(result));
+                            }
+    //						try {
+    //                            cell.add(new Reference(OclEvaluator.evaluateQuery((EObject)re, expr)));
+    //                        } catch ( Exception e1 ) {// TODO make specific to two parse errors
+    //                            Debug.error(true, false, e1.getLocalizedMessage() + " for OCL query \"" + expr + "\" on " + EmfUtils.toString( re ) );
+    //                        }
+    					}
+    				}
+    			}
 				row.add(cell);
 
 				// check constraints
@@ -219,9 +233,10 @@ public class TableStructure extends Table {
 	}
 	
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+        List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (ignore)
-			return;
+			return res;
 		
 		buildTableReferences();
 		DBTable table = new DBTable();
@@ -251,7 +266,8 @@ public class TableStructure extends Table {
 			titles.add(title);
 		}
 		setTableThings(table);
-		parent.addElement(table);
+		res.add(table);
+		return res;
 	}
 
 	public List<Reference> getCellReferences( List< List< Reference > > row, TableColumn col ) {
@@ -307,12 +323,6 @@ public class TableStructure extends Table {
 	
 */
 
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
-	}
-
     public DocumentValidator getValidator() {
         return validator;
     }
@@ -320,4 +330,5 @@ public class TableStructure extends Table {
     public void setValidator( DocumentValidator validator ) {
         this.validator = validator;
     }
+
 }

@@ -94,6 +94,7 @@ public interface MoreToString {
      */
     public static String toString( Object object, boolean withHash,
                                    boolean deep, Set< Object > seen,
+                                   boolean checkIfMoreToString,
                                    Map< String, Object > otherOptions ) {
       if ( object == null ) return "null";
       
@@ -116,13 +117,26 @@ public interface MoreToString {
         return toString( (Map.Entry<?,?>)object, withHash, deep, seen, otherOptions, true );
       }
       
-      if ( object instanceof MoreToString ) {
+      if ( checkIfMoreToString && object instanceof MoreToString ) {
         return ( (MoreToString)object ).toString( withHash, deep, seen,
                                                   otherOptions );
       }
       return object.toString();
     }
 
+    /**
+     * Helper function for MoreToString.toString() when it is not known whether
+     * the input object implements MoreToString.
+     * 
+     * @return ((MoreToString)object).toString(...) with the same options passed
+     *         if the object does implement MoreToString; otherwise return
+     *         object.toString().
+     */
+    public static String toString( Object object, boolean withHash,
+                                   boolean deep, Set< Object > seen,
+                                   Map< String, Object > otherOptions ) {
+        return toString( object, withHash, deep, seen, true, otherOptions );
+    }
     /**
      * Helper function for MoreToString.toString() when it is not known whether
      * the input object implements MoreToString.

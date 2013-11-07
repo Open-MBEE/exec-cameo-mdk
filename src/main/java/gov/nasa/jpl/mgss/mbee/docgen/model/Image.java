@@ -47,16 +47,12 @@ public class Image extends Query {
 	public List<String> getCaptions() {
 		return captions;
 	}
-	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-		
-	}
 
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+	    List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (getIgnore())
-			return;
+			return res;
 		if (getTargets() != null) {
 	    List< Element > targets =
 	        isSortElementsByName() ? Utils.sortByName( getTargets() )
@@ -80,16 +76,17 @@ public class Image extends Query {
 					if (getCaptions() != null && getCaptions().size() > i && getShowCaptions())
 						im.setCaption(getCaptions().get(i));
 					im.setId(e.getID());
-					parent.addElement(im);
+					res.add(im);
 				
 					String doc = ModelHelper.getComment(e);
 					if (doc != null && (forViewEditor || (!doc.trim().equals("") && !getDoNotShow()))) {
-						parent.addElement(new DBParagraph(doc, e, From.DOCUMENTATION));
+						res.add(new DBParagraph(doc, e, From.DOCUMENTATION));
 					}
 					
 				}
 			}
 		}	
+		return res;
 	}
 	
 	@Override

@@ -1,11 +1,9 @@
 package gov.nasa.jpl.mgss.mbee.docgen;
 
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteDocumentAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteProjectAction;
-import gov.nasa.jpl.mgss.mbee.docgen.actions.EditPropertiesTableAction;
-import gov.nasa.jpl.mgss.mbee.docgen.actions.EditWorkpackageTableAction;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.EMSLogoutAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ExportViewAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ExportViewCommentsAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ExportViewHierarchyAction;
@@ -14,14 +12,10 @@ import gov.nasa.jpl.mgss.mbee.docgen.actions.ImportViewAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ImportViewCommentsAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ImportViewDryAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.InstanceViewpointAction;
-import gov.nasa.jpl.mgss.mbee.docgen.actions.MapLibraryAction;
-import gov.nasa.jpl.mgss.mbee.docgen.actions.MapMissionAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.NumberDependencyAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.OrganizeDocumentAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.OrganizeViewEditorAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.PublishDocWebAction;
-import gov.nasa.jpl.mgss.mbee.docgen.actions.RollupWorkpackageTableAction;
-import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserEditableTableAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserScriptAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.RunUserValidationScriptAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.SynchronizeViewAction;
@@ -30,15 +24,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.actions.ValidateViewStructureAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ViewDocument3Action;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ViewViewCommentsAction;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentGenerator;
-import gov.nasa.jpl.mgss.mbee.docgen.model.BillOfMaterialsTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.CollectActionsVisitor;
-import gov.nasa.jpl.mgss.mbee.docgen.model.DeploymentTable;
 import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
-import gov.nasa.jpl.mgss.mbee.docgen.model.LibraryMapping;
-import gov.nasa.jpl.mgss.mbee.docgen.model.MissionMapping;
-import gov.nasa.jpl.mgss.mbee.docgen.model.PropertiesTableByAttributes;
 import gov.nasa.jpl.mgss.mbee.docgen.model.UserScript;
-import gov.nasa.jpl.mgss.mbee.docgen.model.WorkpackageTable;
 import gov.nasa.jpl.mgss.mbee.docgen.sync.ExportComments;
 import gov.nasa.jpl.mgss.mbee.docgen.sync.ImportComments;
 import gov.nasa.jpl.mgss.mbee.docgen.sync.ViewDocumentComments;
@@ -51,6 +39,7 @@ import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
 import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.browser.Node;
@@ -98,8 +87,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 		Project prj = Project.getProject(e);
 		if (prj == null)
 			return;
-		Stereotype sysmlview = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewStereotype, DocGen3Profile.sysmlProfile);
-		Stereotype sysmlviewpoint = StereotypesHelper.getStereotype(Project.getProject(e), DocGen3Profile.viewpointStereotype, DocGen3Profile.sysmlProfile);
+		Stereotype sysmlview = Utils.getViewStereotype();
+		Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
+		Stereotype documentView = StereotypesHelper.getStereotype(prj, DocGen3Profile.documentViewStereotype, "Document Profile");
 		if (e == null)
 			return;
 		
@@ -112,8 +102,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(targets);
-            if (manager.getActionFor("RunValidationScript0") == null) 
-                c.addAction(new RunUserValidationScriptAction(us, 0));
+            if (manager.getActionFor(RunUserValidationScriptAction.actionid) == null) 
+                c.addAction(new RunUserValidationScriptAction(us, true));
         } else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
@@ -121,33 +111,21 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(targets);
-            if (manager.getActionFor("RunUserScript0") == null) 
-                c.addAction(new RunUserScriptAction(us, 0));
+            if (manager.getActionFor(RunUserScriptAction.actionid) == null) 
+                c.addAction(new RunUserScriptAction(us, true));
         }
         if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
             // There may be no view query actions to add, in which case we need
             // to avoid adding an empty menu category, so the category is
             // removed in this case.
-            boolean alreadyAdded = manager.getCategory( "ViewInteraction" ) != null;
-            ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
-            NMAction action = null;
-            action = manager.getActionFor("ViewQueries");
-            if (action == null) {
-                boolean added = addViewQueryActions(c, (NamedElement)e);
-                if (!alreadyAdded && !added) {
-                    manager.removeCategory( c );
-                }
+            ActionsCategory category = (ActionsCategory) manager.getActionFor("ViewInteraction"); 
+            if (category == null) {
+                category = new MDActionsCategory("ViewInteraction", "View Interaction");
+                category.setNested(true);
+                boolean added = addViewQueryActions(category, (NamedElement)e);
+                if (added)
+                    manager.addCategory(0, category);
             }
-    //        //ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
-    //        NMAction action = manager.getActionFor("ViewQueries");
-    //        if (action == null) {
-    //            MDActionsCategory c = new MDActionsCategory("ViewInteraction", "View Interaction");
-    //            boolean added = addViewQueryActions(c, (NamedElement)e);
-    //            if (added) {
-    //                c.setNested(true);
-    //                manager.addCategory(0, c);
-    //            }
-    //        }
         }
     
         // View Editor menu
@@ -168,13 +146,21 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             act = manager.getActionFor(DeleteProjectAction.actionid);
             if (act == null)
                 c.addAction(new DeleteProjectAction(e));
+            act = manager.getActionFor(EMSLogoutAction.actionid);
+            if (act == null)
+                c.addAction(new EMSLogoutAction());
         }
         if (StereotypesHelper.hasStereotype(e, DocWebProfile.document) ||
-            StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentViewStereotype)) {
+            StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             NMAction act = manager.getActionFor(DeleteDocumentAction.actionid);
             if (act ==  null)
                 c.addAction(new DeleteDocumentAction(e));
+            if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
+                act = manager.getActionFor(OrganizeDocumentAction.actionid);
+                if (act ==  null)
+                    c.addAction(new OrganizeDocumentAction(e));
+            }
         }
         
         // DocGen menu
@@ -182,7 +168,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             NMAction act = null;
 			ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
 			//DefaultPropertyResourceProvider pp = new DefaultPropertyResourceProvider();
-			// Only expose the OCL evaluator plugin when in developer mode.
 			act = manager.getActionFor(ValidateDocument3Action.actionid);
 			if (act == null)
 				c.addAction(new ValidateDocument3Action(e));
@@ -199,24 +184,22 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             if (act == null)
                 c.addAction(new GenerateDocumentAction(e));
             
-			if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentViewStereotype)) {
-				act = manager.getActionFor(PublishDocWebAction.actionid);
+			if (StereotypesHelper.hasStereotype(e, documentView)) {
+				/*act = manager.getActionFor(PublishDocWebAction.actionid);
 				if (act == null)
 					c.addAction(new PublishDocWebAction((NamedElement)e));
-				
+				*/
 				act = manager.getActionFor(NumberDependencyAction.actionid);
 				if (act == null)
 					c.addAction(new NumberDependencyAction(e));
 				
-				act = manager.getActionFor(OrganizeDocumentAction.actionid);
-				if (act ==  null)
-					c.addAction(new OrganizeDocumentAction(e));
+				
 			}
-			if (e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentStereotype)) {
+			/*if (e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.documentStereotype)) {
 				act = manager.getActionFor(PublishDocWebAction.actionid);
 				if (act == null)
 					c.addAction(new PublishDocWebAction((NamedElement)e));
-			}
+			}*/
 		}	
 	
 		if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlviewpoint)) {
@@ -284,6 +267,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 		c.addAction(new ExportViewCommentsAction(e));
 		c.addAction(new ImportViewCommentsAction(e));
 		c.addAction(new ViewViewCommentsAction(e));
+		c.addAction(new EMSLogoutAction());
 //		c.setNested(true);
 //		synchronized (this) { // saw a concurrency error at some point
 //			parent.addAction(c);
@@ -319,61 +303,15 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 		Document dge = dg.parseDocument(true, false);
 		CollectActionsVisitor cav = new CollectActionsVisitor();
 		dge.accept(cav);
-		ActionsCategory c = null;
-		if ( Utils2.isNullOrEmpty( parent.getCategories() ) ) {
-		    c = parent;
-		} else {
-		    c = new ActionsCategory("ViewQueries", "View Query Actions");
-		}
-		int nump = 1;
+		
 		boolean added = false;
-		for (PropertiesTableByAttributes pta: cav.getPropertiesTables()) {
-		    c.addAction(new EditPropertiesTableAction(pta, nump));
-			added = true;
-			nump++;
+		if (cav.getActions().size() > 0) {
+		    for (MDAction a: cav.getActions()) {
+		        parent.addAction(a);
+		    }
+		    added = true;
 		}
-		nump = 1;
-		for (WorkpackageTable wt: cav.getWorkpackageTables()) {
-			c.addAction(new EditWorkpackageTableAction(wt, nump));
-			if (wt instanceof DeploymentTable || wt instanceof BillOfMaterialsTable) {
-			    c.addAction(new RollupWorkpackageTableAction(wt, nump));
-			}
-			nump++;
-			added = true;
-		}
-		nump = 1;
-		List<UserScript> editableTables = cav.getUserEditableTables();
-		List<UserScript> validations = cav.getUserValidationScripts();
-		for (UserScript us: cav.getUserScripts()) {
-			if (editableTables.contains(us))
-				c.addAction(new RunUserEditableTableAction(us, nump));
-			if (validations.contains(us)) {
-				c.addAction(new RunUserValidationScriptAction(us, nump));
-			}
-			if (!editableTables.contains(us) && !validations.contains(us))
-				c.addAction(new RunUserScriptAction(us, nump));
-			nump++;
-			added = true;
-		}
-		nump = 1;
-		for (MissionMapping charmap: cav.getMissionMappings()) {
-			c.addAction(new MapMissionAction(charmap, nump));
-			added = true;
-			nump++;
-		}
-		nump = 1;
-		for (LibraryMapping charmap: cav.getLibraryMappings()) {
-			c.addAction(new MapLibraryAction(charmap, nump));
-			added = true;
-			nump++;
-		}
-		c.setNested(true);
-		if (added && parent != c) {
-			synchronized (this) {
-				parent.addAction(c);
-				parent.getCategories().add(c);
-			}
-		}
+		parent.setNested(true);
 		return added;
 	}
 

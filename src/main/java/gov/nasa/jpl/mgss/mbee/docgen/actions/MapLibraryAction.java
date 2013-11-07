@@ -11,8 +11,8 @@ public class MapLibraryAction extends MDAction {
 
 	private LibraryMapping mapping;
 	
-	public MapLibraryAction(LibraryMapping table, int number) {
-		super("libraryMapper" + number, "Map Library", null, null);
+	public MapLibraryAction(LibraryMapping table) {
+		super(null, "Map Library", null, null);
 		mapping = table;
 	}
 	

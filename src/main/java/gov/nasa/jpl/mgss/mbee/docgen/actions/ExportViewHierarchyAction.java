@@ -57,10 +57,12 @@ public class ExportViewHierarchyAction extends MDAction {
 			pm.setRequestHeader("Content-Type", "application/json");
 			pm.setRequestEntity(JsonRequestEntity.create(post));
 			HttpClient client = new HttpClient();
-			ViewEditUtils.setCredentials(client);
+			ViewEditUtils.setCredentials(client, posturl);
 			//gl.log(post);
 			gl.log("[INFO] Sending...");
-			client.executeMethod(pm);
+			int code = client.executeMethod(pm);
+			if (ViewEditUtils.showErrorMessage(code))
+                return;
 			String response = pm.getResponseBodyAsString();
 			if (response.equals("ok"))
 				gl.log("[INFO] Export Successful.");

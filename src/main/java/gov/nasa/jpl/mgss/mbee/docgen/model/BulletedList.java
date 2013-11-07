@@ -61,11 +61,6 @@ public class BulletedList extends Table {
 	}
 
 	@Override
-	public void accept(IModelVisitor v) {
-		v.visit(this);
-	}
-
-	@Override
 	public void initialize() {
 		Boolean showTargets = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.bulletedListStereotype, "showTargets", false);
 		Boolean showSPN = (Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.bulletedListStereotype, "showStereotypePropertyNames", false);
@@ -78,12 +73,13 @@ public class BulletedList extends Table {
 	}
 	
 	@Override
-	public void visit(boolean forViewEditor, DBHasContent parent, String outputDir) {
+	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+	    List<DocumentElement> res = new ArrayList<DocumentElement>();
 		if (ignore)
-			return;
+			return res;
 		if (targets != null && !targets.isEmpty()) {
 			DBList l = new DBList();
-			parent.addElement(l);
+			res.add(l);
 			l.setOrdered(isOrderedList());
 			List< Element > targets = isSortElementsByName() ? Utils.sortByName( getTargets() ): getTargets();
 			if (isShowTargets() || isIncludeDoc()) {
@@ -143,5 +139,6 @@ public class BulletedList extends Table {
 				}
 			}
 		}
+		return res;
 	}
 }

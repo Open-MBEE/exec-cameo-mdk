@@ -65,13 +65,15 @@ public class ProjectExporter {
 			//Protocol easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
 			//Protocol.registerProtocol("https", easyhttps);
 			HttpClient client = new HttpClient();
-			ViewEditUtils.setCredentials(client);
-			client.executeMethod(pm);
-			String code = pm.getResponseBodyAsString();
-			if (code.equals("ok"))
+			ViewEditUtils.setCredentials(client, url);
+			int code = client.executeMethod(pm);
+			if (ViewEditUtils.showErrorMessage(code))
+                return;
+			String response = pm.getResponseBodyAsString();
+			if (response.equals("ok"))
 				log.log("[INFO] Export Successful.");
 			else
-				log.log(code);
+				log.log(response);
 		} catch (MalformedURLException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {

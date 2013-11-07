@@ -21,8 +21,8 @@ public class EditPropertiesTableAction extends MDAction {
 	
 	private PropertiesTableByAttributes npt;
 	
-	public EditPropertiesTableAction(PropertiesTableByAttributes table, int number) {
-		super("edittable" + number, "Edit Properties Table " + number, null, null);
+	public EditPropertiesTableAction(PropertiesTableByAttributes table) {
+		super(null, "Edit Properties Table", null, null);
 		npt = table;
 	}
 	

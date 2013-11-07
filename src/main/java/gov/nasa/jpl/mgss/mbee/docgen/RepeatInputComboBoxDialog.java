@@ -7,7 +7,6 @@ import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
@@ -15,7 +14,6 @@ import java.awt.Dimension;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.ItemSelectable;
-import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ComponentEvent;
@@ -41,8 +39,6 @@ import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
-
-import org.eclipse.xtext.xbase.interpreter.impl.FinallyDidNotCompleteException;
 
 public class RepeatInputComboBoxDialog implements Runnable {
 
@@ -181,7 +177,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
     if ( RequestFocusListener.sizeOnClose  != null ) w.setSize( RequestFocusListener.sizeOnClose );// else w.setLocation(1000,1000);
     //if ( RequestFocusListener.size != null ) w.setSize( RequestFocusListener.size );
     if ( w instanceof Dialog ) ((Dialog)w).setResizable( true );
-    Debug.outln("w=" + w);
+    //Debug.outln("w=" + w);
   }
 
   public void run() {
@@ -270,7 +266,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
     return selectedItem;
   }
   
-  private class EditableListPanel extends JPanel {
+  public static class EditableListPanel extends JPanel {
 
     private static final long serialVersionUID = 8166263196543269359L;
 
@@ -640,7 +636,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
       Window win = (dialog == null ? top : dialog );
       //Window w = SwingUtilities.getWindowAncestor( e.getComponent() );
       Window w = win;
-      Debug.outln("w=" + w);
+      //Debug.outln("w=" + w);
       
       if ( win != w ) {
           Debug.error(false, false, "win != w");
@@ -736,7 +732,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
   /**
    * @param component
-   * @return the highest [grand]parent of component that is a JComponent or, if
+   * @param type
+   * @return the highest [grand]parent of component of the specified type or, if
    *         no such parent exists, component
    */
   public static < T extends Component > T

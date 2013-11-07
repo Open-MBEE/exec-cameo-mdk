@@ -1,5 +1,7 @@
 package gov.nasa.jpl.ocl;
 
+import gov.nasa.jpl.mbee.lib.Debug;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -27,7 +29,7 @@ import org.eclipse.ocl.ecore.internal.OCLStandardLibraryImpl;
 
 public class DgEnvironment extends EcoreEnvironment {
 	Set<String> operationNames = new HashSet<String>();
-	Set<DgOperation> operations = new TreeSet<DgOperation>();
+	Set<DgOperationInstance> operations = new TreeSet<DgOperationInstance>();
 	
 	// this constructor is used to initialize the root environment
 	@SuppressWarnings("deprecation")
@@ -68,7 +70,7 @@ public class DgEnvironment extends EcoreEnvironment {
 	 * Utility for adding custom OCL operations (defined by a DgOperation)
 	 * @param dgOperation
 	 */
-	public void addDgOperation(DgOperation dgOperation) {
+	public void addDgOperation(DgOperationInstance dgOperation) {
 		// check that the operation has not already been added
     if ( !operations.contains( dgOperation ) ) {
 			EOperation eoperation = EcoreFactory.eINSTANCE.createEOperation();
@@ -85,10 +87,17 @@ public class DgEnvironment extends EcoreEnvironment {
 			
       type = dgOperation.getCallerType();
       if ( type == null ) type = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+          try {
+            if ( dgOperation.getCallerType() == null ) {
+                Debug.error(false,"Error! Null callerType for DgOperation " + dgOperation + "! Setting to OclAny." );
+                dgOperation.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+            }
 			addHelperOperation( dgOperation.getCallerType(), eoperation );
-			
-			operationNames.add(dgOperation.getName());
-			operations.add( dgOperation );
+            operationNames.add(dgOperation.getName());
+            operations.add( dgOperation );
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
 		}
 	}
 }

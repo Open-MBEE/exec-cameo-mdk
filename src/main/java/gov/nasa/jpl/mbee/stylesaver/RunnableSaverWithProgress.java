@@ -1,9 +1,10 @@
 package gov.nasa.jpl.mbee.stylesaver;
 
 import java.util.List;
+import java.util.Map;
 import java.util.MissingResourceException;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.task.ProgressStatus;
@@ -19,7 +20,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  * @author Benjamin Inada, JPL/Caltech
  */
 public class RunnableSaverWithProgress implements RunnableWithProgress {
-	private JSONObject mainStore;
+	private Map mainStore;
 	private List<PresentationElement> elemList;
 	private String styleString;
 	private Element diagram;
@@ -27,11 +28,11 @@ public class RunnableSaverWithProgress implements RunnableWithProgress {
 	private boolean success;
 	
 	/**
-	 * @param mainStore the main style store for this diagram.
+	 * @param mainStore2 the main style store for this diagram.
 	 * @param elemList	the elements to save.
 	 */
-	public RunnableSaverWithProgress(JSONObject mainStore, List<PresentationElement> elemList, Element diagram, Stereotype workingStereotype) {
-		this.mainStore = mainStore;
+	public RunnableSaverWithProgress(Map mainStore2, List<PresentationElement> elemList, Element diagram, Stereotype workingStereotype) {
+		this.mainStore = mainStore2;
 		this.elemList = elemList;
 		this.diagram = diagram;
 		this.workingStereotype = workingStereotype;
@@ -77,7 +78,7 @@ public class RunnableSaverWithProgress implements RunnableWithProgress {
        	}
 		
 		// convert to JSON - this takes a while
-		styleString = mainStore.toJSONString();
+		styleString = JSONValue.toJSONString(mainStore);
 		
 		if(progressStatus.isCancel()) {
 			success = false;

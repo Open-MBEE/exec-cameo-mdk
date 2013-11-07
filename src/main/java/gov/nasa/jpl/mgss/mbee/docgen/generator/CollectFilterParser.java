@@ -73,7 +73,7 @@ public class CollectFilterParser {
 		List<CollectFilterNode> toposort = new ArrayList<CollectFilterNode>(reverse);
 		Collections.reverse(toposort);
 
-		List<Element> res = null;
+		List<Element> res = in;
 		for (CollectFilterNode node: toposort) {
 			Set<CollectFilterNode> incomings = new HashSet<CollectFilterNode>();
 			for (DirectedEdgeVector<CollectFilterNode> edge: graph.findEdgesWithTargetVertex(node)) {
@@ -170,6 +170,8 @@ public class CollectFilterParser {
 		List<Property> stereotypeProperties = (List<Property>)GeneratorUtils.getListProperty(cba, DocGen3Profile.stereotypePropertyChoosable, "stereotypeProperties", new ArrayList<Property>());
 		Boolean inherited = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.inheritedChoosable, "includeInherited", false);
 		EnumerationLiteral asso = (EnumerationLiteral)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.associationChoosable, "associationType", null);
+		String expression = (String)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.expressionChoosable, "expression", null);
+		Boolean iterate = (Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.expressionChoosable, "iterate", true);
 		AggregationKind associationType = null;
 		if (asso != null) {
 			if (asso.getName().equals("composite"))
@@ -226,7 +228,7 @@ public class CollectFilterParser {
 				for (Element e: in)
 					res.addAll(Utils.getAttributes(e, inherited));
         } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectExpressionStereotype)) {
-            res.addAll(Utils.collectByExpression(in, cba));
+            res.addAll(Utils.collectByExpression(in, expression, iterate));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterDiagramTypeStereotype)) {
 			res.addAll(Utils.filterDiagramsByDiagramTypes(in, diagramTypes, include));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterMetaclassStereotype)) {
@@ -236,8 +238,8 @@ public class CollectFilterParser {
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterStereotypeStereotype)) {
 			res.addAll(Utils.filterElementsByStereotypes(in, stereotypes, include, derived));
         } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.filterExpressionStereotype)) {
-            res.addAll(Utils.filterElementsByExpression(in, cba, include));
-		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectionStereotype)) {
+            res.addAll(Utils.filterElementsByExpression(in, expression, include, iterate));
+		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.collectionStereotype) && cba.getBehavior() != null) {
 			res.addAll(collectAndFilterGroup((Activity)cba.getBehavior(), in));
 		} else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.removeDuplicates)) {
 			res.addAll(Utils.removeDuplicates(in));
