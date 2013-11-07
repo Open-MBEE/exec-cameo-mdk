@@ -26,6 +26,8 @@
 	<file from="data/defaults/data/diagrams/DocGen 3 View Diagram/descriptor.xml" to="data/defaults/data/diagrams/DocGen 3 View Diagram/descriptor.xml"/>
 	<file from="data/defaults/data/diagrams/Module Management/descriptor.xml" to="data/defaults/data/diagrams/Module Management/descriptor.xml"/>
 	<file from="data/defaults/data/diagrams/View Class Diagram/descriptor.xml" to="data/defaults/data/diagrams/View Class Diagram/descriptor.xml"/>
+	<file from="data/defaults/data/diagrams/View Diagram/descriptor.xml" to="data/defaults/data/diagrams/View Diagram/descriptor.xml"/>
+	<file from="data/defaults/data/diagrams/Viewpoint Method Diagram/descriptor.xml" to="data/defaults/data/diagrams/Viewpoint Method Diagram/descriptor.xml"/>
 	<file from="data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml" to="data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
 	<file from="DocGenUserScripts/common/CustomDependencyValidation.py" to="DocGenUserScripts/common/CustomDependencyValidation.py"/>
 	<file from="DocGenUserScripts/common/DocGenAutoOrganize.py" to="DocGenUserScripts/common/DocGenAutoOrganize.py"/>
