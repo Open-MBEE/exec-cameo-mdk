@@ -92,6 +92,9 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 		
 	}
 	
+	public int getNumberOfElements() {
+	    return elements.size();
+	}
 	/**
 	 * Simple getter for images
 	 */
