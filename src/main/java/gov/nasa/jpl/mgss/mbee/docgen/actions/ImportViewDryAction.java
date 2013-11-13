@@ -24,7 +24,9 @@ public class ImportViewDryAction extends MDAction {
         dv.printErrors();
         if (dv.isFatal())
             return;
-        boolean recurse = Utils.getUserYesNoAnswer("Check recursively?");
+        Boolean recurse = Utils.getUserYesNoAnswer("Check recursively?");
+        if (recurse == null)
+            return;
 		ImportViewAction.doImportView(doc, false, recurse, null);
 	}
 }
