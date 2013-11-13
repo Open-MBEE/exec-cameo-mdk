@@ -12,7 +12,6 @@ import java.awt.event.ActionEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 import com.nomagic.magicdraw.actions.MDAction;
@@ -21,18 +20,12 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-/**
- * export view to view editor
- * recursive means export this view and all its children recursively
- * @author dlam
- *
- */
-@SuppressWarnings("serial")
-public class ExportViewAction extends MDAction {
+public class SynchronizeViewRecursiveAction extends MDAction {
+
 	private Element doc;
-	public static final String actionid = "ExportView";
-	public ExportViewAction(Element e) {
-		super(actionid, "Export View (Overwrite)", null, null);
+	public static final String actionid = "SynchronizeViewRecursive";
+	public SynchronizeViewRecursiveAction(Element e) {
+		super(actionid, "Merge model (Merge conflicting)", null, null);
 		doc = e;
 	}
 	
@@ -40,18 +33,18 @@ public class ExportViewAction extends MDAction {
 		GUILog gl = Application.getInstance().getGUILog();
 		DocumentValidator dv = null;
 		try {
-			Boolean recurse = false; //Utils.getUserYesNoAnswer("Export views recursively?");
+			Boolean recurse = true;//Utils.getUserYesNoAnswer("Synchronize views recursively?");
 			String url = ViewEditUtils.getUrl();
 			if (url == null)
 				return;
-			gl.log("*** Starting export view ***");
+			gl.log("*** Starting merging model ***");
 			dv = new DocumentValidator(doc);
 			dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
                 return;
             }
-			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, true, url, dv), "Exporting View...", true, 0);
+			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, false, url, dv), "Merging Model...", true, 0);
 		} catch (Exception ex) {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
@@ -59,7 +52,6 @@ public class ExportViewAction extends MDAction {
 			gl.log(sw.toString()); // stack trace as a string
 			ex.printStackTrace();
 		} 
-		if ( dv != null ) dv.printErrors();
-		
+        if ( dv != null ) dv.printErrors();
 	}
 }
