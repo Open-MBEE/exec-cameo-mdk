@@ -113,7 +113,7 @@ public class ViewExporter implements RunnableWithProgress{
                 HttpClient client = new HttpClient();
                 ViewEditUtils.setCredentials(client, posturl);
                 //gl.log(post);
-                gl.log("[INFO] Sending...");
+                gl.log("[INFO] Sending View Hierarchy...");
                 int code = client.executeMethod(pm);
                 if (ViewEditUtils.showErrorMessage(code))
                     return;
