@@ -15,9 +15,11 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 import org.apache.commons.httpclient.Credentials;
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -115,6 +117,9 @@ public class ViewEditUtils {
 			
 			Credentials creds = new UsernamePasswordCredentials(username, password);
 			client.getState().setCredentials(new AuthScope(url.getHost(), url.getPort(), AuthScope.ANY_REALM), creds);
+			client.setTimeout(0);
+			client.setConnectionTimeout(0);
+			client.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(0, false)); 
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}

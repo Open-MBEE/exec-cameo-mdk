@@ -51,7 +51,7 @@ public class ImportViewAction extends MDAction {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
-		doImportView(doc, true, null, null);
+		doImportView(doc, true, false, null);
 	}
 	
 	public static void doImportView(Element e, boolean willchange, Boolean recursive, String curl) {
@@ -72,9 +72,7 @@ public class ImportViewAction extends MDAction {
 		vs.addValidationRule(valueChange);
 		try {
 			if (recurse == null)
-				recurse = Utils.getUserYesNoAnswer("Do recursively?");
-			if (recurse == null)
-				return;
+				recurse = false;
 			if (url == null)
 				url = ViewEditUtils.getUrl();
 			if (url == null)

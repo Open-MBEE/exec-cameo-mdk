@@ -25,43 +25,33 @@ public class SynchronizeViewAction extends MDAction {
 	private Element doc;
 	public static final String actionid = "SynchronizeView";
 	public SynchronizeViewAction(Element e) {
-		super(actionid, "Synchronize View (Merge conflicting)", null, null);
+		super(actionid, "Merge View (Merge conflicting)", null, null);
 		doc = e;
 	}
 	
 	public void actionPerformed(ActionEvent e) {
 		GUILog gl = Application.getInstance().getGUILog();
-		GetMethod gm = null;
 		DocumentValidator dv = null;
 		try {
-			String response = null;
-			Boolean recurse = Utils.getUserYesNoAnswer("Synchronize views recursively?");
-			if (recurse == null)
-				return;
+			Boolean recurse = false;//Utils.getUserYesNoAnswer("Synchronize views recursively?");
 			String url = ViewEditUtils.getUrl();
 			if (url == null)
 				return;
-			gl.log("*** Starting synchronize view ***");
+			gl.log("*** Starting merging view ***");
 			dv = new DocumentValidator(doc);
 			dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
                 return;
             }
-			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
-			Document dge = dg.parseDocument(true, recurse);
-			(new PostProcessor()).process(dge);
-			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(dge, doc, recurse, false, url), "Synchronizing View...", true, 0);
+			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, false, url, dv), "Merging View...", true, 0);
 		} catch (Exception ex) {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			ex.printStackTrace(pw);
 			gl.log(sw.toString()); // stack trace as a string
 			ex.printStackTrace();
-		} finally {
-			if (gm != null)
-				gm.releaseConnection();
-		}
+		} 
         if ( dv != null ) dv.printErrors();
 	}
 }

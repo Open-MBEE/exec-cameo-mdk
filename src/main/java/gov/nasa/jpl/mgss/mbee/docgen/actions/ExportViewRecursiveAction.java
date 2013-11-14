@@ -28,11 +28,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  *
  */
 @SuppressWarnings("serial")
-public class ExportViewAction extends MDAction {
+public class ExportViewRecursiveAction extends MDAction {
 	private Element doc;
-	public static final String actionid = "ExportView";
-	public ExportViewAction(Element e) {
-		super(actionid, "Export View (Overwrite)", null, null);
+	public static final String actionid = "ExportViewRecursive";
+	public ExportViewRecursiveAction(Element e) {
+		super(actionid, "Export Model (Overwrite)", null, null);
 		doc = e;
 	}
 	
@@ -40,18 +40,18 @@ public class ExportViewAction extends MDAction {
 		GUILog gl = Application.getInstance().getGUILog();
 		DocumentValidator dv = null;
 		try {
-			Boolean recurse = false; //Utils.getUserYesNoAnswer("Export views recursively?");
+			Boolean recurse = true; //Utils.getUserYesNoAnswer("Export views recursively?");
 			String url = ViewEditUtils.getUrl();
 			if (url == null)
 				return;
-			gl.log("*** Starting export view ***");
+			gl.log("*** Starting export model ***");
 			dv = new DocumentValidator(doc);
 			dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
                 return;
             }
-			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, true, url, dv), "Exporting View...", true, 0);
+			ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, true, url, dv), "Exporting Model...", true, 0);
 		} catch (Exception ex) {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
@@ -60,6 +60,5 @@ public class ExportViewAction extends MDAction {
 			ex.printStackTrace();
 		} 
 		if ( dv != null ) dv.printErrors();
-		
 	}
 }

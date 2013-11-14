@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
 
 import java.awt.event.ActionEvent;
@@ -23,6 +24,9 @@ public class ImportViewDryAction extends MDAction {
         dv.printErrors();
         if (dv.isFatal())
             return;
-		ImportViewAction.doImportView(doc, false, null, null);
+        Boolean recurse = Utils.getUserYesNoAnswer("Check recursively?");
+        if (recurse == null)
+            return;
+		ImportViewAction.doImportView(doc, false, recurse, null);
 	}
 }
