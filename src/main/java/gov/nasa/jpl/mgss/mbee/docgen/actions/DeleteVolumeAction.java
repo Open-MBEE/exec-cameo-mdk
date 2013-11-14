@@ -40,6 +40,7 @@ public class DeleteVolumeAction extends MDAction {
 		
 		if (!root) {
 		    Utils.showPopupMessage("You cannot remove a non-root volume from view editor directly");
+		    return;
 		}
 		String url = ViewEditUtils.getUrl();
 		if (url == null || url.equals(""))
