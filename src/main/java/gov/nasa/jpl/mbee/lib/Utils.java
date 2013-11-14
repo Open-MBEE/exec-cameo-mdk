@@ -1600,6 +1600,9 @@ public class Utils {
     	return getUserDropdownSelectionForString(title, message, elements, displays, null);
     }
     
+    public static void showPopupMessage(String message) {
+        JOptionPane.showMessageDialog(null, message);
+    }
     /**
      * 
      * @param question
