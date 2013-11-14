@@ -3,6 +3,7 @@ package gov.nasa.jpl.mgss.mbee.docgen;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteDocumentAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteProjectAction;
+import gov.nasa.jpl.mgss.mbee.docgen.actions.DeleteVolumeAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.EMSLogoutAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ExportViewAction;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ExportViewCommentsAction;
@@ -149,6 +150,15 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             act = manager.getActionFor(DeleteProjectAction.actionid);
             if (act == null)
                 c.addAction(new DeleteProjectAction(e));
+            act = manager.getActionFor(EMSLogoutAction.actionid);
+            if (act == null)
+                c.addAction(new EMSLogoutAction());
+        }
+        if (StereotypesHelper.hasStereotype(e, DocWebProfile.volume)) { // REVIEW -- hasStereotypeOrDerived()?
+            ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
+            NMAction act = manager.getActionFor(DeleteVolumeAction.actionid);
+            if (act == null)
+                c.addAction(new DeleteVolumeAction(e));
             act = manager.getActionFor(EMSLogoutAction.actionid);
             if (act == null)
                 c.addAction(new EMSLogoutAction());
