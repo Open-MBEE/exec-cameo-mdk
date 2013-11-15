@@ -173,7 +173,7 @@ public class ViewExporter implements RunnableWithProgress{
         book.accept(v);
         int numElements = v.getNumberOfElements();
         if (numElements > 10000 && alfresco) {
-            Boolean cont = Utils.getUserYesNoAnswer("Alert! You're about to publish " + numElements + " in a view, this may take about " + numElements/1000 + " minutes to complete if you're doing initial loading, do you want to continue?");
+            Boolean cont = Utils.getUserYesNoAnswer("Alert! You're about to publish " + numElements + " elements in a view, this may take about " + numElements/1000 + " minutes to complete if you're doing initial loading, do you want to continue?");
             if (cont == null || !cont){
                 return;
             }

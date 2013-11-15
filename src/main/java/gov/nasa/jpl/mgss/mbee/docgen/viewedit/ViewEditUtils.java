@@ -134,9 +134,11 @@ public class ViewEditUtils {
 	
 	public static boolean showErrorMessage(int code) {
 	    if (code == 401)
-	        Application.getInstance().getGUILog().log("[ERROR] Unauthorized:  YOU MAY HAVE ENTERED THE WRONG CREDENTIALS: PLEASE RIGHT CLICK ON A VIEW IN YOUR DOCUMENT AND GO TO THE VIEWEDITOR MENU TO SELECT LOGOUT, AND THEN TRY AGAIN");
+	        Utils.showPopupMessage("[ERROR] You may have entered the wrong credentials: Please right click on a view and select the Logout action from the view editor menu, then try again");
 	    else if (code == 500)
-	        Application.getInstance().getGUILog().log("[ERROR] Error: Server error occured, you may not have permission to modify view(s) or their contents");
+	        Utils.showPopupMessage("[ERROR] Server error occured, you may not have permission to modify view(s) or their contents");
+	    else if (code == 404)
+	        Utils.showPopupMessage("[ERROR] Some elements or views are not found on the server, export them first");
 	    if (code == 401 || code == 500)
 	        return true;
 	    return false;
