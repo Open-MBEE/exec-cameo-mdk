@@ -281,7 +281,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 		c.addAction(new ImportViewCommentsAction(e));
 		c.addAction(new ViewViewCommentsAction(e));
 		c.addAction(new EMSLogoutAction());
-		ActionsCategory a = new MDActionsCategory("AdvanceEditor", "Advance");
+		ActionsCategory a = new MDActionsCategory("AdvanceEditor", "ModelLoad");
 		a.setNested(true);
 		a.addAction(new ImportViewRecursiveAction(e));
 		a.addAction(new ExportViewRecursiveAction(e));
