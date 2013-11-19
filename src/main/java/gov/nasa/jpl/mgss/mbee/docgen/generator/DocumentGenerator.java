@@ -179,7 +179,7 @@ public class DocumentGenerator {
 				    elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(viewpoint, "Covers", 1, false, 1));
 				    elementImports.add(b);
 				}
-				context.pushTargets(elementImports); //this becomes the context of the activity going in
+				context.pushTargets(Utils.removeDuplicates(elementImports)); //this becomes the context of the activity going in
 				if (b instanceof Activity) {
 					parseActivityOrStructuredNode(b, viewSection);
 				}

@@ -111,10 +111,13 @@ public class Utils {
 	 * @return
 	 */
 	public static List<Element> removeDuplicates(Collection<Element> elements) {
+	    Set<Element> added = new HashSet<Element>();
 		List<Element> res = new ArrayList<Element>();
 		for (Element e: elements) {
-			if (!res.contains(e))
+			if (!added.contains(e)) {
 				res.add(e);
+				added.add(e);
+			}
 		}
 		return res;
 	}

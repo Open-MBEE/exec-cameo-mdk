@@ -254,7 +254,7 @@ public class CollectFilterParser {
         } else if (GeneratorUtils.hasStereotypeByString(cba, DocGen3Profile.sortByExpression)) {
             res.addAll(sortElements(in, DocGen3Profile.sortByExpression, cba));
 		}
-		return res;
+		return Utils.removeDuplicates(res);
 	}
 	
     /**
