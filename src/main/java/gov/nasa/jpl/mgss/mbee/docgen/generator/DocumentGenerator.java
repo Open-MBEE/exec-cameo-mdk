@@ -387,7 +387,7 @@ public class DocumentGenerator {
         if (targets.isEmpty() && !context.targetsEmpty()) {
             targets = context.peekTargets();
         }
-        return targets;
+        return Utils.removeDuplicates(targets);
     }
 
     //this is a section made using an activity and should be discouraged since it won't show up on view editor
