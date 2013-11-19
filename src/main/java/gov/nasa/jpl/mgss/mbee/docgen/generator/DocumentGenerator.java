@@ -179,7 +179,7 @@ public class DocumentGenerator {
 				    elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(viewpoint, "Covers", 1, false, 1));
 				    elementImports.add(b);
 				}
-				context.pushTargets(elementImports); //this becomes the context of the activity going in
+				context.pushTargets(Utils.removeDuplicates(elementImports)); //this becomes the context of the activity going in
 				if (b instanceof Activity) {
 					parseActivityOrStructuredNode(b, viewSection);
 				}
@@ -387,7 +387,7 @@ public class DocumentGenerator {
         if (targets.isEmpty() && !context.targetsEmpty()) {
             targets = context.peekTargets();
         }
-        return targets;
+        return Utils.removeDuplicates(targets);
     }
 
     //this is a section made using an activity and should be discouraged since it won't show up on view editor
