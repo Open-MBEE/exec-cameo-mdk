@@ -35,8 +35,10 @@ public class ValidationRule {
     }
 
     public List<ValidationRuleViolation> addViolations( Collection<ValidationRuleViolation> viols ) {
-        for ( ValidationRuleViolation v : viols ) {
-            addViolation( v );
+        if ( viols != null ) {
+            for ( ValidationRuleViolation v : viols ) {
+                addViolation( v );
+            }
         }
         return violations;
     }
