@@ -6,7 +6,7 @@
 	provider-name="NASA / Jet Propulsion Laboratory / Caltech"
 	ownClassLoader="true"
 	class-lookup="LocalFirst"
-	class="gov.nasa.jpl.mgss.mbee.docgen.DocGenPlugin">
+	class="gov.nasa.jpl.mbee.DocGenPlugin">
 	<requires>
 	   <api version="1.0"/>
 	</requires>

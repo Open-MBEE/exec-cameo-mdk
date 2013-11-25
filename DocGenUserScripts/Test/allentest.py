@@ -1,5 +1,5 @@
 from gov.nasa.jpl.mbee.lib import Utils
-from gov.nasa.jpl.mgss.mbee.docgen import DocGen3Profile
+from gov.nasa.jpl.mbee import DocGen3Profile
 from gov.nasa.jpl.mgss.mbee.docgen.docbook import DBParagraph
 from gov.nasa.jpl.mgss.mbee.docgen.docbook import DBSection
 
