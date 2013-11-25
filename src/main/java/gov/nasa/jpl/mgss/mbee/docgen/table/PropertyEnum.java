@@ -1,8 +1,9 @@
 package gov.nasa.jpl.mgss.mbee.docgen.table;
 
 /**
- * 	What to display/change for an element in the editable table. Right now only name for namedelements or value for properties are supported.
+ * What to display/change for an element in the editable table. Right now only
+ * name for namedelements or value for properties are supported.
  */
 public enum PropertyEnum {
-	NAME, VALUE, DOC
+    NAME, VALUE, DOC
 }

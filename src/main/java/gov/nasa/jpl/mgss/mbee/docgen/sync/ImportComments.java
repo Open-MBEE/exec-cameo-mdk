@@ -20,104 +20,100 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 @SuppressWarnings("serial")
 public class ImportComments extends MDAction {
-	private NamedElement documentView;
-	private CommentRepository repository;
-	
-	public ImportComments(NamedElement selectedElement) {
-		super("ImportCommentsFromDocWeb", "Import Comments from DocWeb", null, null);
-		this.documentView = selectedElement;
-		setEnabled(selectedElement.isEditable());
-	}
+    private NamedElement      documentView;
+    private CommentRepository repository;
 
-	//this is for export comments action to call so make sure ppl import first than export
-	public ImportComments(NamedElement ne, CommentRepository re) {
-		super("ImportComments", "Import Comments", null, null);
-		documentView = ne;
-		repository = re;
-	}
-	
-	@Override
-	public void actionPerformed(ActionEvent ac) {
-		if (!documentView.isEditable()) {
-			JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(),
-					"You must lock document for editing",
-					"Permission Denied", JOptionPane.WARNING_MESSAGE);
-			return;
-		}
-		if (!updateRemoteProject()) { // user can say yes/no/cancel to update
-			return; // user canceled the operation
-		}
+    public ImportComments(NamedElement selectedElement) {
+        super("ImportCommentsFromDocWeb", "Import Comments from DocWeb", null, null);
+        this.documentView = selectedElement;
+        setEnabled(selectedElement.isEditable());
+    }
 
-		String url = CommentUtil.getDocwebUrl();
-		if (url == null) {
-			return;
-		}
-		repository = new DocwebCommentRepository(url);
+    // this is for export comments action to call so make sure ppl import first
+    // than export
+    public ImportComments(NamedElement ne, CommentRepository re) {
+        super("ImportComments", "Import Comments", null, null);
+        documentView = ne;
+        repository = re;
+    }
 
-		List<SyncedComment> added = new ArrayList<SyncedComment>();
-		List<SyncedComment> modified = new ArrayList<SyncedComment>();
-		List<SyncedComment> deleted = new ArrayList<SyncedComment>();
-		Map<String,Comment> localComments = null;
+    @Override
+    public void actionPerformed(ActionEvent ac) {
+        if (!documentView.isEditable()) {
+            JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(),
+                    "You must lock document for editing", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (!updateRemoteProject()) { // user can say yes/no/cancel to update
+            return; // user canceled the operation
+        }
 
-		Stereotype s = StereotypesHelper.getStereotype(
-				Application.getInstance().getProject(),
-				CommentUtil.DOCUMENT_COMMENT);
+        String url = CommentUtil.getDocwebUrl();
+        if (url == null) {
+            return;
+        }
+        repository = new DocwebCommentRepository(url);
 
-		try {
-			repository.connect();
-			List<SyncedComment> importedComments = repository.getComments(documentView);
-			localComments = CommentUtil.getLocalComments(documentView);
-			Set<Integer> localChecksums = new HashSet<Integer>();
-			for (Comment c: localComments.values()) {
-				localChecksums.add(CommentUtil.checksum(c, s));
-			}
-			
-			for (SyncedComment remote: importedComments) {
-				if (remote.isDeleted()) {
-					deleted.add(remote);
-					continue;
-				}
-				String remoteId = remote.getId();
-				if (remoteId == null || remoteId.isEmpty()) {
-					if (!localChecksums.contains(CommentUtil.checksum(remote))) {
-						added.add(remote);
-					}
-					continue;
-				}
-				Comment local = localComments.get(remote.getId());
-				if (local != null && CommentUtil.isRemotelyModified(local, s, remote)) {
-					modified.add(remote);
-				}
-			}
-			repository.close();
-		} catch (CommentSyncFailure e) {
-			fail(e.getMessage());
-			return;
-		}
-		new ApplyRemoteCommentChanges(documentView, localComments, added, modified, deleted).run();
-	}
+        List<SyncedComment> added = new ArrayList<SyncedComment>();
+        List<SyncedComment> modified = new ArrayList<SyncedComment>();
+        List<SyncedComment> deleted = new ArrayList<SyncedComment>();
+        Map<String, Comment> localComments = null;
 
-	private boolean updateRemoteProject() {
-		Project project = Application.getInstance().getProject();
-		if (!project.isRemote()) {
-			return true;
-		}
-		int answer = JOptionPane.showConfirmDialog(
-				Application.getInstance().getMainFrame(),
-				"Would you like to update the project first?",
-				"Update Remote Project",
-				JOptionPane.YES_NO_CANCEL_OPTION,
-				JOptionPane.QUESTION_MESSAGE);
-		switch (answer) {
-		case JOptionPane.CANCEL_OPTION:
-			return false;
-		case JOptionPane.YES_OPTION:
-			TeamworkUtils.updateProject(Application.getInstance().getProject());
-		}
-		return true;
-	}
+        Stereotype s = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
+                CommentUtil.DOCUMENT_COMMENT);
 
-	private void fail(String reason) {
-		JOptionPane.showMessageDialog(null, "Failed: " + reason);
-	}
+        try {
+            repository.connect();
+            List<SyncedComment> importedComments = repository.getComments(documentView);
+            localComments = CommentUtil.getLocalComments(documentView);
+            Set<Integer> localChecksums = new HashSet<Integer>();
+            for (Comment c: localComments.values()) {
+                localChecksums.add(CommentUtil.checksum(c, s));
+            }
+
+            for (SyncedComment remote: importedComments) {
+                if (remote.isDeleted()) {
+                    deleted.add(remote);
+                    continue;
+                }
+                String remoteId = remote.getId();
+                if (remoteId == null || remoteId.isEmpty()) {
+                    if (!localChecksums.contains(CommentUtil.checksum(remote))) {
+                        added.add(remote);
+                    }
+                    continue;
+                }
+                Comment local = localComments.get(remote.getId());
+                if (local != null && CommentUtil.isRemotelyModified(local, s, remote)) {
+                    modified.add(remote);
+                }
+            }
+            repository.close();
+        } catch (CommentSyncFailure e) {
+            fail(e.getMessage());
+            return;
+        }
+        new ApplyRemoteCommentChanges(documentView, localComments, added, modified, deleted).run();
+    }
+
+    private boolean updateRemoteProject() {
+        Project project = Application.getInstance().getProject();
+        if (!project.isRemote()) {
+            return true;
+        }
+        int answer = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(),
+                "Would you like to update the project first?", "Update Remote Project",
+                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+        switch (answer) {
+            case JOptionPane.CANCEL_OPTION:
+                return false;
+            case JOptionPane.YES_OPTION:
+                TeamworkUtils.updateProject(Application.getInstance().getProject());
+        }
+        return true;
+    }
+
+    private void fail(String reason) {
+        JOptionPane.showMessageDialog(null, "Failed: " + reason);
+    }
 }

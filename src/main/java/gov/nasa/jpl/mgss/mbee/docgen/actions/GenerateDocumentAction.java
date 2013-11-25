@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mgss.mbee.docgen.actions;
 
-
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentGenerator;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentWriter;
@@ -22,56 +21,59 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  * generates docgen 3 document
+ * 
  * @author dlam
- *
+ * 
  */
 @SuppressWarnings("serial")
-public class GenerateDocumentAction  extends MDAction {
-	
-	private Element doc;
-	public static final String actionid = "GenerateDocument";
-	
-	public GenerateDocumentAction(Element e) {
-		super(actionid, "Generate DocGen 3 Document", null, null);
-		doc = e;
-	}
-	
-	public void actionPerformed(ActionEvent e) {
-		GUILog gl = Application.getInstance().getGUILog();
-		
+public class GenerateDocumentAction extends MDAction {
+
+    private Element            doc;
+    public static final String actionid = "GenerateDocument";
+
+    public GenerateDocumentAction(Element e) {
+        super(actionid, "Generate DocGen 3 Document", null, null);
+        doc = e;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        GUILog gl = Application.getInstance().getGUILog();
+
         DocumentValidator dv = new DocumentValidator(doc);
-		try {
-			dv.validateDocument();
-			if (dv.isFatal()) {
-	            dv.printErrors();
-				return;
-			}
-			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
-			Document dge = dg.parseDocument();
-			boolean genNewImage = dge.getGenNewImage();
-			(new PostProcessor()).process(dge);
-			JFileChooser choose = new JFileChooser();
-			choose.setDialogTitle("Save to output xml...");
-			int retval = choose.showSaveDialog(null);
-			if (retval == JFileChooser.APPROVE_OPTION) {
-				if (choose.getSelectedFile() != null) {
-					File savefile = choose.getSelectedFile();
-					String userName = savefile.getName();
-					String filename = userName;
-					if (userName.length() < 4 || !userName.endsWith(".xml"))
-						filename = userName + ".xml";
-					File dir = savefile.getParentFile();
-					File realfile = new File(dir, filename);
-					ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage, dir), "Generating DocGen 3 Document...", true, 0);
-				}
-			}
-		} catch (Exception ex) {
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			ex.printStackTrace(pw);
-			gl.log(sw.toString()); // stack trace as a string
-			ex.printStackTrace();
-		}
-		dv.printErrors();
-	}
+        try {
+            dv.validateDocument();
+            if (dv.isFatal()) {
+                dv.printErrors();
+                return;
+            }
+            DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
+            Document dge = dg.parseDocument();
+            boolean genNewImage = dge.getGenNewImage();
+            (new PostProcessor()).process(dge);
+            JFileChooser choose = new JFileChooser();
+            choose.setDialogTitle("Save to output xml...");
+            int retval = choose.showSaveDialog(null);
+            if (retval == JFileChooser.APPROVE_OPTION) {
+                if (choose.getSelectedFile() != null) {
+                    File savefile = choose.getSelectedFile();
+                    String userName = savefile.getName();
+                    String filename = userName;
+                    if (userName.length() < 4 || !userName.endsWith(".xml"))
+                        filename = userName + ".xml";
+                    File dir = savefile.getParentFile();
+                    File realfile = new File(dir, filename);
+                    ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage,
+                            dir), "Generating DocGen 3 Document...", true, 0);
+                }
+            }
+        } catch (Exception ex) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            gl.log(sw.toString()); // stack trace as a string
+            ex.printStackTrace();
+        }
+        dv.printErrors();
+    }
 }

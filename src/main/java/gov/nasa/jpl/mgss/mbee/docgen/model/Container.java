@@ -4,52 +4,52 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Container extends DocGenElement {
-	protected String title;
-	protected String stringIfEmpty;
-	protected boolean skipIfEmpty;
-	protected List<DocGenElement> children;
-	
-	public Container() {
-		children = new ArrayList<DocGenElement>();
-		title = null;
-		stringIfEmpty = "";
-		skipIfEmpty = false;
-	}
-	
-	public void addElement(DocGenElement e) {
-		children.add(e);
-	}
+    protected String              title;
+    protected String              stringIfEmpty;
+    protected boolean             skipIfEmpty;
+    protected List<DocGenElement> children;
 
-	public List<DocGenElement> getChildren() {
-		return children;
-	}
-	
-	public void setSkipIfEmpty(boolean a) {
-		skipIfEmpty = a;
-	}
-	
-	public void setTitle(String t) {
-		title = t;
-	}
-	
-	public void setStringIfEmpty(String t) {
-		stringIfEmpty = t;
-	}
-	
-	public String getTitle() {
-		return title;
-	}
-	
-	public String getStringIfEmpty() {
-		return stringIfEmpty;
-	}
-	
-	public boolean getSkipIfEmpty() {
-		return skipIfEmpty;
-	}
+    public Container() {
+        children = new ArrayList<DocGenElement>();
+        title = null;
+        stringIfEmpty = "";
+        skipIfEmpty = false;
+    }
 
-	public boolean isEmpty() {
-		return children.isEmpty();
-	}
-	
+    public void addElement(DocGenElement e) {
+        children.add(e);
+    }
+
+    public List<DocGenElement> getChildren() {
+        return children;
+    }
+
+    public void setSkipIfEmpty(boolean a) {
+        skipIfEmpty = a;
+    }
+
+    public void setTitle(String t) {
+        title = t;
+    }
+
+    public void setStringIfEmpty(String t) {
+        stringIfEmpty = t;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getStringIfEmpty() {
+        return stringIfEmpty;
+    }
+
+    public boolean getSkipIfEmpty() {
+        return skipIfEmpty;
+    }
+
+    public boolean isEmpty() {
+        return children.isEmpty();
+    }
+
 }

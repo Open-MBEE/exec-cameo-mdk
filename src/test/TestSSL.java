@@ -1,9 +1,6 @@
-import gov.nasa.jpl.mbee.docweb.EasySSLProtocolSocketFactory;
-import gov.nasa.jpl.mbee.docweb.EasyX509TrustManager;
-import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.web.EasyX509TrustManager;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -13,17 +10,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.TrustManager;
-
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.protocol.Protocol;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import javax.net.ssl.SSLContext;
 

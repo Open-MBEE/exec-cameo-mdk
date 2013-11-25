@@ -1,9 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.viewedit;
 
-import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSimpleList;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
@@ -18,32 +16,34 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 /**
- * table json exporter that allows multiple elements in cell editing and list editing
+ * table json exporter that allows multiple elements in cell editing and list
+ * editing
+ * 
  * @author dlam
- *
+ * 
  */
-public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
+public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
 
     private JSONObject tablejson;
-    private JSONArray curRow;
-    private JSONArray curCell;
-    private JSONArray tableelements;
-    private int rowspan;
-    private int colspan;
-    
-    //private GUILog gl = Application.getInstance().getGUILog();
-    
+    private JSONArray  curRow;
+    private JSONArray  curCell;
+    private JSONArray  tableelements;
+    private int        rowspan;
+    private int        colspan;
+
+    // private GUILog gl = Application.getInstance().getGUILog();
+
     public DBEditTableVisitor2(boolean recurse, Map<String, JSONObject> elements) {
         super(recurse, true);
         this.elements = elements;
         tablejson = new JSONObject();
         tableelements = new JSONArray();
     }
-    
+
     public JSONObject getObject() {
         return tablejson;
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
@@ -98,12 +98,13 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
         tablejson.put("title", table.getTitle());
         tablejson.put("type", "Table");
         tablejson.put("sources", tableelements);
-        //gl.log( "tablejson =\n" + tablejson );
+        // gl.log( "tablejson =\n" + tablejson );
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void visit(DBTableEntry tableentry) { //TODO; check for informaltable and ignore it
+    public void visit(DBTableEntry tableentry) { // TODO; check for
+                                                 // informaltable and ignore it
         if (tableentry.getMorerows() > 0) {
             rowspan = tableentry.getMorerows() + 1;
         }
@@ -111,9 +112,9 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
             try {
                 int startcol = Integer.parseInt(tableentry.getNamest());
                 int endcol = Integer.parseInt(tableentry.getNameend());
-                colspan = endcol-startcol+1;
+                colspan = endcol - startcol + 1;
             } catch (Exception e) {
-                
+
             }
         }
         curCell = new JSONArray();
@@ -125,10 +126,10 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
         addSpans(entry);
         curRow.add(entry);
     }
-    
+
     @Override
     public void visit(DBColSpec colspec) {
-            
+
     }
 
     @SuppressWarnings("unchecked")
@@ -145,8 +146,8 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
     public void visit(DBParagraph para) {
         JSONObject entry = getJSONForDBParagraph(para);
         if (para.getFrom() != null && para.getFromProperty() != null) {
-            this.tableelements.add(para.getFrom().getID()); 
-        } 
+            this.tableelements.add(para.getFrom().getID());
+        }
         curCell.add(entry);
     }
 
@@ -155,11 +156,11 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
     public void visit(DBText text) {
         JSONObject entry = getJSONForDBText(text);
         if (text.getFrom() != null && text.getFromProperty() != null) {
-            this.tableelements.add(text.getFrom().getID()); 
-        } 
+            this.tableelements.add(text.getFrom().getID());
+        }
         curCell.add(entry);
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBSimpleList simplelist) {
@@ -170,7 +171,7 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
         entry.put("text", html.getOut());
         curCell.add(entry);
     }
-    
+
     @SuppressWarnings("unchecked")
     private void addSpans(JSONObject entry) {
         if (rowspan > 0)
@@ -178,7 +179,7 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor{
         if (colspan > 0)
             entry.put("colspan", Integer.toString(colspan));
     }
-    
+
     public JSONArray getTableElements() {
         return tableelements;
     }

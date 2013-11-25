@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.viewedit;
 
-import gov.nasa.jpl.mbee.docweb.JsonRequestEntity;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.actions.ImportViewAction;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
@@ -44,48 +44,55 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
-public class ViewExporter implements RunnableWithProgress{
+public class ViewExporter implements RunnableWithProgress {
 
-	private Document dge;
-	private Element doc;
-	private boolean recurse;
-	private boolean force;
-	private String url;
-	private DocumentValidator dv;
-	private ValidationSuite vs = new ValidationSuite("Changed Elements");
-	private ValidationRule vr = new ValidationRule("Changed Name", "Name of element has been changed on VE", ViolationSeverity.INFO);
-    private ValidationRule vr2 = new ValidationRule("Changed Doc", "Doc of element has been changed on VE", ViolationSeverity.INFO);
-    private ValidationRule vr3 = new ValidationRule("Changed Value", "Default Value of element has been changed on VE", ViolationSeverity.INFO);
-    private Collection<ValidationSuite> cvs = new ArrayList<ValidationSuite>();
-    private GUILog gl = Application.getInstance().getGUILog();
-    private boolean alfresco;
-    private String user = Utils.getUsername();
-    
-	public ViewExporter(Document dge, Element doc, boolean recurse, boolean force, String url, DocumentValidator dv) {
-		this.dge = dge;
-		this.doc = doc;
-		this.recurse = recurse;
-		this.force = force;
-		this.url = url;
-		this.dv = dv;
-		if (url != null) {
-		    this.alfresco = url.contains("service");
-		}
-	}
-	
-	/**
-	 * Private utility for dumping the stack trace out to GUILog
-	 */
-	private void printStackTrace(Exception ex, GUILog gl) {
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		ex.printStackTrace(pw);
-		gl.log(sw.toString()); // stack trace as a string
-		ex.printStackTrace();
-	}
-	
-	@Override
-	public void run(ProgressStatus arg0) {
+    private Document                    dge;
+    private Element                     doc;
+    private boolean                     recurse;
+    private boolean                     force;
+    private String                      url;
+    private DocumentValidator           dv;
+    private ValidationSuite             vs   = new ValidationSuite("Changed Elements");
+    private ValidationRule              vr   = new ValidationRule("Changed Name",
+                                                     "Name of element has been changed on VE",
+                                                     ViolationSeverity.INFO);
+    private ValidationRule              vr2  = new ValidationRule("Changed Doc",
+                                                     "Doc of element has been changed on VE",
+                                                     ViolationSeverity.INFO);
+    private ValidationRule              vr3  = new ValidationRule("Changed Value",
+                                                     "Default Value of element has been changed on VE",
+                                                     ViolationSeverity.INFO);
+    private Collection<ValidationSuite> cvs  = new ArrayList<ValidationSuite>();
+    private GUILog                      gl   = Application.getInstance().getGUILog();
+    private boolean                     alfresco;
+    private String                      user = Utils.getUsername();
+
+    public ViewExporter(Document dge, Element doc, boolean recurse, boolean force, String url,
+            DocumentValidator dv) {
+        this.dge = dge;
+        this.doc = doc;
+        this.recurse = recurse;
+        this.force = force;
+        this.url = url;
+        this.dv = dv;
+        if (url != null) {
+            this.alfresco = url.contains("service");
+        }
+    }
+
+    /**
+     * Private utility for dumping the stack trace out to GUILog
+     */
+    private void printStackTrace(Exception ex, GUILog gl) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        ex.printStackTrace(pw);
+        gl.log(sw.toString()); // stack trace as a string
+        ex.printStackTrace();
+    }
+
+    @Override
+    public void run(ProgressStatus arg0) {
         vs.addValidationRule(vr);
         vs.addValidationRule(vr2);
         vs.addValidationRule(vr3);
@@ -93,8 +100,8 @@ public class ViewExporter implements RunnableWithProgress{
         arg0.setIndeterminate(true);
         if (url == null)
             return;
-	    if (recurse) {
-	        DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
+        if (recurse) {
+            DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
             Document dge = dg.parseDocument(true, true);
             ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
             dge.accept(vhv);
@@ -112,7 +119,7 @@ public class ViewExporter implements RunnableWithProgress{
                 pm.setRequestEntity(JsonRequestEntity.create(post));
                 HttpClient client = new HttpClient();
                 ViewEditUtils.setCredentials(client, posturl);
-                //gl.log(post);
+                // gl.log(post);
                 gl.log("[INFO] Sending View Hierarchy...");
                 int code = client.executeMethod(pm);
                 if (ViewEditUtils.showErrorMessage(code))
@@ -132,54 +139,56 @@ public class ViewExporter implements RunnableWithProgress{
                 if (pm != null)
                     pm.releaseConnection();
             }
-            
-	    } else {
-    	    postView(doc, recurse);
-	    }
-	    if (vs.hasErrors()) {
+
+        } else {
+            postView(doc, recurse);
+        }
+        if (vs.hasErrors()) {
             Utils.displayValidationWindow(cvs, "View Export Results (Changed Elements)");
             gl.log("[INFO] See changed element info in validation window.");
         }
-		//if synchronizing views
-		if (!force) {
-			ImportViewAction.doImportView(doc, true, recurse, url);
-		}
-	}
-	
-	private void postView(Element view, boolean rec) {
-	    DocumentGenerator dg = new DocumentGenerator(view, dv, null);
+        // if synchronizing views
+        if (!force) {
+            ImportViewAction.doImportView(doc, true, recurse, url);
+        }
+    }
+
+    private void postView(Element view, boolean rec) {
+        DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         dge = dg.parseDocument(true, rec);
         (new PostProcessor()).process(dge);
         boolean document = false;
-        
-        
+
         String baseurl = url;
 
         // first post view information View Editor
         baseurl += "/rest/views/" + view.getID();
-        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGen3Profile.documentViewStereotype, "Document Profile");
+        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
+                DocGen3Profile.documentViewStereotype, "Document Profile");
         if (StereotypesHelper.hasStereotypeOrDerived(view, documentView))
-            document = true;        
-        
+            document = true;
+
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
         dge.accept(visitor);
         DBBook book = visitor.getBook();
         if (book == null)
             return;
-        
+
         baseurl += "?user=" + user;
-        
+
         DBEditDocwebVisitor v = new DBEditDocwebVisitor(rec, alfresco);
         book.accept(v);
         int numElements = v.getNumberOfElements();
         if (numElements > 10000 && alfresco) {
-            Boolean cont = Utils.getUserYesNoAnswer("Alert! You're about to publish " + numElements + " elements in a view, this may take about " + numElements/1000 + " minutes to complete if you're doing initial loading, do you want to continue?");
-            if (cont == null || !cont){
+            Boolean cont = Utils.getUserYesNoAnswer("Alert! You're about to publish " + numElements
+                    + " elements in a view, this may take about " + numElements / 1000
+                    + " minutes to complete if you're doing initial loading, do you want to continue?");
+            if (cont == null || !cont) {
                 return;
             }
         }
         String json = v.getJSON();
-        //gl.log(json);
+        // gl.log(json);
         if (rec || document || force) {
             baseurl += "&";
             List<String> params = new ArrayList<String>();
@@ -193,7 +202,7 @@ public class ViewExporter implements RunnableWithProgress{
                 params.add("product=true");
             baseurl += Utils.join(params, "&");
         }
-        
+
         PostMethod pm = new PostMethod(baseurl);
         try {
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
@@ -208,7 +217,7 @@ public class ViewExporter implements RunnableWithProgress{
             if (response.equals("ok"))
                 gl.log("[INFO] Export Successful.");
             else if (response.startsWith("[")) {
-                
+
                 for (Object o: (JSONArray)JSONValue.parse(response)) {
                     String mdid = (String)((JSONObject)o).get("mdid");
                     String type = (String)((JSONObject)o).get("type");
@@ -222,9 +231,9 @@ public class ViewExporter implements RunnableWithProgress{
                             vr.addViolation((Element)be, "default value changed on VE");
                     }
                 }
-                
+
                 gl.log("[INFO] Export Successful.");
-                
+
             } else
                 gl.log(response);
         } catch (Exception ex) {
@@ -233,7 +242,8 @@ public class ViewExporter implements RunnableWithProgress{
             pm.releaseConnection();
         }
 
-        // Upload images to view editor (JSON keys are specified in DBEditDocwebVisitor
+        // Upload images to view editor (JSON keys are specified in
+        // DBEditDocwebVisitor
         gl.log("[INFO] Updating Images...");
         Map<String, JSONObject> images = v.getImages();
         boolean isAlfresco = false;
@@ -244,14 +254,14 @@ public class ViewExporter implements RunnableWithProgress{
             String filename = (String)images.get(key).get("abspath");
             String cs = (String)images.get(key).get("cs");
             String extension = (String)images.get(key).get("extension");
-            
+
             File imageFile = new File(filename);
             if (isAlfresco) {
                 baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
             } else {
                 baseurl = url + "/rest/images/" + key + "?cs=" + cs + "&extension=" + extension;
             }
-            
+
             // check whether the image already exists
             GetMethod get = new GetMethod(baseurl);
             int status = 0;
@@ -260,30 +270,31 @@ public class ViewExporter implements RunnableWithProgress{
                 ViewEditUtils.setCredentials(client, baseurl);
                 gl.log("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
                 client.executeMethod(get);
-                
-                status= get.getStatusCode();
+
+                status = get.getStatusCode();
             } catch (Exception ex) {
                 printStackTrace(ex, gl);
             } finally {
                 get.releaseConnection();
             }
-            
+
             if (status == HttpURLConnection.HTTP_OK) {
                 gl.log("[INFO] Image file already exists, not uploading");
             } else {
                 PostMethod post = new PostMethod(baseurl);
                 try {
                     if (isAlfresco) {
-                        Part[] parts = { new FilePart("content", imageFile) };
+                        Part[] parts = {new FilePart("content", imageFile)};
                         post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
                     } else {
-                        post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile), imageFile.length()));
+                        post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile),
+                                imageFile.length()));
                     }
                     HttpClient client = new HttpClient();
                     ViewEditUtils.setCredentials(client, baseurl);
                     gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
                     client.executeMethod(post);
-                    
+
                     status = post.getStatusCode();
                     if (status != HttpURLConnection.HTTP_OK) {
                         gl.log("[ERROR] Could not upload image file to view editor");
@@ -295,8 +306,8 @@ public class ViewExporter implements RunnableWithProgress{
                 }
             }
         }
-        
+
         // clean up the local images
         v.removeImages();
-	}
+    }
 }

@@ -10,24 +10,23 @@ import org.jdesktop.swingx.JXTreeTable;
 
 public class CharacterizationTreeTable extends JXTreeTable {
 
-	public CharacterizationTreeTable(CharacterizationTreeTableModel model) {
-		super(model);
-	}
+    public CharacterizationTreeTable(CharacterizationTreeTableModel model) {
+        super(model);
+    }
 
-	// gray out non-editable checkboxes
-	@Override
-	public Component prepareRenderer(TableCellRenderer renderer, int row,
-			int column) {
-		Component comp = super.prepareRenderer(renderer, row, column);
-		if (comp instanceof JCheckBox) {
-			JCheckBox box = (JCheckBox) comp;
+    // gray out non-editable checkboxes
+    @Override
+    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        Component comp = super.prepareRenderer(renderer, row, column);
+        if (comp instanceof JCheckBox) {
+            JCheckBox box = (JCheckBox)comp;
 
-			if (!isCellEditable(row, column)) {
-				box.setBackground(new Color(240, 240, 240));
-				box.setEnabled(false);
-				return box;
-			}
-		}
-		return comp;
-	}
+            if (!isCellEditable(row, column)) {
+                box.setBackground(new Color(240, 240, 240));
+                box.setEnabled(false);
+                return box;
+            }
+        }
+        return comp;
+    }
 }

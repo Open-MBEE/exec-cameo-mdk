@@ -17,40 +17,44 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  * pops up a table showing views/sections/queries and targets given to queries
+ * 
  * @author dlam
- *
+ * 
  */
 @SuppressWarnings("serial")
 public class ViewDocument3Action extends MDAction {
-	private Element doc;
-	public static final String actionid = "ViewDocument3";
-	public ViewDocument3Action(Element e) {
-		super(actionid, "Preview DocGen 3 Document", null, null);
-		doc = e;
-	}
-	
-	public void actionPerformed(ActionEvent e) {
-		GUILog gl = Application.getInstance().getGUILog();
+    private Element            doc;
+    public static final String actionid = "ViewDocument3";
 
-		DocumentValidator dv = null;
-		try {
-			dv = new DocumentValidator(doc);
-			dv.validateDocument();
+    public ViewDocument3Action(Element e) {
+        super(actionid, "Preview DocGen 3 Document", null, null);
+        doc = e;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        GUILog gl = Application.getInstance().getGUILog();
+
+        DocumentValidator dv = null;
+        try {
+            dv = new DocumentValidator(doc);
+            dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
                 return;
             }
-			DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
-			Document dge = dg.parseDocument();
-			(new PostProcessor()).process(dge);
-			DocumentViewer.view(dge);
-		} catch (Exception ex) {
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			ex.printStackTrace(pw);
-			gl.log(sw.toString()); // stack trace as a string
-			ex.printStackTrace();
-		}
-        if ( dv != null ) dv.printErrors();
-	}
+            DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
+            Document dge = dg.parseDocument();
+            (new PostProcessor()).process(dge);
+            DocumentViewer.view(dge);
+        } catch (Exception ex) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            gl.log(sw.toString()); // stack trace as a string
+            ex.printStackTrace();
+        }
+        if (dv != null)
+            dv.printErrors();
+    }
 }
