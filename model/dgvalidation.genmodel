@@ -5,7 +5,7 @@
     modelPluginID="MDK" modelName="Dgvalidation" importerID="org.eclipse.emf.importer.ecore"
     complianceLevel="6.0" copyrightFields="false">
   <foreignModel>dgvalidation.ecore</foreignModel>
-  <genPackages prefix="Dgvalidation" basePackage="gov.nasa.jpl.mgss.mbee.docgen" disposableProviderFactory="true"
+  <genPackages prefix="Dgvalidation" basePackage="gov.nasa.jpl.mbee" disposableProviderFactory="true"
       ecorePackage="dgvalidation.ecore#/">
     <genEnums typeSafeEnumCompatible="false" ecoreEnum="dgvalidation.ecore#//Severity">
       <genEnumLiterals ecoreEnumLiteral="dgvalidation.ecore#//Severity/DEBUG"/>

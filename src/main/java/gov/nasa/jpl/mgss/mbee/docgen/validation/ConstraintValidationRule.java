@@ -3,15 +3,15 @@
  */
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
+import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.constraint.BasicConstraint.Type;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MdDebug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.Collection;

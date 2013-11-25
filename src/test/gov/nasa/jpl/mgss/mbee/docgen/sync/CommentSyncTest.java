@@ -1,5 +1,10 @@
 package gov.nasa.jpl.mgss.mbee.docgen.sync;
 
+import gov.nasa.jpl.mbee.web.sync.CommentSyncFailure;
+import gov.nasa.jpl.mbee.web.sync.CommentUtil;
+import gov.nasa.jpl.mbee.web.sync.FileCommentRepository;
+import gov.nasa.jpl.mbee.web.sync.SyncedComment;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

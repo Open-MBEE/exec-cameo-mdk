@@ -32,7 +32,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
  * Simple servlet to expose containment tree or specification information).
  * 
  * This servlet is loaded from
- * {@link gov.nasa.jpl.mgss.mbee.docgen.DocGenEmbeddedTomcatServer#setup}
+ * {@link gov.nasa.jpl.mbee.DocGenEmbeddedTomcatServer#setup}
  * 
  * @author cinyoung
  * 

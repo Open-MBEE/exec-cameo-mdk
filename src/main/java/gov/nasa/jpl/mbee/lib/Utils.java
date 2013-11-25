@@ -1,14 +1,14 @@
 package gov.nasa.jpl.mbee.lib;
 
-import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.generator.CollectFilterParser;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.CollectFilterParser;
-import gov.nasa.jpl.mgss.mbee.docgen.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;

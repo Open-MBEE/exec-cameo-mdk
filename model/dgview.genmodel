@@ -5,7 +5,7 @@
     modelPluginID="MDK" modelName="Dgview" importerID="org.eclipse.emf.importer.java"
     complianceLevel="6.0" copyrightFields="false">
   <foreignModel>@model</foreignModel>
-  <genPackages prefix="Dgview" basePackage="gov.nasa.jpl.mgss.mbee.docgen" disposableProviderFactory="true"
+  <genPackages prefix="Dgview" basePackage="gov.nasa.jpl.mbee" disposableProviderFactory="true"
       ecorePackage="dgview.ecore#/">
     <genDataTypes ecoreDataType="dgview.ecore#//List_1">
       <genTypeParameters ecoreTypeParameter="dgview.ecore#//List_1/T"/>

@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.lib;
 
-import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
-import gov.nasa.jpl.mgss.mbee.docgen.model.Document;
+import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.model.Document;
 
 import java.util.ArrayList;
 import java.util.Collection;

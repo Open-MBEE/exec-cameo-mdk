@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen.docbook;
 
-import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
+import gov.nasa.jpl.mbee.DocGenUtils;
 
 import java.io.File;
 import java.io.IOException;

@@ -12,15 +12,15 @@
 
    <extension point="org.eclipse.emf.ecore.generated_package">
       <package
-            uri="http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore"
-            class="gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewPackage"
+            uri="http:///gov/nasa/jpl/mbee/dgview.ecore"
+            class="gov.nasa.jpl.mbee.dgview.DgviewPackage"
             genModel="model/dgview.genmodel"/>
    </extension>
    
    <extension point="org.eclipse.emf.ecore.generated_package">
       <package
-            uri="http:///gov/nasa/jpl/mgss/mbee/docgen/dgvalidation.ecore"
-            class="gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.DgvalidationPackage"
+            uri="http:///gov/nasa/jpl/mbee/dgvalidation.ecore"
+            class="gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage"
             genModel="model/dgvalidation.genmodel"/>
    </extension>
 

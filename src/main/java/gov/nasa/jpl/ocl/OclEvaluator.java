@@ -1,11 +1,11 @@
 package gov.nasa.jpl.ocl;
 
+import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mgss.mbee.docgen.DocGen3Profile;
-import gov.nasa.jpl.mgss.mbee.docgen.DocGenUtils;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.util.ArrayList;
