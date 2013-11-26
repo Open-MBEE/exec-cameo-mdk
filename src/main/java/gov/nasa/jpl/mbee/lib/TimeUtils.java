@@ -38,23 +38,16 @@ import java.util.TimeZone;
 import org.junit.Assert;
 
 public class TimeUtils {
-
-    // epoch is a timestamp corresponding to TimePoint = 0 as the date/time that
-    // the simulation starts. It is an offset of the time since Jan 1, 1970.
-    // For example, if epoch == 1341614935000 milliseconds, then a TimePoint or
-    // int value of 0 corresponds to Fri, Jul 06, 2012 3:48:55 PM.
-    // This number comes from using the 'date' unix command:
-    // $ date; date '+%s'
-    // Fri, Jul 06, 2012 3:48:55 PM
-    // 1341614935
-    // The units of time and the epoch are specified by Units units below.
     /**
      * epoch is a timestamp corresponding to TimePoint = 0 as the date/time that
      * the simulation starts. It is an offset of the time since Jan 1, 1970. For
      * example, if epoch == 1341614935000 milliseconds, then a TimePoint or int
      * value of 0 corresponds to Fri, Jul 06, 2012 3:48:55 PM. This number comes
-     * from using the 'date' unix command: $ date; date '+%s' Fri, Jul 06, 2012
-     * 3:48:55 PM 1341614935 The units of time and the epoch are specified by
+     * from using the 'date' unix command: 
+     * $ date; date '+%s' 
+     * Fri, Jul 06, 2012 3:48:55 PM 
+     * 1341614935 
+     * The units of time and the epoch are specified by
      * Units units below.
      */
     protected static Date      epoch               = new Date();

@@ -129,8 +129,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * whether element is editable or not. Sessions are also not created. The caller
  * will need to manage sessions themselves and wrap any call in a session.
  * 
- * @author dlam Changelog: displayValidationWindow(Collection<ValidationSuite>
- *         vss) edited, 02/14/2013. Peter Di Pasquale
+ * @author dlam 
  */
 public class Utils {
     private Utils() {
@@ -266,6 +265,17 @@ public class Utils {
         return false;
     }
 
+    /**
+     * 
+     * @param elements
+     * @param query
+     *          ocl expression
+     * @param include
+     *          whether to include element or not if query is true
+     * @param iterate
+     *          whether to apply query to each element or collection as a whole
+     * @return
+     */
     public static List<Element> filterElementsByExpression(Collection<Element> elements, String query,
             boolean include, boolean iterate) {
         List<Element> res = new ArrayList<Element>();
@@ -382,6 +392,7 @@ public class Utils {
      * @param elements
      * @param regex
      * @param include
+     *          element will be returned if include is true and matched, or include is false and not matched
      * @return
      */
     public static List<Element> filterElementsByNameRegex(Collection<Element> elements,
@@ -480,7 +491,7 @@ public class Utils {
      * 
      * @param elements
      * @param metaclass
-     *            this is the Class model element from magicdraw's uml profile
+     *            this is the metaclass class model element from magicdraw's uml profile
      * @param include
      * @return
      */
@@ -651,10 +662,7 @@ public class Utils {
             res.addAll(collectByExpression(elements, query));
         else {
             for (Element e: elements) {
-                res.addAll(collectByExpression(e, query)); // REVIEW -- Should
-                                                           // this be add()
-                                                           // instead of
-                                                           // addAll()?
+                res.addAll(collectByExpression(e, query));
             }
         }
         return res;
@@ -1363,6 +1371,7 @@ public class Utils {
 
     /**
      * returns elements not shared
+     * misnomer - this is really doing the symmetric difference
      * 
      * @param a
      * @param b
@@ -1553,6 +1562,129 @@ public class Utils {
         };
     }
 
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, String attr) {
+        return sortByAttribute(elem, AvailableAttribute.valueOf(attr));
+    }
+
+    /**
+     * Sorts elements by attribute, provided it is one of those supported by
+     * {@link gov.nasa.jpl.mbee.lib.Utils.getAvailableAttribute(Object attr)}.
+     * 
+     * @param elem
+     *            the element whose attribute is sought
+     * @param attr
+     *            the type of attribute (name, value, ...)
+     * @return
+     */
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, Object attr) {
+        return sortByAttribute(elem, getAvailableAttribute(attr));
+    }
+
+    public static List<Element> sortByExpression(Collection<? extends Element> elem, Object o) {
+        List<Element> list = new ArrayList<Element>(elem);
+        // Check if all numbers
+        boolean isAllNumbers = true;
+        Map<Element, Object> resultMap = new HashMap<Element, Object>();
+        Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
+        for (Element e: list) {
+            Object result = null;
+            DocumentValidator dv = CollectFilterParser.getValidator();
+            result = DocumentValidator.evaluate(o, e, dv, true);
+            // try {
+            // result = OclEvaluator.evaluateQuery(e, o);
+            // } catch ( ParserException e1 ) {
+            // // TODO Auto-generated catch block
+            // e1.printStackTrace();
+            // }
+            resultMap.put(e, result);
+            if (!isAllNumbers)
+                continue;
+            Collection<?> coll = null;
+            if (result instanceof Collection) {
+                coll = ((Collection<?>)result);
+            }
+            if (coll != null && coll.size() > 0) {
+                isAllNumbers = false;
+                continue;
+            }
+            if (coll != null) {
+                List<Object> numbers = new ArrayList<Object>();
+                for (Object c: coll) {
+                    String s = DocGenUtils.fixString(c);
+                    if (isAllNumbers) {
+                        if (Utils2.isNumber(s)) {
+                            numbers.add(Utils2.toDouble(s));
+                        } else {
+                            isAllNumbers = false;
+                            break;
+                        }
+                    }
+                }
+                if (isAllNumbers) {
+                    resultNumberMap.put(e, numbers);
+                }
+            } else {
+                String s = DocGenUtils.fixString(result);
+                if (!Utils2.isNumber(s)) {
+                    isAllNumbers = false;
+                } else {
+                    resultNumberMap.put(e, Utils2.toDouble(s));
+                }
+
+            }
+        }
+        if (isAllNumbers)
+            resultMap = resultNumberMap;
+        Collections.sort(list, new DocGenComparator(resultMap, isAllNumbers));
+        return list;
+    }
+
+    public static class DocGenComparator implements Comparator<Object> {
+        final boolean        allNums;
+        Map<Element, Object> resultMap = null;
+
+        public DocGenComparator(boolean isAllNumbers) {
+            allNums = isAllNumbers;
+        }
+
+        public DocGenComparator(Map<Element, Object> resultMap, boolean isAllNumbers) {
+            this.resultMap = resultMap;
+            allNums = isAllNumbers;
+        }
+
+        @Override
+        public int compare(Object A, Object B) {
+            Object resultA = resultMap == null ? A : resultMap.get(A);
+            Object resultB = resultMap == null ? B : resultMap.get(B);
+            return docgenCompare(resultA, resultB, allNums);
+        }
+    }
+
+    private static int docgenCompare(Object a0, Object b0, boolean asNumbers) {
+        if (a0 == b0)
+            return 0;
+        if (a0 == null)
+            return -1;
+        if (b0 == null)
+            return 1;
+
+        String as = DocGenUtils.fixString(a0);
+        String bs = DocGenUtils.fixString(b0);
+        if (as == bs)
+            return 0;
+        if (as == null)
+            return -1;
+        if (bs == null)
+            return 1;
+        if (asNumbers) {
+            Double da0 = Utils2.toDouble(as);
+            Double db0 = Utils2.toDouble(bs);
+            return CompareUtils.compare(da0, db0);
+        } else {
+            return CompareUtils.compare(as, bs);
+        }
+    }
+    
     /**
      * returns all directed relationships where client element is source and
      * supplier element is target
@@ -1613,8 +1745,8 @@ public class Utils {
     /**
      * @return the element at the top of the MagicDraw containment tree
      */
-    public static Element getRootElement() {
-        Element root = Application.getInstance().getProject().getModel();
+    public static Package getRootElement() {
+        Package root = Application.getInstance().getProject().getModel();
         return root;
     }
 
@@ -1691,6 +1823,12 @@ public class Utils {
         return pkgs;
     }
 
+    /**
+     * 
+     * @param qualifiedName
+     *          in the format of magicdraw's qualified name: ex "Package::hello::world
+     * @return
+     */
     public static Element getElementByQualifiedName(String qualifiedName) {
         String[] path = qualifiedName.split("::");
         Element curElement = Application.getInstance().getProject().getModel();
@@ -2079,24 +2217,6 @@ public class Utils {
         p.setDefaultValue(v);
     }
 
-    public static List<Element> sortByAttribute(Collection<? extends Element> elem, String attr) {
-        return sortByAttribute(elem, AvailableAttribute.valueOf(attr));
-    }
-
-    /**
-     * Sorts elements by attribute, provided it is one of those supported by
-     * {@link gov.nasa.jpl.mbee.lib.Utils.getAvailableAttribute(Object attr)}.
-     * 
-     * @param elem
-     *            the element whose attribute is sought
-     * @param attr
-     *            the type of attribute (name, value, ...)
-     * @return
-     */
-    public static List<Element> sortByAttribute(Collection<? extends Element> elem, Object attr) {
-        return sortByAttribute(elem, getAvailableAttribute(attr));
-    }
-
     /**
      * This will set the default value of p to value, based on what type the
      * default value currently is right now, it'll try to convert to:
@@ -2117,110 +2237,7 @@ public class Utils {
         valueSpecs.add(v);
     }
 
-    public static List<Element> sortByExpression(Collection<? extends Element> elem, Object o) {
-        List<Element> list = new ArrayList<Element>(elem);
-        // Check if all numbers
-        boolean isAllNumbers = true;
-        Map<Element, Object> resultMap = new HashMap<Element, Object>();
-        Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
-        for (Element e: list) {
-            Object result = null;
-            DocumentValidator dv = CollectFilterParser.getValidator();
-            result = DocumentValidator.evaluate(o, e, dv, true);
-            // try {
-            // result = OclEvaluator.evaluateQuery(e, o);
-            // } catch ( ParserException e1 ) {
-            // // TODO Auto-generated catch block
-            // e1.printStackTrace();
-            // }
-            resultMap.put(e, result);
-            if (!isAllNumbers)
-                continue;
-            Collection<?> coll = null;
-            if (result instanceof Collection) {
-                coll = ((Collection<?>)result);
-            }
-            if (coll != null && coll.size() > 0) {
-                isAllNumbers = false;
-                continue;
-            }
-            if (coll != null) {
-                List<Object> numbers = new ArrayList<Object>();
-                for (Object c: coll) {
-                    String s = DocGenUtils.fixString(c);
-                    if (isAllNumbers) {
-                        if (Utils2.isNumber(s)) {
-                            numbers.add(Utils2.toDouble(s));
-                        } else {
-                            isAllNumbers = false;
-                            break;
-                        }
-                    }
-                }
-                if (isAllNumbers) {
-                    resultNumberMap.put(e, numbers);
-                }
-            } else {
-                String s = DocGenUtils.fixString(result);
-                if (!Utils2.isNumber(s)) {
-                    isAllNumbers = false;
-                } else {
-                    resultNumberMap.put(e, Utils2.toDouble(s));
-                }
-
-            }
-        }
-        if (isAllNumbers)
-            resultMap = resultNumberMap;
-        Collections.sort(list, new DocGenComparator(resultMap, isAllNumbers));
-        return list;
-    }
-
-    public static class DocGenComparator implements Comparator<Object> {
-        final boolean        allNums;
-        Map<Element, Object> resultMap = null;
-
-        public DocGenComparator(boolean isAllNumbers) {
-            allNums = isAllNumbers;
-        }
-
-        public DocGenComparator(Map<Element, Object> resultMap, boolean isAllNumbers) {
-            this.resultMap = resultMap;
-            allNums = isAllNumbers;
-        }
-
-        @Override
-        public int compare(Object A, Object B) {
-            Object resultA = resultMap == null ? A : resultMap.get(A);
-            Object resultB = resultMap == null ? B : resultMap.get(B);
-            return docgenCompare(resultA, resultB, allNums);
-        }
-    }
-
-    private static int docgenCompare(Object a0, Object b0, boolean asNumbers) {
-        if (a0 == b0)
-            return 0;
-        if (a0 == null)
-            return -1;
-        if (b0 == null)
-            return 1;
-
-        String as = DocGenUtils.fixString(a0);
-        String bs = DocGenUtils.fixString(b0);
-        if (as == bs)
-            return 0;
-        if (as == null)
-            return -1;
-        if (bs == null)
-            return 1;
-        if (asNumbers) {
-            Double da0 = Utils2.toDouble(as);
-            Double db0 = Utils2.toDouble(bs);
-            return CompareUtils.compare(da0, db0);
-        } else {
-            return CompareUtils.compare(as, bs);
-        }
-    }
+    
 
     /**
      * Creates a new {@link ValueSpecification} of the same type as valueSpec
@@ -2438,25 +2455,7 @@ public class Utils {
         Element myOwner = prop.getOwner();
         if (myOwner instanceof Stereotype
                 && StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype)myOwner)) { // REVIEW
-                                                                                          // --
-                                                                                          // may
-                                                                                          // not
-                                                                                          // be
-                                                                                          // able
-                                                                                          // to
-                                                                                          // get
-                                                                                          // slot
-                                                                                          // from
-                                                                                          // derived
-                                                                                          // stereotype
-                                                                                          // --
-                                                                                          // why
-                                                                                          // doesn't
-                                                                                          // Stereotypes.Helper
-                                                                                          // give
-                                                                                          // us
-                                                                                          // this
-                                                                                          // function?
+            // may not be able to get slot from derived stereotype
             Slot slot = StereotypesHelper.getSlot(elem, prop, false);
             if (slot != null) {
                 return slot;

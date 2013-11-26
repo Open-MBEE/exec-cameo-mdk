@@ -84,18 +84,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 /**
  * <p>
  * Given the document head or a view, generates the document element model
- * classes and structure in gov.nasa.jpl.mgss.mbee.docgen.model.
- * </p>
- * <p>
- * Should explore use of java reflection to set stereotype property values, but
- * right now the profile names and java object/field names MAY not always match
- * exactly, need some thorough scrubbing to be able to use reflection.
- * </p>
- * <p>
- * call behavior actions are parsed by their stereotype, and then their typed
- * behavior stereotype if any - because the tags on the action can override tags
- * on the behavior, there's a lot of seemingly duplicate code where it's just
- * checking for tag values.
+ * classes and structure in gov.nasa.jpl.mbee.model.
  * </p>
  * 
  * @author dlam
