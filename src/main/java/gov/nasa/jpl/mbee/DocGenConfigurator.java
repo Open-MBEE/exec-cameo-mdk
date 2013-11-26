@@ -58,13 +58,9 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
-import gov.nasa.jpl.mbee.web.sync.ExportComments;
-import gov.nasa.jpl.mbee.web.sync.ImportComments;
-import gov.nasa.jpl.mbee.web.sync.ViewDocumentComments;
 
 import java.util.List;
 
-import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
@@ -287,24 +283,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         // if (action == null)
         // addCommentActions(category, (NamedElement) owner);
         // }
-    }
-
-    /**
-     * Adds actions related to document comments (this is for docweb comments).
-     * 
-     * @param element
-     * @return
-     */
-    private void addCommentActions(ActionsCategory parent, NamedElement element) {
-        ActionsCategory c = new ActionsCategory("DocGenComments", "Comments");
-        c.addAction(new ViewDocumentComments(element));
-        c.addAction(new ImportComments(element));
-        c.addAction(new ExportComments(element));
-        c.setNested(true);
-        synchronized (this) { // saw a concurrency error at some point
-            parent.addAction(c);
-            parent.getCategories().add(c);
-        }
     }
 
     /**

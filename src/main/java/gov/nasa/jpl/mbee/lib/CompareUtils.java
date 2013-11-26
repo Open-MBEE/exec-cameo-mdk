@@ -41,6 +41,7 @@ public class CompareUtils {
 
     public static class GenericComparator<T> implements Comparator<T> {
 
+        @SuppressWarnings("rawtypes")
         protected static GenericComparator<?> instance = new CompareUtils.GenericComparator();
 
         @Override
@@ -48,6 +49,7 @@ public class CompareUtils {
             return CompareUtils.compare(o1, o2, true);// , true );
         }
 
+        @SuppressWarnings("unchecked")
         public static <TT> GenericComparator<TT> instance() {
             // TODO Auto-generated method stub
             return (GenericComparator<TT>)instance;
@@ -55,6 +57,7 @@ public class CompareUtils {
 
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static <T1, T2> int compare(T1 o1, T2 o2, boolean checkComparable) {
         // return compare( o1, o2, checkComparable, false );
         // }

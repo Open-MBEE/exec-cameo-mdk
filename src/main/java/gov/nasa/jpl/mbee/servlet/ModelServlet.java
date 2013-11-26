@@ -43,18 +43,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
-import org.eclipse.emf.ecore.EStructuralFeature;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Relationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 
 /**
  * Simple servlet to expose containment tree or specification information).
@@ -65,8 +62,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
  * @author cinyoung
  * 
  */
-@SuppressWarnings("serial")
 public class ModelServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     /**
      * Global buffer that can be manipulated to return servlet response
      */
@@ -205,28 +202,6 @@ public class ModelServlet extends HttpServlet {
     }
 
     /**
-     * Helper method to render structural features for an EObject
-     * 
-     * @param eobject
-     * @return
-     */
-    private StringBuffer renderEObjectStructuralFeatures(EObject eobject) {
-        EClass eclass = eobject.eClass();
-        StringBuffer result = new StringBuffer();
-        if (getEAttribute(eclass, "name") != null) {
-            String name = (String)eobject.eGet(getEAttribute(eclass, "name"));
-        }
-
-        result.append("<ul>\n");
-        for (EStructuralFeature loopvar: eclass.getEAllStructuralFeatures()) {
-            result.append("<li>" + loopvar.getName() + "</li>\n");
-        }
-        result.append("</ul>\n");
-
-        return result;
-    }
-
-    /**
      * Render the specification
      */
     private void renderSpecification() {
@@ -275,7 +250,7 @@ public class ModelServlet extends HttpServlet {
             // add the Reference to the list
             sb.append("<li>" + loopvar.getName() + "</li>\n");
             if (loopvar.getName().equals("appliedStereotypeInstance")) {
-                EList<Slot> slots = null;
+                //EList<Slot> slots = null;
 
                 // lets get the instance specification (TODO: do this
                 // recursively in case there are recursive Stereotypes)
@@ -288,7 +263,7 @@ public class ModelServlet extends HttpServlet {
                         if (eref.getName() == "slot") {
                             // TODO: Slots are empty until instanced - need to
                             // be abel to get slots from Stereotype metadata
-                            slots = (EList<Slot>)asiEobject.eGet(eref);
+                            //slots = (EList<Slot>)asiEobject.eGet(eref);
                             break;
                         } else if (eref.getName() == "_instanceValueOfInstance") {
                             Object eobject = asiEobject.eGet(eref);

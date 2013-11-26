@@ -62,6 +62,7 @@ public class ProductViewParser {
     private Stereotype        productS;
     private boolean           product;
 
+    @SuppressWarnings("unchecked")
     public ProductViewParser(DocumentGenerator dg, boolean singleView, boolean recurse, Document doc,
             Element start) {
         this.dg = dg;

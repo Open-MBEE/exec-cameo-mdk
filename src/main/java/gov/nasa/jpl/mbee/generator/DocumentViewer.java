@@ -54,8 +54,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
  */
 public class DocumentViewer {
 
-    @SuppressWarnings("serial")
     static class ParagraphRenderer extends JTextArea implements TableCellRenderer {
+        private static final long serialVersionUID = 1L;
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                 boolean hasFocus, int row, int col) {

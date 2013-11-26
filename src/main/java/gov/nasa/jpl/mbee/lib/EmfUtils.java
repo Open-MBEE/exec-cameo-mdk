@@ -479,6 +479,7 @@ public final class EmfUtils {
         return Utils2.asList(results);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends Object> List<T> getFieldValues(Object o, boolean includeStatic) {
         List<T> results = new ArrayList<T>();
         for (Field f: o.getClass().getFields()) {
@@ -1206,8 +1207,8 @@ public final class EmfUtils {
         }
         if (s)
             return String.class;
-        boolean c = lower.equals("char");
-        Class<?> cls = boolean.class; // REVIEW -- Why c and cls? Is this not
+        //boolean c = lower.equals("char");
+        //Class<?> cls = boolean.class; // REVIEW -- Why c and cls? Is this not
                                       // complete?
         return ClassUtils.getClassForName(sysMLType, null, false);
     }
@@ -1556,6 +1557,7 @@ public final class EmfUtils {
         return collectOrFilter(elements, collect, true, false, true, true, true, filters);
     }
 
+    @SuppressWarnings("unchecked")
     public static Object collectOrFilter(CollectionAdder adder, Object obj, boolean collect, boolean onlyOne,
             boolean useName, boolean useType, boolean useValue, boolean searchJava, Object... filters) {
         if (obj instanceof Collection) {
@@ -1576,6 +1578,7 @@ public final class EmfUtils {
                 filters);
     }
 
+    @SuppressWarnings("unchecked")
     public static List<Object> collectOrFilter(CollectionAdder adder, Collection<Object> elements,
             boolean collect, boolean onlyOne, boolean useName, boolean useType, boolean useValue,
             boolean searchJava, Object... filters) {

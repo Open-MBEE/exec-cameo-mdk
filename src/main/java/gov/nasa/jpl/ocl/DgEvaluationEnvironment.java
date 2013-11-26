@@ -54,7 +54,6 @@ public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
     // keep track of all the added
     private List<DgOperation> dgOperations = new ArrayList<DgOperation>();
 
-    @SuppressWarnings("deprecation")
     DgEvaluationEnvironment() {
         super();
     }

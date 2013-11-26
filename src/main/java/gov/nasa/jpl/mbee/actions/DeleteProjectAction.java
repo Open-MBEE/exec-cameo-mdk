@@ -43,6 +43,7 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class DeleteProjectAction extends MDAction {
+    private static final long serialVersionUID = 1L;
     private Element            proj;
     public static final String actionid = "DeleteProject";
 

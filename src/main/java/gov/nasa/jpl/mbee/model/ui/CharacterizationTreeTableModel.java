@@ -107,6 +107,7 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object getValueAt(Object node, int column) {
         Node<String, MissionComponent> missionNode = (Node<String, MissionComponent>)node;
@@ -150,6 +151,7 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
         return childList != null ? childList.size() : 0;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public int getIndexOfChild(Object parent, Object child) {
         List<Node<String, MissionComponent>> children = ((Node<String, MissionComponent>)parent)
@@ -161,6 +163,7 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
         return -1;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean isCellEditable(Object node, int column) {
         MissionComponent com = ((Node<String, MissionComponent>)node).getData();
@@ -179,6 +182,7 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
         // && column > 0);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void setValueAt(Object value, Object node, int column) {
         Node<String, MissionComponent> missionNode = (Node<String, MissionComponent>)node;

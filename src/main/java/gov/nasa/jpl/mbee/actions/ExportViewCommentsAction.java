@@ -54,8 +54,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  * @author dlam
  * 
  */
-@SuppressWarnings("serial")
 public class ExportViewCommentsAction extends MDAction {
+
+    private static final long serialVersionUID = 1L;
     private Element            doc;
     public static final String actionid = "ExportViewComments";
 

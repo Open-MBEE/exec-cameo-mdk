@@ -109,7 +109,6 @@ public class ScriptRunner {
      */
     public static Object runScriptFromStereotype(Element e, Stereotype s, Map<String, Object> addInputs)
             throws ScriptException {
-        GUILog log = Application.getInstance().getGUILog();
         Map<String, Object> inputs = new HashMap<String, Object>();
         List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                 "Expose", 1, false, 1);

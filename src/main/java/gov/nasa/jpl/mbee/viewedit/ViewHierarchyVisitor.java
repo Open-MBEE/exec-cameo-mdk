@@ -49,6 +49,7 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
         nosections = new JSONArray();
     }
 
+    @SuppressWarnings("unchecked")
     public JSONObject getResult() {
         JSONObject res = new JSONObject();
         res.put("views", result);
@@ -56,6 +57,7 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
         return res;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void visit(Document doc) {
         if (doc.getDgElement() != null) {
@@ -67,6 +69,7 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void visit(Section sec) {
         if (sec.isView()) {

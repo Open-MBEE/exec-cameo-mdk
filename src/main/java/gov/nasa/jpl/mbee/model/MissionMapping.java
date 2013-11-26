@@ -628,7 +628,6 @@ public class MissionMapping extends Query {
         DBTable table = new DBTable();
         Node<String, MissionComponent> root = getRoot();
         List<Element> chars = Utils.sortByName(getLibraryCharacterizations());
-        Set<LibraryComponent> comps = getLibraryComponents();
         List<List<DocumentElement>> grid = new ArrayList<List<DocumentElement>>();
         List<List<DocumentElement>> headers = new ArrayList<List<DocumentElement>>();
         addMissionRows(root, chars, grid, 1);
@@ -653,7 +652,7 @@ public class MissionMapping extends Query {
         List<DocumentElement> row = new ArrayList<DocumentElement>();
         row.add(new DBText(DocGenUtils.getIndented(curc.getName(), depth)));
         if (curc.isPackage()) {
-            for (Element charr: chars) {
+            for (@SuppressWarnings("unused") Element charr: chars) {
                 row.add(new DBText(""));
             }
             row.add(new DBText(""));

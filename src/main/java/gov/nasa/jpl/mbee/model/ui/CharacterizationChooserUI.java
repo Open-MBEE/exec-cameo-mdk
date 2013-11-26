@@ -225,6 +225,7 @@ public class CharacterizationChooserUI {
         // Add new row to table
         JButton btnAdd = new JButton("Add");
         btnAdd.addActionListener(new ActionListener() {
+            @SuppressWarnings("unchecked")
             @Override
             public void actionPerformed(ActionEvent arg0) {
                 // Find selected row if exists
@@ -294,6 +295,8 @@ public class CharacterizationChooserUI {
         // 'esc' to close out box
         KeyStroke stroke = KeyStroke.getKeyStroke("ESCAPE");
         Action actionListener = new AbstractAction() {
+            private static final long serialVersionUID = 8212840052063420469L;
+
             @Override
             public void actionPerformed(ActionEvent paramActionEvent) {
                 frame.dispose();

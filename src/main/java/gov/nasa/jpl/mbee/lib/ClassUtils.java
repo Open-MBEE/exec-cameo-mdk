@@ -992,7 +992,7 @@ public class ClassUtils {
         return getJavaMethodForCommonFunction(functionName, argTypes);
     }
 
-    public static Method getJavaMethodForCommonFunction(String functionName, Class[] argTypes) {
+    public static Method getJavaMethodForCommonFunction(String functionName, Class<?>[] argTypes) {
         // REVIEW -- Could use external Reflections library to get all classes
         // in a
         // package:
@@ -1137,6 +1137,7 @@ public class ClassUtils {
         return getMethodForArgTypes(cls, callName, argTypes, true);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static Method getMethodForArgTypes(Class<?> cls, String callName, Class<?>[] argTypes,
             boolean complain) {
         // return getMethodForArgTypes( cls, callName, argTypes, 10.0, 2.0, null
@@ -1171,6 +1172,7 @@ public class ClassUtils {
         }
         if (Debug.isOn())
             Debug.outln("--> got methods: " + Utils2.toString(methods));
+        
         ArgTypeCompare atc = new ArgTypeCompare(argTypes);
         if (methods != null) {
             for (Method m: methods) {
@@ -1258,7 +1260,7 @@ public class ClassUtils {
         return p;
     }
 
-    public static boolean isStatic(Class method) {
+    public static boolean isStatic(Class<?> method) {
         if (method == null)
             return false;
         return (Modifier.isStatic(method.getModifiers()));
@@ -1519,6 +1521,7 @@ public class ClassUtils {
      * @param tt
      * @return Collection.class cast as having a type parameter
      */
+    @SuppressWarnings("unchecked")
     public static <TT> Class<Collection<TT>> getCollectionClass(TT tt) {
         return (Class<Collection<TT>>)Collection.class.asSubclass(Collection.class);
         // Collection<TT> coll = new ArrayList< TT >();
@@ -1534,6 +1537,7 @@ public class ClassUtils {
      * @param ttcls
      * @return Collection.class cast as having a type parameter
      */
+    @SuppressWarnings("unchecked")
     public static <TT> Class<Collection<TT>> getCollectionClass(Class<TT> ttcls) {
         return (Class<Collection<TT>>)Collection.class.asSubclass(Collection.class);
         // Collection<TT> coll = new ArrayList< TT >();
@@ -1592,6 +1596,7 @@ public class ClassUtils {
         }
     }
 
+    @SuppressWarnings({"unused", "rawtypes"})
     public static void main(String[] args) {
         A a = new A(1);
         System.out.println("A.class = " + A.class);
@@ -1647,6 +1652,7 @@ public class ClassUtils {
      * @return an object of the type specified or null if the conversion was
      *         unsuccessful.
      */
+    @SuppressWarnings("unchecked")
     public static <T> Pair<Boolean, T> coerce(Object o, Class<T> cls, boolean propagate) {
         // REVIEW -- How is Wraps involved in wrapping in Expression? Can
         // evaluate()
@@ -1688,6 +1694,7 @@ public class ClassUtils {
      * @return o if o is of type cls, an object of type cls that is an
      *         evaluation of o, or null otherwise.
      */
+    @SuppressWarnings("unchecked")
     public static <TT> TT evaluate(Object object, Class<TT> cls, boolean propagate) throws ClassCastException {
         if (object == null)
             return null;
@@ -1698,7 +1705,7 @@ public class ClassUtils {
 
         // Try to evaluate object or dig inside to get the object of the right
         // type.
-        Object value = null;
+        //Object value = null;
         // if ( object instanceof Parameter ) {
         // value = ( (Parameter)object ).getValue( propagate );
         // return evaluate( value, cls, propagate, allowWrapping );

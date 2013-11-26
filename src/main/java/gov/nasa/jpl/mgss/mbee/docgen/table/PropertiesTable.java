@@ -44,8 +44,6 @@ import java.util.Set;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -86,7 +84,6 @@ public class PropertiesTable {
     private List<String>                                topExcludeName          = null;
     private Integer                                     topAssociationType      = null;
     private List<String>                                topOrder                = null;
-    private List<String>                                rollupProperty          = null;
     private Boolean                                     includeInherited;
 
     private List<Element>                               targets;

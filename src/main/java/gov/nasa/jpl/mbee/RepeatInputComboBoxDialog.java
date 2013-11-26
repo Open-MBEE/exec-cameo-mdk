@@ -36,8 +36,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.ItemSelectable;
 import java.awt.Point;
 import java.awt.Window;
@@ -412,7 +410,6 @@ public class RepeatInputComboBoxDialog implements Runnable {
             return (String)jcb.getSelectedItem();
         }
 
-        @SuppressWarnings("unused")
         public ComboBoxEditor getEditor() {
             return jcb.getEditor();
         }
@@ -614,7 +611,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
                 Debug.outln("componentHidden, size = " + size + ", location = " + location);
                 // Window w = SwingUtilities.getWindowAncestor( e.getComponent()
                 // );
-                Window w = getTopComponentOfType(e.getComponent(), Window.class);
+                //Window w = getTopComponentOfType(e.getComponent(), Window.class);
                 // size = e.getComponent().getSize();
                 // location = e.getComponent().getLocation();
                 Dialog d = getDialog(e);
@@ -688,8 +685,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
             }
             try {
                 if (win != null) {
-                    GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                            .getDefaultScreenDevice();
+                    //GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                    //        .getDefaultScreenDevice();
                     // Dimension screenSize =
                     // Toolkit.getDefaultToolkit().getScreenSize();
                     // Dimension screenSize = new Dimension(
@@ -782,6 +779,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
      * @return the highest [grand]parent of component of the specified type or,
      *         if no such parent exists, component
      */
+    @SuppressWarnings("unchecked")
     public static <T extends Component> T getTopComponentOfType(Component component, Class<T> type) {
         if (component == null)
             return null;

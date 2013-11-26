@@ -218,8 +218,7 @@ public class ViewSaver extends MDAction {
         // store for this diagram
         // Use LinkedHashMap instead of JSONObject so JSON is always serialized
         // in same order
-        @SuppressWarnings("rawtypes")
-        Map mainStore = new LinkedHashMap();
+        Map<String, String> mainStore = new LinkedHashMap<String, String>();
 
         // display a progress bar if output is not being suppressed, otherwise
         // just execute the save
@@ -248,8 +247,7 @@ public class ViewSaver extends MDAction {
      *            the JSONObject that will be converted into a JSON string.
      * @return the style string.
      */
-    @SuppressWarnings("unchecked")
-    private static String executeSave(List<PresentationElement> elemList, Map mainStore) {
+    private static String executeSave(List<PresentationElement> elemList, Map<String, String> mainStore) {
         for (PresentationElement elem: elemList) {
             // save the element's style properties
             try {
@@ -352,9 +350,8 @@ public class ViewSaver extends MDAction {
      * @param mainStore
      *            the JSONObject to store style information into.
      */
-    @SuppressWarnings("unchecked")
     // for JSONObject put() method
-    public static void getStyleChildren(PresentationElement parent, Map mainStore,
+    public static void getStyleChildren(PresentationElement parent, Map<String, String> mainStore,
             ProgressStatus progressStatus) {
         // get the parent element's children
         List<PresentationElement> children = new ArrayList<PresentationElement>(); // parent.getPresentationElements();

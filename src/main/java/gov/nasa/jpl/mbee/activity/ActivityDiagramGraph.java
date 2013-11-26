@@ -31,9 +31,7 @@ package gov.nasa.jpl.mbee.activity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 
 import org.jgrapht.DirectedGraph;
@@ -42,7 +40,6 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DirectedSubgraph;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ControlFlow;
@@ -55,11 +52,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 public class ActivityDiagramGraph {
 
     private Diagram                                           diagram;
-    private Element                                           a;               // activity
-                                                                                // or
-                                                                                // structured
-                                                                                // behavior
-                                                                                // node
+    private Element                                           a;
     private DirectedGraph<ActivityNode, ControlFlow>          graph;
     private DirectedGraph<ActivityNode, ControlFlow>          acyclicGraph;
     private Collection<Element>                               ondiagram;
@@ -70,9 +63,7 @@ public class ActivityDiagramGraph {
     private Set<ControlFlow>                                  loopFlows;
     private boolean                                           hasloops;
     private List<ActivityNode>                                sorted;
-    private Set<ControlFlow>                                  removedLoopFlows;
-    private GUILog                                            gl;
-
+    
     public ActivityDiagramGraph(Diagram diagram, Element a) {
         this.diagram = diagram;
         graph = new DefaultDirectedGraph<ActivityNode, ControlFlow>(ControlFlow.class);
@@ -89,8 +80,7 @@ public class ActivityDiagramGraph {
         hasloops = false;
         sorted = new ArrayList<ActivityNode>();
         ends = new HashSet<FinalNode>();
-        removedLoopFlows = new HashSet<ControlFlow>();
-        gl = Application.getInstance().getGUILog();
+        new HashSet<ControlFlow>();
     }
 
     public void fillGraphs() {
@@ -105,7 +95,7 @@ public class ActivityDiagramGraph {
             if (e instanceof FinalNode)
                 ends.add((FinalNode)e);
         }
-        StrongConnectivityInspector<ActivityNode, ControlFlow> sci = new StrongConnectivityInspector(graph);
+        StrongConnectivityInspector<ActivityNode, ControlFlow> sci = new StrongConnectivityInspector<ActivityNode, ControlFlow>(graph);
         for (DirectedSubgraph<ActivityNode, ControlFlow> dsg: sci.stronglyConnectedSubgraphs()) {
             if (dsg.edgeSet().size() > 0) {
                 hasloops = true;
@@ -150,33 +140,6 @@ public class ActivityDiagramGraph {
                     acyclicGraph.addVertex((ActivityNode)e);
                     acyclicGraph.addEdge(an, (ActivityNode)e, fakecf);
                 }
-            }
-        }
-    }
-
-    private void removeLoopEdges() {
-        if (start == null)
-            return;
-        Set<ControlFlow> seenFlows = new HashSet<ControlFlow>();
-        Set<ActivityNode> seenNodes = new HashSet<ActivityNode>();
-        Queue<ControlFlow> nextFlows = new LinkedList<ControlFlow>();
-        for (ControlFlow cf: acyclicGraph.outgoingEdgesOf(start)) {
-            nextFlows.offer(cf);
-        }
-        while (!nextFlows.isEmpty()) {
-            ControlFlow curFlow = nextFlows.remove();
-            seenFlows.add(curFlow);
-            ActivityNode curNode = acyclicGraph.getEdgeTarget(curFlow);
-            seenNodes.add(curNode);
-            for (ControlFlow nextFlow: acyclicGraph.outgoingEdgesOf(curNode)) {
-                if (seenFlows.contains(nextFlow) && seenNodes.contains(curNode)
-                        && loopFlows.contains(curFlow)) {
-                    // going to the curNode will result in a loop
-                    acyclicGraph.removeEdge(curFlow);
-                    removedLoopFlows.add(curFlow);
-                    break;
-                }
-                nextFlows.offer(nextFlow);
             }
         }
     }

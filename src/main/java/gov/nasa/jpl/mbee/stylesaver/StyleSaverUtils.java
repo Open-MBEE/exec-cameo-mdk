@@ -52,7 +52,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  * @author Benjamin Inada, JPL/Caltech
  */
 public class StyleSaverUtils {
-    private static List<DiagramPresentationElement> dpels;
+    //private static List<DiagramPresentationElement> dpels;
 
     /**
      * Returns the correct View or derived stereotype necessary for saving

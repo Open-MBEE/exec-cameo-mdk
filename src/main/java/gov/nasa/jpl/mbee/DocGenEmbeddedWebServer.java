@@ -84,7 +84,6 @@ public class DocGenEmbeddedWebServer {
      * 
      * @throws Throwable
      */
-    @SuppressWarnings("serial")
     public void setupTomcat() throws Throwable {
         String currentDir = new File(".").getCanonicalPath();
         // Tomcat directory simply for logging

@@ -46,9 +46,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  * @author dlam
  * 
  */
-@SuppressWarnings("serial")
 public class ValidateViewStructureAction extends MDAction {
 
+    private static final long serialVersionUID = 1L;
     public static final String actionid = "ValidateViewStructure";
     private Element            view;
 

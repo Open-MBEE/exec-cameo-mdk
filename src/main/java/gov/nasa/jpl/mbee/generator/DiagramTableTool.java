@@ -31,10 +31,12 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class DiagramTableTool {
+    
     private GenericTableSettings             genericTableSettings;
     private ElementRowNumberCache            elementRowNumberCache;
     private List<DiagramPresentationElement> openedTables;
 
+    
     public DiagramTableTool() {
         this.genericTableSettings = new GenericTableSettings();
         this.elementRowNumberCache = new ElementRowNumberCache();

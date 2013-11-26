@@ -587,6 +587,7 @@ public class Utils {
      * @return a list of objects of the specified type or an empty list if there
      *         are none
      */
+    @SuppressWarnings("unchecked")
     public static <T> List<T> getListOfType(Object o, java.lang.Class<T> type, Set<Object> seen) {
         List<T> res = new ArrayList<T>();
         if (type == null || o == null)
@@ -1391,7 +1392,6 @@ public class Utils {
     public static List<Element> sortByName(Collection<? extends Element> e) {
         List<Element> n = new ArrayList<Element>(e);
         Collections.sort(n, new Comparator<Element>() {
-            @SuppressWarnings("unchecked")
             @Override
             public int compare(Element o1, Element o2) {
                 if (o1 == o2)
@@ -1966,7 +1966,7 @@ public class Utils {
         // Collection<RuleViolationResult> results = new
         // ArrayList<RuleViolationResult>();
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
-        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        //Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
 
         EnumerationLiteral severitylevel = Annotation.getSeverityLevel(project, Annotation.WARNING);
         ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);

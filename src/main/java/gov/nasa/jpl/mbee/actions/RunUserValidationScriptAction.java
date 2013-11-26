@@ -44,8 +44,9 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 
-@SuppressWarnings("serial")
 public class RunUserValidationScriptAction extends MDAction {
+
+    private static final long serialVersionUID = 1L;
     private UserScript         scripti;
     public static final String actionid = "RunValidationScript";
 
@@ -65,6 +66,7 @@ public class RunUserValidationScriptAction extends MDAction {
             this.setName("Run " + name + " Validation");
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent event) {
         GUILog log = Application.getInstance().getGUILog();

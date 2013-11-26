@@ -70,14 +70,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 public class TableStructure extends Table {
 
     private abstract class TableColumn {
-        public String            name       = "";
-        public boolean           simpleList = false; // not implemented whether
-                                                     // a cell should display
-                                                     // simple list if content
-                                                     // is a list
         public InitialNode       bnode;
         public ActivityNode      activityNode;
         public GenerationContext context    = null;
+        @SuppressWarnings("unused")
+        public String            name       = "";
 
         public GenerationContext makeContext() {
             ActivityNode n = null;
@@ -119,8 +116,6 @@ public class TableStructure extends Table {
     private InitialNode                 bnode;
 
     private String                      title;
-
-    private String                      empty        = "no entry";
 
     private List<List<List<Reference>>> tableContent = new ArrayList<List<List<Reference>>>();
 
@@ -186,7 +181,7 @@ public class TableStructure extends Table {
             } else if (curNode instanceof StructuredActivityNode) {
                 col.bnode = GeneratorUtils.findInitialNode(curNode);
             }
-            col.name = curNode.getName();
+            col.           name = curNode.getName();
             headers.add(curNode.getName());
             columns.add(col);
             columnIndex.put(col, columnIndex.size());

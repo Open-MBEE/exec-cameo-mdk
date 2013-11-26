@@ -425,6 +425,7 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
         return res;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         super.initialize();

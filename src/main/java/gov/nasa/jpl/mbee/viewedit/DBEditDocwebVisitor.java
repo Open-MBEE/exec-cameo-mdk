@@ -266,6 +266,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
         curContains.add(entry);
     }
 
+    @SuppressWarnings("unchecked")
     protected JSONObject getJSONForDBParagraph(DBParagraph para) {
         JSONObject entry = new JSONObject();
         if (para.getFrom() != null && para.getFromProperty() != null) {
@@ -287,6 +288,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
         curContains.add(entry);
     }
 
+    @SuppressWarnings("unchecked")
     protected JSONObject getJSONForDBText(DBText text) {
         JSONObject entry = new JSONObject();
         if (text.getFrom() != null && text.getFromProperty() != null) {
@@ -347,6 +349,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
         curContains.add(entry);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
         if (alfresco) {

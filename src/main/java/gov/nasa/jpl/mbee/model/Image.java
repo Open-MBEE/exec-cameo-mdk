@@ -112,6 +112,7 @@ public class Image extends Query {
         return res;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         // TODO Auto-generated method stub

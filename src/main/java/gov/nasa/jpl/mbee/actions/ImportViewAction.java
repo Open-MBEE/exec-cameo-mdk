@@ -66,9 +66,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
  * @author dlam
  * 
  */
-@SuppressWarnings("serial")
 public class ImportViewAction extends MDAction {
-
+    private static final long serialVersionUID = 1L;
     private Element            doc;
     public static final String actionid = "ImportView";
 
@@ -132,7 +131,7 @@ public class ImportViewAction extends MDAction {
                     gl.log("[ERROR] This view is not on the view editor yet, export this view first");
                     return;
                 }
-                JSONArray changed = change(json, willchange, nameChange, notLocked, docChange, valueChange);
+                change(json, willchange, nameChange, notLocked, docChange, valueChange);
                 /*
                  * if (willchange) {
                  * //gl.log("[INFO] Notifying view editor of imported changes."

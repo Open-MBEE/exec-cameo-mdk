@@ -45,6 +45,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class DeleteDocumentAction extends MDAction {
+    private static final long serialVersionUID = 1L;
     private Element            proj;
     public static final String actionid = "DeleteDocument";
 

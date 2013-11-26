@@ -150,6 +150,7 @@ public abstract class HierarchicalPropertiesTable extends Table {
         return showType;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         super.initialize();

@@ -48,6 +48,7 @@ public class TestOcl {
     protected Project project     = null;
     protected Model   rootEObject = null;
 
+    @SuppressWarnings("unchecked")
     public static void testOcl(Project project, EObject rootEObject) {
         boolean verbose = true;
 

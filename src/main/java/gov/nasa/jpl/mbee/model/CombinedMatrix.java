@@ -195,6 +195,7 @@ public class CombinedMatrix extends Table {
         return res;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         super.initialize();

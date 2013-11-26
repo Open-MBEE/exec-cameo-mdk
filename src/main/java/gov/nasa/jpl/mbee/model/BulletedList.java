@@ -86,6 +86,7 @@ public class BulletedList extends Table {
         Common.addReferenceToDBHasContent(Reference.getPropertyReference(e, p), parent);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         Boolean showTargets = (Boolean)GeneratorUtils.getObjectProperty(dgElement,

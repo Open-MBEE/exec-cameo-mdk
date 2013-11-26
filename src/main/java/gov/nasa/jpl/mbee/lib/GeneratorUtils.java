@@ -92,6 +92,7 @@ public class GeneratorUtils {
         return value;
     }
 
+    @SuppressWarnings("unchecked")
     public static List<? extends Object> getListProperty(Element e, String stereotype, String property,
             List<? extends Object> defaultt) {
         List<? extends Object> value = StereotypesHelper.getStereotypePropertyValue(e, stereotype, property);

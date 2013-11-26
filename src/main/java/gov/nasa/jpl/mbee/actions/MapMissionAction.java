@@ -37,6 +37,7 @@ import com.nomagic.magicdraw.core.Application;
 
 public class MapMissionAction extends MDAction {
 
+    private static final long serialVersionUID = 1L;
     private MissionMapping mapping;
 
     public MapMissionAction(MissionMapping table) {

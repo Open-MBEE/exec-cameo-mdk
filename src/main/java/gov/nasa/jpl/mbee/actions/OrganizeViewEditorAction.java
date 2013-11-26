@@ -37,6 +37,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class OrganizeViewEditorAction extends MDAction {
 
+    private static final long serialVersionUID = 1L;
     public static final String actionid = "OrganizeViewEditor";
     private Element            project;
 
@@ -45,7 +46,6 @@ public class OrganizeViewEditorAction extends MDAction {
         this.project = project;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
         (new ProjectExporter(project)).export();

@@ -59,7 +59,6 @@ public class ViewEditUtils {
     private static String             otherurl              = "";
     private static String             username              = "admin";
     private static String             password              = "admin";
-    private static String             alf_ticket            = "";
     private static boolean            passwordSet           = false;
     private static final List<String> servers               = Arrays.asList(
                                                                     "http://docgen.jpl.nasa.gov:8080/editor",

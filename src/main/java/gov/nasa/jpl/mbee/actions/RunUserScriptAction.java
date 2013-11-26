@@ -44,8 +44,9 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
-@SuppressWarnings("serial")
 public class RunUserScriptAction extends MDAction {
+
+    private static final long serialVersionUID = 1L;
     private UserScript         scripti;
     public static final String actionid = "RunUserScript";
 

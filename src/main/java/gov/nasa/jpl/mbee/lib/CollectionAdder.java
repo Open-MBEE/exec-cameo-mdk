@@ -95,6 +95,7 @@ public class CollectionAdder {
      * @return the original collection or a new unflattenedCollectionType
      *         collection
      */
+    @SuppressWarnings("unchecked")
     public Object fix(Collection<?> coll, int flattenDepth) {
         if (!mustFlatten && (!mayFlatten || flattenDepth <= 0))
             return coll;

@@ -59,15 +59,15 @@ public class Common {
             return res;
         if (!ref.isResultEditable()) {
             if (ref.result instanceof Collection) {
-                for (Object r: (Collection)ref.result) {
+                for (Object r: (Collection<?>)ref.result) {
                     res.add(new DBParagraph(r));
                 }
             } else {
                 res.add(new DBParagraph(ref.result));
             }
         } else {
-            if (ref.result instanceof Collection && !((Collection)ref.result).isEmpty()) {
-                res.add(new DBParagraph(((Collection)ref.result).iterator().next(), ref.element, ref.from));
+            if (ref.result instanceof Collection && !((Collection<?>)ref.result).isEmpty()) {
+                res.add(new DBParagraph(((Collection<?>)ref.result).iterator().next(), ref.element, ref.from));
             } else {
                 res.add(new DBParagraph(ref.result, ref.element, ref.from));
             }
@@ -97,7 +97,7 @@ public class Common {
     public static DBTableEntry getTableEntryFromObject(Object o) {
         DBTableEntry res = new DBTableEntry();
         if (o instanceof Collection) {
-            for (Object r: (Collection)o) {
+            for (Object r: (Collection<?>)o) {
                 res.addElement(new DBParagraph(r));
             }
         } else

@@ -45,7 +45,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class ViewpointConstraint extends Query {
 
+    @SuppressWarnings("unused")
     private Boolean           iterate;
+    @SuppressWarnings("unused")
     private String            expression;
     private Boolean           report;
     private DocumentValidator dv;

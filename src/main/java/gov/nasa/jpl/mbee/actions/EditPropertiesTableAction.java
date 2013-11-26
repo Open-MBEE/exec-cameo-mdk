@@ -45,9 +45,9 @@ import com.nomagic.magicdraw.core.GUILog;
  * @author dlam
  * 
  */
-@SuppressWarnings("serial")
 public class EditPropertiesTableAction extends MDAction {
 
+    private static final long serialVersionUID = 1L;
     private PropertiesTableByAttributes npt;
 
     public EditPropertiesTableAction(PropertiesTableByAttributes table) {

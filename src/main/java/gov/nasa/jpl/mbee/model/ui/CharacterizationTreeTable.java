@@ -38,6 +38,8 @@ import org.jdesktop.swingx.JXTreeTable;
 
 public class CharacterizationTreeTable extends JXTreeTable {
 
+    private static final long serialVersionUID = 1L;
+
     public CharacterizationTreeTable(CharacterizationTreeTableModel model) {
         super(model);
     }

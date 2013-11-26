@@ -195,7 +195,6 @@ public class CollectFilterParser {
      */
     @SuppressWarnings("unchecked")
     private static List<Element> collectAndFilter(CallBehaviorAction cba, List<Element> in) {
-        Element a = cba.getBehavior();
         Integer depth = (Integer)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.depthChoosable,
                 "depth", 0);
         int direction = ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.directionChoosable,
@@ -261,19 +260,7 @@ public class CollectFilterParser {
             List<Object> blah = new ArrayList<Object>();
             for (Element e: in)
                 for (Property p: stereotypeProperties)
-                    blah.addAll(Utils.getStereotypePropertyValues(e, p, true)); // TODO
-                                                                                // --
-                                                                                // REVIEW
-                                                                                // --
-                                                                                // should
-                                                                                // default
-                                                                                // value
-                                                                                // be
-                                                                                // allowed?!
-                                                                                // (specified
-                                                                                // by
-                                                                                // last
-                                                                                // argument)
+                    blah.addAll(Utils.getStereotypePropertyValues(e, p, true));
             for (Object b: blah)
                 if (b instanceof Element)
                     res.add((Element)b);

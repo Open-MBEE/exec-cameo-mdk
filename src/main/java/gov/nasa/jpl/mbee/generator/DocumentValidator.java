@@ -103,24 +103,19 @@ public class DocumentValidator {
                                                                                                   "ExpressionValidation");
 
     private static final Map<String, String>                  requiredTags                = new HashMap<String, String>() {
-                                                                                              {
 
-                                                                                                  put(DocGen3Profile.metaclassChoosable,
-                                                                                                          "metaclasses");
-                                                                                                  put(DocGen3Profile.stereotypeChoosable,
-                                                                                                          "stereotypes");
-                                                                                                  put(DocGen3Profile.nameChoosable,
-                                                                                                          "names");
-                                                                                                  put(DocGen3Profile.diagramTypeChoosable,
-                                                                                                          "diagramTypes");
-                                                                                                  put(DocGen3Profile.expressionChoosable,
-                                                                                                          "expression");
-                                                                                                  put(DocGen3Profile.propertyChoosable,
-                                                                                                          "desiredProperty");
-                                                                                                  put(DocGen3Profile.attributeChoosable,
-                                                                                                          "desiredAttribute");
-                                                                                              }
-                                                                                          };
+        private static final long serialVersionUID = -5391825454091546000L;
+
+        {
+              put(DocGen3Profile.metaclassChoosable, "metaclasses");
+              put(DocGen3Profile.stereotypeChoosable, "stereotypes");
+              put(DocGen3Profile.nameChoosable, "names");
+              put(DocGen3Profile.diagramTypeChoosable, "diagramTypes");
+              put(DocGen3Profile.expressionChoosable, "expression");
+              put(DocGen3Profile.propertyChoosable, "desiredProperty");
+              put(DocGen3Profile.attributeChoosable, "desiredAttribute");
+        }
+    };
     /*
      * Statuses possible, currently error, warning, and fatal error.
      */
@@ -132,7 +127,7 @@ public class DocumentValidator {
     /*
      * Current List of validation flags.
      */
-    ValidationRule                                            multipleFirstErrors         = new ValidationRule(
+    private ValidationRule                                    multipleFirstErrors         = new ValidationRule(
                                                                                                   "Multiple First Errors",
                                                                                                   "Has multiple firsts!",
                                                                                                   error);

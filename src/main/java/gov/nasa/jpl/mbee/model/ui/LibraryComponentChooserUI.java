@@ -59,21 +59,17 @@ import org.apache.commons.lang.ArrayUtils;
 
 public class LibraryComponentChooserUI {
 
-    @SuppressWarnings("unused")
     private static final JFrame                   frame       = new JFrame();
     private static Node<String, MissionComponent> missionNode;
-    private static MissionMapping                 missionMapping;
     private static JList                          list        = new JList();
     private static JScrollPane                    scrollPane  = new JScrollPane(list);
     private static Object[]                       sortedComps = null;
     private static final JButton                  save        = new JButton("Save");
     private static final JButton                  cancel      = new JButton("Cancel");
 
-    @SuppressWarnings("serial")
     public LibraryComponentChooserUI(Node<String, MissionComponent> node, MissionMapping mapping) {
 
         missionNode = node;
-        missionMapping = mapping;
         frame.setTitle(node.getData().getName());
         frame.setVisible(true);
         String[] names = null;
@@ -119,6 +115,7 @@ public class LibraryComponentChooserUI {
         // 'esc' to close out box
         KeyStroke stroke = KeyStroke.getKeyStroke("ESCAPE");
         Action actionListner = new AbstractAction() {
+            private static final long serialVersionUID = -5354413965998806550L;
 
             @Override
             public void actionPerformed(ActionEvent paramActionEvent) {

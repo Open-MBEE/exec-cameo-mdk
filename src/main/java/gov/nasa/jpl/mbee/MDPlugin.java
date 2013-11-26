@@ -220,6 +220,7 @@ public abstract class MDPlugin extends Plugin {
         nmActionClass = cls;
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends NMAction> void nmActionMethod(ActionEvent event, Element element) {
         T action = null;
         Constructor<T> ctor = (Constructor<T>)ClassUtils.getConstructorForArgs(nmActionClass,

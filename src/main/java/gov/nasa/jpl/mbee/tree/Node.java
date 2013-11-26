@@ -177,10 +177,8 @@ public class Node<K, T> {
     public List<Node<K, T>> getPathToRoot() {
         List<Node<K, T>> path = new ArrayList<Node<K, T>>();
         Node<K, T> curp = parent;
-        Node<K, T> prep = parent;
         while (curp != null) {
             path.add(curp);
-            prep = curp;
             curp = curp.getParent();
         }
         return path;

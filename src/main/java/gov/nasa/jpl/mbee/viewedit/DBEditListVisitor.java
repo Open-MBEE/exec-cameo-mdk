@@ -90,6 +90,7 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void visit(DBParagraph para) {
         JSONObject o = getJSONForDBParagraph(para);
@@ -99,6 +100,7 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
         curitem.add(o);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void visit(DBText text) {
         JSONObject o = getJSONForDBText(text);
@@ -108,6 +110,7 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
         curitem.add(o);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
         DBEditTableVisitor2 v = new DBEditTableVisitor2(this.recurse, this.elements);

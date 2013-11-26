@@ -434,7 +434,7 @@ public class LibraryMapping extends Query {
         List<DocumentElement> row = new ArrayList<DocumentElement>();
         row.add(new DBText(DocGenUtils.getIndented(curc.getName(), depth)));
         if (curc.isPackage()) {
-            for (Element charr: chars) {
+            for (@SuppressWarnings("unused") Element charr: chars) {
                 row.add(new DBText(""));
             }
         } else {

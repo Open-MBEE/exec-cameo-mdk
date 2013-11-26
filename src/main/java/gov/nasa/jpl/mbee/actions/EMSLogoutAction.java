@@ -36,6 +36,7 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 
 public class EMSLogoutAction extends MDAction {
+    private static final long serialVersionUID = 1L;
     public static final String actionid = "Logout";
 
     public EMSLogoutAction() {

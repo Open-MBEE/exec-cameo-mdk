@@ -120,6 +120,7 @@ public abstract class Table extends Query {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions,

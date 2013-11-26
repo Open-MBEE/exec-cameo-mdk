@@ -79,6 +79,7 @@ public class MdDebug extends Debug {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <TT> Pair<Boolean, TT> getComponentOfType(Object o, Class<TT> type, int depth,
             int maxDepth, Seen<Object> seen) {
         if (o == null)
@@ -94,12 +95,9 @@ public class MdDebug extends Debug {
         boolean gotLeafContainer = false;
 
         Container c = null;
-        String name = null;
         if (o instanceof Container) {
             c = (Container)o;
-            name = c.getName();
         } else {
-            name = o.toString();
         }
 
         if (depth >= maxDepth) {
@@ -127,8 +125,6 @@ public class MdDebug extends Debug {
                     // cmps ) );
                 }
                 for (Component cmp: cmps) {
-                    // if ( cmp instanceof Container ) {
-                    TT tt = null;
                     Pair<Boolean, TT> pp = getComponentOfType(cmp, type, depth + 1, maxDepth, seen);
                     if (pp != null) {
                         if (pp.first == true) {
@@ -158,8 +154,6 @@ public class MdDebug extends Debug {
                     if (ClassUtils.isPrimitive(v) && !ClassUtils.isPrimitive(type)) {
                         continue;
                     }
-                    // System.out.print( "field " + f.getName() + ": " );
-                    TT tt = null;
                     Pair<Boolean, TT> pp = getComponentOfType(v, type, depth + 1, maxDepth, seen);
                     if (pp != null) {
                         if (pp.first == true) {

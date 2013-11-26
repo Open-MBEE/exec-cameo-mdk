@@ -140,6 +140,7 @@ public class OclQueryAction extends MDAction {
          * @param input
          * @return the result of the evaluation of the input expression
          */
+        @SuppressWarnings("rawtypes")
         public ArrayList<Object> parseAndProcess(Object input) {
             String oclString = input == null ? null : input.toString();
             ArrayList<Object> outputList = new ArrayList<Object>();

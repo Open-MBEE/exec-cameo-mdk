@@ -609,6 +609,7 @@ public class Utils2 {
         return array;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T[] scramble(Collection<T> collection) {
         if (isNullOrEmpty(collection))
             return (T[])new Object[] {};
@@ -643,6 +644,7 @@ public class Utils2 {
      * @return the longer of the two collections after adding the shorter to the
      *         longer.
      */
+    @SuppressWarnings("unchecked")
     public static <T, C extends Collection<T>> C addAll(Collection<T> coll1, Collection<T> coll2) {
         if (coll1 == null)
             return (C)coll2;
@@ -820,6 +822,7 @@ public class Utils2 {
         }
     }
 
+    @SuppressWarnings("unused")
     public static boolean isInt(String intStr) {
         try {
             int i = Integer.parseInt(intStr);
@@ -851,7 +854,6 @@ public class Utils2 {
      */
     public static int count(String regex, String string) {
         int count = 0;
-        int pos = 0;
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(string);
         // boolean found = false;

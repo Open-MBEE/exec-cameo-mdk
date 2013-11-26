@@ -62,8 +62,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
  * @author dlam
  * 
  */
-@SuppressWarnings("serial")
 public class PublishDocWebAction extends MDAction {
+
+    private static final long serialVersionUID = 1L;
     private NamedElement       p;
     public static final String actionid = "Publish2DocWeb";
 

@@ -48,7 +48,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  * @author Benjamin Inada, JPL/Caltech
  */
 public class RunnableSaverWithProgress implements RunnableWithProgress {
-    private Map                       mainStore;
+    private Map<String, String>       mainStore;
     private List<PresentationElement> elemList;
     private String                    styleString;
     private Element                   diagram;
@@ -61,7 +61,7 @@ public class RunnableSaverWithProgress implements RunnableWithProgress {
      * @param elemList
      *            the elements to save.
      */
-    public RunnableSaverWithProgress(Map mainStore2, List<PresentationElement> elemList, Element diagram,
+    public RunnableSaverWithProgress(Map<String, String> mainStore2, List<PresentationElement> elemList, Element diagram,
             Stereotype workingStereotype) {
         this.mainStore = mainStore2;
         this.elemList = elemList;
@@ -75,7 +75,6 @@ public class RunnableSaverWithProgress implements RunnableWithProgress {
      * @param progressStatus
      *            the status of the operation so far.
      */
-    @SuppressWarnings("unchecked")
     @Override
     public void run(ProgressStatus progressStatus) {
         progressStatus.init("Saving styles...", 0, elemList.size() + 1);

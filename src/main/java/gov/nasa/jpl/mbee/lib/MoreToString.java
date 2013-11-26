@@ -477,6 +477,7 @@ public interface MoreToString {
          * @return a value in map of type T with the given key or null if not
          *         found.
          */
+        @SuppressWarnings("unchecked")
         public static <K, V, T> T get(Map<K, V> map, K key, Class<T> cls) {
             if (key == null)
                 return null;

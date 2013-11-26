@@ -107,6 +107,7 @@ public class Paragraph extends Query {
         return res;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         String body = (String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.paragraphStereotype,

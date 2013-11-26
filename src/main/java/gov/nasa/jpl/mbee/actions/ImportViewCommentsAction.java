@@ -71,9 +71,8 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam
  * 
  */
-@SuppressWarnings("serial")
 public class ImportViewCommentsAction extends MDAction {
-
+    private static final long serialVersionUID = 1L;
     private Element            doc;
     public static final String actionid = "ImportViewComments";
 

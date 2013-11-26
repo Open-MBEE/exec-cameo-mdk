@@ -37,6 +37,7 @@ import com.nomagic.magicdraw.core.Application;
 
 public class MapLibraryAction extends MDAction {
 
+    private static final long serialVersionUID = 1L;
     private LibraryMapping mapping;
 
     public MapLibraryAction(LibraryMapping table) {

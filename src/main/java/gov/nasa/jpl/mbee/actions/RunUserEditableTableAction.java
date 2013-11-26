@@ -41,8 +41,9 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 
-@SuppressWarnings("serial")
 public class RunUserEditableTableAction extends MDAction {
+
+    private static final long serialVersionUID = 1L;
     private UserScript scripti;
 
     public RunUserEditableTableAction(UserScript us) {

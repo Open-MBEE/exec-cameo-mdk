@@ -59,7 +59,6 @@ public class DgEnvironment extends EcoreEnvironment {
     Set<DgOperationInstance> operations     = new TreeSet<DgOperationInstance>();
 
     // this constructor is used to initialize the root environment
-    @SuppressWarnings("deprecation")
     DgEnvironment(EPackage.Registry registry) {
         super(registry);
     }

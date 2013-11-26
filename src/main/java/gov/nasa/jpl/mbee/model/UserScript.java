@@ -107,10 +107,7 @@ public class UserScript extends Query {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            Application.getInstance().getGUILog().log(sw.toString()); // stack
-                                                                      // trace
-                                                                      // as a
-                                                                      // string
+            Application.getInstance().getGUILog().log(sw.toString());
         }
         return null;
     }

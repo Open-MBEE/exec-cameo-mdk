@@ -714,7 +714,7 @@ public class DocumentGenerator {
             String javaClazz = s.getName();
             if (DocGenPlugin.extensionsClassloader != null) {
                 try {
-                    java.lang.Class clazz = java.lang.Class.forName(javaClazz, true,
+                    java.lang.Class<?> clazz = java.lang.Class.forName(javaClazz, true,
                             DocGenPlugin.extensionsClassloader);
                     dge = (Query)clazz.newInstance();
                 } catch (Exception e1) {

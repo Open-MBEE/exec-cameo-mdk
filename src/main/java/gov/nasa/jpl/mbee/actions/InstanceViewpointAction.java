@@ -59,9 +59,9 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam
  * 
  */
-@SuppressWarnings("serial")
 public class InstanceViewpointAction extends MDAction {
 
+    private static final long serialVersionUID = 1L;
     private Element            viewpoint;
     private Stereotype         sysmlView;
     private ElementsFactory    ef;

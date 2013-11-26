@@ -293,6 +293,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 
         // Set< BaseElement > elements = elementToConstraintMap.keySet();
 
+        @SuppressWarnings("unchecked")
         Collection<gov.nasa.jpl.mbee.constraint.Constraint> constraints = (Collection<gov.nasa.jpl.mbee.constraint.Constraint>)(Utils2
                 .isNullOrEmpty(elementsWithConstraints) ? (constraintToElementMap == null ? Utils2.newList()
                 : constraintToElementMap.keySet()) : getAffectedConstraints(elementsWithConstraints));

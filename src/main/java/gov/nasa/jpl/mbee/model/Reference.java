@@ -128,7 +128,6 @@ public class Reference {
      */
     public static Reference getPropertyReference(Element element, Property property) {
         List<Object> v;
-        List<Element> props;
         // need to get actual properties
         Element prop = Utils.getElementProperty(element, property);
         v = Utils.getElementPropertyValues(element, property, true);
@@ -158,7 +157,7 @@ public class Reference {
                 || from == null
                 || (element instanceof Slot && (((Slot)element).getDefiningFeature().getUpper() > 1 || ((Slot)element)
                         .getDefiningFeature().getUpper() == -1))
-                || (result instanceof Collection && ((Collection)result).size() > 1)
+                || (result instanceof Collection && ((Collection<?>)result).size() > 1)
                 || !Utils.isLiteral(result))
             return false;
         return true;

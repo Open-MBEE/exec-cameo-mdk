@@ -159,8 +159,8 @@ public class DocGenPlugin extends Plugin {
         }
         for (File file: extensionDir.listFiles()) {
             try {
-                JarFile jarFile = new JarFile(file); // only add if file is a
-                                                     // jar file
+                @SuppressWarnings("unused")
+                JarFile jarFile = new JarFile(file);
                 extensions.add(file.toURI().toURL());
             } catch (MalformedURLException e) {
                 e.printStackTrace();

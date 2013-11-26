@@ -582,14 +582,12 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             Map<String, Map<String, Map<String, MDAction>>> subcontexts = getMenus().get(c);
             if (!Utils2.isNullOrEmpty(subcontexts)) {
                 if (subcontext != null) {
-                    boolean foundBetterSub = false;
                     for (String subc: subcontexts.keySet()) {
                         Map<String, Map<String, MDAction>> configs = subcontexts.get(subc);
                         if (configs != null && !configs.isEmpty()) {
                             p = prefixOverlapScore(subc, subcontext);
                             boolean betterSubcontext = (p.first > numMatch[idx] || (p.first == numMatch[idx] && p.second < numDontMatch[idx]));
                             if (betterSubcontext) {
-                                foundBetterSub = true;
                                 subcontextKey[idxKey] = subc;
                                 if (!betterContext) {
                                     contextKey[1] = c;

@@ -167,6 +167,8 @@ public class LibraryChooserUI {
         // 'esc' to close out box
         KeyStroke stroke = KeyStroke.getKeyStroke("ESCAPE");
         Action actionListener = new AbstractAction() {
+            private static final long serialVersionUID = -4248621599221498872L;
+
             @Override
             public void actionPerformed(ActionEvent paramActionEvent) {
                 frame.dispose();

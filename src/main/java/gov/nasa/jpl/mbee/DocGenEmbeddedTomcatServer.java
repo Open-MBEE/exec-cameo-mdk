@@ -31,17 +31,10 @@ package gov.nasa.jpl.mbee;
 import gov.nasa.jpl.mbee.servlet.ModelServlet;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.startup.Tomcat;
-
-import com.nomagic.magicdraw.utils.MDLog;
 
 /**
  * Tomcat embedded webserver
@@ -129,49 +122,6 @@ public class DocGenEmbeddedTomcatServer implements DocGenEmbeddedServer {
                 tomcat.stop();
             }
             tomcat.destroy();
-        }
-    }
-
-    // test code for printing out all the URLs of the classloaders
-    private static void printURLs(ClassLoader classLoader) {
-        if (classLoader != null) {
-            System.out.println("ClassLoader:" + classLoader);
-            if (classLoader instanceof URLClassLoader) {
-                URL[] urls = ((URLClassLoader)classLoader).getURLs();
-                for (int i = 0; i < urls.length; ++i) {
-                    System.out.println(urls[i].toExternalForm());
-                }
-            }
-            printURLs(classLoader.getParent());
-        }
-    }
-
-    // test method for finding the URLs that provide the specified class
-    private static void findClass(ClassLoader classLoader, String className) {
-        if (classLoader != null) {
-            System.out.println("ClassLoader:" + classLoader);
-            if (classLoader instanceof URLClassLoader) {
-                URL[] urls = ((URLClassLoader)classLoader).getURLs();
-                for (int i = 0; i < urls.length; ++i) {
-                    try {
-                        String jarFilename = urls[i].getFile();
-                        // MDLog.getPluginsLog().error("Loading jar file " +
-                        // jarFilename);
-                        JarFile jar = new JarFile(jarFilename);
-                        // entries are "/" separated rather than "."
-                        JarEntry entry = jar.getJarEntry(className.replace(".", "/") + ".class");
-                        if (entry != null) {
-                            MDLog.getPluginsLog().error(
-                                    "Loaded from jar: " + jarFilename + " => class: " + className);
-                        }
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        // e.printStackTrace();
-                        // return;
-                    }
-                }
-            }
-            findClass(classLoader.getParent(), className);
         }
     }
 }

@@ -45,8 +45,9 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  * @author dlam
  * 
  */
-@SuppressWarnings("serial")
 public class ViewViewCommentsAction extends MDAction {
+
+    private static final long serialVersionUID = 1L;
     private NamedElement       selectedElement;
     public static final String actionid = "ViewViewComments";
 
