@@ -69,7 +69,7 @@ public interface DgvalidationPackage extends EPackage {
      * 
      * @generated
      */
-    String              eNS_PREFIX              = "gov.nasa.jpl.mgss.mbee.docgen.dgvalidation";
+    String              eNS_PREFIX              = "gov.nasa.jpl.mbee.dgvalidation";
 
     /**
      * The singleton instance of the package. <!-- begin-user-doc --> <!--

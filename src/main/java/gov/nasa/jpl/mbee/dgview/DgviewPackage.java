@@ -69,7 +69,7 @@ public interface DgviewPackage extends EPackage {
      * 
      * @generated
      */
-    String        eNS_PREFIX                         = "gov.nasa.jpl.mgss.mbee.docgen.dgview";
+    String        eNS_PREFIX                         = "gov.nasa.jpl.mbee.dgview";
 
     /**
      * The singleton instance of the package. <!-- begin-user-doc --> <!--
