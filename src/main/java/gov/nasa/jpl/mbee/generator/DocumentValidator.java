@@ -97,7 +97,7 @@ public class DocumentValidator {
     private Element                                           start;
     private Set<Behavior>                                     done;
 
-    private ValidationSuite                                   Validationui                = new ValidationSuite(
+    private ValidationSuite                                   validationui                = new ValidationSuite(
                                                                                                   "Validationui");
     private ValidationSuite                                   dynamicExpressionValidation = new ValidationSuite(
                                                                                                   "ExpressionValidation");
@@ -218,19 +218,11 @@ public class DocumentValidator {
      * Needed to use the utils.displayvalidationwindow
      */
 
-    private Collection<ValidationSuite>                       ValidationOutput            = new ArrayList<ValidationSuite>();
+    private Collection<ValidationSuite>                       validationOutput            = new ArrayList<ValidationSuite>();
 
     private GUILog                                            log;
-    private DirectedGraph<NamedElement, DirectedRelationship> dg;                                                            // graph
-                                                                                                                              // for
-                                                                                                                              // viewpoints
-    private List<Set<ActivityNode>>                           cycles;                                                        // cycles
-                                                                                                                              // for
-                                                                                                                              // activities
-                                                                                                                              // and
-                                                                                                                              // structured
-                                                                                                                              // activity
-                                                                                                                              // nodes
+    private DirectedGraph<NamedElement, DirectedRelationship> dg;           // graph for viewpoints
+    private List<Set<ActivityNode>>                           cycles;       // cycles for activities and structured nodes
     private ActivityEdgeFactory                               aef;
     private boolean                                           fatal;
     private Stereotype                                        sysmlview;
@@ -253,33 +245,33 @@ public class DocumentValidator {
         OclEvaluator.resetEnvironment();
 
         // List of Validation Rules
-        Validationui.addValidationRule(multipleFirstErrors);
-        Validationui.addValidationRule(multipleNextErrors);
-        Validationui.addValidationRule(multipleContentErrors);
-        Validationui.addValidationRule(multipleViewpoints);
-        Validationui.addValidationRule(multipleOutgoingFlows);
-        Validationui.addValidationRule(mismatchStereotypeErrors);
-        Validationui.addValidationRule(missingViewpointErrors);
-        Validationui.addValidationRule(missingImportErrors);
-        Validationui.addValidationRule(multipleInitialNode);
-        Validationui.addValidationRule(multipleIncomingFlows);
-        Validationui.addValidationRule(missingInitialNode);
-        Validationui.addValidationRule(missingViewpointBehavior);
-        Validationui.addValidationRule(missingStereotype);
-        Validationui.addValidationRule(missingOutgoingFlow);
-        Validationui.addValidationRule(multipleStereotypes);
-        Validationui.addValidationRule(nonView2View);
-        Validationui.addValidationRule(shouldBeSection);
-        Validationui.addValidationRule(shouldNotBeSection);
-        Validationui.addValidationRule(cycleError);
-        Validationui.addValidationRule(activityNodeCycleError);
-        Validationui.addValidationRule(missingTagValue);
+        validationui.addValidationRule(multipleFirstErrors);
+        validationui.addValidationRule(multipleNextErrors);
+        validationui.addValidationRule(multipleContentErrors);
+        validationui.addValidationRule(multipleViewpoints);
+        validationui.addValidationRule(multipleOutgoingFlows);
+        validationui.addValidationRule(mismatchStereotypeErrors);
+        validationui.addValidationRule(missingViewpointErrors);
+        validationui.addValidationRule(missingImportErrors);
+        validationui.addValidationRule(multipleInitialNode);
+        validationui.addValidationRule(multipleIncomingFlows);
+        validationui.addValidationRule(missingInitialNode);
+        validationui.addValidationRule(missingViewpointBehavior);
+        validationui.addValidationRule(missingStereotype);
+        validationui.addValidationRule(missingOutgoingFlow);
+        validationui.addValidationRule(multipleStereotypes);
+        validationui.addValidationRule(nonView2View);
+        validationui.addValidationRule(shouldBeSection);
+        validationui.addValidationRule(shouldNotBeSection);
+        validationui.addValidationRule(cycleError);
+        validationui.addValidationRule(activityNodeCycleError);
+        validationui.addValidationRule(missingTagValue);
 
         dynamicExpressionValidation.addValidationRule(viewpointConstraintRule);
 
         // Need Collection to use the utils.DisplayValidationWindow method
-        ValidationOutput.add(Validationui);
-        ValidationOutput.add(dynamicExpressionValidation);
+        validationOutput.add(validationui);
+        validationOutput.add(dynamicExpressionValidation);
 
     }
 
@@ -579,7 +571,7 @@ public class DocumentValidator {
         else
             log.log("Validation done.");
 
-        Utils.displayValidationWindow(ValidationOutput, "Document Validation Results");
+        Utils.displayValidationWindow(validationOutput, "Document Validation Results");
     }
 
     public void printErrors(PrintWriter pw) {
@@ -748,13 +740,8 @@ public class DocumentValidator {
                 String id = context instanceof Element ? ((Element)context).getID() : context.toString();
                 String errorMessage = e.getLocalizedMessage() + " for OCL query \"" + expression + "\" on "
                         + Utils.getName(context) + (showElementIds ? "[" + id + "]" : "");
-                if (rule != null && context instanceof Element) { // need
-                                                                  // further
-                                                                  // fixes to
-                                                                  // allow
-                                                                  // context be
-                                                                  // a
-                                                                  // collection
+                if (rule != null && context instanceof Element) {
+                    // need fixes to allow context be a collection
                     addViolationIfUnique(rule, (Element)context, errorMessage, false);
                 }
                 Debug.error(violationIfInconsistent, false, errorMessage);
