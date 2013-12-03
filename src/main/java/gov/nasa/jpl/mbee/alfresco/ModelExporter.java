@@ -28,6 +28,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -38,7 +39,7 @@ public class ModelExporter {
     private JSONObject elements = new JSONObject();
     private JSONObject relationshipElements = new JSONObject();
     private JSONObject propertyTypes = new JSONObject();
-    private JSONObject propertyValues = new JSONObject();
+    //private JSONObject propertyValues = new JSONObject();
     private JSONObject elementValues = new JSONObject();
     private JSONArray roots = new JSONArray();
     
@@ -77,7 +78,7 @@ public class ModelExporter {
         JSONObject relationships = new JSONObject();
         relationships.put("relationshipElements", relationshipElements);
         relationships.put("propertyTypes", propertyTypes);
-        relationships.put("propertyValues", propertyValues);
+        //relationships.put("propertyValues", propertyValues);
         relationships.put("elementValues", elementValues);
         result.put("relationships", relationships);
         return result;
@@ -87,7 +88,7 @@ public class ModelExporter {
     private boolean addToElements(Element e, int curdepth) {
         if (elements.containsKey(e.getID()))
             return true;
-        if (e instanceof Comment)
+        if (e instanceof Comment || e instanceof ValueSpecification)
             return false;
         JSONObject elementInfo = new JSONObject();
         if (e instanceof Package) {
@@ -95,12 +96,33 @@ public class ModelExporter {
         } else if (e instanceof Property) {
             elementInfo.put("type", "Property");
             elementInfo.put("isDerived", ((Property)e).isDerived());
+            elementInfo.put("isSlot", false);
             ValueSpecification vs = ((Property)e).getDefaultValue();
             if (vs != null) {
-                addToElements(vs, 0);
-                propertyValues.put(e.getID(), vs.getID());
+                //addToElements(vs, 0);
+                //propertyValues.put(e.getID(), vs.getID());
+                JSONArray value = new JSONArray();
+                addValues(e, value, elementInfo, vs);
             }
             Type type = ((Property)e).getType();
+            if (type != null) {
+                addToElements(type, 0);
+                propertyTypes.put(e.getID(), type.getID());
+            }
+        } else if (e instanceof Slot) {
+            elementInfo.put("type", "Property");
+            elementInfo.put("isDerived", false);
+            elementInfo.put("isSlot", true);
+            List<ValueSpecification> vsl = ((Slot)e).getValue();
+            if (vsl != null && vsl.size() > 0) {
+                //addToElements(vs, 0);
+                //propertyValues.put(e.getID(), vs.getID());
+                JSONArray value = new JSONArray();
+                for (ValueSpecification vs: vsl) {
+                    addValues(e, value, elementInfo, vs);
+                }
+            }
+            Element type = ((Slot)e).getDefiningFeature();
             if (type != null) {
                 addToElements(type, 0);
                 propertyTypes.put(e.getID(), type.getID());
@@ -116,7 +138,7 @@ public class ModelExporter {
         } else if (e instanceof Generalization) {
             elementInfo.put("type", "Generalization");
             addRelationship((Generalization)e);
-        } else if (e instanceof LiteralBoolean) {
+   /*     } else if (e instanceof LiteralBoolean) {
             elementInfo.put("type", "LiteralBoolean");
             elementInfo.put("boolean", ((LiteralBoolean)e).isValue());
         } else if (e instanceof LiteralString) {
@@ -139,12 +161,14 @@ public class ModelExporter {
             if (ev != null) {
                 addToElements(ev, 0);
                 elementValues.put(e.getID(), ev.getID());
-            }
+            } */
         } else {
             elementInfo.put("type", "Element");
         }
         if (StereotypesHelper.hasStereotypeOrDerived(e, view))
-            elementInfo.put("type", "View");
+            elementInfo.put("isView", true);
+        else
+            elementInfo.put("isView", false);
         if (StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
             elementInfo.put("type", "Viewpoint");
         if (e instanceof NamedElement) {
@@ -176,5 +200,39 @@ public class ModelExporter {
         relInfo.put("source", client.getID());
         relInfo.put("target", supplier.getID());
         relationshipElements.put(dr.getID(), relInfo);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
+        if (vs instanceof LiteralBoolean) {
+            elementInfo.put("valueType", "LiteralBoolean");
+            value.add(((LiteralBoolean)vs).isValue());
+            elementInfo.put("boolean", value );
+        } else if (vs instanceof LiteralString) {
+            elementInfo.put("valueType", "LiteralString");
+            value.add(((LiteralString)vs).getValue());
+            elementInfo.put("string", value);
+        } else if (vs instanceof LiteralInteger || vs instanceof LiteralUnlimitedNatural) {
+            elementInfo.put("valueType", "LiteralInteger");
+            if (vs instanceof LiteralInteger) {
+                value.add(((LiteralInteger)vs).getValue());
+            } else 
+                value.add(((LiteralUnlimitedNatural)vs).getValue());
+            elementInfo.put("integer", value);
+        } else if (vs instanceof LiteralReal) {
+            elementInfo.put("valueType", "LiteralReal");
+            value.add(((LiteralReal)vs).getValue());
+            elementInfo.put("double", value);
+        } else if (vs instanceof Expression) {
+            elementInfo.put("valueType", "Expression");
+        } else if (vs instanceof ElementValue) {
+            elementInfo.put("valueType", "ElementValue");
+            Element ev = ((ElementValue)vs).getElement();
+            if (ev != null) {
+                addToElements(ev, 0);
+                value.add(ev.getID());
+                elementValues.put(e.getID(), value);
+            }
+        }
     }
 }

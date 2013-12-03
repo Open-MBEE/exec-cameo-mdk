@@ -32,6 +32,7 @@ import gov.nasa.jpl.mbee.actions.DeleteDocumentAction;
 import gov.nasa.jpl.mbee.actions.DeleteProjectAction;
 import gov.nasa.jpl.mbee.actions.DeleteVolumeAction;
 import gov.nasa.jpl.mbee.actions.EMSLogoutAction;
+import gov.nasa.jpl.mbee.actions.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.ExportViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.ExportViewHierarchyAction;
@@ -119,7 +120,11 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 "Document Profile");
         if (e == null)
             return;
-
+        
+        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "Alfresco Model");
+        if (manager.getActionFor(ExportModelAction.actionid) == null)
+            modelLoad.addAction(new ExportModelAction(e));
+        
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
         if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.validationScriptStereotype)) {
