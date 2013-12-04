@@ -31,6 +31,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ModelExporter {
@@ -68,6 +69,10 @@ public class ModelExporter {
         packageOnly = pkgOnly;
     }
     
+    public int getNumberOfElements() {
+        return elements.size();
+    }
+    
     @SuppressWarnings("unchecked")
     public JSONObject getResult() {
         for (Element e: starts) {
@@ -91,7 +96,7 @@ public class ModelExporter {
     private boolean addToElements(Element e, int curdepth) {
         if (elements.containsKey(e.getID()))
             return true;
-        if (e instanceof Comment || e instanceof ValueSpecification || !(e instanceof Package) && packageOnly)
+        if (e instanceof Comment || e instanceof ValueSpecification || !(e instanceof Package) && packageOnly || e instanceof Extension)
             return false;
         JSONObject elementInfo = new JSONObject();
         if (e instanceof Package) {

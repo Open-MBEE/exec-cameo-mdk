@@ -91,7 +91,8 @@ public class ExportModelAction extends MDAction {
         JSONObject result = me.getResult();
         String json = result.toJSONString();
 
-        // gl.log(json);
+        gl.log(json);
+        gl.log("Number of Elements: " + me.getNumberOfElements());
         String url = ViewEditUtils.getUrl();
         if (url == null) {
             return;
