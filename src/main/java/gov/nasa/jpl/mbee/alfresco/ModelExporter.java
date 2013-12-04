@@ -45,11 +45,12 @@ public class ModelExporter {
     
     private List<Element> starts;
     private int depth;
+    private boolean packageOnly;
     
     private Stereotype view = Utils.getViewStereotype();
     private Stereotype viewpoint = Utils.getViewpointStereotype();
     
-    public ModelExporter(Project prj, int depth) {
+    public ModelExporter(Project prj, int depth, boolean pkgOnly) {
         this.depth = depth;
         starts = new ArrayList<Element>();
         for (Package pkg: prj.getModel().getNestedPackage()) {
@@ -57,19 +58,21 @@ public class ModelExporter {
                 continue;//check for module??
             starts.add(pkg);
         }
+        packageOnly = pkgOnly;
         
     }
     
-    public ModelExporter(List<Element> roots, int depth) {
+    public ModelExporter(List<Element> roots, int depth, boolean pkgOnly) {
         this.depth = depth;
         this.starts = roots;
+        packageOnly = pkgOnly;
     }
     
     @SuppressWarnings("unchecked")
     public JSONObject getResult() {
         for (Element e: starts) {
-            addToElements(e, 1);
-            roots.add(e.getID());
+            if (addToElements(e, 1))
+                roots.add(e.getID());
         }
         JSONObject result = new JSONObject();
         result.put("roots", roots);
@@ -88,7 +91,7 @@ public class ModelExporter {
     private boolean addToElements(Element e, int curdepth) {
         if (elements.containsKey(e.getID()))
             return true;
-        if (e instanceof Comment || e instanceof ValueSpecification)
+        if (e instanceof Comment || e instanceof ValueSpecification || !(e instanceof Package) && packageOnly)
             return false;
         JSONObject elementInfo = new JSONObject();
         if (e instanceof Package) {

@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.actions;
 
 import gov.nasa.jpl.mbee.alfresco.ModelExporter;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
@@ -37,6 +38,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JOptionPane;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -65,12 +68,25 @@ public class ExportModelAction extends MDAction {
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
         ModelExporter me = null;
+        Boolean packageOnly = Utils.getUserYesNoAnswer("Export package structure only?");
+        if (packageOnly == null)
+            return;
+        String depths = (String)JOptionPane.showInputDialog("Max Depth? 0 is infinite");
+        if (depths == null)
+            return;
+        int depth = 0;
+        try {
+            depth = Integer.parseInt(depths);
+        } catch (Exception ex) {
+            return;
+        }
+        
         if (start instanceof Model) {
-            me = new ModelExporter(Application.getInstance().getProject(), 0);
+            me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
         } else {
             List<Element> root = new ArrayList<Element>();
             root.add(start);
-            me = new ModelExporter(root, 0);
+            me = new ModelExporter(root, depth, packageOnly);
         }
         JSONObject result = me.getResult();
         String json = result.toJSONString();
