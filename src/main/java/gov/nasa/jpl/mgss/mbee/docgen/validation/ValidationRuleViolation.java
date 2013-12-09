@@ -28,12 +28,17 @@
  ******************************************************************************/
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
+import java.util.List;
+
+import com.nomagic.actions.NMAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidationRuleViolation {
 
     private Element e;
 
+    private List<NMAction> actions;
+    
     public Element getElement() {
         return e;
     }
@@ -71,5 +76,13 @@ public class ValidationRuleViolation {
     public ValidationRuleViolation(Element e, String comment, boolean reported) {
         this(e, comment);
         this.reported = reported;
+    }
+    
+    public void setActions(List<NMAction> actions) {
+        this.actions = actions;
+    }
+    
+    public List<NMAction> getActions() {
+        return actions;
     }
 }

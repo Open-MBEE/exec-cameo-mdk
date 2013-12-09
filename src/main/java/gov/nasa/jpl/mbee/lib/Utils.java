@@ -2071,7 +2071,11 @@ public class Utils {
                 break;
         }
         for (ValidationRuleViolation vrv: vr.getViolations()) {
-            Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
+            Annotation anno;
+            if (vrv.getActions() != null && vrv.getActions().size() > 0)
+                anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement(), vrv.getActions());
+            else
+                anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
             results.add(new RuleViolationResult(anno, cons));
         }
         return results;
