@@ -97,7 +97,7 @@ public class ExportModelAction extends MDAction {
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getModel().getID();
+        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
        // gl.log("*** Starting export view comments ***");
         PostMethod pm = new PostMethod(url);
         try {

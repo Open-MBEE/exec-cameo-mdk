@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.nomagic.actions.NMAction;
@@ -37,7 +38,7 @@ public class ValidationRuleViolation {
 
     private Element e;
 
-    private List<NMAction> actions;
+    private List<NMAction> actions = new ArrayList<NMAction>();
     
     public Element getElement() {
         return e;
@@ -84,5 +85,9 @@ public class ValidationRuleViolation {
     
     public List<NMAction> getActions() {
         return actions;
+    }
+    
+    public void addAction(NMAction a) {
+        actions.add(a);
     }
 }
