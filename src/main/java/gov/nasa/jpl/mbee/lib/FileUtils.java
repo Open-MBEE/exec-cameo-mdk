@@ -240,4 +240,9 @@ public final class FileUtils {
             e.printStackTrace();
         }
     }
+    
+    public static String getFileStringContent(String filename) throws FileNotFoundException {
+        String text = new Scanner(new File(filename)).useDelimiter("\\A").next();
+        return text;
+    }
 }

@@ -127,6 +127,8 @@ public class ModelExporter {
             return true;
         if (e instanceof Comment || e instanceof ValueSpecification || !(e instanceof Package) && packageOnly || e instanceof Extension)
             return false;
+        if (ProjectUtilities.isElementInAttachedProject(e))
+            return false;
         JSONObject elementInfo = new JSONObject();
         if (e instanceof Package) {
             elementInfo.put("type", "Package");

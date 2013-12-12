@@ -51,6 +51,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 
+import gov.nasa.jpl.mbee.alfresco.validation.actions.FixModelOwner;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ImportDoc;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ImportName;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -91,19 +92,18 @@ public class ModelValidator {
                 continue;
        
             boolean valuediff = false;
-            boolean ownerdiff = false;
             String elementDoc = ModelHelper.getComment(e);
             String elementName = null;
             if (e instanceof NamedElement) {
                 elementName = ((NamedElement)e).getName();
             }
             if (elementName != null && !elementName.equals(elementInfo.get("name"))) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "model: " + elementName + ", web: " + elementInfo.get("name"));
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[NAME] model: " + elementName + ", web: " + elementInfo.get("name"));
                 v.addAction(new ImportName((NamedElement)e, (String)elementInfo.get("name")));
                 nameDiff.addViolation(v);
             }
             if (elementDoc != null && !elementDoc.equals(elementInfo.get("documentation"))) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "model: " + elementDoc + ", web: " + elementInfo.get("documentation"));
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + elementDoc + ", web: " + elementInfo.get("documentation"));
                 v.addAction(new ImportDoc(e, (String)elementInfo.get("documentation")));
                 docDiff.addViolation(v);
             }
@@ -117,7 +117,12 @@ public class ModelValidator {
             }
             String ownerID = e.getOwner().getID();
             if (!ownerID.equals(elementInfo.get("owner"))) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "model: " + e.getOwner().getHumanName() + ", web: " + ((Element)prj.getElementByID((String)elementInfo.get("owner"))).getHumanName());
+                Element owner = (Element)prj.getElementByID((String)elementInfo.get("owner"));
+                if (owner == null) {
+                    continue;//??
+                }
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + owner.getHumanName());
+                v.addAction(new FixModelOwner(e, owner));
                 ownership.addViolation(v);
             }
             

@@ -72,7 +72,13 @@ public class ViewEditUtils {
                                                                     "Other");
 
     public static String getUrl() {
-        Boolean old = Utils.getUserYesNoAnswer("Use old view editor?");
+        return getUrl(true);
+    }
+    
+    public static String getUrl(boolean choice) {
+        Boolean old = false;
+        if (choice)
+            old = Utils.getUserYesNoAnswer("Use old view editor?");
         if (old == null)
             return null;
         String url = null;

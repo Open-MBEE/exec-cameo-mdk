@@ -51,6 +51,7 @@ import gov.nasa.jpl.mbee.actions.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.actions.SynchronizeViewAction;
 import gov.nasa.jpl.mbee.actions.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.actions.ValidateDocument3Action;
+import gov.nasa.jpl.mbee.actions.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.ViewDocument3Action;
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
@@ -124,6 +125,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "Alfresco Model");
         if (manager.getActionFor(ExportModelAction.actionid) == null)
             modelLoad.addAction(new ExportModelAction(e));
+        if (manager.getActionFor(ValidateModelAction.actionid) == null)
+            modelLoad.addAction(new ValidateModelAction(e));
         
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
