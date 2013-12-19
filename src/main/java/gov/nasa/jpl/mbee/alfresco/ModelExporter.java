@@ -146,6 +146,7 @@ public class ModelExporter {
             if (type != null) {
                 addToElements(type, 0);
                 propertyTypes.put(e.getID(), type.getID());
+                elementInfo.put("propertyType", type.getID());
             }
         } else if (e instanceof Slot) {
             elementInfo.put("type", "Property");
@@ -162,6 +163,7 @@ public class ModelExporter {
             if (type != null) {
                 addToElements(type, 0);
                 propertyTypes.put(e.getID(), type.getID());
+                elementInfo.put("propertyType", type.getID());
             }
         } else if (e instanceof Dependency) {
             if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getConformsStereotype()))
@@ -170,10 +172,13 @@ public class ModelExporter {
                 elementInfo.put("type", "Expose");
             else
                 elementInfo.put("type", "Dependency");
-            addRelationship((Dependency)e);
+            addRelationship((Dependency)e, elementInfo);
         } else if (e instanceof Generalization) {
             elementInfo.put("type", "Generalization");
-            addRelationship((Generalization)e);
+            addRelationship((Generalization)e, elementInfo);
+        } else if (e instanceof DirectedRelationship) {   
+            elementInfo.put("type", "DirectedRelationship");
+            addRelationship((DirectedRelationship)e, elementInfo);
         } else {
             elementInfo.put("type", "Element");
         }
@@ -203,7 +208,7 @@ public class ModelExporter {
     }
     
     @SuppressWarnings("unchecked")
-    private void addRelationship(DirectedRelationship dr) {
+    private void addRelationship(DirectedRelationship dr, JSONObject elementinfo) {
         JSONObject relInfo = new JSONObject();
         Element client = ModelHelper.getClientElement(dr);
         Element supplier = ModelHelper.getSupplierElement(dr);
@@ -211,6 +216,8 @@ public class ModelExporter {
         addToElements(supplier, 0);
         relInfo.put("source", client.getID());
         relInfo.put("target", supplier.getID());
+        elementinfo.put("source", client.getID());
+        elementinfo.put("target", supplier.getID());
         relationshipElements.put(dr.getID(), relInfo);
     }
     
