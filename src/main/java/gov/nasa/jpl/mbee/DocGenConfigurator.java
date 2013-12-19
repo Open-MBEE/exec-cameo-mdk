@@ -42,6 +42,7 @@ import gov.nasa.jpl.mbee.actions.ImportViewAction;
 import gov.nasa.jpl.mbee.actions.ImportViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.ImportViewDryAction;
 import gov.nasa.jpl.mbee.actions.ImportViewRecursiveAction;
+import gov.nasa.jpl.mbee.actions.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.InstanceViewpointAction;
 import gov.nasa.jpl.mbee.actions.NumberDependencyAction;
 import gov.nasa.jpl.mbee.actions.OrganizeDocumentAction;
@@ -78,6 +79,7 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -127,6 +129,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             modelLoad.addAction(new ExportModelAction(e));
         if (manager.getActionFor(ValidateModelAction.actionid) == null)
             modelLoad.addAction(new ValidateModelAction(e));
+        if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
+            modelLoad.addAction(new InitializeProjectAction());
         
         // add menus in reverse order since they are inserted at top
         // View Interaction menu

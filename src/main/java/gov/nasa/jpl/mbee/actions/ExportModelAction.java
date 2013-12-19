@@ -93,11 +93,11 @@ public class ExportModelAction extends MDAction {
 
         gl.log(json);
         gl.log("Number of Elements: " + me.getNumberOfElements());
-        String url = ViewEditUtils.getUrl();
+        String url = ViewEditUtils.getUrl(false);
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
        // gl.log("*** Starting export view comments ***");
         PostMethod pm = new PostMethod(url);
         try {

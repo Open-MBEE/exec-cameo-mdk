@@ -40,13 +40,16 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationWindowRun;
 import gov.nasa.jpl.ocl.GetCallOperation;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.lang.reflect.InvocationTargetException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +68,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
+import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -2072,11 +2076,23 @@ public class Utils {
         }
         for (ValidationRuleViolation vrv: vr.getViolations()) {
             Annotation anno;
-            if (vrv.getActions() != null && vrv.getActions().size() > 0)
+            if (vrv.getActions() != null && vrv.getActions().size() > 0) {
                 anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement(), vrv.getActions());
-            else
+                for (NMAction action: vrv.getActions()) {
+                    if (action instanceof IRuleViolationAction)
+                        ((IRuleViolationAction)action).setAnnotation(anno);
+                }
+            } else
                 anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
-            results.add(new RuleViolationResult(anno, cons));
+            RuleViolationResult rvr = new RuleViolationResult(anno, cons);
+            results.add(rvr);
+            if (vrv.getActions() != null && vrv.getActions().size() > 0) {
+                for (NMAction action: vrv.getActions()) {
+                    if (action instanceof IRuleViolationAction)
+                        ((IRuleViolationAction)action).setRuleViolationResult(rvr);
+                }
+            }
+            
         }
         return results;
 
@@ -2119,6 +2135,15 @@ public class Utils {
         String id = "" + System.currentTimeMillis();
         // provider.setValidationResults(id, results);
         // provider.update();
+        Map<Annotation, RuleViolationResult> mapping = new HashMap<Annotation, RuleViolationResult>();
+        ValidationWindowRun vwr = new ValidationWindowRun(id, title, runData, results, mapping);
+        for (RuleViolationResult rvr: results) {
+            for (NMAction action: rvr.getAnnotation().getActions()) {
+                if (action instanceof IRuleViolationAction)
+                    ((IRuleViolationAction)action).setValidationWindowRun(vwr);
+            }
+            mapping.put(rvr.getAnnotation(), rvr);
+        }
         ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
     }
 

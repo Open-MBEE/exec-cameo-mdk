@@ -59,20 +59,20 @@ public class ValidateModelAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        String url = "";//ViewEditUtils.getUrl(false);
-        //if (url == null) {
-         //   return;
-        //}
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();;
+        String url = ViewEditUtils.getUrl(false);
+        if (url == null) {
+            return;
+        }
+        url += "/javawebscripts/element/" + start.getID() + "?recurse=true";
         GetMethod gm = new GetMethod(url);
         try {
-            //HttpClient client = new HttpClient();
-            //ViewEditUtils.setCredentials(client, url);
-            //int code = client.executeMethod(gm);
-            //if (ViewEditUtils.showErrorMessage(code))
-            //    return;
-            //String json = gm.getResponseBodyAsString();
-            String json = FileUtils.getFileStringContent("/Users/dlam/Desktop/test.json");
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url);
+            int code = client.executeMethod(gm);
+            if (ViewEditUtils.showErrorMessage(code))
+                return;
+            String json = gm.getResponseBodyAsString();
+            //String json = FileUtils.getFileStringContent("/Users/dlam/Desktop/test.json");
             JSONObject result = (JSONObject)JSONValue.parse(json);
             ResultHolder.lastResults = result;
             ModelValidator validator = new ModelValidator(start, result);

@@ -29,21 +29,25 @@
 package gov.nasa.jpl.mbee.alfresco.validation.actions;
 
 import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.annotation.AnnotationManager;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ImportDoc extends MDAction implements AnnotationAction {
+public class ImportDoc extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private Element element;
@@ -64,6 +68,7 @@ public class ImportDoc extends MDAction implements AnnotationAction {
     public void execute(Collection<Annotation> annos) {
         JSONObject result = ResultHolder.lastResults;
         SessionManager.getInstance().createSession("Change Docs");
+        Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
             for (Annotation anno: annos) {
                 Element e = (Element)anno.getTarget();
@@ -74,8 +79,13 @@ public class ImportDoc extends MDAction implements AnnotationAction {
                 if (resultDoc == null)
                     continue;
                 ModelHelper.setComment(e, resultDoc);
+                AnnotationManager.getInstance().remove(anno);
+                toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
+            AnnotationManager.getInstance().update();
+            this.removeViolationsAndUpdateWindow(toremove);
+            
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
         }
@@ -83,13 +93,17 @@ public class ImportDoc extends MDAction implements AnnotationAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!element.isEditable()) {
+            Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
+            return;
+        }
         SessionManager.getInstance().createSession("Change Doc");
         try {
-            if (element.isEditable())
-                ModelHelper.setComment(element, doc);
-            else
-                Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
+            ModelHelper.setComment(element, doc);
             SessionManager.getInstance().closeSession();
+            AnnotationManager.getInstance().remove(annotation);
+            AnnotationManager.getInstance().update();
+            this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
         }

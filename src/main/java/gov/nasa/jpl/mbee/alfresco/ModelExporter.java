@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.alfresco;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.alfresco.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.ArrayList;
@@ -138,8 +139,6 @@ public class ModelExporter {
             elementInfo.put("isSlot", false);
             ValueSpecification vs = ((Property)e).getDefaultValue();
             if (vs != null) {
-                //addToElements(vs, 0);
-                //propertyValues.put(e.getID(), vs.getID());
                 JSONArray value = new JSONArray();
                 addValues(e, value, elementInfo, vs);
             }
@@ -154,8 +153,6 @@ public class ModelExporter {
             elementInfo.put("isSlot", true);
             List<ValueSpecification> vsl = ((Slot)e).getValue();
             if (vsl != null && vsl.size() > 0) {
-                //addToElements(vs, 0);
-                //propertyValues.put(e.getID(), vs.getID());
                 JSONArray value = new JSONArray();
                 for (ValueSpecification vs: vsl) {
                     addValues(e, value, elementInfo, vs);
@@ -177,30 +174,6 @@ public class ModelExporter {
         } else if (e instanceof Generalization) {
             elementInfo.put("type", "Generalization");
             addRelationship((Generalization)e);
-   /*     } else if (e instanceof LiteralBoolean) {
-            elementInfo.put("type", "LiteralBoolean");
-            elementInfo.put("boolean", ((LiteralBoolean)e).isValue());
-        } else if (e instanceof LiteralString) {
-            elementInfo.put("type", "LiteralString");
-            elementInfo.put("string", ((LiteralString)e).getValue());
-        } else if (e instanceof LiteralInteger || e instanceof LiteralUnlimitedNatural) {
-            elementInfo.put("type", "LiteralInteger");
-            if (e instanceof LiteralInteger)
-                elementInfo.put("integer", ((LiteralInteger)e).getValue());
-            else
-                elementInfo.put("integer", ((LiteralUnlimitedNatural)e).getValue());
-        } else if (e instanceof LiteralReal) {
-            elementInfo.put("type", "LiteralReal");
-            elementInfo.put("double", ((LiteralReal)e).getValue());
-        } else if (e instanceof Expression) {
-            elementInfo.put("type", "Expression");
-        } else if (e instanceof ElementValue) {
-            elementInfo.put("type", "ElementValue");
-            Element ev = ((ElementValue)e).getElement();
-            if (ev != null) {
-                addToElements(ev, 0);
-                elementValues.put(e.getID(), ev.getID());
-            } */
         } else {
             elementInfo.put("type", "Element");
         }
@@ -244,30 +217,25 @@ public class ModelExporter {
     @SuppressWarnings("unchecked")
     private void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
         if (vs instanceof LiteralBoolean) {
-            elementInfo.put("valueType", "LiteralBoolean");
+            elementInfo.put("valueType", PropertyValueType.LiteralBoolean.toString());
             value.add(((LiteralBoolean)vs).isValue());
-            elementInfo.put("boolean", value );
         } else if (vs instanceof LiteralString) {
-            elementInfo.put("valueType", "LiteralString");
+            elementInfo.put("valueType", PropertyValueType.LiteralString.toString());
             value.add(((LiteralString)vs).getValue());
-            elementInfo.put("string", value);
         } else if (vs instanceof LiteralInteger || vs instanceof LiteralUnlimitedNatural) {
-            elementInfo.put("valueType", "LiteralInteger");
+            elementInfo.put("valueType", PropertyValueType.LiteralInteger.toString());
             if (vs instanceof LiteralInteger) {
                 value.add(((LiteralInteger)vs).getValue());
             } else 
                 value.add(((LiteralUnlimitedNatural)vs).getValue());
-            elementInfo.put("integer", value);
         } else if (vs instanceof LiteralReal) {
-            elementInfo.put("valueType", "LiteralReal");
+            elementInfo.put("valueType", PropertyValueType.LiteralReal.toString());
             value.add(((LiteralReal)vs).getValue());
-            elementInfo.put("double", value);
         } else if (vs instanceof Expression) {
-            elementInfo.put("valueType", "Expression");
+            elementInfo.put("valueType", PropertyValueType.Expression.toString());
             value.add(RepresentationTextCreator.getRepresentedText(vs));
-            elementInfo.put("expression", value);
         } else if (vs instanceof ElementValue) {
-            elementInfo.put("valueType", "ElementValue");
+            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
             Element ev = ((ElementValue)vs).getElement();
             if (ev != null) {
                 addToElements(ev, 0);
@@ -275,5 +243,6 @@ public class ModelExporter {
                 elementValues.put(e.getID(), value);
             }
         }
+        elementInfo.put("value", value);
     }
 }
