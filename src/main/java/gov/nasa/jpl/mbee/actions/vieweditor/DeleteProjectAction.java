@@ -26,47 +26,66 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.vieweditor;
 
-import gov.nasa.jpl.mbee.model.PropertiesTableByAttributes;
-import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
+
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.PostMethod;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-/**
- * docgen 3 version
- * 
- * @author dlam
- * 
- */
-public class EditPropertiesTableAction extends MDAction {
-
+public class DeleteProjectAction extends MDAction {
     private static final long serialVersionUID = 1L;
-    private PropertiesTableByAttributes npt;
+    private Element            proj;
+    public static final String actionid = "DeleteProject";
 
-    public EditPropertiesTableAction(PropertiesTableByAttributes table) {
-        super(null, "Edit Properties Table", null, null);
-        npt = table;
+    public DeleteProjectAction(Element e) {
+        super(actionid, "Remove From View Editor", null, null);
+        proj = e;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
 
+        String url = ViewEditUtils.getUrl();
+        if (url == null || url.equals(""))
+            return;
+        url += "/rest/projects/" + proj.getID() + "/delete";
+        PostMethod pm = new PostMethod(url);
         try {
-            EditableTable pt = npt.getEditableTable();
-            pt.showTable();
-        } catch (Exception ex) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            ex.printStackTrace(pw);
-            gl.log(sw.toString()); // stack trace as a string
+            // pm.setRequestHeader("Content-Type", "text/json");
+            // pm.setRequestEntity(JsonRequestEntity.create(vol.getID()));
+            // Protocol easyhttps = new Protocol("https", new
+            // EasySSLProtocolSocketFactory(), 443);
+            // Protocol.registerProtocol("https", easyhttps);
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url);
+            int code = client.executeMethod(pm);
+            if (ViewEditUtils.showErrorMessage(code))
+                return;
+            String response = pm.getResponseBodyAsString();
+            if (response.equals("ok"))
+                gl.log("[INFO] Remove Successful.");
+            else if (response.equals("NotFound"))
+                gl.log("[ERROR] Project not found.");
+            else
+                gl.log(response);
+        } catch (MalformedURLException e1) {
+            e1.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } finally {
+            pm.releaseConnection();
         }
     }
+
 }

@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.alfresco;
 
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;

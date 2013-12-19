@@ -26,62 +26,51 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.docgen;
 
-import gov.nasa.jpl.mbee.alfresco.validation.ModelValidator;
-import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
-import gov.nasa.jpl.mbee.lib.FileUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.generator.ViewStructureValidator;
 
 import java.awt.event.ActionEvent;
-import java.io.FileReader;
-
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ValidateModelAction extends MDAction {
+/**
+ * checks view to viewpoint composition hierarchy - if the view composition
+ * hierarchy violates the viewpoint composition
+ * 
+ * @author dlam
+ * 
+ */
+public class ValidateViewStructureAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element start;
-    public static final String actionid = "ValidateModel";
-    
-    public ValidateModelAction(Element e) {
-        super(actionid, "Validate Model", null, null);
-        start = e;
+    public static final String actionid = "ValidateViewStructure";
+    private Element            view;
+
+    public ValidateViewStructureAction(Element e) {
+        super(actionid, "Validate Viewpoint Conformance", null, null);
+        view = e;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        String url = ViewEditUtils.getUrl(false);
-        if (url == null) {
-            return;
-        }
-        url += "/javawebscripts/element/" + start.getID() + "?recurse=true";
-        GetMethod gm = new GetMethod(url);
+        GUILog gl = Application.getInstance().getGUILog();
         try {
-            HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
-            int code = client.executeMethod(gm);
-            if (ViewEditUtils.showErrorMessage(code))
-                return;
-            String json = gm.getResponseBodyAsString();
-            //String json = FileUtils.getFileStringContent("/Users/dlam/Desktop/test.json");
-            JSONObject result = (JSONObject)JSONValue.parse(json);
-            ResultHolder.lastResults = result;
-            ModelValidator validator = new ModelValidator(start, result);
-            validator.validate();
-            validator.showWindow();
+            ViewStructureValidator vsv = new ViewStructureValidator(view);
+            vsv.validate(view);
+            vsv.printErrors();
+            gl.log("Finished");
         } catch (Exception ex) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            gl.log(sw.toString()); // stack trace as a string
             ex.printStackTrace();
-        } finally {
-            gm.releaseConnection();
         }
     }
 }

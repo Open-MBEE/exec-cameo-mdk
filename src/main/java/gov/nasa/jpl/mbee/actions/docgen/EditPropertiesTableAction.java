@@ -26,78 +26,47 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.docgen;
 
-import gov.nasa.jpl.mbee.ViewEditorProfile;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.model.PropertiesTableByAttributes;
+import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 
 import java.awt.event.ActionEvent;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.List;
-
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.PostMethod;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class DeleteVolumeAction extends MDAction {
+/**
+ * docgen 3 version
+ * 
+ * @author dlam
+ * 
+ */
+public class EditPropertiesTableAction extends MDAction {
+
     private static final long serialVersionUID = 1L;
-    private Element            proj;
-    public static final String actionid = "DeleteVolume";
+    private PropertiesTableByAttributes npt;
 
-    public DeleteVolumeAction(Element e) {
-        super(actionid, "Remove From View Editor", null, null);
-        proj = e;
+    public EditPropertiesTableAction(PropertiesTableByAttributes table) {
+        super(null, "Edit Properties Table", null, null);
+        npt = table;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-        String volid = proj.getID();
-        List<Element> projects = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(proj,
-                ViewEditorProfile.hasVolume, 2, false, 1);
-        boolean root = false;
 
-        for (Element p: projects) {
-            if (StereotypesHelper.hasStereotype(p, ViewEditorProfile.project))
-                root = true;
-        }
-
-        if (!root) {
-            Utils.showPopupMessage("You cannot remove a non-root volume from view editor directly");
-            return;
-        }
-        String url = ViewEditUtils.getUrl();
-        if (url == null || url.equals(""))
-            return;
-        url += "/rest/projects/volume/" + volid + "/delete";
-        PostMethod pm = new PostMethod(url);
         try {
-            HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
-            int code = client.executeMethod(pm);
-            if (ViewEditUtils.showErrorMessage(code))
-                return;
-            String response = pm.getResponseBodyAsString();
-            if (response.equals("ok"))
-                gl.log("[INFO] Remove Successful.");
-            else if (response.equals("NotFound"))
-                gl.log("[ERROR] Volume not found.");
-            else
-                gl.log(response);
-        } catch (MalformedURLException e1) {
-            e1.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        } finally {
-            pm.releaseConnection();
+            EditableTable pt = npt.getEditableTable();
+            pt.showTable();
+        } catch (Exception ex) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            gl.log(sw.toString()); // stack trace as a string
         }
     }
-
 }

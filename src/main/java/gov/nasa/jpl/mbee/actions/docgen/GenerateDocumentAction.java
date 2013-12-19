@@ -26,15 +26,20 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.docgen;
 
+import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mbee.viewedit.ViewExporter;
+import gov.nasa.jpl.mbee.generator.DocumentWriter;
+import gov.nasa.jpl.mbee.generator.PostProcessor;
+import gov.nasa.jpl.mbee.model.Document;
 
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+
+import javax.swing.JFileChooser;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -43,41 +48,53 @@ import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
- * export view to view editor recursive means export this view and all its
- * children recursively
+ * generates docgen 3 document
  * 
  * @author dlam
  * 
  */
-public class ExportViewRecursiveAction extends MDAction {
+public class GenerateDocumentAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Element            doc;
-    public static final String actionid = "ExportViewRecursive";
+    public static final String actionid = "GenerateDocument";
 
-    public ExportViewRecursiveAction(Element e) {
-        super(actionid, "Export Model (Overwrite)", null, null);
+    public GenerateDocumentAction(Element e) {
+        super(actionid, "Generate DocGen 3 Document", null, null);
         doc = e;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-        DocumentValidator dv = null;
+
+        DocumentValidator dv = new DocumentValidator(doc);
         try {
-            Boolean recurse = true; // Utils.getUserYesNoAnswer("Export views recursively?");
-            String url = ViewEditUtils.getUrl();
-            if (url == null)
-                return;
-            gl.log("*** Starting export model ***");
-            dv = new DocumentValidator(doc);
             dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
                 return;
             }
-            ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, true, url, dv),
-                    "Exporting Model...", true, 0);
+            DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
+            Document dge = dg.parseDocument();
+            boolean genNewImage = dge.getGenNewImage();
+            (new PostProcessor()).process(dge);
+            JFileChooser choose = new JFileChooser();
+            choose.setDialogTitle("Save to output xml...");
+            int retval = choose.showSaveDialog(null);
+            if (retval == JFileChooser.APPROVE_OPTION) {
+                if (choose.getSelectedFile() != null) {
+                    File savefile = choose.getSelectedFile();
+                    String userName = savefile.getName();
+                    String filename = userName;
+                    if (userName.length() < 4 || !userName.endsWith(".xml"))
+                        filename = userName + ".xml";
+                    File dir = savefile.getParentFile();
+                    File realfile = new File(dir, filename);
+                    ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage,
+                            dir), "Generating DocGen 3 Document...", true, 0);
+                }
+            }
         } catch (Exception ex) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -85,7 +102,6 @@ public class ExportViewRecursiveAction extends MDAction {
             gl.log(sw.toString()); // stack trace as a string
             ex.printStackTrace();
         }
-        if (dv != null)
-            dv.printErrors();
+        dv.printErrors();
     }
 }

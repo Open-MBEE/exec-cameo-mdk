@@ -26,7 +26,7 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.vieweditor;
 
 import gov.nasa.jpl.mbee.viewedit.ProjectExporter;
 

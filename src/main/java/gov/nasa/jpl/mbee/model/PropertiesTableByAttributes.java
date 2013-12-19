@@ -30,7 +30,7 @@ package gov.nasa.jpl.mbee.model;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mbee.actions.EditPropertiesTableAction;
+import gov.nasa.jpl.mbee.actions.docgen.EditPropertiesTableAction;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;

@@ -26,108 +26,78 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.vieweditor;
 
-import gov.nasa.jpl.mbee.alfresco.ModelExporter;
+import gov.nasa.jpl.mbee.ViewEditorProfile;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.awt.event.ActionEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
-
-import javax.swing.JOptionPane;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ExportModelAction extends MDAction {
-
+public class DeleteVolumeAction extends MDAction {
     private static final long serialVersionUID = 1L;
+    private Element            proj;
+    public static final String actionid = "DeleteVolume";
 
-    private Element start;
-    
-    public static final String actionid = "ExportModel";
-    
-    public ExportModelAction(Element e) {
-        super(actionid, "Export Model", null, null);
-        start = e;
+    public DeleteVolumeAction(Element e) {
+        super(actionid, "Remove From View Editor", null, null);
+        proj = e;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-        ModelExporter me = null;
-        Boolean packageOnly = Utils.getUserYesNoAnswer("Export package structure only?");
-        if (packageOnly == null)
-            return;
-        String depths = (String)JOptionPane.showInputDialog("Max Depth? 0 is infinite");
-        if (depths == null)
-            return;
-        int depth = 0;
-        try {
-            depth = Integer.parseInt(depths);
-        } catch (Exception ex) {
-            return;
-        }
-        
-        if (start instanceof Model) {
-            me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
-        } else {
-            List<Element> root = new ArrayList<Element>();
-            root.add(start);
-            me = new ModelExporter(root, depth, packageOnly);
-        }
-        JSONObject result = me.getResult();
-        String json = result.toJSONString();
+        String volid = proj.getID();
+        List<Element> projects = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(proj,
+                ViewEditorProfile.hasVolume, 2, false, 1);
+        boolean root = false;
 
-        gl.log(json);
-        gl.log("Number of Elements: " + me.getNumberOfElements());
-        String url = ViewEditUtils.getUrl(false);
-        if (url == null) {
+        for (Element p: projects) {
+            if (StereotypesHelper.hasStereotype(p, ViewEditorProfile.project))
+                root = true;
+        }
+
+        if (!root) {
+            Utils.showPopupMessage("You cannot remove a non-root volume from view editor directly");
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
-       // gl.log("*** Starting export view comments ***");
+        String url = ViewEditUtils.getUrl();
+        if (url == null || url.equals(""))
+            return;
+        url += "/rest/projects/volume/" + volid + "/delete";
         PostMethod pm = new PostMethod(url);
         try {
-            gl.log("[INFO] Sending...");
-            pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
-            pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
             int code = client.executeMethod(pm);
             if (ViewEditUtils.showErrorMessage(code))
                 return;
             String response = pm.getResponseBodyAsString();
-            // gl.log(response);
-            if (response.equals("NotFound"))
-                gl.log("[ERROR] There are some views that are not exported yet, export the views first, then the comments");
-            else if (response.equals("ok"))
-                gl.log("[INFO] Export Successful.");
+            if (response.equals("ok"))
+                gl.log("[INFO] Remove Successful.");
+            else if (response.equals("NotFound"))
+                gl.log("[ERROR] Volume not found.");
             else
                 gl.log(response);
-
-        } catch (Exception ex) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            ex.printStackTrace(pw);
-            gl.log(sw.toString()); // stack trace as a string
-            ex.printStackTrace();
+        } catch (MalformedURLException e1) {
+            e1.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
         } finally {
             pm.releaseConnection();
         }
-
     }
 
 }

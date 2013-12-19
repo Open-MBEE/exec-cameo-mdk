@@ -26,82 +26,89 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.vieweditor;
 
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.generator.DocumentWriter;
-import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
+import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javax.swing.JFileChooser;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.PostMethod;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-/**
- * generates docgen 3 document
- * 
- * @author dlam
- * 
- */
-public class GenerateDocumentAction extends MDAction {
-
+public class ExportViewHierarchyAction extends MDAction {
     private static final long serialVersionUID = 1L;
     private Element            doc;
-    public static final String actionid = "GenerateDocument";
+    public static final String actionid = "ExportViewHierarchy";
 
-    public GenerateDocumentAction(Element e) {
-        super(actionid, "Generate DocGen 3 Document", null, null);
+    public ExportViewHierarchyAction(Element e) {
+        super(actionid, "Export View Hierarchy", null, null);
         doc = e;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-
-        DocumentValidator dv = new DocumentValidator(doc);
+        PostMethod pm = null;
+        DocumentValidator dv = null;
         try {
+            dv = new DocumentValidator(doc);
             dv.validateDocument();
             if (dv.isFatal()) {
                 dv.printErrors();
                 return;
             }
             DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
-            Document dge = dg.parseDocument();
-            boolean genNewImage = dge.getGenNewImage();
-            (new PostProcessor()).process(dge);
-            JFileChooser choose = new JFileChooser();
-            choose.setDialogTitle("Save to output xml...");
-            int retval = choose.showSaveDialog(null);
-            if (retval == JFileChooser.APPROVE_OPTION) {
-                if (choose.getSelectedFile() != null) {
-                    File savefile = choose.getSelectedFile();
-                    String userName = savefile.getName();
-                    String filename = userName;
-                    if (userName.length() < 4 || !userName.endsWith(".xml"))
-                        filename = userName + ".xml";
-                    File dir = savefile.getParentFile();
-                    File realfile = new File(dir, filename);
-                    ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage,
-                            dir), "Generating DocGen 3 Document...", true, 0);
-                }
+            Document dge = dg.parseDocument(true, true);
+            dv.printErrors();
+            ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+            dge.accept(vhv);
+            String post = vhv.getResult().toJSONString();
+            String url = ViewEditUtils.getUrl();
+            if (url == null) {
+                dv.printErrors();
+                return;
             }
+            gl.log("*** Starting export view hierarchy ***");
+            String posturl = url + "/rest/views/" + doc.getID() + "/hierarchy";
+            pm = new PostMethod(posturl);
+
+            pm.setRequestHeader("Content-Type", "application/json");
+            pm.setRequestEntity(JsonRequestEntity.create(post));
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, posturl);
+            // gl.log(post);
+            gl.log("[INFO] Sending...");
+            int code = client.executeMethod(pm);
+            if (ViewEditUtils.showErrorMessage(code))
+                return;
+            String response = pm.getResponseBodyAsString();
+            if (response.equals("ok"))
+                gl.log("[INFO] Export Successful.");
+            else
+                gl.log(response);
         } catch (Exception ex) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             ex.printStackTrace(pw);
             gl.log(sw.toString()); // stack trace as a string
             ex.printStackTrace();
+        } finally {
+            if (pm != null)
+                pm.releaseConnection();
         }
-        dv.printErrors();
+        if (dv != null)
+            dv.printErrors();
     }
 }

@@ -26,52 +26,82 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.docgen;
 
-import gov.nasa.jpl.mbee.DgviewDBSwitch;
-import gov.nasa.jpl.mbee.dgview.MDEditableTable;
+import gov.nasa.jpl.mbee.dgview.Paragraph;
+import gov.nasa.jpl.mbee.dgview.ViewElement;
 import gov.nasa.jpl.mbee.model.UserScript;
-import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.m2m.qvt.oml.ModelExtent;
+
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
-public class RunUserEditableTableAction extends MDAction {
+public class RunUserScriptAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private UserScript scripti;
+    private UserScript         scripti;
+    public static final String actionid = "RunUserScript";
 
-    public RunUserEditableTableAction(UserScript us) {
-        super(null, "Run Editable Script", null, null);
-        scripti = us;
-        String name = scripti.getStereotypeName();
+    public RunUserScriptAction(UserScript e) {
+        super(null, "Run User Script", null, null);
+        scripti = e;
+        String name = e.getStereotypeName();
         if (name != null)
-            this.setName("Edit " + name + " Table");
+            this.setName("Run " + name);
+    }
+
+    public RunUserScriptAction(UserScript e, boolean useid) {
+        super(actionid, "Run User Script", null, null);
+        scripti = e;
+        String name = e.getStereotypeName();
+        if (name != null)
+            this.setName("Run " + name);
     }
 
     @Override
     public void actionPerformed(ActionEvent event) {
         GUILog log = Application.getInstance().getGUILog();
         Map<?, ?> o = scripti.getScriptOutput(null);
-        if (o != null && o.containsKey("EditableTable")) {
-            Object l = ((Map<?, ?>)o).get("EditableTable");
-            if (l instanceof EditableTable) {
-                ((EditableTable)l).showTable();
-            }
-        } else if (o != null && o.containsKey("editableTable")) {
-            if (o.get("editableTable") instanceof List) {
-                for (Object object: (List<?>)o.get("editableTable")) {
-                    if (object instanceof MDEditableTable) {
-                        DgviewDBSwitch.convertEditableTable((MDEditableTable)object).showTable();
+        if (o != null) {
+            log.log("output from script: " + o.toString());
+            /*
+             * for (Object key: o.keySet()) { try { log.log("key: " +
+             * key.toString() + " value: " + o.get(key).toString()); } catch
+             * (Exception e) {
+             * 
+             * }
+             * 
+             * }
+             */
+            if (o.containsKey("docgenOutput")) {
+                Object result = o.get("docgenOutput");
+                if (result instanceof List) {
+                    for (Object res: (List<?>)result) {
+                        if (res instanceof NamedElement) {
+                            log.log(((NamedElement)res).getName());
+                        } else if (res instanceof ViewElement) {
+                            log.log(res.toString());
+                        }
+                    }
+                } else if (result instanceof ModelExtent) {
+                    for (EObject object: ((ModelExtent)result).getContents()) {
+                        if (object instanceof Paragraph) {
+                            log.log(((Paragraph)object).getText());
+                        }
                     }
                 }
             }
+
         } else
-            log.log("script has no editable table output!");
+            log.log("script has no output!");
+
     }
 }

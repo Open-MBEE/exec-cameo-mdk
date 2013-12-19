@@ -26,36 +26,59 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.vieweditor;
 
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.viewedit.ViewExporter;
 
 import java.awt.event.ActionEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ImportViewDryAction extends MDAction {
+public class SynchronizeViewRecursiveAction extends MDAction {
+
     private static final long serialVersionUID = 1L;
     private Element            doc;
-    public static final String actionid = "ImportViewDry";
+    public static final String actionid = "SynchronizeViewRecursive";
 
-    public ImportViewDryAction(Element e) {
-        super(actionid, "Validate Sync", null, null);
+    public SynchronizeViewRecursiveAction(Element e) {
+        super(actionid, "Merge model (Merge conflicting)", null, null);
         doc = e;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        DocumentValidator dv = new DocumentValidator(doc);
-        dv.validateDocument();
-        dv.printErrors();
-        if (dv.isFatal())
-            return;
-        Boolean recurse = Utils.getUserYesNoAnswer("Check recursively?");
-        if (recurse == null)
-            return;
-        ImportViewAction.doImportView(doc, false, recurse, null);
+        GUILog gl = Application.getInstance().getGUILog();
+        DocumentValidator dv = null;
+        try {
+            Boolean recurse = true;// Utils.getUserYesNoAnswer("Synchronize views recursively?");
+            String url = ViewEditUtils.getUrl();
+            if (url == null)
+                return;
+            gl.log("*** Starting merging model ***");
+            dv = new DocumentValidator(doc);
+            dv.validateDocument();
+            if (dv.isFatal()) {
+                dv.printErrors();
+                return;
+            }
+            ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, false, url, dv),
+                    "Merging Model...", true, 0);
+        } catch (Exception ex) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            gl.log(sw.toString()); // stack trace as a string
+            ex.printStackTrace();
+        }
+        if (dv != null)
+            dv.printErrors();
     }
 }

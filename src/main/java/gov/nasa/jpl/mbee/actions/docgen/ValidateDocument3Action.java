@@ -26,11 +26,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.docgen;
 
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mbee.viewedit.ViewExporter;
 
 import java.awt.event.ActionEvent;
 import java.io.PrintWriter;
@@ -39,38 +37,34 @@ import java.io.StringWriter;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class SynchronizeViewRecursiveAction extends MDAction {
+/**
+ * validates docgen 3 doc - checks for loops, duplicate dependencies, etc
+ * 
+ * @author dlam
+ * 
+ */
+public class ValidateDocument3Action extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Element            doc;
-    public static final String actionid = "SynchronizeViewRecursive";
+    public static final String actionid = "ValidateDocument3";
 
-    public SynchronizeViewRecursiveAction(Element e) {
-        super(actionid, "Merge model (Merge conflicting)", null, null);
+    public ValidateDocument3Action(Element e) {
+        super(actionid, "Validate DocGen 3 Document", null, null);
         doc = e;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-        DocumentValidator dv = null;
+
         try {
-            Boolean recurse = true;// Utils.getUserYesNoAnswer("Synchronize views recursively?");
-            String url = ViewEditUtils.getUrl();
-            if (url == null)
-                return;
-            gl.log("*** Starting merging model ***");
-            dv = new DocumentValidator(doc);
+            DocumentValidator dv = new DocumentValidator(doc);
             dv.validateDocument();
-            if (dv.isFatal()) {
-                dv.printErrors();
-                return;
-            }
-            ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, false, url, dv),
-                    "Merging Model...", true, 0);
+            dv.printErrors();
+
         } catch (Exception ex) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -78,7 +72,5 @@ public class SynchronizeViewRecursiveAction extends MDAction {
             gl.log(sw.toString()); // stack trace as a string
             ex.printStackTrace();
         }
-        if (dv != null)
-            dv.printErrors();
     }
 }

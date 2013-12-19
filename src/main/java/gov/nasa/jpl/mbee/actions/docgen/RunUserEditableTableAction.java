@@ -26,51 +26,52 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions;
+package gov.nasa.jpl.mbee.actions.docgen;
 
-import gov.nasa.jpl.mbee.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.DgviewDBSwitch;
+import gov.nasa.jpl.mbee.dgview.MDEditableTable;
+import gov.nasa.jpl.mbee.model.UserScript;
+import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 
 import java.awt.event.ActionEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.util.List;
+import java.util.Map;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-/**
- * validates docgen 3 doc - checks for loops, duplicate dependencies, etc
- * 
- * @author dlam
- * 
- */
-public class ValidateDocument3Action extends MDAction {
+public class RunUserEditableTableAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element            doc;
-    public static final String actionid = "ValidateDocument3";
+    private UserScript scripti;
 
-    public ValidateDocument3Action(Element e) {
-        super(actionid, "Validate DocGen 3 Document", null, null);
-        doc = e;
+    public RunUserEditableTableAction(UserScript us) {
+        super(null, "Run Editable Script", null, null);
+        scripti = us;
+        String name = scripti.getStereotypeName();
+        if (name != null)
+            this.setName("Edit " + name + " Table");
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        GUILog gl = Application.getInstance().getGUILog();
-
-        try {
-            DocumentValidator dv = new DocumentValidator(doc);
-            dv.validateDocument();
-            dv.printErrors();
-
-        } catch (Exception ex) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            ex.printStackTrace(pw);
-            gl.log(sw.toString()); // stack trace as a string
-            ex.printStackTrace();
-        }
+    public void actionPerformed(ActionEvent event) {
+        GUILog log = Application.getInstance().getGUILog();
+        Map<?, ?> o = scripti.getScriptOutput(null);
+        if (o != null && o.containsKey("EditableTable")) {
+            Object l = ((Map<?, ?>)o).get("EditableTable");
+            if (l instanceof EditableTable) {
+                ((EditableTable)l).showTable();
+            }
+        } else if (o != null && o.containsKey("editableTable")) {
+            if (o.get("editableTable") instanceof List) {
+                for (Object object: (List<?>)o.get("editableTable")) {
+                    if (object instanceof MDEditableTable) {
+                        DgviewDBSwitch.convertEditableTable((MDEditableTable)object).showTable();
+                    }
+                }
+            }
+        } else
+            log.log("script has no editable table output!");
     }
 }
