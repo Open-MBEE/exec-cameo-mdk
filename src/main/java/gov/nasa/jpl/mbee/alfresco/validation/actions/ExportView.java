@@ -7,6 +7,7 @@ import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.DBEditDocwebVisitor;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
@@ -100,7 +101,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         if (book == null)
             return false;
 
-        DBEditDocwebVisitor visitor2 = new DBEditDocwebVisitor(false, true);
+        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(false);
         book.accept(visitor2);
         int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {
@@ -111,26 +112,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 return false;
             }
         }
-        String json = visitor2.getJSON();
+        String elementsjson = visitor2.getElements().toJSONString();
         //send elements first, then view info
-
-        PostMethod pm = new PostMethod(baseurl);
-        try {
-            pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
-            pm.setRequestEntity(JsonRequestEntity.create(json));
-            HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, baseurl);
-            gl.log("[INFO] Sending...");
-            int code = client.executeMethod(pm);
-            if (ViewEditUtils.showErrorMessage(code))
-                return false;
-            String response = pm.getResponseBodyAsString();
-           
-        } catch (Exception ex) {
-        } finally {
-            pm.releaseConnection();
-        }
-
+        String viewjson = visitor2.getViews().toJSONString();
+        
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
         gl.log("[INFO] Updating Images...");

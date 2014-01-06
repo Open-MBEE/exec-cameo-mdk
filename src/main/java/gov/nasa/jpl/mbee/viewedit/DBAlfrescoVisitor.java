@@ -129,6 +129,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBImage image) {
+        //need to populate view elements with elements in image
         JSONObject entry = new JSONObject();
         JSONObject imageEntry = new JSONObject();
 
@@ -321,6 +322,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
+    }
+    
+    public JSONObject getElements() {
+        return elements;
+    }
+    
+    public JSONObject getViews() {
+        return views;
     }
 }
 
