@@ -64,7 +64,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
                     continue;
                 }
                 PropertyValueType valueType = PropertyValueType.valueOf((String)((JSONObject)((JSONObject)result.get("elements")).get(e.getID())).get("valueType"));
-                JSONArray vals = (JSONArray)((JSONObject)((JSONObject)result.get("elements")).get(e.getID())).get("value");
+                JSONArray vals = (JSONArray)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("value");
                 if (e instanceof Property) {
                     if (vals == null || vals.isEmpty()) {
                         ((Property)e).setDefaultValue(null);

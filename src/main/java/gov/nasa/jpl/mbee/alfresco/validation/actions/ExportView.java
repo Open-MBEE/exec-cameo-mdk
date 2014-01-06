@@ -112,9 +112,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 return false;
             }
         }
-        String elementsjson = visitor2.getElements().toJSONString();
+        JSONObject elementsjson = visitor2.getElements();
         //send elements first, then view info
-        String viewjson = visitor2.getViews().toJSONString();
+        JSONObject viewjson = visitor2.getViews();
         
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor

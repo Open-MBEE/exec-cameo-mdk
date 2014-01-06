@@ -88,11 +88,14 @@ public class ModelValidator {
     }
     
     public void validate() {
-        JSONObject elements = (JSONObject)result.get("elements");
+        JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
-        for (String elementId: (Set<String>)elements.keySet()) {
-            JSONObject elementInfo = (JSONObject)elements.get(elementId);
+        JSONObject elementKeyed = new JSONObject();
+        for (JSONObject elementInfo: (List<JSONObject>)elements) {
+            //JSONObject elementInfo = (JSONObject)elements.get(elementId);
+            String elementId = (String)elementInfo.get("id");
+            elementKeyed.put(elementId, elementInfo);
             Element e = (Element)prj.getElementByID(elementId);
             if (e == null)
                 continue;
@@ -136,6 +139,7 @@ public class ModelValidator {
             }
             
         }
+        result.put("elementsKeyed", elementKeyed);
     }
     
     private ValidationRuleViolation valueDiff(Property e, JSONObject info) {

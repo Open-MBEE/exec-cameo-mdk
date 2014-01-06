@@ -13,6 +13,7 @@ import java.util.Collection;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.actions.MDAction;
@@ -43,12 +44,13 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
     @Override
     public void execute(Collection<Annotation> annos) {
         JSONObject send = new JSONObject();
-        JSONObject infos = new JSONObject();
+        JSONArray infos = new JSONArray();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             JSONObject info = new JSONObject();
             info.put("owner", e.getOwner().getID());
-            infos.put(e.getID(), info);
+            info.put("id", e.getID());
+            infos.add(info);
         }
         send.put("elements", infos);
         gl.log(send.toJSONString());
@@ -66,10 +68,12 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
     @Override
     public void actionPerformed(ActionEvent e) {
         JSONObject info = new JSONObject();
-        JSONObject elements = new JSONObject();
+        JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
         info.put("owner", element.getOwner().getID());
-        elements.put(element.getID(), info);
+        info.put("id", element.getID());
+        
+        elements.add(info);
         send.put("elements", elements);
         gl.log(send.toJSONString());
 

@@ -48,7 +48,7 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
                 if (!e.isEditable()) {
                     continue;
                 }
-                String ownerID = (String)((JSONObject)((JSONObject)result.get("elements")).get(e.getID())).get("owner");
+                String ownerID = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("owner");
                 if (ownerID == null)
                     continue;
                 Element own = (Element)prj.getElementByID(ownerID);

@@ -75,7 +75,7 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
                 if (!e.isEditable()) {
                     continue;
                 }
-                String resultDoc = (String)((JSONObject)((JSONObject)result.get("elements")).get(e.getID())).get("documentation");
+                String resultDoc = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("documentation");
                 if (resultDoc == null)
                     continue;
                 ModelHelper.setComment(e, resultDoc);

@@ -56,11 +56,11 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
     @Override
     public void execute(Collection<Annotation> annos) {
         JSONObject send = new JSONObject();
-        JSONObject infos = new JSONObject();
+        JSONArray infos = new JSONArray();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             JSONObject info = getInfo(e);
-            infos.put(e.getID(), info);
+            infos.add(info);
         }
         send.put("elements", infos);
         gl.log(send.toJSONString());
@@ -78,10 +78,10 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
     @Override
     public void actionPerformed(ActionEvent e) {
         JSONObject info = getInfo(element);
-        JSONObject elements = new JSONObject();
+        JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
 
-        elements.put(element.getID(), info);
+        elements.add(info);
         send.put("elements", elements);
         
         gl.log(send.toJSONString());
@@ -113,6 +113,7 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
                 }
             }
         }
+        elementInfo.put("id", e.getID());
         return elementInfo;
     }
     

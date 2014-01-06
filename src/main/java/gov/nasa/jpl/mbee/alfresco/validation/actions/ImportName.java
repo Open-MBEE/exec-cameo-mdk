@@ -75,7 +75,7 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
                 if (!e.isEditable()) {
                     continue;
                 }
-                String resultName = (String)((JSONObject)((JSONObject)result.get("elements")).get(e.getID())).get("name");
+                String resultName = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("name");
                 if (resultName == null)
                     continue;
                 ((NamedElement)e).setName(resultName);

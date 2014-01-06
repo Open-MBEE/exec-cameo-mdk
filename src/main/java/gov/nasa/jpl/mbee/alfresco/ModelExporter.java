@@ -28,8 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.alfresco;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.alfresco.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.ArrayList;
@@ -40,35 +38,18 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.uml.RepresentationTextCreator;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ModelExporter {
 
-    private JSONObject elementHierarchy = new JSONObject();
+    //private JSONObject elementHierarchy = new JSONObject();
     private JSONObject elements = new JSONObject();
-    private JSONArray roots = new JSONArray();
+    //private JSONArray roots = new JSONArray();
     
     private List<Element> starts;
     private int depth;
@@ -102,13 +83,15 @@ public class ModelExporter {
     @SuppressWarnings("unchecked")
     public JSONObject getResult() {
         for (Element e: starts) {
-            if (addToElements(e, 1))
-                roots.add(e.getID());
+            addToElements(e, 1);
+                //roots.add(e.getID());
         }
         JSONObject result = new JSONObject();
-        result.put("roots", roots);
-        result.put("elements", elements);
-        result.put("elementHierarchy", elementHierarchy);
+        //result.put("roots", roots);
+        JSONArray elementss = new JSONArray();
+        elementss.addAll(elements.values());
+        result.put("elements", elementss);
+        //result.put("elementHierarchy", elementHierarchy);
         return result;
     }
     
@@ -126,12 +109,12 @@ public class ModelExporter {
         
         if ((depth != 0 && curdepth > depth) || curdepth == 0)
             return true;
-        JSONArray children = new JSONArray();
+        //JSONArray children = new JSONArray();
         for (Element c: e.getOwnedElement()) {
-            if (addToElements(c, curdepth+1))
-                children.add(c.getID());
+            addToElements(c, curdepth+1);
+                //children.add(c.getID());
         }
-        elementHierarchy.put(e.getID(), children);
+        //elementHierarchy.put(e.getID(), children);
         return true;
     }
 }
