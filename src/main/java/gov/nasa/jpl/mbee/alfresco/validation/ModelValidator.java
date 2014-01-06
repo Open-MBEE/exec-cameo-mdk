@@ -330,4 +330,8 @@ public class ModelValidator {
         vss.add(suite);
         Utils.displayValidationWindow(vss, "Model Web Difference Validation");
     }
+    
+    public ValidationSuite getSuite() {
+        return suite;
+    }
 }

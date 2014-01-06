@@ -45,11 +45,9 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         JSONObject infos = new JSONObject();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
-            if (e instanceof NamedElement) {
-                JSONObject info = new JSONObject();
-                info.put("documentation", ModelHelper.getComment(e));
-                infos.put(e.getID(), info);
-            }
+            JSONObject info = new JSONObject();
+            info.put("documentation", ModelHelper.getComment(e));
+            infos.put(e.getID(), info);
         }
         send.put("elements", infos);
         gl.log(send.toJSONString());

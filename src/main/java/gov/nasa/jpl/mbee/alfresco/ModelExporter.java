@@ -68,10 +68,6 @@ public class ModelExporter {
 
     private JSONObject elementHierarchy = new JSONObject();
     private JSONObject elements = new JSONObject();
-    private JSONObject relationshipElements = new JSONObject();
-    private JSONObject propertyTypes = new JSONObject();
-    //private JSONObject propertyValues = new JSONObject();
-    private JSONObject elementValues = new JSONObject();
     private JSONArray roots = new JSONArray();
     
     private List<Element> starts;
@@ -113,12 +109,6 @@ public class ModelExporter {
         result.put("roots", roots);
         result.put("elements", elements);
         result.put("elementHierarchy", elementHierarchy);
-        JSONObject relationships = new JSONObject();
-        relationships.put("relationshipElements", relationshipElements);
-        relationships.put("propertyTypes", propertyTypes);
-        //relationships.put("propertyValues", propertyValues);
-        relationships.put("elementValues", elementValues);
-        result.put("relationships", relationships);
         return result;
     }
     
@@ -131,69 +121,7 @@ public class ModelExporter {
         if (ProjectUtilities.isElementInAttachedProject(e))
             return false;
         JSONObject elementInfo = new JSONObject();
-        if (e instanceof Package) {
-            elementInfo.put("type", "Package");
-        } else if (e instanceof Property) {
-            elementInfo.put("type", "Property");
-            elementInfo.put("isDerived", ((Property)e).isDerived());
-            elementInfo.put("isSlot", false);
-            ValueSpecification vs = ((Property)e).getDefaultValue();
-            if (vs != null) {
-                JSONArray value = new JSONArray();
-                addValues(e, value, elementInfo, vs);
-            }
-            Type type = ((Property)e).getType();
-            if (type != null) {
-                addToElements(type, 0);
-                propertyTypes.put(e.getID(), type.getID());
-                elementInfo.put("propertyType", type.getID());
-            }
-        } else if (e instanceof Slot) {
-            elementInfo.put("type", "Property");
-            elementInfo.put("isDerived", false);
-            elementInfo.put("isSlot", true);
-            List<ValueSpecification> vsl = ((Slot)e).getValue();
-            if (vsl != null && vsl.size() > 0) {
-                JSONArray value = new JSONArray();
-                for (ValueSpecification vs: vsl) {
-                    addValues(e, value, elementInfo, vs);
-                }
-            }
-            Element type = ((Slot)e).getDefiningFeature();
-            if (type != null) {
-                addToElements(type, 0);
-                propertyTypes.put(e.getID(), type.getID());
-                elementInfo.put("propertyType", type.getID());
-            }
-        } else if (e instanceof Dependency) {
-            if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getConformsStereotype()))
-                elementInfo.put("type", "Conform");
-            else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.queriesStereotype))
-                elementInfo.put("type", "Expose");
-            else
-                elementInfo.put("type", "Dependency");
-            addRelationship((Dependency)e, elementInfo);
-        } else if (e instanceof Generalization) {
-            elementInfo.put("type", "Generalization");
-            addRelationship((Generalization)e, elementInfo);
-        } else if (e instanceof DirectedRelationship) {   
-            elementInfo.put("type", "DirectedRelationship");
-            addRelationship((DirectedRelationship)e, elementInfo);
-        } else {
-            elementInfo.put("type", "Element");
-        }
-        if (StereotypesHelper.hasStereotypeOrDerived(e, view))
-            elementInfo.put("isView", true);
-        else
-            elementInfo.put("isView", false);
-        if (StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
-            elementInfo.put("type", "Viewpoint");
-        if (e instanceof NamedElement) {
-            elementInfo.put("name", ((NamedElement)e).getName());
-        } else
-            elementInfo.put("name", "");
-        elementInfo.put("documentation", ModelHelper.getComment(e));
-        elementInfo.put("owner", e.getOwner().getID());
+        ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
         
         if ((depth != 0 && curdepth > depth) || curdepth == 0)
@@ -205,51 +133,5 @@ public class ModelExporter {
         }
         elementHierarchy.put(e.getID(), children);
         return true;
-    }
-    
-    @SuppressWarnings("unchecked")
-    private void addRelationship(DirectedRelationship dr, JSONObject elementinfo) {
-        JSONObject relInfo = new JSONObject();
-        Element client = ModelHelper.getClientElement(dr);
-        Element supplier = ModelHelper.getSupplierElement(dr);
-        addToElements(client, 0);
-        addToElements(supplier, 0);
-        relInfo.put("source", client.getID());
-        relInfo.put("target", supplier.getID());
-        elementinfo.put("source", client.getID());
-        elementinfo.put("target", supplier.getID());
-        relationshipElements.put(dr.getID(), relInfo);
-    }
-    
-    @SuppressWarnings("unchecked")
-    private void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
-        if (vs instanceof LiteralBoolean) {
-            elementInfo.put("valueType", PropertyValueType.LiteralBoolean.toString());
-            value.add(((LiteralBoolean)vs).isValue());
-        } else if (vs instanceof LiteralString) {
-            elementInfo.put("valueType", PropertyValueType.LiteralString.toString());
-            value.add(((LiteralString)vs).getValue());
-        } else if (vs instanceof LiteralInteger || vs instanceof LiteralUnlimitedNatural) {
-            elementInfo.put("valueType", PropertyValueType.LiteralInteger.toString());
-            if (vs instanceof LiteralInteger) {
-                value.add(((LiteralInteger)vs).getValue());
-            } else 
-                value.add(((LiteralUnlimitedNatural)vs).getValue());
-        } else if (vs instanceof LiteralReal) {
-            elementInfo.put("valueType", PropertyValueType.LiteralReal.toString());
-            value.add(((LiteralReal)vs).getValue());
-        } else if (vs instanceof Expression) {
-            elementInfo.put("valueType", PropertyValueType.Expression.toString());
-            value.add(RepresentationTextCreator.getRepresentedText(vs));
-        } else if (vs instanceof ElementValue) {
-            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
-            Element ev = ((ElementValue)vs).getElement();
-            if (ev != null) {
-                addToElements(ev, 0);
-                value.add(ev.getID());
-                elementValues.put(e.getID(), value);
-            }
-        }
-        elementInfo.put("value", value);
     }
 }
