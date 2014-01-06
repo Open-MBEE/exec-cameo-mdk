@@ -188,9 +188,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBList list) {
-        DBEditListVisitor l = new DBEditListVisitor(recurse, elements);
+        DBAlfrescoListVisitor l = new DBAlfrescoListVisitor(recurse, elements);
         list.accept(l);
         curContains.add(l.getObject());
+        viewElements.peek().addAll(l.getListElements());
     }
 
     @SuppressWarnings("unchecked")
@@ -286,9 +287,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
-        DBEditTableVisitor2 v = new DBEditTableVisitor2(this.recurse, elements);
+        DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse, elements);
         table.accept(v);
         curContains.add(v.getObject());
+        viewElements.peek().addAll(v.getTableElements());
     }
 
     protected void startView(Element e) {
@@ -316,7 +318,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     @SuppressWarnings("unchecked")
     protected void addToElements(Element e) {
-        viewElements.peek().add(e.getID());
+        if (!viewElements.empty())
+            viewElements.peek().add(e.getID());
         if (elements.containsKey(e.getID()))
             return;
         JSONObject elementInfo = new JSONObject();
