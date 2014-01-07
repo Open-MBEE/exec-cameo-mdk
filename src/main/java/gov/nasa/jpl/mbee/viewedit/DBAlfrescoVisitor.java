@@ -111,13 +111,15 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             entry.put("type", "Paragraph");
             entry.put("sourceType", "reference");
             curContains.add(entry);
-            endView(docview);
+            //endView(docview);
         }
         for (DocumentElement de: book.getChildren()) {
             de.accept(this);
             if (!recurse)
                 break;
         }
+        if (book.getFrom() != null)
+            endView(book.getFrom());
         sibviews.pop();
     }
 
@@ -246,15 +248,13 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (section.isView()) {
             Element eview = section.getFrom();
             startView(eview);
-
-            sibviews.peek().add(eview.getID());
-            JSONArray childViews = new JSONArray();
-            sibviews.push(childViews);
+            
+            
             for (DocumentElement de: section.getChildren()) {
                 // if (recurse || !(de instanceof DBSection))
                 de.accept(this);
             }
-            sibviews.pop();
+            //sibviews.pop();
             endView(eview);
         } else {
             // addToViews(fake, false)
@@ -305,6 +305,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         view.put("contains", contains);
         this.curContains = contains;
         addToElements(e);
+        
+        sibviews.peek().add(e.getID());
+        JSONArray childViews = new JSONArray();
+        sibviews.push(childViews);
     }
     
     @SuppressWarnings("unchecked")
@@ -314,6 +318,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject view = (JSONObject)views.get(e.getID());
         view.put("displayedElements", viewEs);
         view.put("allowedElements", viewEs);
+        if (recurse)
+            view.put("childrenViews", sibviews.peek());
+        sibviews.pop();
     }
 
     @SuppressWarnings("unchecked")
