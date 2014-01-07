@@ -52,6 +52,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stereotype view = Utils.getViewStereotype();
     private Stereotype viewpoint = Utils.getViewpointStereotype();
     private Map<From, String> sourceMapping;
+    private JSONObject                view2view;
+    private boolean doc;
 
     public DBAlfrescoVisitor(boolean recurse) {
         elements = new JSONObject();
@@ -65,6 +67,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         sourceMapping.put(From.DOCUMENTATION, "documentation");
         sourceMapping.put(From.DVALUE, "value");
         sourceMapping.put(From.NAME, "name");
+        view2view = new JSONObject();
+
     }
 
     public int getNumberOfElements() {
@@ -103,6 +107,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         sibviews.push(childviews);
         
         if (book.getFrom() != null) {
+            doc = true; 
             Element docview = book.getFrom();
             startView(docview);
             JSONObject entry = new JSONObject();
@@ -113,12 +118,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             curContains.add(entry);
             //endView(docview);
         }
-        for (DocumentElement de: book.getChildren()) {
-            de.accept(this);
-            if (!recurse)
-                break;
+        if (recurse || !doc) {
+            for (DocumentElement de: book.getChildren()) {
+                de.accept(this);
+                if (!recurse)
+                    break;
+            }
         }
-        if (book.getFrom() != null)
+        if (doc)
             endView(book.getFrom());
         sibviews.pop();
     }
@@ -318,9 +325,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject view = (JSONObject)views.get(e.getID());
         view.put("displayedElements", viewEs);
         view.put("allowedElements", viewEs);
-        if (recurse)
+        if (recurse && !doc)
             view.put("childrenViews", sibviews.peek());
-        sibviews.pop();
+        view2view.put(e.getID(), sibviews.pop());
     }
 
     @SuppressWarnings("unchecked")

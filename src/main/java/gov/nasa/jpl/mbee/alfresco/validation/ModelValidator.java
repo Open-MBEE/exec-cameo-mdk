@@ -95,6 +95,8 @@ public class ModelValidator {
         for (JSONObject elementInfo: (List<JSONObject>)elements) {
             //JSONObject elementInfo = (JSONObject)elements.get(elementId);
             String elementId = (String)elementInfo.get("id");
+            if (elementKeyed.containsKey(elementId))
+                continue;
             elementKeyed.put(elementId, elementInfo);
             Element e = (Element)prj.getElementByID(elementId);
             if (e == null)

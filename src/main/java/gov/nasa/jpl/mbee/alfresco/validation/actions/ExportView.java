@@ -48,10 +48,12 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class ExportView extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element view;
+    private boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
     
-    public ExportView(Element e) {
-        super("ExportView", "Export view", null, null);
+    public ExportView(Element e, boolean recursive) {
+        super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Export view recursive" : "Export view", null, null);
+        this.recurse = recursive;
         this.view = e;
     }
     
@@ -83,7 +85,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     
     private boolean exportView(Element view) {
         DocumentGenerator dg = new DocumentGenerator(view, null, null);
-        Document dge = dg.parseDocument(true, false);
+        Document dge = dg.parseDocument(true, recurse);
         (new PostProcessor()).process(dge);
         boolean document = false;
         
@@ -98,7 +100,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         if (book == null)
             return false;
 
-        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(false);
+        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
         book.accept(visitor2);
         /*int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {
@@ -110,13 +112,18 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             }
         }*/
         JSONObject elementsjson = visitor2.getElements();
-        gl.log(elementsjson.toJSONString());
+        JSONArray elementsArray = new JSONArray();
+        elementsArray.addAll(elementsjson.values());
+        gl.log(elementsArray.toJSONString());
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
-        gl.log(viewjson.toJSONString());
+        JSONArray viewsArray = new JSONArray();
+        viewsArray.addAll(viewjson.values());
+        gl.log(viewsArray.toJSONString());
         
         String url = ViewEditUtils.getUrl(false);
-
+        if (url == null)
+            return false;
         // first post view information View Editor
         String baseurl = url + "/rest/views/" + view.getID();
         // Upload images to view editor (JSON keys are specified in
