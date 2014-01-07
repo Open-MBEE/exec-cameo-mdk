@@ -33,6 +33,7 @@ import gov.nasa.jpl.mbee.actions.alfresco.EMSLogoutAction;
 import gov.nasa.jpl.mbee.actions.alfresco.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.alfresco.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.alfresco.ValidateModelAction;
+import gov.nasa.jpl.mbee.actions.alfresco.ValidateViewAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
 import gov.nasa.jpl.mbee.actions.docgen.NumberDependencyAction;
@@ -169,17 +170,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (added)
                     manager.addCategory(0, category);
             }
-        }
-
-        // View Editor menu
-        if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
+        
+            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "Alfresco Model");
+            NMAction action = manager.getActionFor(ValidateViewAction.actionid);
+            if (action == null)
+                modelLoad2.addAction(new ValidateViewAction(e));
+            
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
-            NMAction action = null;
-
             action = manager.getActionFor(ExportViewAction.actionid);
             if (action == null)
                 addEditableViewActions(c, (NamedElement)e);
-
         }
         if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.project)) { // REVIEW
                                                                          // --

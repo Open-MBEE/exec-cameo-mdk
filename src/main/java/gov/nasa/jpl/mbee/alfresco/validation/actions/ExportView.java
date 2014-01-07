@@ -86,10 +86,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         Document dge = dg.parseDocument(true, false);
         (new PostProcessor()).process(dge);
         boolean document = false;
-        String url = ViewEditUtils.getUrl(false);
-
-        // first post view information View Editor
-        String baseurl = url + "/rest/views/" + view.getID();
+        
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
         if (StereotypesHelper.hasStereotypeOrDerived(view, documentView))
@@ -103,7 +100,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
         DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(false);
         book.accept(visitor2);
-        int numElements = visitor2.getNumberOfElements();
+        /*int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {
             Boolean cont = Utils.getUserYesNoAnswer("Alert! You're about to publish " + numElements
                     + " elements in a view, this may take about " + numElements / 1000
@@ -111,11 +108,17 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             if (cont == null || !cont) {
                 return false;
             }
-        }
+        }*/
         JSONObject elementsjson = visitor2.getElements();
+        gl.log(elementsjson.toJSONString());
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
+        gl.log(viewjson.toJSONString());
         
+        String url = ViewEditUtils.getUrl(false);
+
+        // first post view information View Editor
+        String baseurl = url + "/rest/views/" + view.getID();
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
         gl.log("[INFO] Updating Images...");

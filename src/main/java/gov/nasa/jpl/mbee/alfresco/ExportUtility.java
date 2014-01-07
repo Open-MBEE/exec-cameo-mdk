@@ -20,6 +20,7 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -91,7 +92,8 @@ public class ExportUtility {
             Type type = ((Property)e).getType();
             if (type != null) {
                 elementInfo.put("propertyType", type.getID());
-            }
+            } else
+                elementInfo.put("propertyType", null);
         } else if (e instanceof Slot) {
             elementInfo.put("type", "Property");
             elementInfo.put("isDerived", false);
@@ -138,7 +140,10 @@ public class ExportUtility {
         } else
             elementInfo.put("name", "");
         elementInfo.put("documentation", ModelHelper.getComment(e));
-        elementInfo.put("owner", e.getOwner().getID());
+        if (e.getOwner() instanceof Model)
+            elementInfo.put("owner", null);
+        else
+            elementInfo.put("owner", e.getOwner().getID());
         elementInfo.put("id", e.getID());
     }
     
