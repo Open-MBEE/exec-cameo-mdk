@@ -2255,12 +2255,16 @@ public class Utils {
      * @param slot
      * @param value
      */
-    public static void setSlotValue(Slot slot, String value) {
+    public static void setSlotValue(Slot slot, Object value) {
         List<ValueSpecification> valueSpecs = slot.getValue();
         ValueSpecification v = null;
-        for (ValueSpecification valueSpec: valueSpecs) {
-            v = makeValueSpecification(value, valueSpec);
-            break;
+        if ( value instanceof ValueSpecification ) {
+            v = (ValueSpecification)value;
+        } else {
+            for (ValueSpecification valueSpec: valueSpecs) {
+                v = makeValueSpecification(value.toString(), valueSpec);
+                break;
+            }
         }
         valueSpecs.clear();
         valueSpecs.add(v);

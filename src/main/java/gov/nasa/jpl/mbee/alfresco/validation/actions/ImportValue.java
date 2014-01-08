@@ -2,12 +2,16 @@ package gov.nasa.jpl.mbee.alfresco.validation.actions;
 
 import gov.nasa.jpl.mbee.alfresco.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -109,7 +113,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
                 if (values == null || values.isEmpty()) {
                     ((Slot)element).getValue().clear();
                 } else {
-                    update((Slot)e, type, values);
+                    update((Slot)element, type, values);
                 }
             }
             SessionManager.getInstance().closeSession();
@@ -122,18 +126,20 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         }
     }
     
-    
+    // TODO -- move to Utils and have setProperty() call this instead of always creating a new Property?
     private void update(Property e, PropertyValueType valueType, Object o) {
         //use nondestructive update if possible
         ValueSpecification newval = e.getDefaultValue();
-        if (valueType == PropertyValueType.LiteralString) {
+        switch ( valueType ) {
+        case LiteralString:
             if (newval instanceof LiteralString) {
                 ((LiteralString)newval).setValue((String)o);
                 return;
             } 
             newval = ef.createLiteralStringInstance();
             ((LiteralString)newval).setValue((String)o);
-        } else if (valueType == PropertyValueType.LiteralInteger) {
+            break;
+        case LiteralInteger:
             if (newval instanceof LiteralInteger) {
                 ((LiteralInteger)newval).setValue(((Long)o).intValue());
                 return;
@@ -143,39 +149,131 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             }
             newval = ef.createLiteralIntegerInstance();
             ((LiteralInteger)newval).setValue(((Long)o).intValue());
-        } else if (valueType == PropertyValueType.LiteralBoolean) {
+            break;
+        case LiteralBoolean:
             if (newval instanceof LiteralBoolean) {
                 ((LiteralBoolean)newval).setValue((Boolean)o);
                 return;
             }
             newval = ef.createLiteralBooleanInstance();
             ((LiteralBoolean)newval).setValue((Boolean)o);
-        } else if (valueType == PropertyValueType.LiteralUnlimitedNatural) {
+            break;
+        case LiteralUnlimitedNatural:
             if (newval instanceof LiteralUnlimitedNatural) {
                 ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
                 return;
             }
             newval = ef.createLiteralUnlimitedNaturalInstance();
             ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
-        } else if (valueType == PropertyValueType.LiteralReal) {
+            break;
+        case LiteralReal:
             if (newval instanceof LiteralReal) {
                 ((LiteralReal)newval).setValue((Double)o);
                 return;
             }
             newval = ef.createLiteralRealInstance();
             ((LiteralReal)newval).setValue((Double)o);
-        } else if (valueType == PropertyValueType.ElementValue) {
+            break;
+        case ElementValue:
             if (newval instanceof ElementValue) {
                 ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
             }
             newval = ef.createElementValueInstance();
             ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
-        }
+            break;
+        default:
+            Debug.error("Bad PropertyValueType: " + valueType);
+        };
         e.setDefaultValue(newval);
         return;
     }
     
+    // TODO -- move to Utils and have setSlot() call this instead of always creating a new Slot?
+    private void update(Slot e, PropertyValueType valueType, Object o) {
+        ValueSpecification newval = null; 
+        if ( !Utils2.isNullOrEmpty( e.getValue() ) ) {
+            for ( ValueSpecification v : e.getValue() ) {
+                if ( valueType == PropertyValueType.toPropertyValueType( v ) ) {
+                    newval = v;
+                    break;
+                }
+            }
+        }
+        if ( newval == null && !Utils2.isNullOrEmpty( e.getValue() ) ) {
+            e.getValue().clear();
+        }
+        switch ( valueType ) {
+        case LiteralString:
+            if (newval instanceof LiteralString) {
+                ((LiteralString)newval).setValue((String)o);
+                return;
+            } 
+            newval = ef.createLiteralStringInstance();
+            ((LiteralString)newval).setValue((String)o);
+            break;
+        case LiteralInteger:
+            if (newval instanceof LiteralInteger) {
+                ((LiteralInteger)newval).setValue(((Long)o).intValue());
+                return;
+            } else if (newval instanceof LiteralUnlimitedNatural) {
+                ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
+                return;
+            }
+            newval = ef.createLiteralIntegerInstance();
+            ((LiteralInteger)newval).setValue(((Long)o).intValue());
+            break;
+        case LiteralBoolean:
+            if (newval instanceof LiteralBoolean) {
+                ((LiteralBoolean)newval).setValue((Boolean)o);
+                return;
+            }
+            newval = ef.createLiteralBooleanInstance();
+            ((LiteralBoolean)newval).setValue((Boolean)o);
+            break;
+        case LiteralUnlimitedNatural:
+            if (newval instanceof LiteralUnlimitedNatural) {
+                ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
+                return;
+            }
+            newval = ef.createLiteralUnlimitedNaturalInstance();
+            ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
+            break;
+        case LiteralReal:
+            if (newval instanceof LiteralReal) {
+                ((LiteralReal)newval).setValue((Double)o);
+                return;
+            }
+            newval = ef.createLiteralRealInstance();
+            ((LiteralReal)newval).setValue((Double)o);
+            break;
+        case ElementValue:
+            if (newval instanceof ElementValue) {
+                ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+            }
+            newval = ef.createElementValueInstance();
+            ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+            break;
+        };
+        if ( e.getValue() != null && e.getValue().isEmpty() ) {
+            e.getValue().add( newval );
+        }
+        return;
+    }
     private void update(Slot e, PropertyValueType valueType, JSONArray values) {
-        
+        if ( e == null ) {
+            Debug.error( "Trying to update a null slot!" );
+            return;
+        }
+        if ( values.size() != 1 ) {
+            Application.getInstance().getGUILog().log("[ERROR] " + e.getHumanName() + " must have exactly one value but is being updated with " + values.size() + "!");
+            return;
+        }
+        if ( e.getValue() != null && e.getValue().size() > 1 ) {
+            Application.getInstance().getGUILog().log("[ERROR] " + e.getHumanName() + " must have exactly one value to update, but there are " + e.getValue().size() + "!");
+            return;
+        }
+        Object v = values.get( 0 );
+        //Utils.setSlotValue((Slot)e, v);
+        update( e, valueType, v );
     }
 }

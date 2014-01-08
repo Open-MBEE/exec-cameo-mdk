@@ -60,6 +60,7 @@ import gov.nasa.jpl.mbee.alfresco.validation.actions.FixModelOwner;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ImportDoc;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ImportName;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ImportValue;
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
@@ -95,12 +96,19 @@ public class ModelValidator {
         for (JSONObject elementInfo: (List<JSONObject>)elements) {
             //JSONObject elementInfo = (JSONObject)elements.get(elementId);
             String elementId = (String)elementInfo.get("id");
-            if (elementKeyed.containsKey(elementId))
+            Debug.outln("validating " + elementInfo + ", id = " + elementId);
+            if (elementKeyed.containsKey(elementId)) {
+                Debug.outln("elementKeyed (" + elementKeyed + ") contains " + elementId);
                 continue;
+            }
             elementKeyed.put(elementId, elementInfo);
             Element e = (Element)prj.getElementByID(elementId);
-            if (e == null)
+            Debug.outln("element = " + e);
+            if (e == null) {
                 continue;
+            }
+            Debug.outln( "element.getClass() = "
+                       	 + e.getClass().getSimpleName() );
             String elementDoc = ModelHelper.getComment(e);
             String elementName = null;
             if (e instanceof NamedElement) {
@@ -226,33 +234,42 @@ public class ModelValidator {
     }
     
     private ValidationRuleViolation valueDiff(Slot e, JSONObject info) {
+        Debug.outln( "valueDiff(Slot:" + Utils.slotValueToString( e )
+                     + ", JSONObjec info=" + info );
         List<ValueSpecification> vs = e.getValue();
         String valueTypes = (String)info.get("valueType");
         JSONArray value = (JSONArray)info.get("value");
+        Debug.outln("JSONArray value = " + value);
         
-        if ((vs == null || vs.isEmpty()) && (valueTypes == null || value == null || value.size() == 0))
+        if ((vs == null || vs.isEmpty()) && (valueTypes == null || value == null || value.size() == 0)) {
+            Debug.outln("returning null: vs=" + vs + ", valueTypes=" + valueTypes + ", value=" + value);
             return null;
+        }
         if (vs != null && vs.size() > 0 && (valueTypes == null || value == null || value.size() == 0)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
             v.addAction(new ImportValue(e, null, null));
             v.addAction(new ExportValue(e));
+            Debug.outln("1) returning ValidationRuleViolation: " + v );
             return v;
         }
         if ((vs == null || vs.isEmpty()) && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + value.toString());
             v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes)));
             v.addAction(new ExportValue(e));
+            Debug.outln("2) returning ValidationRuleViolation: " + v );
             return v;
         }
         if ((vs.size() != value.size())) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model and web values don't match");
             v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes)));
             v.addAction(new ExportValue(e));
+            Debug.outln("3) returning ValidationRuleViolation: " + v );
             return v;
         }
+
         PropertyValueType valueType = PropertyValueType.valueOf(valueTypes);
         String message = "";
-        String typeMismatchMessage = "[VALUE] vlaue spec types don't match";
+        String typeMismatchMessage = "[VALUE] value spec types don't match";
         String badMessage = "[VALUE] model: " + RepresentationTextCreator.getRepresentedText(e) + ", web: " + value.toString();
         if (valueType == PropertyValueType.LiteralString) {
             if (vs.get(0) instanceof LiteralString) {
@@ -326,8 +343,10 @@ public class ModelValidator {
             ValidationRuleViolation v = new ValidationRuleViolation(e, message);
             v.addAction(new ImportValue(e, value, valueType));
             v.addAction(new ExportValue(e));
+            Debug.outln("4) returning ValidationRuleViolation: " + v );
             return v;
         }
+        Debug.outln("5) returning null" );
         return null;
     }
     

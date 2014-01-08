@@ -30,20 +30,16 @@ package gov.nasa.jpl.mbee.actions.alfresco;
 
 import gov.nasa.jpl.mbee.alfresco.validation.ModelValidator;
 import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
-import gov.nasa.jpl.mbee.lib.FileUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
-import java.io.FileReader;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateModelAction extends MDAction {
@@ -72,6 +68,7 @@ public class ValidateModelAction extends MDAction {
             if (ViewEditUtils.showErrorMessage(code))
                 return;
             String json = gm.getResponseBodyAsString();
+            Debug.outln( "Validating against remote json: " + json );
             //String json = FileUtils.getFileStringContent("/Users/dlam/Desktop/test.json");
             JSONObject result = (JSONObject)JSONValue.parse(json);
             ResultHolder.lastResults = result;

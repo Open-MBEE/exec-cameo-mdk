@@ -76,8 +76,8 @@ public class ViewEditUtils {
     }
     
     public static String getUrl(boolean choice) {
-        return null;
-        //return "https://sheldon.jpl.nasa.gov/alfresco/service";
+        //return null;
+        return "https://sheldon.jpl.nasa.gov/alfresco/service";
     /*    Boolean old = false;
         if (choice)
             old = Utils.getUserYesNoAnswer("Use old view editor?");
