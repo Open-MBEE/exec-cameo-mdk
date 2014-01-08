@@ -114,24 +114,38 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         JSONObject elementsjson = visitor2.getElements();
         JSONArray elementsArray = new JSONArray();
         elementsArray.addAll(elementsjson.values());
-        gl.log(elementsArray.toJSONString());
+        JSONObject send = new JSONObject();
+        send.put("elements", elementsArray);
+        gl.log(send.toJSONString());
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
         JSONArray viewsArray = new JSONArray();
         viewsArray.addAll(viewjson.values());
-        gl.log(viewsArray.toJSONString());
+        send = new JSONObject();
+        send.put("views", viewsArray);
+        gl.log(send.toJSONString());
         
         String url = ViewEditUtils.getUrl(false);
         if (url == null)
             return false;
         // first post view information View Editor
         String baseurl = url + "/rest/views/" + view.getID();
+        if (document && recurse) {
+            //post document view hierarchy
+            send = new JSONObject();
+            send.put("view2view", visitor2.getHierarchy());
+            send.put("noSections", visitor2.getNosections());
+        }
+        
+        
+        
+        
+        
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
         gl.log("[INFO] Updating Images...");
         Map<String, JSONObject> images = visitor2.getImages();
         boolean isAlfresco = true;
-       
         for (String key: images.keySet()) {
             String filename = (String)images.get(key).get("abspath");
             String cs = (String)images.get(key).get("cs");

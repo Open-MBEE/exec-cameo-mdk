@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.actions.alfresco.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.alfresco.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.alfresco.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.alfresco.ValidateViewAction;
+import gov.nasa.jpl.mbee.actions.alfresco.ValidateViewRecursiveAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
 import gov.nasa.jpl.mbee.actions.docgen.NumberDependencyAction;
@@ -175,6 +176,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             NMAction action = manager.getActionFor(ValidateViewAction.actionid);
             if (action == null)
                 modelLoad2.addAction(new ValidateViewAction(e));
+            action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
+            if (action == null)
+                modelLoad2.addAction(new ValidateViewRecursiveAction(e));
             
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             action = manager.getActionFor(ExportViewAction.actionid);

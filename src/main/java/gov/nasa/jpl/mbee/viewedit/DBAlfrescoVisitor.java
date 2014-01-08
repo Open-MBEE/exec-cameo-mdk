@@ -32,6 +32,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -53,6 +54,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stereotype viewpoint = Utils.getViewpointStereotype();
     private Map<From, String> sourceMapping;
     private JSONObject                view2view;
+    private JSONArray                  noSections = new JSONArray();
     private boolean doc;
 
     public DBAlfrescoVisitor(boolean recurse) {
@@ -141,7 +143,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //need to populate view elements with elements in image
         JSONObject entry = new JSONObject();
         JSONObject imageEntry = new JSONObject();
-
+        for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(true)) {
+            
+        }
         // export image - also keep track of exported images
         DiagramPresentationElement diagram = Application.getInstance().getProject()
                 .getDiagram(image.getImage());
@@ -262,6 +266,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                 de.accept(this);
             }
             //sibviews.pop();
+            if (section.isNoSection())
+                noSections.add(eview.getID());
             endView(eview);
         } else {
             // addToViews(fake, false)
@@ -347,6 +353,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     
     public JSONObject getViews() {
         return views;
+    }
+    
+    public JSONObject getHierarchy() {
+        return view2view;
+    }
+    
+    public JSONArray getNosections() {
+        return noSections;
     }
 }
 

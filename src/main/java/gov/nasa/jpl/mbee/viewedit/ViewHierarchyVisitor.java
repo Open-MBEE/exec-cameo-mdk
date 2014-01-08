@@ -84,4 +84,12 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
             result.put(sec.getDgElement().getID(), curChildren.pop());
         }
     }
+    
+    public JSONObject getView2View() {
+        return result;
+    }
+    
+    public JSONArray getNosections() {
+        return nosections;
+    }
 }

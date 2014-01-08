@@ -1,7 +1,9 @@
 package gov.nasa.jpl.mbee.alfresco;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.alfresco.validation.ModelValidator;
 import gov.nasa.jpl.mbee.alfresco.validation.PropertyValueType;
+import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
@@ -11,9 +13,11 @@ import java.io.StringWriter;
 import java.util.List;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -43,6 +47,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class ExportUtility {
 
     public static boolean send(String url, String json) {
+        if (url == null)
+            return false;
         PostMethod pm = new PostMethod(url);
         GUILog gl = Application.getInstance().getGUILog();
         try {
@@ -74,6 +80,26 @@ public class ExportUtility {
         } finally {
             pm.releaseConnection();
         }
+    }
+    
+    public static String get(String url) {
+        if (url == null)
+            return null;
+        GetMethod gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url);
+            int code = client.executeMethod(gm);
+            if (ViewEditUtils.showErrorMessage(code))
+                return null;
+            String json = gm.getResponseBodyAsString();
+            return json;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            gm.releaseConnection();
+        }
+        return "";
     }
     
     @SuppressWarnings("unchecked")

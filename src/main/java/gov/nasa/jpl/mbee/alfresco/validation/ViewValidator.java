@@ -1,9 +1,13 @@
 package gov.nasa.jpl.mbee.alfresco.validation;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.alfresco.ExportUtility;
+import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportHierarchy;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportView;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
@@ -21,6 +25,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -33,6 +38,7 @@ public class ViewValidator {
     private ValidationSuite suite = new ValidationSuite("View Sync");
     private ValidationRule exists = new ValidationRule("Does Not Exist", "view doesn't exist yet", ViolationSeverity.ERROR);
     private ValidationRule match = new ValidationRule("View content", "view contents have changed", ViolationSeverity.ERROR);
+    private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.INFO);
     private ValidationSuite modelSuite;
     private Project prj;
     private Element view;
@@ -44,6 +50,7 @@ public class ViewValidator {
         prj = Application.getInstance().getProject();
         suite.addValidationRule(exists);
         suite.addValidationRule(match);
+        suite.addValidationRule(hierarchy);
         this.recurse = recursive;
     }
     
@@ -62,6 +69,8 @@ public class ViewValidator {
         JSONObject results = new JSONObject();
         JSONArray resultElements = new JSONArray();
         results.put("elements", resultElements);
+        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
+                DocGen3Profile.documentViewStereotype, "Document Profile");
         for (Object viewid: visitor2.getViews().keySet()) {
             Element currentView = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
             //check to see if view exists on alfresco, if not, export view?
@@ -69,9 +78,8 @@ public class ViewValidator {
             if (existurl == null)
                 existurl = "";//return; //do some error
             existurl += "/javawebscripts/views/" + viewid;
-            //
-            boolean exist = false;
-            if (!exist) {
+            String response = ExportUtility.get(existurl);
+            if (response == null) {
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                 v.addAction(new ExportView(currentView, false));
                 v.addAction(new ExportView(currentView, true));
@@ -82,17 +90,26 @@ public class ViewValidator {
                 //check if the view elements number matches, if not, the view is out of date
                 String viewElementsUrl = existurl + "/elements";
                 JSONArray localElements = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("displayedElements");
-                JSONObject viewresults = new JSONObject(); //replace jsonobject with alfresco info
-                boolean matches = viewElementsMatch(localElements, viewresults);
+                String viewelements = ExportUtility.get(viewElementsUrl);
+                if (viewelements == null)
+                    continue;
+                JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
+                boolean matches = false;//viewElementsMatch(localElements, viewresults);
                 if (!matches) {
-                    ValidationRuleViolation v = new ValidationRuleViolation(view, "[CONTENT] The view editor has an outdated version");
+                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor has an outdated version");
                     v.addAction(new ExportView(currentView, false));
                     v.addAction(new ExportView(currentView, true));
+                    v.addAction(new ExportHierarchy(currentView));
                     match.addViolation(v);
+                } else {
+                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy]");
+                    v.addAction(new ExportHierarchy(currentView));
+                    hierarchy.addViolation(v);
                 }
                 //resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
-                
             }
+            
+            
         }
         ResultHolder.lastResults = results;
         ModelValidator mv = new ModelValidator(view, results);
@@ -109,6 +126,13 @@ public class ViewValidator {
     }
     
     private boolean viewElementsMatch(JSONArray viewDisplayedElements, JSONObject veResults) {
+        Set<String> webElements = new HashSet<String>(viewDisplayedElements);
+        Set<String> local = new HashSet<String>();
+        for (Object o: (JSONArray)veResults.get("elements")) {
+            local.add((String)((JSONObject)o).get("id"));
+        }
+        if (webElements.containsAll(local) && local.containsAll(webElements))
+            return true;
         return false;
     }
 }
