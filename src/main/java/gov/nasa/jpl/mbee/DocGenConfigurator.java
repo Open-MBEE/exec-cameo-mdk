@@ -133,6 +133,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             modelLoad.addAction(new ValidateModelAction(e));
         if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
             modelLoad.addAction(new InitializeProjectAction());
+        if (manager.getActionFor(EMSLogoutAction.actionid) == null)
+            modelLoad.addAction(new EMSLogoutAction());
         
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
@@ -318,7 +320,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         c.addAction(new ExportViewCommentsAction(e));
         c.addAction(new ImportViewCommentsAction(e));
         c.addAction(new ViewViewCommentsAction(e));
-        c.addAction(new EMSLogoutAction());
         ActionsCategory a = new MDActionsCategory("AdvanceEditor", "ModelLoad");
         a.setNested(true);
         a.addAction(new ImportViewRecursiveAction(e));

@@ -39,6 +39,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
@@ -51,8 +52,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportDoc;
+import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportElement;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportName;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportOwner;
 import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportValue;
@@ -74,17 +77,21 @@ public class ModelValidator {
     private ValidationRule docDiff = new ValidationRule("Mismatched Doc", "documentation is different", ViolationSeverity.ERROR);
     private ValidationRule valueDiff = new ValidationRule("Mismatched Value", "value is different", ViolationSeverity.ERROR);
     private ValidationRule ownership = new ValidationRule("Moved", "Wrong containment", ViolationSeverity.ERROR);
+    private ValidationRule exist = new ValidationRule("Exist", "Doesn't Exist or Moved", ViolationSeverity.WARNING);
     private Project prj;
     private Element start;
     private JSONObject result;
+    private boolean checkExist;
     
-    public ModelValidator(Element start, JSONObject result) {
+    public ModelValidator(Element start, JSONObject result, boolean checkExist) {
         this.start = start;
         this.result = result;
         suite.addValidationRule(nameDiff);
         suite.addValidationRule(docDiff);
         suite.addValidationRule(valueDiff);
         suite.addValidationRule(ownership);
+        suite.addValidationRule(exist);
+        this.checkExist = checkExist;
         prj = Application.getInstance().getProject();
     }
     
@@ -92,16 +99,16 @@ public class ModelValidator {
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
-        JSONObject elementKeyed = new JSONObject();
+        JSONObject elementsKeyed = new JSONObject();
         for (JSONObject elementInfo: (List<JSONObject>)elements) {
             //JSONObject elementInfo = (JSONObject)elements.get(elementId);
             String elementId = (String)elementInfo.get("id");
             Debug.outln("validating " + elementInfo + ", id = " + elementId);
-            if (elementKeyed.containsKey(elementId)) {
-                Debug.outln("elementKeyed (" + elementKeyed + ") contains " + elementId);
+            if (elementsKeyed.containsKey(elementId)) {
+                Debug.outln("elementKeyed (" + elementsKeyed + ") contains " + elementId);
                 continue;
             }
-            elementKeyed.put(elementId, elementInfo);
+            elementsKeyed.put(elementId, elementInfo);
             Element e = (Element)prj.getElementByID(elementId);
             Debug.outln("element = " + e);
             if (e == null) {
@@ -137,8 +144,11 @@ public class ModelValidator {
                     valueDiff.addViolation(v);
             }
             String ownerID = e.getOwner().getID();
-            if (!ownerID.equals(elementInfo.get("owner"))) {
-                Element owner = (Element)prj.getElementByID((String)elementInfo.get("owner"));
+            String webOwnerID = (String)elementInfo.get("owner");
+            if (webOwnerID == null || webOwnerID.startsWith("PROJECT"))
+                webOwnerID = Application.getInstance().getProject().getModel().getID();
+            if (!ownerID.equals(webOwnerID)) {
+                Element owner = (Element)prj.getElementByID(webOwnerID);
                 if (owner == null) {
                     continue;//??
                 }
@@ -149,7 +159,18 @@ public class ModelValidator {
             }
             
         }
-        result.put("elementsKeyed", elementKeyed);
+        if (checkExist) {
+            for (Element e: Utils.collectOwnedElements(start, 0)) {
+                if (e instanceof Comment || e instanceof Extension || e instanceof ValueSpecification)
+                    continue;
+                if (elementsKeyed.containsKey(e.getID()))
+                    continue;
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
+                v.addAction(new ExportElement(e));
+                exist.addViolation(v);
+            }
+        }
+        result.put("elementsKeyed", elementsKeyed);
     }
     
     private ValidationRuleViolation valueDiff(Property e, JSONObject info) {
@@ -285,7 +306,7 @@ public class ModelValidator {
         } else if (valueType == PropertyValueType.LiteralBoolean) {
             if (vs.get(0) instanceof LiteralBoolean) {
                 for (int i = 0; i < vs.size(); i++) {
-                    if (!((Boolean)value.get(i)) != (((LiteralBoolean)vs.get(i)).isValue())) {
+                    if (((Boolean)value.get(i)) != (((LiteralBoolean)vs.get(i)).isValue())) {
                         message = badMessage;
                         break;
                     }

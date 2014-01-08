@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.alfresco.validation.actions;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.alfresco.ExportUtility;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
@@ -41,7 +42,6 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class ExportHierarchy extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element view;
-    private boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
     
     public ExportHierarchy(Element e) {
@@ -80,19 +80,40 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
         Document dge = dg.parseDocument(true, true);
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
         dge.accept(vhv);
-        String post = vhv.getResult().toJSONString();
-        String url = ViewEditUtils.getUrl();
+        String url = ViewEditUtils.getUrl(false);
         boolean document = false;
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
         if (StereotypesHelper.hasStereotypeOrDerived(view, documentView))
             document = true;
         
-        JSONObject send = new JSONObject();
-        send.put("view2view", vhv.getView2View());
-        send.put("nosections", vhv.getNosections());
-        gl.log(send.toJSONString());
-        //send json
+        JSONObject view2view = vhv.getView2View();
+        if (document) {
+            String docurl = url + "/javawebscripts/documents";
+            
+            JSONObject send = new JSONObject();
+            JSONArray documents = new JSONArray();
+            JSONObject doc = new JSONObject();
+            doc.put("view2view", view2view);
+            doc.put("noSections", vhv.getNosections());
+            doc.put("id", view.getID());
+            documents.add(doc);
+            send.put("documents", documents);
+            if (!ExportUtility.send(docurl, send.toJSONString()))
+                return false;
+        } else {
+            JSONArray views = new JSONArray();
+            for (Object viewid: view2view.keySet()) {
+                JSONObject viewinfo = new JSONObject();
+                viewinfo.put("id", viewid);
+                viewinfo.put("childrenViews", view2view.get(viewid));
+                views.add(viewinfo);
+            }
+            JSONObject send  = new JSONObject();
+            send.put("views", views);
+            if (!ExportUtility.send(url + "/javawebscripts/newviews", send.toJSONString()))
+                return false;
+        }
         return true;
         
     }

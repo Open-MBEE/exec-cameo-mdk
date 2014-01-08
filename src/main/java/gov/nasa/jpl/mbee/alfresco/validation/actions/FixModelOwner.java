@@ -54,11 +54,11 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
                 Element own = (Element)prj.getElementByID(ownerID);
                 if (own != null)
                     e.setOwner(own);
-                AnnotationManager.getInstance().remove(anno);
+                //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            AnnotationManager.getInstance().update();
+            //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
@@ -75,8 +75,8 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
         try {
             element.setOwner(owner);
             SessionManager.getInstance().closeSession();
-            AnnotationManager.getInstance().remove(annotation);
-            AnnotationManager.getInstance().update();
+            //AnnotationManager.getInstance().remove(annotation);
+            //AnnotationManager.getInstance().update();
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();

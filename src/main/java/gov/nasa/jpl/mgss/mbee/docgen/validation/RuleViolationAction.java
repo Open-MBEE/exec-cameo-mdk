@@ -7,6 +7,7 @@ import javax.swing.KeyStroke;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationManager;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
 import com.nomagic.magicdraw.validation.ui.ValidationResultsWindowManager;
 
@@ -41,13 +42,17 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
 
     public void removeViolationAndUpdateWindow() {
         vwr.results.remove(rvr);
+        AnnotationManager.getInstance().remove(annotation);
+        AnnotationManager.getInstance().update();
         //ValidationResultsWindowManager.updateValidationResultsWindow(vwr.id, vwr.title, vwr.runData, vwr.results);
     }
     
     public void removeViolationsAndUpdateWindow(Collection<Annotation> annos) {
         for (Annotation anno: annos) {
             vwr.results.remove(vwr.mapping.get(anno));
+            AnnotationManager.getInstance().remove(anno);
         }
+        AnnotationManager.getInstance().update();
         //ValidationResultsWindowManager.updateValidationResultsWindow(vwr.id, vwr.title, vwr.runData, vwr.results);
     }
 }

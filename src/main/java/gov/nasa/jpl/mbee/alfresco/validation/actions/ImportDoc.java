@@ -79,11 +79,11 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
                 if (resultDoc == null)
                     continue;
                 ModelHelper.setComment(e, resultDoc);
-                AnnotationManager.getInstance().remove(anno);
+                //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            AnnotationManager.getInstance().update();
+            //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
             
         } catch (Exception ex) {
@@ -101,8 +101,8 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
         try {
             ModelHelper.setComment(element, doc);
             SessionManager.getInstance().closeSession();
-            AnnotationManager.getInstance().remove(annotation);
-            AnnotationManager.getInstance().update();
+            //AnnotationManager.getInstance().remove(annotation);
+            //AnnotationManager.getInstance().update();
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();

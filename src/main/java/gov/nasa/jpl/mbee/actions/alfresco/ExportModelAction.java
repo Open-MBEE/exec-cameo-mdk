@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.alfresco;
 
+import gov.nasa.jpl.mbee.alfresco.ExportUtility;
 import gov.nasa.jpl.mbee.alfresco.ModelExporter;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
@@ -99,35 +100,7 @@ public class ExportModelAction extends MDAction {
         }
         url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
        // gl.log("*** Starting export view comments ***");
-        PostMethod pm = new PostMethod(url);
-        try {
-            gl.log("[INFO] Sending...");
-            pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
-            pm.setRequestEntity(JsonRequestEntity.create(json));
-            HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
-            int code = client.executeMethod(pm);
-            if (ViewEditUtils.showErrorMessage(code))
-                return;
-            String response = pm.getResponseBodyAsString();
-            // gl.log(response);
-            if (response.equals("NotFound"))
-                gl.log("[ERROR] There are some views that are not exported yet, export the views first, then the comments");
-            else if (response.equals("ok"))
-                gl.log("[INFO] Export Successful.");
-            else
-                gl.log(response);
-
-        } catch (Exception ex) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            ex.printStackTrace(pw);
-            gl.log(sw.toString()); // stack trace as a string
-            ex.printStackTrace();
-        } finally {
-            pm.releaseConnection();
-        }
-
+        ExportUtility.send(url, json);
     }
 
 }

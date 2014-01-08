@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.alfresco;
 
+import gov.nasa.jpl.mbee.alfresco.ExportUtility;
 import gov.nasa.jpl.mbee.alfresco.validation.ModelValidator;
 import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
 import gov.nasa.jpl.mbee.lib.Debug;
@@ -60,25 +61,13 @@ public class ValidateModelAction extends MDAction {
             return;
         }
         url += "/javawebscripts/element/" + start.getID() + "?recurse=true";
-        GetMethod gm = new GetMethod(url);
-        try {
-            HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
-            int code = client.executeMethod(gm);
-            if (ViewEditUtils.showErrorMessage(code))
-                return;
-            String json = gm.getResponseBodyAsString();
-            Debug.outln( "Validating against remote json: " + json );
-            //String json = FileUtils.getFileStringContent("/Users/dlam/Desktop/test.json");
-            JSONObject result = (JSONObject)JSONValue.parse(json);
-            ResultHolder.lastResults = result;
-            ModelValidator validator = new ModelValidator(start, result);
-            validator.validate();
-            validator.showWindow();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            gm.releaseConnection();
-        }
+        String response = ExportUtility.get(url);
+        if (response == null)
+            return;
+        JSONObject result = (JSONObject)JSONValue.parse(response);
+        ResultHolder.lastResults = result;
+        ModelValidator validator = new ModelValidator(start, result, true);
+        validator.validate();
+        validator.showWindow();
     }
 }

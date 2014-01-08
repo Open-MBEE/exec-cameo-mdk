@@ -79,11 +79,11 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
                 if (resultName == null)
                     continue;
                 ((NamedElement)e).setName(resultName);
-                AnnotationManager.getInstance().remove(anno);
+                //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            AnnotationManager.getInstance().update();
+            //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
@@ -101,8 +101,8 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
         try {
             element.setName(name);
             SessionManager.getInstance().closeSession();
-            AnnotationManager.getInstance().remove(annotation);
-            AnnotationManager.getInstance().update();
+            //AnnotationManager.getInstance().remove(annotation);
+            //AnnotationManager.getInstance().update();
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();

@@ -82,11 +82,11 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
                         update((Slot)e, type, values);
                     }
                 }
-                AnnotationManager.getInstance().remove(annotation);
+                //AnnotationManager.getInstance().remove(annotation);
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            AnnotationManager.getInstance().update();
+            //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
@@ -117,8 +117,8 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
                 }
             }
             SessionManager.getInstance().closeSession();
-            AnnotationManager.getInstance().remove(annotation);
-            AnnotationManager.getInstance().update();
+            //AnnotationManager.getInstance().remove(annotation);
+            //AnnotationManager.getInstance().update();
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();

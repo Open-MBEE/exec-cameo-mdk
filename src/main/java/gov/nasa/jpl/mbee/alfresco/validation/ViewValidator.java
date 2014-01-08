@@ -58,7 +58,6 @@ public class ViewValidator {
         DocumentGenerator dg = new DocumentGenerator(view, null, null);
         Document dge = dg.parseDocument(true, recurse);
         (new PostProcessor()).process(dge);
-        boolean document = false;
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
         dge.accept(visitor);
         DBBook book = visitor.getBook();
@@ -71,34 +70,36 @@ public class ViewValidator {
         results.put("elements", resultElements);
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
+        String url = ViewEditUtils.getUrl(false);
+        if (url == null)
+            return;//return; //do some error
         for (Object viewid: visitor2.getViews().keySet()) {
+            boolean doc = false;
             Element currentView = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
+            if (StereotypesHelper.hasStereotypeOrDerived(currentView, documentView))
+                doc = true;
             //check to see if view exists on alfresco, if not, export view?
-            String existurl = ViewEditUtils.getUrl(false);
-            if (existurl == null)
-                existurl = "";//return; //do some error
-            existurl += "/javawebscripts/views/" + viewid;
+            String existurl = url + "/javawebscripts/newviews/" + viewid;
+            Application.getInstance().getGUILog().log(existurl);
             String response = ExportUtility.get(existurl);
-            if (response == null) {
+            if (response == null || !response.contains("contains")) {
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                 v.addAction(new ExportView(currentView, false));
                 v.addAction(new ExportView(currentView, true));
                 exists.addViolation(v);
             } else {
-                //get view/id/elements
-                //get the elements of the view from alfresco
-                //check if the view elements number matches, if not, the view is out of date
                 String viewElementsUrl = existurl + "/elements";
                 JSONArray localElements = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("displayedElements");
                 String viewelements = ExportUtility.get(viewElementsUrl);
                 if (viewelements == null)
                     continue;
                 JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
-                boolean matches = false;//viewElementsMatch(localElements, viewresults);
+                boolean matches = viewElementsMatch(localElements, viewresults);
                 if (!matches) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor has an outdated version");
                     v.addAction(new ExportView(currentView, false));
                     v.addAction(new ExportView(currentView, true));
+                    
                     v.addAction(new ExportHierarchy(currentView));
                     match.addViolation(v);
                 } else {
@@ -106,13 +107,11 @@ public class ViewValidator {
                     v.addAction(new ExportHierarchy(currentView));
                     hierarchy.addViolation(v);
                 }
-                //resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
+                resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
             }
-            
-            
         }
         ResultHolder.lastResults = results;
-        ModelValidator mv = new ModelValidator(view, results);
+        ModelValidator mv = new ModelValidator(view, results, false);
         mv.validate();
         modelSuite = mv.getSuite();
     }

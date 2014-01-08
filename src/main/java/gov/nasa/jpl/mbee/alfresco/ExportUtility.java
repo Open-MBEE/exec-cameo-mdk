@@ -13,6 +13,7 @@ import java.io.StringWriter;
 import java.util.List;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.json.simple.JSONArray;
@@ -46,6 +47,14 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
 
+    public static boolean showErrors(int code, String response) {
+        if (code != 200) {
+            Application.getInstance().getGUILog().log(response);
+            return true;
+        }
+        return false;
+    }
+    
     public static boolean send(String url, String json) {
         if (url == null)
             return false;
@@ -58,23 +67,13 @@ public class ExportUtility {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
             int code = client.executeMethod(pm);
-            if (ViewEditUtils.showErrorMessage(code))
-                return false;
             String response = pm.getResponseBodyAsString();
-            //gl.log(response);
-            if (response.equals("NotFound"))
-                gl.log("[ERROR] There are some views that are not exported yet, export the views first, then the comments");
-            else if (response.equals("ok"))
-                gl.log("[INFO] Export Successful.");
-            else
-                gl.log(response);
+            if (showErrors(code, response)) {
+                return false;
+            }
+            gl.log("[INFO] Successful.");
             return true;
-
         } catch (Exception ex) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            ex.printStackTrace(pw);
-            gl.log(sw.toString()); // stack trace as a string
             ex.printStackTrace();
             return false;
         } finally {
@@ -90,16 +89,17 @@ public class ExportUtility {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
             int code = client.executeMethod(gm);
-            if (ViewEditUtils.showErrorMessage(code))
-                return null;
             String json = gm.getResponseBodyAsString();
+            if (showErrors(code, json)) {
+                return null;
+            }
             return json;
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
             gm.releaseConnection();
         }
-        return "";
+        return null;
     }
     
     @SuppressWarnings("unchecked")

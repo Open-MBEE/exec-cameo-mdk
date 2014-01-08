@@ -117,6 +117,14 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         JSONObject send = new JSONObject();
         send.put("elements", elementsArray);
         gl.log(send.toJSONString());
+        String url = ViewEditUtils.getUrl(false);
+        if (url == null)
+            //url = "";
+            return false;
+        String sendElementsUrl = url + "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
+        if (!ExportUtility.send(sendElementsUrl, send.toJSONString()))
+            return false;
+        
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
         JSONArray viewsArray = new JSONArray();
@@ -124,22 +132,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         send = new JSONObject();
         send.put("views", viewsArray);
         gl.log(send.toJSONString());
-        
-        String url = ViewEditUtils.getUrl(false);
-        if (url == null)
+        String sendViewsUrl = url +  "/javawebscripts/newviews";
+        if (!ExportUtility.send(sendViewsUrl, send.toJSONString()))
             return false;
-        // first post view information View Editor
-        String baseurl = url + "/rest/views/" + view.getID();
-        if (document && recurse) {
-            //post document view hierarchy
-            send = new JSONObject();
-            send.put("view2view", visitor2.getHierarchy());
-            send.put("noSections", visitor2.getNosections());
-        }
-        
-        
-        
-        
         
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
@@ -153,7 +148,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
             File imageFile = new File(filename);
             
-            baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
+            String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
            
             // check whether the image already exists
             GetMethod get = new GetMethod(baseurl);
@@ -202,6 +197,34 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
         // clean up the local images
         visitor2.removeImages();
+        
+        if (document && recurse) {
+            String docurl = url + "/javawebscripts/documents";
+            send = new JSONObject();
+            JSONArray documents = new JSONArray();
+            JSONObject doc = new JSONObject();
+            doc.put("view2view", visitor2.getHierarchy());
+            doc.put("noSections", visitor2.getNosections());
+            doc.put("id", view.getID());
+            documents.add(doc);
+            send.put("documents", documents);
+            if (!ExportUtility.send(docurl, send.toJSONString()))
+                return false;
+        } /*else if (recurse) {
+            JSONArray views = new JSONArray();
+            JSONObject view2view = visitor2.getHierarchy();
+            for (Object viewid: view2view.keySet()) {
+                JSONObject viewinfo = new JSONObject();
+                viewinfo.put("id", viewid);
+                viewinfo.put("childrenViews", view2view.get(viewid));
+                views.add(viewinfo);
+            }
+            JSONObject send  = new JSONObject();
+            send.put("views", views);
+            if (!ExportUtility.send(url + "/javawebscripts/views", send.toJSONString()))
+                return false;
+        }
+        */
         return true;
     }
     
