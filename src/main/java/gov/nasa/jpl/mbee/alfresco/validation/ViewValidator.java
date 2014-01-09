@@ -80,7 +80,6 @@ public class ViewValidator {
                 doc = true;
             //check to see if view exists on alfresco, if not, export view?
             String existurl = url + "/javawebscripts/newviews/" + viewid;
-            Application.getInstance().getGUILog().log(existurl);
             String response = ExportUtility.get(existurl);
             if (response == null || !response.contains("contains")) {
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");

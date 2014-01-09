@@ -29,7 +29,9 @@
 package gov.nasa.jpl.mbee.actions.alfresco;
 
 import gov.nasa.jpl.mbee.alfresco.ExportUtility;
+import gov.nasa.jpl.mbee.alfresco.ModelExportRunner;
 import gov.nasa.jpl.mbee.alfresco.ModelExporter;
+import gov.nasa.jpl.mbee.generator.DocumentWriter;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
@@ -49,6 +51,7 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -81,7 +84,8 @@ public class ExportModelAction extends MDAction {
         } catch (Exception ex) {
             return;
         }
-        
+        ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(start, depth, packageOnly), "Exporting Model", true, 0);
+        /*
         if (start instanceof Model) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
         } else {
@@ -101,6 +105,7 @@ public class ExportModelAction extends MDAction {
         url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
        // gl.log("*** Starting export view comments ***");
         ExportUtility.send(url, json);
+        */
     }
 
 }

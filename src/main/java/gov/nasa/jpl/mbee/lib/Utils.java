@@ -2126,7 +2126,7 @@ public class Utils {
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         //Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
 
-        EnumerationLiteral severitylevel = Annotation.getSeverityLevel(project, Annotation.WARNING);
+        EnumerationLiteral severitylevel = Annotation.getSeverityLevel(project, Annotation.INFO);
         ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
         // ValidationRunData runData = new ValidationRunData(dummyvs, false,
         // elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));

@@ -198,7 +198,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         // clean up the local images
         visitor2.removeImages();
         
-        if (document && recurse) {
+     /*   if (document && recurse) {
             String docurl = url + "/javawebscripts/documents";
             send = new JSONObject();
             JSONArray documents = new JSONArray();
