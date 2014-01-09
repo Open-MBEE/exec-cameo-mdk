@@ -1474,18 +1474,18 @@ public class Utils {
                     return 1;
                 switch (attribute) {
                     case Name:
-                        return CompareUtils.compare(a.toString(), b.toString());
+                        return CompareUtils.compare(a.toString(), b.toString(), true);
                     case Documentation:
-                        return CompareUtils.compare(a.toString().length(), b.toString().length());
+                        return CompareUtils.compare(a.toString().length(), b.toString().length(), true);
                     case Value:
                         if (allNums) {
                             Double da = Utils2.toDouble(DocGenUtils.fixString(a));
                             Double db = Utils2.toDouble(DocGenUtils.fixString(b));
-                            return CompareUtils.compare(da, db);
+                            return CompareUtils.compare(da, db, true);
                         }
-                        return CompareUtils.compare(a, b);
+                        return CompareUtils.compare(a, b, true);
                     default:
-                        return CompareUtils.compare(a, b);
+                        return CompareUtils.compare(a, b, true);
                 }
             }
         };
@@ -1551,9 +1551,9 @@ public class Utils {
                     if (allNums) {
                         Double da0 = Utils2.toDouble(as);
                         Double db0 = Utils2.toDouble(bs);
-                        return CompareUtils.compare(da0, db0);
+                        return CompareUtils.compare(da0, db0, true);
                     } else {
-                        return CompareUtils.compare(as, bs);
+                        return CompareUtils.compare(as, bs, true);
                     }
                 } else {
                     return a.size() - b.size();
@@ -1679,9 +1679,9 @@ public class Utils {
         if (asNumbers) {
             Double da0 = Utils2.toDouble(as);
             Double db0 = Utils2.toDouble(bs);
-            return CompareUtils.compare(da0, db0);
+            return CompareUtils.compare(da0, db0, true);
         } else {
-            return CompareUtils.compare(as, bs);
+            return CompareUtils.compare(as, bs, true);
         }
     }
     
