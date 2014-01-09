@@ -72,13 +72,17 @@ public class ViewEditUtils {
                                                                     "Other");
 
     public static String getUrl() {
-        return getUrl(true);
+        return getUrl(true, false);
     }
     
     public static String getUrl(boolean choice) {
+        return getUrl(choice, false);
+    }
+    
+    public static String getUrl(boolean choice, boolean addsite) {
         //return null; 
         return "https://sheldon.jpl.nasa.gov/alfresco/service";
-    /*    Boolean old = false;
+        /*Boolean old = false;
         if (choice)
             old = Utils.getUserYesNoAnswer("Use old view editor?");
         if (old == null)
@@ -103,11 +107,20 @@ public class ViewEditUtils {
             if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
                 url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
                         "url");
+                String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
                 if (url == null || url.equals("")) {
                     JOptionPane
                             .showMessageDialog(null,
                                     "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
                     return null;
+                }
+                if (addsite) {
+                    if (site == null || site.equals("")) {
+                        JOptionPane.showMessageDialog(null,
+                            "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
+                        return null;
+                    }
+                    return url + "/javawebscripts/sites/" + site;
                 }
             } else {
                 JOptionPane

@@ -89,16 +89,16 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
         
         JSONObject view2view = vhv.getView2View();
         if (document) {
-            String docurl = url + "/javawebscripts/documents";
+            String docurl = url + "/javawebscripts/products";
             
             JSONObject send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
-            doc.put("view2view", view2view);
+            doc.put("view2view", ExportUtility.formatView2View(view2view));
             doc.put("noSections", vhv.getNosections());
             doc.put("id", view.getID());
             documents.add(doc);
-            send.put("documents", documents);
+            send.put("products", documents);
             if (!ExportUtility.send(docurl, send.toJSONString()))
                 return false;
         } else {

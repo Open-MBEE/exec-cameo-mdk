@@ -116,7 +116,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         elementsArray.addAll(elementsjson.values());
         JSONObject send = new JSONObject();
         send.put("elements", elementsArray);
-        gl.log(send.toJSONString());
+        //gl.log(send.toJSONString());
         String url = ViewEditUtils.getUrl(false);
         if (url == null)
             //url = "";
@@ -131,7 +131,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         viewsArray.addAll(viewjson.values());
         send = new JSONObject();
         send.put("views", viewsArray);
-        gl.log(send.toJSONString());
+        //gl.log(send.toJSONString());
         String sendViewsUrl = url +  "/javawebscripts/newviews";
         if (!ExportUtility.send(sendViewsUrl, send.toJSONString()))
             return false;
@@ -198,16 +198,16 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         // clean up the local images
         visitor2.removeImages();
         
-     /*   if (document && recurse) {
-            String docurl = url + "/javawebscripts/documents";
+        if (document && recurse) {
+            String docurl = url + "/javawebscripts/products";
             send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
-            doc.put("view2view", visitor2.getHierarchy());
+            doc.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
             doc.put("noSections", visitor2.getNosections());
             doc.put("id", view.getID());
             documents.add(doc);
-            send.put("documents", documents);
+            send.put("products", documents);
             if (!ExportUtility.send(docurl, send.toJSONString()))
                 return false;
         } /*else if (recurse) {

@@ -81,6 +81,18 @@ public class ExportUtility {
         }
     }
     
+    public static JSONArray formatView2View(JSONObject vv) {
+        JSONArray response = new JSONArray();
+        for (Object viewid: vv.keySet()) {
+            JSONArray children = (JSONArray)vv.get(viewid);
+            JSONObject viewinfo = new JSONObject();
+            viewinfo.put("id", viewid);
+            viewinfo.put("childrenViews", children);
+            response.add(viewinfo);
+        }
+        return response;
+    }
+    
     public static String get(String url) {
         if (url == null)
             return null;
@@ -155,10 +167,10 @@ public class ExportUtility {
             elementInfo.put("source", client.getID());
             elementInfo.put("target", supplier.getID());
         }
-        if (StereotypesHelper.hasStereotypeOrDerived(e, view))
+        /*if (StereotypesHelper.hasStereotypeOrDerived(e, view))
             elementInfo.put("isView", true);
         else
-            elementInfo.put("isView", false);
+            elementInfo.put("isView", false);*/
         if (StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
             elementInfo.put("type", "Viewpoint");
         if (e instanceof NamedElement) {

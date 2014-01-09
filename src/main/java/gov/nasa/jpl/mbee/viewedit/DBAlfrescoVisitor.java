@@ -188,7 +188,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         // Lets rename the file to have the hash code
         // make sure this matches what's in the View Editor ImageResource.java
         String svgCrcFilename = image.getImage().getID() + "_latest" + FILE_EXTENSION;
-        gl.log("Exporting diagram to: " + svgDiagramFile.getAbsolutePath());
+        //gl.log("Exporting diagram to: " + svgDiagramFile.getAbsolutePath());
 
         // keep record of all images found
         imageEntry.put("cs", String.valueOf(cs));
@@ -312,7 +312,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     }
 
     protected void startView(Element e) {
-        gl.log("Processing view: " + ((NamedElement)e).getName());
+        //gl.log("Processing view: " + ((NamedElement)e).getName());
         JSONObject view = new JSONObject();
         String id = e.getID();
         view.put("id", id);
