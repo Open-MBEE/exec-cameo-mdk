@@ -464,6 +464,38 @@ public class OclEvaluator {
         envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
     }
 
+    protected static void addEvalOperation(DgEnvironmentFactory envFactory, String opName ) {
+
+        // create custom operation
+        DgOperationInstance doi = new DgOperationInstance();
+        doi.setName(opName);
+        doi.setAnnotationName("DocGenEnvironment");
+        EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
+        parm.setName("expression");
+        doi.addStringParameter(parm);
+        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+
+        // essentially set the actual operation as function pointer
+        doi.setOperation(new CallOperation() {
+            @Override
+            public Object callOperation(Object source, Object[] args) {
+                String expression = (String)args[0];
+                Object result = null;
+                try {
+                    result = evaluateQuery(source, expression, isVerboseDefault());
+                } catch (Throwable e) {
+                    Debug.error(true, false, e.getLocalizedMessage());
+                }
+                return result;
+            }
+        });
+
+        // add custom operation to environment and evaluation environment
+        envFactory.getDgEnvironment().addDgOperation(doi);
+        envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
+    }
+
     protected static void addExpressionOperation(final String opName, final String expression,
             DgEnvironmentFactory envFactory) {
         // create custom operation
@@ -669,6 +701,9 @@ public class OclEvaluator {
         // ++cacheHits;
         // } else {
         addRegexMatchOperation(getEnvironmentFactory());
+        addEvalOperation( getEnvironmentFactory(), "eval" );
+        addEvalOperation( getEnvironmentFactory(), "evaluate" );
+        addEvalOperation( getEnvironmentFactory(), "e" );
         addROperation(getEnvironmentFactory());
         addMOperation(getEnvironmentFactory());
         addTOperation(getEnvironmentFactory());
