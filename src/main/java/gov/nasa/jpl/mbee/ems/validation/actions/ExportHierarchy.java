@@ -1,7 +1,7 @@
-package gov.nasa.jpl.mbee.alfresco.validation.actions;
+package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.alfresco.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;

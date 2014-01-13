@@ -29,12 +29,6 @@
 package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
-import gov.nasa.jpl.mbee.actions.alfresco.EMSLogoutAction;
-import gov.nasa.jpl.mbee.actions.alfresco.ExportModelAction;
-import gov.nasa.jpl.mbee.actions.alfresco.InitializeProjectAction;
-import gov.nasa.jpl.mbee.actions.alfresco.ValidateModelAction;
-import gov.nasa.jpl.mbee.actions.alfresco.ValidateViewAction;
-import gov.nasa.jpl.mbee.actions.alfresco.ValidateViewRecursiveAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
 import gov.nasa.jpl.mbee.actions.docgen.NumberDependencyAction;
@@ -43,6 +37,12 @@ import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
+import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
+import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
+import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.DeleteDocumentAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.DeleteProjectAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.DeleteVolumeAction;

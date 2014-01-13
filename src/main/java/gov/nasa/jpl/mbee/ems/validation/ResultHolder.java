@@ -26,27 +26,11 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions.alfresco;
+package gov.nasa.jpl.mbee.ems.validation;
 
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import org.json.simple.JSONObject;
 
-import java.awt.event.ActionEvent;
+public class ResultHolder {
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-
-public class EMSLogoutAction extends MDAction {
-    private static final long serialVersionUID = 1L;
-    public static final String actionid = "Logout";
-
-    public EMSLogoutAction() {
-        super(actionid, "Logout", null, null);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        ViewEditUtils.clearCredentials();
-        Application.getInstance().getGUILog().log("Logged out");
-    }
-
+    public static JSONObject lastResults;
 }

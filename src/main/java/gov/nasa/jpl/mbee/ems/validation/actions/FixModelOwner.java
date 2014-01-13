@@ -1,6 +1,6 @@
-package gov.nasa.jpl.mbee.alfresco.validation.actions;
+package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
+import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 

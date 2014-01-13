@@ -26,11 +26,48 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.alfresco.validation;
+package gov.nasa.jpl.mbee.actions.ems;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+
+import java.awt.event.ActionEvent;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
-public class ResultHolder {
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-    public static JSONObject lastResults;
+public class ValidateModelAction extends MDAction {
+
+    private static final long serialVersionUID = 1L;
+    private Element start;
+    public static final String actionid = "ValidateModel";
+    
+    public ValidateModelAction(Element e) {
+        super(actionid, "Validate Model", null, null);
+        start = e;
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String url = ViewEditUtils.getUrl(false);
+        if (url == null) {
+            return;
+        }
+        url += "/javawebscripts/elements/" + start.getID() + "?recurse=true";
+        String response = ExportUtility.get(url);
+        if (response == null)
+            return;
+        JSONObject result = (JSONObject)JSONValue.parse(response);
+        ResultHolder.lastResults = result;
+        ModelValidator validator = new ModelValidator(start, result, true);
+        validator.validate();
+        validator.showWindow();
+    }
 }

@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.alfresco.validation;
+package gov.nasa.jpl.mbee.ems.validation;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.alfresco.ExportUtility;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportHierarchy;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportView;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.lib.Utils;

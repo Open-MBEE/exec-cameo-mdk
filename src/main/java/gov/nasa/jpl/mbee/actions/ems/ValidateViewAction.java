@@ -1,8 +1,8 @@
-package gov.nasa.jpl.mbee.actions.alfresco;
+package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.alfresco.validation.ModelValidator;
-import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
-import gov.nasa.jpl.mbee.alfresco.validation.ViewValidator;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
+import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;

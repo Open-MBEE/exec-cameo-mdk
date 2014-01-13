@@ -26,48 +26,86 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions.alfresco;
+package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.alfresco.ExportUtility;
-import gov.nasa.jpl.mbee.alfresco.validation.ModelValidator;
-import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
-import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ModelExportRunner;
+import gov.nasa.jpl.mbee.ems.ModelExporter;
+import gov.nasa.jpl.mbee.generator.DocumentWriter;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.awt.event.ActionEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JOptionPane;
+
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.ui.ProgressStatusRunner;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ValidateModelAction extends MDAction {
+public class ExportModelAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
+
     private Element start;
-    public static final String actionid = "ValidateModel";
     
-    public ValidateModelAction(Element e) {
-        super(actionid, "Validate Model", null, null);
+    public static final String actionid = "ExportModel";
+    
+    public ExportModelAction(Element e) {
+        super(actionid, "Export Model", null, null);
         start = e;
     }
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        GUILog gl = Application.getInstance().getGUILog();
+        ModelExporter me = null;
+        Boolean packageOnly = Utils.getUserYesNoAnswer("Export package structure only?");
+        if (packageOnly == null)
+            return;
+        String depths = (String)JOptionPane.showInputDialog("Max Depth? 0 is infinite");
+        if (depths == null)
+            return;
+        int depth = 0;
+        try {
+            depth = Integer.parseInt(depths);
+        } catch (Exception ex) {
+            return;
+        }
+        ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(start, depth, packageOnly), "Exporting Model", true, 0);
+        /*
+        if (start instanceof Model) {
+            me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
+        } else {
+            List<Element> root = new ArrayList<Element>();
+            root.add(start);
+            me = new ModelExporter(root, depth, packageOnly);
+        }
+        JSONObject result = me.getResult();
+        String json = result.toJSONString();
+
+        gl.log(json);
+        gl.log("Number of Elements: " + me.getNumberOfElements());
         String url = ViewEditUtils.getUrl(false);
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/elements/" + start.getID() + "?recurse=true";
-        String response = ExportUtility.get(url);
-        if (response == null)
-            return;
-        JSONObject result = (JSONObject)JSONValue.parse(response);
-        ResultHolder.lastResults = result;
-        ModelValidator validator = new ModelValidator(start, result, true);
-        validator.validate();
-        validator.showWindow();
+        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
+       // gl.log("*** Starting export view comments ***");
+        ExportUtility.send(url, json);
+        */
     }
+
 }

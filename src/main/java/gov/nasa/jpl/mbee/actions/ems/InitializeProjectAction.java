@@ -1,6 +1,6 @@
-package gov.nasa.jpl.mbee.actions.alfresco;
+package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.alfresco.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 

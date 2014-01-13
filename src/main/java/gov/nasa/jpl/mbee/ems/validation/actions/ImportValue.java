@@ -1,7 +1,7 @@
-package gov.nasa.jpl.mbee.alfresco.validation.actions;
+package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.alfresco.validation.PropertyValueType;
-import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
+import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
+import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;

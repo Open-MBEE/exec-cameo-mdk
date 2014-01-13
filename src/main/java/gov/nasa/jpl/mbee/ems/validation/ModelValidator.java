@@ -26,7 +26,7 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.alfresco.validation;
+package gov.nasa.jpl.mbee.ems.validation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,15 +54,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportDoc;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportElement;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportName;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportOwner;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ExportValue;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.FixModelOwner;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ImportDoc;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ImportName;
-import gov.nasa.jpl.mbee.alfresco.validation.actions.ImportValue;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
+import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;

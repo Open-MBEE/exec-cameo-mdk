@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.viewedit;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mbee.alfresco.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBAbstractVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;

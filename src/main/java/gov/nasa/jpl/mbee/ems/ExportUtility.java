@@ -1,9 +1,9 @@
-package gov.nasa.jpl.mbee.alfresco;
+package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.alfresco.validation.ModelValidator;
-import gov.nasa.jpl.mbee.alfresco.validation.PropertyValueType;
-import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
+import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;

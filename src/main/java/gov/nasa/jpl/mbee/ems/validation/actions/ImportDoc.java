@@ -26,9 +26,10 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.alfresco.validation.actions;
+package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
+import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -44,19 +45,19 @@ import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.annotation.AnnotationManager;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
-public class ImportName extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class ImportDoc extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
-    private NamedElement element;
-    private String name;
+    private Element element;
+    private String doc;
     
-    public ImportName(NamedElement e, String name) {
-        super("ImportName", "Import name", null, null);
+    public ImportDoc(Element e, String doc) {
+        super("ImportDoc", "Import doc", null, null);
         this.element = e;
-        this.name = name;
+        this.doc = doc;
     }
     
     @Override
@@ -67,7 +68,7 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
     @Override
     public void execute(Collection<Annotation> annos) {
         JSONObject result = ResultHolder.lastResults;
-        SessionManager.getInstance().createSession("Change Names");
+        SessionManager.getInstance().createSession("Change Docs");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
             for (Annotation anno: annos) {
@@ -75,31 +76,31 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
                 if (!e.isEditable()) {
                     continue;
                 }
-                String resultName = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("name");
-                if (resultName == null)
+                String resultDoc = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("documentation");
+                if (resultDoc == null)
                     continue;
-                ((NamedElement)e).setName(resultName);
+                ModelHelper.setComment(e, Utils.addHtmlWrapper(resultDoc));
                 //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
             //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
+            
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
         }
-        
     }
-
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] " + element.getQualifiedName() + " is not editable!");
+            Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
             return;
         }
-        SessionManager.getInstance().createSession("Change Name");
+        SessionManager.getInstance().createSession("Change Doc");
         try {
-            element.setName(name);
+            ModelHelper.setComment(element, Utils.addHtmlWrapper(doc));
             SessionManager.getInstance().closeSession();
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();
@@ -108,4 +109,5 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
             SessionManager.getInstance().cancelSession();
         }
     }
+
 }

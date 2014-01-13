@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.alfresco.validation;
+package gov.nasa.jpl.mbee.ems.validation;
 
 public enum PropertyValueType {
     LiteralString(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString.class),

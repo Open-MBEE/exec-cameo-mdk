@@ -1,7 +1,7 @@
-package gov.nasa.jpl.mbee.alfresco.validation.actions;
+package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.alfresco.ExportUtility;
-import gov.nasa.jpl.mbee.alfresco.validation.PropertyValueType;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
