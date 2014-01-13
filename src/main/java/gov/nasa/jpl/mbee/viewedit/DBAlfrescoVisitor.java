@@ -146,7 +146,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //need to populate view elements with elements in image
         JSONObject entry = new JSONObject();
         JSONObject imageEntry = new JSONObject();
-        for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(true)) {
+        for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(false)) {
             if (e instanceof Comment || e instanceof Extension || e instanceof ValueSpecification)
                 continue;
             addToElements(e);
