@@ -126,7 +126,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (e == null)
             return;
         
-        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "Alfresco Model");
+        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
         if (manager.getActionFor(ExportModelAction.actionid) == null)
             modelLoad.addAction(new ExportModelAction(e));
         if (manager.getActionFor(ValidateModelAction.actionid) == null && !(e instanceof Model))
@@ -174,7 +174,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     manager.addCategory(0, category);
             }
         
-            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "Alfresco Model");
+            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
             NMAction action = manager.getActionFor(ValidateViewAction.actionid);
             if (action == null)
                 modelLoad2.addAction(new ValidateViewAction(e));
@@ -182,12 +182,12 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             if (action == null)
                 modelLoad2.addAction(new ValidateViewRecursiveAction(e));
             
-            ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
-            action = manager.getActionFor(ExportViewAction.actionid);
-            if (action == null)
-                addEditableViewActions(c, (NamedElement)e);
+            //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
+            //action = manager.getActionFor(ExportViewAction.actionid);
+            //if (action == null)
+                //addEditableViewActions(c, (NamedElement)e);
         }
-        if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.project)) { // REVIEW
+        /*if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.project)) { // REVIEW
                                                                          // --
                                                                          // hasStereotypeOrDerived()?
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
@@ -223,7 +223,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (act == null)
                     c.addAction(new OrganizeDocumentAction(e));
             }
-        }
+        }*/
 
         // DocGen menu
         if ((e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e,
