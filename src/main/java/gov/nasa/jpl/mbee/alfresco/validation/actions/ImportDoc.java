@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.alfresco.validation.actions;
 
 import gov.nasa.jpl.mbee.alfresco.validation.ResultHolder;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -78,7 +79,7 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
                 String resultDoc = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("documentation");
                 if (resultDoc == null)
                     continue;
-                ModelHelper.setComment(e, resultDoc);
+                ModelHelper.setComment(e, Utils.addHtmlWrapper(resultDoc));
                 //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
@@ -99,7 +100,7 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
         }
         SessionManager.getInstance().createSession("Change Doc");
         try {
-            ModelHelper.setComment(element, doc);
+            ModelHelper.setComment(element, Utils.addHtmlWrapper(doc));
             SessionManager.getInstance().closeSession();
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();

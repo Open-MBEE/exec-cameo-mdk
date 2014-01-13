@@ -117,6 +117,7 @@ public class ModelValidator {
             Debug.outln( "element.getClass() = "
                        	 + e.getClass().getSimpleName() );
             String elementDoc = ModelHelper.getComment(e);
+            String elementDocClean = Utils.stripHtmlWrapper(elementDoc);
             String elementName = null;
             if (e instanceof NamedElement) {
                 elementName = ((NamedElement)e).getName();
@@ -127,8 +128,8 @@ public class ModelValidator {
                 v.addAction(new ExportName((NamedElement)e));
                 nameDiff.addViolation(v);
             }
-            if (elementDoc != null && !elementDoc.equals(elementInfo.get("documentation"))) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + elementDoc + ", web: " + elementInfo.get("documentation"));
+            if (elementDoc != null && !elementDocClean.equals(elementInfo.get("documentation"))) {
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + elementDocClean + ", web: " + elementInfo.get("documentation"));
                 v.addAction(new ImportDoc(e, (String)elementInfo.get("documentation")));
                 v.addAction(new ExportDoc(e));
                 docDiff.addViolation(v);

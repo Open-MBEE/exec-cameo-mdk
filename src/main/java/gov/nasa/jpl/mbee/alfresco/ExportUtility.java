@@ -46,7 +46,14 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
-
+    
+    public static String getPostElementsUrl(String site) {
+        return getPostElementsUrl(site, Application.getInstance().getProject().getPrimaryProject().getProjectID());
+    }
+    public static String getPostElementsUrl(String site, String project) {
+        return "/javawebscripts/sites/" + site + "/projects/" + project + "/elements";
+    }
+    
     public static boolean showErrors(int code, String response) {
         if (code != 200) {
             Application.getInstance().getGUILog().log(response);
@@ -177,7 +184,7 @@ public class ExportUtility {
             elementInfo.put("name", ((NamedElement)e).getName());
         } else
             elementInfo.put("name", "");
-        elementInfo.put("documentation", ModelHelper.getComment(e));
+        elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
         if (e.getOwner() instanceof Model)
             elementInfo.put("owner", null);
         else

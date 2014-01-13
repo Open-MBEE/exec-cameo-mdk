@@ -60,7 +60,7 @@ public class ValidateModelAction extends MDAction {
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/element/" + start.getID() + "?recurse=true";
+        url += "/javawebscripts/elements/" + start.getID() + "?recurse=true";
         String response = ExportUtility.get(url);
         if (response == null)
             return;

@@ -69,7 +69,7 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
+        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
         }
@@ -90,7 +90,7 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
             return;
         }
         
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
+        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }

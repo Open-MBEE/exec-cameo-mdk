@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.alfresco.validation.actions;
 
 import gov.nasa.jpl.mbee.alfresco.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -47,7 +48,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             JSONObject info = new JSONObject();
-            info.put("documentation", ModelHelper.getComment(e));
+            info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
             info.put("id", e.getID());
             infos.add(info);
         }
@@ -57,7 +58,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
+        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
         }
@@ -68,7 +69,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        info.put("documentation", ModelHelper.getComment(element));
+        info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
         info.put("id", element.getID());
         elements.add(info);
         send.put("elements", elements);
@@ -79,7 +80,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
             return;
         }
        
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
+        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }

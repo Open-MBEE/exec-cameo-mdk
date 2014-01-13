@@ -111,7 +111,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             }
             JSONObject send  = new JSONObject();
             send.put("views", views);
-            if (!ExportUtility.send(url + "/javawebscripts/newviews", send.toJSONString()))
+            if (!ExportUtility.send(url + "/javawebscripts/views", send.toJSONString()))
                 return false;
         }
         return true;

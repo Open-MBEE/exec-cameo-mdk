@@ -2897,6 +2897,8 @@ public class Utils {
      * @return
      */
     public static String stripHtmlWrapper(String before) {
+        if (before == null)
+            return null;
         String startRemoved = HTML_WRAPPER_START.matcher(before).replaceAll("");
         return HTML_WRAPPER_END.matcher(startRemoved).replaceAll("");
     }

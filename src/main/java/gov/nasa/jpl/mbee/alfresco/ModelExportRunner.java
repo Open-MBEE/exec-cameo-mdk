@@ -46,7 +46,7 @@ public class ModelExportRunner implements RunnableWithProgress {
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
+        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/elements";
        // gl.log("*** Starting export view comments ***");
         ExportUtility.send(url, json);
         

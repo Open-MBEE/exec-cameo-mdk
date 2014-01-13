@@ -26,7 +26,7 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
     private Element owner;
     
     public FixModelOwner(Element e, Element owner) {
-        super("FixModelOwner", "Fix model owner", null, null);
+        super("FixModelOwner", "Import owner", null, null);
         this.element = e;
         this.owner = owner;
     }

@@ -121,7 +121,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         if (url == null)
             //url = "";
             return false;
-        String sendElementsUrl = url + "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/model";
+        String sendElementsUrl = url + ExportUtility.getPostElementsUrl("europa");
         if (!ExportUtility.send(sendElementsUrl, send.toJSONString()))
             return false;
         
@@ -132,7 +132,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         send = new JSONObject();
         send.put("views", viewsArray);
         //gl.log(send.toJSONString());
-        String sendViewsUrl = url +  "/javawebscripts/newviews";
+        String sendViewsUrl = url +  "/javawebscripts/views";
         if (!ExportUtility.send(sendViewsUrl, send.toJSONString()))
             return false;
         
