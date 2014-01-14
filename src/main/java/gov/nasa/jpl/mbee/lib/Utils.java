@@ -40,13 +40,16 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationWindowRun;
 import gov.nasa.jpl.ocl.GetCallOperation;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.lang.reflect.InvocationTargetException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +68,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
+import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -2071,8 +2075,24 @@ public class Utils {
                 break;
         }
         for (ValidationRuleViolation vrv: vr.getViolations()) {
-            Annotation anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
-            results.add(new RuleViolationResult(anno, cons));
+            Annotation anno;
+            if (vrv.getActions() != null && vrv.getActions().size() > 0) {
+                anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement(), vrv.getActions());
+                for (NMAction action: vrv.getActions()) {
+                    if (action instanceof IRuleViolationAction)
+                        ((IRuleViolationAction)action).setAnnotation(anno);
+                }
+            } else
+                anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
+            RuleViolationResult rvr = new RuleViolationResult(anno, cons);
+            results.add(rvr);
+            if (vrv.getActions() != null && vrv.getActions().size() > 0) {
+                for (NMAction action: vrv.getActions()) {
+                    if (action instanceof IRuleViolationAction)
+                        ((IRuleViolationAction)action).setRuleViolationResult(rvr);
+                }
+            }
+            
         }
         return results;
 
@@ -2106,7 +2126,7 @@ public class Utils {
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         //Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
 
-        EnumerationLiteral severitylevel = Annotation.getSeverityLevel(project, Annotation.WARNING);
+        EnumerationLiteral severitylevel = Annotation.getSeverityLevel(project, Annotation.INFO);
         ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
         // ValidationRunData runData = new ValidationRunData(dummyvs, false,
         // elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
@@ -2115,6 +2135,15 @@ public class Utils {
         String id = "" + System.currentTimeMillis();
         // provider.setValidationResults(id, results);
         // provider.update();
+        Map<Annotation, RuleViolationResult> mapping = new HashMap<Annotation, RuleViolationResult>();
+        ValidationWindowRun vwr = new ValidationWindowRun(id, title, runData, results, mapping);
+        for (RuleViolationResult rvr: results) {
+            for (NMAction action: rvr.getAnnotation().getActions()) {
+                if (action instanceof IRuleViolationAction)
+                    ((IRuleViolationAction)action).setValidationWindowRun(vwr);
+            }
+            mapping.put(rvr.getAnnotation(), rvr);
+        }
         ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
     }
 
@@ -2226,12 +2255,16 @@ public class Utils {
      * @param slot
      * @param value
      */
-    public static void setSlotValue(Slot slot, String value) {
+    public static void setSlotValue(Slot slot, Object value) {
         List<ValueSpecification> valueSpecs = slot.getValue();
         ValueSpecification v = null;
-        for (ValueSpecification valueSpec: valueSpecs) {
-            v = makeValueSpecification(value, valueSpec);
-            break;
+        if ( value instanceof ValueSpecification ) {
+            v = (ValueSpecification)value;
+        } else {
+            for (ValueSpecification valueSpec: valueSpecs) {
+                v = makeValueSpecification(value.toString(), valueSpec);
+                break;
+            }
         }
         valueSpecs.clear();
         valueSpecs.add(v);
@@ -2864,6 +2897,8 @@ public class Utils {
      * @return
      */
     public static String stripHtmlWrapper(String before) {
+        if (before == null)
+            return null;
         String startRemoved = HTML_WRAPPER_START.matcher(before).replaceAll("");
         return HTML_WRAPPER_END.matcher(startRemoved).replaceAll("");
     }

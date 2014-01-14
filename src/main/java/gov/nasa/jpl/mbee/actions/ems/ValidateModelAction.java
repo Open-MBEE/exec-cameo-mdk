@@ -26,68 +26,48 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mgss.mbee.docgen.validation;
+package gov.nasa.jpl.mbee.actions.ems;
 
-import java.util.ArrayList;
-import java.util.List;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
-import com.nomagic.actions.NMAction;
+import java.awt.event.ActionEvent;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ValidationRuleViolation {
+public class ValidateModelAction extends MDAction {
 
-    private Element e;
-
-    private List<NMAction> actions = new ArrayList<NMAction>();
+    private static final long serialVersionUID = 1L;
+    private Element start;
+    public static final String actionid = "ValidateModel";
     
-    public Element getElement() {
-        return e;
-    }
-
-    public void setElement(Element e) {
-        this.e = e;
-    }
-
-    private String comment;
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    private boolean reported;
-
-    public boolean isReported() {
-        return reported;
-    }
-
-    public void setReported(boolean reported) {
-        this.reported = reported;
-    }
-
-    public ValidationRuleViolation(Element e, String comment) {
-        this.e = e;
-        this.comment = comment;
-        this.reported = false;
-    }
-
-    public ValidationRuleViolation(Element e, String comment, boolean reported) {
-        this(e, comment);
-        this.reported = reported;
+    public ValidateModelAction(Element e) {
+        super(actionid, "Validate Model", null, null);
+        start = e;
     }
     
-    public void setActions(List<NMAction> actions) {
-        this.actions = actions;
-    }
-    
-    public List<NMAction> getActions() {
-        return actions;
-    }
-    
-    public void addAction(NMAction a) {
-        actions.add(a);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String url = ViewEditUtils.getUrl(false);
+        if (url == null) {
+            return;
+        }
+        url += "/javawebscripts/elements/" + start.getID() + "?recurse=true";
+        String response = ExportUtility.get(url);
+        if (response == null)
+            return;
+        JSONObject result = (JSONObject)JSONValue.parse(response);
+        ResultHolder.lastResults = result;
+        ModelValidator validator = new ModelValidator(start, result, true);
+        validator.validate();
+        validator.showWindow();
     }
 }

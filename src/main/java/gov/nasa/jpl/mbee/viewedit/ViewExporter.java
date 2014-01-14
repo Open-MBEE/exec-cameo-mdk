@@ -29,7 +29,7 @@
 package gov.nasa.jpl.mbee.viewedit;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.actions.ImportViewAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;

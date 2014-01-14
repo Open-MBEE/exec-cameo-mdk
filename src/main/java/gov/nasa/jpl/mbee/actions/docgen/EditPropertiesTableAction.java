@@ -26,68 +26,47 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mgss.mbee.docgen.validation;
+package gov.nasa.jpl.mbee.actions.docgen;
 
-import java.util.ArrayList;
-import java.util.List;
+import gov.nasa.jpl.mbee.model.PropertiesTableByAttributes;
+import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 
-import com.nomagic.actions.NMAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import java.awt.event.ActionEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
-public class ValidationRuleViolation {
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 
-    private Element e;
+/**
+ * docgen 3 version
+ * 
+ * @author dlam
+ * 
+ */
+public class EditPropertiesTableAction extends MDAction {
 
-    private List<NMAction> actions = new ArrayList<NMAction>();
-    
-    public Element getElement() {
-        return e;
+    private static final long serialVersionUID = 1L;
+    private PropertiesTableByAttributes npt;
+
+    public EditPropertiesTableAction(PropertiesTableByAttributes table) {
+        super(null, "Edit Properties Table", null, null);
+        npt = table;
     }
 
-    public void setElement(Element e) {
-        this.e = e;
-    }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        GUILog gl = Application.getInstance().getGUILog();
 
-    private String comment;
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    private boolean reported;
-
-    public boolean isReported() {
-        return reported;
-    }
-
-    public void setReported(boolean reported) {
-        this.reported = reported;
-    }
-
-    public ValidationRuleViolation(Element e, String comment) {
-        this.e = e;
-        this.comment = comment;
-        this.reported = false;
-    }
-
-    public ValidationRuleViolation(Element e, String comment, boolean reported) {
-        this(e, comment);
-        this.reported = reported;
-    }
-    
-    public void setActions(List<NMAction> actions) {
-        this.actions = actions;
-    }
-    
-    public List<NMAction> getActions() {
-        return actions;
-    }
-    
-    public void addAction(NMAction a) {
-        actions.add(a);
+        try {
+            EditableTable pt = npt.getEditableTable();
+            pt.showTable();
+        } catch (Exception ex) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            gl.log(sw.toString()); // stack trace as a string
+        }
     }
 }

@@ -28,31 +28,36 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.DeleteDocumentAction;
-import gov.nasa.jpl.mbee.actions.DeleteProjectAction;
-import gov.nasa.jpl.mbee.actions.DeleteVolumeAction;
-import gov.nasa.jpl.mbee.actions.EMSLogoutAction;
-import gov.nasa.jpl.mbee.actions.ExportViewAction;
-import gov.nasa.jpl.mbee.actions.ExportViewCommentsAction;
-import gov.nasa.jpl.mbee.actions.ExportViewHierarchyAction;
-import gov.nasa.jpl.mbee.actions.ExportViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.GenerateDocumentAction;
-import gov.nasa.jpl.mbee.actions.ImportViewAction;
-import gov.nasa.jpl.mbee.actions.ImportViewCommentsAction;
-import gov.nasa.jpl.mbee.actions.ImportViewDryAction;
-import gov.nasa.jpl.mbee.actions.ImportViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.InstanceViewpointAction;
-import gov.nasa.jpl.mbee.actions.NumberDependencyAction;
-import gov.nasa.jpl.mbee.actions.OrganizeDocumentAction;
-import gov.nasa.jpl.mbee.actions.OrganizeViewEditorAction;
-import gov.nasa.jpl.mbee.actions.RunUserScriptAction;
-import gov.nasa.jpl.mbee.actions.RunUserValidationScriptAction;
-import gov.nasa.jpl.mbee.actions.SynchronizeViewAction;
-import gov.nasa.jpl.mbee.actions.SynchronizeViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.ValidateDocument3Action;
-import gov.nasa.jpl.mbee.actions.ValidateViewStructureAction;
-import gov.nasa.jpl.mbee.actions.ViewDocument3Action;
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
+import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
+import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
+import gov.nasa.jpl.mbee.actions.docgen.NumberDependencyAction;
+import gov.nasa.jpl.mbee.actions.docgen.RunUserScriptAction;
+import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
+import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
+import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
+import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
+import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
+import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
+import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.DeleteDocumentAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.DeleteProjectAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.DeleteVolumeAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewCommentsAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewHierarchyAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewRecursiveAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewCommentsAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewDryAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewRecursiveAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.OrganizeDocumentAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.OrganizeViewEditorAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
+import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
@@ -76,6 +81,7 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -119,7 +125,17 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 "Document Profile");
         if (e == null)
             return;
-
+        
+        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
+        if (manager.getActionFor(ExportModelAction.actionid) == null)
+            modelLoad.addAction(new ExportModelAction(e));
+        if (manager.getActionFor(ValidateModelAction.actionid) == null && !(e instanceof Model))
+            modelLoad.addAction(new ValidateModelAction(e));
+        if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
+            modelLoad.addAction(new InitializeProjectAction());
+        if (manager.getActionFor(EMSLogoutAction.actionid) == null)
+            modelLoad.addAction(new EMSLogoutAction());
+        
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
         if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.validationScriptStereotype)) {
@@ -157,19 +173,21 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (added)
                     manager.addCategory(0, category);
             }
-        }
-
-        // View Editor menu
-        if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
-            ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
-            NMAction action = null;
-
-            action = manager.getActionFor(ExportViewAction.actionid);
+        
+            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
+            NMAction action = manager.getActionFor(ValidateViewAction.actionid);
             if (action == null)
-                addEditableViewActions(c, (NamedElement)e);
-
+                modelLoad2.addAction(new ValidateViewAction(e));
+            action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
+            if (action == null)
+                modelLoad2.addAction(new ValidateViewRecursiveAction(e));
+            
+            //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
+            //action = manager.getActionFor(ExportViewAction.actionid);
+            //if (action == null)
+                //addEditableViewActions(c, (NamedElement)e);
         }
-        if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.project)) { // REVIEW
+        /*if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.project)) { // REVIEW
                                                                          // --
                                                                          // hasStereotypeOrDerived()?
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
@@ -205,7 +223,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (act == null)
                     c.addAction(new OrganizeDocumentAction(e));
             }
-        }
+        }*/
 
         // DocGen menu
         if ((e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e,
@@ -302,7 +320,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         c.addAction(new ExportViewCommentsAction(e));
         c.addAction(new ImportViewCommentsAction(e));
         c.addAction(new ViewViewCommentsAction(e));
-        c.addAction(new EMSLogoutAction());
         ActionsCategory a = new MDActionsCategory("AdvanceEditor", "ModelLoad");
         a.setNested(true);
         a.addAction(new ImportViewRecursiveAction(e));

@@ -26,68 +26,28 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mgss.mbee.docgen.validation;
+package gov.nasa.jpl.mbee.actions.vieweditor;
 
-import java.util.ArrayList;
-import java.util.List;
+import gov.nasa.jpl.mbee.viewedit.ProjectExporter;
 
-import com.nomagic.actions.NMAction;
+import java.awt.event.ActionEvent;
+
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ValidationRuleViolation {
+public class OrganizeViewEditorAction extends MDAction {
 
-    private Element e;
+    private static final long serialVersionUID = 1L;
+    public static final String actionid = "OrganizeViewEditor";
+    private Element            project;
 
-    private List<NMAction> actions = new ArrayList<NMAction>();
-    
-    public Element getElement() {
-        return e;
+    public OrganizeViewEditorAction(Element project) {
+        super(actionid, "Organize View Editor", null, null);
+        this.project = project;
     }
 
-    public void setElement(Element e) {
-        this.e = e;
-    }
-
-    private String comment;
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    private boolean reported;
-
-    public boolean isReported() {
-        return reported;
-    }
-
-    public void setReported(boolean reported) {
-        this.reported = reported;
-    }
-
-    public ValidationRuleViolation(Element e, String comment) {
-        this.e = e;
-        this.comment = comment;
-        this.reported = false;
-    }
-
-    public ValidationRuleViolation(Element e, String comment, boolean reported) {
-        this(e, comment);
-        this.reported = reported;
-    }
-    
-    public void setActions(List<NMAction> actions) {
-        this.actions = actions;
-    }
-    
-    public List<NMAction> getActions() {
-        return actions;
-    }
-    
-    public void addAction(NMAction a) {
-        actions.add(a);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        (new ProjectExporter(project)).export();
     }
 }
