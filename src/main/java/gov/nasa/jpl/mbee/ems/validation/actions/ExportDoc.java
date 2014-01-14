@@ -53,7 +53,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
             infos.add(info);
         }
         send.put("elements", infos);
-        gl.log(send.toJSONString());
+        //gl.log(send.toJSONString());
         String url = ViewEditUtils.getUrl(false);
         if (url == null) {
             return;
@@ -73,7 +73,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         info.put("id", element.getID());
         elements.add(info);
         send.put("elements", elements);
-        gl.log(send.toJSONString());
+        //gl.log(send.toJSONString());
 
         String url = ViewEditUtils.getUrl(false);
         if (url == null) {

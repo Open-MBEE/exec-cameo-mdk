@@ -40,6 +40,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
@@ -58,10 +59,12 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -78,6 +81,7 @@ public class ModelValidator {
     private ValidationRule valueDiff = new ValidationRule("Mismatched Value", "value is different", ViolationSeverity.ERROR);
     private ValidationRule ownership = new ValidationRule("Moved", "Wrong containment", ViolationSeverity.ERROR);
     private ValidationRule exist = new ValidationRule("Exist", "Doesn't Exist or Moved", ViolationSeverity.WARNING);
+    private ValidationRule relDiff = new ValidationRule("Relationship", "Relationship source or target", ViolationSeverity.ERROR);
     private Project prj;
     private Element start;
     private JSONObject result;
@@ -91,6 +95,7 @@ public class ModelValidator {
         suite.addValidationRule(valueDiff);
         suite.addValidationRule(ownership);
         suite.addValidationRule(exist);
+        suite.addValidationRule(relDiff);
         this.checkExist = checkExist;
         prj = Application.getInstance().getProject();
     }
@@ -143,6 +148,29 @@ public class ModelValidator {
                 ValidationRuleViolation v = valueDiff((Slot)e, elementInfo);
                 if (v != null)
                     valueDiff.addViolation(v);
+            }
+            if (e instanceof DirectedRelationship) {
+                String websourceId = (String)elementInfo.get("source");
+                Element websource = null;
+                String webtargetId = (String)elementInfo.get("target");
+                Element webtarget = null;
+                Element localsource = ModelHelper.getClientElement(e);
+                Element localtarget = ModelHelper.getSupplierElement(e);
+                if (websourceId != null)
+                    websource = (Element)prj.getElementByID(websourceId);
+                if (webtargetId != null)
+                    webtarget = (Element)prj.getElementByID(webtargetId);
+                if (websource != localsource || webtarget != localtarget) {
+                    String msg = "[REL] ";
+                    if (websource != localsource)
+                        msg += "model source: " + localsource.getHumanName() + ", web source: " + websource.getHumanName() + " ";
+                    if (webtarget != localtarget)
+                        msg += "model target: " + localtarget.getHumanName() + ", web target: " + webtarget.getHumanName();
+                    ValidationRuleViolation v = new ValidationRuleViolation(e, msg);
+                    v.addAction(new ImportRel(e));
+                    v.addAction(new ExportRel(e));
+                    relDiff.addViolation(v);
+                }
             }
             String ownerID = e.getOwner().getID();
             String webOwnerID = (String)elementInfo.get("owner");
