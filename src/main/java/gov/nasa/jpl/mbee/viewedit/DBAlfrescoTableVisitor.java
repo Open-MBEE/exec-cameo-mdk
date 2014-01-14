@@ -11,7 +11,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.json.simple.JSONArray;

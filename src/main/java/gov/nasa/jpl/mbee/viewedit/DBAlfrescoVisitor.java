@@ -37,7 +37,6 @@ import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -311,6 +310,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         viewElements.peek().addAll(v.getTableElements());
     }
 
+    @SuppressWarnings("unchecked")
     protected void startView(Element e) {
         //gl.log("Processing view: " + ((NamedElement)e).getName());
         JSONObject view = new JSONObject();

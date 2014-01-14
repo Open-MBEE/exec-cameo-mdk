@@ -1,24 +1,46 @@
+/*******************************************************************************
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * U.S. Government sponsorship acknowledged.
+ * 
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, are 
+ * permitted provided that the following conditions are met:
+ * 
+ *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *    conditions and the following disclaimer.
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list 
+ *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *    provided with the distribution.
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
+ *    nor the names of its contributors may be used to endorse or promote products derived 
+ *    from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
 
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -56,7 +78,14 @@ public class ExportUtility {
     
     public static boolean showErrors(int code, String response) {
         if (code != 200) {
-            Application.getInstance().getGUILog().log(response);
+            if (code == 500) {
+                Utils.showPopupMessage("Server Error");
+                Application.getInstance().getGUILog().log(response);
+            } else if (code == 401) {
+                Utils.showPopupMessage("You are not authorized (you may have entered password wrong, logout in the MMS menu and try again");
+            } else if (code == 403) {
+                Utils.showPopupMessage("You do not have permission to do this");
+            }
             return true;
         }
         return false;
@@ -88,6 +117,7 @@ public class ExportUtility {
         }
     }
     
+    @SuppressWarnings("unchecked")
     public static JSONArray formatView2View(JSONObject vv) {
         JSONArray response = new JSONArray();
         for (Object viewid: vv.keySet()) {

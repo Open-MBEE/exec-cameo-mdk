@@ -28,31 +28,15 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ModelExportRunner;
-import gov.nasa.jpl.mbee.ems.ModelExporter;
-import gov.nasa.jpl.mbee.generator.DocumentWriter;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.awt.event.ActionEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JOptionPane;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.ui.ProgressStatusRunner;
-import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportModelAction extends MDAction {
@@ -70,8 +54,6 @@ public class ExportModelAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        GUILog gl = Application.getInstance().getGUILog();
-        ModelExporter me = null;
         Boolean packageOnly = Utils.getUserYesNoAnswer("Export package structure only?");
         if (packageOnly == null)
             return;
