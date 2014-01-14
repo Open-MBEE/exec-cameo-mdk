@@ -1,3 +1,31 @@
+/*******************************************************************************
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * U.S. Government sponsorship acknowledged.
+ * 
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, are 
+ * permitted provided that the following conditions are met:
+ * 
+ *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *    conditions and the following disclaimer.
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list 
+ *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *    provided with the distribution.
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
+ *    nor the names of its contributors may be used to endorse or promote products derived 
+ *    from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
 package gov.nasa.jpl.mbee.stylesaver;
 
 import java.awt.Color;
@@ -31,274 +59,296 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
  * @author Benjamin Inada, JPL/Caltech
  */
 public class Loader extends MDAction {
-	private static final long serialVersionUID = 1L;
-	
-	/**
-	 * Initializes the Loader.
-	 * 
-	 * @param id 		The ID of the action.
-	 * @param value 	The name of the action.
-	 * @param elem  	The element to be "saved."
-	 * @param mnemonic	The mnemonic key of the action.
-	 * @param group		The name of the related commands group.
-	 */
-	public Loader(String id, String value, int mnemonic, String group) {
-		super(id, value, null, null);
-	}
-	
-	/**
-	 * Loads the style of elements on the active diagram by gathering
-	 * relevant style information from a JSON string in a tag named "style" from
-	 * the active diagram's stereotype.
-	 * 
-	 * @param e The ActionEvent that fired this method.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		Project proj = Application.getInstance().getProject();	// get the project
-		GUILog gl = Application.getInstance().getGUILog();
+    private static final long serialVersionUID = 1L;
 
-    	DiagramPresentationElement diagram;
-    	
-    	// try to load the active diagram
-    	try {
-        	diagram = proj.getActiveDiagram();
-    	} catch (NullPointerException ex) {
-			gl.log("Plugin usage invalid -- Please open a diagram first.");
-			return;
-    	}
+    /**
+     * Initializes the Loader.
+     * 
+     * @param id
+     *            The ID of the action.
+     * @param value
+     *            The name of the action.
+     * @param elem
+     *            The element to be "saved."
+     * @param mnemonic
+     *            The mnemonic key of the action.
+     * @param group
+     *            The name of the related commands group.
+     */
+    public Loader(String id, String value, int mnemonic, String group) {
+        super(id, value, null, null);
+    }
 
-    	// get all the elements in the active diagram and store them into a list
-    	List<PresentationElement> list;
-    	try {
-    		list = diagram.getPresentationElements();
-    	} catch(NullPointerException ex) {
-			gl.log("Plugin usage invalid -- There are no elements on this diagram.");
-			return;
-    	}
-       	
-    	diagram.ensureLoaded();
-    	
-    	// find the style block
-		String blockName = diagram.getName() + "." + diagram.getElement().getID() + ".Style";
-		
-    	Collection<? extends Element> collection = ModelHelper.getElementsOfType(diagram.getElement().getOwner(), new java.lang.Class[]{com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class}, false);
-    	
-    	// find the block in the collection returned
-    	Class block = null;
-    	for(Element elem : collection) {
-    		if(elem instanceof NamedElement) {
-    			// search by name
-    			if(((NamedElement) elem).getName().equals(blockName)) {
-    				block = (Class) elem;
-    				break;
-    			}
-    		}
-    	}
-    	
-    	// TODO if a relative block was not found, alert the user
-    	if(block == null) {
-    		
-    	}
-		
-    	// get a list of all the block's properties
-		List<com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property> props = block.getOwnedAttribute();
-		
-		// find the style property
-		com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property styleProp = null;
-		for(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property p : props) {
-			if(p.getName().equals("Style")) {
-				styleProp = p;
-				break;
-			}
-		}
-		
-		// TODO if the style property was not found, alert the user
-		if(styleProp == null) {
-			
-		}
-		
-		// the default value field is where the JSON-string is located
-		LiteralString styleVS = (LiteralString) styleProp.getDefaultValue();
-		String style = styleVS.getValue();
-				
-    	for(PresentationElement diagElem : list) {
-    		// parse the style string for the correct style for each element
-    		String elemStyle = getStyleString(diagElem, style);
-    		
-    		// set the style of each element and repaint it
-    		setStyle(diagElem, elemStyle);
-    		diagElem.getDiagramSurface().repaint();
-       	}
-	}
-	
-	/**
-	 * Get the specific style string for an element from the main style string.
-	 * 
-	 * @param elem The element the returned style string is for.
-	 * @param style The main style string associated with the active diagram.
-	 * 
-	 * @return The style string associated with the PresentationElement argument.
-	 */
-	private static String getStyleString(PresentationElement elem, String style) {
-		JSONParser parser = new JSONParser();
+    /**
+     * Loads the style of elements on the active diagram by gathering relevant
+     * style information from a JSON string in a tag named "style" from the
+     * active diagram's stereotype.
+     * 
+     * @param e
+     *            The ActionEvent that fired this method.
+     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Project proj = Application.getInstance().getProject(); // get the
+                                                               // project
+        GUILog gl = Application.getInstance().getGUILog();
 
-		// parse the style string
-		Object obj = null;
-		try {
-			obj = parser.parse(style);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		
-		JSONObject jsonObj = (JSONObject) obj;
-		
-		// get the value associated with the element's ID
-		String styleStr = (String) jsonObj.get(elem.getID());
-		
-		return styleStr;
-	}
-	
-	/**
-	 * Sets style properties in the parameterized PresentationElement according to the
-	 * PresentationElement's style property.
-	 * 
-	 * @param elem The element to set style properties in.
-	 * @param style The style string to set.
-	 */
-	private static void setStyle(PresentationElement elem, String style) {
-		PropertyManager propMan = elem.getPropertyManager();
-		
-		JSONParser parser = new JSONParser();
+        DiagramPresentationElement diagram;
 
-		// parse the style string
-		Object obj = null;
-		try {
-			obj = parser.parse(style);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		
-		JSONObject jsonObj = (JSONObject) obj;
+        // try to load the active diagram
+        try {
+            diagram = proj.getActiveDiagram();
+        } catch (NullPointerException ex) {
+            gl.log("Plugin usage invalid -- Please open a diagram first.");
+            return;
+        }
 
-		List<Property> propList = propMan.getProperties();
-		Iterator<Property> iter = propList.iterator();
+        // get all the elements in the active diagram and store them into a list
+        List<PresentationElement> list;
+        try {
+            list = diagram.getPresentationElements();
+        } catch (NullPointerException ex) {
+            gl.log("Plugin usage invalid -- There are no elements on this diagram.");
+            return;
+        }
 
-		// iterate over all the current properties
-		while(iter.hasNext()) {
-			Property currProp = iter.next();
-			String currPropID = currProp.getID();
+        diagram.ensureLoaded();
 
-			// generate the new property
-			String newPropValue = (String) jsonObj.get(currPropID);
-			
-			// if property takes a value of type java.awt.Color, call setColorHelper()
-			if(currProp.getValue() instanceof java.awt.Color) {
-				setColorHelper(currProp, newPropValue);
-			}
-			
-			// if property takes a value of type java.awt.Font, call setFontHelper()
-			if(currProp.getValue() instanceof java.awt.Font) {
-				setFontHelper(currProp, newPropValue);
-			}
-		}
-	}
-	
-	/**
-	 * Helper function that should be used to parse color information to load into the property
-	 * argument.
-	 * 
-	 * @param prop The property to load color information into.
-	 * @param value The string to parse.
-	 */
-	private static void setColorHelper(Property prop, String value) {
-		// trim the RGB values
-		int ltBracket = value.indexOf("[");
-		int rtBracket = value.indexOf("]");
-		String rgb = value.substring(ltBracket + 1, rtBracket);
-		
-		// parse the RGB comma-separated string
-		String redStr = rgb.substring(0, rgb.indexOf(','));
-		rgb = rgb.substring(rgb.indexOf(',') + 2);
-		String greenStr = rgb.substring(0, rgb.indexOf(','));
-		rgb = rgb.substring(rgb.indexOf(',') + 2);
-		String blueStr = rgb.substring(0);
-		
-		// get the integer representations of the color values
-		int red = Integer.parseInt(redStr);
-		int green = Integer.parseInt(greenStr);
-		int blue = Integer.parseInt(blueStr);
-				
-		Color newColor = new Color(red, green, blue);
-		prop.setValue(newColor);
-	}
-	
-	/**
-	 * Helper function that should be used to parse font information to load into the property
-	 * argument.
-	 * 
-	 * @param prop The property to load font information into.
-	 * @param value The string to parse.
-	 */
-	private static void setFontHelper(Property prop, String value) {		
-		// go to the letter after the third ' ', this is where the font info begins
-		int firstSpace = value.indexOf(' ');
-		value = value.substring(firstSpace + 1);
-		int secondSpace = value.indexOf(' ');
-		value = value.substring(secondSpace + 1);
-		int thirdSpace = value.indexOf(' ');
-		int end = value.indexOf('(');
-		
-		// trim the string to parsable format e.g. Arial bold 11
-		value = value.substring(thirdSpace + 1, end);
-		value = value.replace(',', '\0');
-				
-		String name = "";
-		int style = Font.PLAIN;	// plain should be the default
-		int size = 11;
-		int nextSpace = value.indexOf(' ');
-		String word = value.substring(0, nextSpace);
-		value = value.substring(nextSpace + 1);
-		boolean styleFlag = false;
-		
-		while(true) {
-			// try to parse the word as an integer
-			// if parsable, we have reached "size" and the end of the string
-			try {
-				size = Integer.parseInt(word);
-				break;
-			} catch(NumberFormatException e) {
-				// read in the next word (style can be made up of two words e.g. italic bold)
-				String nextWord = value.substring(0, value.indexOf(' '));
-				String italicBoldCandidate = word + " " + nextWord;
-				
-				// note: case matters
-				if(word.equals("bold\0")) {
-					style = Font.BOLD;
-					styleFlag = true;
-				} else if(word.equals("italic\0")) {
-					style = Font.ITALIC;
-					styleFlag = true;
-				} else if(italicBoldCandidate.equals("italic bold\0")) {
-					style = Font.ITALIC | Font.BOLD;
-					styleFlag = true;
-				}
-			}
-			
-			if(!styleFlag) {
-				name = name.concat(word + " ");
-			}
-			
-			// read up to the next ' ', and trim the string
-			nextSpace = value.indexOf(' ');
-			word = value.substring(0, nextSpace);
-			value = value.substring(nextSpace + 1);
-		}
+        // find the style block
+        String blockName = diagram.getName() + "." + diagram.getElement().getID() + ".Style";
 
-		// trim extra space from name
-		name = name.substring(0, name.lastIndexOf(' '));
-		
-		Font newFont = new Font(name, style, size);
-		prop.setValue(newFont);
-	}
+        Collection<? extends Element> collection = ModelHelper.getElementsOfType(diagram.getElement()
+                .getOwner(),
+                new java.lang.Class[] {com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class}, false);
+
+        // find the block in the collection returned
+        Class block = null;
+        for (Element elem: collection) {
+            if (elem instanceof NamedElement) {
+                // search by name
+                if (((NamedElement)elem).getName().equals(blockName)) {
+                    block = (Class)elem;
+                    break;
+                }
+            }
+        }
+
+        // TODO if a relative block was not found, alert the user
+        if (block == null) {
+
+        }
+
+        // get a list of all the block's properties
+        List<com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property> props = block.getOwnedAttribute();
+
+        // find the style property
+        com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property styleProp = null;
+        for (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property p: props) {
+            if (p.getName().equals("Style")) {
+                styleProp = p;
+                break;
+            }
+        }
+
+        // TODO if the style property was not found, alert the user
+        if (styleProp == null) {
+
+        }
+
+        // the default value field is where the JSON-string is located
+        LiteralString styleVS = (LiteralString)styleProp.getDefaultValue();
+        String style = styleVS.getValue();
+
+        for (PresentationElement diagElem: list) {
+            // parse the style string for the correct style for each element
+            String elemStyle = getStyleString(diagElem, style);
+
+            // set the style of each element and repaint it
+            setStyle(diagElem, elemStyle);
+            diagElem.getDiagramSurface().repaint();
+        }
+    }
+
+    /**
+     * Get the specific style string for an element from the main style string.
+     * 
+     * @param elem
+     *            The element the returned style string is for.
+     * @param style
+     *            The main style string associated with the active diagram.
+     * 
+     * @return The style string associated with the PresentationElement
+     *         argument.
+     */
+    private static String getStyleString(PresentationElement elem, String style) {
+        JSONParser parser = new JSONParser();
+
+        // parse the style string
+        Object obj = null;
+        try {
+            obj = parser.parse(style);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        JSONObject jsonObj = (JSONObject)obj;
+
+        // get the value associated with the element's ID
+        String styleStr = (String)jsonObj.get(elem.getID());
+
+        return styleStr;
+    }
+
+    /**
+     * Sets style properties in the parameterized PresentationElement according
+     * to the PresentationElement's style property.
+     * 
+     * @param elem
+     *            The element to set style properties in.
+     * @param style
+     *            The style string to set.
+     */
+    private static void setStyle(PresentationElement elem, String style) {
+        PropertyManager propMan = elem.getPropertyManager();
+
+        JSONParser parser = new JSONParser();
+
+        // parse the style string
+        Object obj = null;
+        try {
+            obj = parser.parse(style);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        JSONObject jsonObj = (JSONObject)obj;
+
+        List<Property> propList = propMan.getProperties();
+        Iterator<Property> iter = propList.iterator();
+
+        // iterate over all the current properties
+        while (iter.hasNext()) {
+            Property currProp = iter.next();
+            String currPropID = currProp.getID();
+
+            // generate the new property
+            String newPropValue = (String)jsonObj.get(currPropID);
+
+            // if property takes a value of type java.awt.Color, call
+            // setColorHelper()
+            if (currProp.getValue() instanceof java.awt.Color) {
+                setColorHelper(currProp, newPropValue);
+            }
+
+            // if property takes a value of type java.awt.Font, call
+            // setFontHelper()
+            if (currProp.getValue() instanceof java.awt.Font) {
+                setFontHelper(currProp, newPropValue);
+            }
+        }
+    }
+
+    /**
+     * Helper function that should be used to parse color information to load
+     * into the property argument.
+     * 
+     * @param prop
+     *            The property to load color information into.
+     * @param value
+     *            The string to parse.
+     */
+    private static void setColorHelper(Property prop, String value) {
+        // trim the RGB values
+        int ltBracket = value.indexOf("[");
+        int rtBracket = value.indexOf("]");
+        String rgb = value.substring(ltBracket + 1, rtBracket);
+
+        // parse the RGB comma-separated string
+        String redStr = rgb.substring(0, rgb.indexOf(','));
+        rgb = rgb.substring(rgb.indexOf(',') + 2);
+        String greenStr = rgb.substring(0, rgb.indexOf(','));
+        rgb = rgb.substring(rgb.indexOf(',') + 2);
+        String blueStr = rgb.substring(0);
+
+        // get the integer representations of the color values
+        int red = Integer.parseInt(redStr);
+        int green = Integer.parseInt(greenStr);
+        int blue = Integer.parseInt(blueStr);
+
+        Color newColor = new Color(red, green, blue);
+        prop.setValue(newColor);
+    }
+
+    /**
+     * Helper function that should be used to parse font information to load
+     * into the property argument.
+     * 
+     * @param prop
+     *            The property to load font information into.
+     * @param value
+     *            The string to parse.
+     */
+    private static void setFontHelper(Property prop, String value) {
+        // go to the letter after the third ' ', this is where the font info
+        // begins
+        int firstSpace = value.indexOf(' ');
+        value = value.substring(firstSpace + 1);
+        int secondSpace = value.indexOf(' ');
+        value = value.substring(secondSpace + 1);
+        int thirdSpace = value.indexOf(' ');
+        int end = value.indexOf('(');
+
+        // trim the string to parsable format e.g. Arial bold 11
+        value = value.substring(thirdSpace + 1, end);
+        value = value.replace(',', '\0');
+
+        String name = "";
+        int style = Font.PLAIN; // plain should be the default
+        int size = 11;
+        int nextSpace = value.indexOf(' ');
+        String word = value.substring(0, nextSpace);
+        value = value.substring(nextSpace + 1);
+        boolean styleFlag = false;
+
+        while (true) {
+            // try to parse the word as an integer
+            // if parsable, we have reached "size" and the end of the string
+            try {
+                size = Integer.parseInt(word);
+                break;
+            } catch (NumberFormatException e) {
+                // read in the next word (style can be made up of two words e.g.
+                // italic bold)
+                String nextWord = value.substring(0, value.indexOf(' '));
+                String italicBoldCandidate = word + " " + nextWord;
+
+                // note: case matters
+                if (word.equals("bold\0")) {
+                    style = Font.BOLD;
+                    styleFlag = true;
+                } else if (word.equals("italic\0")) {
+                    style = Font.ITALIC;
+                    styleFlag = true;
+                } else if (italicBoldCandidate.equals("italic bold\0")) {
+                    style = Font.ITALIC | Font.BOLD;
+                    styleFlag = true;
+                }
+            }
+
+            if (!styleFlag) {
+                name = name.concat(word + " ");
+            }
+
+            // read up to the next ' ', and trim the string
+            nextSpace = value.indexOf(' ');
+            word = value.substring(0, nextSpace);
+            value = value.substring(nextSpace + 1);
+        }
+
+        // trim extra space from name
+        name = name.substring(0, name.lastIndexOf(' '));
+
+        Font newFont = new Font(name, style, size);
+        prop.setValue(newFont);
+    }
 }

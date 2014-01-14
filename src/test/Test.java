@@ -1,18 +1,6 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedSet;
 import java.util.regex.Pattern;
-
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
-import gov.nasa.jpl.graphs.DirectedEdge;
-import gov.nasa.jpl.graphs.DirectedGraph;
-import gov.nasa.jpl.graphs.algorithms.DepthFirstSearch;
-import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
-import gov.nasa.jpl.graphs.utils.Graphviz;
 
 public class Test {
 	
