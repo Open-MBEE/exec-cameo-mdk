@@ -31,12 +31,10 @@ package gov.nasa.jpl.mbee.actions.ems;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
-import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
+
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 

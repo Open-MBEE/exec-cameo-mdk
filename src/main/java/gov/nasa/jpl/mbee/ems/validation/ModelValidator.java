@@ -30,7 +30,6 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -100,6 +99,7 @@ public class ModelValidator {
         prj = Application.getInstance().getProject();
     }
     
+    @SuppressWarnings("unchecked")
     public void validate() {
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
