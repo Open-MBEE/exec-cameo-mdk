@@ -54,6 +54,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
@@ -61,6 +63,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
@@ -81,6 +84,7 @@ public class ModelValidator {
     private ValidationRule ownership = new ValidationRule("Moved", "Wrong containment", ViolationSeverity.ERROR);
     private ValidationRule exist = new ValidationRule("Exist", "Doesn't Exist or Moved", ViolationSeverity.WARNING);
     private ValidationRule relDiff = new ValidationRule("Relationship", "Relationship source or target", ViolationSeverity.ERROR);
+    private ValidationRule commentDiff = new ValidationRule("Comment", "Comment different", ViolationSeverity.ERROR);
     private Project prj;
     private Element start;
     private JSONObject result;
@@ -95,6 +99,7 @@ public class ModelValidator {
         suite.addValidationRule(ownership);
         suite.addValidationRule(exist);
         suite.addValidationRule(relDiff);
+        suite.addValidationRule(commentDiff);
         this.checkExist = checkExist;
         prj = Application.getInstance().getProject();
     }
@@ -149,6 +154,18 @@ public class ModelValidator {
                 if (v != null)
                     valueDiff.addViolation(v);
             }
+            if (e instanceof Comment) {
+                String modelBodyClean = Utils.stripHtmlWrapper(((Comment)e).getBody());
+                String webBody = (String)elementInfo.get("body");
+                if (webBody == null)
+                    webBody = "";
+                if (!modelBodyClean.equals(webBody)) {
+                    ValidationRuleViolation v = new ValidationRuleViolation(e, "[Comment] model: " + modelBodyClean + ", web: " + webBody);
+                    v.addAction(new ImportComment((Comment)e, webBody));
+                    v.addAction(new ExportComment((Comment)e));
+                    commentDiff.addViolation(v);
+                }
+            }
             if (e instanceof DirectedRelationship) {
                 String websourceId = (String)elementInfo.get("source");
                 Element websource = null;
@@ -190,7 +207,7 @@ public class ModelValidator {
         }
         if (checkExist) {
             for (Element e: Utils.collectOwnedElements(start, 0)) {
-                if (e instanceof Comment || e instanceof Extension || e instanceof ValueSpecification)
+                if ((e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) || e instanceof Extension || e instanceof ValueSpecification)
                     continue;
                 if (elementsKeyed.containsKey(e.getID()))
                     continue;
