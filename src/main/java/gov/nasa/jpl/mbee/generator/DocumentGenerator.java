@@ -98,6 +98,7 @@ public class DocumentGenerator {
     private Stereotype        sysmlview = Utils.getViewStereotype();
     private Stereotype        product;
     private Stereotype        conforms  = Utils.getConformsStereotype();
+    private Stereotype        sysml14conforms = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
 
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
         start = e;
@@ -156,7 +157,8 @@ public class DocumentGenerator {
 
     public Section parseView(Element view) {
         Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
-
+        if (viewpoint == null)
+            viewpoint = GeneratorUtils.findStereotypedRelationship(view, sysml14conforms);
         Section viewSection = new Section(); // Section is a misnomer, should be
                                              // View
         viewSection.setView(true);

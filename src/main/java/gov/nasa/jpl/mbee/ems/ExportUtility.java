@@ -82,9 +82,12 @@ public class ExportUtility {
                 Utils.showPopupMessage("Server Error");
                 Application.getInstance().getGUILog().log(response);
             } else if (code == 401) {
-                Utils.showPopupMessage("You are not authorized (you may have entered password wrong, logout in the MMS menu and try again");
+                Utils.showPopupMessage("You are not authorized (you may have entered password wrong, you have been logged out, try again");
+                ViewEditUtils.clearCredentials();
             } else if (code == 403) {
                 Utils.showPopupMessage("You do not have permission to do this");
+            } else if (code == 404) {
+                Utils.showPopupMessage("The url endpoint was not found");
             }
             return true;
         }
