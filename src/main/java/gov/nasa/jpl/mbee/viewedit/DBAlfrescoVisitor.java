@@ -35,6 +35,7 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
@@ -145,8 +146,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject entry = new JSONObject();
         JSONObject imageEntry = new JSONObject();
         for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(false)) {
-            if (e instanceof Extension || e instanceof ValueSpecification)
-                continue;
             addToElements(e);
         }
         // export image - also keep track of exported images
@@ -342,6 +341,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     @SuppressWarnings("unchecked")
     protected void addToElements(Element e) {
+        if ((e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) || 
+                e instanceof Extension || e instanceof ValueSpecification)
+            return;
         if (!viewElements.empty())
             viewElements.peek().add(e.getID());
         if (elements.containsKey(e.getID()))
