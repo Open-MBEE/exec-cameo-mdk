@@ -8,7 +8,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -51,6 +53,15 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
                 if (resultDoc == null)
                     continue;
                 ((Comment)e).setBody(Utils.addHtmlWrapper(resultDoc));
+                ((Comment)e).getAnnotatedElement().clear();
+                JSONArray annotatedElements = (JSONArray)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("annotatedElements");
+                if (annotatedElements != null) {
+                    for (String eid: (List<String>)annotatedElements) {
+                        Element aelement = (Element)Application.getInstance().getProject().getElementByID(eid);
+                        if (aelement != null)
+                            ((Comment)e).getAnnotatedElement().add(aelement);
+                    }
+                }
                 //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
@@ -72,6 +83,15 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
         SessionManager.getInstance().createSession("Change comment");
         try {
             element.setBody(Utils.addHtmlWrapper(doc));
+            element.getAnnotatedElement().clear();
+            JSONArray annotatedElements = (JSONArray)((JSONObject)((JSONObject)ResultHolder.lastResults.get("elementsKeyed")).get(element.getID())).get("annotatedElements");
+            if (annotatedElements != null) {
+                for (String eid: (List<String>)annotatedElements) {
+                    Element aelement = (Element)Application.getInstance().getProject().getElementByID(eid);
+                    if (aelement != null)
+                        element.getAnnotatedElement().add(aelement);
+                }
+            }
             SessionManager.getInstance().closeSession();
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();

@@ -44,6 +44,11 @@ public class ExportComment extends RuleViolationAction implements AnnotationActi
             JSONObject info = new JSONObject();
             info.put("body", Utils.stripHtmlWrapper(((Comment)e).getBody()));
             info.put("id", e.getID());
+            JSONArray annotatedElements = new JSONArray();
+            for (Element el: ((Comment)e).getAnnotatedElement()) {
+                annotatedElements.add(el.getID());
+            }
+            info.put("annotatedElements", annotatedElements);
             infos.add(info);
         }
         send.put("elements", infos);
@@ -66,6 +71,11 @@ public class ExportComment extends RuleViolationAction implements AnnotationActi
         JSONObject send = new JSONObject();
         info.put("body", Utils.stripHtmlWrapper(element.getBody()));
         info.put("id", element.getID());
+        JSONArray annotatedElements = new JSONArray();
+        for (Element el: ((Comment)element).getAnnotatedElement()) {
+            annotatedElements.add(el.getID());
+        }
+        info.put("annotatedElements", annotatedElements);
         elements.add(info);
         send.put("elements", elements);
         //gl.log(send.toJSONString());
@@ -79,6 +89,5 @@ public class ExportComment extends RuleViolationAction implements AnnotationActi
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }
-
     }
 }

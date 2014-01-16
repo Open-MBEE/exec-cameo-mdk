@@ -29,7 +29,9 @@
 package gov.nasa.jpl.mbee.ems.validation;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -155,16 +157,9 @@ public class ModelValidator {
                     valueDiff.addViolation(v);
             }
             if (e instanceof Comment) {
-                String modelBodyClean = Utils.stripHtmlWrapper(((Comment)e).getBody());
-                String webBody = (String)elementInfo.get("body");
-                if (webBody == null)
-                    webBody = "";
-                if (!modelBodyClean.equals(webBody)) {
-                    ValidationRuleViolation v = new ValidationRuleViolation(e, "[Comment] model: " + modelBodyClean + ", web: " + webBody);
-                    v.addAction(new ImportComment((Comment)e, webBody));
-                    v.addAction(new ExportComment((Comment)e));
-                    commentDiff.addViolation(v);
-                }
+                ValidationRuleViolation v = commentDiff((Comment)e, elementInfo);
+                if (v != null)
+                    valueDiff.addViolation(v);
             }
             if (e instanceof DirectedRelationship) {
                 String websourceId = (String)elementInfo.get("source");
@@ -417,6 +412,34 @@ public class ModelValidator {
         return null;
     }
     
+    private ValidationRuleViolation commentDiff(Comment e, JSONObject elementInfo) {
+        String modelBodyClean = Utils.stripHtmlWrapper(((Comment)e).getBody());
+        String webBody = (String)elementInfo.get("body");
+        if (webBody == null)
+            webBody = "";
+        ValidationRuleViolation v = null;
+        if (!modelBodyClean.equals(webBody)) {
+            v = new ValidationRuleViolation(e, "[Comment] model: " + modelBodyClean + ", web: " + webBody);
+            v.addAction(new ImportComment(e, webBody));
+            v.addAction(new ExportComment(e));
+        }
+        Set<String> modelAnnotated = new HashSet<String>();
+        for (Element el: e.getAnnotatedElement()) {
+            modelAnnotated.add(el.getID());
+        }
+        JSONArray web = (JSONArray)elementInfo.get("annotatedElements");
+        if (web != null) {
+            Set<String> webs = new HashSet<String>(web);
+            if (!webs.containsAll(modelAnnotated) || !modelAnnotated.containsAll(webs)) {
+                if (v == null) {
+                    v = new ValidationRuleViolation(e, "[Comment] The anchored elements are different");
+                    v.addAction(new ImportComment(e, webBody));
+                    v.addAction(new ExportComment(e));
+                }
+            }
+        }
+        return v;
+    }
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);
