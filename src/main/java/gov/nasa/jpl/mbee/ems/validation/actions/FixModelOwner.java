@@ -50,11 +50,12 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
     private static final long serialVersionUID = 1L;
     private Element element;
     private Element owner;
-    
-    public FixModelOwner(Element e, Element owner) {
+    private JSONObject result;
+    public FixModelOwner(Element e, Element owner, JSONObject result) {
         super("FixModelOwner", "Import owner", null, null);
         this.element = e;
         this.owner = owner;
+        this.result = result;
     }
     
     @Override
@@ -64,7 +65,6 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        JSONObject result = ResultHolder.lastResults;
         SessionManager.getInstance().createSession("Change Owners");
         Project prj = Application.getInstance().getProject();
         Collection<Annotation> toremove = new HashSet<Annotation>();

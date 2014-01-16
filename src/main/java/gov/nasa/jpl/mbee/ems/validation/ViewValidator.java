@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
@@ -57,6 +58,7 @@ import org.json.simple.JSONValue;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
@@ -66,6 +68,7 @@ public class ViewValidator {
     private ValidationRule exists = new ValidationRule("Does Not Exist", "view doesn't exist yet", ViolationSeverity.ERROR);
     private ValidationRule match = new ValidationRule("View content", "view contents have changed", ViolationSeverity.ERROR);
     private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.INFO);
+    private ValidationRule comments = new ValidationRule("View Comments", "view comments", ViolationSeverity.WARNING);
     private ValidationSuite modelSuite;
     private Project prj;
     private Element view;
@@ -78,6 +81,7 @@ public class ViewValidator {
         suite.addValidationRule(exists);
         suite.addValidationRule(match);
         suite.addValidationRule(hierarchy);
+        suite.addValidationRule(comments);
         this.recurse = recursive;
     }
     
@@ -135,6 +139,20 @@ public class ViewValidator {
                     hierarchy.addViolation(v);
                 }
                 resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
+                
+                
+                String viewCommentsUrl = existurl + "/comments";
+                String viewcomments = ExportUtility.get(viewCommentsUrl);
+                if (viewcomments == null)
+                    continue;
+                JSONObject commentresults = (JSONObject)JSONValue.parse(viewcomments);
+                resultElements.addAll((JSONArray)commentresults.get("elements"));
+                boolean commentMatches = viewCommentsMatch(currentView, commentresults);
+                if (!commentMatches) {
+                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Comments] The view has different comments on either side");
+                    v.addAction(new ExportElementComments(currentView));
+                    comments.addViolation(v);
+                }
             }
         }
         ResultHolder.lastResults = results;
@@ -161,5 +179,21 @@ public class ViewValidator {
         if (webElements.containsAll(local) && local.containsAll(webElements))
             return true;
         return false;
+    }
+    
+    private boolean viewCommentsMatch(Element view, JSONObject commentresults) {
+        Set<String> modelComments = new HashSet<String>();
+        JSONArray elements = (JSONArray)commentresults.get("elements");
+        Set<String> webComments = new HashSet<String>();
+        for (Object elinfo: elements) {
+            webComments.add((String)((JSONObject)elinfo).get("id"));
+        }
+        for (Comment el: view.get_commentOfAnnotatedElement()) {
+            if (!ExportUtility.isElementDocumentation(el))
+                modelComments.add(el.getID());
+        }
+        if (!modelComments.containsAll(webComments) || !webComments.containsAll(modelComments))
+            return false;
+        return true;
     }
 }

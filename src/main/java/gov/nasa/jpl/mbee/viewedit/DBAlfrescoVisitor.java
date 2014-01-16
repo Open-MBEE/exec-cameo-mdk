@@ -146,8 +146,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject entry = new JSONObject();
         JSONObject imageEntry = new JSONObject();
         for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(false)) {
-            if (e instanceof Comment || e instanceof Extension || e instanceof ValueSpecification)
-                continue;
             addToElements(e);
         }
         // export image - also keep track of exported images
@@ -343,6 +341,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     @SuppressWarnings("unchecked")
     protected void addToElements(Element e) {
+        if ((e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) || 
+                e instanceof Extension || e instanceof ValueSpecification)
+            return;
         if (!viewElements.empty())
             viewElements.peek().add(e.getID());
         if (elements.containsKey(e.getID()))

@@ -49,10 +49,11 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
 
     private static final long serialVersionUID = 1L;
     private Element element;
-    
-    public ImportRel(Element e) {
+    private JSONObject result;
+    public ImportRel(Element e, JSONObject result) {
         super("ImportRel", "Import rel", null, null);
         this.element = e;
+        this.result = result;
     }
     
     @Override
@@ -62,7 +63,6 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        JSONObject result = ResultHolder.lastResults;
         SessionManager.getInstance().createSession("Change Rels");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
@@ -97,7 +97,6 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
         }
         SessionManager.getInstance().createSession("Change Rel");
         try {
-            JSONObject result = ResultHolder.lastResults;
             String sourceId = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(element.getID())).get("source");
             String targetId = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(element.getID())).get("target");
             Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);

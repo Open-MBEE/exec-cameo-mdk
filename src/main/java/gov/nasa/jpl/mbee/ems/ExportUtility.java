@@ -49,6 +49,7 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -154,6 +155,14 @@ public class ExportUtility {
         return null;
     }
     
+    public static boolean isElementDocumentation(Comment c) {
+        if (c.getAnnotatedElement().size() > 1 || c.getAnnotatedElement().isEmpty())
+            return false;
+        if (c.getAnnotatedElement().iterator().next() == c.getOwner())
+            return true;
+        return false;
+    }
+    
     @SuppressWarnings("unchecked")
     public static void fillElement(Element e, JSONObject elementInfo, Stereotype view, Stereotype viewpoint) {
         if (e instanceof Package) {
@@ -198,6 +207,14 @@ public class ExportUtility {
             elementInfo.put("type", "Generalization");
         } else if (e instanceof DirectedRelationship) {   
             elementInfo.put("type", "DirectedRelationship");
+        } else if (e instanceof Comment) {
+            elementInfo.put("type", "Comment");
+            elementInfo.put("body", Utils.stripHtmlWrapper(((Comment)e).getBody()));
+            JSONArray elements = new JSONArray();
+            for (Element el: ((Comment)e).getAnnotatedElement()) {
+                elements.add(el.getID());
+            }
+            elementInfo.put("annotatedElements", elements);
         } else {
             elementInfo.put("type", "Element");
         }
@@ -211,7 +228,7 @@ public class ExportUtility {
             elementInfo.put("isView", true);
         else
             elementInfo.put("isView", false);*/
-        if (StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
+        if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
             elementInfo.put("type", "Viewpoint");
         if (e instanceof NamedElement) {
             elementInfo.put("name", ((NamedElement)e).getName());
@@ -223,6 +240,13 @@ public class ExportUtility {
         else
             elementInfo.put("owner", e.getOwner().getID());
         elementInfo.put("id", e.getID());
+        JSONArray comments = new JSONArray();
+        for (Comment c: e.get_commentOfAnnotatedElement()) {
+            if (isElementDocumentation(c))
+                continue;
+            comments.add(c.getID());
+        }
+        elementInfo.put("comments", comments);
     }
     
     @SuppressWarnings("unchecked")

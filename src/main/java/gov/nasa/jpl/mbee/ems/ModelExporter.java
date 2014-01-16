@@ -99,9 +99,11 @@ public class ModelExporter {
     private boolean addToElements(Element e, int curdepth) {
         if (elements.containsKey(e.getID()))
             return true;
-        if (e instanceof Comment || e instanceof ValueSpecification || !(e instanceof Package) && packageOnly || e instanceof Extension)
+        if (e instanceof ValueSpecification || !(e instanceof Package) && packageOnly || e instanceof Extension)
             return false;
         if (ProjectUtilities.isElementInAttachedProject(e))
+            return false;
+        if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
             return false;
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
