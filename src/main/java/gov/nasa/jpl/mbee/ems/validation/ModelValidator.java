@@ -136,13 +136,13 @@ public class ModelValidator {
             }
             if (elementName != null && !elementName.equals(elementInfo.get("name"))) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[NAME] model: " + elementName + ", web: " + elementInfo.get("name"));
-                v.addAction(new ImportName((NamedElement)e, (String)elementInfo.get("name")));
+                v.addAction(new ImportName((NamedElement)e, (String)elementInfo.get("name"), result));
                 v.addAction(new ExportName((NamedElement)e));
                 nameDiff.addViolation(v);
             }
             if (elementDoc != null && !elementDocClean.equals(elementInfo.get("documentation"))) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + elementDocClean + ", web: " + elementInfo.get("documentation"));
-                v.addAction(new ImportDoc(e, (String)elementInfo.get("documentation")));
+                v.addAction(new ImportDoc(e, (String)elementInfo.get("documentation"), result));
                 v.addAction(new ExportDoc(e));
                 docDiff.addViolation(v);
             }
@@ -179,7 +179,7 @@ public class ModelValidator {
                     if (webtarget != localtarget)
                         msg += "model target: " + localtarget.getHumanName() + ", web target: " + webtarget.getHumanName();
                     ValidationRuleViolation v = new ValidationRuleViolation(e, msg);
-                    v.addAction(new ImportRel(e));
+                    v.addAction(new ImportRel(e, result));
                     v.addAction(new ExportRel(e));
                     relDiff.addViolation(v);
                 }
@@ -194,7 +194,7 @@ public class ModelValidator {
                     continue;//??
                 }
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + owner.getHumanName());
-                v.addAction(new FixModelOwner(e, owner));
+                v.addAction(new FixModelOwner(e, owner, result));
                 v.addAction(new ExportOwner(e));
                 ownership.addViolation(v);
             }
@@ -222,13 +222,13 @@ public class ModelValidator {
             return null;
         if (vs != null && (valueTypes == null || value == null || value.isEmpty())) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
-            v.addAction(new ImportValue(e, null, null));
+            v.addAction(new ImportValue(e, null, null, result));
             v.addAction(new ExportValue(e));
             return v;
         }
         if (vs == null && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + value.toString());
-            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes)));
+            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
             v.addAction(new ExportValue(e));
             return v;
         }
@@ -288,7 +288,7 @@ public class ModelValidator {
         }   
         if (!message.equals("")) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, message);
-            v.addAction(new ImportValue(e, value, valueType));
+            v.addAction(new ImportValue(e, value, valueType, result));
             v.addAction(new ExportValue(e));
             return v;
         }
@@ -309,21 +309,21 @@ public class ModelValidator {
         }
         if (vs != null && vs.size() > 0 && (valueTypes == null || value == null || value.size() == 0)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
-            v.addAction(new ImportValue(e, null, null));
+            v.addAction(new ImportValue(e, null, null, result));
             v.addAction(new ExportValue(e));
             Debug.outln("1) returning ValidationRuleViolation: " + v );
             return v;
         }
         if ((vs == null || vs.isEmpty()) && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + value.toString());
-            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes)));
+            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
             v.addAction(new ExportValue(e));
             Debug.outln("2) returning ValidationRuleViolation: " + v );
             return v;
         }
         if ((vs.size() != value.size())) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model and web values don't match");
-            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes)));
+            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
             v.addAction(new ExportValue(e));
             Debug.outln("3) returning ValidationRuleViolation: " + v );
             return v;
@@ -403,7 +403,7 @@ public class ModelValidator {
         }   
         if (!message.equals("")) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, message);
-            v.addAction(new ImportValue(e, value, valueType));
+            v.addAction(new ImportValue(e, value, valueType, result));
             v.addAction(new ExportValue(e));
             Debug.outln("4) returning ValidationRuleViolation: " + v );
             return v;
@@ -420,7 +420,7 @@ public class ModelValidator {
         ValidationRuleViolation v = null;
         if (!modelBodyClean.equals(webBody)) {
             v = new ValidationRuleViolation(e, "[Comment] model: " + modelBodyClean + ", web: " + webBody);
-            v.addAction(new ImportComment(e, webBody));
+            v.addAction(new ImportComment(e, webBody, result));
             v.addAction(new ExportComment(e));
         }
         Set<String> modelAnnotated = new HashSet<String>();
@@ -433,7 +433,7 @@ public class ModelValidator {
             if (!webs.containsAll(modelAnnotated) || !modelAnnotated.containsAll(webs)) {
                 if (v == null) {
                     v = new ValidationRuleViolation(e, "[Comment] The anchored elements are different");
-                    v.addAction(new ImportComment(e, webBody));
+                    v.addAction(new ImportComment(e, webBody, result));
                     v.addAction(new ExportComment(e));
                 }
             }

@@ -26,11 +26,13 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
     private static final long serialVersionUID = 1L;
     private Comment element;
     private String doc;
+    private JSONObject result;
     
-    public ImportComment(Comment e, String doc) {
+    public ImportComment(Comment e, String doc, JSONObject result) {
         super("ImportComment", "Import comment", null, null);
         this.element = e;
         this.doc = doc;
+        this.result = result;
     }
     
     @Override
@@ -40,7 +42,6 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        JSONObject result = ResultHolder.lastResults;
         SessionManager.getInstance().createSession("Change Comments");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
@@ -84,7 +85,7 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
         try {
             element.setBody(Utils.addHtmlWrapper(doc));
             element.getAnnotatedElement().clear();
-            JSONArray annotatedElements = (JSONArray)((JSONObject)((JSONObject)ResultHolder.lastResults.get("elementsKeyed")).get(element.getID())).get("annotatedElements");
+            JSONArray annotatedElements = (JSONArray)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(element.getID())).get("annotatedElements");
             if (annotatedElements != null) {
                 for (String eid: (List<String>)annotatedElements) {
                     Element aelement = (Element)Application.getInstance().getProject().getElementByID(eid);

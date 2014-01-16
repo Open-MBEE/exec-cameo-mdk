@@ -65,12 +65,13 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     private JSONArray values;
     private PropertyValueType type;
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
-
-    public ImportValue(Element e, JSONArray values, PropertyValueType type) {
+    private JSONObject result;
+    public ImportValue(Element e, JSONArray values, PropertyValueType type, JSONObject result) {
         super("ImportValue", "Import value", null, null);
         this.element = e;
         this.values = values;
         this.type = type;
+        this.result = result;
     }
     
     @Override
@@ -80,7 +81,6 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        JSONObject result = ResultHolder.lastResults;
         SessionManager.getInstance().createSession("Change values");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {

@@ -225,7 +225,7 @@ public class ExportUtility {
             elementInfo.put("isView", true);
         else
             elementInfo.put("isView", false);*/
-        if (StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
+        if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
             elementInfo.put("type", "Viewpoint");
         if (e instanceof NamedElement) {
             elementInfo.put("name", ((NamedElement)e).getName());
