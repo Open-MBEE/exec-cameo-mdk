@@ -206,15 +206,18 @@ public class ModelValidator {
         ValueSpecification vs = e.getDefaultValue();
         String valueTypes = (String)info.get("valueType");
         JSONArray value = (JSONArray)info.get("value");
-        if (vs == null && (valueTypes == null || value == null || value.isEmpty()))
+        if ((vs == null || vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) 
+                && (valueTypes == null || value == null || value.isEmpty()))
             return null;
-        if (vs != null && (valueTypes == null || value == null || value.isEmpty())) {
+        if ((vs != null || vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) 
+                && (valueTypes == null || value == null || value.isEmpty())) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
             v.addAction(new ImportValue(e, null, null));
             v.addAction(new ExportValue(e));
             return v;
         }
-        if (vs == null && value != null && value.size() > 0 && valueTypes != null) {
+        if ((vs == null || vs instanceof ElementValue && ((ElementValue)vs).getElement() == null)  
+                && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + value.toString());
             v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes)));
             v.addAction(new ExportValue(e));
@@ -290,19 +293,19 @@ public class ModelValidator {
         String valueTypes = (String)info.get("valueType");
         JSONArray value = (JSONArray)info.get("value");
         Debug.outln("JSONArray value = " + value);
-        
-        if ((vs == null || vs.isEmpty()) && (valueTypes == null || value == null || value.size() == 0)) {
+        boolean nullElementValues = areNullElementValues(vs);
+        if ((vs == null || vs.isEmpty() || nullElementValues) && (valueTypes == null || value == null || value.size() == 0)) {
             Debug.outln("returning null: vs=" + vs + ", valueTypes=" + valueTypes + ", value=" + value);
             return null;
         }
-        if (vs != null && vs.size() > 0 && (valueTypes == null || value == null || value.size() == 0)) {
+        if (vs != null && vs.size() > 0 && !nullElementValues && (valueTypes == null || value == null || value.size() == 0)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
             v.addAction(new ImportValue(e, null, null));
             v.addAction(new ExportValue(e));
             Debug.outln("1) returning ValidationRuleViolation: " + v );
             return v;
         }
-        if ((vs == null || vs.isEmpty()) && value != null && value.size() > 0 && valueTypes != null) {
+        if ((vs == null || vs.isEmpty() || nullElementValues) && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + value.toString());
             v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes)));
             v.addAction(new ExportValue(e));
@@ -408,5 +411,13 @@ public class ModelValidator {
     
     public ValidationSuite getSuite() {
         return suite;
+    }
+    
+    private boolean areNullElementValues(List<ValueSpecification> vs) {
+        for (ValueSpecification v: vs) {
+            if (!(v instanceof ElementValue) || v instanceof ElementValue && ((ElementValue)v).getElement() != null)
+                return false;
+        }
+        return true;
     }
 }
