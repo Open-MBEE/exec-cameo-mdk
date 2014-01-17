@@ -142,7 +142,7 @@ public class ViewValidator {
                 resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
                 
                 
-                String viewCommentsUrl = existurl + "/comments";
+                String viewCommentsUrl = url + "/javawebscripts/elements/" + viewid + "/comments";
                 String viewcomments = ExportUtility.get(viewCommentsUrl);
                 if (viewcomments == null)
                     continue;

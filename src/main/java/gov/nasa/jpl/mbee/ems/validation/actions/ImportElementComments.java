@@ -6,6 +6,8 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -80,6 +82,11 @@ public class ImportElementComments extends RuleViolationAction implements Annota
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            Application.getInstance().getGUILog().log(sw.toString()); // stack trace as a string
+            ex.printStackTrace();
         }
     }
 
