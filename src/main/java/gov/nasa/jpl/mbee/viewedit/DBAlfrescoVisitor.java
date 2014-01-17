@@ -195,7 +195,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         entry.put("text", "<p><img src=\"/editor/images/docgen/" + svgCrcFilename + "\" alt=\""
                 + image.getImage().getName() + "\"/></p>");
-        entry.put("source", "text");
+        entry.put("sourceType", "text");
         entry.put("type", "Paragraph");
         curContains.add(entry);
     }
