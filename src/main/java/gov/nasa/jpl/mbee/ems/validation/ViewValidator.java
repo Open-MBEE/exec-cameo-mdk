@@ -33,6 +33,7 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportElementComments;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -151,6 +152,7 @@ public class ViewValidator {
                 if (!commentMatches) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Comments] The view has different comments on either side");
                     v.addAction(new ExportElementComments(currentView));
+                    v.addAction(new ImportElementComments(currentView, commentresults));
                     comments.addViolation(v);
                 }
             }
