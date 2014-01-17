@@ -92,6 +92,7 @@ public class ExportUtility {
             }
             return true;
         }
+        Application.getInstance().getGUILog().log(response);
         return false;
     }
     
@@ -100,8 +101,10 @@ public class ExportUtility {
             return false;
         PostMethod pm = new PostMethod(url);
         GUILog gl = Application.getInstance().getGUILog();
+        
         try {
             gl.log("[INFO] Sending...");
+            gl.log(json);
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();

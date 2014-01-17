@@ -68,7 +68,7 @@ public class ModelExportRunner implements RunnableWithProgress {
         JSONObject result = me.getResult();
         String json = result.toJSONString();
 
-        gl.log(json);
+        //gl.log(json);
         gl.log("Number of Elements: " + me.getNumberOfElements());
         String url = ViewEditUtils.getUrl(false);
         if (url == null) {
