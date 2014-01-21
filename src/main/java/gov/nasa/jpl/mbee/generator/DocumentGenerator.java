@@ -71,6 +71,8 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activit
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ForkNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -78,6 +80,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementImport;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageImport;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
@@ -226,6 +230,14 @@ public class DocumentGenerator {
                     elementImports.addAll(queries); // all three import/queries
                                                     // relationships are
                                                     // interpreted the same
+                if (view instanceof Class) {
+                    for (TypedElement te: ((Class)view).get_typedElementOfType()) {
+                        if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
+                            elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(te, 
+                                    DocGen3Profile.queriesStereotype, 1, false, 1));
+                        }
+                    }
+                }
                 if (elementImports.isEmpty())
                     elementImports.add(view); // if view does not import/query
                                               // anything, give the view element
@@ -237,6 +249,7 @@ public class DocumentGenerator {
                     elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
                             viewpoint, "Covers", 1, false, 1));
                     elementImports.add(b);
+                    elementImports.add(view);
                 }
                 context.pushTargets(Utils.removeDuplicates(elementImports));
                 if (b instanceof Activity) {
