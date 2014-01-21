@@ -36,6 +36,8 @@ import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -75,6 +77,55 @@ public class ExportUtility {
     }
     public static String getPostElementsUrl(String site, String project) {
         return "/javawebscripts/sites/" + site + "/projects/" + project + "/elements";
+    }
+    
+    public static String getUrl() {
+        String url = null;
+        Element model = Application.getInstance().getProject().getModel();
+        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
+            url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
+                    "url");
+            if (url == null || url.equals("")) {
+                JOptionPane
+                        .showMessageDialog(null,
+                                "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
+                return null;
+            }
+        } else {
+            JOptionPane
+                    .showMessageDialog(null,
+                            "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
+            return null;
+        }
+        return url;
+    }
+    
+    public static String getUrlWithSite() {
+        Element model = Application.getInstance().getProject().getModel();
+        String  url = getUrl();
+        if (url == null)
+            return null;
+        String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
+        if (site == null || site.equals("")) {
+            JOptionPane.showMessageDialog(null,
+                    "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
+                return null;
+        }
+        return url + "/javawebscripts/sites/" + site;
+    }
+    
+    public static String getUrlWithSiteAndProject() {
+        String url = getUrlWithSite();
+        if (url != null)
+            return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        return null;
+    }
+    
+    public static String getPostElementsUrl() {
+        String url = getUrlWithSiteAndProject();
+        if (url == null)
+            return null;
+        return url + "/elements";
     }
     
     public static boolean showErrors(int code, String response) {

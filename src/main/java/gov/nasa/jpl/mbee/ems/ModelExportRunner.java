@@ -58,6 +58,11 @@ public class ModelExportRunner implements RunnableWithProgress {
     public void run(ProgressStatus arg0) {
         ModelExporter me;
         GUILog gl = Application.getInstance().getGUILog();
+        String url = ExportUtility.getUrl();
+        if (url == null) {
+            return;
+        }
+        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/elements";
         if (start instanceof Model) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
         } else {
@@ -70,11 +75,7 @@ public class ModelExportRunner implements RunnableWithProgress {
 
         //gl.log(json);
         gl.log("Number of Elements: " + me.getNumberOfElements());
-        String url = ViewEditUtils.getUrl(false);
-        if (url == null) {
-            return;
-        }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/elements";
+        
        // gl.log("*** Starting export view comments ***");
         ExportUtility.send(url, json);
         

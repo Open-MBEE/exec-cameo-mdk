@@ -139,7 +139,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         JSONObject send = new JSONObject();
         send.put("elements", elementsArray);
         //gl.log(send.toJSONString());
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getUrl();
         if (url == null)
             //url = "";
             return false;

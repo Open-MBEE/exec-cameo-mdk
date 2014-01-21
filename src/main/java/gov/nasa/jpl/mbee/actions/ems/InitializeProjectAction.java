@@ -58,8 +58,8 @@ public class InitializeProjectAction extends MDAction {
         result.put("name", Application.getInstance().getProject().getName());
         String json = result.toJSONString();
 
-        gl.log(json);
-        String url = ViewEditUtils.getUrl(false);
+        //gl.log(json);
+        String url = ExportUtility.getUrl();
         if (url == null) {
             return;
         }

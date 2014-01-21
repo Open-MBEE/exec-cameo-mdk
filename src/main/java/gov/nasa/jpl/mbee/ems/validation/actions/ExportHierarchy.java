@@ -94,7 +94,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
         Document dge = dg.parseDocument(true, true);
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
         dge.accept(vhv);
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getUrl();
         boolean document = false;
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");

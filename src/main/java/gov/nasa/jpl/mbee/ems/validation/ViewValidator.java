@@ -103,7 +103,7 @@ public class ViewValidator {
         results.put("elements", resultElements);
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getUrl();
         if (url == null)
             return;//return; //do some error
         for (Object viewid: visitor2.getViews().keySet()) {

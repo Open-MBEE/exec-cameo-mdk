@@ -54,7 +54,7 @@ public class ValidateModelAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getUrl();
         if (url == null) {
             return;
         }
