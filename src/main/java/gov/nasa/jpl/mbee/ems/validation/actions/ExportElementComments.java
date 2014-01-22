@@ -51,7 +51,7 @@ public class ExportElementComments extends RuleViolationAction implements Annota
         }
         send.put("elements", infos);
         //gl.log(send.toJSONString());
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getUrl();
         if (url == null) {
             return;
         }
@@ -76,7 +76,7 @@ public class ExportElementComments extends RuleViolationAction implements Annota
         send.put("elements", elements);
         //gl.log(send.toJSONString());
 
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getUrl();
         if (url == null) {
             return;
         }

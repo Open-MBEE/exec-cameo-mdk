@@ -80,7 +80,8 @@ public class ExportUtility {
     }
     
     public static String getUrl() {
-        String url = null;
+        return "https://sheldon/alfresco/service";
+        /*String url = null;
         Element model = Application.getInstance().getProject().getModel();
         if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
             url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
@@ -97,7 +98,7 @@ public class ExportUtility {
                             "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
             return null;
         }
-        return url;
+        return url;*/ 
     }
     
     public static String getUrlWithSite() {
@@ -105,13 +106,13 @@ public class ExportUtility {
         String  url = getUrl();
         if (url == null)
             return null;
-        String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
+        /*String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
         if (site == null || site.equals("")) {
             JOptionPane.showMessageDialog(null,
                     "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
                 return null;
-        }
-        return url + "/javawebscripts/sites/" + site;
+        }*/
+        return url + "/javawebscripts/sites/europa";
     }
     
     public static String getUrlWithSiteAndProject() {
@@ -184,6 +185,16 @@ public class ExportUtility {
             viewinfo.put("id", viewid);
             viewinfo.put("childrenViews", children);
             response.add(viewinfo);
+        }
+        return response;
+    }
+    
+    public static JSONObject keyView2View(JSONArray vv) {
+        JSONObject response = new JSONObject();
+        for (Object viewinfo: vv) {
+            String id = (String)((JSONObject)viewinfo).get("id");
+            JSONArray children = (JSONArray)((JSONObject)viewinfo).get("childrenViews");
+            response.put(id, children);
         }
         return response;
     }

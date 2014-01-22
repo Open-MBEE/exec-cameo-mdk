@@ -73,7 +73,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     private GUILog gl = Application.getInstance().getGUILog();
     
     public ExportView(Element e, boolean recursive) {
-        super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Export view recursive" : "Export view", null, null);
+        super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Export view hierarchy" : "Export view", null, null);
         this.recurse = recursive;
         this.view = e;
     }

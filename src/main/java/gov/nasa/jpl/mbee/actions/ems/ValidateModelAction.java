@@ -28,15 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
-
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -54,18 +48,9 @@ public class ValidateModelAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        String url = ExportUtility.getUrl();
-        if (url == null) {
-            return;
-        }
-        url += "/javawebscripts/elements/" + start.getID() + "?recurse=true";
-        String response = ExportUtility.get(url);
-        if (response == null)
-            return;
-        JSONObject result = (JSONObject)JSONValue.parse(response);
-        ResultHolder.lastResults = result;
-        ModelValidator validator = new ModelValidator(start, result, true);
-        validator.validate();
+        ModelValidator validator = new ModelValidator(start, null, true);
+        if (validator.checkProject())
+            validator.validate();
         validator.showWindow();
     }
 }

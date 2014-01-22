@@ -76,7 +76,7 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         send.put("elements", infos);
         //gl.log(send.toJSONString());
 
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getUrl();
         if (url == null) {
             return;
         }
@@ -99,7 +99,7 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         send.put("elements", elements);
         //gl.log(send.toJSONString());
 
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getUrl();
         if (url == null) {
             return;
         }

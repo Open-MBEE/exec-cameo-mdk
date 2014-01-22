@@ -35,11 +35,14 @@ import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -70,6 +73,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
+import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
@@ -87,6 +91,7 @@ public class ModelValidator {
     private ValidationRule exist = new ValidationRule("Exist", "Doesn't Exist or Moved", ViolationSeverity.WARNING);
     private ValidationRule relDiff = new ValidationRule("Relationship", "Relationship source or target", ViolationSeverity.ERROR);
     private ValidationRule commentDiff = new ValidationRule("Comment", "Comment different", ViolationSeverity.ERROR);
+    private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
     private Project prj;
     private Element start;
     private JSONObject result;
@@ -94,7 +99,6 @@ public class ModelValidator {
     
     public ModelValidator(Element start, JSONObject result, boolean checkExist) {
         this.start = start;
-        this.result = result;
         suite.addValidationRule(nameDiff);
         suite.addValidationRule(docDiff);
         suite.addValidationRule(valueDiff);
@@ -102,8 +106,35 @@ public class ModelValidator {
         suite.addValidationRule(exist);
         suite.addValidationRule(relDiff);
         suite.addValidationRule(commentDiff);
+        suite.addValidationRule(projectExist);
         this.checkExist = checkExist;
+        this.result = result;
         prj = Application.getInstance().getProject();
+    }
+    
+    public boolean checkProject() {
+        String projectUrl = ExportUtility.getUrlWithSiteAndProject();
+        if (projectUrl == null)
+            return false;
+        String response = ExportUtility.get(projectUrl);
+        if (response == null) {
+            ValidationRuleViolation v = new ValidationRuleViolation(Project.getProject(start).getModel(), "This project doesn't exist on the web yet, or the site has been moved");
+            v.addAction(new InitializeProjectModel());
+            projectExist.addViolation(v);
+            return false;
+        }
+            
+        String url = ExportUtility.getUrl();
+        String id = start.getID();
+        if (start instanceof Model)
+            id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        url += "/javawebscripts/elements/" + id + "?recurse=true";
+        response = ExportUtility.get(url);
+        if (response == null)
+            return false;
+        result = (JSONObject)JSONValue.parse(response);
+        ResultHolder.lastResults = result;
+        return true;
     }
     
     @SuppressWarnings("unchecked")
@@ -201,17 +232,27 @@ public class ModelValidator {
             
         }
         if (checkExist) {
-            for (Element e: Utils.collectOwnedElements(start, 0)) {
-                if ((e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) || e instanceof Extension || e instanceof ValueSpecification)
-                    continue;
-                if (elementsKeyed.containsKey(e.getID()))
-                    continue;
+            Set<Element> missing = new HashSet<Element>();
+            getAllMissing(start, missing, elementsKeyed);
+            for (Element e: missing) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
                 v.addAction(new ExportElement(e));
                 exist.addViolation(v);
             }
         }
         result.put("elementsKeyed", elementsKeyed);
+    }
+    
+    private void getAllMissing(Element current, Set<Element> missing, JSONObject elementsKeyed) {
+        if (ProjectUtilities.isElementInAttachedProject(current))
+            return;
+        if ((current instanceof Comment && ExportUtility.isElementDocumentation((Comment)current)) || current instanceof Extension || current instanceof ValueSpecification)
+            return;
+        if (!elementsKeyed.containsKey(current.getID()))
+            missing.add(current);
+        for (Element e: current.getOwnedElement()) {
+            getAllMissing(e, missing, elementsKeyed);            
+        }
     }
     
     private ValidationRuleViolation valueDiff(Property e, JSONObject info) {

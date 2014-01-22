@@ -42,7 +42,7 @@ public class ValidateViewAction extends MDAction {
     public static final String actionid = "ValidateViewAlfresco";
     
     public ValidateViewAction(Element e) {
-        super(actionid, "Validate View With VE", null, null);
+        super(actionid, "Validate View", null, null);
         view = e;
     }
     

@@ -129,12 +129,12 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
         if (manager.getActionFor(ExportModelAction.actionid) == null)
             modelLoad.addAction(new ExportModelAction(e));
-        if (manager.getActionFor(ValidateModelAction.actionid) == null && !(e instanceof Model))
+        if (manager.getActionFor(ValidateModelAction.actionid) == null)
             modelLoad.addAction(new ValidateModelAction(e));
-        if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
-            modelLoad.addAction(new InitializeProjectAction());
-        if (manager.getActionFor(EMSLogoutAction.actionid) == null)
-            modelLoad.addAction(new EMSLogoutAction());
+        //if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
+         //   modelLoad.addAction(new InitializeProjectAction());
+        //if (manager.getActionFor(EMSLogoutAction.actionid) == null)
+         //   modelLoad.addAction(new EMSLogoutAction());
         
         // add menus in reverse order since they are inserted at top
         // View Interaction menu

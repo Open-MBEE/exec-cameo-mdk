@@ -41,6 +41,7 @@ import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
@@ -68,7 +69,7 @@ public class ViewValidator {
     private ValidationSuite suite = new ValidationSuite("View Sync");
     private ValidationRule exists = new ValidationRule("Does Not Exist", "view doesn't exist yet", ViolationSeverity.ERROR);
     private ValidationRule match = new ValidationRule("View content", "view contents have changed", ViolationSeverity.ERROR);
-    private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.INFO);
+    private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.WARNING);
     private ValidationRule comments = new ValidationRule("View Comments", "view comments", ViolationSeverity.WARNING);
     private ValidationSuite modelSuite;
     private Project prj;
@@ -89,13 +90,15 @@ public class ViewValidator {
     @SuppressWarnings("unchecked")
     public void validate() {
         DocumentGenerator dg = new DocumentGenerator(view, null, null);
-        Document dge = dg.parseDocument(true, recurse);
+        Document dge = dg.parseDocument(true, true);
         (new PostProcessor()).process(dge);
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
         dge.accept(visitor);
         DBBook book = visitor.getBook();
         if (book == null)
             return;
+        ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+        dge.accept(vhv);
         DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
         book.accept(visitor2);
         JSONObject results = new JSONObject();
@@ -127,20 +130,22 @@ public class ViewValidator {
                     continue;
                 JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
                 boolean matches = viewElementsMatch(localElements, viewresults);
+                boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, response);
                 if (!matches) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor has an outdated version");
                     v.addAction(new ExportView(currentView, false));
                     v.addAction(new ExportView(currentView, true));
-                    
-                    v.addAction(new ExportHierarchy(currentView));
+                    //v.addAction(new ExportHierarchy(currentView));
                     match.addViolation(v);
-                } else {
-                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy]");
-                    v.addAction(new ExportHierarchy(currentView));
-                    hierarchy.addViolation(v);
+                } 
+                if (!hierarchyMatches) {
+                    if (!viewHierarchyMatch(currentView, dge, vhv, response)) {
+                        ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy] The hierarchy from this view/doc is outdated");
+                        v.addAction(new ExportHierarchy(currentView));
+                        hierarchy.addViolation(v);
+                    }
                 }
                 resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
-                
                 
                 String viewCommentsUrl = url + "/javawebscripts/elements/" + viewid + "/comments";
                 String viewcomments = ExportUtility.get(viewCommentsUrl);
@@ -198,4 +203,54 @@ public class ViewValidator {
             return false;
         return true;
     }
+    
+    private boolean viewHierarchyMatch(Element view, Document dge, ViewHierarchyVisitor vhv, String response) {
+        JSONObject hierarchy = vhv.getView2View();
+        if (dge.getDgElement() != null && dge.getDgElement() == view) {//document
+            String url = ExportUtility.getUrl();
+            url += "/javawebscripts/products/" + view.getID();
+            String docresponse = ExportUtility.get(url);
+            if (docresponse  == null)
+                return false;
+            JSONObject docResponse = (JSONObject)JSONValue.parse(docresponse);
+            JSONArray docs = (JSONArray)docResponse.get("products");
+            for (Object docresult: docs) {
+                if (((JSONObject)docresult).get("id").equals(view.getID())) {
+                    JSONArray view2view = (JSONArray)((JSONObject)docresult).get("view2view");
+                    JSONObject keyed = ExportUtility.keyView2View(view2view);
+                    if (hierarchy.size() != keyed.size())
+                        return false;
+                    for (Object key: hierarchy.keySet()) {
+                        JSONArray modelChildren = (JSONArray)hierarchy.get(key);
+                        JSONArray webChildren = (JSONArray)keyed.get(key);
+                        if (webChildren == null || modelChildren.size() != webChildren.size())
+                            return false;
+                        for (int i = 0; i < modelChildren.size(); i++) {
+                            if (!modelChildren.get(i).equals(webChildren.get(i)))
+                                return false;
+                        }
+                    }
+                }
+            }
+        } else if (dge.getDgElement() == null){
+            JSONObject viewresponse = (JSONObject)JSONValue.parse(response);
+            JSONArray views = (JSONArray)viewresponse.get("views");
+            for (Object viewresult: views) {
+                if (((JSONObject)viewresult).get("id").equals(view.getID())) {
+                    JSONArray childrenViews = (JSONArray)((JSONObject)viewresult).get("childrenViews");
+                    if (childrenViews == null)
+                        return false;
+                    JSONArray modelChildrenViews = (JSONArray)hierarchy.get(view.getID());
+                    if (childrenViews.size() != modelChildrenViews.size())
+                        return false;
+                    for (int i = 0; i < childrenViews.size(); i++) {
+                        if (!childrenViews.get(i).equals(modelChildrenViews.get(i)))
+                            return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    
 }
