@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.actions.OclQueryAction;
+import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
 import gov.nasa.jpl.mbee.lib.Debug;
 
 import java.awt.event.ActionEvent;
@@ -100,7 +101,6 @@ public class OclEvaluatorPlugin extends MDPlugin {
                 this);
         addConfiguration("BaseDiagramContext", "DocumentView", OclQueryAction.actionText, category, method,
                 this);
-
         Debug.outln("finished initializing TestPlugin!");
     }
 

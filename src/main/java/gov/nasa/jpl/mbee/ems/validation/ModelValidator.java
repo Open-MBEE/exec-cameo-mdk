@@ -249,7 +249,8 @@ public class ModelValidator {
         if ((current instanceof Comment && ExportUtility.isElementDocumentation((Comment)current)) || current instanceof Extension || current instanceof ValueSpecification)
             return;
         if (!elementsKeyed.containsKey(current.getID()))
-            missing.add(current);
+            if (!(current instanceof Model && ((Model)current).getName().equals("Data")))
+                missing.add(current);
         for (Element e: current.getOwnedElement()) {
             getAllMissing(e, missing, elementsKeyed);            
         }
