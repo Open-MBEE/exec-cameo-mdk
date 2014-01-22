@@ -46,7 +46,7 @@ public class InitializeProjectAction extends MDAction {
     public static final String actionid = "InitializeProject";
     
     public InitializeProjectAction() {
-        super(actionid, "Initialize Project", null, null);
+        super(actionid, "(Initialize Project)", null, null);
     }
     
     @SuppressWarnings("unchecked")

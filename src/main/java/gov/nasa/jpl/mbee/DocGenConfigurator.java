@@ -59,12 +59,17 @@ import gov.nasa.jpl.mbee.actions.vieweditor.OrganizeViewEditorAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
@@ -88,7 +93,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class DocGenConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
-    private boolean viewQueryCalled;
+    private Set<ActionsManager> viewQueryCalled = new HashSet<ActionsManager>();
     
     @Override
     public int getPriority() {
@@ -129,12 +134,15 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             return;
         
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (manager.getActionFor(ExportModelAction.actionid) == null)
-            modelLoad.addAction(new ExportModelAction(e));
+        if (MDUtils.isDeveloperMode()) {
+            if (manager.getActionFor(ExportModelAction.actionid) == null)
+                modelLoad.addAction(new ExportModelAction(e));
+            if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
+                modelLoad.addAction(new InitializeProjectAction());
+        }
         if (manager.getActionFor(ValidateModelAction.actionid) == null)
             modelLoad.addAction(new ValidateModelAction(e));
-        //if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
-         //   modelLoad.addAction(new InitializeProjectAction());
+        
         //if (manager.getActionFor(EMSLogoutAction.actionid) == null)
          //   modelLoad.addAction(new EMSLogoutAction());
         
@@ -171,7 +179,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             if (category == null) {
                 category = new MDActionsCategory("ViewInteraction", "View Interaction");
                 category.setNested(true);
-                boolean added = addViewQueryActions(category, (NamedElement)e);
+                boolean added = addViewQueryActions(manager, category, (NamedElement)e);
                 if (added)
                     manager.addCategory(0, category);
             }
@@ -362,8 +370,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
      * @param parent
      * @param e
      */
-    private boolean addViewQueryActions(ActionsCategory parent, NamedElement e) {
-        if (viewQueryCalled)
+    private boolean addViewQueryActions(ActionsManager manager, ActionsCategory parent, NamedElement e) {
+        if (viewQueryCalled.contains(manager))
             return false;
         DocumentGenerator dg = new DocumentGenerator(e, null, null);
         Document dge = dg.parseDocument(true, false);
@@ -378,7 +386,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             added = true;
         }
         parent.setNested(true);
-        viewQueryCalled = true;
+        viewQueryCalled.clear();
+        viewQueryCalled.add(manager);
         return added;
     }
 
