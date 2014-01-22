@@ -88,6 +88,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class DocGenConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
+    private boolean viewQueryCalled;
+    
     @Override
     public int getPriority() {
         return ConfiguratorWithPriority.MEDIUM_PRIORITY;
@@ -361,6 +363,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
      * @param e
      */
     private boolean addViewQueryActions(ActionsCategory parent, NamedElement e) {
+        if (viewQueryCalled)
+            return false;
         DocumentGenerator dg = new DocumentGenerator(e, null, null);
         Document dge = dg.parseDocument(true, false);
         CollectActionsVisitor cav = new CollectActionsVisitor();
@@ -374,6 +378,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             added = true;
         }
         parent.setNested(true);
+        viewQueryCalled = true;
         return added;
     }
 
