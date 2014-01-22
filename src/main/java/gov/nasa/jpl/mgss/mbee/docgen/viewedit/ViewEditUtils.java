@@ -133,9 +133,10 @@ public class ViewEditUtils {
 	}
 	
 	public static boolean showErrorMessage(int code) {
-	    if (code == 401)
-	        Utils.showPopupMessage("[ERROR] You may have entered the wrong credentials: Please right click on a view and select the Logout action from the view editor menu, then try again");
-	    else if (code == 500)
+	    if (code == 401) {
+	        Utils.showPopupMessage("[ERROR] You may have entered the wrong credentials: You've been logged out, try again");
+	        ViewEditUtils.clearCredentials();
+	    } else if (code == 500)
 	        Utils.showPopupMessage("[ERROR] Server error occured, you may not have permission to modify view(s) or their contents");
 	    else if (code == 404)
 	        Utils.showPopupMessage("[ERROR] Some elements or views are not found on the server, export them first");
