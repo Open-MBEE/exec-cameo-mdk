@@ -87,7 +87,7 @@ public class DocGenPlugin extends Plugin {
 
         PatternLoaderConfigurator plc = new PatternLoaderConfigurator();
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, plc);
-
+        acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 
         getOclPlugin().init();

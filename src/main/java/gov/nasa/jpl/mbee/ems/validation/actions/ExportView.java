@@ -30,6 +30,8 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ModelExportRunner;
+import gov.nasa.jpl.mbee.ems.ViewExportRunner;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
@@ -62,6 +64,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -85,22 +88,31 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
     @Override
     public void execute(Collection<Annotation> annos) {
+        ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, annos), "Exporting Views", true, 0);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, null), "Exporting View", true, 0);
+    }
+    
+    public void performAction() {
+        if (exportView(view)) {
+            this.removeViolationAndUpdateWindow();
+        }
+    }
+    
+    public void performActions(Collection<Annotation> annos) {
         Collection<Annotation> toremove = new ArrayList<Annotation>();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             if (exportView(e)) {
                 toremove.add(anno);
-            }
+            } else
+                break;
         }
         if (!toremove.isEmpty()) {
             this.removeViolationsAndUpdateWindow(toremove);
-        }
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (exportView(view)) {
-            this.removeViolationAndUpdateWindow();
         }
     }
     

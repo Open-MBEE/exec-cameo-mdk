@@ -49,8 +49,8 @@ public class ValidateViewAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         ViewValidator vv = new ViewValidator(view, false);
-        vv.validate();
-        vv.showWindow();
+        if (vv.validate())
+            vv.showWindow();
     }
 }
 

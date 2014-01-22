@@ -48,7 +48,7 @@ public class ValidateViewRecursiveAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         ViewValidator vv = new ViewValidator(view, true);
-        vv.validate();
-        vv.showWindow();
+        if (vv.validate())
+            vv.showWindow();
     }
 }

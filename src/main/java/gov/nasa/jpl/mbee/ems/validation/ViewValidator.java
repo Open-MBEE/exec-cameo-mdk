@@ -88,7 +88,7 @@ public class ViewValidator {
     }
     
     @SuppressWarnings("unchecked")
-    public void validate() {
+    public boolean validate() {
         DocumentGenerator dg = new DocumentGenerator(view, null, null);
         Document dge = dg.parseDocument(true, true);
         (new PostProcessor()).process(dge);
@@ -96,7 +96,7 @@ public class ViewValidator {
         dge.accept(visitor);
         DBBook book = visitor.getBook();
         if (book == null)
-            return;
+            return false;
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
         dge.accept(vhv);
         DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
@@ -108,7 +108,7 @@ public class ViewValidator {
                 DocGen3Profile.documentViewStereotype, "Document Profile");
         String url = ExportUtility.getUrl();
         if (url == null)
-            return;//return; //do some error
+            return false;//return; //do some error
         for (Object viewid: visitor2.getViews().keySet()) {
             boolean doc = false;
             Element currentView = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
@@ -117,6 +117,8 @@ public class ViewValidator {
             //check to see if view exists on alfresco, if not, export view?
             String existurl = url + "/javawebscripts/views/" + viewid;
             String response = ExportUtility.get(existurl);
+            if (!ViewEditUtils.isPasswordSet())
+                return false;
             if (response == null || !response.contains("contains")) {
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                 v.addAction(new ExportView(currentView, false));
@@ -166,6 +168,7 @@ public class ViewValidator {
         ModelValidator mv = new ModelValidator(view, results, false);
         mv.validate();
         modelSuite = mv.getSuite();
+        return true;
     }
     
     public void showWindow() {

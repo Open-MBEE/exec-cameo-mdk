@@ -204,4 +204,8 @@ public class ViewEditUtils {
             return true;
         return false;
     }
+    
+    public static boolean isPasswordSet() {
+        return passwordSet;
+    }
 }
