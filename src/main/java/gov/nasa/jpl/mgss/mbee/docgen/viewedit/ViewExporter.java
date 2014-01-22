@@ -102,7 +102,8 @@ public class ViewExporter implements RunnableWithProgress{
             JSONObject views = (JSONObject)res.get("views");
             for (Object viewid: views.keySet()) {
                 Element view = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
-                postView(view, false);
+                if (!postView(view, false))
+                    return;
             }
             String post = res.toJSONString();
             String posturl = url + "/rest/views/" + doc.getID() + "/hierarchy";
@@ -146,7 +147,7 @@ public class ViewExporter implements RunnableWithProgress{
 		}
 	}
 	
-	private void postView(Element view, boolean rec) {
+	private boolean postView(Element view, boolean rec) {
 	    DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         dge = dg.parseDocument(true, rec);
         (new PostProcessor()).process(dge);
@@ -165,7 +166,7 @@ public class ViewExporter implements RunnableWithProgress{
         dge.accept(visitor);
         DBBook book = visitor.getBook();
         if (book == null)
-            return;
+            return false;
         
         baseurl += "?user=" + user;
         
@@ -175,7 +176,7 @@ public class ViewExporter implements RunnableWithProgress{
         if (numElements > 10000 && alfresco) {
             Boolean cont = Utils.getUserYesNoAnswer("Alert! You're about to publish " + numElements + " elements in a view, this may take about " + numElements/1000 + " minutes to complete if you're doing initial loading, do you want to continue?");
             if (cont == null || !cont){
-                return;
+                return false;
             }
         }
         String json = v.getJSON();
@@ -203,7 +204,7 @@ public class ViewExporter implements RunnableWithProgress{
             gl.log("[INFO] Sending...");
             int code = client.executeMethod(pm);
             if (ViewEditUtils.showErrorMessage(code))
-                return;
+                return false;
             String response = pm.getResponseBodyAsString();
             if (response.equals("ok"))
                 gl.log("[INFO] Export Successful.");
@@ -298,5 +299,6 @@ public class ViewExporter implements RunnableWithProgress{
         
         // clean up the local images
         v.removeImages();
+        return true;
 	}
 }
