@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.actions;
 
 import gov.nasa.jpl.mbee.Configurator;
+import gov.nasa.jpl.mbee.OclEvaluatorDialog;
 import gov.nasa.jpl.mbee.RepeatInputComboBoxDialog;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
@@ -37,6 +38,8 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.ocl.OCLSyntaxHelper;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.awt.Component;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -52,6 +55,7 @@ import org.eclipse.ocl.helper.ConstraintKind;
 import org.junit.Assert;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.base.ModelObject;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -71,6 +75,9 @@ public class OclQueryAction extends MDAction {
     protected TreeSet<String>    pastInputs       = new TreeSet<String>();
     protected LinkedList<String> choices          = new LinkedList<String>();
     protected int                maxChoices       = 10;
+    OclEvaluatorDialog           dialog = null;
+
+    public static boolean useNewOclEvaluator = true;
 
     public OclQueryAction(Element context) {
         super(actionid, actionText, null, null);
@@ -389,6 +396,7 @@ public class OclQueryAction extends MDAction {
 
     }
 
+    @SuppressWarnings( "deprecation" )
     @Override
     public void actionPerformed(ActionEvent e) {
         Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.lastContextIsDiagram);
@@ -397,16 +405,25 @@ public class OclQueryAction extends MDAction {
         // Ensure user-defined shortcut functions are updated
         OclEvaluator.resetEnvironment();
 
-        boolean wasOn = Debug.isOn();
-        Debug.turnOn();
+        Window owner = null;
         try {
-            RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog("Enter an OCL expression:",
-                    "OCL Evaluation", new ProcessOclQuery(selectedElements));
+            owner = Application.getInstance().getMainFrame();
+        } catch ( Throwable t ) {
+            t.printStackTrace();
+        }
+        try {
+            if ( useNewOclEvaluator  ) {
+                if ( dialog == null ) {
+                    dialog = new OclEvaluatorDialog( owner, "OCL Evaluation" );
+                }
+                dialog.setVisible( true );
+            } else {
+                RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog("Enter an OCL expression:",
+                        "OCL Evaluation", new ProcessOclQuery(selectedElements));
+            }
         } catch (Throwable t) {
             t.printStackTrace();
         }
-        if (!wasOn)
-            Debug.turnOff();
     }
 
     /**
