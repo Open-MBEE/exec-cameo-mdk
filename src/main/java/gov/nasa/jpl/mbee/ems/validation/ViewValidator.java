@@ -104,16 +104,15 @@ public class ViewValidator {
         JSONObject results = new JSONObject();
         JSONArray resultElements = new JSONArray();
         results.put("elements", resultElements);
-        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGen3Profile.documentViewStereotype, "Document Profile");
+        
         String url = ExportUtility.getUrl();
         if (url == null)
             return false;//return; //do some error
         for (Object viewid: visitor2.getViews().keySet()) {
-            boolean doc = false;
+            if (!recurse && !viewid.equals(view.getID()))
+                continue;
             Element currentView = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
-            if (StereotypesHelper.hasStereotypeOrDerived(currentView, documentView))
-                doc = true;
+            
             //check to see if view exists on alfresco, if not, export view?
             String existurl = url + "/javawebscripts/views/" + viewid;
             String response = ExportUtility.get(existurl);
@@ -127,11 +126,14 @@ public class ViewValidator {
             } else {
                 String viewElementsUrl = existurl + "/elements";
                 JSONArray localElements = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("displayedElements");
+                JSONArray localContains = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("contains");
+                JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
+                JSONArray webContains = (JSONArray)webView.get("contains");
                 String viewelements = ExportUtility.get(viewElementsUrl);
                 if (viewelements == null)
                     continue;
                 JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
-                boolean matches = viewElementsMatch(localElements, viewresults);
+                boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
                 boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, response);
                 if (!matches) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor has an outdated version");
@@ -220,6 +222,8 @@ public class ViewValidator {
             for (Object docresult: docs) {
                 if (((JSONObject)docresult).get("id").equals(view.getID())) {
                     JSONArray view2view = (JSONArray)((JSONObject)docresult).get("view2view");
+                    if (view2view == null)
+                        return false;
                     JSONObject keyed = ExportUtility.keyView2View(view2view);
                     if (hierarchy.size() != keyed.size())
                         return false;
@@ -252,6 +256,19 @@ public class ViewValidator {
                     }
                 }
             }
+        }
+        return true;
+    }
+    
+    private boolean viewContentsMatch(JSONArray localContains, JSONArray webContains) {
+        if (localContains.size() != webContains.size())
+            return false;
+        for (int i = 0; i < localContains.size(); i++) {
+            JSONObject localView = (JSONObject)localContains.get(i);
+            JSONObject webView = (JSONObject)webContains.get(i);
+            if (!localView.get("type").equals(webView.get("type")))
+                return false;
+            
         }
         return true;
     }

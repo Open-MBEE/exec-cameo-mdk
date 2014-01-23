@@ -141,6 +141,9 @@ public class ExportUtility {
                 Utils.showPopupMessage("You do not have permission to do this");
             } else if (code == 404) {
                 Utils.showPopupMessage("The url endpoint was not found");
+            } else if (code == 400) {
+                Application.getInstance().getGUILog().log(response);
+                return false;
             }
             return true;
         }

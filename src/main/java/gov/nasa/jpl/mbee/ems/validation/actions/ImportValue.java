@@ -190,12 +190,17 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
             break;
         case LiteralReal:
+            Double value;
+            if (o instanceof Long)
+                value = Double.parseDouble(((Long)o).toString());
+            else
+                value = (Double)o;
             if (newval instanceof LiteralReal) {
                 ((LiteralReal)newval).setValue((Double)o);
                 return;
             }
             newval = ef.createLiteralRealInstance();
-            ((LiteralReal)newval).setValue((Double)o);
+            ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
             if (newval instanceof ElementValue) {
@@ -262,12 +267,17 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
             break;
         case LiteralReal:
+            Double value;
+            if (o instanceof Long)
+                value = Double.parseDouble(((Long)o).toString());
+            else
+                value = (Double)o;
             if (newval instanceof LiteralReal) {
-                ((LiteralReal)newval).setValue((Double)o);
+                ((LiteralReal)newval).setValue(value);
                 return;
             }
             newval = ef.createLiteralRealInstance();
-            ((LiteralReal)newval).setValue((Double)o);
+            ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
             if (newval instanceof ElementValue) {
@@ -282,6 +292,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         }
         return;
     }
+    
     private void update(Slot e, PropertyValueType valueType, JSONArray values) {
         if ( e == null ) {
             Debug.error( "Trying to update a null slot!" );

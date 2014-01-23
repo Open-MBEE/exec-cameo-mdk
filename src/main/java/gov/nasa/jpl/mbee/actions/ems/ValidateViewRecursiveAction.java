@@ -28,11 +28,14 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
+import gov.nasa.jpl.mbee.ems.ModelExportRunner;
+import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
 
 import java.awt.event.ActionEvent;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateViewRecursiveAction extends MDAction {
@@ -47,8 +50,6 @@ public class ValidateViewRecursiveAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewValidator vv = new ViewValidator(view, true);
-        if (vv.validate())
-            vv.showWindow();
+        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, true), "Validating Views", true, 0);
     }
 }

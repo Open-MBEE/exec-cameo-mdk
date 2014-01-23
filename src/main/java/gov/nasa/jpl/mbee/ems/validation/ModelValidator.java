@@ -311,8 +311,13 @@ public class ModelValidator {
             }
         } else if (valueType == PropertyValueType.LiteralReal) {
             if (vs instanceof LiteralReal) {
-                if (((LiteralReal)vs).getValue() != (Double)value.get(0)) {
-                    message = "[VALUE] model: " + ((LiteralReal)vs).getValue() + ", web: " + value.toString();
+                Double webValue = null;
+                if (value.get(0) instanceof Long)
+                    webValue = Double.parseDouble(((Long)value.get(0)).toString());
+                else
+                    webValue = (Double)value.get(0);
+                if (((LiteralReal)vs).getValue() != webValue) {
+                    message = "[VALUE] model: " + ((LiteralReal)vs).getValue() + ", web: " + webValue.toString();
                 }
             } else {
                 message = typeMismatchMessage;
