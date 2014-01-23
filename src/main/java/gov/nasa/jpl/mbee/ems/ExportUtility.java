@@ -145,7 +145,7 @@ public class ExportUtility {
             }
             return true;
         }
-        Application.getInstance().getGUILog().log(response);
+        //Application.getInstance().getGUILog().log(response);
         return false;
     }
     

@@ -123,15 +123,20 @@ public class ModelValidator {
             projectExist.addViolation(v);
             return false;
         }
-            
+        
+        if (ProjectUtilities.isElementInAttachedProject(start)){
+            Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
+            return false;
+        }
         String url = ExportUtility.getUrl();
         String id = start.getID();
         if (start instanceof Model)
             id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         url += "/javawebscripts/elements/" + id + "?recurse=true";
         response = ExportUtility.get(url);
-        if (response == null)
-            return false;
+        if (response == null) {
+            response = "{\"elements\": []}";
+        }
         result = (JSONObject)JSONValue.parse(response);
         ResultHolder.lastResults = result;
         return true;

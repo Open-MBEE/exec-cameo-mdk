@@ -257,11 +257,15 @@ public class ViewValidator {
         if (localContains.size() != webContains.size())
             return false;
         for (int i = 0; i < localContains.size(); i++) {
-            JSONObject localView = (JSONObject)localContains.get(i);
-            JSONObject webView = (JSONObject)webContains.get(i);
-            if (!localView.get("type").equals(webView.get("type")))
+            JSONObject local = (JSONObject)localContains.get(i);
+            JSONObject web = (JSONObject)webContains.get(i);
+            if (!local.get("type").equals(web.get("type")))
                 return false;
-            
+            if (local.get("type").equals("Paragraph")) {
+                if (local.toJSONString().length() != web.toJSONString().length())
+                    return false;
+            }
+          
         }
         return true;
     }
