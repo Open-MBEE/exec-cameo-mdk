@@ -26,41 +26,29 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions.ems;
+package gov.nasa.jpl.mbee.ems;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 
-import java.awt.event.ActionEvent;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-import org.json.simple.JSONObject;
+public class ValidateModelRunner implements RunnableWithProgress {
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-
-public class InitializeProjectAction extends MDAction {
-
-    private static final long serialVersionUID = 1L;
+    private Element start;
     
-    public static final String actionid = "InitializeProject";
-    
-    public InitializeProjectAction() {
-        super(actionid, "(Initialize Project)", null, null);
+    public ValidateModelRunner(Element start) {
+        this.start = start;
     }
     
-    @SuppressWarnings("unchecked")
     @Override
-    public void actionPerformed(ActionEvent e) {
-
-        JSONObject result = new JSONObject();
-        result.put("name", Application.getInstance().getProject().getName());
-        String json = result.toJSONString();
-
-        //gl.log(json);
-        String url = ExportUtility.getUrl();
-        if (url == null) {
-            return;
-        }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        ExportUtility.send(url, json);
+    public void run(ProgressStatus arg0) {
+        ModelValidator validator = new ModelValidator(start, null, true);
+        if (validator.checkProject())
+            validator.validate();
+        validator.showWindow();
+        
     }
+
 }

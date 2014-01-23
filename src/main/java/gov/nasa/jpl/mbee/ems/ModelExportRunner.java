@@ -28,8 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 

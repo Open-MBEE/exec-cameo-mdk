@@ -37,15 +37,12 @@ import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
-import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
 import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.DeleteDocumentAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.DeleteProjectAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.DeleteVolumeAction;
+
 import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewHierarchyAction;
@@ -54,8 +51,7 @@ import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewDryAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.OrganizeDocumentAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.OrganizeViewEditorAction;
+
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
@@ -65,10 +61,8 @@ import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.nomagic.actions.ActionsCategory;

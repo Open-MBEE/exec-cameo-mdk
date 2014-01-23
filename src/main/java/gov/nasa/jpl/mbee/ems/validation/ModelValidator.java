@@ -462,6 +462,7 @@ public class ModelValidator {
         return null;
     }
     
+    @SuppressWarnings("unchecked")
     private ValidationRuleViolation commentDiff(Comment e, JSONObject elementInfo) {
         String modelBodyClean = Utils.stripHtmlWrapper(((Comment)e).getBody());
         String webBody = (String)elementInfo.get("body");

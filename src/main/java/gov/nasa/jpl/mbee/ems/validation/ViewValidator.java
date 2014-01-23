@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
@@ -58,11 +57,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ViewValidator {
 
@@ -72,14 +68,11 @@ public class ViewValidator {
     private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.WARNING);
     private ValidationRule comments = new ValidationRule("View Comments", "view comments", ViolationSeverity.WARNING);
     private ValidationSuite modelSuite;
-    private Project prj;
     private Element view;
-    private JSONObject result;
     private boolean recurse;
     
     public ViewValidator(Element view, boolean recursive) {
         this.view = view;
-        prj = Application.getInstance().getProject();
         suite.addValidationRule(exists);
         suite.addValidationRule(match);
         suite.addValidationRule(hierarchy);

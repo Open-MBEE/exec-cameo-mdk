@@ -29,7 +29,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;

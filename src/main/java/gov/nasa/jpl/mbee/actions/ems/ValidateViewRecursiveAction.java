@@ -28,9 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.ModelExportRunner;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
-import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
 
 import java.awt.event.ActionEvent;
 

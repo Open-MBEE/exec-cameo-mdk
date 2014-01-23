@@ -36,8 +36,6 @@ import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.util.List;
 
-import javax.swing.JOptionPane;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -192,6 +190,7 @@ public class ExportUtility {
         return response;
     }
     
+    @SuppressWarnings("unchecked")
     public static JSONObject keyView2View(JSONArray vv) {
         JSONObject response = new JSONObject();
         for (Object viewinfo: vv) {

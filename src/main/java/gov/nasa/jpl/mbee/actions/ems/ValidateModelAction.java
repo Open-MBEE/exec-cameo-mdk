@@ -28,11 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 
 import java.awt.event.ActionEvent;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateModelAction extends MDAction {
@@ -48,9 +49,6 @@ public class ValidateModelAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        ModelValidator validator = new ModelValidator(start, null, true);
-        if (validator.checkProject())
-            validator.validate();
-        validator.showWindow();
+        ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start), "Validating Model", true, 0);
     }
 }
