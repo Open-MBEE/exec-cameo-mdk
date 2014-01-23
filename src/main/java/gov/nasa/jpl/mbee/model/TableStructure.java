@@ -213,7 +213,7 @@ public class TableStructure extends Table {
                         Object result = DocumentValidator
                                 .evaluate(expr, resultElements, getValidator(), true);
                         OclEvaluator evaluator = OclEvaluator.instance;
-                        if (evaluator.isValid()) {
+                        if (evaluator.isValid() && result != null) {
                             cell.add(new Reference(result));
                         }
                     }
@@ -266,7 +266,7 @@ public class TableStructure extends Table {
                             }
                             Object result = DocumentValidator.evaluate(expr, re, getValidator(), true);
                             OclEvaluator evaluator = OclEvaluator.instance;
-                            if (evaluator.isValid()) {
+                            if (evaluator.isValid() || result != null) {
                                 cell.add(new Reference(result));
                             }
                             // try {

@@ -178,7 +178,7 @@ public class OclQueryAction extends MDAction {
                     }
 
                     // If the parse succeeds, return the result.
-                    if (evaluator != null && evaluator.isValid()) {
+                    if (evaluator != null && ( evaluator.isValid() || !Utils2.isNullOrEmpty( result ) ) ) {
                         // return result;
                         outputList.add(result);
                     } else {
@@ -245,7 +245,7 @@ public class OclQueryAction extends MDAction {
                 result = OclEvaluator.evaluateQuery(elem, oclString, true);
                 evaluator = OclEvaluator.instance;
                 output = toString(result);
-                if (!evaluator.isValid()) {
+                if (!evaluator.isValid() && Utils2.isNullOrEmpty( result ) ) {
                     output = output
                             + "\nOclInvalid\nThis may be the result of a problem with a shortcut/blackbox function.";
                 }

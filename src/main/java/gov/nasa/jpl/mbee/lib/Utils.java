@@ -288,7 +288,7 @@ public class Utils {
             DocumentValidator dv = CollectFilterParser.getValidator();
             o = DocumentValidator.evaluate(query, elements, dv, true);
             evaluator = OclEvaluator.instance;
-            if (evaluator != null && evaluator.isValid()) {
+            if (evaluator != null && ( evaluator.isValid() || !Utils2.isNullOrEmpty( o ) ) ) {
                 // try {
                 // o = OclEvaluator.evaluateQuery(e, query);
                 Boolean istrue = isTrue(o, false);
@@ -304,7 +304,7 @@ public class Utils {
                 DocumentValidator dv = CollectFilterParser.getValidator();
                 o = DocumentValidator.evaluate(query, e, dv, true);
                 evaluator = OclEvaluator.instance;
-                if (evaluator != null && evaluator.isValid()) {
+                if (evaluator != null && ( evaluator.isValid() || !Utils2.isNullOrEmpty( o ) ) ) {
                     // try {
                     // o = OclEvaluator.evaluateQuery(e, query);
                     Boolean istrue = isTrue(o, false);
@@ -639,7 +639,7 @@ public class Utils {
         OclEvaluator evaluator = OclEvaluator.instance;
         // try {
         // o = OclEvaluator.evaluateQuery(element, query);
-        if (evaluator.isValid()) {
+        if ( evaluator.isValid() || !Utils2.isNullOrEmpty( o ) ) {
             res.addAll(getListOfType(o, Element.class));
         }
         // } catch ( ParserException e ) {
