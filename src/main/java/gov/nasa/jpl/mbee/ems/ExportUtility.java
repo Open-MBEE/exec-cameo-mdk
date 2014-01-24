@@ -138,14 +138,14 @@ public class ExportUtility {
             } else if (code == 403) {
                 Utils.showPopupMessage("You do not have permission to do this");
             } else if (code == 404) {
-                Utils.showPopupMessage("The url endpoint was not found");
+                Utils.showPopupMessage("Not found");
             } else if (code == 400) {
                 Application.getInstance().getGUILog().log(response);
                 return false;
             }
             return true;
         }
-        //Application.getInstance().getGUILog().log(response);
+        Application.getInstance().getGUILog().log(response);
         return false;
     }
     
@@ -208,8 +208,10 @@ public class ExportUtility {
         try {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
+            Application.getInstance().getGUILog().log("[INFO] Getting...");
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
+            
             if (showErrors(code, json)) {
                 return null;
             }
