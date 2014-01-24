@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -865,6 +867,21 @@ public class Utils2 {
             count++;
         }
         return count;
+    }
+
+    public static String getStackTrace(Throwable t) {
+        if ( t == null ) {
+            try {
+                throw new Exception();
+            } catch( Exception e) {
+                t = e;
+            }
+        }
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        sw.flush();
+        return sw.toString();
     }
 
 }

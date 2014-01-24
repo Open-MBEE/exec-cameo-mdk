@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions;
 
+//import gov.nasa.jpl.mbee.Configurator;
 import gov.nasa.jpl.mbee.Configurator;
 import gov.nasa.jpl.mbee.OclEvaluatorDialog;
 import gov.nasa.jpl.mbee.RepeatInputComboBoxDialog;
@@ -41,8 +42,6 @@ import gov.nasa.jpl.ocl.OclEvaluator;
 import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -75,7 +74,10 @@ public class OclQueryAction extends MDAction {
     protected TreeSet<String>    pastInputs       = new TreeSet<String>();
     protected LinkedList<String> choices          = new LinkedList<String>();
     protected int                maxChoices       = 10;
-    OclEvaluatorDialog           dialog = null;
+
+    //protected static boolean selectionInDiagram = true;
+    
+    public static OclEvaluatorDialog dialog = null;
 
     public static boolean useNewOclEvaluator = true;
 
@@ -87,14 +89,6 @@ public class OclQueryAction extends MDAction {
 
     public OclQueryAction() {
         this(null);
-    }
-
-    public static String getStackTrace(Throwable t) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        t.printStackTrace(pw);
-        sw.flush();
-        return sw.toString();
     }
 
     public static class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
@@ -399,7 +393,7 @@ public class OclQueryAction extends MDAction {
     @SuppressWarnings( "deprecation" )
     @Override
     public void actionPerformed(ActionEvent e) {
-        Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.lastContextIsDiagram);
+        Collection<Element> selectedElements = MDUtils.getSelection(e, isSelectionInDiagram());
         setContext(selectedElements);
 
         // Ensure user-defined shortcut functions are updated
@@ -413,9 +407,27 @@ public class OclQueryAction extends MDAction {
         }
         try {
             if ( useNewOclEvaluator  ) {
+                boolean selectionInDiagram = true;
+                boolean selectionInBrowser = false;
                 if ( dialog == null ) {
                     dialog = new OclEvaluatorDialog( owner, "OCL Evaluation" );
+                } else if ( Configurator.isInvokedFromMainMenu() ) {
+                    // use last 
+                    selectionInDiagram = dialog.diagramCB.isSelected();
+                    selectionInBrowser = dialog.browserCB.isSelected();
                 }
+                if ( !Configurator.isInvokedFromMainMenu() ) {
+                    selectionInDiagram = isSelectionInDiagram();
+                    selectionInBrowser = !selectionInDiagram;
+                }
+                if ( MDUtils.getSelectionInDiagram().isEmpty()
+                     && !MDUtils.getSelectionInContainmentBrowser().isEmpty() ) {
+                    selectionInDiagram = false;
+                    selectionInBrowser = true;
+                }
+                dialog.diagramCB.setSelected( selectionInDiagram );
+                dialog.browserCB.setSelected( selectionInBrowser );
+                dialog.getEditableListPanel().setResultPanel( "" );
                 dialog.setVisible( true );
             } else {
                 RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog("Enter an OCL expression:",
@@ -451,5 +463,20 @@ public class OclQueryAction extends MDAction {
         getContext().clear();
         getContext().addAll(context);
     }
+
+    /**
+     * @return the selectionInDiagram
+     */
+    public static boolean isSelectionInDiagram() {
+        return Configurator.isLastContextDiagram();
+        //return selectionInDiagram;
+    }
+
+//    /**
+//     * @param selectionInDiagram the selectionInDiagram to set
+//     */
+//    public static void setSelectionInDiagram( boolean selectionInDiagram ) {
+//        OclQueryAction.selectionInDiagram = selectionInDiagram;
+//    }
 
 }
