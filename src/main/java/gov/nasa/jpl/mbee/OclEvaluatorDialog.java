@@ -70,7 +70,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 /**
  *
  */
-public class OclEvaluatorDialog extends JDialog implements ActionListener {//, MouseListener {
+public class OclEvaluatorDialog extends JDialog implements ActionListener {
 
     private static final long                                    serialVersionUID  = -9114812582757129836L;
 
@@ -97,16 +97,6 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {//, M
     public JCheckBox browserCB = null;
     
     private boolean added = true; // not doing this
-    
-//    public void addMouseListener() {
-//        if ( added ) return;
-//        Application i = Application.getInstance();
-//        if ( i == null ) return;
-//        MainFrame f = i.getMainFrame();
-//        if ( f == null ) return;
-//        f.addMouseListener( this );
-//        added = true;
-//    }
     
     /**
      * @param owner
@@ -162,18 +152,15 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {//, M
         //Initialize values.
         pack();
         if ( owner != null ) setLocationRelativeTo( owner );
-//        addMouseListener();
     }
 
     protected void runQuery() {
-//        addMouseListener();
         Collection<Element> selectedElements = new TreeSet<Element>(CompareUtils.GenericComparator.instance());
         if ( diagramCB.isSelected() )  {
             selectedElements.addAll( MDUtils.getSelectionInDiagram() );
         }
         if ( browserCB.isSelected() )  {
             selectedElements.addAll( MDUtils.getSelectionInContainmentBrowser() );
-            //selectedElements.addAll( MDUtils.getSelection(null, OclQueryAction.isSelectionInDiagram()) );
         }
         processor = new OclQueryAction.ProcessOclQuery(selectedElements);
         lastInput = RepeatInputComboBoxDialog.getSelectedItem( editableListPanel );
@@ -224,55 +211,5 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {//, M
         OclEvaluatorDialog dialog = new OclEvaluatorDialog( null, "testing" );
         dialog.setVisible(true);
     }
-
-//    @Override
-//    public void mouseClicked( MouseEvent e ) {
-//        lastClickedComponents.add( e.getComponent() );
-//        //System.out.println("clicked " + e.getComponent() );
-//        //listAllComponents( e.getComponent() );
-//    }
-//    
-//    public void listAllComponents( Component component ) {
-//        listAllComponents( component, new ArrayList<Integer>() );
-//    }
-//    protected boolean addedContainmentTreeListener = false;
-//    public void listAllComponents( Component component, List<Integer> outlineNumber ) {
-//        if ( component == null ) return;
-//        if ( !addedContainmentTreeListener && component.getClass().getSimpleName().contains( "ContainmentTree" ) ) {
-//            component.addMouseListener( this );
-//            addedContainmentTreeListener = true;
-//        }
-//        for ( Integer i : outlineNumber ) System.out.print( i.toString() + "." );
-//        System.out.println( component.toString() );
-//        if ( component instanceof Container ) {
-//            Container container = (Container)component;
-//            int count = 0;
-//            for ( Component c : container.getComponents() ) {
-//                outlineNumber.add( count );
-//                listAllComponents( c, outlineNumber );
-//                outlineNumber.remove( outlineNumber.size() - 1 );
-//                count++;
-//            }
-//        }
-//        
-//    }
-//
-//    @Override
-//    public void mouseEntered( MouseEvent e ) {
-//    }
-//
-//    @Override
-//    public void mouseExited( MouseEvent e ) {
-//    }
-//
-//    @Override
-//    public void mousePressed( MouseEvent e ) {
-//        lastClickedComponents.add( e.getComponent() );
-//        System.out.println("pressed " + e.getComponent() );
-//    }
-//
-//    @Override
-//    public void mouseReleased( MouseEvent e ) {
-//    }
 
 }
