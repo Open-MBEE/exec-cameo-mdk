@@ -75,6 +75,7 @@ public class ImportElementComments extends RuleViolationAction implements Annota
         
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
         SessionManager.getInstance().createSession("import comments");
@@ -93,16 +94,24 @@ public class ImportElementComments extends RuleViolationAction implements Annota
                     modelComments.add(el.getID());
             }
             ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+            JSONObject changed = new JSONObject();
             for (String webid: webComments) {
-                if (!modelComments.contains(webid)) {
+                if (!modelComments.contains(webid) && webid.startsWith("_comment")) {
                     Comment newcomment = ef.createCommentInstance();
                     JSONObject commentObject = webCommentsMap.get(webid);
                     newcomment.setBody(Utils.addHtmlWrapper((String)commentObject.get("body")));
-                    //newcomment.setID(webid);
                     newcomment.setOwner(element.getOwner());
                     newcomment.getAnnotatedElement().add(element);
+                    changed.put(webid, newcomment.getID());
                 }
             }
+            if (!changed.isEmpty()) {
+                String url = ExportUtility.getUrl();
+                if (url != null) {
+                    ExportUtility.send(url + "/javawebscripts/elements", changed.toJSONString(), "PUT");
+                }
+            }
+            
             SessionManager.getInstance().closeSession();
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();
