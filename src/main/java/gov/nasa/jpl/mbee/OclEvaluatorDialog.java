@@ -31,21 +31,14 @@ package gov.nasa.jpl.mbee;
 import gov.nasa.jpl.mbee.RepeatInputComboBoxDialog.Processor;
 import gov.nasa.jpl.mbee.actions.OclQueryAction;
 import gov.nasa.jpl.mbee.lib.CompareUtils;
-import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MDUtils;
-import gov.nasa.jpl.mbee.lib.Utils2;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -61,10 +54,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 
-import org.jruby.compiler.ir.operands.Array;
-
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.ui.MainFrame;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
@@ -95,8 +84,6 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
     
     public JCheckBox diagramCB = null;
     public JCheckBox browserCB = null;
-    
-    private boolean added = true; // not doing this
     
     /**
      * @param owner
@@ -142,6 +129,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         
         //Put everything together, using the content pane's BorderLayout.
         Container contentPane = getContentPane();
+        
         contentPane.add( editableListPanel, BorderLayout.CENTER );
         JPanel jp = new JPanel();
         jp.setLayout( new BoxLayout( jp, BoxLayout.Y_AXIS ) );

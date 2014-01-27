@@ -230,7 +230,9 @@ public class RepeatInputComboBoxDialog implements Runnable {
             selectedItem = getSelectedItem(message);
             if (option == JOptionPane.CANCEL_OPTION) {
                 selectedItem = null;
-                Debug.outln("CANCEL! EditableListPanel value: " + selectedItem);
+                Debug.outln//        ((BorderLayout)contentPane.getLayout()).setVgap( ((BorderLayout)contentPane.getLayout()).getVgap()*2 + 5 );
+//              ((BorderLayout)contentPane.getLayout()).setHgap( ((BorderLayout)contentPane.getLayout()).getHgap()*2 + 10 );
+("CANCEL! EditableListPanel value: " + selectedItem);
             } else if (option == JOptionPane.CLOSED_OPTION) {
                 selectedItem = null;
                 Debug.outln("CLOSED! EditableListPanel value: " + selectedItem);
@@ -314,14 +316,16 @@ public class RepeatInputComboBoxDialog implements Runnable {
             add(label);
             add(jcb);
             add(resultScrollPane);
+            // putConstraint(e1, c1, pad, e2, c2): value(e1, c1) := value(e2, c2) + pad
+            layout.putConstraint(SpringLayout.NORTH, label, 5, SpringLayout.NORTH, this);
             layout.putConstraint(SpringLayout.WEST, label, 5, SpringLayout.WEST, this);
             layout.putConstraint(SpringLayout.NORTH, jcb, 5, SpringLayout.SOUTH, label);
             layout.putConstraint(SpringLayout.WEST, jcb, 5, SpringLayout.WEST, this);
-            layout.putConstraint(SpringLayout.EAST, jcb, 5, SpringLayout.EAST, this);
+            layout.putConstraint(SpringLayout.EAST, jcb, -5, SpringLayout.EAST, this);
             layout.putConstraint(SpringLayout.NORTH, resultScrollPane, 5, SpringLayout.SOUTH, jcb);
             layout.putConstraint(SpringLayout.WEST, resultScrollPane, 5, SpringLayout.WEST, this);
-            layout.putConstraint(SpringLayout.EAST, resultScrollPane, 5, SpringLayout.EAST, this);
-            layout.putConstraint(SpringLayout.SOUTH, resultScrollPane, 5, SpringLayout.SOUTH, this);
+            layout.putConstraint(SpringLayout.EAST, resultScrollPane, -5, SpringLayout.EAST, this);
+            layout.putConstraint(SpringLayout.SOUTH, resultScrollPane, -5, SpringLayout.SOUTH, this);
             // super( new BorderLayout( 5, 5 ) );
             // setItems( items );
             // add( new JLabel( msg ), BorderLayout.NORTH );
