@@ -204,10 +204,10 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             break;
         case ElementValue:
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             break;
         default:
             Debug.error("Bad PropertyValueType: " + valueType);
@@ -281,10 +281,10 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             break;
         case ElementValue:
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             break;
         };
         if ( e.getValue() != null && e.getValue().isEmpty() ) {

@@ -328,7 +328,7 @@ public class ModelValidator {
             }
         } else if (valueType == PropertyValueType.ElementValue) {
             if (vs instanceof ElementValue) {
-                if (((ElementValue)vs).getElement() == null || !((ElementValue)vs).getElement().getID().equals(value.get(0))) {
+                if (((ElementValue)vs).getElement() == null || !ExportUtility.getElementID(((ElementValue)vs).getElement()).equals(value.get(0))) {
                     message = "[VALUE] model: " + ((ElementValue)vs).getElement() + ", web: " + value.toString();
                 }
             } else {
