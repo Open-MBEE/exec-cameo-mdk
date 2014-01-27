@@ -44,6 +44,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -55,6 +56,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -70,11 +72,30 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
     
-    public static String getPostElementsUrl(String site) {
-        return getPostElementsUrl(site, Application.getInstance().getProject().getPrimaryProject().getProjectID());
+    public static String getElementID(Element e) {
+        if (e instanceof Slot) {
+            return e.getOwner().getID() + "-slot-" + ((Slot)e).getDefiningFeature().getID();
+        }
+        return e.getID();
     }
-    public static String getPostElementsUrl(String site, String project) {
-        return "/javawebscripts/sites/" + site + "/projects/" + project + "/elements";
+    
+    public static Element getElementFromID(String id) {
+        Project prj = Application.getInstance().getProject();
+        String[] ids = id.split("-slot-");
+        if (ids.length < 2) {
+            return (Element)prj.getElementByID(ids[0]);
+        } else {
+            Element instancespec = (Element)prj.getElementByID(ids[0]);
+            Element definingFeature = (Element)prj.getElementByID(ids[1]);
+            if (instancespec != null && definingFeature != null && instancespec instanceof InstanceSpecification) {
+                for (Element e: ((InstanceSpecification)instancespec).getOwnedElement()) {
+                    if (e instanceof Slot && ((Slot)e).getDefiningFeature() == definingFeature)
+                        return e;
+                }
+            } else
+                return null;
+        }
+        return null;
     }
     
     public static String getUrl() {
@@ -308,7 +329,7 @@ public class ExportUtility {
             elementInfo.put("owner", null);
         else
             elementInfo.put("owner", e.getOwner().getID());
-        elementInfo.put("id", e.getID());
+        elementInfo.put("id", getElementID(e));
         JSONArray comments = new JSONArray();
         for (Comment c: e.get_commentOfAnnotatedElement()) {
             if (isElementDocumentation(c))

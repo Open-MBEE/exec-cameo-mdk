@@ -149,12 +149,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         elementsArray.addAll(elementsjson.values());
         JSONObject send = new JSONObject();
         send.put("elements", elementsArray);
-        //gl.log(send.toJSONString());
         String url = ExportUtility.getUrl();
         if (url == null)
-            //url = "";
             return false;
-        String sendElementsUrl = url + ExportUtility.getPostElementsUrl("europa");
+        String sendElementsUrl = ExportUtility.getPostElementsUrl();
         if (!ExportUtility.send(sendElementsUrl, send.toJSONString()))
             return false;
         

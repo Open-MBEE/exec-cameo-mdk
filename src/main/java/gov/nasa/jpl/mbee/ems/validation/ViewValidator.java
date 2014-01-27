@@ -176,12 +176,12 @@ public class ViewValidator {
     
     @SuppressWarnings("unchecked")
     private boolean viewElementsMatch(JSONArray viewDisplayedElements, JSONObject veResults) {
-        Set<String> webElements = new HashSet<String>(viewDisplayedElements);
-        Set<String> local = new HashSet<String>();
+        Set<String> localElements = new HashSet<String>(viewDisplayedElements);
+        Set<String> webElements = new HashSet<String>();
         for (Object o: (JSONArray)veResults.get("elements")) {
-            local.add((String)((JSONObject)o).get("id"));
+            webElements.add((String)((JSONObject)o).get("id"));
         }
-        if (webElements.containsAll(local) && local.containsAll(webElements))
+        if (webElements.containsAll(localElements) && localElements.containsAll(webElements))
             return true;
         return false;
     }

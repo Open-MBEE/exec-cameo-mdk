@@ -73,12 +73,10 @@ public class ExportElementComments extends RuleViolationAction implements Annota
             }
         }
         send.put("elements", infos);
-        //gl.log(send.toJSONString());
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
         }
@@ -97,14 +95,10 @@ public class ExportElementComments extends RuleViolationAction implements Annota
             elements.add(info);
         }
         send.put("elements", elements);
-        //gl.log(send.toJSONString());
-
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-       
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }

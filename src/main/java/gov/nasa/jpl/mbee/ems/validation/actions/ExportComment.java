@@ -76,12 +76,10 @@ public class ExportComment extends RuleViolationAction implements AnnotationActi
             infos.add(info);
         }
         send.put("elements", infos);
-        //gl.log(send.toJSONString());
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
         }
@@ -102,14 +100,10 @@ public class ExportComment extends RuleViolationAction implements AnnotationActi
         info.put("annotatedElements", annotatedElements);
         elements.add(info);
         send.put("elements", elements);
-        //gl.log(send.toJSONString());
 
-        String url = ExportUtility.getUrl();
-        if (url == null) {
+        String url = ExportUtility.getPostElementsUrl();
+        if (url == null)
             return;
-        }
-       
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }

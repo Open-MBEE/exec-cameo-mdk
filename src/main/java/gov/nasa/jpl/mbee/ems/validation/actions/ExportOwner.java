@@ -66,17 +66,14 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
             Element e = (Element)anno.getTarget();
             JSONObject info = new JSONObject();
             info.put("owner", e.getOwner().getID());
-            info.put("id", e.getID());
+            info.put("id", ExportUtility.getElementID(e));
             infos.add(info);
         }
         send.put("elements", infos);
-        //gl.log(send.toJSONString());
-
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
         }
@@ -89,18 +86,14 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
         info.put("owner", element.getOwner().getID());
-        info.put("id", element.getID());
+        info.put("id", ExportUtility.getElementID(element));
         
         elements.add(info);
         send.put("elements", elements);
-        //gl.log(send.toJSONString());
-
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }

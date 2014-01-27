@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
@@ -203,10 +204,10 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             break;
         case ElementValue:
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             break;
         default:
             Debug.error("Bad PropertyValueType: " + valueType);
@@ -280,10 +281,10 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             break;
         case ElementValue:
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             break;
         };
         if ( e.getValue() != null && e.getValue().isEmpty() ) {

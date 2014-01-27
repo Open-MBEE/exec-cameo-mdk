@@ -222,7 +222,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (para.getFrom() != null && para.getFromProperty() != null) {
             this.addToElements(para.getFrom());
             entry.put("sourceType", "reference");
-            entry.put("source", para.getFrom().getID());
+            entry.put("source", ExportUtility.getElementID(para.getFrom()));
             entry.put("sourceProperty", sourceMapping.get(para.getFromProperty()));
         } else {
             entry.put("sourceType", "text");
@@ -245,7 +245,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (text.getFrom() != null && text.getFromProperty() != null) {
             this.addToElements(text.getFrom());
             entry.put("sourceType", "reference");
-            entry.put("source", text.getFrom().getID());
+            entry.put("source", ExportUtility.getElementID(text.getFrom()));
             entry.put("sourceProperty", sourceMapping.get(text.getFromProperty()));
         } else {
             entry.put("sourceType", "text");
@@ -345,7 +345,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                 e instanceof Extension || e instanceof ValueSpecification)
             return;
         if (!viewElements.empty())
-            viewElements.peek().add(e.getID());
+            viewElements.peek().add(ExportUtility.getElementID(e));
         if (elements.containsKey(e.getID()))
             return;
         JSONObject elementInfo = new JSONObject();

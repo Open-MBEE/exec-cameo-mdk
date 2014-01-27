@@ -98,7 +98,7 @@ public class ImportElementComments extends RuleViolationAction implements Annota
                     Comment newcomment = ef.createCommentInstance();
                     JSONObject commentObject = webCommentsMap.get(webid);
                     newcomment.setBody(Utils.addHtmlWrapper((String)commentObject.get("body")));
-                    newcomment.setID(webid);
+                    //newcomment.setID(webid);
                     newcomment.setOwner(element.getOwner());
                     newcomment.getAnnotatedElement().add(element);
                 }
