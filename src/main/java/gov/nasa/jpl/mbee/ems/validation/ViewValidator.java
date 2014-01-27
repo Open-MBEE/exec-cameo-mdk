@@ -259,15 +259,69 @@ public class ViewValidator {
         for (int i = 0; i < localContains.size(); i++) {
             JSONObject local = (JSONObject)localContains.get(i);
             JSONObject web = (JSONObject)webContains.get(i);
-            if (!local.get("type").equals(web.get("type")))
+            if (!contentMatch(local, web))
                 return false;
-            if (local.get("type").equals("Paragraph")) {
-                if (local.toJSONString().length() != web.toJSONString().length())
-                    return false;
-            }
-          
         }
         return true;
     }
     
+    private boolean contentMatch(JSONObject a, JSONObject b) {
+        if (!a.get("type").equals(b.get("type")))
+            return false;
+        if (a.get("type").equals("Paragraph")) {
+            if (!a.get("sourceType").equals(b.get("sourceType"))) {
+                return false;
+            }
+            if (a.get("sourceType").equals("reference")) {
+                if (!a.get("source").equals(b.get("source")) || !a.get("sourceProperty").equals(b.get("sourceProperty")))
+                    return false;
+            } else if (!a.get("text").equals(b.get("text")))
+                return false;
+        } else if (a.get("type").equals("Table")) {
+            JSONArray localtable = (JSONArray)a.get("body");
+            JSONArray webtable = (JSONArray)b.get("body");
+            if (!tableMatch(localtable, webtable))
+                return false;
+            if (!tableMatch((JSONArray)a.get("header"), (JSONArray)b.get("header")))
+                return false;
+        } else if (a.get("type").equals("List")) {
+            JSONArray alist = (JSONArray)a.get("list");
+            JSONArray blist = (JSONArray)b.get("list");
+            if (alist.size() != blist.size())
+                return false;
+            for (int i = 0; i < alist.size(); i++) {
+                if (!listMatch((JSONArray)alist.get(i), (JSONArray)blist.get(i)))
+                    return false;
+            }
+        }
+        return true;
+    }
+    
+    private boolean tableMatch(JSONArray a, JSONArray b) {
+        if (a.size() != b.size())
+            return false;
+        for (int j = 0; j < a.size(); j++) {
+            JSONArray localrow = (JSONArray)a.get(j);
+            JSONArray webrow = (JSONArray)b.get(j);
+            if (localrow.size() != webrow.size())
+                return false;
+            for (int k = 0; k < localrow.size(); k++) {
+                JSONObject localcell = (JSONObject)localrow.get(k);
+                JSONObject webcell = (JSONObject)webrow.get(k);
+                if (!listMatch((JSONArray)localcell.get("content"), (JSONArray)webcell.get("content")))
+                    return false;
+            }
+        }
+        return true;
+    }
+    
+    private boolean listMatch(JSONArray a, JSONArray b) {
+        if (a.size() != b.size())
+            return false;
+        for (int i = 0; i < a.size(); i++) {
+            if (!contentMatch((JSONObject)a.get(i), (JSONObject)b.get(i)))
+                return false;
+        }
+        return true;
+    }
 }

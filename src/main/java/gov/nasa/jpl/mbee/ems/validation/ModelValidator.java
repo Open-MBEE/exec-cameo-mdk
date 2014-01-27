@@ -177,7 +177,7 @@ public class ModelValidator {
                 nameDiff.addViolation(v);
             }
             if (elementDoc != null && !(elementInfo.get("documentation") == null && elementDoc.equals("")) && !elementDocClean.equals(elementInfo.get("documentation"))) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + elementDocClean + ", web: " + elementInfo.get("documentation"));
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
                 v.addAction(new ImportDoc(e, (String)elementInfo.get("documentation"), result));
                 v.addAction(new ExportDoc(e));
                 docDiff.addViolation(v);
@@ -513,5 +513,13 @@ public class ModelValidator {
                 return false;
         }
         return true;
+    }
+    
+    private static String truncate(String s) {
+        if (s == null)
+            return null;
+        if (s.length() > 50)
+            return s.substring(0, 49) + "...";
+        return s;
     }
 }
