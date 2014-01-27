@@ -176,7 +176,7 @@ public class ModelValidator {
                 v.addAction(new ExportName((NamedElement)e));
                 nameDiff.addViolation(v);
             }
-            if (elementDoc != null && !elementDocClean.equals(elementInfo.get("documentation"))) {
+            if (elementDoc != null && !(elementInfo.get("documentation") == null && elementDoc.equals("")) && !elementDocClean.equals(elementInfo.get("documentation"))) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + elementDocClean + ", web: " + elementInfo.get("documentation"));
                 v.addAction(new ImportDoc(e, (String)elementInfo.get("documentation"), result));
                 v.addAction(new ExportDoc(e));
