@@ -149,19 +149,18 @@ public class ModelValidator {
             return;
         JSONObject elementsKeyed = new JSONObject();
         for (JSONObject elementInfo: (List<JSONObject>)elements) {
-            //JSONObject elementInfo = (JSONObject)elements.get(elementId);
             String elementId = (String)elementInfo.get("id");
             Debug.outln("validating " + elementInfo + ", id = " + elementId);
-            if (elementsKeyed.containsKey(elementId)) {
-                Debug.outln("elementKeyed (" + elementsKeyed + ") contains " + elementId);
-                continue;
-            }
-            elementsKeyed.put(elementId, elementInfo);
-            Element e = (Element)prj.getElementByID(elementId);
+            Element e = ExportUtility.getElementFromID(elementId);
             Debug.outln("element = " + e);
             if (e == null) {
                 continue;
             }
+            if (elementsKeyed.containsKey(e.getID())) {
+                Debug.outln("elementKeyed (" + elementsKeyed + ") contains " + elementId);
+                continue;
+            }
+            elementsKeyed.put(e.getID(), elementInfo);
             Debug.outln( "element.getClass() = "
                        	 + e.getClass().getSimpleName() );
             String elementDoc = ModelHelper.getComment(e);

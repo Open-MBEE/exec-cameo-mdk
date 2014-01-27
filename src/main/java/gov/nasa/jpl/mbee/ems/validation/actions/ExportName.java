@@ -73,13 +73,10 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
             }
         }
         send.put("elements", infos);
-        //gl.log(send.toJSONString());
-
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
         }
@@ -96,12 +93,10 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         info.put("id", element.getID());
         elements.add(info);
         send.put("elements", elements);
-        //gl.log(send.toJSONString());
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }
