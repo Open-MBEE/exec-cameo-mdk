@@ -100,7 +100,6 @@ public class OclEvaluatorPlugin extends MDPlugin {
                 this);
         addConfiguration("BaseDiagramContext", "DocumentView", OclQueryAction.actionText, category, method,
                 this);
-
         Debug.outln("finished initializing TestPlugin!");
     }
 

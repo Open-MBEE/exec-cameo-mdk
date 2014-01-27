@@ -30,7 +30,6 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -43,8 +42,6 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -62,7 +59,6 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
 
     private static final long serialVersionUID = 1L;
     private Element element;
-    private GUILog gl = Application.getInstance().getGUILog();
     
     public ExportValue(Element e) {
         super("ExportValue", "Export value", null, null);
@@ -85,13 +81,10 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
             infos.add(info);
         }
         send.put("elements", infos);
-        //gl.log(send.toJSONString());
-
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
         }
@@ -106,14 +99,10 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
 
         elements.add(info);
         send.put("elements", elements);
-        
-        //gl.log(send.toJSONString());
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }
@@ -137,7 +126,7 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
                 }
             }
         }
-        elementInfo.put("id", e.getID());
+        elementInfo.put("id", ExportUtility.getElementID(e));
         return elementInfo;
     }
     
@@ -165,7 +154,7 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
             elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
             Element ev = ((ElementValue)vs).getElement();
             if (ev != null) {
-                value.add(ev.getID());
+                value.add(ExportUtility.getElementID(ev));
             }
         }
         elementInfo.put("value", value);

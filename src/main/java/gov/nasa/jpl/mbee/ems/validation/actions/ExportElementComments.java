@@ -28,33 +28,28 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.HashSet;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class FixModelOwner extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
-
+public class ExportElementComments extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element element;
-    private Element owner;
-    private JSONObject result;
-    public FixModelOwner(Element e, Element owner, JSONObject result) {
-        super("FixModelOwner", "Import owner", null, null);
+    
+    public ExportElementComments(Element e) {
+        super("ExportElementComments", "Export element comments", null, null);
         this.element = e;
-        this.owner = owner;
-        this.result = result;
     }
     
     @Override
@@ -62,49 +57,50 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void execute(Collection<Annotation> annos) {
-        SessionManager.getInstance().createSession("Change Owners");
-        Project prj = Application.getInstance().getProject();
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        try {
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
+        JSONObject send = new JSONObject();
+        JSONArray infos = new JSONArray();
+        for (Annotation anno: annos) {
+            Element e = (Element)anno.getTarget();
+            for (Comment c: e.get_commentOfAnnotatedElement()) {
+                if (ExportUtility.isElementDocumentation(c))
                     continue;
-                }
-                String ownerID = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("owner");
-                if (ownerID == null)
-                    continue;
-                Element own = (Element)prj.getElementByID(ownerID);
-                if (own != null)
-                    e.setOwner(own);
-                //AnnotationManager.getInstance().remove(anno);
-                toremove.add(anno);
+                JSONObject info = new JSONObject();
+                ExportUtility.fillElement(c, info, null, null);
+                infos.add(info);
             }
-            SessionManager.getInstance().closeSession();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
         }
-    }
-    
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
+        send.put("elements", infos);
+        String url = ExportUtility.getPostElementsUrl();
+        if (url == null) {
             return;
         }
-        SessionManager.getInstance().createSession("Change Owner");
-        try {
-            element.setOwner(owner);
-            SessionManager.getInstance().closeSession();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
+        if (ExportUtility.send(url, send.toJSONString())) {
+            this.removeViolationsAndUpdateWindow(annos);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        JSONArray elements = new JSONArray();
+        JSONObject send = new JSONObject();
+        for (Comment c: element.get_commentOfAnnotatedElement()) {
+            if (ExportUtility.isElementDocumentation(c))
+                continue;
+            JSONObject info = new JSONObject();
+            ExportUtility.fillElement(c, info, null, null);
+            elements.add(info);
+        }
+        send.put("elements", elements);
+        String url = ExportUtility.getPostElementsUrl();
+        if (url == null) {
+            return;
+        }
+        if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
         }
     }
 }

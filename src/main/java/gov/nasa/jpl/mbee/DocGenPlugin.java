@@ -80,13 +80,14 @@ public class DocGenPlugin extends Plugin {
 
         DocGenConfigurator dgc = new DocGenConfigurator();
         acm.addContainmentBrowserContextConfigurator(dgc);
-        acm.addBaseDiagramContextConfigurator("Class Diagram", dgc);
-        acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
-        acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
+        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, dgc);
+        //acm.addBaseDiagramContextConfigurator("Class Diagram", dgc);
+        //acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
+        //acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
 
         PatternLoaderConfigurator plc = new PatternLoaderConfigurator();
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, plc);
-
+        acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 
         getOclPlugin().init();

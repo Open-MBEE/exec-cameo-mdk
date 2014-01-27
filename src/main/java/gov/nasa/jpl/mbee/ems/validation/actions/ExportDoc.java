@@ -30,7 +30,6 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -42,15 +41,12 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportDoc extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element element;
-    private GUILog gl = Application.getInstance().getGUILog();
     
     public ExportDoc(Element e) {
         super("ExportDoc", "Export doc", null, null);
@@ -71,16 +67,14 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
             Element e = (Element)anno.getTarget();
             JSONObject info = new JSONObject();
             info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
-            info.put("id", e.getID());
+            info.put("id", ExportUtility.getElementID(e));
             infos.add(info);
         }
         send.put("elements", infos);
-        //gl.log(send.toJSONString());
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
         }
@@ -93,17 +87,14 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
         info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
-        info.put("id", element.getID());
+        info.put("id", ExportUtility.getElementID(element));
         elements.add(info);
         send.put("elements", elements);
-        //gl.log(send.toJSONString());
 
-        String url = ViewEditUtils.getUrl(false);
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-       
-        url += ExportUtility.getPostElementsUrl("europa");
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
         }

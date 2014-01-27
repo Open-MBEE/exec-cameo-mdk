@@ -28,11 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
+import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 
 import java.awt.event.ActionEvent;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateViewAction extends MDAction {
@@ -42,15 +43,13 @@ public class ValidateViewAction extends MDAction {
     public static final String actionid = "ValidateViewAlfresco";
     
     public ValidateViewAction(Element e) {
-        super(actionid, "Validate View With VE", null, null);
+        super(actionid, "Validate View", null, null);
         view = e;
     }
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewValidator vv = new ViewValidator(view, false);
-        vv.validate();
-        vv.showWindow();
+        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false), "Validating View", true, 0);
     }
 }
 

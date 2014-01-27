@@ -37,15 +37,12 @@ import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
-import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
 import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.DeleteDocumentAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.DeleteProjectAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.DeleteVolumeAction;
+
 import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewHierarchyAction;
@@ -54,17 +51,20 @@ import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewDryAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.OrganizeDocumentAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.OrganizeViewEditorAction;
+
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
@@ -88,6 +88,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class DocGenConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
+    private Set<ActionsManager> viewQueryCalled = new HashSet<ActionsManager>();
+    
     @Override
     public int getPriority() {
         return ConfiguratorWithPriority.MEDIUM_PRIORITY;
@@ -126,15 +128,20 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (e == null)
             return;
         
-        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (manager.getActionFor(ExportModelAction.actionid) == null)
-            modelLoad.addAction(new ExportModelAction(e));
-        if (manager.getActionFor(ValidateModelAction.actionid) == null && !(e instanceof Model))
-            modelLoad.addAction(new ValidateModelAction(e));
-        if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
-            modelLoad.addAction(new InitializeProjectAction());
-        if (manager.getActionFor(EMSLogoutAction.actionid) == null)
-            modelLoad.addAction(new EMSLogoutAction());
+        if (ViewEditUtils.isPasswordSet()) {
+            ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
+            if (MDUtils.isDeveloperMode()) {
+                if (manager.getActionFor(ExportModelAction.actionid) == null)
+                    modelLoad.addAction(new ExportModelAction(e));
+                if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
+                    modelLoad.addAction(new InitializeProjectAction());
+                if (manager.getActionFor(ValidateModelAction.actionid) == null)
+                    modelLoad.addAction(new ValidateModelAction(e));
+            } else if (e instanceof Model){
+                if (manager.getActionFor(ValidateModelAction.actionid) == null)
+                    modelLoad.addAction(new ValidateModelAction(e));
+            } 
+        }
         
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
@@ -169,19 +176,19 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             if (category == null) {
                 category = new MDActionsCategory("ViewInteraction", "View Interaction");
                 category.setNested(true);
-                boolean added = addViewQueryActions(category, (NamedElement)e);
+                boolean added = addViewQueryActions(manager, category, (NamedElement)e);
                 if (added)
                     manager.addCategory(0, category);
             }
-        
-            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-            NMAction action = manager.getActionFor(ValidateViewAction.actionid);
-            if (action == null)
-                modelLoad2.addAction(new ValidateViewAction(e));
-            action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
-            if (action == null)
-                modelLoad2.addAction(new ValidateViewRecursiveAction(e));
-            
+            if (ViewEditUtils.isPasswordSet()) {
+                ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
+                NMAction action = manager.getActionFor(ValidateViewAction.actionid);
+                if (action == null)
+                    modelLoad2.addAction(new ValidateViewAction(e));
+                action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
+                if (action == null)
+                    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
+            }
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             //action = manager.getActionFor(ExportViewAction.actionid);
             //if (action == null)
@@ -360,7 +367,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
      * @param parent
      * @param e
      */
-    private boolean addViewQueryActions(ActionsCategory parent, NamedElement e) {
+    private boolean addViewQueryActions(ActionsManager manager, ActionsCategory parent, NamedElement e) {
+        if (viewQueryCalled.contains(manager))
+            return false;
         DocumentGenerator dg = new DocumentGenerator(e, null, null);
         Document dge = dg.parseDocument(true, false);
         CollectActionsVisitor cav = new CollectActionsVisitor();
@@ -374,6 +383,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             added = true;
         }
         parent.setNested(true);
+        viewQueryCalled.clear();
+        viewQueryCalled.add(manager);
         return added;
     }
 

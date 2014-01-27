@@ -26,41 +26,37 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions.ems;
+package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
+import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
 
-import java.awt.event.ActionEvent;
+import com.nomagic.actions.AMConfigurator;
+import com.nomagic.actions.ActionsCategory;
+import com.nomagic.actions.ActionsManager;
+import com.nomagic.actions.NMAction;
+import com.nomagic.magicdraw.actions.MDActionsCategory;
 
-import org.json.simple.JSONObject;
+public class MMSConfigurator implements AMConfigurator {
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-
-public class InitializeProjectAction extends MDAction {
-
-    private static final long serialVersionUID = 1L;
-    
-    public static final String actionid = "InitializeProject";
-    
-    public InitializeProjectAction() {
-        super(actionid, "(Initialize Project)", null, null);
-    }
-    
-    @SuppressWarnings("unchecked")
     @Override
-    public void actionPerformed(ActionEvent e) {
-
-        JSONObject result = new JSONObject();
-        result.put("name", Application.getInstance().getProject().getName());
-        String json = result.toJSONString();
-
-        //gl.log(json);
-        String url = ExportUtility.getUrl();
-        if (url == null) {
-            return;
-        }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        ExportUtility.send(url, json);
+    public int getPriority() {
+        // TODO Auto-generated method stub
+        return 0;
     }
+
+    @Override
+    public void configure(ActionsManager manager) {
+        NMAction category = (ActionsCategory)manager.getActionFor("MMSMAIN");
+        if (category == null) {
+            category = new MDActionsCategory("MMSMAIN", "MMS");
+            ((ActionsCategory)category).setNested(true);
+            manager.addCategory((ActionsCategory)category);
+            category.addAction(new EMSLogoutAction());
+            category.addAction(new EMSLoginAction());
+        }
+        
+    }
+    
+
 }

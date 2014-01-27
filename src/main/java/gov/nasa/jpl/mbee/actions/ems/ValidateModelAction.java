@@ -28,17 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 
 import java.awt.event.ActionEvent;
 
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateModelAction extends MDAction {
@@ -54,18 +49,6 @@ public class ValidateModelAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        String url = ViewEditUtils.getUrl(false);
-        if (url == null) {
-            return;
-        }
-        url += "/javawebscripts/elements/" + start.getID() + "?recurse=true";
-        String response = ExportUtility.get(url);
-        if (response == null)
-            return;
-        JSONObject result = (JSONObject)JSONValue.parse(response);
-        ResultHolder.lastResults = result;
-        ModelValidator validator = new ModelValidator(start, result, true);
-        validator.validate();
-        validator.showWindow();
+        ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start), "Validating Model", true, 0);
     }
 }

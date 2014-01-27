@@ -28,8 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -65,12 +65,13 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     private JSONArray values;
     private PropertyValueType type;
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
-
-    public ImportValue(Element e, JSONArray values, PropertyValueType type) {
+    private JSONObject result;
+    public ImportValue(Element e, JSONArray values, PropertyValueType type, JSONObject result) {
         super("ImportValue", "Import value", null, null);
         this.element = e;
         this.values = values;
         this.type = type;
+        this.result = result;
     }
     
     @Override
@@ -80,7 +81,6 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        JSONObject result = ResultHolder.lastResults;
         SessionManager.getInstance().createSession("Change values");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
@@ -190,19 +190,24 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
             break;
         case LiteralReal:
+            Double value;
+            if (o instanceof Long)
+                value = Double.parseDouble(((Long)o).toString());
+            else
+                value = (Double)o;
             if (newval instanceof LiteralReal) {
                 ((LiteralReal)newval).setValue((Double)o);
                 return;
             }
             newval = ef.createLiteralRealInstance();
-            ((LiteralReal)newval).setValue((Double)o);
+            ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             break;
         default:
             Debug.error("Bad PropertyValueType: " + valueType);
@@ -262,19 +267,24 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
             break;
         case LiteralReal:
+            Double value;
+            if (o instanceof Long)
+                value = Double.parseDouble(((Long)o).toString());
+            else
+                value = (Double)o;
             if (newval instanceof LiteralReal) {
-                ((LiteralReal)newval).setValue((Double)o);
+                ((LiteralReal)newval).setValue(value);
                 return;
             }
             newval = ef.createLiteralRealInstance();
-            ((LiteralReal)newval).setValue((Double)o);
+            ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement((Element)Application.getInstance().getProject().getElementByID((String)o));
+            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
             break;
         };
         if ( e.getValue() != null && e.getValue().isEmpty() ) {
@@ -282,6 +292,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         }
         return;
     }
+    
     private void update(Slot e, PropertyValueType valueType, JSONArray values) {
         if ( e == null ) {
             Debug.error( "Trying to update a null slot!" );

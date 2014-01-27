@@ -95,7 +95,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             if (book.getDocumentVersion() != null && !book.getDocumentVersion().equals("")) {
                 out.append("\n<releaseinfo>" + book.getDocumentVersion() + "</releaseinfo>");
             }
-            if (book.getLogoAlignment() != null && !book.getLogoAlignment().equals("")) {
+            if (book.getLogoLocation() != null && !book.getLogoLocation().equals("") && book.getLogoAlignment() != null && !book.getLogoAlignment().equals("")) {
                 if (book.getLogoSize() != null && !book.getLogoSize().equals("")) {
 
                     if (book.getLogoAlignment().equals("center") || book.getLogoAlignment().equals("Center")) {

@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import gov.nasa.jpl.mbee.actions.OclQueryAction;
 import gov.nasa.jpl.mbee.lib.ClassUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MoreToString;
@@ -36,7 +37,9 @@ import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils2;
 
 import java.awt.AWTEvent;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.EventObject;
@@ -47,6 +50,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
 import org.junit.Assert;
@@ -62,6 +66,7 @@ import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
 import com.nomagic.magicdraw.actions.DiagramContextToolbarAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.actions.MenuCreatorFactory;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
 import com.nomagic.magicdraw.uml.DiagramType;
@@ -147,8 +152,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * }
      */
 
-    public static Context lastContext          = null;
-    public static boolean lastContextIsDiagram = false;
+    public static Context lastContext             = null;
+    protected static boolean lastContextIsDiagram = false;
+    //protected static boolean invokedFromMenu      = false;
 
     /**
      * A Context is a place from which the user accesses menus that are
@@ -226,6 +232,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         }
     }
 
+    public static ActionEvent lastActionEvent = null;
+
     public static class GenericMDAction extends MDAction {
 
         private static final long serialVersionUID     = 6943254131859224755L;
@@ -288,6 +296,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                     }
                 }
             }
+            lastActionEvent  = actionEvent;
             // Pair< Boolean, Object > p =
             ClassUtils.runMethod(false, objectInvokingAction, actionMethod, args.toArray());
         }
@@ -466,6 +475,47 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         return MEDIUM_PRIORITY;
     }
 
+    /**
+     * @return the lastContextIsDiagram
+     */
+    public static boolean isLastContextDiagram() {
+        return lastContextIsDiagram;
+    }
+
+    /**
+     * @param lastContextIsDiagram the lastContextIsDiagram to set
+     */
+    public static void setLastContextIsDiagram( boolean lastContextIsDiagram ) {
+        Configurator.lastContextIsDiagram = lastContextIsDiagram;
+    }
+
+    /**
+     * @return invokedFromMenu
+     */
+    public static boolean isInvokedFromMainMenu() {
+        // HACK -- FIXME
+        if ( lastActionEvent != null ) {
+            Object source = lastActionEvent.getSource();
+            if ( source instanceof Component ) {
+                source = ( (Component)source ).getParent();
+                if ( source instanceof JPopupMenu ) {
+                    Component invoker = ( (JPopupMenu)source ).getInvoker();
+                    if ( invoker != null ) {
+                        String invokerClassName = invoker.getName();
+                        invokerClassName = invoker.getClass().getName();
+                        if ( invokerClassName.contains( "MenuCreatorFactory" ) ) {
+                            // if ( invoker instanceof MenuCreatorFactory ) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -485,14 +535,14 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (wasOn)
             Debug.turnOn();
         lastContext = Context.DiagramContext;
-        lastContextIsDiagram = true;
+        setLastContextIsDiagram( true );
+        //invokedFromMenu = false;
         if (diagram instanceof DiagramPresentationElement) {
             // Configurator.Context context =
             // getContextForType( DiagramContextToolbarAMConfigurator.class );
             Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class,
                     ((DiagramPresentationElement)diagram).getDiagramType().getType());
             lastContext = p.first;
-            lastContextIsDiagram = true;
             addDiagramActions(manager, diagram, getMenus().get(p.first).get(p.second));
         } else {
             Assert.assertTrue(false);
@@ -686,7 +736,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             Debug.turnOn();
         Pair<Context, String> p = getContextForType(AMConfigurator.class, manager.getClass().getSimpleName());
         lastContext = p.first;
-        lastContextIsDiagram = false;
+        //invokedFromMenu = true;
+        //setLastContextIsDiagram( false );
         if (p == null || p.first == null || p.second == null) {
             Debug.errln("Could not addElementActions: getContextForType( AMConfigurator.class, \""
                     + manager.getClass().getSimpleName() + "\") returned " + p);
@@ -710,6 +761,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     @Override
     public void configure(ActionsManager manager, DiagramPresentationElement diagram,
             PresentationElement[] selected, PresentationElement requestor) {
+        if ( Utils2.getStackTrace( null ).contains( "RepaintManager" ) ) {
+            return;
+        }
         boolean wasOn = Debug.isOn();
         Debug.turnOff();
         Debug.outln("configure(manager=" + manager + ", diagram=" + diagram + ", selected="
@@ -724,7 +778,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         DiagramType dType = diagram.getDiagramType();
         Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class, dType.getType());
         lastContext = p.first;
-        lastContextIsDiagram = true;
+        setLastContextIsDiagram( true );
+        //invokedFromMenu = false;
         if (p == null || p.first == null || p.second == null) {
             Debug.errln("Could not addElementActions: getContextForType( DiagramContextAMConfigurator.class, \""
                     + dType.getType() + "\") returned " + p);
@@ -757,7 +812,6 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             Debug.turnOn();
         Node no = browser.getSelectedNode();
         lastContext = null;
-        lastContextIsDiagram = false;
         if (no == null) {
             Debug.errln("No selected node for adding action.");
             return;
@@ -775,7 +829,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         }
         Pair<Context, String> p = getContextForType(BrowserContextAMConfigurator.class, browserType);
         lastContext = p.first;
-        lastContextIsDiagram = false;
+        setLastContextIsDiagram( false );
+        //invokedFromMenu = false;
         if (p == null || p.first == null || p.second == null) {
             Debug.errln("Could not addElementActions: getContextForType( BrowserContextAMConfigurator.class, \""
                     + browser.getName() + "\") returned " + p);

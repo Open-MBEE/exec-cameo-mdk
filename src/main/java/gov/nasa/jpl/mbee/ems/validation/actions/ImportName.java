@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -50,11 +49,12 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
     private static final long serialVersionUID = 1L;
     private NamedElement element;
     private String name;
-    
-    public ImportName(NamedElement e, String name) {
+    private JSONObject result;
+    public ImportName(NamedElement e, String name, JSONObject result) {
         super("ImportName", "Import name", null, null);
         this.element = e;
         this.name = name;
+        this.result = result;
     }
     
     @Override
@@ -64,7 +64,6 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        JSONObject result = ResultHolder.lastResults;
         SessionManager.getInstance().createSession("Change Names");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {

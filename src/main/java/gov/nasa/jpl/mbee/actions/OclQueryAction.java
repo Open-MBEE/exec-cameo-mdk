@@ -28,7 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions;
 
+//import gov.nasa.jpl.mbee.Configurator;
 import gov.nasa.jpl.mbee.Configurator;
+import gov.nasa.jpl.mbee.OclEvaluatorDialog;
 import gov.nasa.jpl.mbee.RepeatInputComboBoxDialog;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
@@ -37,9 +39,9 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.ocl.OCLSyntaxHelper;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.awt.Component;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -52,6 +54,7 @@ import org.eclipse.ocl.helper.ConstraintKind;
 import org.junit.Assert;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.base.ModelObject;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -72,6 +75,12 @@ public class OclQueryAction extends MDAction {
     protected LinkedList<String> choices          = new LinkedList<String>();
     protected int                maxChoices       = 10;
 
+    //protected static boolean selectionInDiagram = true;
+    
+    public static OclEvaluatorDialog dialog = null;
+
+    public static boolean useNewOclEvaluator = true;
+
     public OclQueryAction(Element context) {
         super(actionid, actionText, null, null);
         if (context != null)
@@ -80,14 +89,6 @@ public class OclQueryAction extends MDAction {
 
     public OclQueryAction() {
         this(null);
-    }
-
-    public static String getStackTrace(Throwable t) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        t.printStackTrace(pw);
-        sw.flush();
-        return sw.toString();
     }
 
     public static class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
@@ -178,7 +179,7 @@ public class OclQueryAction extends MDAction {
                     }
 
                     // If the parse succeeds, return the result.
-                    if (evaluator != null && evaluator.isValid()) {
+                    if (evaluator != null && ( evaluator.isValid() || !Utils2.isNullOrEmpty( result ) ) ) {
                         // return result;
                         outputList.add(result);
                     } else {
@@ -245,7 +246,7 @@ public class OclQueryAction extends MDAction {
                 result = OclEvaluator.evaluateQuery(elem, oclString, true);
                 evaluator = OclEvaluator.instance;
                 output = toString(result);
-                if (!evaluator.isValid()) {
+                if (!evaluator.isValid() && Utils2.isNullOrEmpty( result ) ) {
                     output = output
                             + "\nOclInvalid\nThis may be the result of a problem with a shortcut/blackbox function.";
                 }
@@ -389,24 +390,52 @@ public class OclQueryAction extends MDAction {
 
     }
 
+    @SuppressWarnings( "deprecation" )
     @Override
     public void actionPerformed(ActionEvent e) {
-        Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.lastContextIsDiagram);
+        Collection<Element> selectedElements = MDUtils.getSelection(e, isSelectionInDiagram());
         setContext(selectedElements);
 
         // Ensure user-defined shortcut functions are updated
         OclEvaluator.resetEnvironment();
 
-        boolean wasOn = Debug.isOn();
-        Debug.turnOn();
+        Window owner = null;
         try {
-            RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog("Enter an OCL expression:",
-                    "OCL Evaluation", new ProcessOclQuery(selectedElements));
+            owner = Application.getInstance().getMainFrame();
+        } catch ( Throwable t ) {
+            t.printStackTrace();
+        }
+        try {
+            if ( useNewOclEvaluator  ) {
+                boolean selectionInDiagram = true;
+                boolean selectionInBrowser = false;
+                if ( dialog == null ) {
+                    dialog = new OclEvaluatorDialog( owner, "OCL Evaluation" );
+                } else if ( Configurator.isInvokedFromMainMenu() ) {
+                    // use last 
+                    selectionInDiagram = dialog.diagramCB.isSelected();
+                    selectionInBrowser = dialog.browserCB.isSelected();
+                }
+                if ( !Configurator.isInvokedFromMainMenu() ) {
+                    selectionInDiagram = isSelectionInDiagram();
+                    selectionInBrowser = !selectionInDiagram;
+                }
+                if ( MDUtils.getSelectionInDiagram().isEmpty()
+                     && !MDUtils.getSelectionInContainmentBrowser().isEmpty() ) {
+                    selectionInDiagram = false;
+                    selectionInBrowser = true;
+                }
+                dialog.diagramCB.setSelected( selectionInDiagram );
+                dialog.browserCB.setSelected( selectionInBrowser );
+                dialog.getEditableListPanel().setResultPanel( "" );
+                dialog.setVisible( true );
+            } else {
+                RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog("Enter an OCL expression:",
+                        "OCL Evaluation", new ProcessOclQuery(selectedElements));
+            }
         } catch (Throwable t) {
             t.printStackTrace();
         }
-        if (!wasOn)
-            Debug.turnOff();
     }
 
     /**
@@ -434,5 +463,20 @@ public class OclQueryAction extends MDAction {
         getContext().clear();
         getContext().addAll(context);
     }
+
+    /**
+     * @return the selectionInDiagram
+     */
+    public static boolean isSelectionInDiagram() {
+        return Configurator.isLastContextDiagram();
+        //return selectionInDiagram;
+    }
+
+//    /**
+//     * @param selectionInDiagram the selectionInDiagram to set
+//     */
+//    public static void setSelectionInDiagram( boolean selectionInDiagram ) {
+//        OclQueryAction.selectionInDiagram = selectionInDiagram;
+//    }
 
 }

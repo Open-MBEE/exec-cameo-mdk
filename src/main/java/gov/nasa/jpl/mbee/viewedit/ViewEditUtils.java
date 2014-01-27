@@ -57,8 +57,8 @@ public class ViewEditUtils {
     private static final String       DEFAULT_EDITOR_CHOICE = "Community: http://docgen:8080/editor";
     private static String             editorurl             = null;
     private static String             otherurl              = "";
-    private static String             username              = "admin";
-    private static String             password              = "admin";
+    private static String             username              = "";
+    private static String             password              = "";
     private static boolean            passwordSet           = false;
     private static final List<String> servers               = Arrays.asList(
                                                                     "http://docgen.jpl.nasa.gov:8080/editor",
@@ -81,8 +81,8 @@ public class ViewEditUtils {
     
     public static String getUrl(boolean choice, boolean addsite) {
         //return null; 
-        return "https://sheldon.jpl.nasa.gov/alfresco/service";
-        /*Boolean old = false;
+        //return "https://sheldon.jpl.nasa.gov/alfresco/service";
+        Boolean old = false;
         if (choice)
             old = Utils.getUserYesNoAnswer("Use old view editor?");
         if (old == null)
@@ -129,7 +129,7 @@ public class ViewEditUtils {
                 return null;
             }
         }
-        return url; */
+        return url; 
     }
 
     /**
@@ -194,14 +194,19 @@ public class ViewEditUtils {
     }
 
     public static boolean showErrorMessage(int code) {
-        if (code == 401)
-            Utils.showPopupMessage("[ERROR] You may have entered the wrong credentials: Please right click on a view and select the Logout action from the view editor menu, then try again");
-        else if (code == 500)
+        if (code == 401) {
+            Utils.showPopupMessage("[ERROR] You may have entered the wrong credentials: You've been logged out, try again");
+            ViewEditUtils.clearCredentials();
+        } else if (code == 500)
             Utils.showPopupMessage("[ERROR] Server error occured, you may not have permission to modify view(s) or their contents");
         else if (code == 404)
             Utils.showPopupMessage("[ERROR] Some elements or views are not found on the server, export them first");
         if (code == 401 || code == 500)
             return true;
         return false;
+    }
+    
+    public static boolean isPasswordSet() {
+        return passwordSet;
     }
 }

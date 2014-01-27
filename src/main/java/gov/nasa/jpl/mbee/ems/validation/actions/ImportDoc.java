@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -51,11 +50,12 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
     private static final long serialVersionUID = 1L;
     private Element element;
     private String doc;
-    
-    public ImportDoc(Element e, String doc) {
+    private JSONObject result;
+    public ImportDoc(Element e, String doc, JSONObject result) {
         super("ImportDoc", "Import doc", null, null);
         this.element = e;
         this.doc = doc;
+        this.result = result;
     }
     
     @Override
@@ -65,7 +65,6 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        JSONObject result = ResultHolder.lastResults;
         SessionManager.getInstance().createSession("Change Docs");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {

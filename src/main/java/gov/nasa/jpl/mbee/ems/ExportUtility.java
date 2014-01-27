@@ -44,16 +44,19 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -69,11 +72,80 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
     
-    public static String getPostElementsUrl(String site) {
-        return getPostElementsUrl(site, Application.getInstance().getProject().getPrimaryProject().getProjectID());
+    public static String getElementID(Element e) {
+        if (e instanceof Slot) {
+            return e.getOwner().getID() + "-slot-" + ((Slot)e).getDefiningFeature().getID();
+        }
+        return e.getID();
     }
-    public static String getPostElementsUrl(String site, String project) {
-        return "/javawebscripts/sites/" + site + "/projects/" + project + "/elements";
+    
+    public static Element getElementFromID(String id) {
+        Project prj = Application.getInstance().getProject();
+        String[] ids = id.split("-slot-");
+        if (ids.length < 2) {
+            return (Element)prj.getElementByID(ids[0]);
+        } else {
+            Element instancespec = (Element)prj.getElementByID(ids[0]);
+            Element definingFeature = (Element)prj.getElementByID(ids[1]);
+            if (instancespec != null && definingFeature != null && instancespec instanceof InstanceSpecification) {
+                for (Element e: ((InstanceSpecification)instancespec).getOwnedElement()) {
+                    if (e instanceof Slot && ((Slot)e).getDefiningFeature() == definingFeature)
+                        return e;
+                }
+            } else
+                return null;
+        }
+        return null;
+    }
+    
+    public static String getUrl() {
+        return "https://sheldon/alfresco/service";
+        /*String url = null;
+        Element model = Application.getInstance().getProject().getModel();
+        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
+            url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
+                    "url");
+            if (url == null || url.equals("")) {
+                JOptionPane
+                        .showMessageDialog(null,
+                                "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
+                return null;
+            }
+        } else {
+            JOptionPane
+                    .showMessageDialog(null,
+                            "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
+            return null;
+        }
+        return url;*/ 
+    }
+    
+    public static String getUrlWithSite() {
+        Element model = Application.getInstance().getProject().getModel();
+        String  url = getUrl();
+        if (url == null)
+            return null;
+        /*String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
+        if (site == null || site.equals("")) {
+            JOptionPane.showMessageDialog(null,
+                    "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
+                return null;
+        }*/
+        return url + "/javawebscripts/sites/europa";
+    }
+    
+    public static String getUrlWithSiteAndProject() {
+        String url = getUrlWithSite();
+        if (url != null)
+            return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        return null;
+    }
+    
+    public static String getPostElementsUrl() {
+        String url = getUrlWithSiteAndProject();
+        if (url == null)
+            return null;
+        return url + "/elements";
     }
     
     public static boolean showErrors(int code, String response) {
@@ -82,12 +154,19 @@ public class ExportUtility {
                 Utils.showPopupMessage("Server Error");
                 Application.getInstance().getGUILog().log(response);
             } else if (code == 401) {
-                Utils.showPopupMessage("You are not authorized (you may have entered password wrong, logout in the MMS menu and try again");
+                Utils.showPopupMessage("You are not authorized (you may have entered password wrong, you have been logged out, try again");
+                ViewEditUtils.clearCredentials();
             } else if (code == 403) {
                 Utils.showPopupMessage("You do not have permission to do this");
+            } else if (code == 404) {
+                Utils.showPopupMessage("Not found");
+            } else if (code == 400) {
+                Application.getInstance().getGUILog().log(response);
+                return false;
             }
             return true;
         }
+        Application.getInstance().getGUILog().log(response);
         return false;
     }
     
@@ -96,8 +175,10 @@ public class ExportUtility {
             return false;
         PostMethod pm = new PostMethod(url);
         GUILog gl = Application.getInstance().getGUILog();
+        
         try {
             gl.log("[INFO] Sending...");
+            gl.log(json);
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
@@ -130,6 +211,17 @@ public class ExportUtility {
         return response;
     }
     
+    @SuppressWarnings("unchecked")
+    public static JSONObject keyView2View(JSONArray vv) {
+        JSONObject response = new JSONObject();
+        for (Object viewinfo: vv) {
+            String id = (String)((JSONObject)viewinfo).get("id");
+            JSONArray children = (JSONArray)((JSONObject)viewinfo).get("childrenViews");
+            response.put(id, children);
+        }
+        return response;
+    }
+    
     public static String get(String url) {
         if (url == null)
             return null;
@@ -137,8 +229,10 @@ public class ExportUtility {
         try {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
+            Application.getInstance().getGUILog().log("[INFO] Getting...");
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
+            
             if (showErrors(code, json)) {
                 return null;
             }
@@ -149,6 +243,14 @@ public class ExportUtility {
             gm.releaseConnection();
         }
         return null;
+    }
+    
+    public static boolean isElementDocumentation(Comment c) {
+        if (c.getAnnotatedElement().size() > 1 || c.getAnnotatedElement().isEmpty())
+            return false;
+        if (c.getAnnotatedElement().iterator().next() == c.getOwner())
+            return true;
+        return false;
     }
     
     @SuppressWarnings("unchecked")
@@ -195,6 +297,14 @@ public class ExportUtility {
             elementInfo.put("type", "Generalization");
         } else if (e instanceof DirectedRelationship) {   
             elementInfo.put("type", "DirectedRelationship");
+        } else if (e instanceof Comment) {
+            elementInfo.put("type", "Comment");
+            elementInfo.put("body", Utils.stripHtmlWrapper(((Comment)e).getBody()));
+            JSONArray elements = new JSONArray();
+            for (Element el: ((Comment)e).getAnnotatedElement()) {
+                elements.add(el.getID());
+            }
+            elementInfo.put("annotatedElements", elements);
         } else {
             elementInfo.put("type", "Element");
         }
@@ -208,7 +318,7 @@ public class ExportUtility {
             elementInfo.put("isView", true);
         else
             elementInfo.put("isView", false);*/
-        if (StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
+        if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
             elementInfo.put("type", "Viewpoint");
         if (e instanceof NamedElement) {
             elementInfo.put("name", ((NamedElement)e).getName());
@@ -219,7 +329,14 @@ public class ExportUtility {
             elementInfo.put("owner", null);
         else
             elementInfo.put("owner", e.getOwner().getID());
-        elementInfo.put("id", e.getID());
+        elementInfo.put("id", getElementID(e));
+        JSONArray comments = new JSONArray();
+        for (Comment c: e.get_commentOfAnnotatedElement()) {
+            if (isElementDocumentation(c))
+                continue;
+            comments.add(c.getID());
+        }
+        elementInfo.put("comments", comments);
     }
     
     @SuppressWarnings("unchecked")

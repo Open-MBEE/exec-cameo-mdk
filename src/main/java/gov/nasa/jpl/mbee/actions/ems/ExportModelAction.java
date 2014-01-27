@@ -48,7 +48,7 @@ public class ExportModelAction extends MDAction {
     public static final String actionid = "ExportModel";
     
     public ExportModelAction(Element e) {
-        super(actionid, "Export Model", null, null);
+        super(actionid, "(Export Model)", null, null);
         start = e;
     }
     

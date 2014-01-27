@@ -30,24 +30,36 @@ package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.RepeatInputComboBoxDialog.Processor;
 import gov.nasa.jpl.mbee.actions.OclQueryAction;
-import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.MDUtils;
-
-import java.awt.Dialog;
-import java.awt.Frame;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.TreeSet;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
+import javax.swing.JPanel;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  *
  */
-public class OclEvaluatorDialog extends JDialog {
+public class OclEvaluatorDialog extends JDialog implements ActionListener {
 
     private static final long                                    serialVersionUID  = -9114812582757129836L;
 
@@ -68,83 +80,104 @@ public class OclEvaluatorDialog extends JDialog {
 
     protected boolean                                            cancelSelected    = false;
 
-    /**
-     * 
-     */
-    public OclEvaluatorDialog() {
-        super();
-        init();
-    }
-
-    /**
-     * @param owner
-     */
-    public OclEvaluatorDialog(Frame owner) {
-        super(owner, false);
-        init();
-        // TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param owner
-     */
-    public OclEvaluatorDialog(Dialog owner) {
-        super(owner, false);
-        init();
-        // TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param owner
-     */
-    public OclEvaluatorDialog(Window owner) {
-        super(owner, ModalityType.MODELESS);
-        init();
-        // TODO Auto-generated constructor stub
-    }
-
+    List<Component> lastClickedComponents = new ArrayList<Component>();
+    
+    public JCheckBox diagramCB = null;
+    public JCheckBox browserCB = null;
+    
     /**
      * @param owner
      * @param title
      */
-    public OclEvaluatorDialog(Frame owner, String title) {
-        super(owner, title, false);
-        init();
-        // TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param owner
-     * @param title
-     */
-    public OclEvaluatorDialog(Dialog owner, String title) {
-        super(owner, title, false);
-        init();
-        // TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param owner
-     * @param title
-     */
-    public OclEvaluatorDialog(Window owner, String title) {
+    public OclEvaluatorDialog(Window owner, String title ) {
         super(owner, title, ModalityType.MODELESS);
-        init();
-        // TODO Auto-generated constructor stub
+        init(owner);
     }
 
-    protected void init() {
+    protected void init( Window owner ) {
         editableListPanel = new RepeatInputComboBoxDialog.EditableListPanel("Enter an OCL expression:",
                 choices.toArray());
-        Collection<Element> selectedElements = MDUtils.getSelection(null, Configurator.lastContextIsDiagram);
+
+        editableListPanel.setVisible(true);
+        
+        //Create and initialize the buttons.
+        JButton closeButton = new JButton("Close");
+        closeButton.setActionCommand("Close");
+        closeButton.addActionListener(this);
+        //
+        final JButton evalButton = new JButton("Evaluate");
+        evalButton.setActionCommand("Evaluate");
+        evalButton.addActionListener(this);
+        getRootPane().setDefaultButton(evalButton);
+
+        //Lay out the buttons from left to right.
+        JPanel buttonPane = new JPanel();
+        buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
+        buttonPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+        buttonPane.add(Box.createHorizontalGlue());
+        buttonPane.add(closeButton);
+        buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPane.add(evalButton);
+        
+        // checkboxes for which selected components to include: those in diagram, those in browser.   
+        JPanel checkBoxPane = new JPanel();
+        checkBoxPane.setLayout( new BorderLayout() );
+        diagramCB = new JCheckBox( "selection from diagram", true );
+        browserCB = new JCheckBox( "selection from browser", false );
+        checkBoxPane.add( diagramCB, BorderLayout.CENTER );
+        checkBoxPane.add( browserCB, BorderLayout.PAGE_END );
+        
+        //Put everything together, using the content pane's BorderLayout.
+        Container contentPane = getContentPane();
+        
+        contentPane.add( editableListPanel, BorderLayout.CENTER );
+        JPanel jp = new JPanel();
+        jp.setLayout( new BoxLayout( jp, BoxLayout.Y_AXIS ) );
+        jp.add( checkBoxPane, BorderLayout.CENTER );
+        jp.add( buttonPane );
+        contentPane.add( jp, BorderLayout.PAGE_END );
+ 
+        //Initialize values.
+        pack();
+        if ( owner != null ) setLocationRelativeTo( owner );
+    }
+
+    protected void runQuery() {
+        Collection<Element> selectedElements = new TreeSet<Element>(CompareUtils.GenericComparator.instance());
+        if ( diagramCB.isSelected() )  {
+            selectedElements.addAll( MDUtils.getSelectionInDiagram() );
+        }
+        if ( browserCB.isSelected() )  {
+            selectedElements.addAll( MDUtils.getSelectionInContainmentBrowser() );
+        }
         processor = new OclQueryAction.ProcessOclQuery(selectedElements);
+        lastInput = RepeatInputComboBoxDialog.getSelectedItem( editableListPanel );
         if (lastInput != null) {
             Object result = processor.process(lastInput);
             editableListPanel.setResultPanel(result);
         }
-        Debug.outln("lastInput = " + lastInput);
-
-        editableListPanel.setVisible(true);
+        inputHistory.push(lastInput);
+        if (pastInputs.contains(lastInput)) {
+            choices.remove(lastInput);
+        } else {
+            pastInputs.add(lastInput);
+        }
+        choices.push(lastInput);
+        while (choices.size() > maxChoices) {
+            choices.pollLast();
+        }
+        editableListPanel.setItems(choices.toArray());
+    }
+    
+    @Override
+    public void actionPerformed( ActionEvent e ) {
+        if ("Evaluate".equals(e.getActionCommand())) {
+            runQuery();
+        } else if ("Close".equals(e.getActionCommand())) {
+            setVisible( false );
+        } else {
+            // BAD
+        }
     }
 
     public static OclEvaluatorDialog getInstance() {
@@ -152,10 +185,18 @@ public class OclEvaluatorDialog extends JDialog {
     }
 
     /**
+     * @return the editableListPanel
+     */
+    public static RepeatInputComboBoxDialog.EditableListPanel
+            getEditableListPanel() {
+        return editableListPanel;
+    }
+
+    /**
      * @param args
      */
     public static void main(String[] args) {
-        OclEvaluatorDialog dialog = new OclEvaluatorDialog();
+        OclEvaluatorDialog dialog = new OclEvaluatorDialog( null, "testing" );
         dialog.setVisible(true);
     }
 
