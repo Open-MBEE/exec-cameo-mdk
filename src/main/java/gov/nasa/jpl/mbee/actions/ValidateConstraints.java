@@ -84,7 +84,7 @@ public class ValidateConstraints extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.lastContextIsDiagram);
+        Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.isLastContextDiagram());
         // for ( Element elem : new ArrayList<Element>( selectedElements ) ) {
         // if ( elem instanceof Package ) {
         // selectedElements.addAll( Utils.collectOwnedElements( elem, 0 ) );
