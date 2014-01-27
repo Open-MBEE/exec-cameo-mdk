@@ -43,6 +43,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ModelExporter {
@@ -99,7 +100,7 @@ public class ModelExporter {
     private boolean addToElements(Element e, int curdepth) {
         if (elements.containsKey(e.getID()))
             return true;
-        if (e instanceof ValueSpecification || !(e instanceof Package) && packageOnly || e instanceof Extension)
+        if (e instanceof ValueSpecification || !(e instanceof Package) && packageOnly || e instanceof Extension || e instanceof ProfileApplication)
             return false;
         if (ProjectUtilities.isElementInAttachedProject(e))
             return false;

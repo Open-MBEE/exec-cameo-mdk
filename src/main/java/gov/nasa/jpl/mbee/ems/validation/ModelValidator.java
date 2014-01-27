@@ -58,6 +58,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
@@ -250,7 +251,8 @@ public class ModelValidator {
     private void getAllMissing(Element current, Set<Element> missing, JSONObject elementsKeyed) {
         if (ProjectUtilities.isElementInAttachedProject(current))
             return;
-        if ((current instanceof Comment && ExportUtility.isElementDocumentation((Comment)current)) || current instanceof Extension || current instanceof ValueSpecification)
+        if ((current instanceof Comment && ExportUtility.isElementDocumentation((Comment)current)) || 
+                current instanceof Extension || current instanceof ValueSpecification || current instanceof ProfileApplication)
             return;
         if (!elementsKeyed.containsKey(current.getID()))
             if (!(current instanceof Model && ((Model)current).getName().equals("Data")))
