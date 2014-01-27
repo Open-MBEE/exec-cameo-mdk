@@ -96,7 +96,7 @@ public class ImportElementComments extends RuleViolationAction implements Annota
             ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
             JSONObject changed = new JSONObject();
             for (String webid: webComments) {
-                if (!modelComments.contains(webid) && webid.startsWith("comment")) {
+                if (!modelComments.contains(webid) && webid.startsWith("_comment")) {
                     Comment newcomment = ef.createCommentInstance();
                     JSONObject commentObject = webCommentsMap.get(webid);
                     newcomment.setBody(Utils.addHtmlWrapper((String)commentObject.get("body")));
