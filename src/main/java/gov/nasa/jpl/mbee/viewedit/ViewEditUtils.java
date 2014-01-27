@@ -57,8 +57,8 @@ public class ViewEditUtils {
     private static final String       DEFAULT_EDITOR_CHOICE = "Community: http://docgen:8080/editor";
     private static String             editorurl             = null;
     private static String             otherurl              = "";
-    private static String             username              = "admin";
-    private static String             password              = "admin";
+    private static String             username              = "";
+    private static String             password              = "";
     private static boolean            passwordSet           = false;
     private static final List<String> servers               = Arrays.asList(
                                                                     "http://docgen.jpl.nasa.gov:8080/editor",

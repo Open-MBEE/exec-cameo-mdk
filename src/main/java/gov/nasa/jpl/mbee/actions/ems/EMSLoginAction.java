@@ -26,37 +26,34 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee;
+package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
-import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
-import com.nomagic.actions.AMConfigurator;
-import com.nomagic.actions.ActionsCategory;
-import com.nomagic.actions.ActionsManager;
-import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.actions.MDActionsCategory;
+import java.awt.event.ActionEvent;
 
-public class MMSConfigurator implements AMConfigurator {
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 
-    @Override
-    public int getPriority() {
-        // TODO Auto-generated method stub
-        return 0;
+public class EMSLoginAction extends MDAction {
+    private static final long serialVersionUID = 1L;
+    public static final String actionid = "Login";
+
+    public EMSLoginAction() {
+        super(actionid, "Login", null, null);
     }
 
     @Override
-    public void configure(ActionsManager manager) {
-        NMAction category = (ActionsCategory)manager.getActionFor("MMSMAIN");
-        if (category == null) {
-            category = new MDActionsCategory("MMSMAIN", "MMS");
-            ((ActionsCategory)category).setNested(true);
-            manager.addCategory((ActionsCategory)category);
-            category.addAction(new EMSLogoutAction());
-            category.addAction(new EMSLoginAction());
-        }
-        
+    public void actionPerformed(ActionEvent e) {
+        ViewEditUtils.clearCredentials();
+        String url = ExportUtility.getUrl();
+        if (url == null)
+            return;
+        String response = ExportUtility.get(url + "/checklogin");
+        if (response ==  null)
+            return;
+        Application.getInstance().getGUILog().log("Logged in");
     }
-    
 
 }

@@ -60,6 +60,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -127,18 +128,20 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (e == null)
             return;
         
-        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (MDUtils.isDeveloperMode()) {
-            if (manager.getActionFor(ExportModelAction.actionid) == null)
-                modelLoad.addAction(new ExportModelAction(e));
-            if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
-                modelLoad.addAction(new InitializeProjectAction());
+        if (ViewEditUtils.isPasswordSet()) {
+            ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
+            if (MDUtils.isDeveloperMode()) {
+                if (manager.getActionFor(ExportModelAction.actionid) == null)
+                    modelLoad.addAction(new ExportModelAction(e));
+                if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
+                    modelLoad.addAction(new InitializeProjectAction());
+                if (manager.getActionFor(ValidateModelAction.actionid) == null)
+                    modelLoad.addAction(new ValidateModelAction(e));
+            } else if (e instanceof Model){
+                if (manager.getActionFor(ValidateModelAction.actionid) == null)
+                    modelLoad.addAction(new ValidateModelAction(e));
+            } 
         }
-        if (manager.getActionFor(ValidateModelAction.actionid) == null)
-            modelLoad.addAction(new ValidateModelAction(e));
-        
-        //if (manager.getActionFor(EMSLogoutAction.actionid) == null)
-         //   modelLoad.addAction(new EMSLogoutAction());
         
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
@@ -177,15 +180,15 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (added)
                     manager.addCategory(0, category);
             }
-        
-            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-            NMAction action = manager.getActionFor(ValidateViewAction.actionid);
-            if (action == null)
-                modelLoad2.addAction(new ValidateViewAction(e));
-            action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
-            if (action == null)
-                modelLoad2.addAction(new ValidateViewRecursiveAction(e));
-            
+            if (ViewEditUtils.isPasswordSet()) {
+                ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
+                NMAction action = manager.getActionFor(ValidateViewAction.actionid);
+                if (action == null)
+                    modelLoad2.addAction(new ValidateViewAction(e));
+                action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
+                if (action == null)
+                    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
+            }
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             //action = manager.getActionFor(ExportViewAction.actionid);
             //if (action == null)
