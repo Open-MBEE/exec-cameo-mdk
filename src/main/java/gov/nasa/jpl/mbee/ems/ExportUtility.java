@@ -37,8 +37,10 @@ import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 import java.util.List;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -170,12 +172,16 @@ public class ExportUtility {
         return false;
     }
     
-    public static boolean send(String url, String json) {
+    public static boolean send(String url, String json, String method) {
         if (url == null)
             return false;
-        PostMethod pm = new PostMethod(url);
-        GUILog gl = Application.getInstance().getGUILog();
         
+        EntityEnclosingMethod pm = null;
+        if (method == null)
+            pm = new PostMethod(url);
+        else
+            pm = new PutMethod(url);
+        GUILog gl = Application.getInstance().getGUILog();
         try {
             gl.log("[INFO] Sending...");
             gl.log(json);
@@ -196,6 +202,10 @@ public class ExportUtility {
         } finally {
             pm.releaseConnection();
         }
+    }
+    
+    public static boolean send(String url, String json) {
+        return send(url, json, null);
     }
     
     @SuppressWarnings("unchecked")
