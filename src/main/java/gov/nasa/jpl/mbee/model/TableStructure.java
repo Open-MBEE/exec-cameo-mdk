@@ -73,8 +73,8 @@ public class TableStructure extends Table {
         public InitialNode       bnode;
         public ActivityNode      activityNode;
         public GenerationContext context    = null;
-        @SuppressWarnings("unused")
         public String            name       = "";
+        public boolean editable = true;
 
         public GenerationContext makeContext() {
             ActivityNode n = null;
@@ -175,13 +175,14 @@ public class TableStructure extends Table {
                 outs = curNode.getOutgoing();
                 continue;
             }
+            col.editable = (Boolean)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableColumnStereotype, "editable", true);
             col.activityNode = curNode;
             if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
                 col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
             } else if (curNode instanceof StructuredActivityNode) {
                 col.bnode = GeneratorUtils.findInitialNode(curNode);
             }
-            col.           name = curNode.getName();
+            col.name = curNode.getName();
             headers.add(curNode.getName());
             columns.add(col);
             columnIndex.put(col, columnIndex.size());
@@ -222,46 +223,29 @@ public class TableStructure extends Table {
                         if (tc instanceof TableAttributeColumn) {
                             Utils.AvailableAttribute at = ((TableAttributeColumn)tc).attribute;
                             if (at == null) {
-                                // cell.add(new Reference(empty));
                                 continue;
                             }
-                            Object attr = Utils.getElementAttribute(re, at); // attr
-                                                                             // can
-                                                                             // be
-                                                                             // string,
-                                                                             // value
-                                                                             // spec,
-                                                                             // or
-                                                                             // list
-                                                                             // of
-                                                                             // value
-                                                                             // spec
-                                                                             // if
-                                                                             // element
-                                                                             // is
-                                                                             // a
-                                                                             // slot
-                            if (attr != null)
-                                cell.add(new Reference(re, Utils
-                                        .getFromAttribute(((TableAttributeColumn)tc).attribute), attr));
-                            // else
-                            // cell.add(new Reference(empty));
+                            Object attr = Utils.getElementAttribute(re, at); // attr can be string, value spec, or list of value spec
+                            if (attr != null) {
+                                if (tc.editable)
+                                    cell.add(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn)tc).attribute), attr));
+                                else
+                                    cell.add(new Reference(attr));
+                            }
                         } else if (tc instanceof TablePropertyColumn) {
                             Property prop = ((TablePropertyColumn)tc).property;
                             if (prop == null) {
-                                // cell.add(new Reference(empty));
                                 continue;
                             }
                             Element slotOrProperty = Utils.getElementProperty(re, prop);
                             List<Object> values = Utils.getElementPropertyValues(re, prop, true);
-                            if (slotOrProperty != null) {
+                            if (slotOrProperty != null && tc.editable) {
                                 cell.add(new Reference(slotOrProperty, From.DVALUE, values));
                             } else
                                 cell.add(new Reference(values));
                         } else {
                             String expr = ((TableExpressionColumn)tc).expression;
                             if (expr == null) {
-                                // cell.add(new Reference(empty));
                                 continue;
                             }
                             Object result = DocumentValidator.evaluate(expr, re, getValidator(), true);
@@ -269,16 +253,6 @@ public class TableStructure extends Table {
                             if (evaluator.isValid() || result != null) {
                                 cell.add(new Reference(result));
                             }
-                            // try {
-                            // cell.add(new
-                            // Reference(OclEvaluator.evaluateQuery((EObject)re,
-                            // expr)));
-                            // } catch ( Exception e1 ) {// TODO make specific
-                            // to two parse errors
-                            // Debug.error(true, false, e1.getLocalizedMessage()
-                            // + " for OCL query \"" + expr + "\" on " +
-                            // EmfUtils.toString( re ) );
-                            // }
                         }
                     }
                 }

@@ -180,8 +180,10 @@ public class DocumentGenerator {
                 String viewDoc = ModelHelper.getComment(view);
                 if (viewDoc != null) {
                     Paragraph para = new Paragraph(viewDoc);
-                    para.setDgElement(view);
-                    para.setFrom(From.DOCUMENTATION);
+                    if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
+                        para.setDgElement(view);
+                        para.setFrom(From.DOCUMENTATION);
+                    }
                     viewSection.addElement(para);
                 }
             }
@@ -284,8 +286,10 @@ public class DocumentGenerator {
                 String viewDoc = ModelHelper.getComment(view);
                 if (viewDoc != null) {
                     Paragraph para = new Paragraph(viewDoc);
-                    para.setDgElement(view);
-                    para.setFrom(From.DOCUMENTATION);
+                    if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
+                        para.setDgElement(view);
+                        para.setFrom(From.DOCUMENTATION);
+                    }
                     viewSection.addElement(para);
                 }
             }

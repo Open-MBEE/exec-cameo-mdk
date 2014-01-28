@@ -103,7 +103,10 @@ public class Image extends Query {
 
                     String doc = ModelHelper.getComment(e);
                     if (doc != null && (forViewEditor || (!doc.trim().equals("") && !getDoNotShow()))) {
-                        res.add(new DBParagraph(doc, e, From.DOCUMENTATION));
+                        if ((Boolean)GeneratorUtils.getObjectProperty(e, DocGen3Profile.editableChoosable, "editable", true))
+                            res.add(new DBParagraph(doc, e, From.DOCUMENTATION));
+                        else
+                            res.add(new DBParagraph(doc));
                     }
 
                 }
