@@ -111,7 +111,7 @@ public class DocGen3Profile {
     public static final String sortable                              = "Sortable";
     public static final String propertyChoosable                     = "PropertyChoosable";
     public static final String attributeChoosable                    = "AttributeChoosable";
-
+    public static final String editableChoosable                     = "EditableChoosable";
     public static final String expressionLibrary                     = "ExpressionLibrary";
 
     public static final String stereotypePropertyChoosable           = "StereotypePropertiesChoosable";

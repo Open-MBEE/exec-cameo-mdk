@@ -281,8 +281,12 @@ public class ViewValidator {
             if (a.get("sourceType").equals("reference")) {
                 if (!a.get("source").equals(b.get("source")) || !a.get("sourceProperty").equals(b.get("sourceProperty")))
                     return false;
-            } else if (!a.get("text").equals(b.get("text")))
+            } else if (!a.get("text").equals(b.get("text"))) {
+                if (((String)a.get("text")).contains("alfresco/d/d/workspace/SpacesStore") || 
+                        ((String)b.get("text")).contains("alfresco/d/d/workspace/SpacesStore"))
+                    return true;
                 return false;
+            }
         } else if (a.get("type").equals("Table")) {
             JSONArray localtable = (JSONArray)a.get("body");
             JSONArray webtable = (JSONArray)b.get("body");

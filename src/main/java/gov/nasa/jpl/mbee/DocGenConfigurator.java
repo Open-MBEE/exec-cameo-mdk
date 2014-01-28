@@ -129,15 +129,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             return;
         
         if (ViewEditUtils.isPasswordSet()) {
-            ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
             if (MDUtils.isDeveloperMode()) {
+                ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
                     modelLoad.addAction(new ExportModelAction(e));
                 if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
                     modelLoad.addAction(new InitializeProjectAction());
                 if (manager.getActionFor(ValidateModelAction.actionid) == null)
                     modelLoad.addAction(new ValidateModelAction(e));
-            } else if (e instanceof Model){
+            } else if (e instanceof Model) {
+                ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
                 if (manager.getActionFor(ValidateModelAction.actionid) == null)
                     modelLoad.addAction(new ValidateModelAction(e));
             } 
