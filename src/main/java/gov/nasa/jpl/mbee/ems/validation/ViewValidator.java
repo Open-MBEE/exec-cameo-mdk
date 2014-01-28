@@ -68,6 +68,7 @@ public class ViewValidator {
     private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.WARNING);
     private ValidationRule comments = new ValidationRule("View Comments", "view comments", ViolationSeverity.WARNING);
     private ValidationSuite modelSuite;
+    private ValidationSuite imageSuite;
     private Element view;
     private boolean recurse;
     
@@ -163,6 +164,9 @@ public class ViewValidator {
         ModelValidator mv = new ModelValidator(view, results, false);
         mv.validate();
         modelSuite = mv.getSuite();
+        ImageValidator iv = new ImageValidator(visitor2.getImages());
+        iv.validate();
+        imageSuite = iv.getSuite();
         return true;
     }
     
@@ -171,6 +175,8 @@ public class ViewValidator {
         vss.add(suite);
         if (modelSuite != null)
             vss.add(modelSuite);
+        if (imageSuite != null)
+            vss.add(imageSuite);
         Utils.displayValidationWindow(vss, "View Web Difference Validation");
     }
     
