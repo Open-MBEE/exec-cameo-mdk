@@ -61,7 +61,7 @@ public class ModelExportRunner implements RunnableWithProgress {
             return;
         }
         url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/elements";
-        if (start instanceof Model) {
+        if (start == Application.getInstance().getProject().getModel()) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
         } else {
             List<Element> root = new ArrayList<Element>();

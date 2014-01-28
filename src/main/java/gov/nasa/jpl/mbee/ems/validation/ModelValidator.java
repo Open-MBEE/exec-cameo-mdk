@@ -131,7 +131,7 @@ public class ModelValidator {
         }
         String url = ExportUtility.getUrl();
         String id = start.getID();
-        if (start instanceof Model)
+        if (start == Application.getInstance().getProject().getModel())
             id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         url += "/javawebscripts/elements/" + id + "?recurse=true";
         response = ExportUtility.get(url);
@@ -433,7 +433,12 @@ public class ModelValidator {
         } else if (valueType == PropertyValueType.LiteralReal) {
             if (vs.get(0) instanceof LiteralReal) {
                 for (int i = 0; i < vs.size(); i++) {
-                    if (((LiteralReal)vs.get(i)).getValue() != (Double)value.get(i)) {
+                    Double webValue = null;
+                    if (value.get(i) instanceof Long)
+                        webValue = Double.parseDouble(((Long)value.get(i)).toString());
+                    else
+                        webValue = (Double)value.get(i);
+                    if (((LiteralReal)vs.get(i)).getValue() != webValue) {
                         message = badMessage;
                         break;
                     }
