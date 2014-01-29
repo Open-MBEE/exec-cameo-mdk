@@ -42,7 +42,7 @@ public class ValidateViewRecursiveAction extends MDAction {
     public static final String actionid = "ValidateViewRecursiveAlfresco";
     
     public ValidateViewRecursiveAction(Element e) {
-        super(actionid, "Validate View Hierarchy", null, null);
+        super(actionid, "Validate View Hierarchically", null, null);
         view = e;
     }
     
