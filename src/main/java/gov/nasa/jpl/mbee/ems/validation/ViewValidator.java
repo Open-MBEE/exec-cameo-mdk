@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation;
 
+import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
@@ -36,9 +37,11 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportElementComments;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.model.Section;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
@@ -58,8 +61,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ViewValidator {
 
@@ -105,8 +111,11 @@ public class ViewValidator {
         String url = ExportUtility.getUrl();
         if (url == null)
             return false;//return; //do some error
+        
+        Element startView = getStartView();
+        
         for (Object viewid: visitor2.getViews().keySet()) {
-            if (!recurse && !viewid.equals(view.getID()))
+            if (!recurse && !viewid.equals(startView.getID()))
                 continue;
             Element currentView = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
             
@@ -336,5 +345,24 @@ public class ViewValidator {
                 return false;
         }
         return true;
+    }
+    
+    private Element getStartView() {
+        Stereotype conforms  = Utils.getConformsStereotype();
+        Stereotype sysml14conforms = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
+
+        Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
+        if (viewpoint == null)
+            viewpoint = GeneratorUtils.findStereotypedRelationship(view, sysml14conforms);
+       
+        if (viewpoint != null && viewpoint instanceof Class) 
+            return view;
+        Stereotype sysmlview = Utils.getViewStereotype();
+        List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
+                DocGen3Profile.queriesStereotype, 1, false, 1);
+        if (expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
+            return expose.get(0); // substitute another view
+        }
+        return view;
     }
 }
