@@ -65,10 +65,11 @@ public class ViewpointConstraint extends Query {
         ValidationRule rule = new ValidationRule(((NamedElement)dgElement).getName(), "Viewpoint Constraint",
                 ViolationSeverity.WARNING);
         vs.addValidationRule(rule);
-        ValidationRule r = dv.getViewpointConstraintRule();
-        if (r instanceof ConstraintValidationRule) {
-            rule.addViolations(((ConstraintValidationRule)r).getViolations(dgElement));
-        }
+        if ( dv != null ) {
+            ValidationRule r = dv.getViewpointConstraintRule();
+            if (r instanceof ConstraintValidationRule) {
+                rule.addViolations(((ConstraintValidationRule)r).getViolations(dgElement));
+            }
         // if (expression != null) {
         // if (iterate) {
         // for (Element e: targets) {
@@ -78,8 +79,9 @@ public class ViewpointConstraint extends Query {
         //
         // }
 
-        if (report && !Utils2.isNullOrEmpty(rule.getViolations())) {
-            return vs.getDocBook();
+            if (report && !Utils2.isNullOrEmpty(rule.getViolations())) {
+                return vs.getDocBook();
+            }
         }
         // }
 
