@@ -335,16 +335,18 @@ public class ExportUtility {
         } else
             elementInfo.put("name", "");
         elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
-        if (e.getOwner() == Application.getInstance().getProject().getModel())
+        if (e.getOwner() == null || e.getOwner() == Application.getInstance().getProject().getModel())
             elementInfo.put("owner", null);
         else
             elementInfo.put("owner", e.getOwner().getID());
         elementInfo.put("id", getElementID(e));
         JSONArray comments = new JSONArray();
-        for (Comment c: e.get_commentOfAnnotatedElement()) {
-            if (isElementDocumentation(c))
-                continue;
-            comments.add(c.getID());
+        if ( e.get_commentOfAnnotatedElement() != null ) {
+            for (Comment c: e.get_commentOfAnnotatedElement()) {
+                if (isElementDocumentation(c))
+                    continue;
+                comments.add(c.getID());
+            }
         }
         elementInfo.put("comments", comments);
     }
