@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportElementComments;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
@@ -69,11 +70,13 @@ public class ViewValidator {
     private ValidationRule comments = new ValidationRule("View Comments", "view comments", ViolationSeverity.WARNING);
     private ValidationSuite modelSuite;
     private ValidationSuite imageSuite;
+    private DocumentValidator dv;
     private Element view;
     private boolean recurse;
     
     public ViewValidator(Element view, boolean recursive) {
         this.view = view;
+        this.dv = new DocumentValidator( view );
         suite.addValidationRule(exists);
         suite.addValidationRule(match);
         suite.addValidationRule(hierarchy);
@@ -83,7 +86,7 @@ public class ViewValidator {
     
     @SuppressWarnings("unchecked")
     public boolean validate() {
-        DocumentGenerator dg = new DocumentGenerator(view, null, null);
+        DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = dg.parseDocument(true, true);
         (new PostProcessor()).process(dge);
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);

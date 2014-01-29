@@ -32,6 +32,7 @@ import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ViewExportRunner;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
@@ -117,7 +118,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     
     @SuppressWarnings("unchecked")
     private boolean exportView(Element view) {
-        DocumentGenerator dg = new DocumentGenerator(view, null, null);
+        DocumentGenerator dg = new DocumentGenerator(view, new DocumentValidator( view ), null);
         Document dge = dg.parseDocument(true, recurse);
         (new PostProcessor()).process(dge);
         boolean document = false;
