@@ -335,7 +335,7 @@ public class ExportUtility {
         } else
             elementInfo.put("name", "");
         elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
-        if (e.getOwner() instanceof Model)
+        if (e.getOwner() == Application.getInstance().getProject().getModel())
             elementInfo.put("owner", null);
         else
             elementInfo.put("owner", e.getOwner().getID());
