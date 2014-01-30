@@ -139,7 +139,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             }
             out.append("\n<pubdate>" + new Date().toString() + "</pubdate>");
             if (book.getJPLProjectTitle() == null || book.getJPLProjectTitle().equals("")) {
-                out.append("\n<title>" + book.getTitle() + "</title>");
+                out.append("\n<title>" + DocGenUtils.fixString(book.getTitle()) + "</title>");
             } else {
                 out.append("\n<title>" + book.getJPLProjectTitle() + "</title><subtitle>"
                     + DocGenUtils.fixString(book.getTitle()) + "</subtitle>");
