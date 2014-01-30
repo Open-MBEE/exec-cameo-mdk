@@ -167,7 +167,11 @@ public class ExportUtility {
             }
             return true;
         }
-        Application.getInstance().getGUILog().log(response);
+        if (response.length() > 3000) {
+            System.out.println(response);
+            Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
+        } else
+            Application.getInstance().getGUILog().log(response);
         return false;
     }
     
@@ -183,7 +187,11 @@ public class ExportUtility {
         GUILog gl = Application.getInstance().getGUILog();
         try {
             gl.log("[INFO] Sending...");
-            gl.log(json);
+            if (json.length() > 3000) {
+                System.out.println(json);
+                gl.log("(see md.log for what got send - too big to show)");
+            } else
+                gl.log(json);
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
@@ -196,7 +204,7 @@ public class ExportUtility {
             gl.log("[INFO] Successful.");
             return true;
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Utils.printException(ex);
             return false;
         } finally {
             pm.releaseConnection();
@@ -247,7 +255,7 @@ public class ExportUtility {
             }
             return json;
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Utils.printException(ex);
         } finally {
             gm.releaseConnection();
         }

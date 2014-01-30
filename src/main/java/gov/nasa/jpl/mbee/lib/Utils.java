@@ -49,6 +49,8 @@ import gov.nasa.jpl.ocl.GetCallOperation;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -3091,6 +3093,14 @@ public class Utils {
                 return true;
         }
         return false;
+    }
+    
+    public static void printException(Exception ex) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        ex.printStackTrace(pw);
+        Application.getInstance().getGUILog().log(sw.toString()); // stack trace as a string
+        ex.printStackTrace();
     }
 
 }

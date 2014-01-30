@@ -36,6 +36,7 @@ import javax.swing.KeyStroke;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationManager;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
 
 public abstract class RuleViolationAction extends MDAction implements IRuleViolationAction {
@@ -81,5 +82,9 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
         }
         AnnotationManager.getInstance().update();
         //ValidationResultsWindowManager.updateValidationResultsWindow(vwr.id, vwr.title, vwr.runData, vwr.results);
+    }
+    
+    public void saySuccess() {
+        Application.getInstance().getGUILog().log("[INFO] Successful");
     }
 }

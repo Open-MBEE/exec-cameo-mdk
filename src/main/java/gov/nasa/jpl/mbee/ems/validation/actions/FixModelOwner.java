@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -83,10 +84,12 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
+            saySuccess();
             //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
+            Utils.printException(ex);
         }
     }
     
@@ -100,11 +103,13 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
         try {
             element.setOwner(owner);
             SessionManager.getInstance().closeSession();
+            saySuccess();
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
+            Utils.printException(ex);
         }
     }
 }

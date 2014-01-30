@@ -138,8 +138,12 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                             + "</publishername><address></address></publisher>");
             }
             out.append("\n<pubdate>" + new Date().toString() + "</pubdate>");
-            out.append("\n<title>" + book.getJPLProjectTitle() + "</title><subtitle>"
+            if (book.getJPLProjectTitle() == null || book.getJPLProjectTitle().equals("")) {
+                out.append("\n<title>" + book.getTitle() + "</title>");
+            } else {
+                out.append("\n<title>" + book.getJPLProjectTitle() + "</title><subtitle>"
                     + DocGenUtils.fixString(book.getTitle()) + "</subtitle>");
+            }
             if (book.getAbbreviatedTitle() != null && !book.getAbbreviatedTitle().equals("")) {
                 out.append("\n<titleabbrev>" + book.getAbbreviatedTitle() + "</titleabbrev>");
             }
