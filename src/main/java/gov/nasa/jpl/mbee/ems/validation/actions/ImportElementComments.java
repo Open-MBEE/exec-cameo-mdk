@@ -113,16 +113,13 @@ public class ImportElementComments extends RuleViolationAction implements Annota
             }
             
             SessionManager.getInstance().closeSession();
+            saySuccess();
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            ex.printStackTrace(pw);
-            Application.getInstance().getGUILog().log(sw.toString()); // stack trace as a string
-            ex.printStackTrace();
+            Utils.printException(ex);
         }
     }
 

@@ -137,7 +137,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     modelLoad.addAction(new InitializeProjectAction());
                 if (manager.getActionFor(ValidateModelAction.actionid) == null)
                     modelLoad.addAction(new ValidateModelAction(e));
-            } else if (e instanceof Model) {
+            } else {
                 ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
                 if (manager.getActionFor(ValidateModelAction.actionid) == null)
                     modelLoad.addAction(new ValidateModelAction(e));

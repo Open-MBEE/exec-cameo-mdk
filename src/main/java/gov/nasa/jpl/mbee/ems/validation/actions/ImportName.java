@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -80,6 +81,7 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
+            saySuccess();
             //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {
@@ -98,11 +100,13 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
         try {
             element.setName(name);
             SessionManager.getInstance().closeSession();
+            saySuccess();
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
+            Utils.printException(ex);
         }
     }
 }

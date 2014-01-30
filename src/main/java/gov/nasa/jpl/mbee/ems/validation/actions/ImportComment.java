@@ -95,10 +95,12 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
             }
             SessionManager.getInstance().closeSession();
             //AnnotationManager.getInstance().update();
+            saySuccess();
             this.removeViolationsAndUpdateWindow(toremove);
             
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
+            Utils.printException(ex);
         }
     }
     
@@ -122,11 +124,13 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
                 }
             }
             SessionManager.getInstance().closeSession();
+            saySuccess();
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();
             this.removeViolationAndUpdateWindow();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
+            Utils.printException(ex);
         }
     }
 

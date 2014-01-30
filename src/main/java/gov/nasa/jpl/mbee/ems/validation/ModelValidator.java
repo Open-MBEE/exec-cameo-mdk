@@ -220,19 +220,21 @@ public class ModelValidator {
                     relDiff.addViolation(v);
                 }
             }
-            String ownerID = e.getOwner().getID();
-            String webOwnerID = (String)elementInfo.get("owner");
-            if (webOwnerID == null || webOwnerID.startsWith("PROJECT"))
-                webOwnerID = Application.getInstance().getProject().getModel().getID();
-            if (!ownerID.equals(webOwnerID)) {
-                Element owner = (Element)prj.getElementByID(webOwnerID);
-                if (owner == null) {
-                    continue;//??
+            if ( e.getOwner() != null ) {
+                String ownerID = e.getOwner().getID();
+                String webOwnerID = (String)elementInfo.get("owner");
+                if (webOwnerID == null || webOwnerID.startsWith("PROJECT"))
+                    webOwnerID = Application.getInstance().getProject().getModel().getID();
+                if (!ownerID.equals(webOwnerID)) {
+                    Element owner = (Element)prj.getElementByID(webOwnerID);
+                    if (owner == null) {
+                        continue;//??
+                    }
+                    ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + owner.getHumanName());
+                    v.addAction(new FixModelOwner(e, owner, result));
+                    v.addAction(new ExportOwner(e));
+                    ownership.addViolation(v);
                 }
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + owner.getHumanName());
-                v.addAction(new FixModelOwner(e, owner, result));
-                v.addAction(new ExportOwner(e));
-                ownership.addViolation(v);
             }
             
         }
