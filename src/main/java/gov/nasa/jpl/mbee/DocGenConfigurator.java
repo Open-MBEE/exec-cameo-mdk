@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
@@ -256,16 +257,13 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             if (act == null)
                 c.addAction(new GenerateDocumentAction(e));
 
-            if (StereotypesHelper.hasStereotype(e, documentView)) {
-                /*
-                 * act = manager.getActionFor(PublishDocWebAction.actionid); if
-                 * (act == null) c.addAction(new
-                 * PublishDocWebAction((NamedElement)e));
-                 */
+            if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
+                act = manager.getActionFor(PublishDocWebAction.actionid); 
+                if (act == null) 
+                    c.addAction(new PublishDocWebAction((NamedElement)e));
                 act = manager.getActionFor(NumberDependencyAction.actionid);
                 if (act == null)
                     c.addAction(new NumberDependencyAction(e));
-
             }
             /*
              * if (e instanceof Activity &&

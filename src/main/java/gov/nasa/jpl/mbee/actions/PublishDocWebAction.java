@@ -76,6 +76,7 @@ public class PublishDocWebAction extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ac) {
+        Utils.showPopupMessage("NOTE: This action is deprecated and will be removed in the future");
         HttpsUtils.allowSelfSignedCertificates();
         GUILog log = Application.getInstance().getGUILog();
         String user = TeamworkUtils.getLoggedUserName();
