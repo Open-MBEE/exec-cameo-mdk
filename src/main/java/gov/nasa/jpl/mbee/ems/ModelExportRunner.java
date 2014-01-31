@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
+import gov.nasa.jpl.mbee.lib.Utils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,11 +58,10 @@ public class ModelExportRunner implements RunnableWithProgress {
     public void run(ProgressStatus arg0) {
         ModelExporter me;
         GUILog gl = Application.getInstance().getGUILog();
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID() + "/elements";
         if (start == Application.getInstance().getProject().getModel()) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
         } else {
@@ -73,7 +74,9 @@ public class ModelExportRunner implements RunnableWithProgress {
 
         //gl.log(json);
         gl.log("Number of Elements: " + me.getNumberOfElements());
-        
+        boolean background = Utils.getUserYesNoAnswer("Use background export on server?");
+        if (background)
+            url = url + "?background=true";
        // gl.log("*** Starting export view comments ***");
         ExportUtility.send(url, json);
         
