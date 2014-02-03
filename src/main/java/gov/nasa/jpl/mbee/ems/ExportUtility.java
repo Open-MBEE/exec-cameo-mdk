@@ -292,6 +292,8 @@ public class ExportUtility {
             elementInfo.put("type", "Property");
             elementInfo.put("isDerived", false);
             elementInfo.put("isSlot", true);
+            if (((Slot)e).getDefiningFeature().getID().equals("_17_0_2_3_e9f034d_1375396269655_665865_29411"))
+                elementInfo.put("stylesaver", true);
             List<ValueSpecification> vsl = ((Slot)e).getValue();
             if (vsl != null && vsl.size() > 0) {
                 JSONArray value = new JSONArray();
@@ -347,7 +349,7 @@ public class ExportUtility {
         else
             elementInfo.put("owner", e.getOwner().getID());
         elementInfo.put("id", getElementID(e));
-        JSONArray comments = new JSONArray();
+        /*JSONArray comments = new JSONArray();
         if ( e.get_commentOfAnnotatedElement() != null ) {
             for (Comment c: e.get_commentOfAnnotatedElement()) {
                 if (isElementDocumentation(c))
@@ -355,7 +357,7 @@ public class ExportUtility {
                 comments.add(c.getID());
             }
         }
-        elementInfo.put("comments", comments);
+        elementInfo.put("comments", comments);*/
     }
     
     @SuppressWarnings("unchecked")

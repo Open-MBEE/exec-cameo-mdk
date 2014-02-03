@@ -37,6 +37,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import com.nomagic.ci.persistence.IAttachedProject;
+import com.nomagic.ci.persistence.IProject;
+import com.nomagic.ci.persistence.ProjectDescriptor;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -140,6 +143,13 @@ public class ModelValidator {
         }
         result = (JSONObject)JSONValue.parse(response);
         ResultHolder.lastResults = result;
+        return true;
+    }
+    
+    public boolean checkMountStructure() {
+        for (IAttachedProject proj: ProjectUtilities.getAllAttachedProjects(Application.getInstance().getProject())) {
+            ProjectDescriptor pd = proj.getProjectDescriptor();
+        }
         return true;
     }
     
@@ -256,6 +266,10 @@ public class ModelValidator {
         if ((current instanceof Comment && ExportUtility.isElementDocumentation((Comment)current)) || 
                 current instanceof Extension || current instanceof ValueSpecification || current instanceof ProfileApplication)
             return;
+        if (current instanceof Slot && 
+                (((Slot)current).getDefiningFeature().getID().equals("_17_0_2_3_e9f034d_1375396269655_665865_29411") || //stylesaver slot
+                 ((Slot)current).getDefiningFeature().getID().equals("_17_0_2_2_ff3038a_1358222938684_513628_2513")))//integrity checker slot
+            return;
         if (!elementsKeyed.containsKey(current.getID()))
             if (!(current instanceof Model && ((Model)current).getName().equals("Data")))
                 missing.add(current);
@@ -280,7 +294,7 @@ public class ModelValidator {
         }
         if ((vs == null || vs instanceof ElementValue && ((ElementValue)vs).getElement() == null)  
                 && value != null && value.size() > 0 && valueTypes != null) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + value.toString());
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
             v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
             v.addAction(new ExportValue(e));
             return v;
@@ -291,7 +305,7 @@ public class ModelValidator {
         if (valueType == PropertyValueType.LiteralString) {
             if (vs instanceof LiteralString) {
                 if (!((String)value.get(0)).equals(((LiteralString)vs).getValue())) {
-                    message = "[VALUE] model: " + ((LiteralString)vs).getValue() + ", web: " + value.toString();
+                    message = "[VALUE] model: " + truncate(((LiteralString)vs).getValue()) + ", web: " + truncate(value.toString());
                 }
             } else {
                 message = typeMismatchMessage;
@@ -373,7 +387,7 @@ public class ModelValidator {
             return v;
         }
         if ((vs == null || vs.isEmpty() || nullElementValues) && value != null && value.size() > 0 && valueTypes != null) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + value.toString());
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
             v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
             v.addAction(new ExportValue(e));
             Debug.outln("2) returning ValidationRuleViolation: " + v );
@@ -390,7 +404,7 @@ public class ModelValidator {
         PropertyValueType valueType = PropertyValueType.valueOf(valueTypes);
         String message = "";
         String typeMismatchMessage = "[VALUE] value spec types don't match";
-        String badMessage = "[VALUE] model: " + RepresentationTextCreator.getRepresentedText(e) + ", web: " + value.toString();
+        String badMessage = "[VALUE] model: " + truncate(RepresentationTextCreator.getRepresentedText(e)) + ", web: " + truncate(value.toString());
         if (valueType == PropertyValueType.LiteralString) {
             if (vs.get(0) instanceof LiteralString) {
                 for (int i = 0; i < vs.size(); i++) {
@@ -483,7 +497,7 @@ public class ModelValidator {
             webBody = "";
         ValidationRuleViolation v = null;
         if (!modelBodyClean.equals(webBody)) {
-            v = new ValidationRuleViolation(e, "[Comment] model: " + modelBodyClean + ", web: " + webBody);
+            v = new ValidationRuleViolation(e, "[Comment] model: " + truncate(modelBodyClean) + ", web: " + truncate(webBody));
             v.addAction(new ImportComment(e, webBody, result));
             v.addAction(new ExportComment(e));
         }

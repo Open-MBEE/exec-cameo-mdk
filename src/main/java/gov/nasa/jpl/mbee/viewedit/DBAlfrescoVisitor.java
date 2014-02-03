@@ -35,7 +35,9 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
@@ -351,6 +353,16 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
+        if (e instanceof DirectedRelationship) {
+            JSONObject sourceInfo = new JSONObject();
+            JSONObject targetInfo = new JSONObject();
+            Element source = ModelHelper.getClientElement(e);
+            Element target = ModelHelper.getSupplierElement(e);
+            ExportUtility.fillElement(source, sourceInfo, view, viewpoint);
+            ExportUtility.fillElement(target, targetInfo, view, viewpoint);
+            elements.put(source.getID(), sourceInfo);
+            elements.put(target.getID(), targetInfo);
+        }
     }
     
     public JSONObject getElements() {

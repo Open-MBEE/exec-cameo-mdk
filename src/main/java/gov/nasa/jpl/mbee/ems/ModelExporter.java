@@ -40,7 +40,9 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
@@ -105,6 +107,10 @@ public class ModelExporter {
         if (ProjectUtilities.isElementInAttachedProject(e))
             return false;
         if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
+            return false;
+        if (e instanceof Slot && 
+                (((Slot)e).getDefiningFeature().getID().equals("_17_0_2_3_e9f034d_1375396269655_665865_29411") || //stylesaver slot
+                 ((Slot)e).getDefiningFeature().getID().equals("_17_0_2_2_ff3038a_1358222938684_513628_2513")))//integrity checker slot
             return false;
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
