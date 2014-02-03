@@ -28,7 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
 
@@ -49,6 +51,10 @@ public class ValidateViewAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!ExportUtility.checkBaselineMount()) {
+            Utils.showPopupMessage("Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed");
+            return;
+        }
         ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false), "Validating View", true, 0);
     }
 }

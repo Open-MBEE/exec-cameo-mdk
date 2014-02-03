@@ -40,6 +40,8 @@ import org.json.simple.JSONValue;
 import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.ci.persistence.ProjectDescriptor;
+import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
+import com.nomagic.ci.persistence.versioning.VersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -127,7 +129,6 @@ public class ModelValidator {
             projectExist.addViolation(v);
             return false;
         }
-        
         if (ProjectUtilities.isElementInAttachedProject(start)){
             Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
             return false;
@@ -143,13 +144,6 @@ public class ModelValidator {
         }
         result = (JSONObject)JSONValue.parse(response);
         ResultHolder.lastResults = result;
-        return true;
-    }
-    
-    public boolean checkMountStructure() {
-        for (IAttachedProject proj: ProjectUtilities.getAllAttachedProjects(Application.getInstance().getProject())) {
-            ProjectDescriptor pd = proj.getProjectDescriptor();
-        }
         return true;
     }
     
