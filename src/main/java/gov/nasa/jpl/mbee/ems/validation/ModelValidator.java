@@ -260,9 +260,7 @@ public class ModelValidator {
         if ((current instanceof Comment && ExportUtility.isElementDocumentation((Comment)current)) || 
                 current instanceof Extension || current instanceof ValueSpecification || current instanceof ProfileApplication)
             return;
-        if (current instanceof Slot && 
-                (((Slot)current).getDefiningFeature().getID().equals("_17_0_2_3_e9f034d_1375396269655_665865_29411") || //stylesaver slot
-                 ((Slot)current).getDefiningFeature().getID().equals("_17_0_2_2_ff3038a_1358222938684_513628_2513")))//integrity checker slot
+        if (current instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)current).getDefiningFeature().getID()))
             return;
         if (!elementsKeyed.containsKey(current.getID()))
             if (!(current instanceof Model && ((Model)current).getName().equals("Data")))

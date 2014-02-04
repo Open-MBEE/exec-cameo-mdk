@@ -294,8 +294,8 @@ public class ViewValidator {
                 if (!a.get("source").equals(b.get("source")) || !a.get("sourceProperty").equals(b.get("sourceProperty")))
                     return false;
             } else if (!a.get("text").equals(b.get("text"))) {
-                if (((String)a.get("text")).contains("alfresco/d/d/workspace/SpacesStore") || 
-                        ((String)b.get("text")).contains("alfresco/d/d/workspace/SpacesStore"))
+                if (((String)a.get("text")).contains("alfresco/service/api/node/content") || 
+                        ((String)b.get("text")).contains("alfresco/service/api/node/content"))
                     return true;
                 return false;
             }

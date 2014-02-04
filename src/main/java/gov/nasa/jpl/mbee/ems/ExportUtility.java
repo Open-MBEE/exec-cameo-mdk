@@ -34,7 +34,10 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
 
@@ -76,6 +79,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
+    
+    public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
+            "_17_0_2_3_e9f034d_1375396269655_665865_29411", 
+            "_17_0_2_2_ff3038a_1358222938684_513628_2513",
+            "_17_0_2_2_ff3038a_1358666613056_344763_2540",
+            "_be00301_1073306188629_537791_2",
+            "_be00301_1077726770128_871366_1",
+            "_be00301_1073394345322_922552_1",
+            "_16_8beta_8ca0285_1257244649124_794756_344"));
     
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
