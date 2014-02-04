@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ModelExportRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
 
@@ -54,6 +55,10 @@ public class ExportModelAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!ExportUtility.checkBaselineMount()) {
+            Utils.showPopupMessage("Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed");
+            return;
+        }
         Boolean packageOnly = Utils.getUserYesNoAnswer("Export package structure only?");
         if (packageOnly == null)
             return;

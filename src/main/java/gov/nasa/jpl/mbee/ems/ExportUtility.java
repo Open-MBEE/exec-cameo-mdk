@@ -36,6 +36,8 @@ import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -44,9 +46,11 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -72,6 +76,27 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
+    
+    public static String getBaselineTag() {
+        Element model = Application.getInstance().getProject().getModel();
+        String tag = null;
+        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
+            tag = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
+                    "baselineTag");
+            if (tag == null || tag.equals("")) {
+                JOptionPane
+                        .showMessageDialog(null,
+                                "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set!");
+                return null;
+            }
+        } else {
+            JOptionPane
+                    .showMessageDialog(null,
+                            "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set!");
+            return null;
+        }
+        return tag;
+    }
     
     public static String getElementID(Element e) {
         if (e instanceof Slot) {
@@ -292,6 +317,8 @@ public class ExportUtility {
             elementInfo.put("type", "Property");
             elementInfo.put("isDerived", false);
             elementInfo.put("isSlot", true);
+            if (((Slot)e).getDefiningFeature().getID().equals("_17_0_2_3_e9f034d_1375396269655_665865_29411"))
+                elementInfo.put("stylesaver", true);
             List<ValueSpecification> vsl = ((Slot)e).getValue();
             if (vsl != null && vsl.size() > 0) {
                 JSONArray value = new JSONArray();
@@ -347,7 +374,7 @@ public class ExportUtility {
         else
             elementInfo.put("owner", e.getOwner().getID());
         elementInfo.put("id", getElementID(e));
-        JSONArray comments = new JSONArray();
+        /*JSONArray comments = new JSONArray();
         if ( e.get_commentOfAnnotatedElement() != null ) {
             for (Comment c: e.get_commentOfAnnotatedElement()) {
                 if (isElementDocumentation(c))
@@ -355,7 +382,7 @@ public class ExportUtility {
                 comments.add(c.getID());
             }
         }
-        elementInfo.put("comments", comments);
+        elementInfo.put("comments", comments);*/
     }
     
     @SuppressWarnings("unchecked")
@@ -386,5 +413,25 @@ public class ExportUtility {
             }
         }
         elementInfo.put("value", value);
+    }
+    
+    public static boolean checkBaselineMount() {
+        /*Project prj = Application.getInstance().getProject();
+        String baselineTag = getBaselineTag();
+        if (baselineTag == null)
+            return false;
+        if (prj.isRemote()) {
+            List<String> tags = ProjectUtilities.getVersionTags(prj.getPrimaryProject());
+            if (!tags.contains(baselineTag))
+                return false;
+        }
+        for (IAttachedProject proj: ProjectUtilities.getAllAttachedProjects(prj)) {
+            if (ProjectUtilities.isFromTeamworkServer(proj)) {
+                List<String> tags = ProjectUtilities.getVersionTags(proj);
+                if (!tags.contains(baselineTag))
+                    return false;
+            }
+        }*/
+        return true;
     }
 }
