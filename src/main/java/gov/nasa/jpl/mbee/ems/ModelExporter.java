@@ -108,9 +108,7 @@ public class ModelExporter {
             return false;
         if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
             return false;
-        if (e instanceof Slot && 
-                (((Slot)e).getDefiningFeature().getID().equals("_17_0_2_3_e9f034d_1375396269655_665865_29411") || //stylesaver slot
-                 ((Slot)e).getDefiningFeature().getID().equals("_17_0_2_2_ff3038a_1358222938684_513628_2513")))//integrity checker slot
+        if (e instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)e).getDefiningFeature().getID()))
             return false;
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
