@@ -53,6 +53,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -259,6 +260,8 @@ public class ModelValidator {
             return;
         if ((current instanceof Comment && ExportUtility.isElementDocumentation((Comment)current)) || 
                 current instanceof Extension || current instanceof ValueSpecification || current instanceof ProfileApplication)
+            return;
+        if (current instanceof InstanceSpecification && current.getOwnedElement().isEmpty())
             return;
         if (current instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)current).getDefiningFeature().getID()))
             return;

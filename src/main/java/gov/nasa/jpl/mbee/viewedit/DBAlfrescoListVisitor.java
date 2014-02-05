@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.viewedit;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -67,7 +68,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     public void visit(DBParagraph para) {
         JSONObject o = getJSONForDBParagraph(para);
         if (para.getFrom() != null && para.getFromProperty() != null) {
-            this.listelements.add(para.getFrom().getID());
+            this.listelements.add(ExportUtility.getElementID(para.getFrom()));
         }
         curitem.add(o);
     }
@@ -77,7 +78,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     public void visit(DBText text) {
         JSONObject o = getJSONForDBText(text);
         if (text.getFrom() != null && text.getFromProperty() != null) {
-            this.listelements.add(text.getFrom().getID());
+            this.listelements.add(ExportUtility.getElementID(text.getFrom()));
         }
         curitem.add(o);
     }
@@ -85,7 +86,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
-        DBEditTableVisitor2 v = new DBEditTableVisitor2(this.recurse, this.elements);
+        DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse, this.elements);
         table.accept(v);
         listelements.addAll(v.getTableElements());
         curitem.add(v.getObject());

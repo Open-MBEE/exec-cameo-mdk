@@ -473,6 +473,10 @@ public class ExportUtility {
             IVersionDescriptor version = ProjectUtilities.getVersion(module);
             return version.getDate();
         }
+        if (!e.isEditable()) {
+            IVersionDescriptor version = ProjectUtilities.getVersion(Application.getInstance().getProject().getPrimaryProject());
+            return version.getDate();
+        }
         return new Date();
     }
 }
