@@ -51,8 +51,7 @@ public class ValidateModelAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.checkBaselineMount()) {
-            Utils.showPopupMessage("Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed");
+        if (!ExportUtility.checkBaseline()) {    
             return;
         }
         ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start), "Validating Model", true, 0);

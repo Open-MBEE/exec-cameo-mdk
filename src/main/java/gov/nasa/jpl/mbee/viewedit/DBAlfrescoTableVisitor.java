@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.viewedit;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
@@ -139,7 +140,7 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
     public void visit(DBParagraph para) {
         JSONObject entry = getJSONForDBParagraph(para);
         if (para.getFrom() != null && para.getFromProperty() != null) {
-            this.tableelements.add(para.getFrom().getID());
+            this.tableelements.add(ExportUtility.getElementID(para.getFrom()));
         }
         curCell.add(entry);
     }
@@ -149,7 +150,7 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
     public void visit(DBText text) {
         JSONObject entry = getJSONForDBText(text);
         if (text.getFrom() != null && text.getFromProperty() != null) {
-            this.tableelements.add(text.getFrom().getID());
+            this.tableelements.add(ExportUtility.getElementID(text.getFrom()));
         }
         curCell.add(entry);
     }

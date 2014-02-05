@@ -35,6 +35,7 @@ import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,10 +47,13 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.ci.persistence.IAttachedProject;
+import com.nomagic.ci.persistence.IProject;
+import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
@@ -79,15 +83,19 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
+    public static Logger log = Logger.getLogger(ExportUtility.class);
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
-            "_17_0_2_3_e9f034d_1375396269655_665865_29411", 
-            "_17_0_2_2_ff3038a_1358222938684_513628_2513",
-            "_17_0_2_2_ff3038a_1358666613056_344763_2540",
-            "_be00301_1073306188629_537791_2",
-            "_be00301_1077726770128_871366_1",
-            "_be00301_1073394345322_922552_1",
-            "_16_8beta_8ca0285_1257244649124_794756_344"));
+            "_17_0_2_3_e9f034d_1375396269655_665865_29411", //stylesaver
+            "_17_0_2_2_ff3038a_1358222938684_513628_2513",  //integrity
+            "_17_0_2_2_ff3038a_1358666613056_344763_2540",  //integrity
+            "_17_0_2_3_407019f_1383165366792_59388_29094", //mms
+            "_17_0_2_3_407019f_1389652520710_658839_29078", //mms
+            "_17_0_2_3_407019f_1391466672868_698092_29164", //mms
+            "_be00301_1073306188629_537791_2", //diagraminfo
+            "_be00301_1077726770128_871366_1", //diagraminfo
+            "_be00301_1073394345322_922552_1", //diagraminfo
+            "_16_8beta_8ca0285_1257244649124_794756_344"));  //diagraminfo
     
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
@@ -98,13 +106,13 @@ public class ExportUtility {
             if (tag == null || tag.equals("")) {
                 JOptionPane
                         .showMessageDialog(null,
-                                "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set!");
+                                "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
                 return null;
             }
         } else {
             JOptionPane
                     .showMessageDialog(null,
-                            "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set!");
+                            "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
             return null;
         }
         return tag;
@@ -189,15 +197,15 @@ public class ExportUtility {
     public static boolean showErrors(int code, String response) {
         if (code != 200) {
             if (code == 500) {
-                Utils.showPopupMessage("Server Error");
+                Utils.showPopupMessage("Server Error, see message window for details");
                 Application.getInstance().getGUILog().log(response);
             } else if (code == 401) {
-                Utils.showPopupMessage("You are not authorized (you may have entered password wrong, you have been logged out, try again");
+                Utils.showPopupMessage("You are not authorized or don't have permission, you have been logged out (you can login and try again)");
                 ViewEditUtils.clearCredentials();
             } else if (code == 403) {
                 Utils.showPopupMessage("You do not have permission to do this");
             } else if (code == 404) {
-                Utils.showPopupMessage("Not found");
+                Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
                 Application.getInstance().getGUILog().log(response);
                 return false;
@@ -205,7 +213,8 @@ public class ExportUtility {
             return true;
         }
         if (response.length() > 3000) {
-            System.out.println(response);
+            //System.out.println(response);
+            log.info(response);
             Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else
             Application.getInstance().getGUILog().log(response);
@@ -225,8 +234,9 @@ public class ExportUtility {
         try {
             gl.log("[INFO] Sending...");
             if (json.length() > 3000) {
-                System.out.println(json);
-                gl.log("(see md.log for what got send - too big to show)");
+                //System.out.println(json);
+                log.info(json);
+                gl.log("(see md.log for what got sent - too big to show)");
             } else
                 gl.log(json);
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
@@ -428,22 +438,50 @@ public class ExportUtility {
     }
     
     public static boolean checkBaselineMount() {
-        /*Project prj = Application.getInstance().getProject();
-        String baselineTag = getBaselineTag();
-        if (baselineTag == null)
-            return false;
+        Project prj = Application.getInstance().getProject();
         if (prj.isRemote()) {
+            String baselineTag = getBaselineTag();
+            if (baselineTag == null)
+                return false;
             List<String> tags = ProjectUtilities.getVersionTags(prj.getPrimaryProject());
-            if (!tags.contains(baselineTag))
+            if (!tags.contains(baselineTag)) {
+                Application.getInstance().getGUILog().log("The current project is not an approved version!");
+                return false;
+            }
+        
+            for (IAttachedProject proj: ProjectUtilities.getAllAttachedProjects(prj)) {
+                if (ProjectUtilities.isFromTeamworkServer(proj)) {
+                    List<String> tags2 = ProjectUtilities.getVersionTags(proj);
+                    if (!tags2.contains(baselineTag)) {
+                        Application.getInstance().getGUILog().log(proj.getName() + " is not an approved module version!");
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    
+    public static boolean checkBaseline() {
+        if (!ExportUtility.checkBaselineMount()) {
+            Boolean con = Utils.getUserYesNoAnswer("Mount structure check did not pass (your project or mounts are not baseline versions)! Do you want to continue?");
+            //Utils.showPopupMessage("Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed");
+            if (con == null || !con)
                 return false;
         }
-        for (IAttachedProject proj: ProjectUtilities.getAllAttachedProjects(prj)) {
-            if (ProjectUtilities.isFromTeamworkServer(proj)) {
-                List<String> tags = ProjectUtilities.getVersionTags(proj);
-                if (!tags.contains(baselineTag))
-                    return false;
-            }
-        }*/
         return true;
+    }
+    
+    public static Date getModuleTimestamp(Element e) {
+        if (ProjectUtilities.isElementInAttachedProject(e)) {
+            IProject module = ProjectUtilities.getAttachedProject(e);
+            IVersionDescriptor version = ProjectUtilities.getVersion(module);
+            return version.getDate();
+        }
+        if (!e.isEditable()) {
+            IVersionDescriptor version = ProjectUtilities.getVersion(Application.getInstance().getProject().getPrimaryProject());
+            return version.getDate();
+        }
+        return new Date();
     }
 }

@@ -108,6 +108,8 @@ public class ModelExporter {
             return false;
         if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
             return false;
+        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty())
+            return false;
         if (e instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)e).getDefiningFeature().getID()))
             return false;
         JSONObject elementInfo = new JSONObject();
