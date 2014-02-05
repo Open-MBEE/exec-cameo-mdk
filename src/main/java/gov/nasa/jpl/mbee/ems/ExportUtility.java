@@ -47,6 +47,7 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -82,6 +83,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
+    public static Logger log = Logger.getLogger(ExportUtility.class);
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", //stylesaver
@@ -195,15 +197,15 @@ public class ExportUtility {
     public static boolean showErrors(int code, String response) {
         if (code != 200) {
             if (code == 500) {
-                Utils.showPopupMessage("Server Error");
+                Utils.showPopupMessage("Server Error, see message window for details");
                 Application.getInstance().getGUILog().log(response);
             } else if (code == 401) {
-                Utils.showPopupMessage("You are not authorized (you may have entered password wrong, you have been logged out, try again");
+                Utils.showPopupMessage("You are not authorized or don't have permission, you have been logged out (you can login and try again)");
                 ViewEditUtils.clearCredentials();
             } else if (code == 403) {
                 Utils.showPopupMessage("You do not have permission to do this");
             } else if (code == 404) {
-                Utils.showPopupMessage("Not found");
+                Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
                 Application.getInstance().getGUILog().log(response);
                 return false;
@@ -211,7 +213,8 @@ public class ExportUtility {
             return true;
         }
         if (response.length() > 3000) {
-            System.out.println(response);
+            //System.out.println(response);
+            log.info(response);
             Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else
             Application.getInstance().getGUILog().log(response);
@@ -231,8 +234,9 @@ public class ExportUtility {
         try {
             gl.log("[INFO] Sending...");
             if (json.length() > 3000) {
-                System.out.println(json);
-                gl.log("(see md.log for what got send - too big to show)");
+                //System.out.println(json);
+                log.info(json);
+                gl.log("(see md.log for what got sent - too big to show)");
             } else
                 gl.log(json);
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
