@@ -435,22 +435,23 @@ public class ExportUtility {
     
     public static boolean checkBaselineMount() {
         Project prj = Application.getInstance().getProject();
-        String baselineTag = getBaselineTag();
-        if (baselineTag == null)
-            return false;
         if (prj.isRemote()) {
+            String baselineTag = getBaselineTag();
+            if (baselineTag == null)
+                return false;
             List<String> tags = ProjectUtilities.getVersionTags(prj.getPrimaryProject());
             if (!tags.contains(baselineTag)) {
                 Application.getInstance().getGUILog().log("The current project is not an approved version!");
                 return false;
             }
-        }
-        for (IAttachedProject proj: ProjectUtilities.getAllAttachedProjects(prj)) {
-            if (ProjectUtilities.isFromTeamworkServer(proj)) {
-                List<String> tags = ProjectUtilities.getVersionTags(proj);
-                if (!tags.contains(baselineTag)) {
-                    Application.getInstance().getGUILog().log(proj.getName() + " is not an approved module version!");
-                    return false;
+        
+            for (IAttachedProject proj: ProjectUtilities.getAllAttachedProjects(prj)) {
+                if (ProjectUtilities.isFromTeamworkServer(proj)) {
+                    List<String> tags2 = ProjectUtilities.getVersionTags(proj);
+                    if (!tags2.contains(baselineTag)) {
+                        Application.getInstance().getGUILog().log(proj.getName() + " is not an approved module version!");
+                        return false;
+                    }
                 }
             }
         }
