@@ -35,6 +35,7 @@ import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,6 +51,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.ci.persistence.IAttachedProject;
+import com.nomagic.ci.persistence.IProject;
+import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
@@ -81,13 +84,16 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class ExportUtility {
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
-            "_17_0_2_3_e9f034d_1375396269655_665865_29411", 
-            "_17_0_2_2_ff3038a_1358222938684_513628_2513",
-            "_17_0_2_2_ff3038a_1358666613056_344763_2540",
-            "_be00301_1073306188629_537791_2",
-            "_be00301_1077726770128_871366_1",
-            "_be00301_1073394345322_922552_1",
-            "_16_8beta_8ca0285_1257244649124_794756_344"));
+            "_17_0_2_3_e9f034d_1375396269655_665865_29411", //stylesaver
+            "_17_0_2_2_ff3038a_1358222938684_513628_2513",  //integrity
+            "_17_0_2_2_ff3038a_1358666613056_344763_2540",  //integrity
+            "_17_0_2_3_407019f_1383165366792_59388_29094", //mms
+            "_17_0_2_3_407019f_1389652520710_658839_29078", //mms
+            "_17_0_2_3_407019f_1391466672868_698092_29164", //mms
+            "_be00301_1073306188629_537791_2", //diagraminfo
+            "_be00301_1077726770128_871366_1", //diagraminfo
+            "_be00301_1073394345322_922552_1", //diagraminfo
+            "_16_8beta_8ca0285_1257244649124_794756_344"));  //diagraminfo
     
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
@@ -98,13 +104,13 @@ public class ExportUtility {
             if (tag == null || tag.equals("")) {
                 JOptionPane
                         .showMessageDialog(null,
-                                "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set!");
+                                "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
                 return null;
             }
         } else {
             JOptionPane
                     .showMessageDialog(null,
-                            "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set!");
+                            "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
             return null;
         }
         return tag;
@@ -428,22 +434,45 @@ public class ExportUtility {
     }
     
     public static boolean checkBaselineMount() {
-        /*Project prj = Application.getInstance().getProject();
+        Project prj = Application.getInstance().getProject();
         String baselineTag = getBaselineTag();
         if (baselineTag == null)
             return false;
         if (prj.isRemote()) {
             List<String> tags = ProjectUtilities.getVersionTags(prj.getPrimaryProject());
-            if (!tags.contains(baselineTag))
+            if (!tags.contains(baselineTag)) {
+                Application.getInstance().getGUILog().log("The current project is not an approved version!");
                 return false;
+            }
         }
         for (IAttachedProject proj: ProjectUtilities.getAllAttachedProjects(prj)) {
             if (ProjectUtilities.isFromTeamworkServer(proj)) {
                 List<String> tags = ProjectUtilities.getVersionTags(proj);
-                if (!tags.contains(baselineTag))
+                if (!tags.contains(baselineTag)) {
+                    Application.getInstance().getGUILog().log(proj.getName() + " is not an approved module version!");
                     return false;
+                }
             }
-        }*/
+        }
         return true;
+    }
+    
+    public static boolean checkBaseline() {
+        if (!ExportUtility.checkBaselineMount()) {
+            Boolean con = Utils.getUserYesNoAnswer("Mount structure check did not pass (your project or mounts are not baseline versions)! Do you want to continue?");
+            //Utils.showPopupMessage("Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed");
+            if (con == null || !con)
+                return false;
+        }
+        return true;
+    }
+    
+    public static Date getModuleTimestamp(Element e) {
+        if (ProjectUtilities.isElementInAttachedProject(e)) {
+            IProject module = ProjectUtilities.getAttachedProject(e);
+            IVersionDescriptor version = ProjectUtilities.getVersion(module);
+            return version.getDate();
+        }
+        return new Date();
     }
 }
