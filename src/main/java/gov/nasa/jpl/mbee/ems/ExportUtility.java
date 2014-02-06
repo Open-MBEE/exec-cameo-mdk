@@ -75,7 +75,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
@@ -371,6 +373,25 @@ public class ExportUtility {
                 elements.add(el.getID());
             }
             elementInfo.put("annotatedElements", elements);
+        } else if (e instanceof Expression) {
+            elementInfo.put("type", "Expression");
+            List<ValueSpecification> vsl = ((Expression)e).getOperand();
+            if (vsl != null && vsl.size() > 0) {
+                JSONArray value = new JSONArray();
+                for (ValueSpecification vs: vsl) {
+                    addValues(e, value, elementInfo, vs);
+                }
+            }
+        } else if (e instanceof Operation) {
+            elementInfo.put("type", "Operation");
+            List<Parameter> vsl = ((Operation)e).getOwnedParameter();
+            if (vsl != null && vsl.size() > 0) {
+                JSONArray value = new JSONArray();
+                for (Parameter p: vsl) {
+                    value.add( p.getID() );
+                    elementInfo.put( "value", value );
+                }
+            }
         } else {
             elementInfo.put("type", "Element");
         }
@@ -426,7 +447,8 @@ public class ExportUtility {
             value.add(((LiteralReal)vs).getValue());
         } else if (vs instanceof Expression) {
             elementInfo.put("valueType", PropertyValueType.Expression.toString());
-            value.add(RepresentationTextCreator.getRepresentedText(vs));
+            //value.add(RepresentationTextCreator.getRepresentedText(vs));
+            value.add(vs.getID());
         } else if (vs instanceof ElementValue) {
             elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
             Element ev = ((ElementValue)vs).getElement();
