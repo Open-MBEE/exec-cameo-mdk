@@ -328,6 +328,125 @@ public class ExportUtility {
             return true;
         return false;
     }
+
+    @SuppressWarnings( "unchecked" )
+    public static void fillValueSpecification(ValueSpecification vs, JSONObject elementInfo, Stereotype view, Stereotype viewpoint) {
+        ValueSpecification expr = ((Duration)vs ).getExpression();
+        if ( expr != null ) {
+            elementInfo.put( "expr", expr.getID() );
+        }
+        if ( vs instanceof Duration ) {
+            elementInfo.put("type", "Duration");
+//   java.util.Collection<DurationInterval>    get_durationIntervalOfMax()
+//            Returns the value of the 'duration Interval Of Max' reference list.
+//   java.util.Collection<DurationInterval>     get_durationIntervalOfMin()
+//            Returns the value of the 'duration Interval Of Min' reference list.
+//   ValueSpecification     getExpr()
+//            Returns the value of the 'Expr' containment reference.
+//   java.util.Collection<Observation>  getObservation()
+//            Returns the value of the 'Observation' reference list.
+
+        } else if (vs instanceof DurationInterval) {
+            elementInfo.put("type", "DurationInterval");
+//            DurationConstraint     get_durationConstraintOfSpecification()
+//            Returns the value of the 'duration Constraint Of Specification' container reference.
+//            Duration   getMax()
+//                     Returns the value of the 'Max' reference.
+//            Duration   getMin()
+//                     Returns the value of the 'Min' reference.
+        } else if (vs instanceof ElementValue) {
+            elementInfo.put("type", "ElementValue");
+            Element elem = ((ElementValue)vs).getElement();
+            if ( elem != null ) {
+                elementInfo.put( "element", elem.getID() );
+            }
+        } else if (vs instanceof Expression) {
+            elementInfo.put("type", "Expression");
+            if ( ((Expression)vs).getSymbol() != null ) {
+                elementInfo.put("symbol", ((Expression)vs).getSymbol());
+            }
+            List<ValueSpecification> vsl = ((Expression)vs).getOperand();
+            if (vsl != null && vsl.size() > 0) {
+                JSONArray operands = new JSONArray();
+                for (ValueSpecification op: vsl) {
+                    operands.add( op.getID() );
+                }
+                elementInfo.put("operand", operands);
+            }
+        } else if (vs instanceof InstanceValue) {
+            elementInfo.put("type", "InstanceValue");
+            InstanceValue iv = (InstanceValue)vs;
+            InstanceSpecification i = iv.getInstance();
+            if ( i != null ) {
+                elementInfo.put( "instance", i.getID() );
+            }
+        } else if (vs instanceof Interval) {
+            elementInfo.put("type", "Interval");
+        } else if (vs instanceof LiteralSpecification) {
+            if (vs instanceof LiteralBoolean) {
+                elementInfo.put("type", "LiteralBoolean");
+                elementInfo.put( "value", ((LiteralBoolean)vs ).isValue() );
+            } else if (vs instanceof LiteralInteger) {
+                elementInfo.put("type", "LiteralInteger");
+                elementInfo.put( "value", ((LiteralInteger)vs ).getValue() );
+            } else if (vs instanceof LiteralNull) {
+                elementInfo.put("type", "LiteralNull");
+            } else if (vs instanceof LiteralReal) {
+                elementInfo.put("type", "LiteralReal");
+                elementInfo.put( "value", ((LiteralReal)vs ).getValue() );
+            } else if (vs instanceof LiteralString) {
+                elementInfo.put("type", "LiteralString");
+                elementInfo.put( "value", ((LiteralString)vs ).getValue() );
+            } else if (vs instanceof LiteralUnlimitedNatural) {
+                elementInfo.put("type", "LiteralUnlimitedNatural");
+                elementInfo.put( "value", ((LiteralUnlimitedNatural)vs ).getValue() );
+            }
+        } else if (vs instanceof OpaqueExpression) {
+            elementInfo.put("type", "OpaqueExpression");
+            elementInfo.put("body", ((OpaqueExpression)vs).getBody());
+//   Abstraction    get_abstractionOfMapping() 
+//            Returns the value of the 'abstraction Of Mapping' container reference.
+//   Behavior   getBehavior() 
+//            Returns the value of the 'Behavior' reference.
+//   java.util.List<java.lang.String>   getBody() 
+//            Returns the value of the 'Body' attribute list.
+//   java.util.List<java.lang.String>   getLanguage() 
+//            Returns the value of the 'Language' attribute list.
+//   Parameter  getResult() 
+//            Returns the value of the 'Result' reference.                
+        } else if (vs instanceof StringExpression) {
+            elementInfo.put("type", "StringExpression");
+//   NamedElement   get_namedElementOfNameExpression() 
+//            Returns the value of the 'named Element Of Name Expression' container reference.
+//   StringExpression   getOwningExpression() 
+//            Returns the value of the 'Owning Expression' container reference.
+//   java.util.Collection<StringExpression> getSubExpression() 
+//            Returns the value of the 'Sub Expression' containment reference list.                
+        } else if (vs instanceof TimeExpression) {
+            elementInfo.put("type", "TimeExpression");
+//   TimeEvent  get_timeEventOfWhen() 
+//            Returns the value of the 'time Event Of When' container reference.
+//   java.util.Collection<TimeInterval> get_timeIntervalOfMax() 
+//            Returns the value of the 'time Interval Of Max' reference list.
+//   java.util.Collection<TimeInterval> get_timeIntervalOfMin() 
+//            Returns the value of the 'time Interval Of Min' reference list.
+//   ValueSpecification getExpr() 
+//            Returns the value of the 'Expr' containment reference.
+//   java.util.Collection<Observation>  getObservation() 
+//            Returns the value of the 'Observation' reference list.
+        } else if (vs instanceof TimeInterval) {
+            elementInfo.put("type", "TimeInterval");
+//   TimeConstraint get_timeConstraintOfSpecification() 
+//            Returns the value of the 'time Constraint Of Specification' container reference.
+//   TimeExpression getMax() 
+//            Returns the value of the 'Max' reference.
+            elementInfo.put( "max", ((TimeInterval)vs ).getMax() );
+//   TimeExpression getMin() 
+//            Returns the value of the 'Min' reference.            }
+            elementInfo.put( "min", ((TimeInterval)vs ).getMin() );
+        }
+
+    }
     
     @SuppressWarnings("unchecked")
     public static void fillElement(Element e, JSONObject elementInfo, Stereotype view, Stereotype viewpoint) {
@@ -394,76 +513,7 @@ public class ExportUtility {
                 }
             }
         } else if (e instanceof ValueSpecification) {
-            ValueSpecification vs = (ValueSpecification)e;
-            ValueSpecification expr = ((Duration)e ).getExpression();
-            if ( expr != null ) {
-                elementInfo.put( "expr", expr.getID() );
-            }
-            if ( e instanceof Duration ) {
-                elementInfo.put("type", "Duration");
-//       java.util.Collection<DurationInterval>    get_durationIntervalOfMax()
-//                Returns the value of the 'duration Interval Of Max' reference list.
-//       java.util.Collection<DurationInterval>     get_durationIntervalOfMin()
-//                Returns the value of the 'duration Interval Of Min' reference list.
-//       ValueSpecification     getExpr()
-//                Returns the value of the 'Expr' containment reference.
-//       java.util.Collection<Observation>  getObservation()
-//                Returns the value of the 'Observation' reference list.
-
-            } else if (e instanceof DurationInterval) {
-                elementInfo.put("type", "DurationInterval");
-//                DurationConstraint     get_durationConstraintOfSpecification()
-//                Returns the value of the 'duration Constraint Of Specification' container reference.
-//                Duration   getMax()
-//                         Returns the value of the 'Max' reference.
-//                Duration   getMin()
-//                         Returns the value of the 'Min' reference.
-            } else if (e instanceof ElementValue) {
-                elementInfo.put("type", "ElementValue");
-                Element elem = ((ElementValue)e).getElement();
-                if ( elem != null ) {
-                    elementInfo.put( "element", elem.getID() );
-                }
-            } else if (e instanceof Expression) {
-                elementInfo.put("type", "Expression");
-                if ( ((Expression)e).getSymbol() != null ) {
-                    elementInfo.put("symbol", ((Expression)e).getSymbol());
-                }
-                List<ValueSpecification> vsl = ((Expression)e).getOperand();
-                if (vsl != null && vsl.size() > 0) {
-                    JSONArray operands = new JSONArray();
-                    for (ValueSpecification op: vsl) {
-                        operands.add( op.getID() );
-                    }
-                    elementInfo.put("operand", operands);
-                }
-            } else if (e instanceof InstanceValue) {
-                elementInfo.put("type", "InstanceValue");
-            } else if (e instanceof Interval) {
-                elementInfo.put("type", "Interval");
-            } else if (e instanceof LiteralBoolean) {
-                elementInfo.put("type", "LiteralBoolean");
-            } else if (e instanceof LiteralInteger) {
-                elementInfo.put("type", "LiteralInteger");
-            } else if (e instanceof LiteralNull) {
-                elementInfo.put("type", "LiteralNull");
-            } else if (e instanceof LiteralReal) {
-                elementInfo.put("type", "LiteralReal");
-            } else if (e instanceof LiteralSpecification) {
-                elementInfo.put("type", "LiteralSpecification");
-            } else if (e instanceof LiteralString) {
-                elementInfo.put("type", "LiteralString");
-            } else if (e instanceof LiteralUnlimitedNatural) {
-                elementInfo.put("type", "LiteralUnlimitedNatural");
-            } else if (e instanceof OpaqueExpression) {
-                elementInfo.put("type", "OpaqueExpression");
-            } else if (e instanceof StringExpression) {
-                elementInfo.put("type", "StringExpression");
-            } else if (e instanceof TimeExpression) {
-                elementInfo.put("type", "TimeExpression");
-            } else if (e instanceof TimeInterval) {
-                elementInfo.put("type", "TimeInterval");
-            }
+            fillValueSpecification( (ValueSpecification)e, elementInfo, view, viewpoint );
         } else if (e instanceof InstanceSpecification) {
             elementInfo.put( "type", "InstanceSpecification" );
 //   java.util.Collection<InstanceValue>   get_instanceValueOfInstance()
@@ -473,6 +523,7 @@ public class ExportUtility {
 //   java.util.Collection<Slot>     getSlot()
 //            Returns the value of the 'Slot' containment reference list.
 //   ValueSpecification     getSpecification()
+            elementInfo.put("specification", ((InstanceSpecification)e).getSpecification());
 //            Returns the value of the 'Specification' containment reference.
 //   Element    getStereotypedElement()
 //            Returns the value of the 'Stereotyped Element' container reference.            
@@ -481,9 +532,9 @@ public class ExportUtility {
             elementInfo.put( "type", "Element" );
             elementInfo.put( "direction", p.getDirection() );
             elementInfo.put( "parameterType", p.getType() );
-            ValueSpecification vs = p.getDefaultValue();
-            if ( vs != null ) {
-                elementInfo.put( "defaultValue", vs.getID() );
+            ValueSpecification defaultValue = p.getDefaultValue();
+            if ( defaultValue != null ) {
+                elementInfo.put( "defaultValue", defaultValue.getID() );
             }
         } else {
             elementInfo.put("type", "Element");
@@ -510,6 +561,7 @@ public class ExportUtility {
         else
             elementInfo.put("owner", e.getOwner().getID());
         elementInfo.put("id", getElementID(e));
+
         /*JSONArray comments = new JSONArray();
         if ( e.get_commentOfAnnotatedElement() != null ) {
             for (Comment c: e.get_commentOfAnnotatedElement()) {
