@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -73,7 +74,7 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
                 if (!e.isEditable()) {
                     continue;
                 }
-                String resultName = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("name");
+                String resultName = ExportUtility.unescapeHtml((String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("name"));
                 if (resultName == null)
                     continue;
                 ((NamedElement)e).setName(resultName);

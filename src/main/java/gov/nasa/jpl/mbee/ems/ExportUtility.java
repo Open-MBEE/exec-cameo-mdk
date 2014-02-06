@@ -47,6 +47,7 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -483,5 +484,9 @@ public class ExportUtility {
             return version.getDate();
         }
         return new Date();
+    }
+    
+    public static String unescapeHtml(String s) {
+        return StringEscapeUtils.unescapeHtml(s);
     }
 }
