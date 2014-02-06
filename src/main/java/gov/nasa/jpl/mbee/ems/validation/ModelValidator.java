@@ -100,8 +100,9 @@ public class ModelValidator {
     private Element start;
     private JSONObject result;
     private boolean checkExist;
+    private Set<Element> elementSet;
     
-    public ModelValidator(Element start, JSONObject result, boolean checkExist) {
+    public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet) {
         this.start = start;
         suite.addValidationRule(nameDiff);
         suite.addValidationRule(docDiff);
@@ -114,6 +115,7 @@ public class ModelValidator {
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
+        this.elementSet = elementSet;
     }
     
     public boolean checkProject() {
@@ -152,18 +154,20 @@ public class ModelValidator {
             return;
         Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
         if (checkExist) {
-            validateModel(elementsKeyed);
+            elementSet = new HashSet<Element>();
+            getAllMissing(start, elementSet, elementsKeyed);
+            validateModel(elementsKeyed, elementSet);
         } else {
-            validateViews(elementsKeyed);
+            validateModel(elementsKeyed, elementSet);
         }
         result.put("elementsKeyed", elementsKeyed);
     }
     
     @SuppressWarnings("unchecked")
-    private void validateModel(Map<String, JSONObject> elementsKeyed) {
-        Set<Element> all = new HashSet<Element>();
+    private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all) {
+        //Set<Element> all = new HashSet<Element>();
         Set<String> checked = new HashSet<String>();
-        getAllMissing(start, all, elementsKeyed);
+        //getAllMissing(start, all, elementsKeyed);
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
@@ -180,9 +184,11 @@ public class ModelValidator {
         }
         for (Element e: all) {
             if (!elementsKeyed.containsKey(e.getID())) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
-                v.addAction(new ExportElement(e));
-                exist.addViolation(v);
+                if (checkExist) {
+                    ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
+                    v.addAction(new ExportElement(e));
+                    exist.addViolation(v);
+                }
                 continue;
             }
             JSONObject elementInfo = (JSONObject)elementsKeyed.get(e.getID());
@@ -199,6 +205,7 @@ public class ModelValidator {
         }
     }
     
+    /*
     @SuppressWarnings("unchecked")
     private void validateViews(Map<String, JSONObject> elementsKeyed) {
         JSONArray elements = (JSONArray)result.get("elements");
@@ -222,7 +229,7 @@ public class ModelValidator {
             checkElement(e, elementInfo);
             
         }
-    }
+    }*/
     
     private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed) {
         if (ProjectUtilities.isElementInAttachedProject(current))
