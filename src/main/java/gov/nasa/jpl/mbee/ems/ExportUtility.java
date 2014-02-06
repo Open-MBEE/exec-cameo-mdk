@@ -29,12 +29,12 @@
 package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -58,7 +58,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.uml.RepresentationTextCreator;
+import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
@@ -179,11 +179,11 @@ public class ExportUtility {
     }
     
     public static String getUrlWithSite() {
-        Element model = Application.getInstance().getProject().getModel();
         String  url = getUrl();
         if (url == null)
             return null;
-        /*String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
+        /* Element model = Application.getInstance().getProject().getModel();
+        String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
         if (site == null || site.equals("")) {
             JOptionPane.showMessageDialog(null,
                     "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
@@ -333,10 +333,11 @@ public class ExportUtility {
     public static void fillValueSpecification(ValueSpecification vs, JSONObject elementInfo, Stereotype view, Stereotype viewpoint) {
         ValueSpecification expr = ((Duration)vs ).getExpression();
         if ( expr != null ) {
-            elementInfo.put( "expr", expr.getID() );
+            elementInfo.put( "valueExpression", expr.getID() );
         }
         if ( vs instanceof Duration ) {
             elementInfo.put("type", "Duration");
+            //((Duration)vs).getExpr(); // REVIEW -- Is this the same as getExpression() above?!
 //   java.util.Collection<DurationInterval>    get_durationIntervalOfMax()
 //            Returns the value of the 'duration Interval Of Max' reference list.
 //   java.util.Collection<DurationInterval>     get_durationIntervalOfMin()
@@ -345,15 +346,14 @@ public class ExportUtility {
 //            Returns the value of the 'Expr' containment reference.
 //   java.util.Collection<Observation>  getObservation()
 //            Returns the value of the 'Observation' reference list.
-
         } else if (vs instanceof DurationInterval) {
             elementInfo.put("type", "DurationInterval");
-//            DurationConstraint     get_durationConstraintOfSpecification()
+            //            DurationConstraint     get_durationConstraintOfSpecification()
 //            Returns the value of the 'duration Constraint Of Specification' container reference.
-//            Duration   getMax()
-//                     Returns the value of the 'Max' reference.
-//            Duration   getMin()
-//                     Returns the value of the 'Min' reference.
+            Duration maxD = ((DurationInterval)vs ).getMax();
+            if ( maxD != null ) elementInfo.put( "durationMax", maxD.getID() );
+            Duration minD = ((DurationInterval)vs ).getMin();
+            if ( minD != null ) elementInfo.put( "durationMin", minD.getID() );
         } else if (vs instanceof ElementValue) {
             elementInfo.put("type", "ElementValue");
             Element elem = ((ElementValue)vs).getElement();
@@ -367,11 +367,7 @@ public class ExportUtility {
             }
             List<ValueSpecification> vsl = ((Expression)vs).getOperand();
             if (vsl != null && vsl.size() > 0) {
-                JSONArray operands = new JSONArray();
-                for (ValueSpecification op: vsl) {
-                    operands.add( op.getID() );
-                }
-                elementInfo.put("operand", operands);
+                elementInfo.put( "operand", makeJsonArrayOfIDs( vsl ) );
             }
         } else if (vs instanceof InstanceValue) {
             elementInfo.put("type", "InstanceValue");
@@ -385,25 +381,28 @@ public class ExportUtility {
         } else if (vs instanceof LiteralSpecification) {
             if (vs instanceof LiteralBoolean) {
                 elementInfo.put("type", "LiteralBoolean");
-                elementInfo.put( "value", ((LiteralBoolean)vs ).isValue() );
+                elementInfo.put( "boolean", ((LiteralBoolean)vs ).isValue() );
             } else if (vs instanceof LiteralInteger) {
                 elementInfo.put("type", "LiteralInteger");
-                elementInfo.put( "value", ((LiteralInteger)vs ).getValue() );
+                elementInfo.put( "integer", ((LiteralInteger)vs ).getValue() );
             } else if (vs instanceof LiteralNull) {
                 elementInfo.put("type", "LiteralNull");
             } else if (vs instanceof LiteralReal) {
                 elementInfo.put("type", "LiteralReal");
-                elementInfo.put( "value", ((LiteralReal)vs ).getValue() );
+                elementInfo.put( "double", ((LiteralReal)vs ).getValue() );
             } else if (vs instanceof LiteralString) {
                 elementInfo.put("type", "LiteralString");
-                elementInfo.put( "value", ((LiteralString)vs ).getValue() );
+                elementInfo.put( "string", ((LiteralString)vs ).getValue() );
             } else if (vs instanceof LiteralUnlimitedNatural) {
                 elementInfo.put("type", "LiteralUnlimitedNatural");
-                elementInfo.put( "value", ((LiteralUnlimitedNatural)vs ).getValue() );
+                elementInfo.put( "naturalValue", ((LiteralUnlimitedNatural)vs ).getValue() );
             }
         } else if (vs instanceof OpaqueExpression) {
             elementInfo.put("type", "OpaqueExpression");
-            elementInfo.put("body", ((OpaqueExpression)vs).getBody());
+            List<String> body = ((OpaqueExpression)vs).getBody();
+            if ( body != null && body.size() > 0 ) {
+                elementInfo.put("body", makeJsonArray( body ) );
+            }
 //   Abstraction    get_abstractionOfMapping() 
 //            Returns the value of the 'abstraction Of Mapping' container reference.
 //   Behavior   getBehavior() 
@@ -438,14 +437,32 @@ public class ExportUtility {
             elementInfo.put("type", "TimeInterval");
 //   TimeConstraint get_timeConstraintOfSpecification() 
 //            Returns the value of the 'time Constraint Of Specification' container reference.
-//   TimeExpression getMax() 
-//            Returns the value of the 'Max' reference.
-            elementInfo.put( "max", ((TimeInterval)vs ).getMax() );
-//   TimeExpression getMin() 
-//            Returns the value of the 'Min' reference.            }
-            elementInfo.put( "min", ((TimeInterval)vs ).getMin() );
+            TimeExpression maxD = ((TimeInterval)vs).getMax();
+            if ( maxD != null ) elementInfo.put( "timeMax", maxD.getID() );
+            TimeExpression minD = ((TimeInterval)vs).getMin();
+            if ( minD != null ) elementInfo.put( "timeMin", minD.getID() );
         }
 
+    }
+    
+    @SuppressWarnings( "unchecked" )
+    protected static void add( JSONArray arr, Object o ) {
+        arr.add( o );
+    }
+    
+    protected static < T extends MDObject > JSONArray makeJsonArrayOfIDs( Collection< T > collection ) {
+        JSONArray ids = new JSONArray();
+        for ( T t : collection ) {
+            if ( t != null ) add( ids, t.getID() );
+        }
+        return ids;
+    }
+    protected static < T > JSONArray makeJsonArray( Collection< T > collection ) {
+        JSONArray arr = new JSONArray();
+        for ( T t : collection ) {
+            if ( t != null ) add( arr, t );
+        }
+        return arr;
     }
     
     @SuppressWarnings("unchecked")
@@ -458,8 +475,9 @@ public class ExportUtility {
             elementInfo.put("isSlot", false);
             ValueSpecification vs = ((Property)e).getDefaultValue();
             if (vs != null) {
-                JSONArray value = new JSONArray();
-                addValues(e, value, elementInfo, vs);
+                elementInfo.put( "value", vs.getID() );
+//                JSONArray value = new JSONArray();
+//                addValues(e, value, elementInfo, vs);
             }
             Type type = ((Property)e).getType();
             if (type != null) {
@@ -474,10 +492,13 @@ public class ExportUtility {
                 elementInfo.put("stylesaver", true);
             List<ValueSpecification> vsl = ((Slot)e).getValue();
             if (vsl != null && vsl.size() > 0) {
-                JSONArray value = new JSONArray();
-                for (ValueSpecification vs: vsl) {
-                    addValues(e, value, elementInfo, vs);
-                }
+//                JSONArray value = new JSONArray();
+//                for (ValueSpecification vs: vsl) {
+//                    if ( vs != null ) value.add( vs.getID() );
+////                    addValues(e, value, elementInfo, vs);
+//                }
+//                elementInfo.put( "value", value );
+                elementInfo.put( "value", makeJsonArrayOfIDs( vsl ) );
             }
             Element type = ((Slot)e).getDefiningFeature();
             if (type != null) {
@@ -497,20 +518,23 @@ public class ExportUtility {
         } else if (e instanceof Comment) {
             elementInfo.put("type", "Comment");
             elementInfo.put("body", Utils.stripHtmlWrapper(((Comment)e).getBody()));
-            JSONArray elements = new JSONArray();
-            for (Element el: ((Comment)e).getAnnotatedElement()) {
-                elements.add(el.getID());
-            }
-            elementInfo.put("annotatedElements", elements);
+//            JSONArray elements = new JSONArray();
+//            for (Element el: ((Comment)e).getAnnotatedElement()) {
+//                if ( el != null ) elements.add(el.getID());
+//            }
+//            elementInfo.put("annotatedElements", elements);
+            elementInfo.put("annotatedElements",
+                            makeJsonArrayOfIDs( ((Comment)e).getAnnotatedElement() ));
         } else if (e instanceof Operation) {
             elementInfo.put("type", "Operation");
             List<Parameter> vsl = ((Operation)e).getOwnedParameter();
             if (vsl != null && vsl.size() > 0) {
-                JSONArray value = new JSONArray();
-                for (Parameter p: vsl) {
-                    value.add( p.getID() );
-                    elementInfo.put( "value", value );
-                }
+//                JSONArray value = new JSONArray();
+//                for (Parameter p: vsl) {
+//                    if ( p != null ) value.add( p.getID() );
+//                }
+//                elementInfo.put( "value", value );
+                elementInfo.put("parameter", makeJsonArrayOfIDs( vsl ));
             }
         } else if (e instanceof ValueSpecification) {
             fillValueSpecification( (ValueSpecification)e, elementInfo, view, viewpoint );
@@ -523,19 +547,32 @@ public class ExportUtility {
 //   java.util.Collection<Slot>     getSlot()
 //            Returns the value of the 'Slot' containment reference list.
 //   ValueSpecification     getSpecification()
-            elementInfo.put("specification", ((InstanceSpecification)e).getSpecification());
-//            Returns the value of the 'Specification' containment reference.
+//          Returns the value of the 'Specification' containment reference.
+            ValueSpecification spec = ((InstanceSpecification)e).getSpecification();
+            if ( spec != null ) elementInfo.put("specification", spec.getID() );
 //   Element    getStereotypedElement()
 //            Returns the value of the 'Stereotyped Element' container reference.            
         } else if (e instanceof Parameter) {
             Parameter p = (Parameter)e;
             elementInfo.put( "type", "Element" );
-            elementInfo.put( "direction", p.getDirection() );
-            elementInfo.put( "parameterType", p.getType() );
+            if ( p.getDirection() != null ) elementInfo.put( "direction", p.getDirection() );
+            if ( p.getType() != null ) elementInfo.put( "parameterType", p.getType().getID() );
             ValueSpecification defaultValue = p.getDefaultValue();
             if ( defaultValue != null ) {
                 elementInfo.put( "defaultValue", defaultValue.getID() );
             }
+        // REVIEW -- do we want to specify Type?
+//        } else if (e instanceof Type) {
+////   java.util.Collection<Association>     get_associationOfEndType()
+////            Returns the value of the 'association Of End Type' reference list.
+////   java.util.Collection<BehavioralFeature>    get_behavioralFeatureOfRaisedException()
+////            Returns the value of the 'behavioral Feature Of Raised Exception' reference list.
+////   java.util.Collection<Operation>    get_operationOfRaisedException()
+////            Returns the value of the 'operation Of Raised Exception' reference list.
+////   java.util.Collection<TypedElement>     get_typedElementOfType()
+////            Returns the value of the 'typed Element Of Type' reference list.
+////   Package    getPackage()
+////            Returns the value of the 'Package' reference.
         } else {
             elementInfo.put("type", "Element");
         }
@@ -571,37 +608,6 @@ public class ExportUtility {
             }
         }
         elementInfo.put("comments", comments);*/
-    }
-    
-    @SuppressWarnings("unchecked")
-    private static void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
-        if (vs instanceof LiteralBoolean) {
-            elementInfo.put("valueType", PropertyValueType.LiteralBoolean.toString());
-            value.add(((LiteralBoolean)vs).isValue());
-        } else if (vs instanceof LiteralString) {
-            elementInfo.put("valueType", PropertyValueType.LiteralString.toString());
-            value.add(((LiteralString)vs).getValue());
-        } else if (vs instanceof LiteralInteger || vs instanceof LiteralUnlimitedNatural) {
-            elementInfo.put("valueType", PropertyValueType.LiteralInteger.toString());
-            if (vs instanceof LiteralInteger) {
-                value.add(((LiteralInteger)vs).getValue());
-            } else 
-                value.add(((LiteralUnlimitedNatural)vs).getValue());
-        } else if (vs instanceof LiteralReal) {
-            elementInfo.put("valueType", PropertyValueType.LiteralReal.toString());
-            value.add(((LiteralReal)vs).getValue());
-        } else if (vs instanceof Expression) {
-            elementInfo.put("valueType", PropertyValueType.Expression.toString());
-            //value.add(RepresentationTextCreator.getRepresentedText(vs));
-            value.add(vs.getID());
-        } else if (vs instanceof ElementValue) {
-            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
-            Element ev = ((ElementValue)vs).getElement();
-            if (ev != null) {
-                value.add(ev.getID());
-            }
-        }
-        elementInfo.put("value", value);
     }
     
     public static boolean checkBaselineMount() {
