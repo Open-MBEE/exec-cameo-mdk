@@ -61,6 +61,7 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
@@ -69,12 +70,16 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralNull;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
@@ -82,6 +87,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Interval;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
@@ -373,15 +383,6 @@ public class ExportUtility {
                 elements.add(el.getID());
             }
             elementInfo.put("annotatedElements", elements);
-        } else if (e instanceof Expression) {
-            elementInfo.put("type", "Expression");
-            List<ValueSpecification> vsl = ((Expression)e).getOperand();
-            if (vsl != null && vsl.size() > 0) {
-                JSONArray value = new JSONArray();
-                for (ValueSpecification vs: vsl) {
-                    addValues(e, value, elementInfo, vs);
-                }
-            }
         } else if (e instanceof Operation) {
             elementInfo.put("type", "Operation");
             List<Parameter> vsl = ((Operation)e).getOwnedParameter();
@@ -391,6 +392,98 @@ public class ExportUtility {
                     value.add( p.getID() );
                     elementInfo.put( "value", value );
                 }
+            }
+        } else if (e instanceof ValueSpecification) {
+            ValueSpecification vs = (ValueSpecification)e;
+            ValueSpecification expr = ((Duration)e ).getExpression();
+            if ( expr != null ) {
+                elementInfo.put( "expr", expr.getID() );
+            }
+            if ( e instanceof Duration ) {
+                elementInfo.put("type", "Duration");
+//       java.util.Collection<DurationInterval>    get_durationIntervalOfMax()
+//                Returns the value of the 'duration Interval Of Max' reference list.
+//       java.util.Collection<DurationInterval>     get_durationIntervalOfMin()
+//                Returns the value of the 'duration Interval Of Min' reference list.
+//       ValueSpecification     getExpr()
+//                Returns the value of the 'Expr' containment reference.
+//       java.util.Collection<Observation>  getObservation()
+//                Returns the value of the 'Observation' reference list.
+
+            } else if (e instanceof DurationInterval) {
+                elementInfo.put("type", "DurationInterval");
+//                DurationConstraint     get_durationConstraintOfSpecification()
+//                Returns the value of the 'duration Constraint Of Specification' container reference.
+//                Duration   getMax()
+//                         Returns the value of the 'Max' reference.
+//                Duration   getMin()
+//                         Returns the value of the 'Min' reference.
+            } else if (e instanceof ElementValue) {
+                elementInfo.put("type", "ElementValue");
+                Element elem = ((ElementValue)e).getElement();
+                if ( elem != null ) {
+                    elementInfo.put( "element", elem.getID() );
+                }
+            } else if (e instanceof Expression) {
+                elementInfo.put("type", "Expression");
+                if ( ((Expression)e).getSymbol() != null ) {
+                    elementInfo.put("symbol", ((Expression)e).getSymbol());
+                }
+                List<ValueSpecification> vsl = ((Expression)e).getOperand();
+                if (vsl != null && vsl.size() > 0) {
+                    JSONArray operands = new JSONArray();
+                    for (ValueSpecification op: vsl) {
+                        operands.add( op.getID() );
+                    }
+                    elementInfo.put("operand", operands);
+                }
+            } else if (e instanceof InstanceValue) {
+                elementInfo.put("type", "InstanceValue");
+            } else if (e instanceof Interval) {
+                elementInfo.put("type", "Interval");
+            } else if (e instanceof LiteralBoolean) {
+                elementInfo.put("type", "LiteralBoolean");
+            } else if (e instanceof LiteralInteger) {
+                elementInfo.put("type", "LiteralInteger");
+            } else if (e instanceof LiteralNull) {
+                elementInfo.put("type", "LiteralNull");
+            } else if (e instanceof LiteralReal) {
+                elementInfo.put("type", "LiteralReal");
+            } else if (e instanceof LiteralSpecification) {
+                elementInfo.put("type", "LiteralSpecification");
+            } else if (e instanceof LiteralString) {
+                elementInfo.put("type", "LiteralString");
+            } else if (e instanceof LiteralUnlimitedNatural) {
+                elementInfo.put("type", "LiteralUnlimitedNatural");
+            } else if (e instanceof OpaqueExpression) {
+                elementInfo.put("type", "OpaqueExpression");
+            } else if (e instanceof StringExpression) {
+                elementInfo.put("type", "StringExpression");
+            } else if (e instanceof TimeExpression) {
+                elementInfo.put("type", "TimeExpression");
+            } else if (e instanceof TimeInterval) {
+                elementInfo.put("type", "TimeInterval");
+            }
+        } else if (e instanceof InstanceSpecification) {
+            elementInfo.put( "type", "InstanceSpecification" );
+//   java.util.Collection<InstanceValue>   get_instanceValueOfInstance()
+//            Returns the value of the 'instance Value Of Instance' reference list.
+//   java.util.List<Classifier>     getClassifier()
+//            Returns the value of the 'Classifier' reference list.
+//   java.util.Collection<Slot>     getSlot()
+//            Returns the value of the 'Slot' containment reference list.
+//   ValueSpecification     getSpecification()
+//            Returns the value of the 'Specification' containment reference.
+//   Element    getStereotypedElement()
+//            Returns the value of the 'Stereotyped Element' container reference.            
+        } else if (e instanceof Parameter) {
+            Parameter p = (Parameter)e;
+            elementInfo.put( "type", "Element" );
+            elementInfo.put( "direction", p.getDirection() );
+            elementInfo.put( "parameterType", p.getType() );
+            ValueSpecification vs = p.getDefaultValue();
+            if ( vs != null ) {
+                elementInfo.put( "defaultValue", vs.getID() );
             }
         } else {
             elementInfo.put("type", "Element");
