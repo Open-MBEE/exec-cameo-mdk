@@ -132,6 +132,7 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
         DBAlfrescoListVisitor listv = new DBAlfrescoListVisitor(this.recurse, this.elements);
         list.accept(listv);
         tableelements.addAll(listv.getListElements());
+        elementSet.addAll(listv.getElementSet());
         curCell.add(listv.getObject());
     }
 

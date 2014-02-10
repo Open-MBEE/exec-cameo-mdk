@@ -39,6 +39,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
             list.accept(inner);
             curitem.add(inner.getObject());
             listelements.addAll(inner.getListElements());
+            elementSet.addAll(inner.getElementSet());
         } else {
             listjson.put("type", "List");
             if (list.isOrdered())
@@ -89,6 +90,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
         DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse, this.elements);
         table.accept(v);
         listelements.addAll(v.getTableElements());
+        elementSet.addAll(v.getElementSet());
         curitem.add(v.getObject());
     }
 
