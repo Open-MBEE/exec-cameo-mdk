@@ -296,9 +296,9 @@ public class ModelValidator {
             if (websource != localsource || webtarget != localtarget) {
                 String msg = "[REL] ";
                 if (websource != localsource)
-                    msg += "model source: " + localsource.getHumanName() + ", web source: " + websource.getHumanName() + " ";
+                    msg += "model source: " + localsource.getHumanName() + ", web source: " + websource == null ? "null" : websource.getHumanName() + " ";
                 if (webtarget != localtarget)
-                    msg += "model target: " + localtarget.getHumanName() + ", web target: " + webtarget.getHumanName();
+                    msg += "model target: " + localtarget.getHumanName() + ", web target: " + webtarget == null ? "null" : webtarget.getHumanName();
                 ValidationRuleViolation v = new ValidationRuleViolation(e, msg);
                 v.addAction(new ImportRel(e, result));
                 v.addAction(new ExportRel(e));
