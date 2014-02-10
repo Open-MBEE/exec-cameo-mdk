@@ -157,7 +157,8 @@ public class ExportUtility {
     }
     
     public static String getUrl() {
-        return "https://sheldon/alfresco/service";
+        return "https://localhost/alfresco/service";
+        //return "https://sheldon/alfresco/service";
         /*String url = null;
         Element model = Application.getInstance().getProject().getModel();
         if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
@@ -401,7 +402,7 @@ public class ExportUtility {
             elementInfo.put("type", "OpaqueExpression");
             List<String> body = ((OpaqueExpression)vs).getBody();
             if ( body != null && body.size() > 0 ) {
-                elementInfo.put("body", makeJsonArray( body ) );
+                elementInfo.put("expressionBody", makeJsonArray( body ) );
             }
 //   Abstraction    get_abstractionOfMapping() 
 //            Returns the value of the 'abstraction Of Mapping' container reference.
