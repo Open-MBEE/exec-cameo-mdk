@@ -35,6 +35,7 @@ import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -157,7 +158,7 @@ public class ExportUtility {
     }
     
     public static String getUrl() {
-        return "https://localhost/alfresco/service";
+        return "http://localhost:8080/view-repo/service";
         //return "https://sheldon/alfresco/service";
         /*String url = null;
         Element model = Application.getInstance().getProject().getModel();
@@ -332,7 +333,7 @@ public class ExportUtility {
 
     @SuppressWarnings( "unchecked" )
     public static void fillValueSpecification(ValueSpecification vs, JSONObject elementInfo, Stereotype view, Stereotype viewpoint) {
-        ValueSpecification expr = ((Duration)vs ).getExpression();
+        ValueSpecification expr = vs.getExpression();
         if ( expr != null ) {
             elementInfo.put( "valueExpression", expr.getID() );
         }
@@ -359,7 +360,7 @@ public class ExportUtility {
             elementInfo.put("type", "ElementValue");
             Element elem = ((ElementValue)vs).getElement();
             if ( elem != null ) {
-                elementInfo.put( "element", elem.getID() );
+                elementInfo.put( "elementValueOfElement", elem.getID() );
             }
         } else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
@@ -439,9 +440,9 @@ public class ExportUtility {
 //   TimeConstraint get_timeConstraintOfSpecification() 
 //            Returns the value of the 'time Constraint Of Specification' container reference.
             TimeExpression maxD = ((TimeInterval)vs).getMax();
-            if ( maxD != null ) elementInfo.put( "timeMax", maxD.getID() );
+            if ( maxD != null ) elementInfo.put( "timeIntervalMax", maxD.getID() );
             TimeExpression minD = ((TimeInterval)vs).getMin();
-            if ( minD != null ) elementInfo.put( "timeMin", minD.getID() );
+            if ( minD != null ) elementInfo.put( "timeIntervalMin", minD.getID() );
         }
 
     }
@@ -476,9 +477,11 @@ public class ExportUtility {
             elementInfo.put("isSlot", false);
             ValueSpecification vs = ((Property)e).getDefaultValue();
             if (vs != null) {
-                elementInfo.put( "value", vs.getID() );
-//                JSONArray value = new JSONArray();
-//                addValues(e, value, elementInfo, vs);
+                elementInfo.put( "value",
+                                 makeJsonArrayOfIDs( Collections.singletonList( vs ) ) );
+                //                elementInfo.put( "value", vs.getID() );
+////                JSONArray value = new JSONArray();
+////                addValues(e, value, elementInfo, vs);
             }
             Type type = ((Property)e).getType();
             if (type != null) {
@@ -535,7 +538,7 @@ public class ExportUtility {
 //                    if ( p != null ) value.add( p.getID() );
 //                }
 //                elementInfo.put( "value", value );
-                elementInfo.put("parameter", makeJsonArrayOfIDs( vsl ));
+                elementInfo.put("operationParameter", makeJsonArrayOfIDs( vsl ));
             }
         } else if (e instanceof ValueSpecification) {
             fillValueSpecification( (ValueSpecification)e, elementInfo, view, viewpoint );
@@ -550,17 +553,17 @@ public class ExportUtility {
 //   ValueSpecification     getSpecification()
 //          Returns the value of the 'Specification' containment reference.
             ValueSpecification spec = ((InstanceSpecification)e).getSpecification();
-            if ( spec != null ) elementInfo.put("specification", spec.getID() );
+            if ( spec != null ) elementInfo.put("instanceSpecificationSpecification", spec.getID() );
 //   Element    getStereotypedElement()
 //            Returns the value of the 'Stereotyped Element' container reference.            
         } else if (e instanceof Parameter) {
             Parameter p = (Parameter)e;
             elementInfo.put( "type", "Element" );
-            if ( p.getDirection() != null ) elementInfo.put( "direction", p.getDirection() );
+            if ( p.getDirection() != null ) elementInfo.put( "parameterDirection", p.getDirection() );
             if ( p.getType() != null ) elementInfo.put( "parameterType", p.getType().getID() );
             ValueSpecification defaultValue = p.getDefaultValue();
             if ( defaultValue != null ) {
-                elementInfo.put( "defaultValue", defaultValue.getID() );
+                elementInfo.put( "parameterDefaultValue", defaultValue.getID() );
             }
         // REVIEW -- do we want to specify Type?
 //        } else if (e instanceof Type) {

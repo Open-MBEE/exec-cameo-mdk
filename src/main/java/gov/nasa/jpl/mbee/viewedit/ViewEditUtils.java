@@ -142,7 +142,7 @@ public class ViewEditUtils {
         try {
             URL url = new URL(urlstring);
 
-            if (url.getProtocol().toLowerCase().equals("https") && !passwordSet) {
+            if (!passwordSet) {
                 // Pop up one time dialog for logging into Alfresco
                 JPanel userPanel = new JPanel();
                 userPanel.setLayout(new GridLayout(2, 2));
