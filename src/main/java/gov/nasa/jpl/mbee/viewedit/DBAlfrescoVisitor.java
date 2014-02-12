@@ -346,8 +346,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     @SuppressWarnings("unchecked")
     protected void addToElements(Element e) {
-        if ((e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) || 
-                e instanceof Extension || e instanceof ValueSpecification)
+        if (!ExportUtility.shouldAdd(e))
             return;
         if (!viewElements.empty())
             viewElements.peek().add(ExportUtility.getElementID(e));

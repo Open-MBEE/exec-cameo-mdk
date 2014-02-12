@@ -81,6 +81,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
@@ -488,5 +490,17 @@ public class ExportUtility {
     
     public static String unescapeHtml(String s) {
         return StringEscapeUtils.unescapeHtml(s);
+    }
+    
+    public static boolean shouldAdd(Element e) {
+        if (e instanceof ValueSpecification || e instanceof Extension || e instanceof ProfileApplication)
+            return false;
+        if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
+            return false;
+        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty())
+            return false;
+        if (e instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)e).getDefiningFeature().getID()))
+            return false;
+        return true;
     }
 }
