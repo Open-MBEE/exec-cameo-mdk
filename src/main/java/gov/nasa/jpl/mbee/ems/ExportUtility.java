@@ -65,6 +65,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -542,6 +543,10 @@ public class ExportUtility {
             }
         } else if (e instanceof ValueSpecification) {
             fillValueSpecification( (ValueSpecification)e, elementInfo, view, viewpoint );
+        } else if (e instanceof Constraint) {
+            elementInfo.put( "type", "Constraint" );
+            ValueSpecification spec = ((Constraint)e).getSpecification();
+            if ( spec != null ) elementInfo.put("constraintSpecification", spec.getID() );
         } else if (e instanceof InstanceSpecification) {
             elementInfo.put( "type", "InstanceSpecification" );
 //   java.util.Collection<InstanceValue>   get_instanceValueOfInstance()
