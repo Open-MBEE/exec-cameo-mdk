@@ -460,7 +460,7 @@ public class ExportUtility {
     
     public static boolean checkBaselineMount() {
         Project prj = Application.getInstance().getProject();
-        if (prj.isRemote()) {
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
             String baselineTag = getBaselineTag();
             if (baselineTag == null)
                 return false;
@@ -513,21 +513,22 @@ public class ExportUtility {
         if (json == null)
             return null; //??
         JSONObject result = (JSONObject)JSONValue.parse(json);
-        if (result.containsKey("version"))
+        if (result.containsKey("projectVersion"))
             return Integer.valueOf(result.get("projectVersion").toString());
         return null;
     }
     
     public static Integer getAlfrescoProjectVersion(Element e) {
         if (ProjectUtilities.isElementInAttachedProject(e)) {
-            Project prj = ProjectUtilities.getProject(ProjectUtilities.getAttachedProject(e));
-            if (prj.isRemote())
-                return getAlfrescoProjectVersion(prj.getID());
+            IAttachedProject aprj = ProjectUtilities.getAttachedProject(e);
+            Project prj = ProjectUtilities.getProject(aprj);
+            if (ProjectUtilities.isFromTeamworkServer(aprj))
+                return getAlfrescoProjectVersion(aprj.getProjectID());
             return null;
         } else {
             Project prj = Application.getInstance().getProject();
-            if (prj.isRemote()) {
-                return getAlfrescoProjectVersion(prj.getID());
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
+                return getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
             }
             return null;
         }
@@ -538,12 +539,12 @@ public class ExportUtility {
         if (ProjectUtilities.isElementInAttachedProject(e)) {
             IProject module = ProjectUtilities.getAttachedProject(e);
             Project modulePrj = ProjectUtilities.getProject(module);
-            if (modulePrj.isRemote()) {
+            if (ProjectUtilities.isFromTeamworkServer(module)) {
                 return TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
             }
             return null;
         } else {
-            if (prj.isRemote())
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
                 return TeamworkService.getInstance(prj).getVersion(prj).getNumber();
             return null;
         }
@@ -554,18 +555,18 @@ public class ExportUtility {
         if (ProjectUtilities.isElementInAttachedProject(e)) {
             IProject module = ProjectUtilities.getAttachedProject(e);
             Project modulePrj = ProjectUtilities.getProject(module);
-            if (modulePrj.isRemote()) {
+            if (ProjectUtilities.isFromTeamworkServer(module)) {
                 Integer teamwork = TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
-                Integer mms = getAlfrescoProjectVersion(modulePrj.getID());
+                Integer mms = getAlfrescoProjectVersion(module.getProjectID());
                 if (teamwork == mms || mms == null || teamwork > mms)
                     return true;
                 return false;
             }
             return true;
         } else {
-            if (prj.isRemote()) {
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
                 Integer teamwork = TeamworkService.getInstance(prj).getVersion(prj).getNumber();
-                Integer mms = getAlfrescoProjectVersion(prj.getID());
+                Integer mms = getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
                 if (teamwork == mms || mms == null || teamwork > mms)
                     return true;
                 return false;
@@ -579,12 +580,12 @@ public class ExportUtility {
         if (ProjectUtilities.isElementInAttachedProject(e)) {
             IProject module = ProjectUtilities.getAttachedProject(e);
             Project modulePrj = ProjectUtilities.getProject(module);
-            if (modulePrj.isRemote()) {
-                sendProjectVersion(modulePrj.getID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
+            if (ProjectUtilities.isFromTeamworkServer(module)) {
+                sendProjectVersion(module.getProjectID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
             }
         } else {
-            if (prj.isRemote()) {
-                sendProjectVersion(prj.getID(),TeamworkService.getInstance(prj).getVersion(prj).getNumber());
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
+                sendProjectVersion(prj.getPrimaryProject().getProjectID(),TeamworkService.getInstance(prj).getVersion(prj).getNumber());
             }
         }
     
@@ -602,14 +603,14 @@ public class ExportUtility {
     public static boolean okToExport(Set<Element> set) {
         Project prj = Application.getInstance().getProject();
         mountedVersions = new HashMap<String, Integer>();
-        if (prj.isRemote())
-            mountedVersions.put(prj.getID(), TeamworkService.getInstance(prj).getVersion(prj).getNumber());
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+            mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj).getNumber());
         for (Element e: set) {
             if (ProjectUtilities.isElementInAttachedProject(e)) {
                 IProject module = ProjectUtilities.getAttachedProject(e);
                 Project modulePrj = ProjectUtilities.getProject(module);
-                if (modulePrj.isRemote() && !mountedVersions.containsKey(modulePrj.getID())) {
-                    mountedVersions.put(modulePrj.getID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
+                if (ProjectUtilities.isFromTeamworkServer(module) && !mountedVersions.containsKey(module.getProjectID())) {
+                    mountedVersions.put(module.getProjectID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
                 }
             }
         }
@@ -627,10 +628,12 @@ public class ExportUtility {
     public static boolean okToExport() {
         mountedVersions = new HashMap<String, Integer>();
         Project prj = Application.getInstance().getProject();
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+            mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj).getNumber());
         for (IAttachedProject p: ProjectUtilities.getAllAttachedProjects(prj)) {
             Project modulePrj = ProjectUtilities.getProject(p);
-            if (modulePrj.isRemote()) {
-                mountedVersions.put(modulePrj.getID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
+            if (ProjectUtilities.isFromTeamworkServer(p)) {
+                mountedVersions.put(p.getProjectID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
             }
         }
         for (String prjId: mountedVersions.keySet()) {
@@ -652,9 +655,9 @@ public class ExportUtility {
         String baseurl = getUrl();
         if (baseurl == null)
             return;
-        String url = baseurl + "/javawebscripts/projects/" + projId;
+        String url = baseurl + "/javawebscripts/projects/" + projId + "?fix=true";
         JSONObject tosend = new JSONObject();
-        tosend.put("projectVersion", version);
+        tosend.put("projectVersion", version.toString());
         send(url, tosend.toJSONString(), null, false);
     }
     
