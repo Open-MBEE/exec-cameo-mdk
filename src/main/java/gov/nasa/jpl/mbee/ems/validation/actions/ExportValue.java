@@ -35,7 +35,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -75,11 +77,15 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
     public void execute(Collection<Annotation> annos) {
         JSONObject send = new JSONObject();
         JSONArray infos = new JSONArray();
+        Set<Element> set = new HashSet<Element>();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
+            set.add(e);
             JSONObject info = getInfo(e);
             infos.add(info);
         }
+        if (!ExportUtility.okToExport(set))
+            return;
         send.put("elements", infos);
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
@@ -87,12 +93,15 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         }
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
+            ExportUtility.sendProjectVersions();
         }
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!ExportUtility.okToExport(element))
+            return;
         JSONObject info = getInfo(element);
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
@@ -105,6 +114,7 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         }
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
+            ExportUtility.sendProjectVersion(element);
         }
 
     }

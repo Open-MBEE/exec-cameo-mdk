@@ -2126,7 +2126,10 @@ public class Utils {
         // ArrayList<RuleViolationResult>();
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         //Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
-
+        if (dummyvs == null) {
+            Utils.showPopupMessage("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
+            return;
+        }
         EnumerationLiteral severitylevel = Annotation.getSeverityLevel(project, Annotation.INFO);
         ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
         // ValidationRunData runData = new ValidationRunData(dummyvs, false,

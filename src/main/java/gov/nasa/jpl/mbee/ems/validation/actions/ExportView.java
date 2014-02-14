@@ -49,6 +49,7 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -145,6 +146,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 return false;
             }
         }*/
+        //Set<Element> set = visitor2.getElementSet();
+        if (!ExportUtility.okToExport())
+            return false;
         JSONObject elementsjson = visitor2.getElements();
         JSONArray elementsArray = new JSONArray();
         elementsArray.addAll(elementsjson.values());
@@ -156,7 +160,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         String sendElementsUrl = ExportUtility.getPostElementsUrl();
         if (!ExportUtility.send(sendElementsUrl, send.toJSONString()))
             return false;
-        
+        ExportUtility.sendProjectVersions();
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
         JSONArray viewsArray = new JSONArray();
