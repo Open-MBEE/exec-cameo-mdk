@@ -185,7 +185,9 @@ public class ExportUtility {
             JOptionPane.showMessageDialog(null,
                     "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
                 return null;
-        }*/
+        }
+        return url + "/javawebscripts/sites/" + site;
+        */
         return url + "/javawebscripts/sites/europa";
     }
     
@@ -521,7 +523,6 @@ public class ExportUtility {
     public static Integer getAlfrescoProjectVersion(Element e) {
         if (ProjectUtilities.isElementInAttachedProject(e)) {
             IAttachedProject aprj = ProjectUtilities.getAttachedProject(e);
-            Project prj = ProjectUtilities.getProject(aprj);
             if (ProjectUtilities.isFromTeamworkServer(aprj))
                 return getAlfrescoProjectVersion(aprj.getProjectID());
             return null;
@@ -538,9 +539,11 @@ public class ExportUtility {
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isElementInAttachedProject(e)) {
             IProject module = ProjectUtilities.getAttachedProject(e);
-            Project modulePrj = ProjectUtilities.getProject(module);
             if (ProjectUtilities.isFromTeamworkServer(module)) {
-                return TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
+                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                return teamwork;//TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
             }
             return null;
         } else {
@@ -554,9 +557,11 @@ public class ExportUtility {
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isElementInAttachedProject(e)) {
             IProject module = ProjectUtilities.getAttachedProject(e);
-            Project modulePrj = ProjectUtilities.getProject(module);
             if (ProjectUtilities.isFromTeamworkServer(module)) {
-                Integer teamwork = TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
+                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                //Integer teamwork = TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
                 Integer mms = getAlfrescoProjectVersion(module.getProjectID());
                 if (teamwork == mms || mms == null || teamwork > mms)
                     return true;
@@ -579,9 +584,11 @@ public class ExportUtility {
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isElementInAttachedProject(e)) {
             IProject module = ProjectUtilities.getAttachedProject(e);
-            Project modulePrj = ProjectUtilities.getProject(module);
             if (ProjectUtilities.isFromTeamworkServer(module)) {
-                sendProjectVersion(module.getProjectID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
+                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                sendProjectVersion(module.getProjectID(), teamwork);
             }
         } else {
             if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
@@ -608,9 +615,11 @@ public class ExportUtility {
         for (Element e: set) {
             if (ProjectUtilities.isElementInAttachedProject(e)) {
                 IProject module = ProjectUtilities.getAttachedProject(e);
-                Project modulePrj = ProjectUtilities.getProject(module);
                 if (ProjectUtilities.isFromTeamworkServer(module) && !mountedVersions.containsKey(module.getProjectID())) {
-                    mountedVersions.put(module.getProjectID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
+                    IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                    ProjectVersion pv = new ProjectVersion(vd);
+                    Integer teamwork = pv.getNumber();
+                    mountedVersions.put(module.getProjectID(), teamwork);
                 }
             }
         }
@@ -631,9 +640,11 @@ public class ExportUtility {
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
             mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj).getNumber());
         for (IAttachedProject p: ProjectUtilities.getAllAttachedProjects(prj)) {
-            Project modulePrj = ProjectUtilities.getProject(p);
             if (ProjectUtilities.isFromTeamworkServer(p)) {
-                mountedVersions.put(p.getProjectID(), TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber());
+                IVersionDescriptor vd = ProjectUtilities.getVersion(p);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                mountedVersions.put(p.getProjectID(), teamwork);
             }
         }
         for (String prjId: mountedVersions.keySet()) {
