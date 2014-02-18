@@ -76,6 +76,7 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
         url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         if (!ExportUtility.send(url, json))
             return;
+        ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
         ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false), "Exporting Model", true, 0);
     }
 }

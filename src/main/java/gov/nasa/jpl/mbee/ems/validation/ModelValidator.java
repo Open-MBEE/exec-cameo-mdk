@@ -234,12 +234,7 @@ public class ModelValidator {
     private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed) {
         if (ProjectUtilities.isElementInAttachedProject(current))
             return;
-        if ((current instanceof Comment && ExportUtility.isElementDocumentation((Comment)current)) || 
-                current instanceof Extension || current instanceof ValueSpecification || current instanceof ProfileApplication)
-            return;
-        if (current instanceof InstanceSpecification && current.getOwnedElement().isEmpty())
-            return;
-        if (current instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)current).getDefiningFeature().getID()))
+        if (!ExportUtility.shouldAdd(current))
             return;
         if (!elementsKeyed.containsKey(current.getID()))
             if (!(current instanceof Model && ((Model)current).getName().equals("Data")))

@@ -82,7 +82,7 @@
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
-                <custom description="SysML1.4.Conforms" id="IDaction_1389808028890_615249_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization">
+                <custom description="Conforms" id="IDaction_1389808028890_615249_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization">
                     <stereotype id="_17_0_2_3_407019f_1389807639137_860750_29082"/>
                     <defaults>
                         <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">

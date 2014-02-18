@@ -102,15 +102,11 @@ public class ModelExporter {
     private boolean addToElements(Element e, int curdepth) {
         if (elements.containsKey(e.getID()))
             return true;
-        if (e instanceof ValueSpecification || !(e instanceof Package) && packageOnly || e instanceof Extension || e instanceof ProfileApplication)
+        if (!(e instanceof Package) && packageOnly)
             return false;
         if (ProjectUtilities.isElementInAttachedProject(e))
             return false;
-        if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
-            return false;
-        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty())
-            return false;
-        if (e instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)e).getDefiningFeature().getID()))
+        if (!ExportUtility.shouldAdd(e))
             return false;
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
