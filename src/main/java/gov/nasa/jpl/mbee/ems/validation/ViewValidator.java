@@ -357,7 +357,7 @@ public class ViewValidator {
     
     private Element getStartView() {
         Stereotype conforms  = Utils.getConformsStereotype();
-        Stereotype sysml14conforms = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
+        Stereotype sysml14conforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
 
         Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
         if (viewpoint == null)

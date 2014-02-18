@@ -1874,6 +1874,10 @@ public class Utils {
     public static Stereotype getConformsStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Conform");
     }
+    
+    public static Stereotype getSysML14ConformsStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Conforms");
+    }
 
     /********************************************* User interaction ****************************************************/
 
