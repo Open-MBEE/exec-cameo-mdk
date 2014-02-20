@@ -288,7 +288,7 @@ public class ModelValidator {
                 websource = (Element)prj.getElementByID(websourceId);
             if (webtargetId != null)
                 webtarget = (Element)prj.getElementByID(webtargetId);
-            if (websource != null && webtarget != null && (websource != localsource || webtarget != localtarget)) {
+            if (websource != null && webtarget != null && localsource != null && localtarget != null && (websource != localsource || webtarget != localtarget)) {
                 String msg = "[REL] ";
                 if (websource != localsource)
                     msg += "model source: " + localsource.getHumanName() + ", web source: " + websource == null ? "null" : websource.getHumanName() + " ";
