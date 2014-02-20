@@ -154,46 +154,6 @@ public class TableStructure extends Table {
         if (bnode == null)
             return;
         parseColumns(bnode, null, 1);
-        /*ActivityNode curNode = bnode;
-        Collection<ActivityEdge> outs = curNode.getOutgoing();
-        while (outs != null && outs.size() == 1) {
-            curNode = outs.iterator().next().getTarget();
-            TableColumn col = null;
-            if (GeneratorUtils.hasStereotypeByString(curNode, DocGen3Profile.tableAttributeColumnStereotype)) {
-                col = new TableAttributeColumn();
-                Object attr = GeneratorUtils.getObjectProperty(curNode,
-                        DocGen3Profile.tableAttributeColumnStereotype, "desiredAttribute", null);
-                ((TableAttributeColumn)col).attribute = (attr instanceof EnumerationLiteral)
-                        ? Utils.AvailableAttribute.valueOf(((EnumerationLiteral)attr).getName()) : null;
-            } else if (GeneratorUtils.hasStereotypeByString(curNode,
-                    DocGen3Profile.tableExpressionColumnStereotype)) {
-                col = new TableExpressionColumn();
-                ((TableExpressionColumn)col).expression = (String)GeneratorUtils.getObjectProperty(curNode,
-                        DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
-                ((TableExpressionColumn)col).iterate = (Boolean)GeneratorUtils.getObjectProperty(curNode,
-                        DocGen3Profile.tableExpressionColumnStereotype, "iterate", true);
-            } else if (GeneratorUtils.hasStereotypeByString(curNode,
-                    DocGen3Profile.tablePropertyColumnStereotype)) {
-                col = new TablePropertyColumn();
-                ((TablePropertyColumn)col).property = (Property)GeneratorUtils.getObjectProperty(curNode,
-                        DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
-            } else {
-                outs = curNode.getOutgoing();
-                continue;
-            }
-            col.editable = (Boolean)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableColumnStereotype, "editable", true);
-            col.activityNode = curNode;
-            if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
-                col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
-            } else if (curNode instanceof StructuredActivityNode) {
-                col.bnode = GeneratorUtils.findInitialNode(curNode);
-            }
-            col.name = curNode.getName();
-            headers.add(curNode.getName());
-            columns.add(col);
-            columnIndex.put(col, columnIndex.size());
-            outs = curNode.getOutgoing();
-        }*/
     }
 
     private void parseColumns(ActivityNode inNode, TableColumnGroup parent, int curDepth) {
@@ -340,12 +300,6 @@ public class TableStructure extends Table {
         DBTable table = new DBTable();
 
         List<List<DocumentElement>> tableheaders = makeTableHeaders();
-        //List<DocumentElement> header = new ArrayList<DocumentElement>();
-        //for (String head: this.headers) {
-        //    header.add(new DBText(head));
-        //}
-        //tableheaders.add(header);
-        
         table.setHeaders(tableheaders);
         if (headerDepth > 1) {
             List<DBColSpec> colspecs = new ArrayList<DBColSpec>();
