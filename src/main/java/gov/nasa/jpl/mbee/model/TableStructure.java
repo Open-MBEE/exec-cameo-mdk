@@ -32,7 +32,9 @@ import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.GenerationContext;
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
@@ -191,6 +193,7 @@ public class TableStructure extends Table {
     }
 
     private void buildTableReferences() {
+        //Debug.turnOn();
         for (Element e: targets) {
             List<List<Reference>> row = new ArrayList<List<Reference>>();
             List<Element> startElements = new ArrayList<Element>();
@@ -215,8 +218,18 @@ public class TableStructure extends Table {
                                 .evaluate(expr, resultElements, getValidator(), true);
                         OclEvaluator evaluator = OclEvaluator.instance;
                         if (evaluator.isValid() && result != null) {
+                            Debug.outln( "valid result = " + result
+                                         + " for expression " + expr + " on "
+                                         + MoreToString.Helper.toLongString( resultElements ) );
                             cell.add(new Reference(result));
+                        } else {
+                            Debug.outln( "invalid evaluation of expression "
+                                         + expr + " on "
+                                         + MoreToString.Helper.toLongString( resultElements ) );
                         }
+                    } else {
+                        Debug.outln( "attempted to evaluate null expression on "
+                                + MoreToString.Helper.toLongString( resultElements ) );
                     }
                 } else {
                     for (Element re: resultElements) {
@@ -246,12 +259,23 @@ public class TableStructure extends Table {
                         } else {
                             String expr = ((TableExpressionColumn)tc).expression;
                             if (expr == null) {
+                                // cell.add(new Reference(empty));
+                                Debug.outln( "attempted to evaluate null expression on "
+                                        + MoreToString.Helper.toLongString( re ) );
                                 continue;
                             }
                             Object result = DocumentValidator.evaluate(expr, re, getValidator(), true);
                             OclEvaluator evaluator = OclEvaluator.instance;
                             if (evaluator.isValid() || result != null) {
+                                Debug.outln( "valid result = " + result
+                                             + " for expression " + expr + " on "
+                                             + MoreToString.Helper.toLongString( re ) );
                                 cell.add(new Reference(result));
+                            } else {
+                                Debug.outln( "invalid evaluation of expression "
+                                        + expr + " on "
+                                        + MoreToString.Helper.toLongString( re ) );
+   
                             }
                         }
                     }
@@ -262,8 +286,10 @@ public class TableStructure extends Table {
                 DocumentValidator.evaluateConstraints(tc.activityNode, getCellData(row, tc), context, true,
                         true);
             }
+            Debug.outln( "adding " + row.size() + " cells in row to table." );
             tableContent.add(row);
         }
+        Debug.turnOff();
     }
 
     @Override
