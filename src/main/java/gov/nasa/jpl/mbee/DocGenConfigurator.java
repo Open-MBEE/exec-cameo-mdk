@@ -83,6 +83,7 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -246,7 +247,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 c.addAction(new ValidateDocument3Action(e));
 
             act = manager.getActionFor(ValidateViewStructureAction.actionid);
-            if (act == null)
+            if (act == null && e instanceof Classifier)
                 c.addAction(new ValidateViewStructureAction(e));
 
             act = manager.getActionFor(ViewDocument3Action.actionid);

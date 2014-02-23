@@ -52,15 +52,11 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  */
 public class ViewStructureValidator {
 
-    private Stereotype    sysmlViewpoint;
-    private GUILog        gl;
-    private List<Element> missing;
-
-    public ViewStructureValidator(Element view) {
-        gl = Application.getInstance().getGUILog();
-        sysmlViewpoint = Utils.getViewpointStereotype();
-        missing = new ArrayList<Element>();
-    }
+    private Stereotype    sysmlViewpoint = Utils.getViewpointStereotype();
+    private Stereotype    sysmlConforms = Utils.getSysML14ConformsStereotype();
+    private Stereotype    sysmlView = Utils.getViewStereotype();
+    private GUILog        gl = Application.getInstance().getGUILog();
+    private List<Element> missing = new ArrayList<Element>();
 
     public void validate(Element curView) {
         List<Element> childrenViews = getChildrenViews(curView);
@@ -92,28 +88,13 @@ public class ViewStructureValidator {
     }
 
     private List<Element> getChildrenViews(Element e) {
-        List<Element> first = getFirst(e);
-        List<Element> nexts = new ArrayList<Element>();
-        for (Element el: first) {
-            nexts.addAll(getNexts(el));
-        }
-        first.addAll(nexts);
-        return first;
-    }
-
-    public List<Element> getNexts(Element e) {
-        return Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                DocGen3Profile.nextStereotype, 1, false, 0);
-    }
-
-    public List<Element> getFirst(Element e) {
-        return Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                DocGen3Profile.firstStereotype, 1, false, 1);
+        return Utils.filterElementsByStereotype(
+                Utils.collectAssociatedElements(e, 1, AggregationKindEnum.COMPOSITE), sysmlView, true, true);
     }
 
     private Element getConforms(Element v) {
         List<Element> conforms = Utils.collectDirectedRelatedElementsByRelationshipStereotype(v,
-                Utils.getConformsStereotype(), 1, false, 1);
+                sysmlConforms, 1, false, 1);
         if (conforms.isEmpty())
             return null;
         return conforms.get(0);
@@ -123,7 +104,7 @@ public class ViewStructureValidator {
         Set<Element> res = new HashSet<Element>();
         for (Element e: views) {
             res.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e,
-                    Utils.getConformsStereotype(), 1, false, 1));
+                    sysmlConforms, 1, false, 1));
         }
         return res;
     }
