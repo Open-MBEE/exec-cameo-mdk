@@ -61,7 +61,7 @@ public class ValidateViewStructureAction extends MDAction {
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
         try {
-            ViewStructureValidator vsv = new ViewStructureValidator(view);
+            ViewStructureValidator vsv = new ViewStructureValidator();
             vsv.validate(view);
             vsv.printErrors();
             gl.log("Finished");
