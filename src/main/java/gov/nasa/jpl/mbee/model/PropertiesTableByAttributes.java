@@ -33,6 +33,7 @@ import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.actions.docgen.EditPropertiesTableAction;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
@@ -121,7 +122,7 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
                 topExcludeName, topIncludeTypeName, topExcludeTypeName, topOrder, systemIncludeStereotype,
                 systemExcludeStereotype, systemIncludeName, systemExcludeName, systemIncludeTypeName,
                 systemExcludeTypeName, splitStereotype, maxDepth, systemAssociationType, topAssociationType,
-                this.targets, includeInherited);
+                Utils2.asList(this.targets, Element.class), includeInherited);
         ahh.doMainThings();
         return ahh.getEt();
     }
@@ -140,18 +141,18 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
             return res1;
         List<List<Element>> elementsList = new ArrayList<List<Element>>();
         if (this.loop) {
-            for (Element e: this.targets) {
+            for (Object e: this.targets) {
                 if (e instanceof Class) {
                     List<Element> blah = new ArrayList<Element>();
-                    blah.add(e);
+                    blah.add((Class)e);
                     elementsList.add(blah);
                 }
             }
         } else {
             List<Element> blah = new ArrayList<Element>();
-            for (Element e: this.targets) {
+            for (Object e: this.targets) {
                 if (e instanceof Class) {
-                    blah.add(e);
+                    blah.add((Class)e);
                 }
             }
             elementsList.add(blah);

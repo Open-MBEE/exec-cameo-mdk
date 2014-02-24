@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.GenerationContext;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
@@ -88,7 +89,7 @@ public class TableStructure extends Table {
                                                                              // node
                 n = bnode.getOutgoing().iterator().next().getTarget();
             }
-            Stack<List<Element>> in = new Stack<List<Element>>();
+            Stack<List<Object>> in = new Stack<List<Object>>();
             // in.add( targets );
             context = new GenerationContext(in, n, getValidator(), Application.getInstance().getGUILog());
             return context;
@@ -215,9 +216,9 @@ public class TableStructure extends Table {
     }
     
     private void buildTableReferences() {
-        for (Element e: targets) {
+        for (Object e: targets) {
             List<List<Reference>> row = new ArrayList<List<Reference>>();
-            List<Element> startElements = new ArrayList<Element>();
+            List<Object> startElements = new ArrayList<Object>();
             startElements.add(e);
             for (TableColumn tc: columns) {
                 List<Element> resultElements;
@@ -227,9 +228,9 @@ public class TableStructure extends Table {
                                                         // collect/filter node
                     CollectFilterParser.setContext(context);
                     resultElements = CollectFilterParser.startCollectAndFilterSequence(
-                            context.getCurrentNode(), startElements);
+                            context.getCurrentNode(), Utils2.asList( startElements, Element.class) );
                 } else {
-                    resultElements = startElements;
+                    resultElements = Utils2.asList( startElements, Element.class);
                 }
                 List<Reference> cell = new ArrayList<Reference>();
                 if (tc instanceof TableExpressionColumn && !((TableExpressionColumn)tc).iterate) {

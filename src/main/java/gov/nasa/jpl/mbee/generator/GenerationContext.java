@@ -47,34 +47,34 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  */
 public class GenerationContext {
 
-    private Stack<List<Element>> targets;
+    private Stack<List<Object>> targets;
     private ActivityNode         current;
     private DocumentValidator    validator;
     private GUILog               log;
 
-    public GenerationContext(Stack<List<Element>> t, ActivityNode a, DocumentValidator dv, GUILog l) {
+    public GenerationContext(Stack<List<Object>> t, ActivityNode a, DocumentValidator dv, GUILog l) {
         targets = t;
         current = a;
         validator = dv;
         log = l;
     }
 
-    public GenerationContext(Stack<List<Element>> t, ActivityNode a, GUILog l) {
+    public GenerationContext(Stack<List<Object>> t, ActivityNode a, GUILog l) {
         targets = t;
         current = a;
         validator = null;
         log = l;
     }
 
-    public void pushTargets(List<Element> t) {
+    public void pushTargets(List<Object> t) {
         targets.push(t);
     }
 
-    public List<Element> peekTargets() {
+    public List<Object> peekTargets() {
         return targets.peek();
     }
 
-    public List<Element> popTargets() {
+    public List<Object> popTargets() {
         return targets.pop();
     }
 
@@ -82,7 +82,7 @@ public class GenerationContext {
         return targets.isEmpty();
     }
 
-    public Stack<List<Element>> getTargets() {
+    public Stack<List<Object>> getTargets() {
         return targets;
     }
 

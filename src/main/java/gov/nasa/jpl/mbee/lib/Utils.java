@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
@@ -150,10 +151,10 @@ public class Utils {
      * @param elements
      * @return
      */
-    public static List<Element> removeDuplicates(Collection<Element> elements) {
-        Set<Element> added = new HashSet<Element>();
-        List<Element> res = new ArrayList<Element>();
-        for (Element e: elements) {
+    public static <T> List<T> removeDuplicates(Collection<T> elements) {
+        Set<T> added = new HashSet<T>();
+        List<T> res = new ArrayList<T>();
+        for (T e: elements) {
             if (!added.contains(e)) {
                 res.add(e);
                 added.add(e);
@@ -1403,11 +1404,11 @@ public class Utils {
      * @param e
      * @return
      */
-    public static List<Element> sortByName(Collection<? extends Element> e) {
-        List<Element> n = new ArrayList<Element>(e);
-        Collections.sort(n, new Comparator<Element>() {
+    public static <T, TT extends T> List<T> sortByName(Collection<TT> e) {
+        List<T> n = new ArrayList<T>(e);
+        Collections.sort(n, new Comparator<T>() {
             @Override
-            public int compare(Element o1, Element o2) {
+            public int compare(T o1, T o2) {
                 if (o1 == o2)
                     return 0;
                 if (o1 == null)
@@ -1853,6 +1854,76 @@ public class Utils {
             }
         }
         return null;
+    }
+
+    public static Map< Element, Map< String, Collection< Element > > > nameOrIdSearchOwnerCache =
+            new HashMap< Element, Map<String, Collection<Element> > >();
+    public static Map< String, Collection< Element > > nameOrIdSearchCache =
+            new HashMap< String, Collection< Element > >();
+    public static Map< String, Element > nameOrIdSingleElementSearchCache =
+            new HashMap< String, Element >();
+    public static Map< Element, Map< String, Element > > nameOrIdSingleElementSearchOwnerCache =
+            new HashMap< Element, Map< String, Element > >();
+    
+    public static List<Element> findByName( String pattern,
+                                            boolean getJustFirst ) {
+        // check cache
+        if ( getJustFirst ) {
+            Element e = nameOrIdSingleElementSearchCache.get( pattern );
+            if ( e != null ) return Utils2.newList( e );
+        } else {
+            Collection< Element > res = nameOrIdSearchCache.get( pattern );
+            return Utils2.asList( res );
+        }
+        
+        // start at root and search recursively through children
+        if ( Utils2.isNullOrEmpty( pattern ) ) return null;
+        Element root = getRootElement();
+        List< Element > results = findByName(root, pattern, getJustFirst );
+        nameOrIdSearchCache.put( pattern, results );
+        return results;
+    }
+    
+    public static List< Element > findByName( Element owner,
+                                              String pattern,
+                                              boolean getJustFirst ) {
+        // check cache
+        if ( getJustFirst ) {
+            Element e = Utils2.get( nameOrIdSingleElementSearchOwnerCache,
+                                    owner, pattern );
+            if ( e != null ) return Utils2.newList( e );
+        } else {
+            Collection< Element > res =
+                    Utils2.get( nameOrIdSearchOwnerCache, owner, pattern );
+            return Utils2.asList( res );
+        }
+
+        // check immediate children
+        List<Element> results = new ArrayList< Element >();
+        for (Element e: owner.getOwnedElement()) {
+            if (e instanceof NamedElement) {
+                Pattern p = Pattern.compile(pattern);
+                Matcher matcher = p.matcher(((NamedElement)e).getName());
+                if ( matcher.matches() ) {
+                    results.add( e );
+//                    Utils2.add( nameOrIdSearchOwnerCache, owner, pattern, e );
+                    if ( getJustFirst ) {
+                        nameOrIdSingleElementSearchCache.put( pattern, e );
+                        return results;
+                    }
+                }
+            }
+        }
+        // check children of children
+        for (Element e: owner.getOwnedElement()) {
+            results.addAll( findByName(e, pattern, getJustFirst) );
+            if ( getJustFirst && results.size() > 0 ) {
+                Utils2.put( nameOrIdSingleElementSearchOwnerCache, owner, pattern, e );
+                return results;
+            }
+        }
+        Utils2.put( nameOrIdSearchOwnerCache, owner, pattern, results );
+        return results;
     }
 
     public static Project getProject() {

@@ -47,6 +47,8 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 // import org.apache.commons.lang.StringUtils;
 
 /**
@@ -510,6 +512,25 @@ public class Utils2 {
         if (c instanceof List)
             return (List<T>)c;
         List<T> list = new ArrayList<T>(c);
+        return list;
+    }
+
+    /**
+     * @param c
+     * @param cls
+     * @return a new {@link List} containing
+     *         the elements of c cast to type V
+     */
+    public static <V, T> List<V> asList( Collection<T> c, Class<V> cls ) {
+        List<V> list = new ArrayList< V >();
+        for ( T t : c ) {
+            if (t == null || cls == null || cls.isAssignableFrom( t.getClass() ) ) {
+                try {
+                    V v = cls.cast( t );
+                    list.add( v );
+                } catch ( ClassCastException e ) {}
+            }
+        }
         return list;
     }
 

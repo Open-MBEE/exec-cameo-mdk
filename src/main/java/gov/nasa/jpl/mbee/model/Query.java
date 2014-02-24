@@ -51,15 +51,15 @@ public abstract class Query extends DocGenElement implements Generatable {
      * The elements passed into this query. These are magicdraw elements
      * resulting from collect/filter/sort actions
      */
-    protected List<Element> targets;
+    protected List<Object> targets;
     protected List<String>  titles;
     protected boolean       sortElementsByName = false;
 
-    public void setTargets(List<Element> t) {
+    public void setTargets(List<Object> t) {
         targets = t;
     }
 
-    public List<Element> getTargets() {
+    public List<Object> getTargets() {
         return targets;
     }
 

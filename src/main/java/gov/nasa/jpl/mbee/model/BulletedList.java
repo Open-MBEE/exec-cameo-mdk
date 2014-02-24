@@ -35,6 +35,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 
@@ -114,17 +115,22 @@ public class BulletedList extends Table {
             DBList l = new DBList();
             res.add(l);
             l.setOrdered(isOrderedList());
-            List<Element> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
+            List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
             if (isShowTargets() || isIncludeDoc()) {
 
-                for (Element e: targets) {
+                for (Object o: targets) {
                     DBListItem li = new DBListItem();
                     l.addElement(li);
-                    if (isShowTargets() && e instanceof NamedElement) {
-                        li.addElement(new DBParagraph(((NamedElement)e).getName(), e, From.NAME));
+                    if ( !( o instanceof Element ) ) {
+                        li.addElement( new DBText( o ) );
+                        continue;
                     }
-                    if (isIncludeDoc() && !ModelHelper.getComment(e).equals("")) {
-                        li.addElement(new DBParagraph(ModelHelper.getComment(e), e, From.DOCUMENTATION));
+                    Element e = (Element)o;
+                    if (isShowTargets() && e instanceof NamedElement) {
+                        li.addElement(new DBParagraph(((NamedElement)e).getName(), (NamedElement)e, From.NAME));
+                    }
+                    if (isIncludeDoc() && (e instanceof Element) && !ModelHelper.getComment((Element)e).equals("")) {
+                        li.addElement(new DBParagraph(ModelHelper.getComment((Element)e), (Element)e, From.DOCUMENTATION));
                     }
                     if (getStereotypeProperties() != null && !getStereotypeProperties().isEmpty()) {
                         if (isShowStereotypePropertyNames()) {
@@ -151,7 +157,11 @@ public class BulletedList extends Table {
                     }
                 }
             } else {
-                for (Element e: targets) {
+                for (Object o: targets) {
+                    if ( !( o instanceof Element ) ) {
+                        continue;
+                    }
+                    Element e = (Element)o;
                     if (getStereotypeProperties() != null && !getStereotypeProperties().isEmpty()) {
                         if (isShowStereotypePropertyNames()) {
                             for (Property p: getStereotypeProperties()) {
