@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
@@ -167,14 +168,19 @@ public class ExportUtility {
                 JOptionPane
                         .showMessageDialog(null,
                                 "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
-                return null;
+                url = null;
             }
         } else {
             JOptionPane
                     .showMessageDialog(null,
                             "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
-            return null;
+            url = null;
         }
+        if (url == null && MDUtils.isDeveloperMode()) {
+            url = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the editor URL:");  
+        }
+        if (url == null || url.equals(""))
+            return null;
         return url;
     }
     
@@ -187,8 +193,13 @@ public class ExportUtility {
         if (site == null || site.equals("")) {
             JOptionPane.showMessageDialog(null,
                     "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
-                return null;
+                site = null;
         }
+        if (site == null && MDUtils.isDeveloperMode()) {
+            site = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:");
+        }
+        if (site == null || site.equals(""))
+            return null;
         return url + "/javawebscripts/sites/" + site;
         
         //return url + "/javawebscripts/sites/europa";
