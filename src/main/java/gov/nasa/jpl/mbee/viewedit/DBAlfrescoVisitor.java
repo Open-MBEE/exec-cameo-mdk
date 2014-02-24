@@ -39,6 +39,9 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -365,6 +368,19 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             ExportUtility.fillElement(target, targetInfo, view, viewpoint);
             elements.put(source.getID(), sourceInfo);
             elements.put(target.getID(), targetInfo);
+        }
+        if (e instanceof Property && ((Property)e).getDefaultValue() instanceof ElementValue) {
+            Element value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
+            addToElements(value);
+        }
+        if (e instanceof Slot) {
+            if (!((Slot)e).getValue().isEmpty() && ((Slot)e).getValue().get(0) instanceof ElementValue) {
+                for (Element val: ((Slot)e).getValue()) {
+                    if (val instanceof ElementValue && ((ElementValue)val).getElement() != null) {
+                        addToElements(((ElementValue)val).getElement());
+                    }
+                }
+            }
         }
     }
     

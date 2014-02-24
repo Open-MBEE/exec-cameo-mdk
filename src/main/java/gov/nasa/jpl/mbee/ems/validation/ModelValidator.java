@@ -247,8 +247,13 @@ public class ModelValidator {
     
     private void checkElement(Element e, JSONObject elementInfo) {
         String elementDoc = ModelHelper.getComment(e);
-        String elementDocClean = Utils.stripHtmlWrapper(elementDoc);
+        String elementDocClean = Utils.stripHtmlWrapper(elementDoc).replace(" class=\"pwrapper\"", "");
         String elementName = null;
+        String webDoc = (String)elementInfo.get("documentation");
+        if (webDoc != null) {
+            webDoc = webDoc.replace(" class=\"pwrapper\"", "");
+            elementInfo.put("documentation", webDoc);
+        }
         if (e instanceof NamedElement) {
             elementName = ((NamedElement)e).getName();
         }
@@ -259,9 +264,9 @@ public class ModelValidator {
             v.addAction(new ExportName((NamedElement)e));
             nameDiff.addViolation(v);
         }
-        if (elementDoc != null && !(elementInfo.get("documentation") == null && elementDoc.equals("")) && !elementDocClean.equals(elementInfo.get("documentation"))) {
+        if (elementDoc != null && !(webDoc == null && elementDoc.equals("")) && !elementDocClean.equals(webDoc)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
-            v.addAction(new ImportDoc(e, (String)elementInfo.get("documentation"), result));
+            v.addAction(new ImportDoc(e, webDoc, result));
             v.addAction(new ExportDoc(e));
             docDiff.addViolation(v);
         }
@@ -346,8 +351,11 @@ public class ModelValidator {
         String typeMismatchMessage = "[VALUE] value spec types don't match";
         if (valueType == PropertyValueType.LiteralString) {
             if (vs instanceof LiteralString) {
-                if (!((String)value.get(0)).equals(((LiteralString)vs).getValue())) {
-                    message = "[VALUE] model: " + truncate(((LiteralString)vs).getValue()) + ", web: " + truncate(value.toString());
+                String modelString = Utils.stripHtmlWrapper(((LiteralString)vs).getValue()).replace(" class=\"pwrapper\"", "");
+                String webString = ((String)value.get(0)).replace(" class=\"pwrapper\"", "");
+                value.set(0, webString);
+                if (!modelString.equals(webString)) {
+                    message = "[VALUE] model: " + truncate(modelString) + ", web: " + truncate(webString);
                 }
             } else {
                 message = typeMismatchMessage;
@@ -450,7 +458,10 @@ public class ModelValidator {
         if (valueType == PropertyValueType.LiteralString) {
             if (vs.get(0) instanceof LiteralString) {
                 for (int i = 0; i < vs.size(); i++) {
-                    if (!((String)value.get(i)).equals(((LiteralString)vs.get(i)).getValue())) {
+                    String modelString = Utils.stripHtmlWrapper(((LiteralString)vs.get(i)).getValue()).replace(" class=\"pwrapper\"", "");
+                    String webString = ((String)value.get(i)).replace(" class=\"pwrapper\"", "");
+                    value.set(i, webString);
+                    if (!modelString.equals(webString)) {
                         message = badMessage;
                         break;
                     }

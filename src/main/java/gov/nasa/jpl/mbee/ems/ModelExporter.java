@@ -40,8 +40,10 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
@@ -111,7 +113,19 @@ public class ModelExporter {
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
-        
+        if (e instanceof Property && ((Property)e).getDefaultValue() instanceof ElementValue) {
+            Element value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
+            addToElements(value, 0);
+        }
+        if (e instanceof Slot) {
+            if (!((Slot)e).getValue().isEmpty() && ((Slot)e).getValue().get(0) instanceof ElementValue) {
+                for (Element val: ((Slot)e).getValue()) {
+                    if (val instanceof ElementValue && ((ElementValue)val).getElement() != null) {
+                        addToElements(((ElementValue)val).getElement(), 0);
+                    }
+                }
+            }
+        }
         if ((depth != 0 && curdepth > depth) || curdepth == 0)
             return true;
         //JSONArray children = new JSONArray();
