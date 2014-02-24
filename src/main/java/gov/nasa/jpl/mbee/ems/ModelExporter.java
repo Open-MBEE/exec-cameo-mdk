@@ -33,6 +33,8 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -113,7 +115,8 @@ public class ModelExporter {
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
-        elements.putAll(ExportUtility.getReferencedElements(e));
+        if (e instanceof Property || e instanceof Slot)
+            elements.putAll(ExportUtility.getReferencedElements(e));
         if ((depth != 0 && curdepth > depth) || curdepth == 0)
             return true;
         //JSONArray children = new JSONArray();
