@@ -388,8 +388,13 @@ public class TableStructure extends Table {
             int start = startIndex;
             DBTableEntry entry = new DBTableEntry();
             entry.addElement(new DBText(tc.name));
+            int i = 0;
             for (TableColumn ctc: ((TableColumnGroup)tc).childColumns) {
-                start = addHeader(ctc, header, curDepth+1, start);
+                if (i == 0)
+                    start = addHeader(ctc, header, curDepth+1, start);
+                else
+                    start = addHeader(ctc, header, curDepth+1, start+1);
+                i++;
             }
             entry.setNamest(Integer.toString(startIndex));
             entry.setNameend(Integer.toString(start));
