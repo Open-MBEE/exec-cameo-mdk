@@ -39,7 +39,6 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.ocl.OCLSyntaxHelper;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
-import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -73,7 +72,6 @@ public class OclQueryAction extends MDAction {
     protected LinkedList<String> inputHistory     = new LinkedList<String>();
     protected TreeSet<String>    pastInputs       = new TreeSet<String>();
     protected LinkedList<String> choices          = new LinkedList<String>();
-    protected int                maxChoices       = 10;
 
     //protected static boolean selectionInDiagram = true;
     
@@ -94,6 +92,7 @@ public class OclQueryAction extends MDAction {
     public static class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
 
         private List<Element> context = null;
+        public List<String> choiceStrings = new LinkedList< String >();
 
         public ProcessOclQuery() {
             super();
@@ -276,11 +275,10 @@ public class OclQueryAction extends MDAction {
                         + EmfUtils.toString(elem);
                 Debug.error(false, false, errorMsg);
             }
+            choiceStrings.clear();
             if (evaluator != null)
-                Debug.outln(evaluator.commandCompletionChoiceStrings(null, elem, oclString)// ,
-                                                                                           // 3
-                                                                                           // )
-                        .toString());
+                choiceStrings.addAll(evaluator.commandCompletionChoiceStrings(null, elem, oclString) );
+                Debug.outln(choiceStrings.toString());
             return outputList;
         }
 
@@ -388,6 +386,11 @@ public class OclQueryAction extends MDAction {
             return s;
         }
 
+        @Override
+        public List< String > getChoiceStrings() {
+            return choiceStrings;
+        }
+
     }
 
     @SuppressWarnings( "deprecation" )
@@ -409,6 +412,7 @@ public class OclQueryAction extends MDAction {
             if ( useNewOclEvaluator  ) {
                 boolean selectionInDiagram = true;
                 boolean selectionInBrowser = false;
+    dialog = null;
                 if ( dialog == null ) {
                     dialog = new OclEvaluatorDialog( owner, "OCL Evaluation" );
                 } else if ( Configurator.isInvokedFromMainMenu() ) {

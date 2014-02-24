@@ -155,6 +155,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         if (lastInput != null) {
             Object result = processor.process(lastInput);
             editableListPanel.setResultPanel(result);
+            editableListPanel.setChoices( processor.getChoiceStrings() );
         }
         inputHistory.push(lastInput);
         if (pastInputs.contains(lastInput)) {

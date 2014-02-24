@@ -486,8 +486,8 @@ public class OclEvaluator {
             parm.setName("toLog");
             doi.addParameter(parm, OCLStandardLibraryImpl.INSTANCE.getOclAny());
         }
-        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getT());
-        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getT());
+        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
 
         // essentially set the actual operation as function pointer
         doi.setOperation(new CallOperation() {
@@ -890,7 +890,7 @@ public class OclEvaluator {
             EObject context, String oclInput) {
         getHelper().setContext(context == null ? null : context.eClass());
         List<Choice> choices = getHelper().getSyntaxHelp(ConstraintKind.INVARIANT, oclInput);
-        Debug.outln("Completion choices for OCL expression \"" + oclInput + "\" = " + choices);
+        //Debug.outln("Completion choices for OCL expression \"" + oclInput + "\" = " + choices);
         return choices;
     }
 
@@ -930,12 +930,12 @@ public class OclEvaluator {
 
     public List<String> commandCompletionChoiceStrings(OCLHelper<EClassifier, ?, ?, Constraint> helper,
             EObject context, String oclInput) {
-        boolean wasOn = Debug.isOn();
-        Debug.turnOn();
+//        boolean wasOn = Debug.isOn();
+//        Debug.turnOn();
         List<String> choiceList = new ArrayList<String>();
         List<Choice> choices = commandCompletionChoices(helper, context, oclInput);
         for (Choice next: choices) {
-            choiceList.add(next.getName());
+            choiceList.add(next.getName() + " : " + next.getDescription());
             switch (next.getKind()) {
                 case OPERATION:
                 case SIGNAL:
@@ -954,8 +954,8 @@ public class OclEvaluator {
                     break;
             }
         }
-        if (!wasOn)
-            Debug.turnOff();
+//        if (!wasOn)
+//            Debug.turnOff();
         Debug.outln("choices = " + choiceList.toString());
         return choiceList;
     }
