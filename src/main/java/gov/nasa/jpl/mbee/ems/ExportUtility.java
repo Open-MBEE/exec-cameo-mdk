@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -72,9 +73,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -690,10 +693,45 @@ public class ExportUtility {
             return false;
         if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
             return false;
-        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty())
+        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty() && !(e instanceof EnumerationLiteral))
             return false;
         if (e instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)e).getDefiningFeature().getID()))
             return false;
         return true;
     }
+    
+    public static Map<String, JSONObject> getReferencedElements(Element e) {
+        Stereotype view = Utils.getViewStereotype();
+        Stereotype viewpoint = Utils.getViewpointStereotype();
+        Map<String, JSONObject> result = new HashMap<String, JSONObject>();
+        if (e instanceof Property) {
+            Element value = null;
+            if (((Property)e).getDefaultValue() instanceof ElementValue) {
+                value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
+            } else if (((Property)e).getDefaultValue() instanceof InstanceValue) {
+                value = ((InstanceValue)((Property)e).getDefaultValue()).getInstance();
+            }
+            if (value != null) {
+                JSONObject j = new JSONObject();
+                fillElement(value, j, view, viewpoint);
+                result.put(value.getID(), j);
+            }
+        } else if (e instanceof Slot) {
+            for (ValueSpecification vs: ((Slot)e).getValue()) {
+                Element value = null;
+                if (vs instanceof ElementValue) {
+                    value = ((ElementValue)vs).getElement();
+                } else if (vs instanceof InstanceValue) {
+                    value = ((InstanceValue)vs).getInstance();
+                }
+                if (value != null) {
+                    JSONObject j = new JSONObject();
+                    fillElement(value, j, view, viewpoint);
+                    result.put(value.getID(), j);
+                }
+            }
+        }
+        return result;
+    }
+    
 }

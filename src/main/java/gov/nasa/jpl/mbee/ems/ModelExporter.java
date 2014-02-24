@@ -113,19 +113,7 @@ public class ModelExporter {
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
-        if (e instanceof Property && ((Property)e).getDefaultValue() instanceof ElementValue) {
-            Element value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
-            addToElements(value, 0);
-        }
-        if (e instanceof Slot) {
-            if (!((Slot)e).getValue().isEmpty() && ((Slot)e).getValue().get(0) instanceof ElementValue) {
-                for (Element val: ((Slot)e).getValue()) {
-                    if (val instanceof ElementValue && ((ElementValue)val).getElement() != null) {
-                        addToElements(((ElementValue)val).getElement(), 0);
-                    }
-                }
-            }
-        }
+        elements.putAll(ExportUtility.getReferencedElements(e));
         if ((depth != 0 && curdepth > depth) || curdepth == 0)
             return true;
         //JSONArray children = new JSONArray();

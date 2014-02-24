@@ -369,19 +369,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             elements.put(source.getID(), sourceInfo);
             elements.put(target.getID(), targetInfo);
         }
-        if (e instanceof Property && ((Property)e).getDefaultValue() instanceof ElementValue) {
-            Element value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
-            addToElements(value);
-        }
-        if (e instanceof Slot) {
-            if (!((Slot)e).getValue().isEmpty() && ((Slot)e).getValue().get(0) instanceof ElementValue) {
-                for (Element val: ((Slot)e).getValue()) {
-                    if (val instanceof ElementValue && ((ElementValue)val).getElement() != null) {
-                        addToElements(((ElementValue)val).getElement());
-                    }
-                }
-            }
-        }
+        if (e instanceof Property || e instanceof Slot)
+            elements.putAll(ExportUtility.getReferencedElements(e));
     }
     
     public JSONObject getElements() {

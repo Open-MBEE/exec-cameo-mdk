@@ -82,19 +82,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            if (e instanceof Property && ((Property)e).getDefaultValue() instanceof ElementValue) {
-                Element value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
-                infos.add(getInfo(value));//addToElements(value, 0);
-            }
-            if (e instanceof Slot) {
-                if (!((Slot)e).getValue().isEmpty() && ((Slot)e).getValue().get(0) instanceof ElementValue) {
-                    for (Element val: ((Slot)e).getValue()) {
-                        if (val instanceof ElementValue && ((ElementValue)val).getElement() != null) {
-                            infos.add(getInfo(((ElementValue)val).getElement()));//addToElements(((ElementValue)val).getElement(), 0);
-                        }
-                    }
-                }
-            }
+            if (e instanceof Property || e instanceof Slot)
+                infos.addAll(ExportUtility.getReferencedElements(e).values());
             JSONObject info = getInfo(e);
             infos.add(info);
         }
@@ -119,20 +108,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         JSONObject info = getInfo(element);
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        
-        if (element instanceof Property && ((Property)element).getDefaultValue() instanceof ElementValue) {
-            Element value = ((ElementValue)((Property)element).getDefaultValue()).getElement();
-            elements.add(getInfo(value));//addToElements(value, 0);
-        }
-        if (element instanceof Slot) {
-            if (!((Slot)element).getValue().isEmpty() && ((Slot)element).getValue().get(0) instanceof ElementValue) {
-                for (Element val: ((Slot)element).getValue()) {
-                    if (val instanceof ElementValue && ((ElementValue)val).getElement() != null) {
-                        elements.add(getInfo(((ElementValue)val).getElement()));//addToElements(((ElementValue)val).getElement(), 0);
-                    }
-                }
-            }
-        }
+        if (element instanceof Property || element instanceof Slot)
+            elements.addAll(ExportUtility.getReferencedElements(element).values());
         elements.add(info);
         send.put("elements", elements);
         String url = ExportUtility.getPostElementsUrl();
