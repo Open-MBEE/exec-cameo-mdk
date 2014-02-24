@@ -319,7 +319,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
             completionsPane = createEditorPane(" ");
             resultScrollPane = new JScrollPane(resultPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            completionsScrollPane = new JScrollPane(resultPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            completionsScrollPane = new JScrollPane(completionsPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
             add(label);
@@ -465,7 +465,13 @@ public class RepeatInputComboBoxDialog implements Runnable {
         }
 
         public void setChoices( List< String > choiceStrings ) {
-            setTextInPanel( completionsScrollPane, completionsScrollPane, MoreToString.Helper.toString( choiceStrings, false, true, null, null, "(", "\n", ")", false ) );
+            setTextInPanel( completionsPane,
+                            completionsScrollPane,
+                            "completion choices:\n"
+                            + MoreToString.Helper.toString( choiceStrings,
+                                                            false, true, null,
+                                                            null, "", "\n * ", "",
+                                                            false ) );
         }
 
     }
