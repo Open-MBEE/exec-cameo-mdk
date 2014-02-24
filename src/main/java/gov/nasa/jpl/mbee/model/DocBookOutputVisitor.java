@@ -94,7 +94,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         book.setRevisionHistory(doc.getRevisionHistory());
         book.setUseDefaulStylesheet(doc.getUseDefaultStylesheet());
         book.setLogoSize(doc.getLogoSize());
-
+        book.setIndex(doc.isIndex());
         parent.push(book);
         visitChildren(doc);
     }
