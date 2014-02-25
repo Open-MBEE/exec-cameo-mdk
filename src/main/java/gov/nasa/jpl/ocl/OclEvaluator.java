@@ -777,6 +777,20 @@ public class OclEvaluator {
     }
 
     /**
+     * Add n(), name(), and names() OCL shortcuts with and without arguments.
+     * 
+     * @param envFactory
+     */
+    protected static void addOOperation(DgEnvironmentFactory envFactory) {
+
+        EClassifier callerType = getGenericCallerType();
+        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
+        EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+        addOperation(new String[] {"owner", "o"}, callerType, returnType, stringType, "name", true, true,
+                CallReturnType.OWNER, envFactory);
+    }
+
+    /**
      * @param exprString
      *            an OCL expression
      * @return an error message if the parse failed; otherwise return null
@@ -905,6 +919,7 @@ public class OclEvaluator {
         addTOperation( getEnvironmentFactory() );
         addSOperation( getEnvironmentFactory() );
         addNOperation( getEnvironmentFactory() );
+        addOOperation( getEnvironmentFactory() );
         addVOperation( getEnvironmentFactory() );
 
         addExpressionOperations( getEnvironmentFactory() );

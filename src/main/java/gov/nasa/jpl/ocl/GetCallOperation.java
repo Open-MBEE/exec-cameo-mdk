@@ -59,7 +59,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class GetCallOperation implements CallOperation {
 
     public enum CallReturnType {
-        SELF, NAME, TYPE, VALUE, MEMBER, RELATIONSHIP
+        SELF, NAME, TYPE, VALUE, MEMBER, RELATIONSHIP, OWNER
     };
 
     private boolean       collect                    = true;                     // TODO
@@ -145,6 +145,25 @@ public class GetCallOperation implements CallOperation {
                 // }
                 // added = adder.add( source, resultList );
                 break;
+            case OWNER:
+                if (loop) {
+                    objectToAdd = source;
+                } else {
+                    if ( !( source instanceof Element ) ) {
+                        objectToAdd = null;
+                    } else {
+                        List<Element> owners = new ArrayList< Element >();
+                        Element owner = ((Element)source).getOwner();
+                        while ( owner != null ) {
+                            owners.add( owner );
+                            if ( onlyOneForAll || onlyOnePer ) {
+                                break;
+                            }
+                            owner = owner.getOwner(); 
+                        }
+                        objectToAdd = owners;
+                    }
+                }
             case NAME:
                 // if ( onlyOnePer )
                 if (loop) {
