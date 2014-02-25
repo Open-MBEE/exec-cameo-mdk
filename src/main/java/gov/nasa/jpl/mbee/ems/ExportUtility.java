@@ -448,7 +448,7 @@ public class ExportUtility {
     }
     
     @SuppressWarnings("unchecked")
-    private static void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
+    public static void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
         if (vs instanceof LiteralBoolean) {
             elementInfo.put("valueType", PropertyValueType.LiteralBoolean.toString());
             value.add(((LiteralBoolean)vs).isValue());
@@ -472,6 +472,12 @@ public class ExportUtility {
             Element ev = ((ElementValue)vs).getElement();
             if (ev != null) {
                 value.add(ev.getID());
+            }
+        } else if (vs instanceof InstanceValue) {
+            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
+            Element ev = ((InstanceValue)vs).getInstance();
+            if (ev != null) {
+                value.add(ExportUtility.getElementID(ev));
             }
         }
         elementInfo.put("value", value);

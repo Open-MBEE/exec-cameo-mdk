@@ -36,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -77,7 +78,7 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
                 if (!e.isEditable()) {
                     continue;
                 }
-                String resultDoc = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("body");
+                String resultDoc = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("body");
                 if (resultDoc == null)
                     continue;
                 ((Comment)e).setBody(Utils.addHtmlWrapper(resultDoc));
@@ -115,7 +116,7 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
         try {
             element.setBody(Utils.addHtmlWrapper(doc));
             element.getAnnotatedElement().clear();
-            JSONArray annotatedElements = (JSONArray)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(element.getID())).get("annotatedElements");
+            JSONArray annotatedElements = (JSONArray)((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID()).get("annotatedElements");
             if (annotatedElements != null) {
                 for (String eid: (List<String>)annotatedElements) {
                     Element aelement = (Element)Application.getInstance().getProject().getElementByID(eid);

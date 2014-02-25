@@ -36,6 +36,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.json.simple.JSONObject;
 
@@ -74,7 +75,7 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
                 if (!e.isEditable()) {
                     continue;
                 }
-                String resultName = ExportUtility.unescapeHtml((String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("name"));
+                String resultName = ExportUtility.unescapeHtml((String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("name"));
                 if (resultName == null)
                     continue;
                 ((NamedElement)e).setName(resultName);

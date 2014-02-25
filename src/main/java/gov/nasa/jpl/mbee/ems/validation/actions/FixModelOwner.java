@@ -35,6 +35,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.json.simple.JSONObject;
 
@@ -74,7 +75,7 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
                 if (!e.isEditable()) {
                     continue;
                 }
-                String ownerID = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("owner");
+                String ownerID = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("owner");
                 if (ownerID == null)
                     continue;
                 Element own = (Element)prj.getElementByID(ownerID);

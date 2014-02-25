@@ -73,6 +73,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -396,6 +397,10 @@ public class ModelValidator {
                 if (((ElementValue)vs).getElement() == null || !ExportUtility.getElementID(((ElementValue)vs).getElement()).equals(value.get(0))) {
                     message = "[VALUE] model: " + ((ElementValue)vs).getElement() + ", web: " + value.toString();
                 }
+            } else if (vs instanceof InstanceValue) {
+                if (((InstanceValue)vs).getInstance() == null || !ExportUtility.getElementID(((InstanceValue)vs).getInstance()).equals(value.get(0))) {
+                    message = "[VALUE] model: " + ((ElementValue)vs).getElement() + ", web: " + value.toString();
+                }
             } else {
                 message = typeMismatchMessage;
             }
@@ -515,7 +520,14 @@ public class ModelValidator {
         } else if (valueType == PropertyValueType.ElementValue) {
             if (vs.get(0) instanceof ElementValue) {
                 for (int i = 0; i < vs.size(); i++) {
-                    if (((ElementValue)vs.get(i)).getElement() == null || !((ElementValue)vs.get(i)).getElement().getID().equals(value.get(i))) {
+                    if (((ElementValue)vs.get(i)).getElement() == null || !ExportUtility.getElementID(((ElementValue)vs.get(i)).getElement()).equals(value.get(i))) {
+                        message = badMessage;
+                        break;
+                    }
+                }
+            } else if (vs.get(0) instanceof InstanceValue) {
+                for (int i = 0; i < vs.size(); i++) {
+                    if (((InstanceValue)vs.get(i)).getInstance() == null || !ExportUtility.getElementID(((InstanceValue)vs.get(i)).getInstance()).equals(value.get(i))) {
                         message = badMessage;
                         break;
                     }

@@ -39,6 +39,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -49,6 +50,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -91,8 +94,8 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
                     Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
                     continue;
                 }
-                PropertyValueType valueType = PropertyValueType.valueOf((String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("valueType"));
-                JSONArray vals = (JSONArray)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("value");
+                PropertyValueType valueType = PropertyValueType.valueOf((String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("valueType"));
+                JSONArray vals = (JSONArray)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("value");
                 if (e instanceof Property) {
                     if (vals == null || vals.isEmpty()) {
                         ((Property)e).setDefaultValue(null);
@@ -208,6 +211,8 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         case ElementValue:
             if (newval instanceof ElementValue) {
                 ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+            } else if (newval instanceof InstanceValue) {
+                ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
             }
             newval = ef.createElementValueInstance();
             ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
@@ -224,7 +229,10 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         ValueSpecification newval = null; 
         if ( !Utils2.isNullOrEmpty( e.getValue() ) ) {
             for ( ValueSpecification v : e.getValue() ) {
-                if ( valueType == PropertyValueType.toPropertyValueType( v ) ) {
+                PropertyValueType modelType = PropertyValueType.toPropertyValueType( v );
+                if ( valueType == modelType ||
+                     valueType == PropertyValueType.ElementValue && v instanceof InstanceValue ||
+                     valueType == PropertyValueType.LiteralInteger && v instanceof LiteralUnlimitedNatural) {
                     newval = v;
                     break;
                 }
@@ -285,9 +293,21 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         case ElementValue:
             if (newval instanceof ElementValue) {
                 ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+                return;
+            } else if (newval instanceof InstanceValue) {
+                ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
+                return;
             }
             newval = ef.createElementValueInstance();
             ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+            break;
+        case InstanceValue:
+            if (newval instanceof InstanceValue) {
+                ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
+                return;
+            }
+            newval = ef.createInstanceValueInstance();
+            ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
             break;
         };
         if ( e.getValue() != null && e.getValue().isEmpty() ) {

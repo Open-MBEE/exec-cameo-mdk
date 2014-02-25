@@ -49,6 +49,7 @@ import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -130,20 +131,20 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         if (e instanceof Property) {
             ValueSpecification vs = ((Property)e).getDefaultValue();
             if (vs != null) {
-                addValues(e, value, elementInfo, vs);
+                ExportUtility.addValues(e, value, elementInfo, vs);
             }
         } else if (e instanceof Slot) {
             List<ValueSpecification> vsl = ((Slot)e).getValue();
             if (vsl != null && vsl.size() > 0) {
                 for (ValueSpecification vs: vsl) {
-                    addValues(e, value, elementInfo, vs);
+                    ExportUtility.addValues(e, value, elementInfo, vs);
                 }
             }
         }
         elementInfo.put("id", ExportUtility.getElementID(e));
         return elementInfo;
     }
-    
+/*    
     @SuppressWarnings("unchecked")
     private void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
         if (vs instanceof LiteralBoolean) {
@@ -170,7 +171,13 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
             if (ev != null) {
                 value.add(ExportUtility.getElementID(ev));
             }
+        } else if (vs instanceof InstanceValue) {
+            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
+            Element ev = ((InstanceValue)vs).getInstance();
+            if (ev != null) {
+                value.add(ExportUtility.getElementID(ev));
+            }
         }
         elementInfo.put("value", value);
-    }
+    }*/
 }
