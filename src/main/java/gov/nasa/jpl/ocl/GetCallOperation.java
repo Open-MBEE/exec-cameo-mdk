@@ -158,6 +158,7 @@ public class GetCallOperation implements CallOperation {
                         objectToAdd = owners;
                     }
                 }
+                break;
             case NAME:
                 // if ( onlyOnePer )
                 if (loop) {

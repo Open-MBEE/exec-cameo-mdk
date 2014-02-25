@@ -786,7 +786,7 @@ public class OclEvaluator {
         EClassifier callerType = getGenericCallerType();
         EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
         EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
-        addOperation(new String[] {"owner", "o"}, callerType, returnType, stringType, "name", true, true,
+        addOperation(new String[] {"owner", "o"}, callerType, returnType, stringType, "owner", true, true,
                 CallReturnType.OWNER, envFactory);
     }
 
