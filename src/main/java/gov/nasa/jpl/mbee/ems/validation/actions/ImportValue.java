@@ -211,8 +211,10 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         case ElementValue:
             if (newval instanceof ElementValue) {
                 ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+                return;
             } else if (newval instanceof InstanceValue) {
                 ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
+                return;
             }
             newval = ef.createElementValueInstance();
             ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
