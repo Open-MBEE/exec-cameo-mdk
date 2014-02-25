@@ -399,7 +399,7 @@ public class ModelValidator {
                 }
             } else if (vs instanceof InstanceValue) {
                 if (((InstanceValue)vs).getInstance() == null || !ExportUtility.getElementID(((InstanceValue)vs).getInstance()).equals(value.get(0))) {
-                    message = "[VALUE] model: " + ((ElementValue)vs).getElement() + ", web: " + value.toString();
+                    message = "[VALUE] model: " + ((InstanceValue)vs).getInstance() + ", web: " + value.toString();
                 }
             } else {
                 message = typeMismatchMessage;
