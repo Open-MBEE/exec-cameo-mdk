@@ -44,6 +44,8 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
@@ -282,6 +284,16 @@ public class OclQueryAction extends MDAction {
             choiceStrings.clear();
             if (evaluator != null)
                 choiceStrings.addAll(evaluator.commandCompletionChoiceStrings(null, completionSource, oclString) );
+                Collections.sort( choiceStrings, new Comparator< String >() {
+                    @Override
+                    public int compare( String o1, String o2 ) {
+                        if ( o1 == o2 ) return 0;
+                        if ( o1 == null ) return -1;
+                        if ( o2 == null ) return 1;
+                        o1 = o1.replaceFirst( "[^A-Za-z0-9]*", "" );
+                        o2 = o2.replaceFirst( "[^A-Za-z0-9]*", "" );
+                        return o1.compareTo( o2 );
+                    }} );
                 Debug.outln(choiceStrings.toString());
             return outputList;
         }
@@ -413,7 +425,7 @@ public class OclQueryAction extends MDAction {
             if ( useNewOclEvaluator  ) {
                 boolean selectionInDiagram = true;
                 boolean selectionInBrowser = false;
-//    dialog = null;
+    //dialog = null;  // comment this out -- only for debug
                 if ( dialog == null ) {
                     dialog = new OclEvaluatorDialog( owner, "OCL Evaluation" );
                 } else if ( Configurator.isInvokedFromMainMenu() ) {
