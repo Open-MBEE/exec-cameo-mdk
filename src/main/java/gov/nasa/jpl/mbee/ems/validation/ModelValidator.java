@@ -196,7 +196,7 @@ public class ModelValidator {
             checkElement(e, elementInfo);
             checked.add(e.getID());
         }
-        Set<String> elementsKeyedIds = elementsKeyed.keySet();
+        Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
         for (String elementsKeyedId: elementsKeyedIds) {
             Element e = ExportUtility.getElementFromID(elementsKeyedId);

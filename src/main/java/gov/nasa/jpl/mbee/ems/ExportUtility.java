@@ -97,6 +97,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class ExportUtility {
     public static Logger log = Logger.getLogger(ExportUtility.class);
     public static Map<String, Integer> mountedVersions;
+    private static String developerUrl = "https://sheldon.jpl.nasa.gov/alfresco/service";
+    private static String developerSite = "europa";
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", //stylesaver
@@ -177,10 +179,11 @@ public class ExportUtility {
             url = null;
         }
         if (url == null && MDUtils.isDeveloperMode()) {
-            url = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the editor URL:");  
+            url = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the editor URL:", developerUrl);  
         }
         if (url == null || url.equals(""))
             return null;
+        developerUrl = url;
         return url;
     }
     
@@ -196,10 +199,11 @@ public class ExportUtility {
                 site = null;
         }
         if (site == null && MDUtils.isDeveloperMode()) {
-            site = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:");
+            site = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
         }
         if (site == null || site.equals(""))
             return null;
+        developerSite = site;
         return url + "/javawebscripts/sites/" + site;
         
         //return url + "/javawebscripts/sites/europa";
