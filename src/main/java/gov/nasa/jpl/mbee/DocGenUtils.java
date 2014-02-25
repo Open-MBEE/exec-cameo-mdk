@@ -210,6 +210,46 @@ public class DocGenUtils {
         }
         return "";
     }
+    
+    public static Object getLiteralValue( Object s, boolean convertHtml ) {
+        if (s instanceof String) {
+            return fixString( s, convertHtml );
+        } else if (s instanceof Integer) {
+            return (Integer)s;
+        } else if (s instanceof InstanceValue) {
+            InstanceSpecification is = ((InstanceValue)s).getInstance();
+            if (is != null)
+                return getLiteralValue(is.getName(), convertHtml);
+        } else if (s instanceof ElementValue) {
+            Element e = ((ElementValue)s).getElement();
+            return getLiteralValue(e, convertHtml);
+        } else if (s instanceof LiteralBoolean) {
+            return ((LiteralBoolean)s).isValue();
+        } else if (s instanceof LiteralString) {
+            return ((LiteralString)s).getValue();
+        } else if (s instanceof LiteralInteger) {
+            return ((LiteralInteger)s).getValue();
+        } else if (s instanceof LiteralUnlimitedNatural) {
+            return ((LiteralUnlimitedNatural)s).getValue();
+        } else if (s instanceof LiteralReal) {
+            return ((LiteralReal)s).getValue();
+        } else if (s instanceof NamedElement) {
+            return ((NamedElement)s).getName();
+        } else if (s instanceof Comment) {
+            return getLiteralValue(((Comment)s).getBody(), convertHtml);
+        } else if (s instanceof StringProperty) {
+            return getLiteralValue(((StringProperty)s).getString(), convertHtml);
+        } else if (s instanceof NumberProperty) {
+            return ((NumberProperty)s).getValue();
+        } else if (s instanceof BooleanProperty) {
+            return ((BooleanProperty)s).getBooleanObject();
+        } else if (s instanceof ElementProperty) {
+            return getLiteralValue(((ElementProperty)s).getElement(), convertHtml);
+        } else if (s instanceof Slot) {
+            return slot2String((Slot)s);
+        }
+        return s;
+    }
 
     /**
      * gives sensible text representation for slot element

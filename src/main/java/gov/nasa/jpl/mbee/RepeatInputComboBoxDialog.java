@@ -33,6 +33,7 @@ import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
@@ -369,6 +370,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
             editorPane.setEditable(false);
             editorPane.setText(html);
             editorPane.setContentType("text/html");
+            editorPane.setBackground( new Color( 245, 255, 245 ) );
             return editorPane;
         }
 

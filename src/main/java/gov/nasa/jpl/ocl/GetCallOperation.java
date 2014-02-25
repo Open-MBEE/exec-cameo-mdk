@@ -28,10 +28,13 @@
  ******************************************************************************/
 package gov.nasa.jpl.ocl;
 
+import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.lib.CollectionAdder;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mbee.lib.Utils.AvailableAttribute;
+import gov.nasa.jpl.mgss.mbee.docgen.table.PropertiesTable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +45,9 @@ import org.eclipse.emf.ecore.EObject;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 /**
@@ -226,6 +232,30 @@ public class GetCallOperation implements CallOperation {
                 if (loop) {
                     objectToAdd = source;
                 } else {
+                    if (filter && source instanceof Element) {
+                        if (!Utils2.isNullOrEmpty(args)) {
+                            ArrayList<Object> objectTotAdd = new ArrayList<Object>();
+                            for ( Object arg : args ) {
+                                Property prop = null;
+                                if ( arg instanceof String ) {
+                                    if ( source instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class ) {
+                                        prop = PropertiesTable.getPropertyElement( (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class)source, Utils2.newList( (String)arg ), true );
+                                    } else {
+                                        
+                                    }
+                                }
+                                Utils.getElementPropertyValues( (Element)source, prop, true );
+                            }
+                        }
+                    }
+                    if ( source instanceof Property || source instanceof Slot ) {
+                        objectToAdd = Utils.getElementAttribute( (Element)source, AvailableAttribute.Value );
+                    } else if ( source instanceof ValueSpecification ) {
+                        objectToAdd = DocGenUtils.getLiteralValue(source, true);
+                    }
+//                    if ( objectToAdd != null ) {
+//                        objectToAdd = DocGenUtils.getLiteralValue(objectToAdd, true);
+//                    }
                     boolean one = (onlyOneForAll || (asCollection && coll != null && onlyOnePer))
                             && Utils2.isNullOrEmpty(filterArgs);
                     objectToAdd = EmfUtils.getValues(source, null, true, true, one, false, null);
@@ -285,7 +315,7 @@ public class GetCallOperation implements CallOperation {
             // TODO -- apply filter while collecting above for efficiency in
             // case returning only one!
             // REVIEW -- this todo above may already be done
-            if (filter) {
+            if (filter && resultType != CallReturnType.VALUE) {
                 if (!Utils2.isNullOrEmpty(args)) {
                     objectToAdd = EmfUtils.collectOrFilter(adder, objectToAdd, !filter,
                             (onlyOneForAll || (isCollection && onlyOnePer)), useName, useType, useValue,
