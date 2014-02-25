@@ -139,8 +139,6 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
                     addValues(e, value, elementInfo, vs);
                 }
             }
-        } else {
-            ExportUtility.fillElement(e, elementInfo, Utils.getViewStereotype(), Utils.getViewpointStereotype());
         }
         elementInfo.put("id", ExportUtility.getElementID(e));
         return elementInfo;
