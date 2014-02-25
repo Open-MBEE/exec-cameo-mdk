@@ -29,10 +29,15 @@
 package gov.nasa.jpl.mbee.model;
 
 import gov.nasa.jpl.mbee.generator.Generatable;
+import gov.nasa.jpl.mbee.lib.ClassUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -123,4 +128,37 @@ public abstract class Query extends DocGenElement implements Generatable {
     public void accept(IModelVisitor visitor) {
         visitor.visit(this);
     }
+    
+    protected static HashSet<Field> notToStringSet = new HashSet< Field >() {
+            private static final long serialVersionUID = -2943965696220565323L;
+            {
+                try{
+                    add(Query.class.getField( "sortElementsByName" ));
+                } catch( Exception e ) {
+                    e.printStackTrace();
+                }
+            }
+    };
+    protected Set<Field> notToString() {
+        return notToStringSet;
+    }
+    
+    @Override
+    public String toStringStart() {
+        StringBuffer sb = new StringBuffer();
+        sb.append( super.toStringStart() );
+        for ( Field f : getClass().getDeclaredFields() ) {
+            if ( notToString().contains( f ) ) {
+                continue;
+            }
+            f.setAccessible( true );
+            try {
+                sb.append( "," + f.getName() + "=" + f.get( this ) );
+            } catch ( IllegalArgumentException e ) {
+            } catch ( IllegalAccessException e ) {
+            }
+        }
+        return sb.toString();
+    }
+
 }

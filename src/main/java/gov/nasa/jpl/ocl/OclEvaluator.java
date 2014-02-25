@@ -31,6 +31,8 @@ package gov.nasa.jpl.ocl;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.generator.ViewParser;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
@@ -73,9 +75,11 @@ import org.eclipse.ocl.util.OCLUtil;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
@@ -578,32 +582,45 @@ public class OclEvaluator {
             public Object callOperation(Object source, Object[] args) {
                 
                 if ( !( source instanceof Element ) ) return null;
+                Element sourceElement = (Element)source;
+
+                // If the source is a view, parse it.
+                if ( sourceElement instanceof Class
+                        && StereotypesHelper.hasStereotypeOrDerived( sourceElement,
+                                                                     DocGen3Profile.viewStereotype ) ) {
+                    DocumentValidator dv = new DocumentValidator(sourceElement);
+                    DocumentGenerator dg =
+                            new DocumentGenerator( sourceElement, dv, null );
+                    ViewParser vp = new ViewParser( dg, true, true, dg.getDocument(), sourceElement );
+                    return vp.parse();
+                }
+                
+                // Need to parse the behavior of the Viewpoint, not the
+                // Viewpoint itself.
+                if ( sourceElement instanceof Class
+                     && StereotypesHelper.hasStereotypeOrDerived( sourceElement,
+                                                                  DocGen3Profile.viewpointStereotype ) ) {
+                    sourceElement = ((Class)sourceElement).getClassifierBehavior();
+                }
 
                 Object input = args[0];
-//                ActivityNode node = null;
-//                if ( source instanceof ActivityNode ) {
-//                    node = (ActivityNode)source;
-//                } else if ( source instanceof Activity ) {
-//                    Activity act = (Activity)source;
-//                } else {
-//                    // TODO -- either handle other sources or throw parse error
-//                    return null;
-//                }
 
                 // Allow for activity and target input to be reversed.
                 // For example, run may be called as 
                 //   viewpoint1.run(Sequence{element1, element2}) or as
                 //   Sequence{element1, element2}.run(viewpoint1)
-                if ( GeneratorUtils.findInitialNode((Element)source) == null
+                if ( GeneratorUtils.findInitialNode(sourceElement) == null
                      && input instanceof Element
                      && GeneratorUtils.findInitialNode( (Element)input ) != null ) {
                     // Change to run Collection of items together as a single
                     // input since user can use "." or "->" to specify to the Ocl
                     // parser which way to handle it.
                     runItemsInCollectionIndividually = false;
+                    // Call with swapped source/input, using the original source
+                    // since sourceElement may have been reassigned.
                     return callOperation( input, new Object[]{ source } );
                 }
-
+                
                 List<Object> inputs = new ArrayList< Object >();
                 if ( runItemsInCollectionIndividually 
                      && input instanceof Collection ) {
@@ -611,11 +628,12 @@ public class OclEvaluator {
                 } else {
                     inputs.add( input );
                 }
+                DocumentValidator dv = new DocumentValidator(sourceElement);
                 DocumentGenerator dg =
-                        new DocumentGenerator( (Element)source, null, null );
+                        new DocumentGenerator( sourceElement, dv, null );
                 dg.getContext().pushTargets( inputs );
                 Object result = 
-                        dg.parseActivityOrStructuredNode( (Element)source,
+                        dg.parseActivityOrStructuredNode( sourceElement,
                                                           dg.getDocument() );
                 return result;
             }

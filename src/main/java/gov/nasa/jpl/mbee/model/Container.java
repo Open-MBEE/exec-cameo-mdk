@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import gov.nasa.jpl.mbee.lib.MoreToString;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,5 +81,14 @@ public abstract class Container extends DocGenElement {
     public boolean isEmpty() {
         return children.isEmpty();
     }
+    
+    @Override
+    protected String toStringStart() {
+        return super.toStringStart() + "title=" + title;
+    }
 
+    @Override
+    protected String toStringEnd() {
+        return ",children=" + MoreToString.Helper.toString( children ) + super.toStringEnd();
+    }
 }
