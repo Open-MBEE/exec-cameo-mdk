@@ -31,6 +31,7 @@ package gov.nasa.jpl.ocl;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.lib.CollectionAdder;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.lib.Utils.AvailableAttribute;
@@ -232,30 +233,38 @@ public class GetCallOperation implements CallOperation {
                 if (loop) {
                     objectToAdd = source;
                 } else {
+                    objectToAdd = null;
                     if (filter && source instanceof Element) {
                         if (!Utils2.isNullOrEmpty(args)) {
                             ArrayList<Object> objectTotAdd = new ArrayList<Object>();
                             for ( Object arg : args ) {
                                 Property prop = null;
                                 if ( arg instanceof String ) {
-                                    if ( source instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class ) {
-                                        prop = PropertiesTable.getPropertyElement( (com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class)source, Utils2.newList( (String)arg ), true );
-                                    } else {
-                                        
-                                    }
+                                    objectToAdd =
+                                            Utils.getElementPropertyValues( (Element)source,
+                                                                            (String)arg,
+                                                                            true );
+                                } else if ( arg instanceof Property ) {
+                                    prop = (Property)arg;
+                                    objectToAdd =
+                                            Utils.getElementPropertyValues( (Element)source,
+                                                                            prop,
+                                                                            true );
                                 }
-                                Utils.getElementPropertyValues( (Element)source, prop, true );
                             }
                         }
                     }
-                    if ( source instanceof Property || source instanceof Slot ) {
-                        objectToAdd = Utils.getElementAttribute( (Element)source, AvailableAttribute.Value );
-                    } else if ( source instanceof ValueSpecification ) {
-                        objectToAdd = DocGenUtils.getLiteralValue(source, true);
+                    if ( Utils2.isNullOrEmpty( objectToAdd )
+                         && ( source instanceof Property || source instanceof Slot ) ) {
+                        objectToAdd =
+                                Utils.getElementAttribute( (Element)source,
+                                                           AvailableAttribute.Value );
                     }
-//                    if ( objectToAdd != null ) {
-//                        objectToAdd = DocGenUtils.getLiteralValue(objectToAdd, true);
-//                    }
+                    if ( Utils2.isNullOrEmpty( objectToAdd )
+                         && source instanceof ValueSpecification ) {
+                        objectToAdd =
+                                DocGenUtils.getLiteralValue( source, true );
+                    }
                     boolean one = (onlyOneForAll || (asCollection && coll != null && onlyOnePer))
                             && Utils2.isNullOrEmpty(filterArgs);
                     objectToAdd = EmfUtils.getValues(source, null, true, true, one, false, null);

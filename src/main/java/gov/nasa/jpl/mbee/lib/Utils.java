@@ -2602,6 +2602,41 @@ public class Utils {
         return getSlot(elem, prop);
     }
 
+    public static Property getClassProperty( Element elem, String propName,
+                                             boolean inherited ) {
+        for (Element e : elem.getOwnedElement() ) {
+            if ( e instanceof Property ) {
+                if ( ((Property)e).getName().equals( propName ) ) {
+                    return (Property)e;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Property getElementStereotypeProperty( Element elem,
+                                                         String propName ) {
+        List< Stereotype > stereotypes = StereotypesHelper.getStereotypes( elem );
+        for ( Stereotype stereotype : stereotypes ) {
+            Property prop = getStereotypePropertyByName( stereotype, propName );
+            if ( prop != null ) {
+                return prop;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the property of the stereotype by name.
+     * @param stereotype
+     * @param propName
+     * @return
+     */
+    public static Property getStereotypePropertyByName( Stereotype stereotype,
+                                                        String propName ) {
+        return StereotypesHelper.getPropertyByName( stereotype, propName );
+    }
+
     /**
      * Get the element's matching Slot or Properties.
      * 
@@ -2627,6 +2662,25 @@ public class Utils {
     }
 
     /**
+     * Get the element's matching Slot or Properties.
+     * 
+     * @param elem
+     *            the Element with the sought Properties.
+     * @param propName
+     *            the name of the Stereotype tag or Class Property
+     * @return a Property or Slot that corresponds to the input property
+     */
+    public static Element getElementProperty( Element elem, String propName ) {
+        Property prop = getElementStereotypeProperty(elem, propName);
+        if ( prop != null ) {
+            Element result = getElementProperty(elem, prop);
+            if ( result != null ) return result;
+        }
+        prop = getClassProperty( elem, propName, true );
+        return prop;
+    }
+    
+    /**
      * A list of property values will always be returned. Gets default value of
      * a stereotype property when there's no slot for the element. Class value
      * properties will be collected by name matching.
@@ -2640,6 +2694,8 @@ public class Utils {
      */
     public static List<Object> getElementPropertyValues(Element elem, Property prop,
             boolean allowStereotypeDefaultOrInherited) {
+        if ( elem == null ) return Collections.emptyList();
+        if ( prop == null ) return Collections.emptyList();
         List<Object> results = getStereotypePropertyValues(elem, prop, allowStereotypeDefaultOrInherited);
         if (!Utils2.isNullOrEmpty(results))
             return results;
@@ -2662,6 +2718,17 @@ public class Utils {
             }
         }
         return results;
+    }
+
+    public static List< Object > getElementPropertyValues( Element elem,
+                                                           String propName,
+                                                           boolean allowStereotypeDefaultOrInherited ) {
+        Property prop = getClassProperty( elem, propName, allowStereotypeDefaultOrInherited );
+        //return Utils2.newList( (Object)getClassPropertyValue( elem, prop, allowStereotypeDefaultOrInherited ) );
+        if ( prop == null ) {
+            prop = getElementStereotypeProperty( elem, propName );
+        }
+        return getElementPropertyValues( elem, prop, allowStereotypeDefaultOrInherited );
     }
 
     /**
@@ -2710,6 +2777,23 @@ public class Utils {
             }
         }
         return results;
+    }
+
+    /**
+     * Gets list of values for a stereotype property, supports derived
+     * properties in customizations
+     * 
+     * @param elem
+     * @param propName
+     * @param useDefaultIfNoSlot
+     * @return
+     */
+    public static List< Object > getStereotypePropertyValues( Element elem,
+                                                              String propName,
+                                                              boolean useDefaultIfNoSlot ) {
+        Property prop = getElementStereotypeProperty( elem, propName );
+        if ( prop == null ) return null;
+        return getStereotypePropertyValues( elem, prop, useDefaultIfNoSlot );
     }
 
     /*****************************************************************************************/
