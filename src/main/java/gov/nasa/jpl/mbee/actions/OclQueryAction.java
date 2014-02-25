@@ -413,7 +413,7 @@ public class OclQueryAction extends MDAction {
             if ( useNewOclEvaluator  ) {
                 boolean selectionInDiagram = true;
                 boolean selectionInBrowser = false;
-    dialog = null;
+//    dialog = null;
                 if ( dialog == null ) {
                     dialog = new OclEvaluatorDialog( owner, "OCL Evaluation" );
                 } else if ( Configurator.isInvokedFromMainMenu() ) {

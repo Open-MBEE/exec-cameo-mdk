@@ -59,6 +59,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.JWindow;
 import javax.swing.ScrollPaneConstants;
@@ -322,11 +323,13 @@ public class RepeatInputComboBoxDialog implements Runnable {
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             completionsScrollPane = new JScrollPane(completionsPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
+            JSplitPane splitPane = new JSplitPane( JSplitPane.VERTICAL_SPLIT, resultScrollPane, completionsScrollPane );
+            
             add(label);
             add(jcb);
-            add(resultScrollPane);
-            add(completionsScrollPane);
+            add(splitPane);
+//            add(resultScrollPane);
+//            add(completionsScrollPane);
             // putConstraint(e1, c1, pad, e2, c2): value(e1, c1) := value(e2, c2) + pad
             layout.putConstraint(SpringLayout.NORTH, label, 5, SpringLayout.NORTH, this);
             layout.putConstraint(SpringLayout.WEST, label, 5, SpringLayout.WEST, this);
@@ -335,15 +338,20 @@ public class RepeatInputComboBoxDialog implements Runnable {
             layout.putConstraint(SpringLayout.WEST, jcb, 5, SpringLayout.WEST, this);
             layout.putConstraint(SpringLayout.EAST, jcb, -5, SpringLayout.EAST, this);
 
-            layout.putConstraint(SpringLayout.NORTH, resultScrollPane, 5, SpringLayout.SOUTH, jcb);
-            layout.putConstraint(SpringLayout.WEST, resultScrollPane, 5, SpringLayout.WEST, this);
-            layout.putConstraint(SpringLayout.EAST, resultScrollPane, -5, SpringLayout.EAST, this);
-//            layout.putConstraint(SpringLayout.SOUTH, resultScrollPane, -5, SpringLayout.NORTH, completionsScrollPane);
+//            layout.putConstraint(SpringLayout.NORTH, resultScrollPane, 5, SpringLayout.SOUTH, jcb);
+//            layout.putConstraint(SpringLayout.WEST, resultScrollPane, 5, SpringLayout.WEST, this);
+//            layout.putConstraint(SpringLayout.EAST, resultScrollPane, -5, SpringLayout.EAST, this);
+////            layout.putConstraint(SpringLayout.SOUTH, resultScrollPane, -5, SpringLayout.NORTH, completionsScrollPane);
+//
+//            layout.putConstraint(SpringLayout.NORTH, completionsScrollPane, 5, SpringLayout.SOUTH, resultScrollPane);
+//            layout.putConstraint(SpringLayout.WEST, completionsScrollPane, 5, SpringLayout.WEST, this);
+//            layout.putConstraint(SpringLayout.EAST, completionsScrollPane, -5, SpringLayout.EAST, this);
+//            layout.putConstraint(SpringLayout.SOUTH, completionsScrollPane, -5, SpringLayout.SOUTH, this);
 
-            layout.putConstraint(SpringLayout.NORTH, completionsScrollPane, 5, SpringLayout.SOUTH, resultScrollPane);
-            layout.putConstraint(SpringLayout.WEST, completionsScrollPane, 5, SpringLayout.WEST, this);
-            layout.putConstraint(SpringLayout.EAST, completionsScrollPane, -5, SpringLayout.EAST, this);
-            layout.putConstraint(SpringLayout.SOUTH, completionsScrollPane, -5, SpringLayout.SOUTH, this);
+            layout.putConstraint(SpringLayout.NORTH, splitPane, 5, SpringLayout.SOUTH, jcb);
+            layout.putConstraint(SpringLayout.WEST, splitPane, 5, SpringLayout.WEST, this);
+            layout.putConstraint(SpringLayout.EAST, splitPane, -5, SpringLayout.EAST, this);
+            layout.putConstraint(SpringLayout.SOUTH, splitPane, -5, SpringLayout.SOUTH, this);
             // super( new BorderLayout( 5, 5 ) );
             // setItems( items );
             // add( new JLabel( msg ), BorderLayout.NORTH );

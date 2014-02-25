@@ -563,7 +563,8 @@ public class OclEvaluator {
         envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
     }
 
-    protected static void addRunOperation(DgEnvironmentFactory envFactory, EClassifier argType) {
+    protected static void addRunOperation(DgEnvironmentFactory envFactory,
+                                          EClassifier argType) {
 
         // create custom operation
         DgOperationInstance doi = new DgOperationInstance();
@@ -571,10 +572,13 @@ public class OclEvaluator {
         doi.setAnnotationName("DocGenEnvironment");
         EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
         parm.setName("input");
-        doi.addParameter(parm, argType);
-        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
-        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
-
+        
+        if ( argType != null ) {
+            doi.addParameter(parm, argType);
+            doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+            doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        }
+        
         // essentially set the actual operation as function pointer
         doi.setOperation(new CallOperation() {
             boolean runItemsInCollectionIndividually = true;
@@ -891,6 +895,7 @@ public class OclEvaluator {
                          OCLStandardLibraryImpl.INSTANCE.getOclAny() );
         addRunOperation( getEnvironmentFactory(),
                          OCLStandardLibraryImpl.INSTANCE.getSequence() );
+        addRunOperation( getEnvironmentFactory(), null );
         addGetOperation( getEnvironmentFactory() );
         addLogOperation( getEnvironmentFactory(), true );
         addLogOperation( getEnvironmentFactory(), false );
