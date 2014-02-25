@@ -520,8 +520,8 @@ public class OclEvaluator {
         EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
         parm.setName("nameOrId");
         doi.addStringParameter(parm);
-        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclVoid());
-        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclElement());
+        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
 
         // essentially set the actual operation as function pointer
         doi.setOperation(new CallOperation() {
@@ -559,7 +559,7 @@ public class OclEvaluator {
         envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
     }
 
-    protected static void addRunOperation(DgEnvironmentFactory envFactory) {
+    protected static void addRunOperation(DgEnvironmentFactory envFactory, EClassifier argType) {
 
         // create custom operation
         DgOperationInstance doi = new DgOperationInstance();
@@ -567,7 +567,7 @@ public class OclEvaluator {
         doi.setAnnotationName("DocGenEnvironment");
         EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
         parm.setName("input");
-        doi.addParameter(parm, OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        doi.addParameter(parm, argType);
         doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
         doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
 
@@ -722,7 +722,7 @@ public class OclEvaluator {
     protected static void addVOperation(DgEnvironmentFactory envFactory) {
 
         EClassifier callerType = getGenericCallerType();
-        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
+        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
         EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
         addOperation(new String[] {"value", "values", "v"}, callerType, returnType, stringType, "value", true,
                 true, CallReturnType.VALUE, envFactory);
@@ -869,7 +869,10 @@ public class OclEvaluator {
         addEvalOperation( getEnvironmentFactory(), "eval" );
         addEvalOperation( getEnvironmentFactory(), "evaluate" );
         addEvalOperation( getEnvironmentFactory(), "e" );
-        addRunOperation( getEnvironmentFactory() );
+        addRunOperation( getEnvironmentFactory(),
+                         OCLStandardLibraryImpl.INSTANCE.getOclAny() );
+        addRunOperation( getEnvironmentFactory(),
+                         OCLStandardLibraryImpl.INSTANCE.getSequence() );
         addGetOperation( getEnvironmentFactory() );
         addLogOperation( getEnvironmentFactory(), true );
         addLogOperation( getEnvironmentFactory(), false );

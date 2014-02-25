@@ -80,7 +80,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
     public static interface Processor {
         public Object process(Object input);
 
-        public List<String> getChoiceStrings();
+        public List<String> getCompletionChoices();
+        public Object getSourceOfCompletion();
     }
 
     // RepeatInputComboBoxDialog members
@@ -427,33 +428,6 @@ public class RepeatInputComboBoxDialog implements Runnable {
         public void setResultPanel(Object result) {
             Debug.outln("setResultPanel(" + result + ")");
             setTextInPanel( resultPane, resultScrollPane, result );
-//            if (resultPane instanceof JEditorPane) {
-//                if (result == null)
-//                    result = "null";
-//                ((JEditorPane)resultPane).setText( // toHtml(
-//                        result.toString());
-//            } else {
-//                JComponent newResultPane = null;
-//                if (result instanceof JComponent) {
-//                    newResultPane = (JComponent)result;
-//                } else if (result instanceof Icon) {
-//                    newResultPane = new JLabel((Icon)result);
-//                } else {
-//                    newResultPane = createEditorPane(result == null ? "null" : result.toString());
-//                }
-//                if (newResultPane != null) {
-//                    resultScrollPane.remove(resultPane);
-//                    resultPane = newResultPane;
-//                    resultScrollPane.add(resultPane);
-//                }
-//            }
-//            if (this.isVisible()) {
-//                Debug.outln("IS visible");
-//                setVisible(false);
-//                setVisible(true);
-//            } else {
-//                Debug.outln("is NOT visible");
-//            }
         }
 
         public String getValue() {
@@ -464,14 +438,17 @@ public class RepeatInputComboBoxDialog implements Runnable {
             return jcb.getEditor();
         }
 
-        public void setChoices( List< String > choiceStrings ) {
-            setTextInPanel( completionsPane,
-                            completionsScrollPane,
-                            "completion choices:\n"
-                            + MoreToString.Helper.toString( choiceStrings,
+        public void setCompletions( List< String > completionStrings, Object completionSource ) {
+            String newText = "<br>"; // empty text -- need something to avoid weird ghost bullet artifact
+            if ( !Utils2.isNullOrEmpty( completionStrings ) ) {
+                newText = ( "completion choices for " + completionSource + ":<br>"
+                            + MoreToString.Helper.toString( completionStrings,
                                                             false, true, null,
-                                                            null, "", "\n * ", "",
+                                                            null, "<ul><li>",
+                                                            "<li>", "</ul>",
                                                             false ) );
+            }
+            setTextInPanel( completionsPane, completionsScrollPane, newText );
         }
 
     }
@@ -830,7 +807,14 @@ public class RepeatInputComboBoxDialog implements Runnable {
             }
 
             @Override
-            public List< String > getChoiceStrings() {
+            public List< String > getCompletionChoices() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public Object getSourceOfCompletion() {
+                // TODO Auto-generated method stub
                 return null;
             }
         };
