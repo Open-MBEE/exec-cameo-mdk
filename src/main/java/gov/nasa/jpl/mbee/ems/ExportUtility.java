@@ -244,6 +244,9 @@ public class ExportUtility {
                 Application.getInstance().getGUILog().log(response);
                 log.info(response);
                 return false;
+            } else {
+                Application.getInstance().getGUILog().log(response);
+                log.info(response);
             }
             return true;
         }

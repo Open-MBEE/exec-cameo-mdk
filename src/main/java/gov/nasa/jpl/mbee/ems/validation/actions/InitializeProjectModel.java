@@ -69,11 +69,12 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
         result.put("name", Application.getInstance().getProject().getName());
         String json = result.toJSONString();
         //gl.log(json);
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrlWithSiteAndProject();
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        url += "?fix=true";
+        //url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         if (!ExportUtility.send(url, json))
             return;
         ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
