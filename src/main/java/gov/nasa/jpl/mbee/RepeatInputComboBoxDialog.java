@@ -318,8 +318,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
             setItems(items);
 
             JLabel label = new JLabel(msg);
-            resultPane = createEditorPane(" ");
-            completionsPane = createEditorPane(" ");
+            resultPane = createEditorPane("<br>");
+            completionsPane = createEditorPane("<br>");
             resultScrollPane = new JScrollPane(resultPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             completionsScrollPane = new JScrollPane(completionsPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -576,14 +576,29 @@ public class RepeatInputComboBoxDialog implements Runnable {
         }
 
         public class SizeListener implements ComponentListener {
+            protected Window window = null;
+            
+            public void setWindow( Window w ) {
+                window = w;
+            }
+            public Window getWindow() {
+                return window;
+            }
+            
             @Override
             public void componentResized(ComponentEvent e) {
-                Debug.outln("before componentResized, size = " + size + ", location = " + location);
+                //Debug.outln("before componentResized, size = " + size + ", location = " + location);
+
                 // //Window w = SwingUtilities.getWindowAncestor(
                 // e.getComponent() );
                 // Window w = getTopComponentOfType( e.getComponent(),
                 // Window.class );
-                Window w = getWindow(e.getComponent());
+                if ( getWindow() == null ) {
+                    setWindow( RequestFocusListener.getWindow(e.getComponent()) );
+                }
+                Window w = getWindow();
+                if ( e.getComponent() != w ) return;
+                
                 size = w.getSize();
                 location = w.getLocation();
                 // size = e.getComponent().getSize();
@@ -595,12 +610,18 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
             @Override
             public void componentMoved(ComponentEvent e) {
-                Debug.outln("before componentMoved, size = " + size + ", location = " + location);
+                //Debug.outln("before componentMoved, size = " + size + ", location = " + location);
+
                 // //Window w = SwingUtilities.getWindowAncestor(
                 // e.getComponent() );
                 // Window w = getTopComponentOfType( e.getComponent(),
                 // Window.class );
-                Window w = getWindow(e.getComponent());
+                if ( getWindow() == null ) {
+                    setWindow( RequestFocusListener.getWindow(e.getComponent()) );
+                }
+                Window w = getWindow();
+                if ( e.getComponent() != w ) return;
+                
                 size = w.getSize();
                 location = w.getLocation();
                 // size = e.getComponent().getSize();
@@ -623,12 +644,17 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
             @Override
             public void componentShown(ComponentEvent e) {
-                Debug.outln("componentShown, size = " + size + ", location = " + location);
+                //Debug.outln("componentShown, size = " + size + ", location = " + location);
+
                 // //Window w = SwingUtilities.getWindowAncestor(
                 // e.getComponent() );
                 // Window w = getTopComponentOfType( e.getComponent(),
                 // Window.class );
-                Window w = getWindow(e.getComponent());
+                if ( getWindow() == null ) {
+                    setWindow( RequestFocusListener.getWindow(e.getComponent()) );
+                }
+                Window w = getWindow();
+                if ( e.getComponent() != w ) return;
                 if (locationOnClose != null) {
                     w.setLocation(locationOnClose);
                 } // else w.setLocation(1000,1000);
@@ -667,6 +693,15 @@ public class RepeatInputComboBoxDialog implements Runnable {
                         d.setResizable(true);
                     }
                 }
+
+                if ( getWindow() == null ) {
+                    setWindow( RequestFocusListener.getWindow(e.getComponent()) );
+                }
+                Window w = getWindow();
+                if ( e.getComponent() != w ) return;
+                
+                locationOnClose = new Point(w.getLocation());
+                sizeOnClose = new Dimension(w.getSize());
                 // if ( w instanceof Dialog ) {
                 // if ( !( (Dialog)w ).isResizable() ) {
                 // ( (Dialog)w ).setResizable( true );
@@ -749,14 +784,14 @@ public class RepeatInputComboBoxDialog implements Runnable {
                     Debug.outln("locationOnClose=" + locationOnClose);
                     Debug.outln("size=" + size);
                     Debug.outln("sizeOnClose=" + sizeOnClose);
-                    if (locationOnClose != null) {
-                        win.setLocation(locationOnClose);
-                    } else if (location != null && !win.getLocation().equals(location)) {
-                        win.setLocation(location);
-                    }
-                    if (sizeOnClose != null) {
-                        win.setSize(sizeOnClose);
-                    }
+//                    if (locationOnClose != null) {
+//                        win.setLocation(locationOnClose);
+//                    } else if (location != null && !win.getLocation().equals(location)) {
+//                        win.setLocation(location);
+//                    }
+//                    if (sizeOnClose != null) {
+//                        win.setSize(sizeOnClose);
+//                    }
                     win.setMinimumSize(new Dimension(300, 200));
 
                     // add listeners
