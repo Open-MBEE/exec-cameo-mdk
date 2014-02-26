@@ -227,9 +227,9 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     }
     
     // TODO -- move to Utils and have setSlot() call this instead of always creating a new Slot?
-    private void update(Slot e, PropertyValueType valueType, Object o) {
-        ValueSpecification newval = null; 
-        if ( !Utils2.isNullOrEmpty( e.getValue() ) ) {
+    private void update(Slot e, PropertyValueType valueType, ValueSpecification vs, Object o, int i) {
+        ValueSpecification newval = vs; 
+        /*if ( !Utils2.isNullOrEmpty( e.getValue() ) ) {
             for ( ValueSpecification v : e.getValue() ) {
                 PropertyValueType modelType = PropertyValueType.toPropertyValueType( v );
                 if ( valueType == modelType ||
@@ -242,7 +242,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         }
         if ( newval == null && !Utils2.isNullOrEmpty( e.getValue() ) ) {
             e.getValue().clear();
-        }
+        }*/
         switch ( valueType ) {
         case LiteralString:
             if (newval instanceof LiteralString) {
@@ -312,9 +312,12 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
             break;
         };
-        if ( e.getValue() != null && e.getValue().isEmpty() ) {
-            e.getValue().add( newval );
-        }
+        //if ( e.getValue() != null && e.getValue().isEmpty() ) {
+        if (e.getValue().size() > i)
+            e.getValue().set(i, newval );
+        else
+            e.getValue().add(newval);
+        //}
         return;
     }
     
@@ -323,7 +326,13 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             Debug.error( "Trying to update a null slot!" );
             return;
         }
-        if ( values.size() != 1 ) {
+        for (int i = 0; i < values.size(); i++) {
+            if (e.getValue().size() > i) {
+                update(e, valueType, e.getValue().get(i), values.get(i), i);
+            } else
+                update(e, valueType, null, values.get(i), i);
+        }
+        /*if ( values.size() != 1 ) {
             Application.getInstance().getGUILog().log("[ERROR] " + e.getHumanName() + " must have exactly one value but is being updated with " + values.size() + "!");
             return;
         }
@@ -333,6 +342,6 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         }
         Object v = values.get( 0 );
         //Utils.setSlotValue((Slot)e, v);
-        update( e, valueType, v );
+        update( e, valueType, v );*/
     }
 }
