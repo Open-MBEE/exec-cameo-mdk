@@ -35,15 +35,17 @@ import gov.nasa.jpl.mbee.RepeatInputComboBoxDialog;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.MDUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.ocl.OCLSyntaxHelper;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
-import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
@@ -73,7 +75,6 @@ public class OclQueryAction extends MDAction {
     protected LinkedList<String> inputHistory     = new LinkedList<String>();
     protected TreeSet<String>    pastInputs       = new TreeSet<String>();
     protected LinkedList<String> choices          = new LinkedList<String>();
-    protected int                maxChoices       = 10;
 
     //protected static boolean selectionInDiagram = true;
     
@@ -94,6 +95,8 @@ public class OclQueryAction extends MDAction {
     public static class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
 
         private List<Element> context = null;
+        public List<String> choiceStrings = new LinkedList< String >();
+        protected EObject             completionSource = null;
 
         public ProcessOclQuery() {
             super();
@@ -234,7 +237,18 @@ public class OclQueryAction extends MDAction {
 
             return outputList;
         }
-
+        
+        public static String getTypeName( Object o ) {
+            if (o == null)
+                return null;
+            EObject eo = (EObject)(o instanceof EObject ? o : null);
+            Class<?> c = (eo != null ? EmfUtils.getType(eo) : o.getClass());
+            if (c == null)
+                return null;
+            String type = c.getSimpleName();
+            return type;
+        }
+        
         public ArrayList<Object> process(Element elem, String oclString) {
             ArrayList<Object> outputList = new ArrayList<Object>();
             Object result = null;
@@ -243,7 +257,9 @@ public class OclQueryAction extends MDAction {
             try {
                 if (elem == null)
                     return null;
+                completionSource = elem;
                 result = OclEvaluator.evaluateQuery(elem, oclString, true);
+                if ( result instanceof EObject ) completionSource = (EObject)result;  // TODO -- what if the result is a collection?
                 evaluator = OclEvaluator.instance;
                 output = toString(result);
                 if (!evaluator.isValid() && Utils2.isNullOrEmpty( result ) ) {
@@ -252,18 +268,7 @@ public class OclQueryAction extends MDAction {
                 }
                 String type = null;
 
-                // EmfUtils.getTypeName( result ); // TODO -- THIS LINE REPLACES
-                // BELOW
-                Object o = result;
-                if (o == null)
-                    return null;
-                EObject eo = (EObject)(o instanceof EObject ? o : null);
-                Class<?> c = (eo != null ? EmfUtils.getType(eo) : o.getClass());
-                if (c == null)
-                    return null;
-                type = c.getSimpleName();
-
-                output = output + " : " + type;
+                output = output + " : " + getTypeName( result );
                 Debug.outln("evaluated \"" + oclString + "\" for element " + toString(elem) + "\n"
                         + "    result = " + output + "\n");
 
@@ -276,11 +281,20 @@ public class OclQueryAction extends MDAction {
                         + EmfUtils.toString(elem);
                 Debug.error(false, false, errorMsg);
             }
+            choiceStrings.clear();
             if (evaluator != null)
-                Debug.outln(evaluator.commandCompletionChoiceStrings(null, elem, oclString)// ,
-                                                                                           // 3
-                                                                                           // )
-                        .toString());
+                choiceStrings.addAll(evaluator.commandCompletionChoiceStrings(null, completionSource, oclString) );
+                Collections.sort( choiceStrings, new Comparator< String >() {
+                    @Override
+                    public int compare( String o1, String o2 ) {
+                        if ( o1 == o2 ) return 0;
+                        if ( o1 == null ) return -1;
+                        if ( o2 == null ) return 1;
+                        o1 = o1.replaceFirst( "[^A-Za-z0-9]*", "" );
+                        o2 = o2.replaceFirst( "[^A-Za-z0-9]*", "" );
+                        return o1.compareTo( o2 );
+                    }} );
+                Debug.outln(choiceStrings.toString());
             return outputList;
         }
 
@@ -310,20 +324,11 @@ public class OclQueryAction extends MDAction {
             return outputList;
         }
 
-        private String toString(Object result) {
+        public static String toString(Object result) {
             String s = null;
             if (result instanceof Collection) {
                 StringBuffer sb = new StringBuffer();
-                sb.append("(");
-                boolean first = true;
-                for (Object r: (Collection<?>)result) {
-                    if (first)
-                        first = false;
-                    else
-                        sb.append(",");
-                    sb.append(toString(r));
-                }
-                sb.append(")");
+                sb.append(MoreToString.Helper.toString((Collection<?>)result));
                 s = sb.toString();
             }
             if (Utils2.isNullOrEmpty(s) && result instanceof BaseElement) {
@@ -388,6 +393,17 @@ public class OclQueryAction extends MDAction {
             return s;
         }
 
+        @Override
+        public List< String > getCompletionChoices() {
+            return choiceStrings;
+        }
+
+        @Override
+        public Object getSourceOfCompletion() {
+            // TODO Auto-generated method stub
+            return completionSource;
+        }
+
     }
 
     @SuppressWarnings( "deprecation" )
@@ -409,6 +425,7 @@ public class OclQueryAction extends MDAction {
             if ( useNewOclEvaluator  ) {
                 boolean selectionInDiagram = true;
                 boolean selectionInBrowser = false;
+    //dialog = null;  // comment this out -- only for debug
                 if ( dialog == null ) {
                     dialog = new OclEvaluatorDialog( owner, "OCL Evaluation" );
                 } else if ( Configurator.isInvokedFromMainMenu() ) {
@@ -471,12 +488,5 @@ public class OclQueryAction extends MDAction {
         return Configurator.isLastContextDiagram();
         //return selectionInDiagram;
     }
-
-//    /**
-//     * @param selectionInDiagram the selectionInDiagram to set
-//     */
-//    public static void setSelectionInDiagram( boolean selectionInDiagram ) {
-//        OclQueryAction.selectionInDiagram = selectionInDiagram;
-//    }
 
 }

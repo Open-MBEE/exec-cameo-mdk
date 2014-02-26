@@ -131,9 +131,9 @@ public class MissionMapping extends Query {
         libraryChars = new HashSet<NamedElement>();
         chars = new HashSet<NamedElement>();
 
-        for (Element e: this.targets) {
+        for (Object e: this.targets) {
             if (e instanceof Package) {
-                for (Element ee: Utils.collectOwnedElements(e, 0)) {
+                for (Element ee: Utils.collectOwnedElements((Package)e, 0)) {
                     if (ee instanceof Classifier && hasCharacterizesDependency(ee)) {
                         if (StereotypesHelper.hasStereotypeOrDerived(ee, CHAR)
                                 || StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHAR)) {
@@ -151,7 +151,7 @@ public class MissionMapping extends Query {
                     break;
             }
         }
-        for (Element e: this.targets) {
+        for (Object e: this.targets) {
             if (e instanceof Package && e != libraryComponentPackage && e != libraryCharPackage) {
                 missionComponentPackage = (Package)e;
             }

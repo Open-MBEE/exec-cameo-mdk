@@ -88,9 +88,11 @@ public class Paragraph extends Query {
             if (forViewEditor || !getText().trim().equals(""))
                 res.add(new DBParagraph(getText(), getDgElement(), getFrom()));
         } else if (getTargets() != null) {
-            List<Element> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
-            for (Element e: targets) {
-                if (getStereotypeProperties() != null && !getStereotypeProperties().isEmpty()) {
+            List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
+            for (Object o: targets) {
+                if ( !( o instanceof Element ) ) continue;
+                Element e = (Element)o;
+                if ( getStereotypeProperties() != null && !getStereotypeProperties().isEmpty() ) {
                     for (Property p: getStereotypeProperties()) {
                         res.addAll(Common.getReferenceAsDocumentElements(Reference.getPropertyReference(e, p)));
                         // List<Object> ob =

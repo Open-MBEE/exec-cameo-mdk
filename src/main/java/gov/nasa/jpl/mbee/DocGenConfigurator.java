@@ -58,6 +58,7 @@ import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
@@ -156,7 +157,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-            us.setTargets(targets);
+            us.setTargets( Utils2.asList( targets, Object.class ) );
             if (manager.getActionFor(RunUserValidationScriptAction.actionid) == null)
                 c.addAction(new RunUserValidationScriptAction(us, true));
         } else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
@@ -167,7 +168,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-            us.setTargets(targets);
+            us.setTargets( Utils2.asList( targets, Object.class ) );
             if (manager.getActionFor(RunUserScriptAction.actionid) == null)
                 c.addAction(new RunUserScriptAction(us, true));
         }

@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee.model;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.actions.MapLibraryAction;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.ui.LibraryChooserUI;
 import gov.nasa.jpl.mbee.model.ui.LibraryComponent;
 import gov.nasa.jpl.mbee.tree.Node;
@@ -94,9 +95,9 @@ public class LibraryMapping extends Query {
         // create a root tree node so we can add multiple component imports
         tree = new Node<String, LibraryComponent>("Library", new LibraryComponent("Library"));
 
-        for (Element e: this.targets) {
+        for (Object e: this.targets) {
             if (e instanceof Package) {
-                for (Element ee: Utils.collectOwnedElements(e, 0)) {
+                for (Element ee: Utils.collectOwnedElements((Package)e, 0)) {
                     if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHAR)
                             || StereotypesHelper.hasStereotypeOrDerived(ee, CHAR)) {
                         charPackage = (Package)e;
@@ -110,9 +111,9 @@ public class LibraryMapping extends Query {
         }
 
         // fill in the tree after all the characterizations
-        for (Element e: this.targets) {
+        for (Object e: this.targets) {
             if (e instanceof Package) {
-                for (Element ee: Utils.collectOwnedElements(e, 0)) {
+                for (Element ee: Utils.collectOwnedElements((Package)e, 0)) {
                     if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT)
                             || StereotypesHelper.hasStereotypeOrDerived(ee, COMPONENT)
                             || StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHARACTERIZABLE)) {
@@ -410,7 +411,7 @@ public class LibraryMapping extends Query {
             return res;
         DBTable table = new DBTable();
         Node<String, LibraryComponent> root = getRoot();
-        List<Element> chars = Utils.sortByName(getUsedChars());
+        List<Element> chars = Utils.sortByName( Utils2.asList( getUsedChars(), Element.class ) );
         List<List<DocumentElement>> grid = new ArrayList<List<DocumentElement>>();
         List<List<DocumentElement>> headers = new ArrayList<List<DocumentElement>>();
         addLibraryRows(root, chars, grid, 1);

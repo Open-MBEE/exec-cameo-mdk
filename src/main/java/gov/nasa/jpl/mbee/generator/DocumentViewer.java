@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.generator;
 
+import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.model.Container;
 import gov.nasa.jpl.mbee.model.DocGenElement;
 import gov.nasa.jpl.mbee.model.Document;
@@ -115,7 +116,7 @@ public class DocumentViewer {
             sections.remove(sections.size() - 1);
         } else if (dge instanceof Query) {
             String templateType = dge.getClass().getSimpleName();
-            List<Element> targets = ((Query)dge).getTargets();
+            List<Object> targets = ((Query)dge).getTargets();
             List<String> titles = ((Query)dge).getTitles();
             String title = (titles != null && titles.size() > 0) ? titles.get(0) : "(no title)";
             String display = "(" + templateType + ") " + titlePrefix + title + titleSuffix;
@@ -129,15 +130,17 @@ public class DocumentViewer {
         }
     }
 
-    private static String stringFromTargets(List<Element> targets) {
+    private static String stringFromTargets(List<Object> targets) {
         if (targets == null || targets.isEmpty())
             return "(no targets)";
         String res = "";
-        for (Element e: targets) {
+        for (Object e: targets) {
             if (e instanceof NamedElement)
                 res += ((NamedElement)e).getName() + "\n";
-            else
+            else if ( e instanceof Element )
                 res += "(element)" + "\n";
+            else
+                res += DocGenUtils.fixString(e);
         }
         return res;
     }

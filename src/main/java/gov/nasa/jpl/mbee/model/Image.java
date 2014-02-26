@@ -79,18 +79,19 @@ public class Image extends Query {
         if (getIgnore())
             return res;
         if (getTargets() != null) {
-            List<Element> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
+            List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
             for (int i = 0; i < targets.size(); i++) {
-                Element e = targets.get(i);
-                if (e instanceof Diagram) {
+                Object o = targets.get(i);
+                if (o instanceof Diagram) {
+                    Diagram diagram = (Diagram)o;
                     DBImage im = new DBImage();
-                    im.setDiagram((Diagram)e);
+                    im.setDiagram(diagram);
                     im.setDoNotShow(getDoNotShow());
                     String title = "";
                     if (getTitles() != null && getTitles().size() > i)
                         title = getTitles().get(i);
                     else
-                        title = ((Diagram)e).getName();
+                        title = diagram.getName();
                     if (getTitlePrefix() != null)
                         title = getTitlePrefix() + title;
                     if (getTitleSuffix() != null)
@@ -98,13 +99,13 @@ public class Image extends Query {
                     im.setTitle(title);
                     if (getCaptions() != null && getCaptions().size() > i && getShowCaptions())
                         im.setCaption(getCaptions().get(i));
-                    im.setId(e.getID());
+                    im.setId(diagram.getID());
                     res.add(im);
 
-                    String doc = ModelHelper.getComment(e);
+                    String doc = ModelHelper.getComment(diagram);
                     if (doc != null && (forViewEditor || (!doc.trim().equals("") && !getDoNotShow()))) {
-                        if ((Boolean)GeneratorUtils.getObjectProperty(e, DocGen3Profile.editableChoosable, "editable", true))
-                            res.add(new DBParagraph(doc, e, From.DOCUMENTATION));
+                        if ((Boolean)GeneratorUtils.getObjectProperty(diagram, DocGen3Profile.editableChoosable, "editable", true))
+                            res.add(new DBParagraph(doc, diagram, From.DOCUMENTATION));
                         else
                             res.add(new DBParagraph(doc));
                     }
