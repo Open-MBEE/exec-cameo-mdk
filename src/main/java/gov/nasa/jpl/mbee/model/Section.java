@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import java.lang.reflect.Field;
+
 /**
  * this should really be called View now
  * 
@@ -89,6 +91,11 @@ public class Section extends Container {
     @Override
     public void accept(IModelVisitor v) {
         v.visit(this);
-
     }
+    
+    @Override
+    public String toStringStart() {
+        return super.toStringStart() + ",id=" + id;
+    }
+
 }

@@ -28,11 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.ocl;
 
+import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.lib.CollectionAdder;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-
+import gov.nasa.jpl.mbee.lib.Utils.AvailableAttribute;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -42,6 +43,9 @@ import org.eclipse.emf.ecore.EObject;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 /**
@@ -53,7 +57,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class GetCallOperation implements CallOperation {
 
     public enum CallReturnType {
-        SELF, NAME, TYPE, VALUE, MEMBER, RELATIONSHIP
+        SELF, NAME, TYPE, VALUE, MEMBER, RELATIONSHIP, OWNER
     };
 
     private boolean       collect                    = true;                     // TODO
@@ -139,6 +143,26 @@ public class GetCallOperation implements CallOperation {
                 // }
                 // added = adder.add( source, resultList );
                 break;
+            case OWNER:
+                if (loop) {
+                    objectToAdd = source;
+                } else {
+                    if ( !( source instanceof Element ) ) {
+                        objectToAdd = null;
+                    } else {
+                        List<Element> owners = new ArrayList< Element >();
+                        Element owner = ((Element)source).getOwner();
+                        while ( owner != null ) {
+                            owners.add( owner );
+                            if ( onlyOneForAll || onlyOnePer ) {
+                                break;
+                            }
+                            owner = owner.getOwner(); 
+                        }
+                        objectToAdd = owners;
+                    }
+                }
+                break;
             case NAME:
                 // if ( onlyOnePer )
                 if (loop) {
@@ -206,9 +230,58 @@ public class GetCallOperation implements CallOperation {
                 if (loop) {
                     objectToAdd = source;
                 } else {
-                    boolean one = (onlyOneForAll || (asCollection && coll != null && onlyOnePer))
-                            && Utils2.isNullOrEmpty(filterArgs);
-                    objectToAdd = EmfUtils.getValues(source, null, true, true, one, false, null);
+                    objectToAdd = null;
+                    // If arguments were passed, then treat them as names of properties in source.
+                    if (source instanceof Element && !Utils2.isNullOrEmpty(args)) {
+                        List<Object> objects = new ArrayList< Object >();
+                        for ( Object arg : args ) {
+                            Property prop = null;
+                            if ( arg instanceof String ) {
+                                // TODO -- REVIEW -- should this be addAll or add?
+                                objects.addAll( Utils.getElementPropertyValues( (Element)source,
+                                                                                (String)arg,
+                                                                                true ) );
+                            } else if ( arg instanceof Property ) {
+                                prop = (Property)arg;
+                                objects.addAll( Utils.getElementPropertyValues( (Element)source,
+                                                                                prop,
+                                                                                true ) );
+                            }
+                        }
+                        if ( !objects.isEmpty() ) {
+                            objectToAdd = objects;
+                            filter = false;
+                        } // TODO -- REVIEW -- is setting filter like this ok if in a loop?
+                    }
+                    boolean one = !filter && (onlyOneForAll || (asCollection && coll != null && onlyOnePer));
+
+                    // If the source is a Property or slot, get its value 
+                    if ( Utils2.isNullOrEmpty( objectToAdd )
+                         && ( source instanceof Property || source instanceof Slot ) ) {
+                        objectToAdd =
+                                Utils.getElementAttribute( (Element)source,
+                                                           AvailableAttribute.Value );
+                    }
+                    if ( Utils2.isNullOrEmpty( objectToAdd )
+                         && source instanceof ValueSpecification ) {
+                        objectToAdd =
+                                DocGenUtils.getLiteralValue( source, true );
+                    }
+                    // Handle onlyOne.
+                    if ( !Utils2.isNullOrEmpty( objectToAdd ) ) { 
+                        if ( one && objectToAdd instanceof Collection ) {
+                            Object first = ( (Collection<?>)objectToAdd ).iterator().next();
+                            objectToAdd = Utils2.newList( first );
+                        }
+                    } else {
+                        // Last resort -- try to find a member that looks like it would return a value
+//                        boolean one = (onlyOneForAll || (asCollection && coll != null && onlyOnePer))
+//                                && Utils2.isNullOrEmpty(filterArgs);
+                        objectToAdd = EmfUtils.getValues(source, null, true, true, one, false, null);
+                    }
+                    if ( Utils2.isNullOrEmpty( objectToAdd ) ) {
+                        objectToAdd = source;
+                    }
                 }
                 break;
             case MEMBER:
@@ -265,7 +338,7 @@ public class GetCallOperation implements CallOperation {
             // TODO -- apply filter while collecting above for efficiency in
             // case returning only one!
             // REVIEW -- this todo above may already be done
-            if (filter) {
+            if (filter && resultType != CallReturnType.VALUE) {
                 if (!Utils2.isNullOrEmpty(args)) {
                     objectToAdd = EmfUtils.collectOrFilter(adder, objectToAdd, !filter,
                             (onlyOneForAll || (isCollection && onlyOnePer)), useName, useType, useValue,

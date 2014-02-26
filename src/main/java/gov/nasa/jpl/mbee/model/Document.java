@@ -28,6 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import gov.nasa.jpl.mbee.lib.MoreToString;
+
+import java.lang.reflect.Field;
 import java.util.List;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
@@ -374,6 +377,24 @@ public class Document extends Container {
     @Override
     public void accept(IModelVisitor v) {
         v.visit(this);
-
     }
+    
+    @Override
+    public String toStringStart() {
+        StringBuffer sb = new StringBuffer();
+        sb.append( super.toStringStart() );
+        for ( Field f : getClass().getFields() ) {
+            if ( f.getDeclaringClass().equals( getClass().getSuperclass() ) ) {
+                continue;
+            }
+            try {
+                sb.append( "," + f.getName() + "=" + f.get( this ) );
+            } catch ( IllegalArgumentException e ) {
+            } catch ( IllegalAccessException e ) {
+            }
+        }
+//        sb.append( super.toStringEnd() );
+        return sb.toString();
+    }
+
 }

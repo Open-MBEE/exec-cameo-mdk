@@ -925,7 +925,7 @@ public class DocumentValidator {
     public static List<Constraint> getConstraints(Object constrainedObject, Object actionOutput,
             GenerationContext context) {
         List<Constraint> constraints = new ArrayList<Constraint>();
-        List<Element> targets = DocumentGenerator.getTargets(constrainedObject, context);
+        List<Object> targets = DocumentGenerator.getTargets(constrainedObject, context);
         // targets = (List< Element >)BasicConstraint.fixTargets( targets );
 
         List<Element> constraintElements = BasicConstraint.getConstraintElements(constrainedObject,

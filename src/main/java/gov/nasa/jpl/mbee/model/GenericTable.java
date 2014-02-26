@@ -132,25 +132,26 @@ public class GenericTable extends Table {
         if (getIgnore())
             return res;
         int tableCount = 0;
-        List<Element> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
-        for (Element e: targets) {
+        List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
+        for (Object e: targets) {
             if (e instanceof Diagram) {
-                if (Application.getInstance().getProject().getDiagram((Diagram)e).getDiagramType().getType()
+                Diagram diagram = (Diagram)e;
+                if (Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()
                         .equals("Generic Table")) {
                     DBTable t = new DBTable();
-                    List<String> columnIds = dtt.getColumnIds((Diagram)e);
-                    t.setHeaders(getHeaders((Diagram)e, columnIds, dtt));
-                    List<Element> rowElements = dtt.getRowElements((Diagram)e);
-                    t.setBody(getBody((Diagram)e, rowElements, columnIds, dtt, forViewEditor));
+                    List<String> columnIds = dtt.getColumnIds(diagram);
+                    t.setHeaders(getHeaders(diagram, columnIds, dtt));
+                    List<Element> rowElements = dtt.getRowElements(diagram);
+                    t.setBody(getBody(diagram, rowElements, columnIds, dtt, forViewEditor));
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
                     } else {
-                        t.setTitle(getTitlePrefix() + ((Diagram)e).getName() + getTitleSuffix());
+                        t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
                     }
                     if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
                         t.setCaption(getCaptions().get(tableCount));
                     } else {
-                        t.setCaption(ModelHelper.getComment(e));
+                        t.setCaption(ModelHelper.getComment(diagram));
                     }
                     t.setCols(columnIds.size() - 1);
                     res.add(t);

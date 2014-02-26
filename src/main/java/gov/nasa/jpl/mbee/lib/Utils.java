@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
@@ -150,10 +151,10 @@ public class Utils {
      * @param elements
      * @return
      */
-    public static List<Element> removeDuplicates(Collection<Element> elements) {
-        Set<Element> added = new HashSet<Element>();
-        List<Element> res = new ArrayList<Element>();
-        for (Element e: elements) {
+    public static <T> List<T> removeDuplicates(Collection<T> elements) {
+        Set<T> added = new HashSet<T>();
+        List<T> res = new ArrayList<T>();
+        for (T e: elements) {
             if (!added.contains(e)) {
                 res.add(e);
                 added.add(e);
@@ -1403,11 +1404,11 @@ public class Utils {
      * @param e
      * @return
      */
-    public static List<Element> sortByName(Collection<? extends Element> e) {
-        List<Element> n = new ArrayList<Element>(e);
-        Collections.sort(n, new Comparator<Element>() {
+    public static <T, TT extends T> List<T> sortByName(Collection<TT> e) {
+        List<T> n = new ArrayList<T>(e);
+        Collections.sort(n, new Comparator<T>() {
             @Override
-            public int compare(Element o1, Element o2) {
+            public int compare(T o1, T o2) {
                 if (o1 == o2)
                     return 0;
                 if (o1 == null)
@@ -1853,6 +1854,76 @@ public class Utils {
             }
         }
         return null;
+    }
+
+    public static Map< Element, Map< String, Collection< Element > > > nameOrIdSearchOwnerCache =
+            new HashMap< Element, Map<String, Collection<Element> > >();
+    public static Map< String, Collection< Element > > nameOrIdSearchCache =
+            new HashMap< String, Collection< Element > >();
+    public static Map< String, Element > nameOrIdSingleElementSearchCache =
+            new HashMap< String, Element >();
+    public static Map< Element, Map< String, Element > > nameOrIdSingleElementSearchOwnerCache =
+            new HashMap< Element, Map< String, Element > >();
+    
+    public static List<Element> findByName( String pattern,
+                                            boolean getJustFirst ) {
+        // check cache
+        if ( getJustFirst ) {
+            Element e = nameOrIdSingleElementSearchCache.get( pattern );
+            if ( e != null ) return Utils2.newList( e );
+        } else {
+            Collection< Element > res = nameOrIdSearchCache.get( pattern );
+            return Utils2.asList( res );
+        }
+        
+        // start at root and search recursively through children
+        if ( Utils2.isNullOrEmpty( pattern ) ) return null;
+        Element root = getRootElement();
+        List< Element > results = findByName(root, pattern, getJustFirst );
+        nameOrIdSearchCache.put( pattern, results );
+        return results;
+    }
+    
+    public static List< Element > findByName( Element owner,
+                                              String pattern,
+                                              boolean getJustFirst ) {
+        // check cache
+        if ( getJustFirst ) {
+            Element e = Utils2.get( nameOrIdSingleElementSearchOwnerCache,
+                                    owner, pattern );
+            if ( e != null ) return Utils2.newList( e );
+        } else {
+            Collection< Element > res =
+                    Utils2.get( nameOrIdSearchOwnerCache, owner, pattern );
+            return Utils2.asList( res );
+        }
+
+        // check immediate children
+        List<Element> results = new ArrayList< Element >();
+        for (Element e: owner.getOwnedElement()) {
+            if (e instanceof NamedElement) {
+                Pattern p = Pattern.compile(pattern);
+                Matcher matcher = p.matcher(((NamedElement)e).getName());
+                if ( matcher.matches() ) {
+                    results.add( e );
+//                    Utils2.add( nameOrIdSearchOwnerCache, owner, pattern, e );
+                    if ( getJustFirst ) {
+                        nameOrIdSingleElementSearchCache.put( pattern, e );
+                        return results;
+                    }
+                }
+            }
+        }
+        // check children of children
+        for (Element e: owner.getOwnedElement()) {
+            results.addAll( findByName(e, pattern, getJustFirst) );
+            if ( getJustFirst && results.size() > 0 ) {
+                Utils2.put( nameOrIdSingleElementSearchOwnerCache, owner, pattern, e );
+                return results;
+            }
+        }
+        Utils2.put( nameOrIdSearchOwnerCache, owner, pattern, results );
+        return results;
     }
 
     public static Project getProject() {
@@ -2535,6 +2606,41 @@ public class Utils {
         return getSlot(elem, prop);
     }
 
+    public static Property getClassProperty( Element elem, String propName,
+                                             boolean inherited ) {
+        for (Element e : elem.getOwnedElement() ) {
+            if ( e instanceof Property ) {
+                if ( ((Property)e).getName().equals( propName ) ) {
+                    return (Property)e;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Property getElementStereotypeProperty( Element elem,
+                                                         String propName ) {
+        List< Stereotype > stereotypes = StereotypesHelper.getStereotypes( elem );
+        for ( Stereotype stereotype : stereotypes ) {
+            Property prop = getStereotypePropertyByName( stereotype, propName );
+            if ( prop != null ) {
+                return prop;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the property of the stereotype by name.
+     * @param stereotype
+     * @param propName
+     * @return
+     */
+    public static Property getStereotypePropertyByName( Stereotype stereotype,
+                                                        String propName ) {
+        return StereotypesHelper.getPropertyByName( stereotype, propName );
+    }
+
     /**
      * Get the element's matching Slot or Properties.
      * 
@@ -2560,6 +2666,25 @@ public class Utils {
     }
 
     /**
+     * Get the element's matching Slot or Properties.
+     * 
+     * @param elem
+     *            the Element with the sought Properties.
+     * @param propName
+     *            the name of the Stereotype tag or Class Property
+     * @return a Property or Slot that corresponds to the input property
+     */
+    public static Element getElementProperty( Element elem, String propName ) {
+        Property prop = getElementStereotypeProperty(elem, propName);
+        if ( prop != null ) {
+            Element result = getElementProperty(elem, prop);
+            if ( result != null ) return result;
+        }
+        prop = getClassProperty( elem, propName, true );
+        return prop;
+    }
+    
+    /**
      * A list of property values will always be returned. Gets default value of
      * a stereotype property when there's no slot for the element. Class value
      * properties will be collected by name matching.
@@ -2573,6 +2698,8 @@ public class Utils {
      */
     public static List<Object> getElementPropertyValues(Element elem, Property prop,
             boolean allowStereotypeDefaultOrInherited) {
+        if ( elem == null ) return Collections.emptyList();
+        if ( prop == null ) return Collections.emptyList();
         List<Object> results = getStereotypePropertyValues(elem, prop, allowStereotypeDefaultOrInherited);
         if (!Utils2.isNullOrEmpty(results))
             return results;
@@ -2595,6 +2722,17 @@ public class Utils {
             }
         }
         return results;
+    }
+
+    public static List< Object > getElementPropertyValues( Element elem,
+                                                           String propName,
+                                                           boolean allowStereotypeDefaultOrInherited ) {
+        Property prop = getClassProperty( elem, propName, allowStereotypeDefaultOrInherited );
+        //return Utils2.newList( (Object)getClassPropertyValue( elem, prop, allowStereotypeDefaultOrInherited ) );
+        if ( prop == null ) {
+            prop = getElementStereotypeProperty( elem, propName );
+        }
+        return getElementPropertyValues( elem, prop, allowStereotypeDefaultOrInherited );
     }
 
     /**
@@ -2643,6 +2781,23 @@ public class Utils {
             }
         }
         return results;
+    }
+
+    /**
+     * Gets list of values for a stereotype property, supports derived
+     * properties in customizations
+     * 
+     * @param elem
+     * @param propName
+     * @param useDefaultIfNoSlot
+     * @return
+     */
+    public static List< Object > getStereotypePropertyValues( Element elem,
+                                                              String propName,
+                                                              boolean useDefaultIfNoSlot ) {
+        Property prop = getElementStereotypeProperty( elem, propName );
+        if ( prop == null ) return null;
+        return getStereotypePropertyValues( elem, prop, useDefaultIfNoSlot );
     }
 
     /*****************************************************************************************/
