@@ -526,7 +526,7 @@ public class Utils2 {
         for ( T t : c ) {
             if (t == null || cls == null || cls.isAssignableFrom( t.getClass() ) ) {
                 try {
-                    V v = cls.cast( t );
+                    V v = ( cls == null ? (V)t : cls.cast( t ) );
                     list.add( v );
                 } catch ( ClassCastException e ) {}
             }
