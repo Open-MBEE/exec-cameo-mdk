@@ -69,6 +69,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
+import org.apache.ivy.core.event.download.NeedArtifactEvent;
+
 public class RepeatInputComboBoxDialog implements Runnable {
 
     @SuppressWarnings("unused")
@@ -307,6 +309,10 @@ public class RepeatInputComboBoxDialog implements Runnable {
         public JComponent         completionsPane  = null;
         public JScrollPane        resultScrollPane = null;
         public JScrollPane        completionsScrollPane = null;
+        JLabel label = null;
+        JLabel resultLabel = null;
+//        JLabel completionsLabel = null;
+
 
         public EditableListPanel(String msg, Object[] items) { // , String
                                                                // processButtonLabel,
@@ -317,17 +323,24 @@ public class RepeatInputComboBoxDialog implements Runnable {
             SpringLayout layout = (SpringLayout)getLayout();
             setItems(items);
 
-            JLabel label = new JLabel(msg);
+            label = new JLabel(msg);
+            resultLabel = new JLabel("Result of evaluation:");
+//            completionsLabel = new JLabel("Operations:");
+            
             resultPane = createEditorPane("<br>");
             completionsPane = createEditorPane("<br>");
             resultScrollPane = new JScrollPane(resultPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             completionsScrollPane = new JScrollPane(completionsPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+//            JPanel completionsPane = new JPanel();
+//            completionsPane.add( completionsLabel );
+//            completionsPane.add( completionsScrollPane );
             JSplitPane splitPane = new JSplitPane( JSplitPane.VERTICAL_SPLIT, resultScrollPane, completionsScrollPane );
             
             add(label);
             add(jcb);
+            add(resultLabel);
             add(splitPane);
 //            add(resultScrollPane);
 //            add(completionsScrollPane);
@@ -339,7 +352,11 @@ public class RepeatInputComboBoxDialog implements Runnable {
             layout.putConstraint(SpringLayout.WEST, jcb, 5, SpringLayout.WEST, this);
             layout.putConstraint(SpringLayout.EAST, jcb, -5, SpringLayout.EAST, this);
 
-//            layout.putConstraint(SpringLayout.NORTH, resultScrollPane, 5, SpringLayout.SOUTH, jcb);
+            layout.putConstraint(SpringLayout.NORTH, resultLabel, 5, SpringLayout.SOUTH, jcb);
+            layout.putConstraint(SpringLayout.WEST, resultLabel, 5, SpringLayout.WEST, this);
+            layout.putConstraint(SpringLayout.EAST, resultLabel, -5, SpringLayout.EAST, this);
+            
+            //            layout.putConstraint(SpringLayout.NORTH, resultScrollPane, 5, SpringLayout.SOUTH, jcb);
 //            layout.putConstraint(SpringLayout.WEST, resultScrollPane, 5, SpringLayout.WEST, this);
 //            layout.putConstraint(SpringLayout.EAST, resultScrollPane, -5, SpringLayout.EAST, this);
 ////            layout.putConstraint(SpringLayout.SOUTH, resultScrollPane, -5, SpringLayout.NORTH, completionsScrollPane);
@@ -349,7 +366,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
 //            layout.putConstraint(SpringLayout.EAST, completionsScrollPane, -5, SpringLayout.EAST, this);
 //            layout.putConstraint(SpringLayout.SOUTH, completionsScrollPane, -5, SpringLayout.SOUTH, this);
 
-            layout.putConstraint(SpringLayout.NORTH, splitPane, 5, SpringLayout.SOUTH, jcb);
+            layout.putConstraint(SpringLayout.NORTH, splitPane, 5, SpringLayout.SOUTH, resultLabel);
             layout.putConstraint(SpringLayout.WEST, splitPane, 5, SpringLayout.WEST, this);
             layout.putConstraint(SpringLayout.EAST, splitPane, -5, SpringLayout.EAST, this);
             layout.putConstraint(SpringLayout.SOUTH, splitPane, -5, SpringLayout.SOUTH, this);
