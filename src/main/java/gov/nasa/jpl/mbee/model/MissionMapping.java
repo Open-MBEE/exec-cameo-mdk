@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee.model;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.actions.MapMissionAction;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.ui.CharacterizationChooserUI;
 import gov.nasa.jpl.mbee.model.ui.LibraryComponent;
 import gov.nasa.jpl.mbee.model.ui.MissionCharacterization;
@@ -627,7 +628,7 @@ public class MissionMapping extends Query {
             return res;
         DBTable table = new DBTable();
         Node<String, MissionComponent> root = getRoot();
-        List<Element> chars = Utils.sortByName(getLibraryCharacterizations());
+        List<Element> chars = Utils.sortByName(Utils2.asList(getLibraryCharacterizations(), Element.class));
         List<List<DocumentElement>> grid = new ArrayList<List<DocumentElement>>();
         List<List<DocumentElement>> headers = new ArrayList<List<DocumentElement>>();
         addMissionRows(root, chars, grid, 1);

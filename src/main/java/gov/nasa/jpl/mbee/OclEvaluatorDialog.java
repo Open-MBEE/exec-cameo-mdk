@@ -138,6 +138,9 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         jp.add( buttonPane );
         contentPane.add( jp, BorderLayout.PAGE_END );
  
+        setMinimumSize( new Dimension( 400, 300 ) );
+        //setSize( new Dimension( 400, 600 ) );
+        
         //Initialize values.
         pack();
         if ( owner != null ) setLocationRelativeTo( owner );
