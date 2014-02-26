@@ -209,15 +209,24 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
+            Element find = ExportUtility.getElementFromID((String)o);
+            if (find == null) {
+                Application.getInstance().getGUILog().log("Element with id " + o + " not found!");
+                return;
+            }
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+                ((ElementValue)newval).setElement(find);
                 return;
             } else if (newval instanceof InstanceValue) {
-                ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
+                if (!(find instanceof InstanceSpecification)) {
+                    Application.getInstance().getGUILog().log("Element with id " + o + " is not an instance spec, cannot be put into an InstanceValue.");
+                    return;
+                }
+                ((InstanceValue)newval).setInstance((InstanceSpecification)find);
                 return;
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+            ((ElementValue)newval).setElement(find);
             break;
         default:
             Debug.error("Bad PropertyValueType: " + valueType);
@@ -293,15 +302,24 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
+            Element find = ExportUtility.getElementFromID((String)o);
+            if (find == null) {
+                Application.getInstance().getGUILog().log("Element with id " + o + " not found!");
+                return;
+            }
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+                ((ElementValue)newval).setElement(find);
                 return;
             } else if (newval instanceof InstanceValue) {
-                ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
+                if (!(find instanceof InstanceSpecification)) {
+                    Application.getInstance().getGUILog().log("Element with id " + o + " is not an instance spec, cannot be put into an InstanceValue.");
+                    return;
+                }
+                ((InstanceValue)newval).setInstance((InstanceSpecification)find);
                 return;
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+            ((ElementValue)newval).setElement(find);
             break;
         case InstanceValue:
             if (newval instanceof InstanceValue) {
