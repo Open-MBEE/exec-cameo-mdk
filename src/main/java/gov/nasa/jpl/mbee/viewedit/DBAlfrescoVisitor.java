@@ -39,6 +39,9 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -366,6 +369,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             elements.put(source.getID(), sourceInfo);
             elements.put(target.getID(), targetInfo);
         }
+        if (e instanceof Property || e instanceof Slot)
+            elements.putAll(ExportUtility.getReferencedElements(e));
     }
     
     public JSONObject getElements() {

@@ -35,6 +35,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.json.simple.JSONObject;
 
@@ -71,8 +72,8 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
                 if (!e.isEditable()) {
                     continue;
                 }
-                String sourceId = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("source");
-                String targetId = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("target");
+                String sourceId = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("source");
+                String targetId = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("target");
                 Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);
                 Element target = (Element)Application.getInstance().getProject().getElementByID(targetId);
                 ModelHelper.setClientElement(e, source);
@@ -98,8 +99,8 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
         }
         SessionManager.getInstance().createSession("Change Rel");
         try {
-            String sourceId = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(element.getID())).get("source");
-            String targetId = (String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(element.getID())).get("target");
+            String sourceId = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID()).get("source");
+            String targetId = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID()).get("target");
             Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);
             Element target = (Element)Application.getInstance().getProject().getElementByID(targetId);
             ModelHelper.setClientElement(element, source);

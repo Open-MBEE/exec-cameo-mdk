@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -48,6 +49,7 @@ import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -81,6 +83,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
+            if (e instanceof Property || e instanceof Slot)
+                infos.addAll(ExportUtility.getReferencedElements(e).values());
             JSONObject info = getInfo(e);
             infos.add(info);
         }
@@ -105,7 +109,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         JSONObject info = getInfo(element);
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-
+        if (element instanceof Property || element instanceof Slot)
+            elements.addAll(ExportUtility.getReferencedElements(element).values());
         elements.add(info);
         send.put("elements", elements);
         String url = ExportUtility.getPostElementsUrl();
@@ -126,20 +131,20 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         if (e instanceof Property) {
             ValueSpecification vs = ((Property)e).getDefaultValue();
             if (vs != null) {
-                addValues(e, value, elementInfo, vs);
+                ExportUtility.addValues(e, value, elementInfo, vs);
             }
         } else if (e instanceof Slot) {
             List<ValueSpecification> vsl = ((Slot)e).getValue();
             if (vsl != null && vsl.size() > 0) {
                 for (ValueSpecification vs: vsl) {
-                    addValues(e, value, elementInfo, vs);
+                    ExportUtility.addValues(e, value, elementInfo, vs);
                 }
             }
         }
         elementInfo.put("id", ExportUtility.getElementID(e));
         return elementInfo;
     }
-    
+/*    
     @SuppressWarnings("unchecked")
     private void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
         if (vs instanceof LiteralBoolean) {
@@ -166,7 +171,13 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
             if (ev != null) {
                 value.add(ExportUtility.getElementID(ev));
             }
+        } else if (vs instanceof InstanceValue) {
+            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
+            Element ev = ((InstanceValue)vs).getInstance();
+            if (ev != null) {
+                value.add(ExportUtility.getElementID(ev));
+            }
         }
         elementInfo.put("value", value);
-    }
+    }*/
 }

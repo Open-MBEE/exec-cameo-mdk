@@ -39,6 +39,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -49,6 +50,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -91,8 +94,8 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
                     Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
                     continue;
                 }
-                PropertyValueType valueType = PropertyValueType.valueOf((String)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("valueType"));
-                JSONArray vals = (JSONArray)((JSONObject)((JSONObject)result.get("elementsKeyed")).get(e.getID())).get("value");
+                PropertyValueType valueType = PropertyValueType.valueOf((String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("valueType"));
+                JSONArray vals = (JSONArray)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("value");
                 if (e instanceof Property) {
                     if (vals == null || vals.isEmpty()) {
                         ((Property)e).setDefaultValue(null);
@@ -206,11 +209,24 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
+            Element find = ExportUtility.getElementFromID((String)o);
+            if (find == null) {
+                Application.getInstance().getGUILog().log("Element with id " + o + " not found!");
+                return;
+            }
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+                ((ElementValue)newval).setElement(find);
+                return;
+            } else if (newval instanceof InstanceValue) {
+                if (!(find instanceof InstanceSpecification)) {
+                    Application.getInstance().getGUILog().log("Element with id " + o + " is not an instance spec, cannot be put into an InstanceValue.");
+                    return;
+                }
+                ((InstanceValue)newval).setInstance((InstanceSpecification)find);
+                return;
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+            ((ElementValue)newval).setElement(find);
             break;
         default:
             Debug.error("Bad PropertyValueType: " + valueType);
@@ -220,11 +236,14 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     }
     
     // TODO -- move to Utils and have setSlot() call this instead of always creating a new Slot?
-    private void update(Slot e, PropertyValueType valueType, Object o) {
-        ValueSpecification newval = null; 
-        if ( !Utils2.isNullOrEmpty( e.getValue() ) ) {
+    private void update(Slot e, PropertyValueType valueType, ValueSpecification vs, Object o, int i) {
+        ValueSpecification newval = vs; 
+        /*if ( !Utils2.isNullOrEmpty( e.getValue() ) ) {
             for ( ValueSpecification v : e.getValue() ) {
-                if ( valueType == PropertyValueType.toPropertyValueType( v ) ) {
+                PropertyValueType modelType = PropertyValueType.toPropertyValueType( v );
+                if ( valueType == modelType ||
+                     valueType == PropertyValueType.ElementValue && v instanceof InstanceValue ||
+                     valueType == PropertyValueType.LiteralInteger && v instanceof LiteralUnlimitedNatural) {
                     newval = v;
                     break;
                 }
@@ -232,7 +251,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         }
         if ( newval == null && !Utils2.isNullOrEmpty( e.getValue() ) ) {
             e.getValue().clear();
-        }
+        }*/
         switch ( valueType ) {
         case LiteralString:
             if (newval instanceof LiteralString) {
@@ -283,16 +302,40 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
+            Element find = ExportUtility.getElementFromID((String)o);
+            if (find == null) {
+                Application.getInstance().getGUILog().log("Element with id " + o + " not found!");
+                return;
+            }
             if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+                ((ElementValue)newval).setElement(find);
+                return;
+            } else if (newval instanceof InstanceValue) {
+                if (!(find instanceof InstanceSpecification)) {
+                    Application.getInstance().getGUILog().log("Element with id " + o + " is not an instance spec, cannot be put into an InstanceValue.");
+                    return;
+                }
+                ((InstanceValue)newval).setInstance((InstanceSpecification)find);
+                return;
             }
             newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement(ExportUtility.getElementFromID((String)o));
+            ((ElementValue)newval).setElement(find);
+            break;
+        case InstanceValue:
+            if (newval instanceof InstanceValue) {
+                ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
+                return;
+            }
+            newval = ef.createInstanceValueInstance();
+            ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
             break;
         };
-        if ( e.getValue() != null && e.getValue().isEmpty() ) {
-            e.getValue().add( newval );
-        }
+        //if ( e.getValue() != null && e.getValue().isEmpty() ) {
+        if (e.getValue().size() > i)
+            e.getValue().set(i, newval );
+        else
+            e.getValue().add(newval);
+        //}
         return;
     }
     
@@ -301,7 +344,13 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             Debug.error( "Trying to update a null slot!" );
             return;
         }
-        if ( values.size() != 1 ) {
+        for (int i = 0; i < values.size(); i++) {
+            if (e.getValue().size() > i) {
+                update(e, valueType, e.getValue().get(i), values.get(i), i);
+            } else
+                update(e, valueType, null, values.get(i), i);
+        }
+        /*if ( values.size() != 1 ) {
             Application.getInstance().getGUILog().log("[ERROR] " + e.getHumanName() + " must have exactly one value but is being updated with " + values.size() + "!");
             return;
         }
@@ -311,6 +360,6 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         }
         Object v = values.get( 0 );
         //Utils.setSlotValue((Slot)e, v);
-        update( e, valueType, v );
+        update( e, valueType, v );*/
     }
 }

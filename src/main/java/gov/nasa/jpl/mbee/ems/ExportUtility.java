@@ -30,10 +30,12 @@ package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -72,9 +74,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
@@ -93,6 +97,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class ExportUtility {
     public static Logger log = Logger.getLogger(ExportUtility.class);
     public static Map<String, Integer> mountedVersions;
+    private static String developerUrl = "https://sheldon.jpl.nasa.gov/alfresco/service";
+    private static String developerSite = "europa";
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", //stylesaver
@@ -164,14 +170,20 @@ public class ExportUtility {
                 JOptionPane
                         .showMessageDialog(null,
                                 "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
-                return null;
+                url = null;
             }
         } else {
             JOptionPane
                     .showMessageDialog(null,
                             "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
-            return null;
+            url = null;
         }
+        if (url == null && MDUtils.isDeveloperMode()) {
+            url = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the editor URL:", developerUrl);  
+        }
+        if (url == null || url.equals(""))
+            return null;
+        developerUrl = url;
         return url;
     }
     
@@ -184,8 +196,14 @@ public class ExportUtility {
         if (site == null || site.equals("")) {
             JOptionPane.showMessageDialog(null,
                     "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
-                return null;
+                site = null;
         }
+        if (site == null && MDUtils.isDeveloperMode()) {
+            site = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
+        }
+        if (site == null || site.equals(""))
+            return null;
+        developerSite = site;
         return url + "/javawebscripts/sites/" + site;
         
         //return url + "/javawebscripts/sites/europa";
@@ -434,7 +452,7 @@ public class ExportUtility {
     }
     
     @SuppressWarnings("unchecked")
-    private static void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
+    public static void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
         if (vs instanceof LiteralBoolean) {
             elementInfo.put("valueType", PropertyValueType.LiteralBoolean.toString());
             value.add(((LiteralBoolean)vs).isValue());
@@ -458,6 +476,12 @@ public class ExportUtility {
             Element ev = ((ElementValue)vs).getElement();
             if (ev != null) {
                 value.add(ev.getID());
+            }
+        } else if (vs instanceof InstanceValue) {
+            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
+            Element ev = ((InstanceValue)vs).getInstance();
+            if (ev != null) {
+                value.add(ExportUtility.getElementID(ev));
             }
         }
         elementInfo.put("value", value);
@@ -690,10 +714,45 @@ public class ExportUtility {
             return false;
         if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
             return false;
-        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty())
+        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty() && !(e instanceof EnumerationLiteral))
             return false;
         if (e instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)e).getDefiningFeature().getID()))
             return false;
         return true;
     }
+    
+    public static Map<String, JSONObject> getReferencedElements(Element e) {
+        Stereotype view = Utils.getViewStereotype();
+        Stereotype viewpoint = Utils.getViewpointStereotype();
+        Map<String, JSONObject> result = new HashMap<String, JSONObject>();
+        if (e instanceof Property) {
+            Element value = null;
+            if (((Property)e).getDefaultValue() instanceof ElementValue) {
+                value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
+            } else if (((Property)e).getDefaultValue() instanceof InstanceValue) {
+                value = ((InstanceValue)((Property)e).getDefaultValue()).getInstance();
+            }
+            if (value != null) {
+                JSONObject j = new JSONObject();
+                fillElement(value, j, view, viewpoint);
+                result.put(value.getID(), j);
+            }
+        } else if (e instanceof Slot) {
+            for (ValueSpecification vs: ((Slot)e).getValue()) {
+                Element value = null;
+                if (vs instanceof ElementValue) {
+                    value = ((ElementValue)vs).getElement();
+                } else if (vs instanceof InstanceValue) {
+                    value = ((InstanceValue)vs).getInstance();
+                }
+                if (value != null) {
+                    JSONObject j = new JSONObject();
+                    fillElement(value, j, view, viewpoint);
+                    result.put(value.getID(), j);
+                }
+            }
+        }
+        return result;
+    }
+    
 }

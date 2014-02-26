@@ -35,7 +35,8 @@ public enum PropertyValueType {
     LiteralInteger(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger.class), 
     LiteralUnlimitedNatural(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural.class), 
     ElementValue(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue.class), 
-    Expression(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression.class);
+    Expression(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression.class),
+    InstanceValue(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue.class);
     
     Class<?> type;
     PropertyValueType( Class<?> type ) {
