@@ -49,8 +49,10 @@ import gov.nasa.jpl.ocl.GetCallOperation;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.awt.Color;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +65,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -2799,10 +2802,93 @@ public class Utils {
     /*****************************************************************************************/
 
     public static void log(Object o) {
-        GUILog log = Application.getInstance().getGUILog();
-        log.log(o.toString());
+        if ( o == null ) o = "null";
+        log( o, (Color)null );
     }
 
+    /**
+     * Get the Color by name or by RGB specification.
+     * 
+     * @param colorString
+     * @return the Color constant with the same name as the input (forgiving
+     *         capitalization, hyphens, underscores, etc.) or the RGB Color
+     *         specified as 3 comma separated integers
+     */
+    public static Color toColor( String colorString ) {
+        if ( Utils2.isNullOrEmpty( colorString ) ) return null;
+
+        Color color = null;
+        
+        // try to find a field in the Color class that has the same name
+        Field f;
+        LinkedHashSet<String> set = new LinkedHashSet< String >();
+        set.add( colorString );
+        String colorNameLetters = colorString.replaceAll( "[^A-Za-z]*", "" );
+        set.add( colorNameLetters );
+        set.add( colorString.toLowerCase() );
+        set.add( colorString.toUpperCase() );
+        set.add( colorNameLetters.toLowerCase() );
+        set.add( colorNameLetters.toUpperCase() );
+        for ( String cName : set ) {
+            try {
+                f = Color.class.getField( cName );
+                if ( f != null ) {
+                    color = (Color)f.get( null );
+                    if ( color != null ) break;
+                }
+            } catch ( IllegalArgumentException e ) {
+            } catch ( IllegalAccessException e ) {
+            } catch ( SecurityException e ) {
+            } catch ( NoSuchFieldException e ) {
+            }
+        }
+        
+        // try to parse RGB integers separated by commas
+        if ( color == null ) {
+            Pattern p = Pattern.compile( "[^0-9]*([0-9]+), *([0-9]+), *([0-9]+).*" );
+            Matcher m = p.matcher( colorString );
+            if ( m.matches() ) {
+                if ( m.groupCount() == 3 ) {
+                    Integer r = Integer.valueOf( m.group( 1 ) );
+                    Integer g = Integer.valueOf( m.group( 2 ) );
+                    Integer b = Integer.valueOf( m.group( 3 ) );
+                    color = new Color( r == null ? 0 : r,
+                                       g == null ? 0 : g,
+                                       b == null ? 0 : b );
+                }
+            }
+        }
+
+        return color;
+    }
+    
+    public static boolean isColor( Object o ) {
+        if ( o == null ) return false;
+        if ( o instanceof Color ) return true;
+        return ( toColor( o.toString() ) != null );
+    }
+
+    public static void log(Object o, String colorName) {
+        Color c = toColor( colorName );
+        log(o, c);
+    }
+    public static void log(Object o, Color color) {
+        if ( o == null ) o = "null";
+        if ( !( o instanceof String ) ) {
+            // To handle arrays, etc.
+            o = MoreToString.Helper.toString( o );
+        }
+        MdDebug.logForce( o.toString(), true, false, color );
+    }
+    public static void log(Object o, Object color) {
+        if ( color == null || color instanceof Color ) {
+            log( o, (Color)color );
+        } else {
+            log( o, color.toString() );
+        }
+    }
+    
+    
     /**
      * @param slot
      * @return the "represented text" for the slot values as a single String
