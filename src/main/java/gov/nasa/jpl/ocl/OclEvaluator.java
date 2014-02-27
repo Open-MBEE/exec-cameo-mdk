@@ -41,6 +41,7 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -389,11 +390,6 @@ public class OclEvaluator {
         // op.resultType = opType;
         ArrayList<GetCallOperation> ops = new ArrayList<GetCallOperation>();
 
-        // Create the one parameter for the operation
-        EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
-        parm.setName(parmName);
-        parm.setEType(parmType);
-
         GetCallOperation op = null;
 
         boolean someEndWithS = false;
@@ -414,6 +410,12 @@ public class OclEvaluator {
             op.resultType = opType;
             boolean endsWithS = false;
             boolean oneChar = false;
+            
+            // Create the one parameter for the operation
+            EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
+            parm.setName(parmName);
+            parm.setEType(parmType);
+
             if (someEndWithS && notAllEndWithS) {
                 oneChar = name.trim().length() == 1;
                 endsWithS = name.trim().substring(name.length() - 1).toLowerCase().equals("s");
@@ -426,8 +428,9 @@ public class OclEvaluator {
                 }
             }
             // Create the one-parameter operation
-            DgOperationInstance.addOperation(name, "DocGenEnvironment", envFactory, callerType, returnType,
-                    op, parm);
+            DgOperationInstance.addOperation( name, "DocGenEnvironment",
+                                              envFactory, callerType,
+                                              returnType, op, parm );
             ops.add(op);
 
             if (zeroArgToo) {
@@ -443,8 +446,9 @@ public class OclEvaluator {
                         op.onlyOnePer = true;
                     }
                 }
-                DgOperationInstance.addOperation(name, "DocGenEnvironment", envFactory, callerType,
-                        returnType, op);
+                DgOperationInstance.addOperation( name, "DocGenEnvironment",
+                                                  envFactory, callerType,
+                                                  returnType, op );
                 ops.add(op);
             }
         }
@@ -479,18 +483,40 @@ public class OclEvaluator {
         envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
     }
 
-    protected static void addLogOperation(DgEnvironmentFactory envFactory, boolean addArg) {
+    protected static void addLogOperation(DgEnvironmentFactory envFactory, boolean addArg, boolean addColorArg) {
+        addLogOperation( envFactory, addArg, addColorArg, false, false );
+        addLogOperation( envFactory, addArg, addColorArg, true, false );
+        addLogOperation( envFactory, addArg, addColorArg, false, true );
+        addLogOperation( envFactory, addArg, addColorArg, true, true );
+    }
+
+    protected static void addLogOperation( DgEnvironmentFactory envFactory,
+                                           boolean addArg, boolean addColorArg,
+                                           boolean asSequence,
+                                           boolean fromSequence ) {  // Are these last two args helpful???
 
         // create custom operation
         DgOperationInstance doi = new DgOperationInstance();
-        doi.setName("log");
+        doi.setName("log");// + (asSequence ? "S" : "" ) + (fromSequence ? "F" : "") );
         doi.setAnnotationName("DocGenEnvironment");
         if ( addArg ) {
             EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
             parm.setName("toLog");
-            doi.addParameter(parm, OCLStandardLibraryImpl.INSTANCE.getOclAny());
+            if ( asSequence ) {
+                doi.addParameter(parm, OCLStandardLibraryImpl.INSTANCE.getSequence());
+            } else {
+                doi.addParameter(parm, OCLStandardLibraryImpl.INSTANCE.getOclAny());
+            }
+            if ( addColorArg ) {
+                parm = EcoreFactory.eINSTANCE.createEParameter();
+                parm.setName("color");
+                doi.addParameter(parm, OCLStandardLibraryImpl.INSTANCE.getOclAny());
+            }
         }
-        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        if ( fromSequence )
+            doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        else
+            doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getSequence());
         doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
 
         // essentially set the actual operation as function pointer
@@ -498,11 +524,15 @@ public class OclEvaluator {
             @Override
             public Object callOperation(Object source, Object[] args) {
                 if ( args != null && args.length > 0 ) {
-                    if ( args.length == 1 ) {
-                        Utils.log( MoreToString.Helper.toString( args[ 0 ] ) );
-                    } else {
-                        Utils.log( MoreToString.Helper.toString( args ) );
-                    }
+                        Object o = args[0];
+                        Object colorObj = null;
+                        if ( args.length >= 2 ) {
+                            colorObj = args[1];
+                        } else if ( source != null && Utils.isColor( o ) ){
+                            colorObj = args[0];
+                            o = source;
+                        }
+                        Utils.log( o, colorObj );
                 } else if ( source != null ) {
                     Utils.log( source );
                 }
@@ -911,8 +941,9 @@ public class OclEvaluator {
                          OCLStandardLibraryImpl.INSTANCE.getSequence() );
         addRunOperation( getEnvironmentFactory(), null );
         addGetOperation( getEnvironmentFactory() );
-        addLogOperation( getEnvironmentFactory(), true );
-        addLogOperation( getEnvironmentFactory(), false );
+        addLogOperation( getEnvironmentFactory(), true, false );
+        addLogOperation( getEnvironmentFactory(), true, true );
+        addLogOperation( getEnvironmentFactory(), false, false );
         // add one-letter custom OCL operations
         addROperation( getEnvironmentFactory() );
         addMOperation( getEnvironmentFactory() );

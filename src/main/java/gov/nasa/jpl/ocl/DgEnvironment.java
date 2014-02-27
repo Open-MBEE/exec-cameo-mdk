@@ -31,9 +31,8 @@ package gov.nasa.jpl.ocl;
 import gov.nasa.jpl.mbee.lib.Debug;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TreeSet;
-
 import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
@@ -56,7 +55,7 @@ import org.eclipse.ocl.ecore.internal.OCLStandardLibraryImpl;
 
 public class DgEnvironment extends EcoreEnvironment {
     Set<String>              operationNames = new HashSet<String>();
-    Set<DgOperationInstance> operations     = new TreeSet<DgOperationInstance>();
+    Set<DgOperationInstance> operations     = new LinkedHashSet<DgOperationInstance>();
 
     // this constructor is used to initialize the root environment
     DgEnvironment(EPackage.Registry registry) {

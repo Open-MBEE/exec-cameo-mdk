@@ -313,7 +313,6 @@ public class RepeatInputComboBoxDialog implements Runnable {
         JLabel resultLabel = null;
 //        JLabel completionsLabel = null;
 
-
         public EditableListPanel(String msg, Object[] items) { // , String
                                                                // processButtonLabel,
                                                                // Icon
@@ -356,7 +355,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
             layout.putConstraint(SpringLayout.WEST, resultLabel, 5, SpringLayout.WEST, this);
             layout.putConstraint(SpringLayout.EAST, resultLabel, -5, SpringLayout.EAST, this);
             
-            //            layout.putConstraint(SpringLayout.NORTH, resultScrollPane, 5, SpringLayout.SOUTH, jcb);
+//            layout.putConstraint(SpringLayout.NORTH, resultScrollPane, 5, SpringLayout.SOUTH, jcb);
 //            layout.putConstraint(SpringLayout.WEST, resultScrollPane, 5, SpringLayout.WEST, this);
 //            layout.putConstraint(SpringLayout.EAST, resultScrollPane, -5, SpringLayout.EAST, this);
 ////            layout.putConstraint(SpringLayout.SOUTH, resultScrollPane, -5, SpringLayout.NORTH, completionsScrollPane);
