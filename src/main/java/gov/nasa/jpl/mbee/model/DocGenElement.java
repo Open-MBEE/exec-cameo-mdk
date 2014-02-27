@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import gov.nasa.jpl.mbee.lib.MoreToString;
+
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public abstract class DocGenElement implements IDocGenElement {
@@ -96,5 +98,18 @@ public abstract class DocGenElement implements IDocGenElement {
 
     public boolean getLoop() {
         return this.loop;
+    }
+    
+    protected String toStringStart() {
+        return getClass().getSimpleName() + "(";
+    }
+
+    protected String toStringEnd() {
+        return ")";
+    }
+
+    @Override
+    public String toString() {
+        return toStringStart() + toStringEnd();  
     }
 }

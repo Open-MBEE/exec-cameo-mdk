@@ -29,16 +29,21 @@
 package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -48,9 +53,11 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
@@ -60,6 +67,9 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.foundation.MDObject;
+import com.nomagic.magicdraw.teamwork2.ProjectVersion;
+import com.nomagic.magicdraw.teamwork2.TeamworkService;
+import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
@@ -69,6 +79,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -94,10 +105,15 @@ import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInter
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Interval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
     public static Logger log = Logger.getLogger(ExportUtility.class);
+    public static Map<String, Integer> mountedVersions;
+    private static String developerUrl = "https://sheldon.jpl.nasa.gov/alfresco/service";
+    private static String developerSite = "europa";
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", //stylesaver
@@ -159,9 +175,9 @@ public class ExportUtility {
     }
     
     public static String getUrl() {
-        return "http://localhost:8080/view-repo/service";
-        //return "https://sheldon/alfresco/service";
-        /*String url = null;
+//        return "http://localhost:8080/view-repo/service";
+//        //return "https://sheldon/alfresco/service";
+        String url = null;
         Element model = Application.getInstance().getProject().getModel();
         if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
             url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
@@ -170,29 +186,43 @@ public class ExportUtility {
                 JOptionPane
                         .showMessageDialog(null,
                                 "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
-                return null;
+                url = null;
             }
         } else {
             JOptionPane
                     .showMessageDialog(null,
                             "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
-            return null;
+            url = null;
         }
-        return url;*/ 
+        if (url == null && MDUtils.isDeveloperMode()) {
+            url = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the editor URL:", developerUrl);  
+        }
+        if (url == null || url.equals(""))
+            return null;
+        developerUrl = url;
+        return url;
     }
     
     public static String getUrlWithSite() {
+        Element model = Application.getInstance().getProject().getModel();
         String  url = getUrl();
         if (url == null)
             return null;
-        /* Element model = Application.getInstance().getProject().getModel();
         String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
         if (site == null || site.equals("")) {
             JOptionPane.showMessageDialog(null,
                     "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
-                return null;
-        }*/
-        return url + "/javawebscripts/sites/europa";
+                site = null;
+        }
+        if (site == null && MDUtils.isDeveloperMode()) {
+            site = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
+        }
+        if (site == null || site.equals(""))
+            return null;
+        developerSite = site;
+        return url + "/javawebscripts/sites/" + site;
+        
+        //return url + "/javawebscripts/sites/europa";
     }
     
     public static String getUrlWithSiteAndProject() {
@@ -209,21 +239,30 @@ public class ExportUtility {
         return url + "/elements";
     }
     
-    public static boolean showErrors(int code, String response) {
+    public static boolean showErrors(int code, String response, boolean showPopupErrors) {
         if (code != 200) {
             if (code == 500) {
-                Utils.showPopupMessage("Server Error, see message window for details");
+                if (showPopupErrors)
+                    Utils.showPopupMessage("Server Error, see message window for details");
                 Application.getInstance().getGUILog().log(response);
+                log.info(response);
             } else if (code == 401) {
-                Utils.showPopupMessage("You are not authorized or don't have permission, you have been logged out (you can login and try again)");
+                if (showPopupErrors)
+                    Utils.showPopupMessage("You are not authorized or don't have permission, you have been logged out (you can login and try again)");
                 ViewEditUtils.clearCredentials();
             } else if (code == 403) {
-                Utils.showPopupMessage("You do not have permission to do this");
+                if (showPopupErrors)
+                    Utils.showPopupMessage("You do not have permission to do this");
             } else if (code == 404) {
-                Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
+                if (showPopupErrors)
+                    Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
                 Application.getInstance().getGUILog().log(response);
+                log.info(response);
                 return false;
+            } else {
+                Application.getInstance().getGUILog().log(response);
+                log.info(response);
             }
             return true;
         }
@@ -232,11 +271,15 @@ public class ExportUtility {
             log.info(response);
             Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else
-            Application.getInstance().getGUILog().log(response);
+            log.info(response);//Application.getInstance().getGUILog().log(response);
         return false;
     }
     
     public static boolean send(String url, String json, String method) {
+        return send(url, json, method, true);
+    }
+    
+    public static boolean send(String url, String json, String method, boolean showPopupErrors) {
         if (url == null)
             return false;
         
@@ -260,7 +303,7 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            if (showErrors(code, response)) {
+            if (showErrors(code, response, showPopupErrors)) {
                 return false;
             }
             gl.log("[INFO] Successful.");
@@ -302,6 +345,10 @@ public class ExportUtility {
     }
     
     public static String get(String url) {
+        return get(url, true);
+    }
+    
+    public static String get(String url, boolean showPopupErrors) {
         if (url == null)
             return null;
         GetMethod gm = new GetMethod(url);
@@ -312,9 +359,10 @@ public class ExportUtility {
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             
-            if (showErrors(code, json)) {
+            if (showErrors(code, json, showPopupErrors)) {
                 return null;
             }
+            Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -619,9 +667,51 @@ public class ExportUtility {
         elementInfo.put("comments", comments);*/
     }
     
+    // TODO -- Can DocGenUtils.getLiteralValue() be used to simplify this; maybe
+    // create a Class<?> getValueClass( ValueSpecification) that gets the
+    // valueType.  Then this would be three lines (forgetting error checking):
+    //   elementInfo.put( "valueType", getValueClass( vs ).getSimpleName() );
+    //   value.add( DocGenUtils.getLiteralValue( vs ) );
+    //   elementInfo.put( "value", value );
+    @SuppressWarnings("unchecked")
+    public static void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
+        if (vs instanceof LiteralBoolean) {
+            elementInfo.put("valueType", PropertyValueType.LiteralBoolean.toString());
+            value.add(((LiteralBoolean)vs).isValue());
+        } else if (vs instanceof LiteralString) {
+            elementInfo.put("valueType", PropertyValueType.LiteralString.toString());
+            value.add(((LiteralString)vs).getValue());
+        } else if (vs instanceof LiteralInteger || vs instanceof LiteralUnlimitedNatural) {
+            elementInfo.put("valueType", PropertyValueType.LiteralInteger.toString());
+            if (vs instanceof LiteralInteger) {
+                value.add(((LiteralInteger)vs).getValue());
+            } else 
+                value.add(((LiteralUnlimitedNatural)vs).getValue());
+        } else if (vs instanceof LiteralReal) {
+            elementInfo.put("valueType", PropertyValueType.LiteralReal.toString());
+            value.add(((LiteralReal)vs).getValue());
+        } else if (vs instanceof Expression) {
+            elementInfo.put("valueType", PropertyValueType.Expression.toString());
+            value.add(RepresentationTextCreator.getRepresentedText(vs));
+        } else if (vs instanceof ElementValue) {
+            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
+            Element ev = ((ElementValue)vs).getElement();
+            if (ev != null) {
+                value.add(ev.getID());
+            }
+        } else if (vs instanceof InstanceValue) {
+            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
+            Element ev = ((InstanceValue)vs).getInstance();
+            if (ev != null) {
+                value.add(ExportUtility.getElementID(ev));
+            }
+        }
+        elementInfo.put("value", value);
+    }
+    
     public static boolean checkBaselineMount() {
         Project prj = Application.getInstance().getProject();
-        if (prj.isRemote()) {
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
             String baselineTag = getBaselineTag();
             if (baselineTag == null)
                 return false;
@@ -666,4 +756,225 @@ public class ExportUtility {
         }
         return new Date();
     }
+    
+    public static Integer getAlfrescoProjectVersion(String projectId) {
+        String baseUrl = getUrl();
+        String checkProjUrl = baseUrl + "/javawebscripts/projects/" + projectId;
+        String json = get(checkProjUrl, false);
+        if (json == null)
+            return null; //??
+        JSONObject result = (JSONObject)JSONValue.parse(json);
+        if (result.containsKey("projectVersion"))
+            return Integer.valueOf(result.get("projectVersion").toString());
+        return null;
+    }
+    
+    public static Integer getAlfrescoProjectVersion(Element e) {
+        if (ProjectUtilities.isElementInAttachedProject(e)) {
+            IAttachedProject aprj = ProjectUtilities.getAttachedProject(e);
+            if (ProjectUtilities.isFromTeamworkServer(aprj))
+                return getAlfrescoProjectVersion(aprj.getProjectID());
+            return null;
+        } else {
+            Project prj = Application.getInstance().getProject();
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
+                return getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
+            }
+            return null;
+        }
+    }
+    
+    public static Integer getModuleVersion(Element e) {
+        Project prj = Application.getInstance().getProject();
+        if (ProjectUtilities.isElementInAttachedProject(e)) {
+            IProject module = ProjectUtilities.getAttachedProject(e);
+            if (ProjectUtilities.isFromTeamworkServer(module)) {
+                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                return teamwork;//TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
+            }
+            return null;
+        } else {
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+                return TeamworkService.getInstance(prj).getVersion(prj).getNumber();
+            return null;
+        }
+    }
+    
+    public static boolean versionOk(Element e) {
+        Project prj = Application.getInstance().getProject();
+        if (ProjectUtilities.isElementInAttachedProject(e)) {
+            IProject module = ProjectUtilities.getAttachedProject(e);
+            if (ProjectUtilities.isFromTeamworkServer(module)) {
+                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                //Integer teamwork = TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
+                Integer mms = getAlfrescoProjectVersion(module.getProjectID());
+                if (teamwork == mms || mms == null || teamwork > mms)
+                    return true;
+                return false;
+            }
+            return true;
+        } else {
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
+                Integer teamwork = TeamworkService.getInstance(prj).getVersion(prj).getNumber();
+                Integer mms = getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
+                if (teamwork == mms || mms == null || teamwork > mms)
+                    return true;
+                return false;
+            }
+            return true;
+        }
+    }
+    
+    public static void sendProjectVersion(Element e) {
+        Project prj = Application.getInstance().getProject();
+        if (ProjectUtilities.isElementInAttachedProject(e)) {
+            IProject module = ProjectUtilities.getAttachedProject(e);
+            if (ProjectUtilities.isFromTeamworkServer(module)) {
+                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                sendProjectVersion(module.getProjectID(), teamwork);
+            }
+        } else {
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
+                sendProjectVersion(prj.getPrimaryProject().getProjectID(),TeamworkService.getInstance(prj).getVersion(prj).getNumber());
+            }
+        }
+    
+    }
+    
+    public static boolean okToExport(Element e) {
+        if (!versionOk(e)) {
+            Boolean con = Utils.getUserYesNoAnswer("The element " + e.getHumanName() + " is in a project that is an older version of what's on the server, do you want to continue export?");
+            if (con == null || !con)
+                return false;
+        }
+        return true;
+    }
+    
+    public static boolean okToExport(Set<Element> set) {
+        Project prj = Application.getInstance().getProject();
+        mountedVersions = new HashMap<String, Integer>();
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+            mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj).getNumber());
+        for (Element e: set) {
+            if (ProjectUtilities.isElementInAttachedProject(e)) {
+                IProject module = ProjectUtilities.getAttachedProject(e);
+                if (ProjectUtilities.isFromTeamworkServer(module) && !mountedVersions.containsKey(module.getProjectID())) {
+                    IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                    ProjectVersion pv = new ProjectVersion(vd);
+                    Integer teamwork = pv.getNumber();
+                    mountedVersions.put(module.getProjectID(), teamwork);
+                }
+            }
+        }
+        for (String prjId: mountedVersions.keySet()) {
+            Integer serverVersion = getAlfrescoProjectVersion(prjId);
+            if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) {
+                Boolean con = Utils.getUserYesNoAnswer("Some elements being exported come from an older project version than what's on the server, do you want to continue?");
+                if (con == null || !con)
+                    return false;
+            }
+        }
+        return true;
+    }
+    
+    public static boolean okToExport() {
+        mountedVersions = new HashMap<String, Integer>();
+        Project prj = Application.getInstance().getProject();
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+            mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj).getNumber());
+        for (IAttachedProject p: ProjectUtilities.getAllAttachedProjects(prj)) {
+            if (ProjectUtilities.isFromTeamworkServer(p)) {
+                IVersionDescriptor vd = ProjectUtilities.getVersion(p);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                mountedVersions.put(p.getProjectID(), teamwork);
+            }
+        }
+        for (String prjId: mountedVersions.keySet()) {
+            Integer serverVersion = getAlfrescoProjectVersion(prjId);
+            if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) {
+                Boolean con = Utils.getUserYesNoAnswer("Your project or mounts is an older project version than what's on the server, do you want to continue?");
+                if (con == null || !con)
+                    return false;
+            }
+        }
+        return true;
+    }
+    
+    public static Map<String, Integer> getMountedVersions() {
+        return mountedVersions;
+    }
+    
+    public static void sendProjectVersion(String projId, Integer version) {
+        String baseurl = getUrl();
+        if (baseurl == null)
+            return;
+        String url = baseurl + "/javawebscripts/projects/" + projId + "?fix=true";
+        JSONObject tosend = new JSONObject();
+        tosend.put("projectVersion", version.toString());
+        send(url, tosend.toJSONString(), null, false);
+    }
+    
+    public static void sendProjectVersions() {
+        for (String projid: mountedVersions.keySet()) {
+            sendProjectVersion(projid, mountedVersions.get(projid));
+        }
+    }
+    
+    public static String unescapeHtml(String s) {
+        return StringEscapeUtils.unescapeHtml(s);
+    }
+    
+    public static boolean shouldAdd(Element e) {
+        if (e instanceof ValueSpecification || e instanceof Extension || e instanceof ProfileApplication)
+            return false;
+        if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
+            return false;
+        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty() && !(e instanceof EnumerationLiteral))
+            return false;
+        if (e instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)e).getDefiningFeature().getID()))
+            return false;
+        return true;
+    }
+    
+    public static Map<String, JSONObject> getReferencedElements(Element e) {
+        Stereotype view = Utils.getViewStereotype();
+        Stereotype viewpoint = Utils.getViewpointStereotype();
+        Map<String, JSONObject> result = new HashMap<String, JSONObject>();
+        if (e instanceof Property) {
+            Element value = null;
+            if (((Property)e).getDefaultValue() instanceof ElementValue) {
+                value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
+            } else if (((Property)e).getDefaultValue() instanceof InstanceValue) {
+                value = ((InstanceValue)((Property)e).getDefaultValue()).getInstance();
+            }
+            if (value != null) {
+                JSONObject j = new JSONObject();
+                fillElement(value, j, view, viewpoint);
+                result.put(value.getID(), j);
+            }
+        } else if (e instanceof Slot) {
+            for (ValueSpecification vs: ((Slot)e).getValue()) {
+                Element value = null;
+                if (vs instanceof ElementValue) {
+                    value = ((ElementValue)vs).getElement();
+                } else if (vs instanceof InstanceValue) {
+                    value = ((InstanceValue)vs).getInstance();
+                }
+                if (value != null) {
+                    JSONObject j = new JSONObject();
+                    fillElement(value, j, view, viewpoint);
+                    result.put(value.getID(), j);
+                }
+            }
+        }
+        return result;
+    }
+    
 }

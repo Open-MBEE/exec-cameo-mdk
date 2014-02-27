@@ -52,8 +52,10 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.json.simple.JSONArray;
@@ -113,7 +115,7 @@ public class ViewValidator {
             return false;//return; //do some error
         
         Element startView = getStartView();
-        
+        Map<String, JSONObject> cachedResultElements = new HashMap<String, JSONObject>();
         for (Object viewid: visitor2.getViews().keySet()) {
             if (!recurse && !viewid.equals(startView.getID()))
                 continue;
@@ -155,7 +157,12 @@ public class ViewValidator {
                         hierarchy.addViolation(v);
                     }
                 }
-                resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
+                for (Object reselement: (JSONArray)viewresults.get("elements")) {
+                    if (cachedResultElements.containsKey(((JSONObject)reselement).get("id")))
+                            continue;
+                    cachedResultElements.put((String)((JSONObject)reselement).get("id"), (JSONObject)reselement);
+                }
+                //resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
                 
                 String viewCommentsUrl = url + "/javawebscripts/elements/" + viewid + "/comments";
                 String viewcomments = ExportUtility.get(viewCommentsUrl);
@@ -172,8 +179,9 @@ public class ViewValidator {
                 }
             }
         }
+        resultElements.addAll(cachedResultElements.values());
         ResultHolder.lastResults = results;
-        ModelValidator mv = new ModelValidator(view, results, false);
+        ModelValidator mv = new ModelValidator(view, results, false, visitor2.getElementSet());
         mv.validate();
         modelSuite = mv.getSuite();
         ImageValidator iv = new ImageValidator(visitor2.getImages());
@@ -349,7 +357,7 @@ public class ViewValidator {
     
     private Element getStartView() {
         Stereotype conforms  = Utils.getConformsStereotype();
-        Stereotype sysml14conforms = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
+        Stereotype sysml14conforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
 
         Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
         if (viewpoint == null)

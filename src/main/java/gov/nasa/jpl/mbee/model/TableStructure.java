@@ -36,6 +36,8 @@ import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
@@ -89,13 +91,17 @@ public class TableStructure extends Table {
                                                                              // node
                 n = bnode.getOutgoing().iterator().next().getTarget();
             }
-            Stack<List<Element>> in = new Stack<List<Element>>();
+            Stack<List<Object>> in = new Stack<List<Object>>();
             // in.add( targets );
             context = new GenerationContext(in, n, getValidator(), Application.getInstance().getGUILog());
             return context;
         }
     }
 
+    private class TableColumnGroup extends TableColumn {
+        public List<TableColumn> childColumns = new ArrayList<TableColumn>();
+    }
+    
     private class TableAttributeColumn extends TableColumn {
         public Utils.AvailableAttribute attribute;
     }
@@ -109,8 +115,9 @@ public class TableStructure extends Table {
         public Boolean iterate;
     }
 
-    private List<String>                headers      = new ArrayList<String>();
-
+    //private List<String>                headers      = new ArrayList<String>();
+    private List<TableColumn>           headers = new ArrayList<TableColumn>();
+    private int headerDepth = 0; //1 based
     private List<TableColumn>           columns      = new ArrayList<TableColumn>();
 
     private Element                     ts;
@@ -121,7 +128,7 @@ public class TableStructure extends Table {
 
     private List<List<List<Reference>>> tableContent = new ArrayList<List<List<Reference>>>();
 
-    private Map<TableColumn, Integer>   columnIndex  = new HashMap<TableStructure.TableColumn, Integer>();
+    private Map<TableColumn, Integer>   columnIndex  = new HashMap<TableStructure.TableColumn, Integer>(); //0 based
 
     protected DocumentValidator         validator    = null;
 
@@ -149,7 +156,13 @@ public class TableStructure extends Table {
     public void parse() {
         if (bnode == null)
             return;
-        ActivityNode curNode = bnode;
+        parseColumns(bnode, null, 1);
+    }
+
+    private void parseColumns(ActivityNode inNode, TableColumnGroup parent, int curDepth) {
+        if (inNode == null)
+            return;
+        ActivityNode curNode = inNode;
 
         Collection<ActivityEdge> outs = curNode.getOutgoing();
         while (outs != null && outs.size() == 1) {
@@ -173,6 +186,8 @@ public class TableStructure extends Table {
                 col = new TablePropertyColumn();
                 ((TablePropertyColumn)col).property = (Property)GeneratorUtils.getObjectProperty(curNode,
                         DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+            } else if (GeneratorUtils.hasStereotypeByString(curNode, "TableColumnGroup")) {
+                col = new TableColumnGroup();
             } else {
                 outs = curNode.getOutgoing();
                 continue;
@@ -185,18 +200,27 @@ public class TableStructure extends Table {
                 col.bnode = GeneratorUtils.findInitialNode(curNode);
             }
             col.name = curNode.getName();
-            headers.add(curNode.getName());
-            columns.add(col);
-            columnIndex.put(col, columnIndex.size());
+            //headers.add(curNode.getName());
+            if (!(col instanceof TableColumnGroup)) {
+                columns.add(col);
+                columnIndex.put(col, columnIndex.size());
+            } else {
+                parseColumns(col.bnode, (TableColumnGroup)col, curDepth+1);
+            }
+            if (parent != null)
+                parent.childColumns.add(col);
+            else
+                headers.add(col);
             outs = curNode.getOutgoing();
+            if (headerDepth < curDepth)
+                headerDepth = curDepth;
         }
     }
-
+    
     private void buildTableReferences() {
-        //Debug.turnOn();
-        for (Element e: targets) {
+        for (Object e: targets) {
             List<List<Reference>> row = new ArrayList<List<Reference>>();
-            List<Element> startElements = new ArrayList<Element>();
+            List<Object> startElements = new ArrayList<Object>();
             startElements.add(e);
             for (TableColumn tc: columns) {
                 List<Element> resultElements;
@@ -206,9 +230,9 @@ public class TableStructure extends Table {
                                                         // collect/filter node
                     CollectFilterParser.setContext(context);
                     resultElements = CollectFilterParser.startCollectAndFilterSequence(
-                            context.getCurrentNode(), startElements);
+                            context.getCurrentNode(), Utils2.asList( startElements, Element.class) );
                 } else {
-                    resultElements = startElements;
+                    resultElements = Utils2.asList( startElements, Element.class);
                 }
                 List<Reference> cell = new ArrayList<Reference>();
                 if (tc instanceof TableExpressionColumn && !((TableExpressionColumn)tc).iterate) {
@@ -289,7 +313,6 @@ public class TableStructure extends Table {
             Debug.outln( "adding " + row.size() + " cells in row to table." );
             tableContent.add(row);
         }
-        Debug.turnOff();
     }
 
     @Override
@@ -301,14 +324,16 @@ public class TableStructure extends Table {
         buildTableReferences();
         DBTable table = new DBTable();
 
-        List<List<DocumentElement>> tableheaders = new ArrayList<List<DocumentElement>>();
-        List<DocumentElement> header = new ArrayList<DocumentElement>();
-        for (String head: this.headers) {
-            header.add(new DBText(head));
-        }
-        tableheaders.add(header);
+        List<List<DocumentElement>> tableheaders = makeTableHeaders();
         table.setHeaders(tableheaders);
-
+        if (headerDepth > 1) {
+            List<DBColSpec> colspecs = new ArrayList<DBColSpec>();
+            for (int i = 0; i < columns.size(); i++) {
+                DBColSpec cs = new DBColSpec(i+1);
+                colspecs.add(cs);
+            }
+            table.setColspecs(colspecs);
+        }
         List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
         for (List<List<Reference>> row: tableContent) {
             List<DocumentElement> tableRow = new ArrayList<DocumentElement>();
@@ -371,4 +396,43 @@ public class TableStructure extends Table {
         this.validator = validator;
     }
 
+    private List<List<DocumentElement>> makeTableHeaders() {
+        List<List<DocumentElement>> result = new ArrayList<List<DocumentElement>>();
+        for (int i = 0; i < headerDepth; i++) { //add in rows of the headers
+            result.add(new ArrayList<DocumentElement>()); 
+        }
+        int start = 0;
+        for (TableColumn tc: headers) {
+            start = addHeader(tc, result, 1, start+1);
+        }
+        return result;
+    }
+    
+    private int addHeader(TableColumn tc, List<List<DocumentElement>> header, int curDepth, int startIndex) {
+        if (tc instanceof TableColumnGroup) {
+            int start = startIndex;
+            DBTableEntry entry = new DBTableEntry();
+            entry.addElement(new DBText(tc.name));
+            int i = 0;
+            for (TableColumn ctc: ((TableColumnGroup)tc).childColumns) {
+                if (i == 0)
+                    start = addHeader(ctc, header, curDepth+1, start);
+                else
+                    start = addHeader(ctc, header, curDepth+1, start+1);
+                i++;
+            }
+            entry.setNamest(Integer.toString(startIndex));
+            entry.setNameend(Integer.toString(start));
+            header.get(curDepth-1).add(entry);
+            return start;
+        } else {
+            DBTableEntry entry = new DBTableEntry();
+            entry.addElement(new DBText(tc.name));
+            header.get(curDepth-1).add(entry);
+            if (curDepth < headerDepth) {
+                entry.setMorerows(headerDepth-curDepth);
+            }
+            return columnIndex.get(tc)+1;
+        }
+    }
 }

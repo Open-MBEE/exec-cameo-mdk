@@ -33,6 +33,8 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -40,8 +42,10 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
@@ -103,20 +107,18 @@ public class ModelExporter {
         if (elements.containsKey(e.getID()))
             return true;
         if (//e instanceof ValueSpecification || 
-            !(e instanceof Package) && packageOnly || e instanceof Extension || e instanceof ProfileApplication)
+            (packageOnly && !(e instanceof Package)) || e instanceof Extension || e instanceof ProfileApplication)
+        //if (!(e instanceof Package) && packageOnly)
             return false;
         if (ProjectUtilities.isElementInAttachedProject(e))
             return false;
-        if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) 
-            return false;
-        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty())
-            return false;
-        if (e instanceof Slot && ExportUtility.ignoreSlots.contains(((Slot)e).getDefiningFeature().getID()))
+        if (!ExportUtility.shouldAdd(e))
             return false;
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
-        
+        if (e instanceof Property || e instanceof Slot)
+            elements.putAll(ExportUtility.getReferencedElements(e));
         if ((depth != 0 && curdepth > depth) || curdepth == 0)
             return true;
         //JSONArray children = new JSONArray();

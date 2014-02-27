@@ -44,8 +44,12 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
@@ -77,11 +81,11 @@ public class InstanceViewpointAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-        sysmlView = Utils.getViewStereotype();
+        sysmlView = Utils.getViewClassStereotype();
         sysmlViewpoint = Utils.getViewpointStereotype();
         ef = Project.getProject(viewpoint).getElementsFactory();
         if (sysmlView == null) {
-            gl.log("The sysml view stereotype cannot be found");
+            gl.log("The view stereotype cannot be found");
             return;
         }
         if (sysmlViewpoint == null) {
@@ -108,24 +112,33 @@ public class InstanceViewpointAction extends MDAction {
         }
     }
 
-    private void instance(Package owner, Class vp, String name) {
-        Package view = ef.createPackageInstance();
+    private Class instance(Element owner, Class vp, String name) {
+        Class view = ef.createClassInstance();
         view.setOwner(owner);
         view.setName(name);
         StereotypesHelper.addStereotype(view, sysmlView);
-        Dependency conforms = ef.createDependencyInstance();
-        StereotypesHelper.addStereotype(conforms, Utils.getConformsStereotype());
+        Generalization conforms = ef.createGeneralizationInstance();
+        StereotypesHelper.addStereotype(conforms, Utils.getSysML14ConformsStereotype());
         ModelHelper.setClientElement(conforms, view);
         ModelHelper.setSupplierElement(conforms, vp);
         conforms.setOwner(view);
         for (Property p: vp.getOwnedAttribute()) {
             Type type = p.getType();
             if (type instanceof Class && StereotypesHelper.hasStereotypeOrDerived(type, sysmlViewpoint)) {
+                Class child = null;
                 if (p.getName().equals(""))
-                    instance(view, (Class)type, ((Class)type).getName());
+                    child = instance(view, (Class)type, ((Class)type).getName());
                 else
-                    instance(view, (Class)type, p.getName());
+                    child = instance(view, (Class)type, p.getName());
+                Association asso = ef.createAssociationInstance();
+                asso.getMemberEnd().get(0).setOwner(view);
+                asso.getMemberEnd().get(0).setType(child);
+                asso.getMemberEnd().get(0).setAggregation(p.getAggregation());
+                asso.getMemberEnd().get(1).setType(view);
+                asso.getMemberEnd().get(1).setOwner(asso);
+                asso.setOwner(owner);
             }
         }
+        return view;
     }
 }

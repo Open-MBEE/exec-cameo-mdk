@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.RepeatInputComboBoxDialog.Processor;
 import gov.nasa.jpl.mbee.actions.OclQueryAction;
+import gov.nasa.jpl.mbee.actions.OclQueryAction.ProcessOclQuery;
 import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import java.awt.BorderLayout;
@@ -137,6 +138,9 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         jp.add( buttonPane );
         contentPane.add( jp, BorderLayout.PAGE_END );
  
+        setMinimumSize( new Dimension( 400, 300 ) );
+        //setSize( new Dimension( 400, 600 ) );
+        
         //Initialize values.
         pack();
         if ( owner != null ) setLocationRelativeTo( owner );
@@ -150,11 +154,16 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         if ( browserCB.isSelected() )  {
             selectedElements.addAll( MDUtils.getSelectionInContainmentBrowser() );
         }
-        processor = new OclQueryAction.ProcessOclQuery(selectedElements);
+        ProcessOclQuery oclQueryProcessor = new OclQueryAction.ProcessOclQuery(selectedElements);
+        processor = oclQueryProcessor;
         lastInput = RepeatInputComboBoxDialog.getSelectedItem( editableListPanel );
         if (lastInput != null) {
             Object result = processor.process(lastInput);
             editableListPanel.setResultPanel(result);
+            editableListPanel.setCompletions( processor.getCompletionChoices(),
+                                              ProcessOclQuery.toString( processor.getSourceOfCompletion() )
+                                                      + " : "
+                                                      + ProcessOclQuery.getTypeName( processor.getSourceOfCompletion() ) );
         }
         inputHistory.push(lastInput);
         if (pastInputs.contains(lastInput)) {

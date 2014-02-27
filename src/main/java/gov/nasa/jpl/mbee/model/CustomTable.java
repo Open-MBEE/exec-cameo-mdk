@@ -59,7 +59,7 @@ public class CustomTable extends Table {
         setSortElementsByName(true);
     }
 
-    public Object evaluateOcl(EObject o, String expression) throws ParserException {
+    public Object evaluateOcl(Object o, String expression) throws ParserException {
         return OclEvaluator.evaluateQuery(o, expression, isOclEvaluationVerbose());
     }
 
@@ -155,10 +155,10 @@ public class CustomTable extends Table {
 
         // construct the main body of the table
         List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-        List<Element> targets = this.isSortElementsByName() ? Utils.sortByName(this.getTargets()) : this
+        List<Object> targets = this.isSortElementsByName() ? Utils.sortByName(this.getTargets()) : this
                 .getTargets();
         // construct row for each target
-        for (Element e: targets) {
+        for (Object e: targets) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             // construct cell for each column
             for (String oclExpr: this.getColumns()) {

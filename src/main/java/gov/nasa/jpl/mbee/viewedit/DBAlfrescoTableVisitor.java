@@ -132,6 +132,7 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
         DBAlfrescoListVisitor listv = new DBAlfrescoListVisitor(this.recurse, this.elements);
         list.accept(listv);
         tableelements.addAll(listv.getListElements());
+        elementSet.addAll(listv.getElementSet());
         curCell.add(listv.getObject());
     }
 
@@ -140,7 +141,8 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
     public void visit(DBParagraph para) {
         JSONObject entry = getJSONForDBParagraph(para);
         if (para.getFrom() != null && para.getFromProperty() != null) {
-            this.tableelements.add(ExportUtility.getElementID(para.getFrom()));
+            if (ExportUtility.shouldAdd(para.getFrom()))
+                this.tableelements.add(ExportUtility.getElementID(para.getFrom()));
         }
         curCell.add(entry);
     }
@@ -150,7 +152,8 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
     public void visit(DBText text) {
         JSONObject entry = getJSONForDBText(text);
         if (text.getFrom() != null && text.getFromProperty() != null) {
-            this.tableelements.add(ExportUtility.getElementID(text.getFrom()));
+            if (ExportUtility.shouldAdd(text.getFrom()))
+                this.tableelements.add(ExportUtility.getElementID(text.getFrom()));
         }
         curCell.add(entry);
     }

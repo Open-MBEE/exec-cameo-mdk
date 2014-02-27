@@ -35,6 +35,8 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -42,6 +44,8 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -66,12 +70,18 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
     public void execute(Collection<Annotation> annos) {
         JSONObject send = new JSONObject();
         JSONArray infos = new JSONArray();
+        Set<Element> set = new HashSet<Element>();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
+            set.add(e);
             JSONObject info = new JSONObject();
             ExportUtility.fillElement(e, info, view, viewpoint);
             infos.add(info);
+            if (e instanceof Property || e instanceof Slot)
+                infos.addAll(ExportUtility.getReferencedElements(e).values());
         }
+        if (!ExportUtility.okToExport(set))
+            return;
         send.put("elements", infos);
         //gl.log(send.toJSONString());
 
@@ -81,17 +91,22 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         }
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
+            ExportUtility.sendProjectVersions();
         }
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!ExportUtility.okToExport(element))
+            return;
         JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
         ExportUtility.fillElement(element, info, view, viewpoint);
         elements.add(info);
+        if (element instanceof Property || element instanceof Slot)
+            elements.addAll(ExportUtility.getReferencedElements(element).values());
         send.put("elements", elements);
         //gl.log(send.toJSONString());
         String url = ExportUtility.getPostElementsUrl();
@@ -100,6 +115,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         }
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
+            ExportUtility.sendProjectVersion(element);
         }
     }
 }

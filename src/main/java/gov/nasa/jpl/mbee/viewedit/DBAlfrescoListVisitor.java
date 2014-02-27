@@ -39,6 +39,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
             list.accept(inner);
             curitem.add(inner.getObject());
             listelements.addAll(inner.getListElements());
+            elementSet.addAll(inner.getElementSet());
         } else {
             listjson.put("type", "List");
             if (list.isOrdered())
@@ -68,7 +69,8 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     public void visit(DBParagraph para) {
         JSONObject o = getJSONForDBParagraph(para);
         if (para.getFrom() != null && para.getFromProperty() != null) {
-            this.listelements.add(ExportUtility.getElementID(para.getFrom()));
+            if (ExportUtility.shouldAdd(para.getFrom()))
+                this.listelements.add(ExportUtility.getElementID(para.getFrom()));
         }
         curitem.add(o);
     }
@@ -78,7 +80,8 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     public void visit(DBText text) {
         JSONObject o = getJSONForDBText(text);
         if (text.getFrom() != null && text.getFromProperty() != null) {
-            this.listelements.add(ExportUtility.getElementID(text.getFrom()));
+            if (ExportUtility.shouldAdd(text.getFrom()))
+                this.listelements.add(ExportUtility.getElementID(text.getFrom()));
         }
         curitem.add(o);
     }
@@ -89,6 +92,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
         DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse, this.elements);
         table.accept(v);
         listelements.addAll(v.getTableElements());
+        elementSet.addAll(v.getElementSet());
         curitem.add(v.getObject());
     }
 

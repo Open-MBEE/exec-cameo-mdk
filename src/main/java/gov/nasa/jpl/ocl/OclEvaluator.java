@@ -30,16 +30,23 @@ package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.generator.ViewParser;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,6 +73,14 @@ import org.eclipse.ocl.lpg.AbstractParser;
 import org.eclipse.ocl.lpg.ProblemHandler;
 import org.eclipse.ocl.util.OCLUtil;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
@@ -464,6 +479,175 @@ public class OclEvaluator {
         envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
     }
 
+    protected static void addLogOperation(DgEnvironmentFactory envFactory, boolean addArg) {
+
+        // create custom operation
+        DgOperationInstance doi = new DgOperationInstance();
+        doi.setName("log");
+        doi.setAnnotationName("DocGenEnvironment");
+        if ( addArg ) {
+            EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
+            parm.setName("toLog");
+            doi.addParameter(parm, OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        }
+        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+
+        // essentially set the actual operation as function pointer
+        doi.setOperation(new CallOperation() {
+            @Override
+            public Object callOperation(Object source, Object[] args) {
+                if ( args != null && args.length > 0 ) {
+                    if ( args.length == 1 ) {
+                        Utils.log( MoreToString.Helper.toString( args[ 0 ] ) );
+                    } else {
+                        Utils.log( MoreToString.Helper.toString( args ) );
+                    }
+                } else if ( source != null ) {
+                    Utils.log( source );
+                }
+                return source;
+            }
+        });
+
+        // add custom operation to environment and evaluation environment
+        envFactory.getDgEnvironment().addDgOperation(doi);
+        envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
+    }
+
+    protected static void addGetOperation(DgEnvironmentFactory envFactory) {
+
+        // create custom operation
+        DgOperationInstance doi = new DgOperationInstance();
+        doi.setName("get");
+        doi.setAnnotationName("DocGenEnvironment");
+        EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
+        parm.setName("nameOrId");
+        doi.addStringParameter(parm);
+        doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+
+        // essentially set the actual operation as function pointer
+        doi.setOperation(new CallOperation() {
+            @Override
+            public Object callOperation(Object source, Object[] args) {
+                if ( args.length < 1 ) return null;
+                if ( args.length > 1 ) return null;
+                String nameOrId = (String)args[0];
+                
+                // try id
+                BaseElement e = Application.getInstance().getProject().getElementByID( nameOrId );
+                if ( e != null ) return e;
+                
+                // try child
+                if ( source != null && source instanceof Element ) {
+                    e = Utils.findChildByName( (Element)source, nameOrId );
+                    if ( e != null ) return e;
+                }
+                
+                // try qualified name
+                e = Utils.getElementByQualifiedName( nameOrId );
+                if ( e != null ) return e;
+
+                // try searching everything
+                List< Element > results = Utils.findByName( nameOrId, true );
+                if ( !Utils2.isNullOrEmpty( results ) ) {
+                    return results.get( 0 );
+                }
+                return null;
+            }
+        });
+
+        // add custom operation to environment and evaluation environment
+        envFactory.getDgEnvironment().addDgOperation(doi);
+        envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
+    }
+
+    protected static void addRunOperation(DgEnvironmentFactory envFactory,
+                                          EClassifier argType) {
+
+        // create custom operation
+        DgOperationInstance doi = new DgOperationInstance();
+        doi.setName("run");
+        doi.setAnnotationName("DocGenEnvironment");
+        EParameter parm = EcoreFactory.eINSTANCE.createEParameter();
+        parm.setName("input");
+        
+        if ( argType != null ) {
+            doi.addParameter(parm, argType);
+            doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+            doi.setReturnType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
+        }
+        
+        // essentially set the actual operation as function pointer
+        doi.setOperation(new CallOperation() {
+            boolean runItemsInCollectionIndividually = true;
+            @Override
+            public Object callOperation(Object source, Object[] args) {
+                
+                if ( !( source instanceof Element ) ) return null;
+                Element sourceElement = (Element)source;
+
+                // If the source is a view, parse it.
+                if ( sourceElement instanceof Class
+                        && StereotypesHelper.hasStereotypeOrDerived( sourceElement,
+                                                                     DocGen3Profile.viewStereotype ) ) {
+                    DocumentValidator dv = new DocumentValidator(sourceElement);
+                    DocumentGenerator dg =
+                            new DocumentGenerator( sourceElement, dv, null );
+                    ViewParser vp = new ViewParser( dg, true, true, dg.getDocument(), sourceElement );
+                    return vp.parse();
+                }
+                
+                // Need to parse the behavior of the Viewpoint, not the
+                // Viewpoint itself.
+                if ( sourceElement instanceof Class
+                     && StereotypesHelper.hasStereotypeOrDerived( sourceElement,
+                                                                  DocGen3Profile.viewpointStereotype ) ) {
+                    sourceElement = ((Class)sourceElement).getClassifierBehavior();
+                }
+
+                Object input = args[0];
+
+                // Allow for activity and target input to be reversed.
+                // For example, run may be called as 
+                //   viewpoint1.run(Sequence{element1, element2}) or as
+                //   Sequence{element1, element2}.run(viewpoint1)
+                if ( GeneratorUtils.findInitialNode(sourceElement) == null
+                     && input instanceof Element
+                     && GeneratorUtils.findInitialNode( (Element)input ) != null ) {
+                    // Change to run Collection of items together as a single
+                    // input since user can use "." or "->" to specify to the Ocl
+                    // parser which way to handle it.
+                    runItemsInCollectionIndividually = false;
+                    // Call with swapped source/input, using the original source
+                    // since sourceElement may have been reassigned.
+                    return callOperation( input, new Object[]{ source } );
+                }
+                
+                List<Object> inputs = new ArrayList< Object >();
+                if ( runItemsInCollectionIndividually 
+                     && input instanceof Collection ) {
+                    inputs.addAll( (Collection< ? >)input );
+                } else {
+                    inputs.add( input );
+                }
+                DocumentValidator dv = new DocumentValidator(sourceElement);
+                DocumentGenerator dg =
+                        new DocumentGenerator( sourceElement, dv, null );
+                dg.getContext().pushTargets( inputs );
+                Object result = 
+                        dg.parseActivityOrStructuredNode( sourceElement,
+                                                          dg.getDocument() );
+                return result;
+            }
+        });
+
+        // add custom operation to environment and evaluation environment
+        envFactory.getDgEnvironment().addDgOperation(doi);
+        envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
+    }
+
     protected static void addEvalOperation(DgEnvironmentFactory envFactory, String opName ) {
 
         // create custom operation
@@ -557,6 +741,15 @@ public class OclEvaluator {
                 true, CallReturnType.TYPE, envFactory);
     }
 
+    protected static void addVOperation(DgEnvironmentFactory envFactory) {
+
+        EClassifier callerType = getGenericCallerType();
+        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+        EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+        addOperation(new String[] {"value", "values", "v"}, callerType, returnType, stringType, "value", true,
+                true, CallReturnType.VALUE, envFactory);
+    }
+
     protected static void addSOperation(DgEnvironmentFactory envFactory) {
 
         EClassifier callerType = getGenericCallerType();
@@ -581,6 +774,20 @@ public class OclEvaluator {
         EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
         addOperation(new String[] {"name", "n"}, callerType, returnType, stringType, "name", true, true,
                 CallReturnType.NAME, envFactory);
+    }
+
+    /**
+     * Add n(), name(), and names() OCL shortcuts with and without arguments.
+     * 
+     * @param envFactory
+     */
+    protected static void addOOperation(DgEnvironmentFactory envFactory) {
+
+        EClassifier callerType = getGenericCallerType();
+        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
+        EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+        addOperation(new String[] {"owner", "owners", "o"}, callerType, returnType, stringType, "owner", true, true,
+                CallReturnType.OWNER, envFactory);
     }
 
     /**
@@ -692,28 +899,31 @@ public class OclEvaluator {
         // set up the customized environment
         // create custom environment factory
         resetEnvironment(false);
-        // DgEnvironmentFactory.reset();
-        // environmentFactory = new DgEnvironmentFactory();
-        // if ( !Utils2.isNullOrEmpty( opsCache ) ) {
-        // for ( DgOperationInstance op : opsCache ) {
-        // DgOperationInstance.addOperation( op, getEnvironmentFactory() );
-        // }
-        // ++cacheHits;
-        // } else {
-        addRegexMatchOperation(getEnvironmentFactory());
+
+        // add custom OCL functions
+        addRegexMatchOperation( getEnvironmentFactory() );
         addEvalOperation( getEnvironmentFactory(), "eval" );
         addEvalOperation( getEnvironmentFactory(), "evaluate" );
         addEvalOperation( getEnvironmentFactory(), "e" );
-        addROperation(getEnvironmentFactory());
-        addMOperation(getEnvironmentFactory());
-        addTOperation(getEnvironmentFactory());
-        addSOperation(getEnvironmentFactory());
-        addNOperation(getEnvironmentFactory());
-        addExpressionOperations(getEnvironmentFactory());
+        addRunOperation( getEnvironmentFactory(),
+                         OCLStandardLibraryImpl.INSTANCE.getOclAny() );
+        addRunOperation( getEnvironmentFactory(),
+                         OCLStandardLibraryImpl.INSTANCE.getSequence() );
+        addRunOperation( getEnvironmentFactory(), null );
+        addGetOperation( getEnvironmentFactory() );
+        addLogOperation( getEnvironmentFactory(), true );
+        addLogOperation( getEnvironmentFactory(), false );
+        // add one-letter custom OCL operations
+        addROperation( getEnvironmentFactory() );
+        addMOperation( getEnvironmentFactory() );
+        addTOperation( getEnvironmentFactory() );
+        addSOperation( getEnvironmentFactory() );
+        addNOperation( getEnvironmentFactory() );
+        addOOperation( getEnvironmentFactory() );
+        addVOperation( getEnvironmentFactory() );
 
-        // opsCache = getEnvironment().operations;
-        // ++cacheMisses;
-        // }
+        addExpressionOperations( getEnvironmentFactory() );
+
         return getEnvironmentFactory();
     }
 
@@ -721,7 +931,7 @@ public class OclEvaluator {
             EObject context, String oclInput) {
         getHelper().setContext(context == null ? null : context.eClass());
         List<Choice> choices = getHelper().getSyntaxHelp(ConstraintKind.INVARIANT, oclInput);
-        Debug.outln("Completion choices for OCL expression \"" + oclInput + "\" = " + choices);
+        //Debug.outln("Completion choices for OCL expression \"" + oclInput + "\" = " + choices);
         return choices;
     }
 
@@ -761,12 +971,12 @@ public class OclEvaluator {
 
     public List<String> commandCompletionChoiceStrings(OCLHelper<EClassifier, ?, ?, Constraint> helper,
             EObject context, String oclInput) {
-        boolean wasOn = Debug.isOn();
-        Debug.turnOn();
+//        boolean wasOn = Debug.isOn();
+//        Debug.turnOn();
         List<String> choiceList = new ArrayList<String>();
         List<Choice> choices = commandCompletionChoices(helper, context, oclInput);
         for (Choice next: choices) {
-            choiceList.add(next.getName());
+            choiceList.add(next.getName() + " : " + next.getDescription());
             switch (next.getKind()) {
                 case OPERATION:
                 case SIGNAL:
@@ -785,8 +995,8 @@ public class OclEvaluator {
                     break;
             }
         }
-        if (!wasOn)
-            Debug.turnOff();
+//        if (!wasOn)
+//            Debug.turnOff();
         Debug.outln("choices = " + choiceList.toString());
         return choiceList;
     }

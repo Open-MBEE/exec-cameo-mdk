@@ -148,11 +148,15 @@ public class CombinedMatrix extends Table {
         dbTable.setHeaders(hs);
 
         List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-        List<Element> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
-        for (Element e: targets) {
-            if (isSkipIfNoDoc() && ModelHelper.getComment(e).trim().equals(""))
+        List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
+        for (Object o: targets) {
+            Element e = o instanceof Element ? (Element)o : null;
+            if (isSkipIfNoDoc() && (e == null || ModelHelper.getComment(e).trim().equals("")))
                 continue;
             List<DocumentElement> row = new ArrayList<DocumentElement>();
+            if ( e == null ) {
+                continue;
+            }
             for (Property p: getStereotypeProperties())
                 row.add(Common.getStereotypePropertyEntry(e, p));
             for (Stereotype s: getOutgoing()) {

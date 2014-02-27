@@ -37,6 +37,7 @@ import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.ScriptRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -118,7 +119,7 @@ public class CollectFilterParser {
             if (incomings.isEmpty()) {
                 if (in == null) {
                     if (!context.targetsEmpty())
-                        ins.add(context.peekTargets());
+                        ins.add(Utils2.asList(context.peekTargets(), Element.class));
                 } else {
                     ins.add(in);
                 }
@@ -366,7 +367,7 @@ public class CollectFilterParser {
         } else if (isExpr) {
             ordered = Utils.sortByExpression(in, o);
         } else if (isName) {
-            ordered = Utils.sortByName(in);
+            ordered = Utils2.asList( Utils.sortByName(in), Element.class );
         } else {
             Debug.error(true, false, "Error! Trying to sort as " + sortStereotype
                     + ", but the property/attribute is the wrong type: " + o);

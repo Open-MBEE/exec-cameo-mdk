@@ -39,6 +39,9 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -60,7 +63,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private JSONObject                view2view;
     private JSONArray                  noSections = new JSONArray();
     private boolean doc;
-
+    protected Set<Element> elementSet = new HashSet<Element>();
+    
     public DBAlfrescoVisitor(boolean recurse) {
         elements = new JSONObject();
         views = new JSONObject();
@@ -209,6 +213,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         list.accept(l);
         curContains.add(l.getObject());
         viewElements.peek().addAll(l.getListElements());
+        elementSet.addAll(l.getElementSet());
     }
 
     @SuppressWarnings("unchecked")
@@ -308,6 +313,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         table.accept(v);
         curContains.add(v.getObject());
         viewElements.peek().addAll(v.getTableElements());
+        elementSet.addAll(v.getElementSet());
     }
 
     @SuppressWarnings("unchecked")
@@ -343,13 +349,13 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     @SuppressWarnings("unchecked")
     protected void addToElements(Element e) {
-        if ((e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e)) || 
-                e instanceof Extension || e instanceof ValueSpecification)
+        if (!ExportUtility.shouldAdd(e))
             return;
         if (!viewElements.empty())
             viewElements.peek().add(ExportUtility.getElementID(e));
         if (elements.containsKey(e.getID()))
             return;
+        elementSet.add(e);
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
@@ -363,6 +369,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             elements.put(source.getID(), sourceInfo);
             elements.put(target.getID(), targetInfo);
         }
+        if (e instanceof Property || e instanceof Slot)
+            elements.putAll(ExportUtility.getReferencedElements(e));
     }
     
     public JSONObject getElements() {
@@ -379,6 +387,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     
     public JSONArray getNosections() {
         return noSections;
+    }
+    
+    public Set<Element> getElementSet() {
+        return elementSet;
     }
 }
 

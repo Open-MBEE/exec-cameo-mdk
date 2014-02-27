@@ -58,6 +58,7 @@ import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
@@ -83,6 +84,7 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -155,7 +157,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-            us.setTargets(targets);
+            us.setTargets( Utils2.asList( targets, Object.class ) );
             if (manager.getActionFor(RunUserValidationScriptAction.actionid) == null)
                 c.addAction(new RunUserValidationScriptAction(us, true));
         } else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
@@ -166,7 +168,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-            us.setTargets(targets);
+            us.setTargets( Utils2.asList( targets, Object.class ) );
             if (manager.getActionFor(RunUserScriptAction.actionid) == null)
                 c.addAction(new RunUserScriptAction(us, true));
         }
@@ -246,7 +248,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 c.addAction(new ValidateDocument3Action(e));
 
             act = manager.getActionFor(ValidateViewStructureAction.actionid);
-            if (act == null)
+            if (act == null && e instanceof Classifier)
                 c.addAction(new ValidateViewStructureAction(e));
 
             act = manager.getActionFor(ViewDocument3Action.actionid);

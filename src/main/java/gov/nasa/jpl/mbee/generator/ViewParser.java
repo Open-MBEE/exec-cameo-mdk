@@ -62,7 +62,7 @@ public class ViewParser {
         this.start = start;
     }
 
-    public void parse() {
+    public Section parse() {
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
         if (StereotypesHelper.hasStereotypeOrDerived(start, documentView)) {
@@ -72,10 +72,11 @@ public class ViewParser {
                                      // things (like docweb visitors)
             Element first = GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype);
             if (first != null)
-                parseView(first, doc, true, false);
+                return parseView(first, doc, true, false);
         } else {// starting from regular view, not document
-            parseView(start, doc, true, true);
+            return parseView(start, doc, true, true);
         }
+        return null;
     }
 
     /**
@@ -94,7 +95,7 @@ public class ViewParser {
      * @param top
      *            is current view the top view
      */
-    private void parseView(Element view, Container parent, boolean section, boolean top) {
+    private Section parseView(Element view, Container parent, boolean section, boolean top) {
         Section viewSection = dg.parseView(view);
 
         parent.addElement(viewSection);
@@ -142,5 +143,6 @@ public class ViewParser {
                 }
             }
         }
+        return viewSection;
     }
 }
