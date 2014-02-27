@@ -137,7 +137,7 @@ public class ViewValidator {
                 JSONArray localContains = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("contains");
                 JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
                 JSONArray webContains = (JSONArray)webView.get("contains");
-                String viewelements = ExportUtility.get(viewElementsUrl);
+                String viewelements = ExportUtility.get(viewElementsUrl, false);
                 if (viewelements == null)
                     continue;
                 JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
@@ -165,7 +165,7 @@ public class ViewValidator {
                 //resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
                 
                 String viewCommentsUrl = url + "/javawebscripts/elements/" + viewid + "/comments";
-                String viewcomments = ExportUtility.get(viewCommentsUrl);
+                String viewcomments = ExportUtility.get(viewCommentsUrl, false);
                 if (viewcomments == null)
                     continue;
                 JSONObject commentresults = (JSONObject)JSONValue.parse(viewcomments);
