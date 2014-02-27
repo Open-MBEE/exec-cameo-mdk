@@ -155,7 +155,7 @@ public class CombinedMatrix extends Table {
                 continue;
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             if ( e == null ) {
-                row.add( new DBText( o ) );
+                continue;
             }
             for (Property p: getStereotypeProperties())
                 row.add(Common.getStereotypePropertyEntry(e, p));

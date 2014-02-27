@@ -31,12 +31,9 @@ package gov.nasa.jpl.ocl;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.lib.CollectionAdder;
 import gov.nasa.jpl.mbee.lib.EmfUtils;
-import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.lib.Utils.AvailableAttribute;
-import gov.nasa.jpl.mgss.mbee.docgen.table.PropertiesTable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -234,26 +231,31 @@ public class GetCallOperation implements CallOperation {
                     objectToAdd = source;
                 } else {
                     objectToAdd = null;
-                    if (filter && source instanceof Element) {
-                        if (!Utils2.isNullOrEmpty(args)) {
-                            ArrayList<Object> objectTotAdd = new ArrayList<Object>();
-                            for ( Object arg : args ) {
-                                Property prop = null;
-                                if ( arg instanceof String ) {
-                                    objectToAdd =
-                                            Utils.getElementPropertyValues( (Element)source,
-                                                                            (String)arg,
-                                                                            true );
-                                } else if ( arg instanceof Property ) {
-                                    prop = (Property)arg;
-                                    objectToAdd =
-                                            Utils.getElementPropertyValues( (Element)source,
-                                                                            prop,
-                                                                            true );
-                                }
+                    // If arguments were passed, then treat them as names of properties in source.
+                    if (source instanceof Element && !Utils2.isNullOrEmpty(args)) {
+                        List<Object> objects = new ArrayList< Object >();
+                        for ( Object arg : args ) {
+                            Property prop = null;
+                            if ( arg instanceof String ) {
+                                // TODO -- REVIEW -- should this be addAll or add?
+                                objects.addAll( Utils.getElementPropertyValues( (Element)source,
+                                                                                (String)arg,
+                                                                                true ) );
+                            } else if ( arg instanceof Property ) {
+                                prop = (Property)arg;
+                                objects.addAll( Utils.getElementPropertyValues( (Element)source,
+                                                                                prop,
+                                                                                true ) );
                             }
                         }
+                        if ( !objects.isEmpty() ) {
+                            objectToAdd = objects;
+                            filter = false;
+                        } // TODO -- REVIEW -- is setting filter like this ok if in a loop?
                     }
+                    boolean one = !filter && (onlyOneForAll || (asCollection && coll != null && onlyOnePer));
+
+                    // If the source is a Property or slot, get its value 
                     if ( Utils2.isNullOrEmpty( objectToAdd )
                          && ( source instanceof Property || source instanceof Slot ) ) {
                         objectToAdd =
@@ -265,9 +267,21 @@ public class GetCallOperation implements CallOperation {
                         objectToAdd =
                                 DocGenUtils.getLiteralValue( source, true );
                     }
-                    boolean one = (onlyOneForAll || (asCollection && coll != null && onlyOnePer))
-                            && Utils2.isNullOrEmpty(filterArgs);
-                    objectToAdd = EmfUtils.getValues(source, null, true, true, one, false, null);
+                    // Handle onlyOne.
+                    if ( !Utils2.isNullOrEmpty( objectToAdd ) ) { 
+                        if ( one && objectToAdd instanceof Collection ) {
+                            Object first = ( (Collection<?>)objectToAdd ).iterator().next();
+                            objectToAdd = Utils2.newList( first );
+                        }
+                    } else {
+                        // Last resort -- try to find a member that looks like it would return a value
+//                        boolean one = (onlyOneForAll || (asCollection && coll != null && onlyOnePer))
+//                                && Utils2.isNullOrEmpty(filterArgs);
+                        objectToAdd = EmfUtils.getValues(source, null, true, true, one, false, null);
+                    }
+                    if ( Utils2.isNullOrEmpty( objectToAdd ) ) {
+                        objectToAdd = source;
+                    }
                 }
                 break;
             case MEMBER:
