@@ -123,7 +123,7 @@ public class ViewValidator {
             
             //check to see if view exists on alfresco, if not, export view?
             String existurl = url + "/javawebscripts/views/" + viewid;
-            String response = ExportUtility.get(existurl);
+            String response = ExportUtility.get(existurl, false);
             if (!ViewEditUtils.isPasswordSet())
                 return false;
             if (response == null || !response.contains("contains")) {
