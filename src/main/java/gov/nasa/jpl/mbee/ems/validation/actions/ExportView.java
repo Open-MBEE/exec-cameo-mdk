@@ -98,13 +98,18 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     }
     
     public void performAction() {
+        if (!ExportUtility.okToExport())
+            return;
         if (exportView(view)) {
             this.removeViolationAndUpdateWindow();
+            ExportUtility.sendProjectVersions();
         }
     }
     
     public void performActions(Collection<Annotation> annos) {
         Collection<Annotation> toremove = new ArrayList<Annotation>();
+        if (!ExportUtility.okToExport())
+            return;
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             if (exportView(e)) {
@@ -112,6 +117,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             } else
                 break;
         }
+        ExportUtility.sendProjectVersions();
         if (!toremove.isEmpty()) {
             this.removeViolationsAndUpdateWindow(toremove);
         }
@@ -147,8 +153,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             }
         }*/
         //Set<Element> set = visitor2.getElementSet();
-        if (!ExportUtility.okToExport())
-            return false;
+        
         JSONObject elementsjson = visitor2.getElements();
         JSONArray elementsArray = new JSONArray();
         elementsArray.addAll(elementsjson.values());
@@ -158,9 +163,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         if (url == null)
             return false;
         String sendElementsUrl = ExportUtility.getPostElementsUrl();
-        if (!ExportUtility.send(sendElementsUrl, send.toJSONString()))
+        if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), "Post", false))
             return false;
-        ExportUtility.sendProjectVersions();
+        
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
         JSONArray viewsArray = new JSONArray();
@@ -169,7 +174,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         send.put("views", viewsArray);
         //gl.log(send.toJSONString());
         String sendViewsUrl = url +  "/javawebscripts/views";
-        if (!ExportUtility.send(sendViewsUrl, send.toJSONString()))
+        if (!ExportUtility.send(sendViewsUrl, send.toJSONString(), "Post", false))
             return false;
         
         // Upload images to view editor (JSON keys are specified in
@@ -233,7 +238,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
         // clean up the local images
         visitor2.removeImages();
-        
+        gl.log("[INFO] Done");
         if (document && recurse) {
             String docurl = url + "/javawebscripts/products";
             send = new JSONObject();
@@ -244,7 +249,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             doc.put("id", view.getID());
             documents.add(doc);
             send.put("products", documents);
-            if (!ExportUtility.send(docurl, send.toJSONString()))
+            if (!ExportUtility.send(docurl, send.toJSONString(), "Post", false))
                 return false;
         } /*else if (recurse) {
             JSONArray views = new JSONArray();
