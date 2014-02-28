@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -256,7 +257,9 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
         getDocAndProps(e, numunit, row, colspecs);
         getStereotypeProps(e, row);
         body.add(row);
-        for (Element ee: Utils.sortByName(new HashSet<Element>(consolidated.get(e).keySet()))) {
+        Set< Class > set = consolidated.get(e).keySet();
+        List< Element > list = Utils.sortByName(Utils2.asList(set, Element.class));
+        for (Element ee: list) {
             getHierarchyConsolidated((Class)ee, curdepth + 1, consolidated.get(e), consolidated, body,
                     colspecs);
         }
@@ -285,7 +288,9 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
         getStereotypeProps(type, row);
         body.add(row);
 
-        for (Element ee: Utils.sortByName(new HashSet<Element>(childMap.get(type).keySet()))) {
+        Set< Property > set = childMap.get(type).keySet();
+        List< Element > list = Utils.sortByName(Utils2.asList(set, Element.class));
+        for (Element ee: list) {
             getHierarchy((NamedElement)ee, curdepth + 1, childMap, body, colspecs);
         }
     }
