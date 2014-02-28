@@ -123,7 +123,7 @@ public class ViewValidator {
             
             //check to see if view exists on alfresco, if not, export view?
             String existurl = url + "/javawebscripts/views/" + viewid;
-            String response = ExportUtility.get(existurl);
+            String response = ExportUtility.get(existurl, false);
             if (!ViewEditUtils.isPasswordSet())
                 return false;
             if (response == null || !response.contains("contains")) {
@@ -137,7 +137,7 @@ public class ViewValidator {
                 JSONArray localContains = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("contains");
                 JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
                 JSONArray webContains = (JSONArray)webView.get("contains");
-                String viewelements = ExportUtility.get(viewElementsUrl);
+                String viewelements = ExportUtility.get(viewElementsUrl, false);
                 if (viewelements == null)
                     continue;
                 JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
@@ -165,7 +165,7 @@ public class ViewValidator {
                 //resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
                 
                 String viewCommentsUrl = url + "/javawebscripts/elements/" + viewid + "/comments";
-                String viewcomments = ExportUtility.get(viewCommentsUrl);
+                String viewcomments = ExportUtility.get(viewCommentsUrl, false);
                 if (viewcomments == null)
                     continue;
                 JSONObject commentresults = (JSONObject)JSONValue.parse(viewcomments);
@@ -187,6 +187,9 @@ public class ViewValidator {
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         iv.validate();
         imageSuite = iv.getSuite();
+        if (!exists.getViolations().isEmpty()) {
+            Utils.showPopupMessage("There's view(s) that are missing on the server, see validation window.");
+        }
         return true;
     }
     

@@ -102,18 +102,22 @@ public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
      */
     @Override
     protected Method getJavaMethodFor(EOperation operation, Object receiver) {
+        return getJavaMethodFor( operation, receiver, false );
+    }
+    protected Method getJavaMethodFor(EOperation operation, Object receiver, boolean recursing) {
+            
         Method result = null;
         try {
             result = super.getJavaMethodFor(operation, receiver);
         } catch (Throwable e) {
-            if (operation != null && operation.getEContainingClass() != null) {
+            if (!recursing && operation != null && operation.getEContainingClass() != null) {
                 EClass container = operation.getEContainingClass();
                 Class<?> containerClass = container.getInstanceClass();
                 if (containerClass == null) {
                     if (container.getName().startsWith("String")) {
                         container.setInstanceClass(String.class);
                     }
-                    return getJavaMethodFor(operation, receiver);
+                    return getJavaMethodFor(operation, receiver, true);
                 }
             }
             Debug.error(true, true, "Couldn't get java method for EOperation, " + operation);
