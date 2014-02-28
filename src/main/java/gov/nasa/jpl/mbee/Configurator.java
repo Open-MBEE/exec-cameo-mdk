@@ -761,7 +761,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     @Override
     public void configure(ActionsManager manager, DiagramPresentationElement diagram,
             PresentationElement[] selected, PresentationElement requestor) {
-        if ( Utils2.getStackTrace( null ).contains( "RepaintManager" ) ) {
+        if ( DocGenConfigurator.repainting() ) {
             return;
         }
         boolean wasOn = Debug.isOn();
