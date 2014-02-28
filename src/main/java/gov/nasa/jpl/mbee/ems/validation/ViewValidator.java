@@ -187,6 +187,9 @@ public class ViewValidator {
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         iv.validate();
         imageSuite = iv.getSuite();
+        if (!exists.getViolations().isEmpty()) {
+            Utils.showPopupMessage("There's view(s) that are missing on the server, see validation window.");
+        }
         return true;
     }
     
