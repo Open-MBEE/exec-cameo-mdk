@@ -47,9 +47,11 @@ public class ValidateViewRunner implements RunnableWithProgress {
     @Override
     public void run(ProgressStatus arg0) {
         ViewValidator vv = new ViewValidator(view, recurse);
-        if (vv.validate())
+        if (vv.checkProject()) {
+            if (vv.validate())
+                vv.showWindow();
+        } else
             vv.showWindow();
-        
     }
 
 }

@@ -163,7 +163,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         if (url == null)
             return false;
         String sendElementsUrl = ExportUtility.getPostElementsUrl();
-        if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), "Post", false))
+        if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
             return false;
         
         //send elements first, then view info
@@ -174,7 +174,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         send.put("views", viewsArray);
         //gl.log(send.toJSONString());
         String sendViewsUrl = url +  "/javawebscripts/views";
-        if (!ExportUtility.send(sendViewsUrl, send.toJSONString(), "Post", false))
+        if (!ExportUtility.send(sendViewsUrl, send.toJSONString(), null, false))
             return false;
         
         // Upload images to view editor (JSON keys are specified in
@@ -249,7 +249,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             doc.put("id", view.getID());
             documents.add(doc);
             send.put("products", documents);
-            if (!ExportUtility.send(docurl, send.toJSONString(), "Post", false))
+            if (!ExportUtility.send(docurl, send.toJSONString(), null, false))
                 return false;
         } /*else if (recurse) {
             JSONArray views = new JSONArray();
