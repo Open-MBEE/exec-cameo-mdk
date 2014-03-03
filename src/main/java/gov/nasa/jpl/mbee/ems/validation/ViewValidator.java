@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportElementComments;
+import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
@@ -63,6 +64,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
@@ -71,6 +74,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ViewValidator {
 
+    private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
     private ValidationSuite suite = new ValidationSuite("View Sync");
     private ValidationRule exists = new ValidationRule("Does Not Exist", "view doesn't exist yet", ViolationSeverity.ERROR);
     private ValidationRule match = new ValidationRule("View content", "view contents have changed", ViolationSeverity.ERROR);
@@ -89,7 +93,27 @@ public class ViewValidator {
         suite.addValidationRule(match);
         suite.addValidationRule(hierarchy);
         suite.addValidationRule(comments);
+        suite.addValidationRule(projectExist);
         this.recurse = recursive;
+    }
+    
+    public boolean checkProject() {
+        String projectUrl = ExportUtility.getUrlWithSiteAndProject();
+        if (projectUrl == null)
+            return false;
+        String response = ExportUtility.get(projectUrl);
+        if (response == null) {
+            ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "This project doesn't exist on the web yet, or the site has been moved");
+            v.addAction(new InitializeProjectModel(true));
+            v.addAction(new InitializeProjectModel(false));
+            projectExist.addViolation(v);
+            return false;
+        }
+        if (ProjectUtilities.isElementInAttachedProject(view)){
+            Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
+            return false;
+        }
+        return true;
     }
     
     @SuppressWarnings("unchecked")

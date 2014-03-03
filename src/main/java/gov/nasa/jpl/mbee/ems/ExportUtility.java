@@ -229,33 +229,39 @@ public class ExportUtility {
                 if (showPopupErrors)
                     Utils.showPopupMessage("Server Error, see message window for details");
                 Application.getInstance().getGUILog().log(response);
-                log.info(response);
             } else if (code == 401) {
                 if (showPopupErrors)
-                    Utils.showPopupMessage("You are not authorized or don't have permission, you have been logged out (you can login and try again)");
+                    Utils.showPopupMessage("You are not authorized or don't have permission, (you can login and try again).");
+                else
+                    Application.getInstance().getGUILog().log("You are not authorized or don't have permission, (you can login and try again).");
                 ViewEditUtils.clearCredentials();
             } else if (code == 403) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("You do not have permission to do this");
+                else
+                    Application.getInstance().getGUILog().log("You do not have permission to do this");
             } else if (code == 404) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
+                else
+                    Application.getInstance().getGUILog().log("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
                 Application.getInstance().getGUILog().log(response);
                 log.info(response);
                 return false;
             } else {
                 Application.getInstance().getGUILog().log(response);
-                log.info(response);
             }
+            log.info(response);
             return true;
         }
         if (response.length() > 3000) {
             //System.out.println(response);
             log.info(response);
             Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
-        } else
+        } else {
             log.info(response);//Application.getInstance().getGUILog().log(response);
+        }
         return false;
     }
     
@@ -280,7 +286,7 @@ public class ExportUtility {
                 log.info(json);
                 gl.log("(see md.log for what got sent - too big to show)");
             } else
-                gl.log(json);
+                log.info(json);//gl.log(json);
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
@@ -666,21 +672,27 @@ public class ExportUtility {
     
     public static boolean okToExport() {
         mountedVersions = new HashMap<String, Integer>();
+        Map<String, String> projectNames = new HashMap<String, String>();
         Project prj = Application.getInstance().getProject();
-        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
             mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj).getNumber());
+            projectNames.put(prj.getPrimaryProject().getProjectID(), prj.getName());
+        }
         for (IAttachedProject p: ProjectUtilities.getAllAttachedProjects(prj)) {
             if (ProjectUtilities.isFromTeamworkServer(p)) {
                 IVersionDescriptor vd = ProjectUtilities.getVersion(p);
                 ProjectVersion pv = new ProjectVersion(vd);
                 Integer teamwork = pv.getNumber();
                 mountedVersions.put(p.getProjectID(), teamwork);
+                projectNames.put(p.getProjectID(), p.getName());
             }
         }
         for (String prjId: mountedVersions.keySet()) {
             Integer serverVersion = getAlfrescoProjectVersion(prjId);
             if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) {
-                Boolean con = Utils.getUserYesNoAnswer("Your project or mounts is an older project version than what's on the server, do you want to continue?");
+                Boolean con = Utils.getUserYesNoAnswer("Your project " + projectNames.get(prjId) + 
+                        " is an older project version (" + mountedVersions.get(prjId) + 
+                        ") than what's on the server (" + serverVersion + ") , do you want to continue?");
                 if (con == null || !con)
                     return false;
             }

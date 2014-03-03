@@ -46,9 +46,11 @@ import com.nomagic.ui.ProgressStatusRunner;
 public class InitializeProjectModel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
-   
-    public InitializeProjectModel() {
-        super("InitializeProjectModel", "Initialize Project and Model", null, null);
+    private boolean initOnly;
+    
+    public InitializeProjectModel(boolean initOnly) {
+        super("InitializeProjectModel", initOnly ? "Initialize Project" : "Initialize Project and Model", null, null);
+        this.initOnly = initOnly;
     }
     
     @Override
@@ -78,7 +80,8 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
         if (!ExportUtility.send(url, json))
             return;
         ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
-        ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false), "Exporting Model", true, 0);
+        if (!initOnly)
+            ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false), "Exporting Model", true, 0);
     }
 }
 
