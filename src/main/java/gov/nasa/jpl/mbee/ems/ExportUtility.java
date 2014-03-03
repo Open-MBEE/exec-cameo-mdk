@@ -286,7 +286,7 @@ public class ExportUtility {
                 log.info(json);
                 gl.log("(see md.log for what got sent - too big to show)");
             } else
-                gl.log(json);
+                log.info(json);//gl.log(json);
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
@@ -690,7 +690,9 @@ public class ExportUtility {
         for (String prjId: mountedVersions.keySet()) {
             Integer serverVersion = getAlfrescoProjectVersion(prjId);
             if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) {
-                Boolean con = Utils.getUserYesNoAnswer("Your project " + projectNames.get(prjId) + " is an older project version than what's on the server, do you want to continue?");
+                Boolean con = Utils.getUserYesNoAnswer("Your project " + projectNames.get(prjId) + 
+                        " is an older project version (" + mountedVersions.get(prjId) + 
+                        ") than what's on the server (" + serverVersion + ") , do you want to continue?");
                 if (con == null || !con)
                     return false;
             }
