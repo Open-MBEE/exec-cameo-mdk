@@ -139,14 +139,14 @@ public class DocumentGenerator {
         if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
             if (start instanceof Package
                     || start instanceof Diagram
-                    || StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype,
-                            "Document Profile")
+                    //|| StereotypesHelper.hasStereotype(start, DocGen3Profile.documentViewStereotype,
+                     //       "Document Profile")
                     || GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype) != null
                     || GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nextStereotype) != null
                     || GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.nosectionStereotype) != null) {
                 ViewParser vp = new ViewParser(this, singleView, recurse, doc, start);
                 vp.parse();
-            } else {
+            } else if (start instanceof Class){
                 ProductViewParser vp = new ProductViewParser(this, singleView, recurse, doc, start);
                 vp.parse();
             }

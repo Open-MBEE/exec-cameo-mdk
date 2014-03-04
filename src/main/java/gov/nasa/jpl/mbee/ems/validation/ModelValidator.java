@@ -327,17 +327,20 @@ public class ModelValidator {
         ValueSpecification vs = e.getDefaultValue();
         String valueTypes = (String)info.get("valueType");
         JSONArray value = (JSONArray)info.get("value");
-        if ((vs == null || vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) 
+        if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
+                (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null))
                 && (valueTypes == null || value == null || value.isEmpty()))
             return null;
-        if ((vs != null || vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) 
+        if ((vs != null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) || 
+                (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() != null))
                 && (valueTypes == null || value == null || value.isEmpty())) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
             v.addAction(new ImportValue(e, null, null, result));
             v.addAction(new ExportValue(e));
             return v;
         }
-        if ((vs == null || vs instanceof ElementValue && ((ElementValue)vs).getElement() == null)  
+        if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
+                (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null)) 
                 && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
             v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
@@ -592,7 +595,9 @@ public class ModelValidator {
     
     private boolean areNullElementValues(List<ValueSpecification> vs) {
         for (ValueSpecification v: vs) {
-            if (!(v instanceof ElementValue) || v instanceof ElementValue && ((ElementValue)v).getElement() != null)
+            if (!(v instanceof ElementValue || v instanceof InstanceValue) || 
+                    (v instanceof ElementValue && ((ElementValue)v).getElement() != null) || 
+                    (v instanceof InstanceValue && ((InstanceValue)v).getInstance() != null))
                 return false;
         }
         return true;
