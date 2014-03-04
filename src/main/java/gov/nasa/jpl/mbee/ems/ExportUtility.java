@@ -260,7 +260,8 @@ public class ExportUtility {
             log.info(response);
             Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else {
-            log.info(response);//Application.getInstance().getGUILog().log(response);
+            log.info(response);
+            Application.getInstance().getGUILog().log(response);
         }
         return false;
     }

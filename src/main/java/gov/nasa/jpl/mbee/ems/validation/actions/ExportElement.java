@@ -84,11 +84,14 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
             return;
         send.put("elements", infos);
         //gl.log(send.toJSONString());
-
+        
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
+        Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background?");
+        if (background != null && background)
+            url += "?background=true";
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
             ExportUtility.sendProjectVersions();
