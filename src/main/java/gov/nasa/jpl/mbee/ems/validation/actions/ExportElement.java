@@ -89,7 +89,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         if (url == null) {
             return;
         }
-        Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background?");
+        Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background? You'll get an email when done.");
         if (background != null && background)
             url += "?background=true";
         if (ExportUtility.send(url, send.toJSONString())) {
