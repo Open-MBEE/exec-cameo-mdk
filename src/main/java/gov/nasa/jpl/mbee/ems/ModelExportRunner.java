@@ -74,7 +74,7 @@ public class ModelExportRunner implements RunnableWithProgress {
 
         //gl.log(json);
         gl.log("Number of Elements: " + me.getNumberOfElements());
-        boolean background = Utils.getUserYesNoAnswer("Use background export on server?");
+        boolean background = Utils.getUserYesNoAnswer("Use background export on server? You'll get an email when done.");
         if (background)
             url = url + "?background=true";
        // gl.log("*** Starting export view comments ***");

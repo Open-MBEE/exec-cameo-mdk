@@ -261,7 +261,7 @@ public class ExportUtility {
             Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else {
             log.info(response);
-            Application.getInstance().getGUILog().log(response);
+            //Application.getInstance().getGUILog().log(response);
         }
         return false;
     }
@@ -468,7 +468,7 @@ public class ExportUtility {
             value.add(((LiteralBoolean)vs).isValue());
         } else if (vs instanceof LiteralString) {
             elementInfo.put("valueType", PropertyValueType.LiteralString.toString());
-            value.add(((LiteralString)vs).getValue());
+            value.add(Utils.stripHtmlWrapper(((LiteralString)vs).getValue()));
         } else if (vs instanceof LiteralInteger || vs instanceof LiteralUnlimitedNatural) {
             elementInfo.put("valueType", PropertyValueType.LiteralInteger.toString());
             if (vs instanceof LiteralInteger) {
