@@ -16,7 +16,7 @@ public class Test2 {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String blah = (String)null;
+		String blah = null;
 		if (blah == null)
 			System.out.println("null");
 		if (null instanceof Integer)

@@ -44,7 +44,7 @@ from gov.nasa.jpl.mgss.mbee.docgen.docbook import DBTable
 from gov.nasa.jpl.mgss.mbee.docgen.docbook import DBText
 from gov.nasa.jpl.mgss.mbee.docgen.docbook import DBColSpec
 from gov.nasa.jpl.mgss.mbee.docgen.docbook import DBTableEntry
-from gov.nasa.jpl.mgss.mbee.docgen import DocGenUtils
+from gov.nasa.jpl.mbee import DocGenUtils
 from gov.nasa.jpl.mgss.mbee.docgen.table import EditableTable
 from gov.nasa.jpl.mgss.mbee.docgen.table import PropertyEnum
 import MDUtils._MDUtils as MDUtils

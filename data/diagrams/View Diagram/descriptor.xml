@@ -34,6 +34,24 @@
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
+                <custom description="Method" id="IDaction_1389808057005_34439_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity">
+                    <stereotype id="_17_0_1_2_8c20286_1339091178652_692897_26954"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="Stakeholder" id="IDaction_1389818410532_134142_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component">
+                    <stereotype id="_project-bundle_project_PackageableElement-project_u003aStakeholder_PackageableElement"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <standard action="ADD_DIRECTED_COMPOSITION"/>
+                <standard action="ADD_DIRECTED_AGGREGATION"/>
                 <custom description="AddressedTo" id="IDaction_1383678317623_75746_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency">
                     <stereotype id="_17_0_2_3_407019f_1381797132779_823460_29420"/>
                     <defaults>
@@ -64,13 +82,11 @@
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
-                <custom description="Conform" id="IDaction_1378761047596_122536_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency">
-                    <stereotype id="_11_5EAPbeta_be00301_1147420728091_674481_152"/>
+                <custom description="Conforms" id="IDaction_1389808028890_615249_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization">
+                    <stereotype id="_17_0_2_3_407019f_1389807639137_860750_29082"/>
                     <defaults>
                         <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager">
-                                <propertyManagerID>_17_0_2_3_407019f_1383678629446_952379_29334</propertyManagerID>
-                            </mdElement>
+                            <mdElement elementClass="PropertyManager"/>
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
@@ -85,24 +101,18 @@
     </module>
     <manipulators>
         <element>com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class</element>
-        <path action="IDaction_1378760996044_294568_0"/>
-        <path action="IDaction_1378761047596_122536_0"/>
-        <path action="ADD_DIRECTED_AGGREGATION">
-            <target>ADD_CLASS</target>
-            <target>ADD_INTERFACE</target>
-            <target>ADD_ENUMERATION</target>
-        </path>
         <path action="ADD_DIRECTED_COMPOSITION">
             <target>ADD_CLASS</target>
-            <target>ADD_INTERFACE</target>
-            <target>ADD_ENUMERATION</target>
         </path>
-        <path action="ADD_DEPENDENCY">
+        <path action="ADD_DIRECTED_AGGREGATION">
             <target>ADD_CLASS</target>
-            <target>ADD_INTERFACE</target>
-            <target>ADD_ENUMERATION</target>
-            <target>ADD_PACKAGE</target>
         </path>
+        <path action="IDaction_1378760996044_294568_0"/>
+        <path action="IDaction_1389808028890_615249_0">
+            <target>IDaction_1378760931841_229013_0</target>
+        </path>
+        <path action="IDaction_1383678317623_75746_0"/>
+        <path action="IDaction_1383678488690_544124_0"/>
         <path action="ADD_NOTE_ANCHOR">
             <target>ADD_NOTE</target>
             <target>ADD_HTML_NOTE</target>

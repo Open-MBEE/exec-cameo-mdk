@@ -2,7 +2,7 @@
 <ecore:EPackage xmi:version="2.0"
     xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="dgview"
-    nsURI="http://mbee.jpl.nasa.gov/docgen/dgview" nsPrefix="gov.nasa.jpl.mgss.mbee.docgen.dgview">
+    nsURI="http://mbee.jpl.nasa.gov/docgen/dgview" nsPrefix="gov.nasa.jpl.mbee.dgview">
   <eClassifiers xsi:type="ecore:EClass" name="ColSpec" eSuperTypes="#//ViewElement">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="colname" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="colwidth" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
