@@ -56,11 +56,11 @@ public class InitializeProjectAction extends MDAction {
         String json = result.toJSONString();
 
         //gl.log(json);
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrlWithSite();
         if (url == null) {
             return;
         }
-        url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        url += "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         ExportUtility.send(url, json);
     }
 }
