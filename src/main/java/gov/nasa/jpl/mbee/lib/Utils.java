@@ -3133,7 +3133,7 @@ public class Utils {
      */
     public static String addHtmlWrapper(String s) {
         if (!s.startsWith("<html") && (s.contains("</p>") || s.contains("<br/>") || 
-                s.contains("<br>") || s.contains("</span>") || s.contains("</li>") || s.contains("</table>"))) {
+                s.contains("<br>") || s.contains("</span>") || s.contains("</li>") || s.contains("</th>") || s.contains("</td>"))) {
             return "<html>\n<body>\n" + s + "</body>\n</html>";
         }
         return s;
