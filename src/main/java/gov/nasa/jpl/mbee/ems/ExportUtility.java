@@ -99,6 +99,7 @@ public class ExportUtility {
     public static Map<String, Integer> mountedVersions;
     private static String developerUrl = "https://sheldon.jpl.nasa.gov/alfresco/service";
     private static String developerSite = "europa";
+    public static boolean baselineNotSet = false;
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", //stylesaver
@@ -119,17 +120,20 @@ public class ExportUtility {
             tag = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
                     "baselineTag");
             if (tag == null || tag.equals("")) {
-                JOptionPane
-                        .showMessageDialog(null,
-                                "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+                baselineNotSet = true;
+                //JOptionPane
+                 //       .showMessageDialog(null,
+                  //              "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
                 return null;
             }
         } else {
-            JOptionPane
-                    .showMessageDialog(null,
-                            "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+            //JOptionPane
+             //       .showMessageDialog(null,
+              //              "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+            baselineNotSet = true;
             return null;
         }
+        baselineNotSet = false;
         return tag;
     }
     
@@ -502,10 +506,10 @@ public class ExportUtility {
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
             String baselineTag = getBaselineTag();
             if (baselineTag == null)
-                return false;
+                return true;
             List<String> tags = ProjectUtilities.getVersionTags(prj.getPrimaryProject());
             if (!tags.contains(baselineTag)) {
-                Application.getInstance().getGUILog().log("The current project is not an approved version!");
+                Application.getInstance().getGUILog().log("The current project is not an approved baseline version!");
                 return false;
             }
         
@@ -513,12 +517,13 @@ public class ExportUtility {
                 if (ProjectUtilities.isFromTeamworkServer(proj)) {
                     List<String> tags2 = ProjectUtilities.getVersionTags(proj);
                     if (!tags2.contains(baselineTag)) {
-                        Application.getInstance().getGUILog().log(proj.getName() + " is not an approved module version!");
+                        Application.getInstance().getGUILog().log(proj.getName() + " is not an approved baseline module version!");
                         return false;
                     }
                 }
             }
-        }
+        } else
+            baselineNotSet = false;
         return true;
     }
     

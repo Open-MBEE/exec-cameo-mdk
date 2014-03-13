@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
@@ -47,6 +48,10 @@ public class EMSLoginAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         ViewEditUtils.clearCredentials();
+        if (Application.getInstance().getProject() == null) {
+            Utils.showPopupMessage("You need to have a project open first!");
+            return;
+        }
         String url = ExportUtility.getUrl();
         if (url == null)
             return;

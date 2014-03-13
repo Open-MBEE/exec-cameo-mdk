@@ -97,6 +97,7 @@ public class ModelValidator {
     private ValidationRule relDiff = new ValidationRule("Relationship", "Relationship source or target", ViolationSeverity.ERROR);
     private ValidationRule commentDiff = new ValidationRule("Comment", "Comment different", ViolationSeverity.ERROR);
     private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
+    private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
     private Project prj;
     private Element start;
     private JSONObject result;
@@ -113,6 +114,7 @@ public class ModelValidator {
         suite.addValidationRule(relDiff);
         suite.addValidationRule(commentDiff);
         suite.addValidationRule(projectExist);
+        suite.addValidationRule(baselineTag);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -120,6 +122,8 @@ public class ModelValidator {
     }
     
     public boolean checkProject() {
+        if (ExportUtility.baselineNotSet)
+            baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(start).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
         String projectUrl = ExportUtility.getUrlWithSiteAndProject();
         if (projectUrl == null)
             return false;

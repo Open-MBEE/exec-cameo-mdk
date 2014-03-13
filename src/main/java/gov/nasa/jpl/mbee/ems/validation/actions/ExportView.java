@@ -89,17 +89,20 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
     @Override
     public void execute(Collection<Annotation> annos) {
+        if (!ExportUtility.okToExport())
+            return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, annos), "Exporting Views", true, 0);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!ExportUtility.okToExport())
+            return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, null), "Exporting View", true, 0);
     }
     
     public void performAction() {
-        if (!ExportUtility.okToExport())
-            return;
+        
         if (exportView(view)) {
             this.removeViolationAndUpdateWindow();
             ExportUtility.sendProjectVersions();
@@ -108,8 +111,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     
     public void performActions(Collection<Annotation> annos) {
         Collection<Annotation> toremove = new ArrayList<Annotation>();
-        if (!ExportUtility.okToExport())
-            return;
+        
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             if (exportView(e)) {
