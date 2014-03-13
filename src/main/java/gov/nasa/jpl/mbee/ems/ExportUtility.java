@@ -169,17 +169,17 @@ public class ExportUtility {
         Element model = Application.getInstance().getProject().getModel();
         if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
             url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
-                    "url");
+                    "MMS URL");
             if (url == null || url.equals("")) {
                 JOptionPane
                         .showMessageDialog(null,
-                                "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
+                                "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
                 url = null;
             }
         } else {
             JOptionPane
                     .showMessageDialog(null,
-                            "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
+                            "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
             url = null;
         }
         if (url == null && MDUtils.isDeveloperMode()) {
@@ -188,6 +188,7 @@ public class ExportUtility {
         if (url == null || url.equals(""))
             return null;
         developerUrl = url;
+        url += "/alfresco/service";
         return url;
     }
     
@@ -196,10 +197,10 @@ public class ExportUtility {
         String  url = getUrl();
         if (url == null)
             return null;
-        String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
+        String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "MMS Site");
         if (site == null || site.equals("")) {
             JOptionPane.showMessageDialog(null,
-                    "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
+                    "Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
                 site = null;
         }
         if (site == null && MDUtils.isDeveloperMode()) {
@@ -208,6 +209,7 @@ public class ExportUtility {
         if (site == null || site.equals(""))
             return null;
         developerSite = site;
+        //do switch here
         return url + "/javawebscripts/sites/" + site;
         
         //return url + "/javawebscripts/sites/europa";
