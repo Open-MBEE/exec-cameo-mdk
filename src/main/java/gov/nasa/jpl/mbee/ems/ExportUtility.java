@@ -97,7 +97,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class ExportUtility {
     public static Logger log = Logger.getLogger(ExportUtility.class);
     public static Map<String, Integer> mountedVersions;
-    private static String developerUrl = "https://sheldon.jpl.nasa.gov/alfresco/service";
+    private static String developerUrl = "https://sheldon.jpl.nasa.gov";
     private static String developerSite = "europa";
     public static boolean baselineNotSet = false;
     
