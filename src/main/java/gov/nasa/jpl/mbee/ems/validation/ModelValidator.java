@@ -252,11 +252,11 @@ public class ModelValidator {
     
     private void checkElement(Element e, JSONObject elementInfo) {
         String elementDoc = ModelHelper.getComment(e);
-        String elementDocClean = Utils.stripHtmlWrapper(elementDoc).replace(" class=\"pwrapper\"", "").replace("<br>", "");
+        String elementDocClean = ExportUtility.cleanHtml(elementDoc);
         String elementName = null;
         String webDoc = (String)elementInfo.get("documentation");
         if (webDoc != null) {
-            webDoc = webDoc.replace(" class=\"pwrapper\"", "").replace("<br>", "");
+            webDoc = ExportUtility.cleanHtml(webDoc);
             elementInfo.put("documentation", webDoc);
         }
         if (e instanceof NamedElement) {
@@ -356,8 +356,8 @@ public class ModelValidator {
         String typeMismatchMessage = "[VALUE] value spec types don't match";
         if (valueType == PropertyValueType.LiteralString) {
             if (vs instanceof LiteralString) {
-                String modelString = Utils.stripHtmlWrapper(((LiteralString)vs).getValue()).replace(" class=\"pwrapper\"", "").replace("<br>", "");
-                String webString = ((String)value.get(0)).replace(" class=\"pwrapper\"", "").replace("<br>", "");
+                String modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
+                String webString = ExportUtility.cleanHtml((String)value.get(0));
                 value.set(0, webString);
                 if (!modelString.equals(webString)) {
                     message = "[VALUE] model: " + truncate(modelString) + ", web: " + truncate(webString);
@@ -467,8 +467,8 @@ public class ModelValidator {
         if (valueType == PropertyValueType.LiteralString) {
             if (vs.get(0) instanceof LiteralString) {
                 for (int i = 0; i < vs.size(); i++) {
-                    String modelString = Utils.stripHtmlWrapper(((LiteralString)vs.get(i)).getValue()).replace(" class=\"pwrapper\"", "").replace("<br>", "");
-                    String webString = ((String)value.get(i)).replace(" class=\"pwrapper\"", "").replace("<br>", "");
+                    String modelString = ExportUtility.cleanHtml(((LiteralString)vs.get(i)).getValue());
+                    String webString = ExportUtility.cleanHtml((String)value.get(i));
                     value.set(i, webString);
                     if (!modelString.equals(webString)) {
                         message = badMessage;
@@ -560,10 +560,12 @@ public class ModelValidator {
     
     @SuppressWarnings("unchecked")
     private ValidationRuleViolation commentDiff(Comment e, JSONObject elementInfo) {
-        String modelBodyClean = Utils.stripHtmlWrapper(((Comment)e).getBody());
+        String modelBodyClean = ExportUtility.cleanHtml(((Comment)e).getBody());
         String webBody = (String)elementInfo.get("body");
         if (webBody == null)
             webBody = "";
+        else
+            webBody = ExportUtility.cleanHtml(webBody);
         ValidationRuleViolation v = null;
         if (!modelBodyClean.equals(webBody)) {
             v = new ValidationRuleViolation(e, "[Comment] model: " + truncate(modelBodyClean) + ", web: " + truncate(webBody));
