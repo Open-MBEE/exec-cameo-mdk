@@ -75,6 +75,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     private Element view;
     private boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
+    private String url;
+    private String sendElementsUrl;
     
     public ExportView(Element e, boolean recursive) {
         super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Export views hierarchically" : "Export view", null, null);
@@ -89,17 +91,32 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
     @Override
     public void execute(Collection<Annotation> annos) {
+        if (!ExportUtility.okToExport())
+            return;
+        url = ExportUtility.getUrl();
+        if (url == null)
+            return;
+        sendElementsUrl = ExportUtility.getPostElementsUrl();
+        if (sendElementsUrl == null)
+            return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, annos), "Exporting Views", true, 0);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!ExportUtility.okToExport())
+            return;
+        url = ExportUtility.getUrl();
+        if (url == null)
+            return;
+        sendElementsUrl = ExportUtility.getPostElementsUrl();
+        if (sendElementsUrl == null)
+            return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, null), "Exporting View", true, 0);
     }
     
     public void performAction() {
-        if (!ExportUtility.okToExport())
-            return;
+        
         if (exportView(view)) {
             this.removeViolationAndUpdateWindow();
             ExportUtility.sendProjectVersions();
@@ -108,8 +125,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     
     public void performActions(Collection<Annotation> annos) {
         Collection<Annotation> toremove = new ArrayList<Annotation>();
-        if (!ExportUtility.okToExport())
-            return;
+        
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             if (exportView(e)) {
@@ -159,10 +175,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         elementsArray.addAll(elementsjson.values());
         JSONObject send = new JSONObject();
         send.put("elements", elementsArray);
-        String url = ExportUtility.getUrl();
         if (url == null)
             return false;
-        String sendElementsUrl = ExportUtility.getPostElementsUrl();
         if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
             return false;
         

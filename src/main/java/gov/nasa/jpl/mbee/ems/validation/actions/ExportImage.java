@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -47,6 +48,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportImage extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -84,9 +86,11 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
                 ViewEditUtils.setCredentials(client, baseurl);
                 client.executeMethod(post);
                 int status = post.getStatusCode();
-                ExportUtility.showErrors(status, post.getResponseBodyAsString(), true);
+                if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), true)) {
+                    Application.getInstance().getGUILog().log("[INFO] Successful");
+                }
             } catch (Exception ex) {
-                //printStackTrace(ex, gl);
+                Utils.printException(ex);
             } finally {
                 post.releaseConnection();
             }
@@ -111,9 +115,11 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             ViewEditUtils.setCredentials(client, baseurl);
             client.executeMethod(post);
             int status = post.getStatusCode();
-            ExportUtility.showErrors(status, post.getResponseBodyAsString(), true);
+            if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), true)) {
+                Application.getInstance().getGUILog().log("[INFO] Successful");
+            }
         } catch (Exception ex) {
-            //printStackTrace(ex, gl);
+            Utils.printException(ex);
         } finally {
             post.releaseConnection();
         }

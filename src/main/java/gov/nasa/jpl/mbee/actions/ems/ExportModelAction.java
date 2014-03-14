@@ -70,7 +70,14 @@ public class ExportModelAction extends MDAction {
         } catch (Exception ex) {
             return;
         }
-        ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(start, depth, packageOnly), "Exporting Model", true, 0);
+        String url = ExportUtility.getPostElementsUrl();
+        if (url == null) {
+            return;
+        }
+        boolean background = Utils.getUserYesNoAnswer("Use background export on server? You'll get an email when done.");
+        if (background)
+            url = url + "?background=true";
+        ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(start, depth, packageOnly, url), "Exporting Model", true, 0);
         /*
         if (start instanceof Model) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
