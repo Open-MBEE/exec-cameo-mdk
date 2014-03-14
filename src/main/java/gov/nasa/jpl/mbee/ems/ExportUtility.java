@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
@@ -97,8 +98,9 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class ExportUtility {
     public static Logger log = Logger.getLogger(ExportUtility.class);
     public static Map<String, Integer> mountedVersions;
-    private static String developerUrl = "https://sheldon.jpl.nasa.gov/alfresco/service";
+    private static String developerUrl = "https://sheldon.jpl.nasa.gov";
     private static String developerSite = "europa";
+    public static boolean baselineNotSet = false;
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", //stylesaver
@@ -119,17 +121,20 @@ public class ExportUtility {
             tag = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
                     "baselineTag");
             if (tag == null || tag.equals("")) {
-                JOptionPane
-                        .showMessageDialog(null,
-                                "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+                baselineNotSet = true;
+                //JOptionPane
+                 //       .showMessageDialog(null,
+                  //              "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
                 return null;
             }
         } else {
-            JOptionPane
-                    .showMessageDialog(null,
-                            "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+            //JOptionPane
+             //       .showMessageDialog(null,
+              //              "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+            baselineNotSet = true;
             return null;
         }
+        baselineNotSet = false;
         return tag;
     }
     
@@ -165,17 +170,17 @@ public class ExportUtility {
         Element model = Application.getInstance().getProject().getModel();
         if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
             url = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
-                    "url");
+                    "MMS URL");
             if (url == null || url.equals("")) {
                 JOptionPane
                         .showMessageDialog(null,
-                                "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
+                                "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
                 url = null;
             }
         } else {
             JOptionPane
                     .showMessageDialog(null,
-                            "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
+                            "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
             url = null;
         }
         if (url == null && MDUtils.isDeveloperMode()) {
@@ -184,6 +189,7 @@ public class ExportUtility {
         if (url == null || url.equals(""))
             return null;
         developerUrl = url;
+        url += "/alfresco/service";
         return url;
     }
     
@@ -192,10 +198,10 @@ public class ExportUtility {
         String  url = getUrl();
         if (url == null)
             return null;
-        String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
+        String site = (String)StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "MMS Site");
         if (site == null || site.equals("")) {
             JOptionPane.showMessageDialog(null,
-                    "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
+                    "Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
                 site = null;
         }
         if (site == null && MDUtils.isDeveloperMode()) {
@@ -204,6 +210,7 @@ public class ExportUtility {
         if (site == null || site.equals(""))
             return null;
         developerSite = site;
+        //do switch here
         return url + "/javawebscripts/sites/" + site;
         
         //return url + "/javawebscripts/sites/europa";
@@ -502,10 +509,10 @@ public class ExportUtility {
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
             String baselineTag = getBaselineTag();
             if (baselineTag == null)
-                return false;
+                return true;
             List<String> tags = ProjectUtilities.getVersionTags(prj.getPrimaryProject());
             if (!tags.contains(baselineTag)) {
-                Application.getInstance().getGUILog().log("The current project is not an approved version!");
+                Application.getInstance().getGUILog().log("The current project is not an approved baseline version!");
                 return false;
             }
         
@@ -513,12 +520,13 @@ public class ExportUtility {
                 if (ProjectUtilities.isFromTeamworkServer(proj)) {
                     List<String> tags2 = ProjectUtilities.getVersionTags(proj);
                     if (!tags2.contains(baselineTag)) {
-                        Application.getInstance().getGUILog().log(proj.getName() + " is not an approved module version!");
+                        Application.getInstance().getGUILog().log(proj.getName() + " is not an approved baseline module version!");
                         return false;
                     }
                 }
             }
-        }
+        } else
+            baselineNotSet = false;
         return true;
     }
     
@@ -532,19 +540,6 @@ public class ExportUtility {
         return true;
     }
     
-    public static Date getModuleTimestamp(Element e) {
-        if (ProjectUtilities.isElementInAttachedProject(e)) {
-            IProject module = ProjectUtilities.getAttachedProject(e);
-            IVersionDescriptor version = ProjectUtilities.getVersion(module);
-            return version.getDate();
-        }
-        if (!e.isEditable()) {
-            IVersionDescriptor version = ProjectUtilities.getVersion(Application.getInstance().getProject().getPrimaryProject());
-            return version.getDate();
-        }
-        return new Date();
-    }
-    
     public static Integer getAlfrescoProjectVersion(String projectId) {
         String baseUrl = getUrl();
         String checkProjUrl = baseUrl + "/javawebscripts/projects/" + projectId;
@@ -555,66 +550,6 @@ public class ExportUtility {
         if (result.containsKey("projectVersion"))
             return Integer.valueOf(result.get("projectVersion").toString());
         return null;
-    }
-    
-    public static Integer getAlfrescoProjectVersion(Element e) {
-        if (ProjectUtilities.isElementInAttachedProject(e)) {
-            IAttachedProject aprj = ProjectUtilities.getAttachedProject(e);
-            if (ProjectUtilities.isFromTeamworkServer(aprj))
-                return getAlfrescoProjectVersion(aprj.getProjectID());
-            return null;
-        } else {
-            Project prj = Application.getInstance().getProject();
-            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
-                return getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
-            }
-            return null;
-        }
-    }
-    
-    public static Integer getModuleVersion(Element e) {
-        Project prj = Application.getInstance().getProject();
-        if (ProjectUtilities.isElementInAttachedProject(e)) {
-            IProject module = ProjectUtilities.getAttachedProject(e);
-            if (ProjectUtilities.isFromTeamworkServer(module)) {
-                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
-                ProjectVersion pv = new ProjectVersion(vd);
-                Integer teamwork = pv.getNumber();
-                return teamwork;//TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
-            }
-            return null;
-        } else {
-            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
-                return TeamworkService.getInstance(prj).getVersion(prj).getNumber();
-            return null;
-        }
-    }
-    
-    public static boolean versionOk(Element e) {
-        Project prj = Application.getInstance().getProject();
-        if (ProjectUtilities.isElementInAttachedProject(e)) {
-            IProject module = ProjectUtilities.getAttachedProject(e);
-            if (ProjectUtilities.isFromTeamworkServer(module)) {
-                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
-                ProjectVersion pv = new ProjectVersion(vd);
-                Integer teamwork = pv.getNumber();
-                //Integer teamwork = TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
-                Integer mms = getAlfrescoProjectVersion(module.getProjectID());
-                if (teamwork == mms || mms == null || teamwork > mms)
-                    return true;
-                return false;
-            }
-            return true;
-        } else {
-            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
-                Integer teamwork = TeamworkService.getInstance(prj).getVersion(prj).getNumber();
-                Integer mms = getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
-                if (teamwork == mms || mms == null || teamwork > mms)
-                    return true;
-                return false;
-            }
-            return true;
-        }
     }
     
     public static void sendProjectVersion(Element e) {
@@ -636,19 +571,48 @@ public class ExportUtility {
     }
     
     public static boolean okToExport(Element e) {
-        if (!versionOk(e)) {
-            Boolean con = Utils.getUserYesNoAnswer("The element " + e.getHumanName() + " is in a project that is an older version of what's on the server, do you want to continue export?");
-            if (con == null || !con)
-                return false;
-        }
-        return true;
+        if (mountedVersions == null)
+            mountedVersions = new HashMap<String, Integer>();
+        Project prj = Application.getInstance().getProject();
+        if (ProjectUtilities.isElementInAttachedProject(e)) {
+            IAttachedProject module = ProjectUtilities.getAttachedProject(e);
+            if (ProjectUtilities.isFromTeamworkServer(module)) {
+                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
+                ProjectVersion pv = new ProjectVersion(vd);
+                Integer teamwork = pv.getNumber();
+                //Integer teamwork = TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
+                Integer mms = getAlfrescoProjectVersion(module.getProjectID());
+                if (teamwork == mms || mms == null || teamwork > mms)
+                    return true;
+                Boolean con = Utils.getUserYesNoAnswer("The element is in project " + module.getName() + " (" + teamwork + 
+                        ") that is an older version of what's on the server (" + mms + "), do you want to continue export?");
+                if (con == null || !con)
+                    return false;
+            }
+            return true;
+        } else {
+            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
+                Integer teamwork = TeamworkService.getInstance(prj).getVersion(prj).getNumber();
+                Integer mms = getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
+                if (teamwork == mms || mms == null || teamwork > mms)
+                    return true;
+                Boolean con = Utils.getUserYesNoAnswer("The element is in project " + prj.getName() + " (" + teamwork + 
+                        ") that is an older version of what's on the server (" + mms + "), do you want to continue export?");
+                if (con == null || !con)
+                    return false;
+            }
+            return true;
+        }        
     }
     
     public static boolean okToExport(Set<Element> set) {
         Project prj = Application.getInstance().getProject();
         mountedVersions = new HashMap<String, Integer>();
-        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+        Map<String, String> projectNames = new HashMap<String, String>();
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
             mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj).getNumber());
+            projectNames.put(prj.getPrimaryProject().getProjectID(), prj.getName());
+        }
         for (Element e: set) {
             if (ProjectUtilities.isElementInAttachedProject(e)) {
                 IProject module = ProjectUtilities.getAttachedProject(e);
@@ -657,13 +621,16 @@ public class ExportUtility {
                     ProjectVersion pv = new ProjectVersion(vd);
                     Integer teamwork = pv.getNumber();
                     mountedVersions.put(module.getProjectID(), teamwork);
+                    projectNames.put(module.getProjectID(), module.getName());
                 }
             }
         }
         for (String prjId: mountedVersions.keySet()) {
             Integer serverVersion = getAlfrescoProjectVersion(prjId);
             if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) {
-                Boolean con = Utils.getUserYesNoAnswer("Some elements being exported come from an older project version than what's on the server, do you want to continue?");
+                Boolean con = Utils.getUserYesNoAnswer("Your project " + projectNames.get(prjId) + 
+                        " is an older project version (" + mountedVersions.get(prjId) + 
+                        ") than what's on the server (" + serverVersion + ") , do you want to continue?");
                 if (con == null || !con)
                     return false;
             }
@@ -769,6 +736,13 @@ public class ExportUtility {
             }
         }
         return result;
+    }
+    public static final Pattern HTML_WHITESPACE_END = Pattern.compile("\\s*</p>", Pattern.DOTALL);
+    public static final Pattern HTML_WHITESPACE_START = Pattern.compile("<p>\\s*", Pattern.DOTALL);
+    public static String cleanHtml(String s) {
+        String inter = Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "").replace("<br>", "").replace("</br>", "").replace("\n", "");
+        inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
+        return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
     }
     
 }

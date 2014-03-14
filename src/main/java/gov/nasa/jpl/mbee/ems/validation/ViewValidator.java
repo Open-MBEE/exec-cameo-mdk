@@ -80,6 +80,8 @@ public class ViewValidator {
     private ValidationRule match = new ValidationRule("View content", "view contents have changed", ViolationSeverity.ERROR);
     private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.WARNING);
     private ValidationRule comments = new ValidationRule("View Comments", "view comments", ViolationSeverity.WARNING);
+    private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
+    
     private ValidationSuite modelSuite;
     private ValidationSuite imageSuite;
     private DocumentValidator dv;
@@ -94,10 +96,13 @@ public class ViewValidator {
         suite.addValidationRule(hierarchy);
         suite.addValidationRule(comments);
         suite.addValidationRule(projectExist);
+        suite.addValidationRule(baselineTag);
         this.recurse = recursive;
     }
     
     public boolean checkProject() {
+        if (ExportUtility.baselineNotSet)
+            baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(view).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
         String projectUrl = ExportUtility.getUrlWithSiteAndProject();
         if (projectUrl == null)
             return false;

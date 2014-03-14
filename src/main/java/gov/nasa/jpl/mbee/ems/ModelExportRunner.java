@@ -47,21 +47,20 @@ public class ModelExportRunner implements RunnableWithProgress {
     private Element start;
     private int depth;
     private boolean packageOnly;
+    private String url;
     
-    public ModelExportRunner(Element start, int depth, boolean packageOnly) {
+    public ModelExportRunner(Element start, int depth, boolean packageOnly, String url) {
         this.start = start;
         this.depth = depth;
         this.packageOnly = packageOnly;
+        this.url = url;
     }
     
     @Override
     public void run(ProgressStatus arg0) {
         ModelExporter me;
         GUILog gl = Application.getInstance().getGUILog();
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
+        
         if (start == Application.getInstance().getProject().getModel()) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
         } else {
@@ -74,9 +73,6 @@ public class ModelExportRunner implements RunnableWithProgress {
 
         //gl.log(json);
         gl.log("Number of Elements: " + me.getNumberOfElements());
-        boolean background = Utils.getUserYesNoAnswer("Use background export on server? You'll get an email when done.");
-        if (background)
-            url = url + "?background=true";
        // gl.log("*** Starting export view comments ***");
         ExportUtility.send(url, json);
         
