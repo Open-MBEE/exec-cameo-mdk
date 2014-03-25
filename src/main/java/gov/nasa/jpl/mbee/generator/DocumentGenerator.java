@@ -267,6 +267,14 @@ public class DocumentGenerator {
         } else { // view does not conform to a viewpoint, apply default behavior
             List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
                     DocGen3Profile.queriesStereotype, 1, false, 1);
+            if (view instanceof Class) {
+                for (TypedElement te: ((Class)view).get_typedElementOfType()) {
+                    if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
+                        expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(te, 
+                                DocGen3Profile.queriesStereotype, 1, false, 1));
+                    }
+                }
+            }
             if (expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
                 return parseView(expose.get(0)); // substitute another view
             }
