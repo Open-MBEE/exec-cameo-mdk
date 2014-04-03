@@ -327,6 +327,8 @@ public class DocumentGenerator {
      */
     @SuppressWarnings("unchecked")
     public Object parseActivityOrStructuredNode(Element a, Container parent) {
+        if (a == null || parent == null)
+            return null;
         Debug.outln("parseActivityOrStructuredNode( " + a.getHumanName() + ", " + a.getID() + ", "
                 + parent.getStringIfEmpty() + ")");
         InitialNode in = GeneratorUtils.findInitialNode(a);
