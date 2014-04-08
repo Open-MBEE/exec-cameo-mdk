@@ -279,7 +279,8 @@ public class MdDebug extends Debug {
     public static void logWithColor(String msg, Color color) {
         if ( color == null ) color = Color.black;
         if ( gl == null ) gl = getGuiLog();
-        JDialog log = gl.getLog();
+        gl.log(msg);
+        /*JDialog log = gl.getLog();
         // JPanel jp = getComponentOfType( log, JPanel.class
         // );//(JPanel)((java.awt.Container)log).getComponent( 0 );
         // //.getComponents();
@@ -304,7 +305,7 @@ public class MdDebug extends Debug {
             doc.insertString(i, msg, set);
         } catch (BadLocationException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }
