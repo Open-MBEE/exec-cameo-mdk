@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportElementComments;
+import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
@@ -63,6 +64,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
@@ -71,11 +74,14 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ViewValidator {
 
+    private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
     private ValidationSuite suite = new ValidationSuite("View Sync");
     private ValidationRule exists = new ValidationRule("Does Not Exist", "view doesn't exist yet", ViolationSeverity.ERROR);
     private ValidationRule match = new ValidationRule("View content", "view contents have changed", ViolationSeverity.ERROR);
     private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.WARNING);
     private ValidationRule comments = new ValidationRule("View Comments", "view comments", ViolationSeverity.WARNING);
+    private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
+    
     private ValidationSuite modelSuite;
     private ValidationSuite imageSuite;
     private DocumentValidator dv;
@@ -89,7 +95,30 @@ public class ViewValidator {
         suite.addValidationRule(match);
         suite.addValidationRule(hierarchy);
         suite.addValidationRule(comments);
+        suite.addValidationRule(projectExist);
+        suite.addValidationRule(baselineTag);
         this.recurse = recursive;
+    }
+    
+    public boolean checkProject() {
+        if (ExportUtility.baselineNotSet)
+            baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(view).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
+        String projectUrl = ExportUtility.getUrlWithSiteAndProject();
+        if (projectUrl == null)
+            return false;
+        String response = ExportUtility.get(projectUrl);
+        if (response == null) {
+            ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "This project doesn't exist on the web yet, or the site has been moved");
+            v.addAction(new InitializeProjectModel(true));
+            v.addAction(new InitializeProjectModel(false));
+            projectExist.addViolation(v);
+            return false;
+        }
+        if (ProjectUtilities.isElementInAttachedProject(view)){
+            Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
+            return false;
+        }
+        return true;
     }
     
     @SuppressWarnings("unchecked")
@@ -123,7 +152,7 @@ public class ViewValidator {
             
             //check to see if view exists on alfresco, if not, export view?
             String existurl = url + "/javawebscripts/views/" + viewid;
-            String response = ExportUtility.get(existurl);
+            String response = ExportUtility.get(existurl, false);
             if (!ViewEditUtils.isPasswordSet())
                 return false;
             if (response == null || !response.contains("contains")) {
@@ -137,7 +166,7 @@ public class ViewValidator {
                 JSONArray localContains = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("contains");
                 JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
                 JSONArray webContains = (JSONArray)webView.get("contains");
-                String viewelements = ExportUtility.get(viewElementsUrl);
+                String viewelements = ExportUtility.get(viewElementsUrl, false);
                 if (viewelements == null)
                     continue;
                 JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
@@ -165,7 +194,7 @@ public class ViewValidator {
                 //resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
                 
                 String viewCommentsUrl = url + "/javawebscripts/elements/" + viewid + "/comments";
-                String viewcomments = ExportUtility.get(viewCommentsUrl);
+                String viewcomments = ExportUtility.get(viewCommentsUrl, false);
                 if (viewcomments == null)
                     continue;
                 JSONObject commentresults = (JSONObject)JSONValue.parse(viewcomments);
@@ -187,6 +216,9 @@ public class ViewValidator {
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         iv.validate();
         imageSuite = iv.getSuite();
+        if (!exists.getViolations().isEmpty()) {
+            Utils.showPopupMessage("There's view(s) that are missing on the server, see validation window.");
+        }
         return true;
     }
     

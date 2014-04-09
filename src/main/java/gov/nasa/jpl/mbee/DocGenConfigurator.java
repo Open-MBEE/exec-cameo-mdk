@@ -56,7 +56,9 @@ import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewRecursiveAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MDUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
@@ -112,12 +114,33 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
     @Override
     public void configure(ActionsManager manager, DiagramPresentationElement diagram,
             PresentationElement[] selected, PresentationElement requestor) {
+        if ( repainting() ) return;
         if (requestor != null) {
             Element e = requestor.getElement();
             addElementActions(manager, e);
         } else {
             addDiagramActions(manager, diagram);
         }
+    }
+
+    public static boolean repainting() {
+        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+        String lastMethod = "";
+        for ( StackTraceElement traceElem : trace ) {
+            if ( traceElem.getClassName().contains( "MainFrame") && ( traceElem.getMethodName().equals( "paint" ) || lastMethod.equals( "paintImmediately" ) ) ) {
+                //Debug.outln( "@@@ repainting() = true" );
+                return true;
+            }
+            if ( traceElem.getClassName().endsWith( "RepaintManager") && traceElem.getMethodName().equals( "paint" ) ) {
+                //Debug.outln( "@@@ repainting() = true" );
+                return true;
+            }
+            //Debug.outln( "class name = " + traceElem.getClassName() + ", method name = " + traceElem.getMethodName() + ", last method name = " + lastMethod );
+            lastMethod = traceElem.getMethodName();
+        }
+        Debug.outln( "@@@ repainting() = false:" );
+        Debug.outln( MoreToString.Helper.toString( trace ) );
+        return false;
     }
 
     private void addElementActions(ActionsManager manager, Element e) {

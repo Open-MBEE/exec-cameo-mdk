@@ -183,7 +183,7 @@ public class CompareUtils {
             char c2 = s2.charAt(pos);
             if (gotAmp) {
                 if (Character.isDigit(c1) || Character.isDigit(c2)) {
-                    System.err.println("Warning! Assumed comparing hash codes!");
+                    System.err.println("Warning! Assumed comparing hash codes!: o1=" + o1 + ", o2=" + o2 + "\n" + MoreToString.Helper.toString( Thread.currentThread().getStackTrace()).replaceAll( ", ", "\n  " )+"\n");
                     return 0;
                 } else {
                     gotAmp = false;

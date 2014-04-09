@@ -97,6 +97,7 @@ public class ModelValidator {
     private ValidationRule relDiff = new ValidationRule("Relationship", "Relationship source or target", ViolationSeverity.ERROR);
     private ValidationRule commentDiff = new ValidationRule("Comment", "Comment different", ViolationSeverity.ERROR);
     private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
+    private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
     private Project prj;
     private Element start;
     private JSONObject result;
@@ -113,6 +114,7 @@ public class ModelValidator {
         suite.addValidationRule(relDiff);
         suite.addValidationRule(commentDiff);
         suite.addValidationRule(projectExist);
+        suite.addValidationRule(baselineTag);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -120,13 +122,15 @@ public class ModelValidator {
     }
     
     public boolean checkProject() {
+        if (ExportUtility.baselineNotSet)
+            baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(start).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
         String projectUrl = ExportUtility.getUrlWithSiteAndProject();
         if (projectUrl == null)
             return false;
         String response = ExportUtility.get(projectUrl);
         if (response == null) {
             ValidationRuleViolation v = new ValidationRuleViolation(Project.getProject(start).getModel(), "This project doesn't exist on the web yet, or the site has been moved");
-            v.addAction(new InitializeProjectModel());
+            v.addAction(new InitializeProjectModel(false));
             projectExist.addViolation(v);
             return false;
         }
@@ -248,11 +252,11 @@ public class ModelValidator {
     
     private void checkElement(Element e, JSONObject elementInfo) {
         String elementDoc = ModelHelper.getComment(e);
-        String elementDocClean = Utils.stripHtmlWrapper(elementDoc).replace(" class=\"pwrapper\"", "");
+        String elementDocClean = ExportUtility.cleanHtml(elementDoc);
         String elementName = null;
         String webDoc = (String)elementInfo.get("documentation");
         if (webDoc != null) {
-            webDoc = webDoc.replace(" class=\"pwrapper\"", "");
+            webDoc = ExportUtility.cleanHtml(webDoc);
             elementInfo.put("documentation", webDoc);
         }
         if (e instanceof NamedElement) {
@@ -327,17 +331,20 @@ public class ModelValidator {
         ValueSpecification vs = e.getDefaultValue();
         String valueTypes = (String)info.get("valueType");
         JSONArray value = (JSONArray)info.get("value");
-        if ((vs == null || vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) 
+        if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
+                (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null))
                 && (valueTypes == null || value == null || value.isEmpty()))
             return null;
-        if ((vs != null || vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) 
+        if ((vs != null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) || 
+                (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() != null))
                 && (valueTypes == null || value == null || value.isEmpty())) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
             v.addAction(new ImportValue(e, null, null, result));
             v.addAction(new ExportValue(e));
             return v;
         }
-        if ((vs == null || vs instanceof ElementValue && ((ElementValue)vs).getElement() == null)  
+        if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
+                (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null)) 
                 && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
             v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
@@ -349,8 +356,8 @@ public class ModelValidator {
         String typeMismatchMessage = "[VALUE] value spec types don't match";
         if (valueType == PropertyValueType.LiteralString) {
             if (vs instanceof LiteralString) {
-                String modelString = Utils.stripHtmlWrapper(((LiteralString)vs).getValue()).replace(" class=\"pwrapper\"", "");
-                String webString = ((String)value.get(0)).replace(" class=\"pwrapper\"", "");
+                String modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
+                String webString = ExportUtility.cleanHtml((String)value.get(0));
                 value.set(0, webString);
                 if (!modelString.equals(webString)) {
                     message = "[VALUE] model: " + truncate(modelString) + ", web: " + truncate(webString);
@@ -460,8 +467,8 @@ public class ModelValidator {
         if (valueType == PropertyValueType.LiteralString) {
             if (vs.get(0) instanceof LiteralString) {
                 for (int i = 0; i < vs.size(); i++) {
-                    String modelString = Utils.stripHtmlWrapper(((LiteralString)vs.get(i)).getValue()).replace(" class=\"pwrapper\"", "");
-                    String webString = ((String)value.get(i)).replace(" class=\"pwrapper\"", "");
+                    String modelString = ExportUtility.cleanHtml(((LiteralString)vs.get(i)).getValue());
+                    String webString = ExportUtility.cleanHtml((String)value.get(i));
                     value.set(i, webString);
                     if (!modelString.equals(webString)) {
                         message = badMessage;
@@ -553,10 +560,12 @@ public class ModelValidator {
     
     @SuppressWarnings("unchecked")
     private ValidationRuleViolation commentDiff(Comment e, JSONObject elementInfo) {
-        String modelBodyClean = Utils.stripHtmlWrapper(((Comment)e).getBody());
+        String modelBodyClean = ExportUtility.cleanHtml(((Comment)e).getBody());
         String webBody = (String)elementInfo.get("body");
         if (webBody == null)
             webBody = "";
+        else
+            webBody = ExportUtility.cleanHtml(webBody);
         ValidationRuleViolation v = null;
         if (!modelBodyClean.equals(webBody)) {
             v = new ValidationRuleViolation(e, "[Comment] model: " + truncate(modelBodyClean) + ", web: " + truncate(webBody));
@@ -592,7 +601,9 @@ public class ModelValidator {
     
     private boolean areNullElementValues(List<ValueSpecification> vs) {
         for (ValueSpecification v: vs) {
-            if (!(v instanceof ElementValue) || v instanceof ElementValue && ((ElementValue)v).getElement() != null)
+            if (!(v instanceof ElementValue || v instanceof InstanceValue) || 
+                    (v instanceof ElementValue && ((ElementValue)v).getElement() != null) || 
+                    (v instanceof InstanceValue && ((InstanceValue)v).getInstance() != null))
                 return false;
         }
         return true;

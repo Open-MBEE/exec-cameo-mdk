@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ModelExportRunner;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -46,9 +47,11 @@ import com.nomagic.ui.ProgressStatusRunner;
 public class InitializeProjectModel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
-   
-    public InitializeProjectModel() {
-        super("InitializeProjectModel", "Initialize Project and Model", null, null);
+    private boolean initOnly;
+    
+    public InitializeProjectModel(boolean initOnly) {
+        super("InitializeProjectModel", initOnly ? "Initialize Project" : "Initialize Project and Model", null, null);
+        this.initOnly = initOnly;
     }
     
     @Override
@@ -78,7 +81,17 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
         if (!ExportUtility.send(url, json))
             return;
         ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
-        ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false), "Exporting Model", true, 0);
+        if (!initOnly) {
+            url = ExportUtility.getPostElementsUrl();
+            if (url == null) {
+                return;
+            }
+            boolean background = Utils.getUserYesNoAnswer("Use background export on server? You'll get an email when done.");
+            if (background)
+                url = url + "?background=true";
+            ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false, url), "Exporting Model", true, 0);
+   
+        }
     }
 }
 

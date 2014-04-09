@@ -162,11 +162,11 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         switch ( valueType ) {
         case LiteralString:
             if (newval instanceof LiteralString) {
-                ((LiteralString)newval).setValue((String)o);
+                ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o));
                 return;
             } 
             newval = ef.createLiteralStringInstance();
-            ((LiteralString)newval).setValue((String)o);
+            ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o));
             break;
         case LiteralInteger:
             if (newval instanceof LiteralInteger) {
@@ -255,11 +255,11 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         switch ( valueType ) {
         case LiteralString:
             if (newval instanceof LiteralString) {
-                ((LiteralString)newval).setValue((String)o);
+                ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o));
                 return;
             } 
             newval = ef.createLiteralStringInstance();
-            ((LiteralString)newval).setValue((String)o);
+            ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o));
             break;
         case LiteralInteger:
             if (newval instanceof LiteralInteger) {

@@ -29,6 +29,8 @@
 package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.CompareUtils;
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,6 +100,14 @@ public class DgOperationInstance implements DgOperation {
     public static DgOperationInstance addOperation(String name, String annotationName,
             DgEnvironmentFactory envFactory, EClassifier callerType, EClassifier returnType,
             CallOperation operation, EParameter... parameters) {
+        Debug.outln( "addOperation(name=" + name
+                     + ", annotationName"
+                     // + annotationName
+                     + ", envFactory, callerType=" + callerType.getName()
+                     + ", returnType=" + returnType.getName()
+                     + ", operation"// + operation
+                     + ", parameters="
+                     + MoreToString.Helper.toString( parameters ) + ")" );
         return new DgOperationInstance(name, annotationName, envFactory, callerType, returnType, operation,
                 parameters);
     }

@@ -75,6 +75,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     private Element view;
     private boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
+    private String url;
+    private String sendElementsUrl;
     
     public ExportView(Element e, boolean recursive) {
         super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Export views hierarchically" : "Export view", null, null);
@@ -89,22 +91,41 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
     @Override
     public void execute(Collection<Annotation> annos) {
+        if (!ExportUtility.okToExport())
+            return;
+        url = ExportUtility.getUrl();
+        if (url == null)
+            return;
+        sendElementsUrl = ExportUtility.getPostElementsUrl();
+        if (sendElementsUrl == null)
+            return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, annos), "Exporting Views", true, 0);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!ExportUtility.okToExport())
+            return;
+        url = ExportUtility.getUrl();
+        if (url == null)
+            return;
+        sendElementsUrl = ExportUtility.getPostElementsUrl();
+        if (sendElementsUrl == null)
+            return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, null), "Exporting View", true, 0);
     }
     
     public void performAction() {
+        
         if (exportView(view)) {
             this.removeViolationAndUpdateWindow();
+            ExportUtility.sendProjectVersions();
         }
     }
     
     public void performActions(Collection<Annotation> annos) {
         Collection<Annotation> toremove = new ArrayList<Annotation>();
+        
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             if (exportView(e)) {
@@ -112,6 +133,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             } else
                 break;
         }
+        ExportUtility.sendProjectVersions();
         if (!toremove.isEmpty()) {
             this.removeViolationsAndUpdateWindow(toremove);
         }
@@ -147,20 +169,17 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             }
         }*/
         //Set<Element> set = visitor2.getElementSet();
-        if (!ExportUtility.okToExport())
-            return false;
+        
         JSONObject elementsjson = visitor2.getElements();
         JSONArray elementsArray = new JSONArray();
         elementsArray.addAll(elementsjson.values());
         JSONObject send = new JSONObject();
         send.put("elements", elementsArray);
-        String url = ExportUtility.getUrl();
         if (url == null)
             return false;
-        String sendElementsUrl = ExportUtility.getPostElementsUrl();
-        if (!ExportUtility.send(sendElementsUrl, send.toJSONString()))
+        if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
             return false;
-        ExportUtility.sendProjectVersions();
+        
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
         JSONArray viewsArray = new JSONArray();
@@ -169,7 +188,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         send.put("views", viewsArray);
         //gl.log(send.toJSONString());
         String sendViewsUrl = url +  "/javawebscripts/views";
-        if (!ExportUtility.send(sendViewsUrl, send.toJSONString()))
+        if (!ExportUtility.send(sendViewsUrl, send.toJSONString(), null, false))
             return false;
         
         // Upload images to view editor (JSON keys are specified in
@@ -233,7 +252,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
         // clean up the local images
         visitor2.removeImages();
-        
+        gl.log("[INFO] Done");
         if (document && recurse) {
             String docurl = url + "/javawebscripts/products";
             send = new JSONObject();
@@ -244,7 +263,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             doc.put("id", view.getID());
             documents.add(doc);
             send.put("products", documents);
-            if (!ExportUtility.send(docurl, send.toJSONString()))
+            if (!ExportUtility.send(docurl, send.toJSONString(), null, false))
                 return false;
         } /*else if (recurse) {
             JSONArray views = new JSONArray();
