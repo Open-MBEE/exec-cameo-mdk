@@ -199,7 +199,7 @@ public class ScriptRunner {
                 count++;
             }
             urls[count] = (new File(ApplicationEnvironment.getInstallRoot() + File.separator + "plugins"
-                    + File.separator + "com.nomagic.magicdraw.jpython" + File.separator + "jython2.5.1"
+                    + File.separator + "com.nomagic.magicdraw.jpython" + File.separator + "jython"
                     + File.separator + "Lib")).toURI().toURL();
 
             URLClassLoader automatonClassLoaderWithBinDir = new URLClassLoader(urls,
