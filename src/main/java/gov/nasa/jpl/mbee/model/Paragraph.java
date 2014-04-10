@@ -60,7 +60,6 @@ public class Paragraph extends Query {
     private boolean        tryOcl = false;
     private DocumentValidator validator = null;
     private boolean        iterate = true;
-    private Object         oclResult = null;
 
     public InitialNode       bnode;
     public ActivityNode      activityNode;
