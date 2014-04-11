@@ -180,11 +180,11 @@ public class ViewValidator {
                     match.addViolation(v);
                 } 
                 if (!hierarchyMatches) {
-                    if (!viewHierarchyMatch(currentView, dge, vhv, response)) {
+                    //if (!viewHierarchyMatch(currentView, dge, vhv, response)) {
                         ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy] The hierarchy from this view/doc is outdated");
                         v.addAction(new ExportHierarchy(currentView));
                         hierarchy.addViolation(v);
-                    }
+                    //}
                 }
                 for (Object reselement: (JSONArray)viewresults.get("elements")) {
                     if (cachedResultElements.containsKey(((JSONObject)reselement).get("id")))
