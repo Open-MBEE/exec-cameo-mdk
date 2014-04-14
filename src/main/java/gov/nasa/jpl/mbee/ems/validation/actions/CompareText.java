@@ -10,6 +10,7 @@ import java.util.Collection;
 import javax.swing.JDialog;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 
 
@@ -49,6 +50,8 @@ public class CompareText extends RuleViolationAction implements AnnotationAction
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        JTabbedPane webpane = new JTabbedPane();
+        JTabbedPane modelpane = new JTabbedPane();
         JTextArea web = new JTextArea(webDoc);
         web.setEditable(false);
         web.setLineWrap(true);
@@ -57,8 +60,10 @@ public class CompareText extends RuleViolationAction implements AnnotationAction
         model.setLineWrap(true);
         JScrollPane webp = new JScrollPane(web);
         webp.setName("Web");
+        webpane.addTab("Web", webp);
         JScrollPane modelp = new JScrollPane(model);
         modelp.setName("Model");
+        modelpane.addTab("Model", modelp);
         JSplitPane top = new JSplitPane();
         
         JDialog show = new JDialog(MDDialogParentProvider.getProvider().getDialogParent());
@@ -66,8 +71,8 @@ public class CompareText extends RuleViolationAction implements AnnotationAction
         show.setSize(600, 600);
         show.getContentPane().add(top);
         top.setDividerLocation(.5);
-        top.setLeftComponent(modelp);
-        top.setRightComponent(webp);
+        top.setLeftComponent(modelpane);
+        top.setRightComponent(webpane);
         show.setVisible(true);
     }
 
