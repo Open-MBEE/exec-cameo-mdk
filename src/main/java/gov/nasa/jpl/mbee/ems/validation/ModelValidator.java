@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
@@ -271,6 +272,7 @@ public class ModelValidator {
         }
         if (elementDoc != null && !(webDoc == null && elementDoc.equals("")) && !elementDocClean.equals(webDoc)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
+            v.addAction(new CompareText(e, webDoc, elementDocClean, result));
             v.addAction(new ImportDoc(e, webDoc, result));
             v.addAction(new ExportDoc(e));
             docDiff.addViolation(v);
@@ -354,12 +356,16 @@ public class ModelValidator {
         PropertyValueType valueType = PropertyValueType.valueOf(valueTypes);
         String message = "";
         String typeMismatchMessage = "[VALUE] value spec types don't match";
+        String modelString = null;
+        String webString = null;
+        boolean stringMatch = false;
         if (valueType == PropertyValueType.LiteralString) {
             if (vs instanceof LiteralString) {
-                String modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
-                String webString = ExportUtility.cleanHtml((String)value.get(0));
+                modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
+                webString = ExportUtility.cleanHtml((String)value.get(0));
                 value.set(0, webString);
                 if (!modelString.equals(webString)) {
+                    stringMatch = true;
                     message = "[VALUE] model: " + truncate(modelString) + ", web: " + truncate(webString);
                 }
             } else {
@@ -419,6 +425,8 @@ public class ModelValidator {
         }   
         if (!message.equals("")) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, message);
+            if (stringMatch)
+                v.addAction(new CompareText(e, webString, modelString, result));
             v.addAction(new ImportValue(e, value, valueType, result));
             v.addAction(new ExportValue(e));
             return v;
@@ -464,13 +472,17 @@ public class ModelValidator {
         String message = "";
         String typeMismatchMessage = "[VALUE] value spec types don't match";
         String badMessage = "[VALUE] model: " + truncate(RepresentationTextCreator.getRepresentedText(e)) + ", web: " + truncate(value.toString());
+        String modelString = null;
+        String webString = null;
+        boolean stringMatch = false;
         if (valueType == PropertyValueType.LiteralString) {
             if (vs.get(0) instanceof LiteralString) {
                 for (int i = 0; i < vs.size(); i++) {
-                    String modelString = ExportUtility.cleanHtml(((LiteralString)vs.get(i)).getValue());
-                    String webString = ExportUtility.cleanHtml((String)value.get(i));
+                    modelString = ExportUtility.cleanHtml(((LiteralString)vs.get(i)).getValue());
+                    webString = ExportUtility.cleanHtml((String)value.get(i));
                     value.set(i, webString);
                     if (!modelString.equals(webString)) {
+                        stringMatch = true;
                         message = badMessage;
                         break;
                     }
@@ -549,6 +561,8 @@ public class ModelValidator {
         }   
         if (!message.equals("")) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, message);
+            if (stringMatch)
+                v.addAction(new CompareText(e, webString, modelString, result));
             v.addAction(new ImportValue(e, value, valueType, result));
             v.addAction(new ExportValue(e));
             Debug.outln("4) returning ValidationRuleViolation: " + v );
