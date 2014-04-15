@@ -20,7 +20,7 @@
     <property name="plugin.project" value="${ant.project.name}"/>
     <property name="plugin.resource" value="${plugin.resources}/data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
     <property name="plugin.archive" value="gov.nasa.jpl.mbee.docgen"/>
-
+<!--
     <condition property="all.precondition" value="true">
         <and>
             <isset property="md.bundle.prefix"/>
@@ -31,7 +31,7 @@
             <available type="dir" file="${md.install.dir}"/>
         </and>
     </condition>
-
+-->
     <target name="all" depends="all.error,all.ok"/>
     
     <target name="all.error" unless="all.precondition">
@@ -39,12 +39,13 @@
         <fail/>
     </target>
         
-    <target name="all.ok" if="all.precondition" depends="zip,install">
-        <propertyfile file="${plugin.dir}/artifacts/${md.bundle.prefix}.properties">
+    <target name="all.ok" if="all.precondition" depends="zip">
+       <!-- <propertyfile file="${plugin.dir}/artifacts/${md.bundle.prefix}.properties">
             <entry key="${md.bundle.prefix}.bundle.version"     value="${md.bundle.version}"/>
             <entry key="${md.bundle.prefix}.bundle.prefix"      value="${md.bundle.prefix}"/>
             <entry key="${md.bundle.prefix}.bundle.name"        value="${bundle.name}"/>
-        </propertyfile>
+        </propertyfile>-->
+    	<save.job.properties/>
     </target>
 
     <!-- use the build from build-nojenkins, need to keep IMCE's zip target--> 
