@@ -5,7 +5,7 @@
     
     <import file="${md.install.dir}/data/eclipse/zip.xml"/>
 
-    <property name="md.build.tools.dir" location="${md.install.dir}/data/eclipse/resource/gov.nasa.jpl.imce.md.qvt"/>
+    <property name="md.build.tools.dir" location="${md.install.dir}/data/eclipse/resource/SMDP-PackageB"/>
 
     <tstamp>
         <format property="now" pattern="yyyyMMdd"/>
