@@ -2,7 +2,6 @@
 <project xmlns:qvto="http://www.eclipse.org/qvt/1.0.0/Operational" name="gov.nasa.jpl.mbee.docgen" basedir=".">
 
     <property environment="env"/>
-	<loadproperties srcFile="build.properties"/>
     
     <import file="${md.install.dir}/data/eclipse/zip.xml"/>
 
