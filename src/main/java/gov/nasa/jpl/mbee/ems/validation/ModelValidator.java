@@ -190,7 +190,7 @@ public class ModelValidator {
         }
         for (Element e: all) {
             if (!elementsKeyed.containsKey(e.getID())) {
-                if (checkExist) {
+                if (checkExist && ExportUtility.shouldAdd(e)) {
                     JSONObject maybeMissing = getAlfrescoElement(e);
                     if (maybeMissing != null) {
                         elementsKeyed.put(e.getID(), maybeMissing);
@@ -200,7 +200,8 @@ public class ModelValidator {
                         exist.addViolation(v);
                         continue;
                     }
-                }
+                } else
+                    continue;
             }
             JSONObject elementInfo = (JSONObject)elementsKeyed.get(e.getID());
             checkElement(e, elementInfo);
