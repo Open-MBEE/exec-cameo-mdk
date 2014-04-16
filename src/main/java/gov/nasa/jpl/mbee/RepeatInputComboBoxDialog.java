@@ -69,8 +69,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
-import org.apache.ivy.core.event.download.NeedArtifactEvent;
-
 public class RepeatInputComboBoxDialog implements Runnable {
 
     @SuppressWarnings("unused")
