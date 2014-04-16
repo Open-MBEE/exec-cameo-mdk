@@ -211,7 +211,7 @@ public class ViewValidator {
         resultElements.addAll(cachedResultElements.values());
         ResultHolder.lastResults = results;
         ModelValidator mv = new ModelValidator(view, results, false, visitor2.getElementSet());
-        mv.validate();
+        mv.validate(false);
         modelSuite = mv.getSuite();
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         iv.validate();

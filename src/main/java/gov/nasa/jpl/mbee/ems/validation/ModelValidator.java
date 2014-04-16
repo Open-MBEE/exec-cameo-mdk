@@ -154,12 +154,12 @@ public class ModelValidator {
     }
     
     @SuppressWarnings("unchecked")
-    public void validate() {
+    public void validate(boolean fillContainment) {
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
         Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
-        if (checkExist) {
+        if (fillContainment) {
             elementSet = new HashSet<Element>();
             getAllMissing(start, elementSet, elementsKeyed);
             validateModel(elementsKeyed, elementSet);
@@ -191,11 +191,16 @@ public class ModelValidator {
         for (Element e: all) {
             if (!elementsKeyed.containsKey(e.getID())) {
                 if (checkExist) {
-                    ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
-                    v.addAction(new ExportElement(e));
-                    exist.addViolation(v);
+                    JSONObject maybeMissing = getAlfrescoElement(e);
+                    if (maybeMissing != null) {
+                        elementsKeyed.put(e.getID(), maybeMissing);
+                    } else {
+                        ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
+                        v.addAction(new ExportElement(e));
+                        exist.addViolation(v);
+                        continue;
+                    }
                 }
-                continue;
             }
             JSONObject elementInfo = (JSONObject)elementsKeyed.get(e.getID());
             checkElement(e, elementInfo);
@@ -629,5 +634,19 @@ public class ModelValidator {
         if (s.length() > 50)
             return s.substring(0, 49) + "...";
         return s;
+    }
+
+    private JSONObject getAlfrescoElement(Element e) {
+        String url = ExportUtility.getUrl();
+        String id = ExportUtility.getElementID(e);
+        url += "/javawebscripts/elements/" + id;
+        String response = ExportUtility.get(url, false);
+        if (response == null)
+            return null;
+        JSONObject result = (JSONObject)JSONValue.parse(response);
+        JSONArray elements = (JSONArray)result.get("elements");
+        if (elements == null || elements.isEmpty())
+            return null;
+        return (JSONObject)elements.get(0);
     }
 }
