@@ -321,10 +321,21 @@ public class ModelValidator {
         if ( e.getOwner() != null ) {
             String ownerID = e.getOwner().getID();
             String webOwnerID = (String)elementInfo.get("owner");
-            if (webOwnerID == null || webOwnerID.startsWith("PROJECT"))
-                webOwnerID = Application.getInstance().getProject().getModel().getID();
+            if (webOwnerID == null || webOwnerID.startsWith("PROJECT")) {
+                if (webOwnerID == null)
+                    webOwnerID = Application.getInstance().getProject().getModel().getID();
+                else {
+                    if (webOwnerID == Application.getInstance().getProject().getPrimaryProject().getProjectID())
+                        webOwnerID = Application.getInstance().getProject().getModel().getID();
+                    else
+                        webOwnerID = null;
+                }
+                    
+            }
             if (!ownerID.equals(webOwnerID)) {
-                Element owner = (Element)prj.getElementByID(webOwnerID);
+                Element owner = null;
+                if (webOwnerID != null)
+                    owner = (Element)prj.getElementByID(webOwnerID);
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? "null" : owner.getHumanName()));
                 v.addAction(new FixModelOwner(e, owner, result));
                 v.addAction(new ExportOwner(e));
