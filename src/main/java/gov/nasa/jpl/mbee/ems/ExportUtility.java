@@ -370,6 +370,8 @@ public class ExportUtility {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
             Application.getInstance().getGUILog().log("[INFO] Getting...");
+            Application.getInstance().getGUILog().log("url=" + url);
+            
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             
@@ -548,9 +550,9 @@ public class ExportUtility {
             }
             Type type = ((Property)e).getType();
             if (type != null) {
-                elementInfo.put("propertyType", type.getID());
+                elementInfo.put("propertyType", "" + type.getID());
             } else
-                elementInfo.put("propertyType", null);
+                elementInfo.put("propertyType", "null");
         } else if (e instanceof Slot) {
             elementInfo.put("type", "Property");
             elementInfo.put("isDerived", false);
@@ -569,7 +571,7 @@ public class ExportUtility {
             }
             Element type = ((Slot)e).getDefiningFeature();
             if (type != null) {
-                elementInfo.put("propertyType", type.getID());
+                elementInfo.put("propertyType", "" + type.getID());
             }
         } else if (e instanceof Dependency) {
             if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getConformsStereotype()))
@@ -579,7 +581,12 @@ public class ExportUtility {
             else
                 elementInfo.put("type", "Dependency");
         } else if (e instanceof Generalization) {
-            elementInfo.put("type", "Generalization");
+            if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getConformsStereotype()))
+                elementInfo.put("type", "Conform");
+            else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.queriesStereotype))
+                elementInfo.put("type", "Expose");
+            else
+                elementInfo.put("type", "Generalization");
         } else if (e instanceof DirectedRelationship) {   
             elementInfo.put("type", "DirectedRelationship");
         } else if (e instanceof Comment) {
@@ -665,9 +672,9 @@ public class ExportUtility {
             elementInfo.put("name", "");
         elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
         if (e.getOwner() == null || e.getOwner() == Application.getInstance().getProject().getModel())
-            elementInfo.put("owner", null);
+            elementInfo.put("owner", "null");
         else
-            elementInfo.put("owner", e.getOwner().getID());
+            elementInfo.put("owner", "" + e.getOwner().getID());
         elementInfo.put("id", getElementID(e));
 
         /*JSONArray comments = new JSONArray();
