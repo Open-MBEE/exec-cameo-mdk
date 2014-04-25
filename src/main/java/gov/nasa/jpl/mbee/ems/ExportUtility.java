@@ -740,9 +740,9 @@ public class ExportUtility {
     public static final Pattern HTML_WHITESPACE_END = Pattern.compile("\\s*</p>", Pattern.DOTALL);
     public static final Pattern HTML_WHITESPACE_START = Pattern.compile("<p>\\s*", Pattern.DOTALL);
     public static String cleanHtml(String s) {
-        String inter = Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "").replace("<br>", "").replace("</br>", "");//.replace("\n", "");
-        inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
-        return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
+        return Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "").replace("<br>", "").replace("</br>", "");//.replace("\n", "");
+        //inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
+        //return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
     }
     
 }
