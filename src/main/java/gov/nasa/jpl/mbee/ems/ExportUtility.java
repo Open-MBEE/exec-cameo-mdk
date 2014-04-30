@@ -582,7 +582,7 @@ public class ExportUtility {
                 Integer teamwork = pv.getNumber();
                 //Integer teamwork = TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
                 Integer mms = getAlfrescoProjectVersion(module.getProjectID());
-                if (teamwork == mms || mms == null || teamwork > mms)
+                if (teamwork == mms || mms == null || teamwork >= mms)
                     return true;
                 Boolean con = Utils.getUserYesNoAnswer("The element is in project " + module.getName() + " (" + teamwork + 
                         ") that is an older version of what's on the server (" + mms + "), do you want to continue export?");
@@ -594,7 +594,7 @@ public class ExportUtility {
             if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
                 Integer teamwork = TeamworkService.getInstance(prj).getVersion(prj).getNumber();
                 Integer mms = getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
-                if (teamwork == mms || mms == null || teamwork > mms)
+                if (teamwork == mms || mms == null || teamwork >= mms)
                     return true;
                 Boolean con = Utils.getUserYesNoAnswer("The element is in project " + prj.getName() + " (" + teamwork + 
                         ") that is an older version of what's on the server (" + mms + "), do you want to continue export?");
