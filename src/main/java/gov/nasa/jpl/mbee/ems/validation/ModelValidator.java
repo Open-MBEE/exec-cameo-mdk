@@ -325,7 +325,7 @@ public class ModelValidator {
                 if (webOwnerID == null)
                     webOwnerID = Application.getInstance().getProject().getModel().getID();
                 else {
-                    if (webOwnerID == Application.getInstance().getProject().getPrimaryProject().getProjectID())
+                    if (webOwnerID.equals(Application.getInstance().getProject().getPrimaryProject().getProjectID()))
                         webOwnerID = Application.getInstance().getProject().getModel().getID();
                     else
                         webOwnerID = null;
