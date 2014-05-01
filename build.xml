@@ -13,33 +13,22 @@
     </tstamp>
 
     <import file="${md.build.tools.dir}/build.md.plugin.xml"/>
-
+	<echoproperties prefix="md"/>
     <property name="bundle.name"            value="${md.bundle.prefix}-build${env.BUILD_NUMBER}-${now}"/>
         
     <property name="plugin.dir" location="${basedir}"/>
     <property name="plugin.project" value="${ant.project.name}"/>
     <property name="plugin.resource" value="${plugin.resources}/data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
     <property name="plugin.archive" value="gov.nasa.jpl.mbee.docgen"/>
-<!--
-    <condition property="all.precondition" value="true">
-        <and>
-            <isset property="md.bundle.prefix"/>
-            <isset property="md.bundle.version"/>
-            <isset property="md.build.tools.dir"/>
-            <available type="dir" file="${md.build.tools.dir}"/>
-            <isset property="md.install.dir"/>
-            <available type="dir" file="${md.install.dir}"/>
-        </and>
-    </condition>
--->
+
     <target name="all" depends="all.error,all.ok"/>
     
-    <target name="all.error" unless="all.precondition">
-        <echo message="Check the environment variables tested in the target 'all.precondition'"/>
+    <target name="all.error" unless="all.precondition.md">
+        <echo message="Check the environment variables tested in the target 'all.precondition.md'"/>
         <fail/>
     </target>
         
-    <target name="all.ok" if="all.precondition" depends="zip">
+    <target name="all.ok" if="all.precondition.md" depends="zip">
        <!-- <propertyfile file="${plugin.dir}/artifacts/${md.bundle.prefix}.properties">
             <entry key="${md.bundle.prefix}.bundle.version"     value="${md.bundle.version}"/>
             <entry key="${md.bundle.prefix}.bundle.prefix"      value="${md.bundle.prefix}"/>
