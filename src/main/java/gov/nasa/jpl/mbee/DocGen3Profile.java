@@ -133,7 +133,7 @@ public class DocGen3Profile {
     public static final String sortByProperty                        = "SortByProperty";
     public static final String sortByExpression                      = "SortByExpression";
 
-    public static final String conformStereotype                     = "Conform";
+    public static final String conformStereotype                     = "Conforms";
 
     public static final String templateStereotype                    = "FormattingAndDisplayTemplate";
 

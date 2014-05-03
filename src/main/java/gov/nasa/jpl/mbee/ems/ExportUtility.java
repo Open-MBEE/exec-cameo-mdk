@@ -39,9 +39,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -574,14 +575,27 @@ public class ExportUtility {
                 elementInfo.put("propertyType", "" + type.getID());
             }
         } else if (e instanceof Dependency) {
-            if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getConformsStereotype()))
+            if (StereotypesHelper.hasStereotypeOrDerived( e, DocGen3Profile.conformStereotype))//(e, Utils.getConformsStereotype()))
                 elementInfo.put("type", "Conform");
             else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.queriesStereotype))
                 elementInfo.put("type", "Expose");
             else
                 elementInfo.put("type", "Dependency");
         } else if (e instanceof Generalization) {
-            if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getConformsStereotype()))
+            boolean isConform = StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.conformStereotype);//(e, Utils.getConformsStereotype()))
+//            if (!isConform ) { 
+//                List< Stereotype > s = StereotypesHelper.getStereotypes(e);
+//                System.out.println("Stereotypes for " + e.getHumanName() );
+//                for ( Stereotype st : s ) {
+//                    String n = st.getName();
+//                    System.out.println("    " + n);
+//                    if ( n.toLowerCase().contains("conform")) {
+//                        isConform = true;
+//                        break;
+//                    }
+//                }
+//            }
+            if (isConform)
                 elementInfo.put("type", "Conform");
             else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.queriesStereotype))
                 elementInfo.put("type", "Expose");
@@ -599,6 +613,12 @@ public class ExportUtility {
 //            elementInfo.put("annotatedElements", elements);
             elementInfo.put("annotatedElements",
                             makeJsonArrayOfIDs( ((Comment)e).getAnnotatedElement() ));
+//        } else if (e instanceof Connector) {
+//            Connector c = (Connector)e;
+//            List< ConnectorEnd > ends = c.getEnd();
+//            for ( ConnectorEnd end : ends ) {
+//                if ( end.get == end.getDefiningEnd() )
+//            }
         } else if (e instanceof Operation) {
             elementInfo.put("type", "Operation");
             List<Parameter> vsl = ((Operation)e).getOwnedParameter();
@@ -930,39 +950,62 @@ public class ExportUtility {
         return true;
     }
     
-    public static Map<String, JSONObject> getReferencedElements(Element e) {
+    /**
+     * Add nested Expression elements to the set recursively.
+     * @param set
+     */
+    protected static void getNestedValueElements( Set< Element > set ) {
+        LinkedList<Element> queue = new LinkedList< Element >( set );
+        while ( !queue.isEmpty() ) {
+            Element e = queue.pollFirst();
+            Element value = null;
+            HashSet<Element> moreElements = new HashSet< Element >();
+            if ( e instanceof Expression ) {
+                moreElements.addAll( ((Expression)e).getOperand() );
+            } else if ( e instanceof Slot ) {
+                moreElements.addAll( ((Slot)e).getValue() );
+            } else {
+                if (e instanceof Property) {
+                    ValueSpecification propVal = ((Property)e).getDefaultValue();
+                    value = propVal;
+                } else if (e instanceof ElementValue) {
+                    value = ((ElementValue)e).getElement();
+                } else if (e instanceof InstanceValue) {
+                    value = ((InstanceValue)e).getInstance();
+                }
+                if ( value != null ) {
+                    moreElements.add( value );
+                }
+            }
+            for ( Element ee : moreElements ) {
+                if ( !set.contains( ee ) ) {
+                    set.add( ee );
+                    queue.add( ee );
+                }
+            }
+        }
+    }
+    
+//    public static Map<String, JSONObject> getReferencedElements(Element e) {
+//        return getReferencedElements( e, true );
+//    }
+    public static Map<String, JSONObject> getReferencedElements(Element e ) {
+//                                                                boolean justValues) {
         Stereotype view = Utils.getViewStereotype();
         Stereotype viewpoint = Utils.getViewpointStereotype();
         Map<String, JSONObject> result = new HashMap<String, JSONObject>();
-        if (e instanceof Property) {
-            Element value = null;
-            if (((Property)e).getDefaultValue() instanceof ElementValue) {
-                value = ((ElementValue)((Property)e).getDefaultValue()).getElement();
-            } else if (((Property)e).getDefaultValue() instanceof InstanceValue) {
-                value = ((InstanceValue)((Property)e).getDefaultValue()).getInstance();
-            }
-            if (value != null) {
+        HashSet< Element > values = new HashSet< Element >();
+        getNestedValueElements( values );
+        for ( Element value : values ) {
+            if ( value != null ) {//&& !result.containsKey( value.getID() ) ) {
                 JSONObject j = new JSONObject();
-                fillElement(value, j, view, viewpoint);
-                result.put(value.getID(), j);
-            }
-        } else if (e instanceof Slot) {
-            for (ValueSpecification vs: ((Slot)e).getValue()) {
-                Element value = null;
-                if (vs instanceof ElementValue) {
-                    value = ((ElementValue)vs).getElement();
-                } else if (vs instanceof InstanceValue) {
-                    value = ((InstanceValue)vs).getInstance();
-                }
-                if (value != null) {
-                    JSONObject j = new JSONObject();
-                    fillElement(value, j, view, viewpoint);
-                    result.put(value.getID(), j);
-                }
+                fillElement( value, j, view, viewpoint );
+                result.put( value.getID(), j );
             }
         }
         return result;
     }
+
     public static final Pattern HTML_WHITESPACE_END = Pattern.compile("\\s*</p>", Pattern.DOTALL);
     public static final Pattern HTML_WHITESPACE_START = Pattern.compile("<p>\\s*", Pattern.DOTALL);
     public static String cleanHtml(String s) {
