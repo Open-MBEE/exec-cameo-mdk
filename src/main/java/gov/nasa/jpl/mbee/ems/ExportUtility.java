@@ -582,7 +582,7 @@ public class ExportUtility {
                 Integer teamwork = pv.getNumber();
                 //Integer teamwork = TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
                 Integer mms = getAlfrescoProjectVersion(module.getProjectID());
-                if (teamwork == mms || mms == null || teamwork > mms)
+                if (teamwork == mms || mms == null || teamwork >= mms)
                     return true;
                 Boolean con = Utils.getUserYesNoAnswer("The element is in project " + module.getName() + " (" + teamwork + 
                         ") that is an older version of what's on the server (" + mms + "), do you want to continue export?");
@@ -594,7 +594,7 @@ public class ExportUtility {
             if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
                 Integer teamwork = TeamworkService.getInstance(prj).getVersion(prj).getNumber();
                 Integer mms = getAlfrescoProjectVersion(prj.getPrimaryProject().getProjectID());
-                if (teamwork == mms || mms == null || teamwork > mms)
+                if (teamwork == mms || mms == null || teamwork >= mms)
                     return true;
                 Boolean con = Utils.getUserYesNoAnswer("The element is in project " + prj.getName() + " (" + teamwork + 
                         ") that is an older version of what's on the server (" + mms + "), do you want to continue export?");
@@ -740,9 +740,9 @@ public class ExportUtility {
     public static final Pattern HTML_WHITESPACE_END = Pattern.compile("\\s*</p>", Pattern.DOTALL);
     public static final Pattern HTML_WHITESPACE_START = Pattern.compile("<p>\\s*", Pattern.DOTALL);
     public static String cleanHtml(String s) {
-        String inter = Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "").replace("<br>", "").replace("</br>", "");//.replace("\n", "");
-        inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
-        return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
+        return Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "").replace("<br>", "").replace("</br>", "");//.replace("\n", "");
+        //inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
+        //return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
     }
     
 }
