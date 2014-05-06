@@ -169,9 +169,17 @@ public class ViewValidator {
                 JSONArray webContains = null;
                 if ( containsObj instanceof JSONArray ) {
                     webContains = (JSONArray)containsObj;
-                } else {//if ( containsObj instanceof String ) {
+                } else if ( containsObj instanceof String ) {
+                    Object arr = JSONValue.parse( (String)containsObj );
+                    if ( arr instanceof JSONArray ) {
+                        webContains = (JSONArray)arr;
+                    } else {
+                        webContains = new JSONArray();
+                        webContains.add( containsObj );
+                    }
+                } else {
                     webContains = new JSONArray();
-                    webContains.add( containsObj );//((String)containsObj);
+                    webContains.add( containsObj );
                 }
                 String viewelements = ExportUtility.get(viewElementsUrl, false);
                 if (viewelements == null)
