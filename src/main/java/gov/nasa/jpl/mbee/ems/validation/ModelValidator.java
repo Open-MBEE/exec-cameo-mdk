@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
@@ -153,12 +154,12 @@ public class ModelValidator {
     }
     
     @SuppressWarnings("unchecked")
-    public void validate() {
+    public void validate(boolean fillContainment) {
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
         Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
-        if (checkExist) {
+        if (fillContainment) {
             elementSet = new HashSet<Element>();
             getAllMissing(start, elementSet, elementsKeyed);
             validateModel(elementsKeyed, elementSet);
@@ -189,12 +190,18 @@ public class ModelValidator {
         }
         for (Element e: all) {
             if (!elementsKeyed.containsKey(e.getID())) {
-                if (checkExist) {
-                    ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
-                    v.addAction(new ExportElement(e));
-                    exist.addViolation(v);
-                }
-                continue;
+                if (checkExist && ExportUtility.shouldAdd(e)) {
+                    JSONObject maybeMissing = getAlfrescoElement(e);
+                    if (maybeMissing != null) {
+                        elementsKeyed.put(e.getID(), maybeMissing);
+                    } else {
+                        ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
+                        v.addAction(new ExportElement(e));
+                        exist.addViolation(v);
+                        continue;
+                    }
+                } else
+                    continue;
             }
             JSONObject elementInfo = (JSONObject)elementsKeyed.get(e.getID());
             checkElement(e, elementInfo);
@@ -271,6 +278,7 @@ public class ModelValidator {
         }
         if (elementDoc != null && !(webDoc == null && elementDoc.equals("")) && !elementDocClean.equals(webDoc)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
+            v.addAction(new CompareText(e, webDoc, elementDocClean, result));
             v.addAction(new ImportDoc(e, webDoc, result));
             v.addAction(new ExportDoc(e));
             docDiff.addViolation(v);
@@ -313,10 +321,21 @@ public class ModelValidator {
         if ( e.getOwner() != null ) {
             String ownerID = e.getOwner().getID();
             String webOwnerID = (String)elementInfo.get("owner");
-            if (webOwnerID == null || webOwnerID.startsWith("PROJECT"))
-                webOwnerID = Application.getInstance().getProject().getModel().getID();
+            if (webOwnerID == null || webOwnerID.startsWith("PROJECT")) {
+                if (webOwnerID == null)
+                    webOwnerID = Application.getInstance().getProject().getModel().getID();
+                else {
+                    if (webOwnerID.equals(Application.getInstance().getProject().getPrimaryProject().getProjectID()))
+                        webOwnerID = Application.getInstance().getProject().getModel().getID();
+                    else
+                        webOwnerID = null;
+                }
+                    
+            }
             if (!ownerID.equals(webOwnerID)) {
-                Element owner = (Element)prj.getElementByID(webOwnerID);
+                Element owner = null;
+                if (webOwnerID != null)
+                    owner = (Element)prj.getElementByID(webOwnerID);
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? "null" : owner.getHumanName()));
                 v.addAction(new FixModelOwner(e, owner, result));
                 v.addAction(new ExportOwner(e));
@@ -354,12 +373,16 @@ public class ModelValidator {
         PropertyValueType valueType = PropertyValueType.valueOf(valueTypes);
         String message = "";
         String typeMismatchMessage = "[VALUE] value spec types don't match";
+        String modelString = null;
+        String webString = null;
+        boolean stringMatch = false;
         if (valueType == PropertyValueType.LiteralString) {
             if (vs instanceof LiteralString) {
-                String modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
-                String webString = ExportUtility.cleanHtml((String)value.get(0));
+                modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
+                webString = ExportUtility.cleanHtml((String)value.get(0));
                 value.set(0, webString);
                 if (!modelString.equals(webString)) {
+                    stringMatch = true;
                     message = "[VALUE] model: " + truncate(modelString) + ", web: " + truncate(webString);
                 }
             } else {
@@ -419,6 +442,8 @@ public class ModelValidator {
         }   
         if (!message.equals("")) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, message);
+            if (stringMatch)
+                v.addAction(new CompareText(e, webString, modelString, result));
             v.addAction(new ImportValue(e, value, valueType, result));
             v.addAction(new ExportValue(e));
             return v;
@@ -464,13 +489,17 @@ public class ModelValidator {
         String message = "";
         String typeMismatchMessage = "[VALUE] value spec types don't match";
         String badMessage = "[VALUE] model: " + truncate(RepresentationTextCreator.getRepresentedText(e)) + ", web: " + truncate(value.toString());
+        String modelString = null;
+        String webString = null;
+        boolean stringMatch = false;
         if (valueType == PropertyValueType.LiteralString) {
             if (vs.get(0) instanceof LiteralString) {
                 for (int i = 0; i < vs.size(); i++) {
-                    String modelString = ExportUtility.cleanHtml(((LiteralString)vs.get(i)).getValue());
-                    String webString = ExportUtility.cleanHtml((String)value.get(i));
+                    modelString = ExportUtility.cleanHtml(((LiteralString)vs.get(i)).getValue());
+                    webString = ExportUtility.cleanHtml((String)value.get(i));
                     value.set(i, webString);
                     if (!modelString.equals(webString)) {
+                        stringMatch = true;
                         message = badMessage;
                         break;
                     }
@@ -549,6 +578,8 @@ public class ModelValidator {
         }   
         if (!message.equals("")) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, message);
+            if (stringMatch)
+                v.addAction(new CompareText(e, webString, modelString, result));
             v.addAction(new ImportValue(e, value, valueType, result));
             v.addAction(new ExportValue(e));
             Debug.outln("4) returning ValidationRuleViolation: " + v );
@@ -615,5 +646,19 @@ public class ModelValidator {
         if (s.length() > 50)
             return s.substring(0, 49) + "...";
         return s;
+    }
+
+    private JSONObject getAlfrescoElement(Element e) {
+        String url = ExportUtility.getUrl();
+        String id = ExportUtility.getElementID(e);
+        url += "/javawebscripts/elements/" + id;
+        String response = ExportUtility.get(url, false);
+        if (response == null)
+            return null;
+        JSONObject result = (JSONObject)JSONValue.parse(response);
+        JSONArray elements = (JSONArray)result.get("elements");
+        if (elements == null || elements.isEmpty())
+            return null;
+        return (JSONObject)elements.get(0);
     }
 }
