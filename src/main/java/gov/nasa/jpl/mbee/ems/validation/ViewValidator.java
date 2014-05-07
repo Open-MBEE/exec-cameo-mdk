@@ -165,7 +165,22 @@ public class ViewValidator {
                 JSONArray localElements = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("displayedElements");
                 JSONArray localContains = (JSONArray)((JSONObject)visitor2.getViews().get(viewid)).get("contains");
                 JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
-                JSONArray webContains = (JSONArray)webView.get("contains");
+                Object containsObj= webView.get("contains");
+                JSONArray webContains = null;
+                if ( containsObj instanceof JSONArray ) {
+                    webContains = (JSONArray)containsObj;
+                } else if ( containsObj instanceof String ) {
+                    Object arr = JSONValue.parse( (String)containsObj );
+                    if ( arr instanceof JSONArray ) {
+                        webContains = (JSONArray)arr;
+                    } else {
+                        webContains = new JSONArray();
+                        webContains.add( containsObj );
+                    }
+                } else {
+                    webContains = new JSONArray();
+                    webContains.add( containsObj );
+                }
                 String viewelements = ExportUtility.get(viewElementsUrl, false);
                 if (viewelements == null)
                     continue;

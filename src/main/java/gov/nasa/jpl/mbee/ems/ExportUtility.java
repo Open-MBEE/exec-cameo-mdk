@@ -107,6 +107,8 @@ import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInter
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Interval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -613,12 +615,18 @@ public class ExportUtility {
 //            elementInfo.put("annotatedElements", elements);
             elementInfo.put("annotatedElements",
                             makeJsonArrayOfIDs( ((Comment)e).getAnnotatedElement() ));
-//        } else if (e instanceof Connector) {
-//            Connector c = (Connector)e;
-//            List< ConnectorEnd > ends = c.getEnd();
-//            for ( ConnectorEnd end : ends ) {
-//                if ( end.get == end.getDefiningEnd() )
-//            }
+        } else if (e instanceof Connector) {
+            elementInfo.put("type", "Connector");
+            Connector c = (Connector)e;
+            List< ConnectorEnd > ends = c.getEnd();
+            ArrayList<Element> roles = new ArrayList< Element >();
+            for ( ConnectorEnd end : ends ) {
+                if ( end.getRole() != null ) {
+                    roles.add( end.getRole() );
+                }
+            }
+            JSONArray ids = makeJsonArrayOfIDs( roles );
+            elementInfo.put("connectorRole", ids);
         } else if (e instanceof Operation) {
             elementInfo.put("type", "Operation");
             List<Parameter> vsl = ((Operation)e).getOwnedParameter();
