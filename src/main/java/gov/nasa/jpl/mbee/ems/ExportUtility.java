@@ -183,8 +183,10 @@ public class ExportUtility {
     }
     
     public static String getUrl() {
-//        return "http://localhost:8080/view-repo/service";
-//        //return "https://sheldon/alfresco/service";
+        if ( false ) {
+            return "http://localhost:8080/alfresco/service";
+//          //return "https://sheldon/alfresco/service";
+        }
         String url = null;
         Element model = Application.getInstance().getProject().getModel();
         if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
@@ -1003,6 +1005,7 @@ public class ExportUtility {
         Stereotype viewpoint = Utils.getViewpointStereotype();
         Map<String, JSONObject> result = new HashMap<String, JSONObject>();
         HashSet< Element > values = new HashSet< Element >();
+        values.add( e );
         getNestedValueElements( values );
         for ( Element value : values ) {
             if ( value != null ) {//&& !result.containsKey( value.getID() ) ) {
@@ -1011,6 +1014,7 @@ public class ExportUtility {
                 result.put( value.getID(), j );
             }
         }
+        values.remove( e );
         return result;
     }
 
