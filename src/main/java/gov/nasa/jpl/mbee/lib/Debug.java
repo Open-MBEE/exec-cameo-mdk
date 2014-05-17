@@ -303,7 +303,8 @@ public class Debug {
     }
 
   public static void logWithColor( String msg, Color color ) {
-    JDialog log = gl.getLog();
+    gl.log(msg);
+      /*JDialog log = gl.getLog();
     //JPanel jp = getComponentOfType( log, JPanel.class );//(JPanel)((java.awt.Container)log).getComponent( 0 ); //.getComponents();
     //JEditorPane jep = getComponentOfType( jp, JEditorPane.class );//(JEditorPane)jp.getComponent( 0 );
     StyledDocument doc = getComponentOfType( log, StyledDocument.class );
@@ -324,7 +325,7 @@ public class Debug {
       doc.insertString( i, msg, set );
     } catch ( BadLocationException e ) {
       e.printStackTrace();
-    }
+    }*/
   }
   
   /**
