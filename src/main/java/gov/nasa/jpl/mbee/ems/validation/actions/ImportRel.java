@@ -52,7 +52,9 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
     private Element element;
     private JSONObject result;
     public ImportRel(Element e, JSONObject result) {
-        super("ImportRel", "Import rel", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super("ImportRel", "Accept rel", null, null);
         this.element = e;
         this.result = result;
     }

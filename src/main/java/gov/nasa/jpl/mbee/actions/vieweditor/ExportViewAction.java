@@ -56,7 +56,9 @@ public class ExportViewAction extends MDAction {
     public static final String actionid = "ExportView";
 
     public ExportViewAction(Element e) {
-        super(actionid, "Export View (Overwrite)", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super(actionid, "Commit View (Overwrite)", null, null);
         doc = e;
     }
 
@@ -77,7 +79,7 @@ public class ExportViewAction extends MDAction {
                 return;
             }
             ProgressStatusRunner.runWithProgressStatus(new ViewExporter(null, doc, recurse, true, url, dv),
-                    "Exporting View...", true, 0);
+                    "Committing View...", true, 0);
         } catch (Exception ex) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);

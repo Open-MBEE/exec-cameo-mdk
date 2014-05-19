@@ -71,7 +71,9 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
     private JSONObject result;
     public ImportValue(Element e, JSONArray values, PropertyValueType type, JSONObject result) {
-        super("ImportValue", "Import value", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super("ImportValue", "Accept value", null, null);
         this.element = e;
         this.values = values;
         this.type = type;

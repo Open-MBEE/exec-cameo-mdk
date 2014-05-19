@@ -79,7 +79,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     private String sendElementsUrl;
     
     public ExportView(Element e, boolean recursive) {
-        super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Export views hierarchically" : "Export view", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Commit views hierarchically" : "Commit view", null, null);
         this.recurse = recursive;
         this.view = e;
     }
