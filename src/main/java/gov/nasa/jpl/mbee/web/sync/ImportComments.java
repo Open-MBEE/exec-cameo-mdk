@@ -52,7 +52,9 @@ public class ImportComments extends MDAction {
     private CommentRepository repository;
 
     public ImportComments(NamedElement selectedElement) {
-        super("ImportCommentsFromDocWeb", "Import Comments from DocWeb", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super("ImportCommentsFromDocWeb", "Accept Comments from DocWeb", null, null);
         this.documentView = selectedElement;
         setEnabled(selectedElement.isEditable());
     }
@@ -60,7 +62,9 @@ public class ImportComments extends MDAction {
     // this is for export comments action to call so make sure ppl import first
     // than export
     public ImportComments(NamedElement ne, CommentRepository re) {
-        super("ImportComments", "Import Comments", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super("ImportComments", "Accept Comments", null, null);
         documentView = ne;
         repository = re;
     }

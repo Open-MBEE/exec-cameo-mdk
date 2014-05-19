@@ -46,7 +46,9 @@ public class ImportViewRecursiveAction extends MDAction {
     public static final String actionid = "ImportViewRecursive";
 
     public ImportViewRecursiveAction(Element e) {
-        super(actionid, "Import Model (Overwrite)", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super(actionid, "Accept Model (Overwrite)", null, null);
         doc = e;
     }
 

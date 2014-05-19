@@ -51,7 +51,9 @@ public class ExportComments extends MDAction {
     private CommentRepository repository;
 
     public ExportComments(NamedElement selectedElement) {
-        super("ExportCommentsFromDocWeb", "Export Comments to DocWeb", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportCommentsFromDocWeb", "Commit Comments to DocWeb", null, null);
         this.documentView = selectedElement;
     }
 

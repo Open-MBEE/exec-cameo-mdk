@@ -55,7 +55,9 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
     private Element view;
     
     public ExportHierarchy(Element e) {
-        super("ExportHierarchy", "Export Hierarchy", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportHierarchy", "Commit Hierarchy", null, null);
         this.view = e;
     }
     

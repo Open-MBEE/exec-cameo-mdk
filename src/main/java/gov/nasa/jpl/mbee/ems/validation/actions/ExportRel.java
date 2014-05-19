@@ -50,7 +50,9 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
     private Element element;
     
     public ExportRel(Element e) {
-        super("ExportRel", "Export rel", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportRel", "Commit rel", null, null);
         this.element = e;
     }
     

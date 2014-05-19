@@ -94,7 +94,9 @@ public class OrganizeDocumentAction extends MDAction {
                 return;
             String response = pm.getResponseBodyAsString();
             if (response.equals("ok"))
-                gl.log("[INFO] Export Successful.");
+            	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+            	//
+                gl.log("[INFO] Commit Successful.");
             else if (response.equals("NotFound"))
                 gl.log("[ERROR] Volume not found, export project hierarchy first");
             else

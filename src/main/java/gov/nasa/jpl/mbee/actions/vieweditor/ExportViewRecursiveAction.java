@@ -56,7 +56,9 @@ public class ExportViewRecursiveAction extends MDAction {
     public static final String actionid = "ExportViewRecursive";
 
     public ExportViewRecursiveAction(Element e) {
-        super(actionid, "Export Model (Overwrite)", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super(actionid, "Commit Model (Overwrite)", null, null);
         doc = e;
     }
 

@@ -49,7 +49,9 @@ public class ExportComment extends RuleViolationAction implements AnnotationActi
     private Comment element;
     
     public ExportComment(Comment e) {
-        super("ExportComment", "Export comment", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportComment", "Commit comment", null, null);
         this.element = e;
     }
     
