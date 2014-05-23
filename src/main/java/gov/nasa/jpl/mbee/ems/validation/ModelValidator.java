@@ -128,7 +128,7 @@ public class ModelValidator {
         String projectUrl = ExportUtility.getUrlWithSiteAndProject();
         if (projectUrl == null)
             return false;
-        String response = ExportUtility.get(projectUrl);
+        String response = ExportUtility.get(projectUrl, false);
         if (response == null) {
             ValidationRuleViolation v = new ValidationRuleViolation(Project.getProject(start).getModel(), "This project doesn't exist on the web yet, or the site has been moved");
             v.addAction(new InitializeProjectModel(false));
