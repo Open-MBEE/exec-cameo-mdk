@@ -72,7 +72,9 @@ public class ImportViewAction extends MDAction {
     public static final String actionid = "ImportView";
 
     public ImportViewAction(Element e) {
-        super(actionid, "Import View (Overwrite)", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super(actionid, "Accept View (Overwrite)", null, null);
         doc = e;
     }
 
@@ -85,7 +87,9 @@ public class ImportViewAction extends MDAction {
         Boolean recurse = recursive;
         String url = curl;
         GUILog gl = Application.getInstance().getGUILog();
-        ValidationSuite vs = new ValidationSuite("Import changes");
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        ValidationSuite vs = new ValidationSuite("Accept changes");
         ViolationSeverity sev = ViolationSeverity.WARNING;
         if (willchange)
             sev = ViolationSeverity.INFO;
@@ -158,7 +162,9 @@ public class ImportViewAction extends MDAction {
         Collection<ValidationSuite> cvs = new ArrayList<ValidationSuite>();
         cvs.add(vs);
         if (willchange)
-            Utils.displayValidationWindow(cvs, "Import/Synchronize View Results");
+        	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        	//
+            Utils.displayValidationWindow(cvs, "Accept/Synchronize View Results");
         else
             Utils.displayValidationWindow(cvs, "Validate Sync Results");
     }

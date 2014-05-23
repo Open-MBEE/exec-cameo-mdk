@@ -51,7 +51,9 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
     private Element element;
     
     public ExportDoc(Element e) {
-        super("ExportDoc", "Export doc", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportDoc", "Commit doc", null, null);
         this.element = e;
     }
     

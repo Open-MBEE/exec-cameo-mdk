@@ -160,6 +160,7 @@ public class ViewEditUtils {
 
                 if (username != null) {
                     usernameFld.setText(username);
+                    usernameFld.requestFocus();
                 }
                 if (password != null) {
                     passwordFld.setText(password);

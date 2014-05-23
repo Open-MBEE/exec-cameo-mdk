@@ -97,7 +97,9 @@ public class ProjectExporter {
                 return;
             String response = pm.getResponseBodyAsString();
             if (response.equals("ok"))
-                log.log("[INFO] Export Successful.");
+            	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+            	//
+                log.log("[INFO] Commit Successful.");
             else
                 log.log(response);
         } catch (MalformedURLException e1) {
