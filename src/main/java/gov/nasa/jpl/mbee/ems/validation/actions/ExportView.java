@@ -77,12 +77,15 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     private GUILog gl = Application.getInstance().getGUILog();
     private String url;
     private String sendElementsUrl;
+    private boolean exportElements;
     
-    public ExportView(Element e, boolean recursive) {
+    public ExportView(Element e, boolean recursive, boolean exportElements, String action) {
     	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
     	//
-        super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Commit views hierarchically" : "Commit view", null, null);
+        //super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Commit views hierarchically" : "Commit view", null, null);
+        super(action, action, null, null);
         this.recurse = recursive;
+        this.exportElements = exportElements;
         this.view = e;
     }
     
@@ -171,17 +174,18 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             }
         }*/
         //Set<Element> set = visitor2.getElementSet();
-        
-        JSONObject elementsjson = visitor2.getElements();
-        JSONArray elementsArray = new JSONArray();
-        elementsArray.addAll(elementsjson.values());
         JSONObject send = new JSONObject();
-        send.put("elements", elementsArray);
-        if (url == null)
-            return false;
-        if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
-            return false;
         
+        if (exportElements) {
+            JSONObject elementsjson = visitor2.getElements();
+            JSONArray elementsArray = new JSONArray();
+            elementsArray.addAll(elementsjson.values());
+            send.put("elements", elementsArray);
+            if (url == null)
+                return false;
+            if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
+                return false;
+        }
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
         JSONArray viewsArray = new JSONArray();
