@@ -275,7 +275,8 @@ public class DocumentGenerator {
                     }
                 }
             }
-            if (expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
+            //MDEV-555 only do view replacement if using class views
+            if (view instanceof Class && expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
                 return parseView(expose.get(0)); // substitute another view
             }
             if (view instanceof Diagram) { // if a diagram, show diagram and
