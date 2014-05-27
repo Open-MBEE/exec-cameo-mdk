@@ -45,6 +45,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,6 +73,8 @@ import org.eclipse.ocl.helper.OCLHelper;
 import org.eclipse.ocl.lpg.AbstractLexer;
 import org.eclipse.ocl.lpg.AbstractParser;
 import org.eclipse.ocl.lpg.ProblemHandler;
+import org.eclipse.ocl.util.Bag;
+import org.eclipse.ocl.util.CollectionUtil;
 import org.eclipse.ocl.util.OCLUtil;
 
 import com.nomagic.magicdraw.core.Application;
@@ -741,6 +744,23 @@ public class OclEvaluator {
         envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
     }
 
+//    /**
+//     * @param result
+//     * @return an OclCollection
+//     */
+//    public static Object makeCollectionOcl( Object result ) {
+//        if ( result instanceof Bag ) return result;
+//        if ( result instanceof LinkedHashSet ) return result;
+//        if ( result instanceof ArrayList ) {
+//            result = CollectionUtil.asSequence( (Collection< ? >)result );
+//        } else if ( result instanceof HashSet ) {
+//            result = CollectionUtil.asSet( (Collection< ? >)result );
+//        } else if ( result instanceof Collection ) {
+//            result = CollectionUtil.asBag( (Collection< ? >)result );
+//        }
+//        return result;
+//    }
+    
     static EClassifier getGenericCallerType() {
         return OCLStandardLibraryImpl.INSTANCE.getOclAny();
     }
@@ -869,7 +889,7 @@ public class OclEvaluator {
      * @param envFactory
      */
     protected static void addExpressionOperations(DgEnvironmentFactory envFactory) {
-        ArrayList<Element> exprs = getExpressions();
+        ArrayList<Element> exprs = new ArrayList<Element>(getExpressions());
         // add each of the elements with the Expression stereotype as
         // shortcut/blackbox functions
         for (Element expr: exprs) {

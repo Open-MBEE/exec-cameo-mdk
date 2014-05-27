@@ -129,7 +129,7 @@ public class BulletedList extends Table {
                     if (isShowTargets() && e instanceof NamedElement) {
                         li.addElement(new DBParagraph(((NamedElement)e).getName(), (NamedElement)e, From.NAME));
                     }
-                    if (isIncludeDoc() && (e instanceof Element) && !ModelHelper.getComment((Element)e).equals("")) {
+                    if (isIncludeDoc() && (e instanceof Element) && (!ModelHelper.getComment((Element)e).equals("") || forViewEditor)) {
                         li.addElement(new DBParagraph(ModelHelper.getComment((Element)e), (Element)e, From.DOCUMENTATION));
                     }
                     if (getStereotypeProperties() != null && !getStereotypeProperties().isEmpty()) {

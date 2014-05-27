@@ -56,7 +56,9 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
     private JSONObject result;
     
     public ImportComment(Comment e, String doc, JSONObject result) {
-        super("ImportComment", "Import comment", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super("ImportComment", "Accept comment", null, null);
         this.element = e;
         this.doc = doc;
         this.result = result;

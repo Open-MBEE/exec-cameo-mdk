@@ -53,7 +53,9 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
     private String doc;
     private JSONObject result;
     public ImportDoc(Element e, String doc, JSONObject result) {
-        super("ImportDoc", "Import doc", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super("ImportDoc", "Accept doc", null, null);
         this.element = e;
         this.doc = doc;
         this.result = result;

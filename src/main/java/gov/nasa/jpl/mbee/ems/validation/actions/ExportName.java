@@ -51,7 +51,9 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
     private NamedElement element;
     
     public ExportName(NamedElement e) {
-        super("ExportName", "Export name", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportName", "Commit name", null, null);
         this.element = e;
     }
     

@@ -60,7 +60,9 @@ public class ImportElementComments extends RuleViolationAction implements Annota
     private JSONObject result;
     
     public ImportElementComments(Element e, JSONObject result) {
-        super("ImportElementComments", "Import element comments", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super("ImportElementComments", "Accept element comments", null, null);
         this.element = e;
         this.result = result;
     }

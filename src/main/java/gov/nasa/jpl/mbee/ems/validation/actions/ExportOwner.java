@@ -51,7 +51,9 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
     private Element element;
     
     public ExportOwner(Element e) {
-        super("ExportOwner", "Export owner", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportOwner", "Commit owner", null, null);
         this.element = e;
     }
     

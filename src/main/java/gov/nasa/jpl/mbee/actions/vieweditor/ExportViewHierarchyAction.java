@@ -53,7 +53,9 @@ public class ExportViewHierarchyAction extends MDAction {
     public static final String actionid = "ExportViewHierarchy";
 
     public ExportViewHierarchyAction(Element e) {
-        super(actionid, "Export View Hierarchy", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super(actionid, "Commit View Hierarchy", null, null);
         doc = e;
     }
 
@@ -95,7 +97,9 @@ public class ExportViewHierarchyAction extends MDAction {
                 return;
             String response = pm.getResponseBodyAsString();
             if (response.equals("ok"))
-                gl.log("[INFO] Export Successful.");
+            	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+            	//
+                gl.log("[INFO] Commit Successful.");
             else
                 gl.log(response);
         } catch (Exception ex) {
