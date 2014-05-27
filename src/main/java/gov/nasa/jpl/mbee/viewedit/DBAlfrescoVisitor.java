@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.viewedit;
 
+import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -329,7 +331,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         view.put("contains", contains);
         this.curContains = contains;
         addToElements(e);
-        
+        //MDEV-443 add view exposed elements to view elements
+        for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
+                DocGen3Profile.queriesStereotype, 1, false, 1))
+            addToElements(exposed);
         sibviews.peek().add(e.getID());
         JSONArray childViews = new JSONArray();
         sibviews.push(childViews);
