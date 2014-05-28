@@ -33,7 +33,9 @@ import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.GenerationContext;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils.AvailableAttribute;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
@@ -41,14 +43,17 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 public class Paragraph extends Query {
@@ -57,9 +62,10 @@ public class Paragraph extends Query {
     private List<Property> stereotypeProperties;
     private From           fromProperty;
     
-    private boolean        tryOcl = false;
     private DocumentValidator validator = null;
+    private boolean        tryOcl = false;
     private boolean        iterate = true;
+    private AvailableAttribute attribute = null; // this is redundant with fromProperty
 
     public InitialNode       bnode;
     public ActivityNode      activityNode;
@@ -131,13 +137,24 @@ public class Paragraph extends Query {
 //    }
 
     protected void addOclParagraph(List<DocumentElement> res, Object oclExpression, Object context) {
+        System.out.println( "addOclParagraph(" + res + ", \"" + oclExpression
+                            + "\", " + context + ")" );
         Object result =
                 DocumentValidator.evaluate( oclExpression, context,
                                             getValidator(), true );
-        if (OclEvaluator.instance.isValid() && result != null) {
-            res.add( new DBParagraph( result ) );
+        System.out.println("ocl result = " + result);
+        if ( result instanceof Collection && ((Collection<?>)result).size() == 1 ) {
+            result = ( (Collection< ? >)result ).iterator().next();
+        }
+        if (OclEvaluator.instance.isValid() || result != null) {
+            if ( result instanceof Element && getFrom() != null ) {
+                Element e = (Element)result;
+                res.add( new DBParagraph( Utils.getElementAttribute( e, attribute ), e, getFrom() ) );
+            } else {
+                res.add( new DBParagraph( result ) );
+            }
         } else {
-            // REVIEW -- tablestructure adds nothing in this case; is that right?                    
+            // REVIEW -- TableStructure adds nothing in this case; is that right?                    
         }
 
     }
@@ -169,6 +186,7 @@ public class Paragraph extends Query {
      */
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+        System.out.println( "visit(" + forViewEditor + ", " + outputDir + ")" );
         List<DocumentElement> res = new ArrayList<DocumentElement>();
         List< Reference > refs = new ArrayList< Reference >();
         if (getIgnore())
@@ -177,12 +195,18 @@ public class Paragraph extends Query {
         boolean gotTargets = getTargets() != null;
         boolean gotStereotypeProperties = 
                 !Utils2.isNullOrEmpty( getStereotypeProperties() );
+        System.out.println("gotText = " + gotText + ", " + getText());
+        System.out.println("gotTargets = " + gotTargets + ", " + MoreToString.Helper.toLongString( getTargets()) );
+        System.out.println("gotStereotypeProperties = " + gotStereotypeProperties + ", " + getStereotypeProperties());
+        System.out.println("desiredAttribute = " + attribute);
         if (gotText && !tryOcl) { // ignoring targets -- should be none -- REVIEW
+            System.out.println( "case 4" );
             // case 4: return a paragraph of the text, tied to an attribute (the
             // Documentation attribute as set from parseView) of dgElement
             if (forViewEditor || !getText().trim().equals(""))
                 res.add(new DBParagraph(getText(), getDgElement(), getFrom()));
         } else if (gotText && !gotTargets) { // tryOcl must be true
+            System.out.println( "case 7" );
             // case 7: return a paragraph of the evaluation of the text as OCL on dgElement 
             addOclParagraph( res, getText(), dgElement );
         } else if ( gotTargets ) {
@@ -195,15 +219,18 @@ public class Paragraph extends Query {
                 Reference ref = null;
                 if ( gotStereotypeProperties ) {
                     // for cases 3, 6, and 9
+                    System.out.println( "case 3, 6, or 9, target=" + o );
                     for (Property p: getStereotypeProperties()) {
                         ref = Reference.getPropertyReference(e, p);
                         refs.add( ref );
                     }
                 } else {
                     if ( tryOcl && gotText) {
+                        System.out.println( "case 8, target=" + Utils.getName( o ) );
                         // for case 8
                         ref = new Reference( o );
                     } else {
+                        System.out.println( "case 2 or 5" );
                         // for cases 2 and 5
                         ref = new Reference(e, From.DOCUMENTATION, ModelHelper.getComment(e));
                     }
@@ -211,6 +238,7 @@ public class Paragraph extends Query {
                 }
             }
             if ( tryOcl && !iterate && gotText ) {
+                System.out.println( "case 8 or 9 a" );
                 // for cases 8 & 9 when !iterate
                 // apply text as OCL to the collection as a whole
                 ArrayList<Object> results = new ArrayList< Object >();
@@ -227,6 +255,7 @@ public class Paragraph extends Query {
                 // creating paragraph for each reference
                 for ( Reference r : refs ) {
                     if ( !tryOcl ) { // gotText is false
+                        System.out.println( "case 2 or 3, ref=" + r );
                         // cases 2 & 3: return a paragraph for each
                         // target-property pair (3) or for each target's
                         // documentation (2)
@@ -234,11 +263,13 @@ public class Paragraph extends Query {
                                                   r.getElement(), r.getFrom() ) );
                     } else {
                         if ( gotText ) {
+                            System.out.println( "case 8 or 9, ref=" + r );
                             // cases 8 & 9: return a paragraph of the evaluation
                             // of the text as OCL on each target-property pair (9)
                             // or on each target (8)
                             addOclParagraph( res, getText(), r.getResult() );
                         } else {
+                            System.out.println( "case 5 or 6, ref=" + r );
                             // cases 5 & 6: add a paragraph of the evaluation of
                             // the value of each target-property (6) or of each target's
                             // documentation (5) as OCL on dgElement
@@ -248,7 +279,8 @@ public class Paragraph extends Query {
                 }
             }
         } // else case 1: gotText and gotTarget are both false, so return nothing 
-        
+
+        System.out.println( "visit(" + forViewEditor + ", \"" + outputDir + ") returning " + res );
         return res;
     }
 
@@ -268,6 +300,14 @@ public class Paragraph extends Query {
         if ( iter != null ) {
             iterate = Utils.isTrue( iter, false ); // TODO -- use this!
         }
+        
+        Object attr = GeneratorUtils.getObjectProperty(dgElement,
+                                                       DocGen3Profile.attributeChoosable, "desiredAttribute", null);
+        if ( attr instanceof EnumerationLiteral ) {
+            attribute = Utils.AvailableAttribute.valueOf(((EnumerationLiteral)attr).getName());
+            if ( attribute != null ) setFrom( Utils.getFromAttribute( attribute ) );
+        }
+        
         setStereotypeProperties((List<Property>)GeneratorUtils
                 .getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable,
                         "stereotypeProperties", new ArrayList<Property>()));
