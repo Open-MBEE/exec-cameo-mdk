@@ -141,25 +141,17 @@ public class Paragraph extends Query {
         Object result =
                 DocumentValidator.evaluate( oclExpression, context,
                                             getValidator(), true );
-    	Debug.turnOn();
         Debug.outln("ocl result = " + result);
         if ( result instanceof Collection && ((Collection<?>)result).size() == 1 ) {
             result = ( (Collection< ? >)result ).iterator().next();
         }
         
-        //if (OclEvaluator.instance.isValid() || !Utils2.isNullOrEmpty(result)) {
-        	Debug.outln("GOT HERE?");
-            if ( result instanceof Element && getFrom() != null ) {
-                Element e = (Element)result;
-                res.add( new DBParagraph( Utils.getElementAttribute( e, attribute ), e, getFrom() ) );
-            } else if ( !Utils2.isNullOrEmpty( result ) ){
-                res.add( new DBParagraph( result ) );
-            }
-//        } else {
-//        	Debug.outln("GOOD");
-//            // REVIEW -- TableStructure adds nothing in this case; is that right?                    
-//        }
-        Debug.turnOff();
+        if ( result instanceof Element && getFrom() != null ) {
+            Element e = (Element)result;
+            res.add( new DBParagraph( Utils.getElementAttribute( e, attribute ), e, getFrom() ) );
+        } else if ( !Utils2.isNullOrEmpty( result ) ){
+            res.add( new DBParagraph( result ) );
+        }
     }
     
     /**
