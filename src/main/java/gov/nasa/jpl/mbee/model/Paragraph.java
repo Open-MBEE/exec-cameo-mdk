@@ -194,8 +194,8 @@ public class Paragraph extends Query {
         List< Reference > refs = new ArrayList< Reference >();
         if (getIgnore())
             return res;
-        boolean gotText = getText() != null;
-        boolean gotTargets = getTargets() != null;
+        boolean gotText = getText() != null && !getText().equals("");
+        boolean gotTargets = getTargets() != null && !getTargets().isEmpty();
         boolean gotStereotypeProperties = 
                 !Utils2.isNullOrEmpty( getStereotypeProperties() );
         Debug.outln("gotText = " + gotText + ", " + getText());
@@ -212,9 +212,9 @@ public class Paragraph extends Query {
                 Slot s = Utils.getSlot( getDgElement(), Utils.getStereotypePropertyByName( paragraphStereotype, "body" ) );
                 //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
                 res.add(new DBParagraph(getText(), s, From.DVALUE));
-            } else {
-                res.add(new DBParagraph(getText()));
-            }
+            } //else {
+                //res.add(new DBParagraph(getText()));
+            //}
         } else if (gotText && !gotTargets) { // tryOcl must be true
             Debug.outln( "case 7" );
             // case 7: return a paragraph of the evaluation of the text as OCL on dgElement 
