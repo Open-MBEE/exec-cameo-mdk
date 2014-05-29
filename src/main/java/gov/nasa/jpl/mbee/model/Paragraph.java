@@ -50,11 +50,14 @@ import java.util.Stack;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class Paragraph extends Query {
 
@@ -173,7 +176,7 @@ public class Paragraph extends Query {
      *  1 &nbsp;D && !T && !R &&  D: return nothing <br>
      *  2     !O && !T &&  R && !S: return a paragraph of documentation for each target <br>
      *  3     !O && !T &&  R &&  S: return a paragraph for each target-property pair  <br>
-     *  4     !O &&  T &&  D &&  D: return a paragraph of the text, tied to an attribute (the Documentation attribute as set from parseView) of dgElement <br> 
+     *  4     !O &&  T &&  D &&  D: return a paragraph of the text, tied to the "body" slot of dgElement <br> 
      *  <br>
      *  5 &nbsp;O && !T &&  R && !S: return a paragraph of the evaluation of the documentation of each target as OCL on dgElement <br>
      *  6 &nbsp;O && !T &&  R &&  S: return a paragraph of the evaluation of each target-property as OCL on dgElement <br>
@@ -203,8 +206,15 @@ public class Paragraph extends Query {
             System.out.println( "case 4" );
             // case 4: return a paragraph of the text, tied to an attribute (the
             // Documentation attribute as set from parseView) of dgElement
-            if (forViewEditor || !getText().trim().equals(""))
-                res.add(new DBParagraph(getText(), getDgElement(), getFrom()));
+            if (forViewEditor || !getText().trim().equals("")) {
+                //GeneratorUtils.getObjectProperty( getDgElement(), DocGen3Profile.paragraphStereotype, "body", null );
+                Stereotype paragraphStereotype = Utils.getStereotype( DocGen3Profile.paragraphStereotype );
+                Slot s = Utils.getSlot( getDgElement(), Utils.getStereotypePropertyByName( paragraphStereotype, "body" ) );
+                //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
+                res.add(new DBParagraph(getText(), s, From.DVALUE));
+            } else {
+                res.add(new DBParagraph(getText()));
+            }
         } else if (gotText && !gotTargets) { // tryOcl must be true
             System.out.println( "case 7" );
             // case 7: return a paragraph of the evaluation of the text as OCL on dgElement 
@@ -259,8 +269,9 @@ public class Paragraph extends Query {
                         // cases 2 & 3: return a paragraph for each
                         // target-property pair (3) or for each target's
                         // documentation (2)
-                        res.add( new DBParagraph( r.getResult(),
-                                                  r.getElement(), r.getFrom() ) );
+                        res.addAll( Common.getReferenceAsDocumentElements( r ) );
+//                        res.add( new DBParagraph( r.getResult(),
+//                                                  r.getElement(), r.getFrom() ) );
                     } else {
                         if ( gotText ) {
                             System.out.println( "case 8 or 9, ref=" + r );
