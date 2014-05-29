@@ -40,17 +40,13 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-import gov.nasa.jpl.ocl.OclEvaluator;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -141,25 +137,29 @@ public class Paragraph extends Query {
 
     protected void addOclParagraph(List<DocumentElement> res, Object oclExpression, Object context) {
         Debug.outln( "addOclParagraph(" + res + ", \"" + oclExpression
-                            + "\", " + context + ")" );
+                            + "\", " + context + ")" + " class(" + context.getClass() + ")");
         Object result =
                 DocumentValidator.evaluate( oclExpression, context,
                                             getValidator(), true );
+    	Debug.turnOn();
         Debug.outln("ocl result = " + result);
         if ( result instanceof Collection && ((Collection<?>)result).size() == 1 ) {
             result = ( (Collection< ? >)result ).iterator().next();
         }
-        if (OclEvaluator.instance.isValid() || result != null) {
+        
+        //if (OclEvaluator.instance.isValid() || !Utils2.isNullOrEmpty(result)) {
+        	Debug.outln("GOT HERE?");
             if ( result instanceof Element && getFrom() != null ) {
                 Element e = (Element)result;
                 res.add( new DBParagraph( Utils.getElementAttribute( e, attribute ), e, getFrom() ) );
-            } else {
+            } else if ( !Utils2.isNullOrEmpty( result ) ){
                 res.add( new DBParagraph( result ) );
             }
-        } else {
-            // REVIEW -- TableStructure adds nothing in this case; is that right?                    
-        }
-
+//        } else {
+//        	Debug.outln("GOOD");
+//            // REVIEW -- TableStructure adds nothing in this case; is that right?                    
+//        }
+        Debug.turnOff();
     }
     
     /**
