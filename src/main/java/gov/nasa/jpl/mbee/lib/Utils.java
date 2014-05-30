@@ -2882,7 +2882,12 @@ public class Utils {
             // To handle arrays, etc.
             o = MoreToString.Helper.toString( o );
         }
-        MdDebug.logForce( o.toString(), true, false, color );
+        GUILog log = Application.getInstance().getGUILog();
+        if ( log != null ) {
+            log.log( "" + o );
+        }
+
+        //MdDebug.logForce( o.toString(), true, false, color );
     }
     public static void log(Object o, Object color) {
         if ( color == null || color instanceof Color ) {

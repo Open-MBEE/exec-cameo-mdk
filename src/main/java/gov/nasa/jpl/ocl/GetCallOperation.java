@@ -131,6 +131,7 @@ public class GetCallOperation implements CallOperation {
         Collection<?> coll = (source instanceof Collection ? (Collection<?>)source : null);
         Object objectToAdd = null;
         boolean loop = coll != null && asCollection && recursionDepth > 0;
+        boolean filterAlreadyUsed = false;
         // boolean doingAdd = true;
         switch (resultType) {
             case SELF:
@@ -236,22 +237,26 @@ public class GetCallOperation implements CallOperation {
                         List<Object> objects = new ArrayList< Object >();
                         for ( Object arg : args ) {
                             Property prop = null;
+                            List<Object> propVals = null;
                             if ( arg instanceof String ) {
                                 // TODO -- REVIEW -- should this be addAll or add?
-                                objects.addAll( Utils.getElementPropertyValues( (Element)source,
-                                                                                (String)arg,
-                                                                                true ) );
+                                propVals = Utils.getElementPropertyValues( (Element)source,
+                                                                           (String)arg,
+                                                                           true );
                             } else if ( arg instanceof Property ) {
                                 prop = (Property)arg;
-                                objects.addAll( Utils.getElementPropertyValues( (Element)source,
-                                                                                prop,
-                                                                                true ) );
+                                propVals = Utils.getElementPropertyValues( (Element)source,
+                                                                           prop,
+                                                                           true );
+                            }
+                            if ( !Utils2.isNullOrEmpty( propVals ) ) {
+                                filterAlreadyUsed = true;
+                                objects.addAll( propVals );
                             }
                         }
                         if ( !objects.isEmpty() ) {
                             objectToAdd = objects;
-                            filter = false;
-                        } // TODO -- REVIEW -- is setting filter like this ok if in a loop?
+                        }
                     }
                     boolean one = !filter && (onlyOneForAll || (asCollection && coll != null && onlyOnePer));
 
@@ -279,7 +284,8 @@ public class GetCallOperation implements CallOperation {
 //                                && Utils2.isNullOrEmpty(filterArgs);
                         objectToAdd = EmfUtils.getValues(source, null, true, true, one, false, null);
                     }
-                    if ( Utils2.isNullOrEmpty( objectToAdd ) ) {
+                    if ( Utils2.isNullOrEmpty( objectToAdd ) &&
+                         Utils2.isNullOrEmpty(args) ) {
                         objectToAdd = source;
                     }
                 }
@@ -338,7 +344,7 @@ public class GetCallOperation implements CallOperation {
             // TODO -- apply filter while collecting above for efficiency in
             // case returning only one!
             // REVIEW -- this todo above may already be done
-            if (filter && resultType != CallReturnType.VALUE) {
+            if (filter && !filterAlreadyUsed) {
                 if (!Utils2.isNullOrEmpty(args)) {
                     objectToAdd = EmfUtils.collectOrFilter(adder, objectToAdd, !filter,
                             (onlyOneForAll || (isCollection && onlyOnePer)), useName, useType, useValue,
