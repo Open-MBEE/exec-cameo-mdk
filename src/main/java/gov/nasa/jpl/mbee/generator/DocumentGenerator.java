@@ -703,7 +703,7 @@ public class DocumentGenerator {
         if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.imageStereotype)) {
             dge = new Image();
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.paragraphStereotype)) {
-            dge = new Paragraph();
+            dge = new Paragraph(context.getValidator());
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.bulletedListStereotype)) {
             dge = new BulletedList();
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.dependencyMatrixStereotype)) {
