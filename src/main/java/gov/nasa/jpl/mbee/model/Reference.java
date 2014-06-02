@@ -193,4 +193,33 @@ public class Reference {
      * else { Reference ref = new Reference(element, from, result);
      * entries.add(ref); } } return entries; }
      */
+    
+    /**
+     * @return the result
+     */
+    public Object getResult() {
+        return result;
+    }
+
+    /**
+     * @param result the result to set
+     */
+    public void setResult( Object result ) {
+        this.result = result;
+    }
+
+    /**
+     * @return the element
+     */
+    public Element getElement() {
+        return element;
+    }
+
+    /**
+     * @return the from
+     */
+    public From getFrom() {
+        return from;
+    }
+    
 }
