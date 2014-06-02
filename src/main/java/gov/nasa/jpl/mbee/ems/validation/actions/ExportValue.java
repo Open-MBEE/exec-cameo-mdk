@@ -65,7 +65,9 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
     private Element element;
     
     public ExportValue(Element e) {
-        super("ExportValue", "Export value", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportValue", "Commit value", null, null);
         this.element = e;
     }
     

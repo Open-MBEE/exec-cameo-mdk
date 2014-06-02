@@ -61,7 +61,9 @@ public class ExportViewCommentsAction extends MDAction {
     public static final String actionid = "ExportViewComments";
 
     public ExportViewCommentsAction(Element e) {
-        super(actionid, "Export View Comments", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super(actionid, "Commit View Comments", null, null);
         doc = e;
     }
 
@@ -113,7 +115,9 @@ public class ExportViewCommentsAction extends MDAction {
                 if (response.equals("NotFound"))
                     gl.log("[ERROR] There are some views that are not exported yet, export the views first, then the comments");
                 else if (response.equals("ok"))
-                    gl.log("[INFO] Export Successful.");
+                	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+                	//
+                    gl.log("[INFO] Commit Successful.");
                 else
                     gl.log(response);
 

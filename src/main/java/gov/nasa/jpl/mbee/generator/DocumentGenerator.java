@@ -275,7 +275,8 @@ public class DocumentGenerator {
                     }
                 }
             }
-            if (expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
+            //MDEV-555 only do view replacement if using class views
+            if (view instanceof Class && expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
                 return parseView(expose.get(0)); // substitute another view
             }
             if (view instanceof Diagram) { // if a diagram, show diagram and
@@ -702,7 +703,7 @@ public class DocumentGenerator {
         if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.imageStereotype)) {
             dge = new Image();
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.paragraphStereotype)) {
-            dge = new Paragraph();
+            dge = new Paragraph(context.getValidator());
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.bulletedListStereotype)) {
             dge = new BulletedList();
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.dependencyMatrixStereotype)) {
