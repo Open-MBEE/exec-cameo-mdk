@@ -52,8 +52,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     protected JSONObject elements;
     private JSONObject   views;
-    private JSONArray                 curContains;
-    private Stack<JSONArray>          sibviews;
+    private Stack<JSONArray>          curContains;  //MDEV #674 -- change to a Stack of JSONArrays
+    private Stack<JSONArray>          sibviews; //sibling views
     private Stack<Set<String>>        viewElements;
     private Map<String, JSONObject>   images;        
     protected boolean                 recurse;
@@ -63,15 +63,17 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stereotype viewpoint = Utils.getViewpointStereotype();
     private Map<From, String> sourceMapping;
     private JSONObject                view2view;
-    private JSONArray                  noSections = new JSONArray();
+    private JSONArray                 noSections = new JSONArray();
     private boolean doc;
     protected Set<Element> elementSet = new HashSet<Element>();
     
     public DBAlfrescoVisitor(boolean recurse) {
         elements = new JSONObject();
         views = new JSONObject();
+        curContains = new Stack<JSONArray>();
         sibviews = new Stack<JSONArray>();
         viewElements = new Stack<Set<String>>();
+
         this.recurse = recurse;
         gl = Application.getInstance().getGUILog();
         images = new HashMap<String, JSONObject>();
@@ -127,7 +129,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             entry.put("sourceProperty", sourceMapping.get(From.DOCUMENTATION));
             entry.put("type", "Paragraph");
             entry.put("sourceType", "reference");
-            curContains.add(entry);
+            curContains.peek().add(entry);
             //endView(docview);
         }
         if (recurse || !doc) {
@@ -201,11 +203,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         imageEntry.put("extension", FILE_EXTENSION);
         images.put(svgFilename, imageEntry);
 
-        entry.put("text", "<p><img src=\"/editor/images/docgen/" + svgCrcFilename + "\" alt=\""
-                + image.getImage().getName() + "\"/></p>");
-        entry.put("sourceType", "text");
-        entry.put("type", "Paragraph");
-        curContains.add(entry);
+        //MDEV #674 -- Update the type and id: was hard coded.
+        //
+        entry.put("type", "Image");
+        entry.put("id", image.getImage().getID());
+        curContains.peek().add(entry);
     }
 
     @SuppressWarnings("unchecked")
@@ -213,7 +215,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     public void visit(DBList list) {
         DBAlfrescoListVisitor l = new DBAlfrescoListVisitor(recurse, elements);
         list.accept(l);
-        curContains.add(l.getObject());
+        curContains.peek().add(l.getObject());
         viewElements.peek().addAll(l.getListElements());
         elementSet.addAll(l.getElementSet());
     }
@@ -222,7 +224,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @Override
     public void visit(DBParagraph para) {
         JSONObject entry = getJSONForDBParagraph(para);
-        curContains.add(entry);
+        curContains.peek().add(entry);
     }
 
     @SuppressWarnings("unchecked")
@@ -245,7 +247,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @Override
     public void visit(DBText text) {
         JSONObject entry = getJSONForDBText(text);
-        curContains.add(entry);
+        curContains.peek().add(entry);
     }
 
     @SuppressWarnings("unchecked")
@@ -281,18 +283,31 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                 noSections.add(eview.getID());
             endView(eview);
         } else {
-            // addToViews(fake, false)
-            // gen fakeid
-            // sibviews.peek().add(fakeid);
-            // JSONArray childViews = new JSONArray();
-            // sibviews.push(childViews);
-            // view2view.put(fakeid, childViews);
-            // for (DocumentElement de: section.getChildren()) {
-            // if (recurse || !(de instanceof DBSection))
-            // de.accept(this);
-            // }
-
-            // sibviews.pop();
+        	
+        	//JJS -- MDEV #674.
+        	//NOTE: for a Section, add a element with type = "Section"
+        	//and the name is set to the section title.
+        	//Create an array to hold the elements contained within
+        	//this section.
+        	//
+        	Element eSection = section.getFrom();
+        	JSONObject newSection = new JSONObject();
+        	
+        	newSection.put("type", "Section");
+        	newSection.put("name", section.getTitle());
+        	
+        	JSONArray secArray = new JSONArray();
+        	newSection.put("contains", secArray);
+        	this.curContains.peek().add(newSection);
+        	this.curContains.push(secArray);
+        	
+            for (DocumentElement de: section.getChildren()) {
+                de.accept(this);
+            }
+            //Remove the current JSONArray from
+            //the stack.
+            //
+            this.curContains.pop();
         }
     }
 
@@ -305,7 +320,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         entry.put("sourceType", "text");
         entry.put("text", html.getOut());
         entry.put("type", "Paragraph"); // just show it as html for now
-        curContains.add(entry);
+        curContains.peek().add(entry);
     }
 
     @SuppressWarnings("unchecked")
@@ -313,11 +328,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     public void visit(DBTable table) {
         DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse, elements);
         table.accept(v);
-        curContains.add(v.getObject());
+        curContains.peek().add(v.getObject());
         viewElements.peek().addAll(v.getTableElements());
         elementSet.addAll(v.getElementSet());
     }
-
+        
     @SuppressWarnings("unchecked")
     protected void startView(Element e) {
         //gl.log("Processing view: " + ((NamedElement)e).getName());
@@ -327,9 +342,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         views.put(id, view);
         Set<String> viewE = new HashSet<String>();
         viewElements.push(viewE);
+        //JJS : may need to make this a Stack
         JSONArray contains = new JSONArray();
         view.put("contains", contains);
-        this.curContains = contains;
+        this.curContains.push(contains);
         addToElements(e);
         //MDEV-443 add view exposed elements to view elements
         for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
@@ -350,6 +366,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (recurse && !doc)
             view.put("childrenViews", sibviews.peek());
         view2view.put(e.getID(), sibviews.pop());
+        this.curContains.pop();
     }
 
     @SuppressWarnings("unchecked")
