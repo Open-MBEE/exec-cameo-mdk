@@ -42,6 +42,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportOwner extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -50,7 +51,9 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
     private Element element;
     
     public ExportOwner(Element e) {
-        super("ExportOwner", "Export owner", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportOwner", "Commit owner", null, null);
         this.element = e;
     }
     
@@ -69,7 +72,11 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
             Element e = (Element)anno.getTarget();
             set.add(e);
             JSONObject info = new JSONObject();
-            info.put("owner", e.getOwner().getID());
+            Element owner = e.getOwner();
+            String ownerId = owner.getID();
+            if (owner == Application.getInstance().getProject().getModel())
+                ownerId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+            info.put("owner", ownerId);
             info.put("id", ExportUtility.getElementID(e));
             infos.add(info);
         }
@@ -94,7 +101,11 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        info.put("owner", element.getOwner().getID());
+        Element owner = element.getOwner();
+        String ownerId = owner.getID();
+        if (owner == Application.getInstance().getProject().getModel())
+            ownerId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        info.put("owner", ownerId);
         info.put("id", ExportUtility.getElementID(element));
         
         elements.add(info);

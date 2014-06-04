@@ -77,7 +77,9 @@ public class ImportViewCommentsAction extends MDAction {
     public static final String actionid = "ImportViewComments";
 
     public ImportViewCommentsAction(Element e) {
-        super(actionid, "Import View Comments", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super(actionid, "Accept View Comments", null, null);
         doc = e;
     }
 
@@ -90,7 +92,9 @@ public class ImportViewCommentsAction extends MDAction {
         // user will commit)
         GUILog gl = Application.getInstance().getGUILog();
         try {
-            Boolean recurse = Utils.getUserYesNoAnswer("Import view comments recursively?");
+        	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        	//
+            Boolean recurse = Utils.getUserYesNoAnswer("Accept view comments recursively?");
             if (recurse == null)
                 return;
             String url = ViewEditUtils.getUrl();
@@ -162,7 +166,9 @@ public class ImportViewCommentsAction extends MDAction {
         int cannot = 0;
         int notfound = 0;
         try {
-            ValidationSuite vs = new ValidationSuite("Import View Comments");
+        	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        	//
+            ValidationSuite vs = new ValidationSuite("Accept View Comments");
             ValidationRule createdR = new ValidationRule("Create", "Comment created", ViolationSeverity.INFO);
             ValidationRule modifiedR = new ValidationRule("Modified", "Comment modified",
                     ViolationSeverity.INFO);
@@ -292,7 +298,9 @@ public class ImportViewCommentsAction extends MDAction {
             SessionManager.getInstance().closeSession();
             Collection<ValidationSuite> cvs = new ArrayList<ValidationSuite>();
             cvs.add(vs);
-            Utils.displayValidationWindow(cvs, "Import View Comments Results");
+        	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        	//
+            Utils.displayValidationWindow(cvs, "Accept View Comments Results");
             gl.log("[INFO] Created: " + created);
             gl.log("[INFO] Modified: " + modified);
             gl.log("[INFO] Deleted: " + numdeleted);

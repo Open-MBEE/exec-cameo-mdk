@@ -155,7 +155,9 @@ public class ViewExporter implements RunnableWithProgress {
                     return;
                 String response = pm.getResponseBodyAsString();
                 if (response.equals("ok"))
-                    gl.log("[INFO] Export Successful.");
+                	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+                	//
+                    gl.log("[INFO] Commit Successful.");
                 else
                     gl.log(response);
             } catch (Exception ex) {
@@ -173,7 +175,9 @@ public class ViewExporter implements RunnableWithProgress {
             postView(doc, recurse);
         }
         if (vs.hasErrors()) {
-            Utils.displayValidationWindow(cvs, "View Export Results (Changed Elements)");
+        	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+        	//
+            Utils.displayValidationWindow(cvs, "View CommitResults (Changed Elements)");
             gl.log("[INFO] See changed element info in validation window.");
         }
         // if synchronizing views
@@ -244,7 +248,9 @@ public class ViewExporter implements RunnableWithProgress {
                 return false;
             String response = pm.getResponseBodyAsString();
             if (response.equals("ok"))
-                gl.log("[INFO] Export Successful.");
+            	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+            	//
+                gl.log("[INFO] Commit Successful.");
             else if (response.startsWith("[")) {
 
                 for (Object o: (JSONArray)JSONValue.parse(response)) {
@@ -261,7 +267,9 @@ public class ViewExporter implements RunnableWithProgress {
                     }
                 }
 
-                gl.log("[INFO] Export Successful.");
+            	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+            	//
+                gl.log("[INFO] Commit Successful.");
 
             } else
                 gl.log(response);

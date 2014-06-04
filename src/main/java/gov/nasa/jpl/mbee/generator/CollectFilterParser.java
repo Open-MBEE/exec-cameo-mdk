@@ -261,7 +261,8 @@ public class CollectFilterParser {
             List<Object> blah = new ArrayList<Object>();
             for (Element e: in)
                 for (Property p: stereotypeProperties)
-                    blah.addAll(Utils.getStereotypePropertyValues(e, p, true));
+                    //blah.addAll(StereotypesHelper.getStereotypePropertyValue(e, (Stereotype)p.getOwner(), p));
+                    blah.addAll(Utils.collectByStereotypeProperty(e, p));
             for (Object b: blah)
                 if (b instanceof Element)
                     res.add((Element)b);

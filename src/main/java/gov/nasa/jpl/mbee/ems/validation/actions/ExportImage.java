@@ -57,7 +57,9 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
     private Map<String, JSONObject> images;
     
     public ExportImage(Element e, Map<String, JSONObject> images) {
-        super("ExportImage", "Export image", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+       super("ExportImage", "Commit image", null, null);
         this.element = e;
         this.images = images;
     }

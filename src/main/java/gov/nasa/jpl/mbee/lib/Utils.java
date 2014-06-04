@@ -1238,6 +1238,29 @@ public class Utils {
         return collectDirectedRelatedElementsByRelationshipStereotypes(e, s, direction, derived, depth);
     }
 
+    public static List<Object> collectByStereotypeProperty(Element e, Property p) {
+        List<Object> results = new ArrayList<Object>();
+        if (p.getOwner() instanceof Stereotype) {
+            results.addAll(StereotypesHelper.getStereotypePropertyValue(e, (Stereotype)p.getOwner(), p));
+        }
+        if (results.isEmpty()) {
+            try {
+                Object value = e.refGetValue(p.getName()); // i think this
+                                                                 // only works
+                                                                 // for derived
+                                                                 // properties
+                if (value != null) {
+                    if (value instanceof Collection)
+                        results.addAll((Collection<?>)value);
+                    else
+                        results.add(value);
+                }
+            } catch (Throwable t) { // ignore
+            }
+        }
+        return results;
+    }
+    
     protected static void badDirectionError(int direction, String methodSignature) {
         Debug.error("Error! Bad direction " + direction + " for " + methodSignature
                 + "; using direction = 0 (both directions).");
@@ -2758,8 +2781,7 @@ public class Utils {
     }
 
     /**
-     * Gets list of values for a stereotype property, supports derived
-     * properties in customizations
+     * Gets list of values for a stereotype property, this returns valuespecs
      * 
      * @param e
      * @param p
@@ -2882,7 +2904,12 @@ public class Utils {
             // To handle arrays, etc.
             o = MoreToString.Helper.toString( o );
         }
-        MdDebug.logForce( o.toString(), true, false, color );
+        GUILog log = Application.getInstance().getGUILog();
+        if ( log != null ) {
+            log.log( "" + o );
+        }
+
+        //MdDebug.logForce( o.toString(), true, false, color );
     }
     public static void log(Object o, Object color) {
         if ( color == null || color instanceof Color ) {

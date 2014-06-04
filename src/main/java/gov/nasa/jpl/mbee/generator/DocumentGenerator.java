@@ -267,7 +267,16 @@ public class DocumentGenerator {
         } else { // view does not conform to a viewpoint, apply default behavior
             List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
                     DocGen3Profile.queriesStereotype, 1, false, 1);
-            if (expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
+            if (view instanceof Class) {
+                for (TypedElement te: ((Class)view).get_typedElementOfType()) {
+                    if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
+                        expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(te, 
+                                DocGen3Profile.queriesStereotype, 1, false, 1));
+                    }
+                }
+            }
+            //MDEV-555 only do view replacement if using class views
+            if (view instanceof Class && expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
                 return parseView(expose.get(0)); // substitute another view
             }
             if (view instanceof Diagram) { // if a diagram, show diagram and
@@ -319,6 +328,8 @@ public class DocumentGenerator {
      */
     @SuppressWarnings("unchecked")
     public Object parseActivityOrStructuredNode(Element a, Container parent) {
+        if (a == null || parent == null)
+            return null;
         Debug.outln("parseActivityOrStructuredNode( " + a.getHumanName() + ", " + a.getID() + ", "
                 + parent.getStringIfEmpty() + ")");
         InitialNode in = GeneratorUtils.findInitialNode(a);
@@ -692,7 +703,7 @@ public class DocumentGenerator {
         if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.imageStereotype)) {
             dge = new Image();
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.paragraphStereotype)) {
-            dge = new Paragraph();
+            dge = new Paragraph(context.getValidator());
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.bulletedListStereotype)) {
             dge = new BulletedList();
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.dependencyMatrixStereotype)) {

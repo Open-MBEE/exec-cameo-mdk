@@ -48,7 +48,9 @@ public class ExportElementComments extends RuleViolationAction implements Annota
     private Element element;
     
     public ExportElementComments(Element e) {
-        super("ExportElementComments", "Export element comments", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportElementComments", "Commit element comments", null, null);
         this.element = e;
     }
     

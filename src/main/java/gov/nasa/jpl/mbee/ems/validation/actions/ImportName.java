@@ -54,7 +54,9 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
     private String name;
     private JSONObject result;
     public ImportName(NamedElement e, String name, JSONObject result) {
-        super("ImportName", "Import name", null, null);
+    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+    	//
+        super("ImportName", "Accept name", null, null);
         this.element = e;
         this.name = name;
         this.result = result;

@@ -157,8 +157,10 @@ public class ViewValidator {
                 return false;
             if (response == null || !response.contains("contains")) {
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
-                v.addAction(new ExportView(currentView, false));
-                v.addAction(new ExportView(currentView, true));
+                v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
+                v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
+                v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
+                v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
                 exists.addViolation(v);
             } else {
                 String viewElementsUrl = existurl + "/elements";
@@ -173,18 +175,21 @@ public class ViewValidator {
                 boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
                 boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, response);
                 if (!matches) {
-                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor has an outdated version");
-                    v.addAction(new ExportView(currentView, false));
-                    v.addAction(new ExportView(currentView, true));
+                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor structure is outdated.");
+                    v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
+                    v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
+                    v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
+                    v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
+                    
                     //v.addAction(new ExportHierarchy(currentView));
                     match.addViolation(v);
                 } 
                 if (!hierarchyMatches) {
-                    if (!viewHierarchyMatch(currentView, dge, vhv, response)) {
+                    //if (!viewHierarchyMatch(currentView, dge, vhv, response)) {
                         ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy] The hierarchy from this view/doc is outdated");
                         v.addAction(new ExportHierarchy(currentView));
                         hierarchy.addViolation(v);
-                    }
+                    //}
                 }
                 for (Object reselement: (JSONArray)viewresults.get("elements")) {
                     if (cachedResultElements.containsKey(((JSONObject)reselement).get("id")))
@@ -210,8 +215,8 @@ public class ViewValidator {
         }
         resultElements.addAll(cachedResultElements.values());
         ResultHolder.lastResults = results;
-        ModelValidator mv = new ModelValidator(view, results, false, visitor2.getElementSet());
-        mv.validate();
+        ModelValidator mv = new ModelValidator(view, results, true, visitor2.getElementSet());
+        mv.validate(false);
         modelSuite = mv.getSuite();
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         iv.validate();

@@ -56,7 +56,9 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
     private Stereotype viewpoint = Utils.getViewpointStereotype();
     
     public ExportElement(Element e) {
-        super("ExportElement", "Export element", null, null);
+    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+    	//
+        super("ExportElement", "Commit element", null, null);
         this.element = e;
     }
     
