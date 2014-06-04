@@ -186,7 +186,7 @@ public class Paragraph extends Query {
         List< Reference > refs = new ArrayList< Reference >();
         if (getIgnore())
             return res;
-        boolean gotText = getText() != null && !getText().equals("");
+        boolean gotText = getText() != null;// && !getText().equals("");
         boolean gotTargets = getTargets() != null && !getTargets().isEmpty();
         boolean gotStereotypeProperties = 
                 !Utils2.isNullOrEmpty( getStereotypeProperties() );
@@ -203,7 +203,13 @@ public class Paragraph extends Query {
                 Stereotype paragraphStereotype = Utils.getStereotype( DocGen3Profile.paragraphStereotype );
                 Slot s = Utils.getSlot( getDgElement(), Utils.getStereotypePropertyByName( paragraphStereotype, "body" ) );
                 //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
-                res.add(new DBParagraph(getText(), s, From.DVALUE));
+                if (s == null) {
+                    if (getDgElement() != null && getFrom() != null)
+                        res.add(new DBParagraph(getText(), getDgElement(), getFrom()));
+                    else
+                        res.add(new DBParagraph(getText()));
+                } else
+                    res.add(new DBParagraph(getText(), s, From.DVALUE));
             } //else {
                 //res.add(new DBParagraph(getText()));
             //}
