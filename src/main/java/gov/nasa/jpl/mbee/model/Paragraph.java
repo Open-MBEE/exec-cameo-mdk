@@ -40,8 +40,10 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Stack;
 
@@ -135,22 +137,60 @@ public class Paragraph extends Query {
 //        super.parse();
 //    }
 
-    protected void addOclParagraph(List<DocumentElement> res, Object oclExpression, Object context) {
+    protected void addOclParagraph( List< DocumentElement > res,
+                                    Object oclExpression, Object context ) {
+        addOclParagraph( res, oclExpression, context, new HashSet< Object >() );
+    }
+
+    protected void addOclParagraph( List< DocumentElement > res,
+                                    Object oclExpression, Object context,
+                                    HashSet< Object > seen ) {
+        // check for infinite recursion
+        if ( seen.contains( oclExpression ) ) return;
+        seen.add( oclExpression );
+        
+        if ( oclExpression instanceof Collection ) {
+            Collection<?> oclColl = (Collection<?>)oclExpression;
+            for ( Object ocl : oclColl ) {
+                addOclParagraph( res, ocl, context, seen );
+            }
+            return;
+        }
         Debug.outln( "addOclParagraph(" + res + ", \"" + oclExpression
                             + "\", " + context + ")" + " class(" + context.getClass() + ")");
         Object result =
                 DocumentValidator.evaluate( oclExpression, context,
                                             getValidator(), true );
         Debug.outln("ocl result = " + result);
-        if ( result instanceof Collection && ((Collection<?>)result).size() == 1 ) {
-            result = ( (Collection< ? >)result ).iterator().next();
-        }
+
+//        if ( result instanceof Collection && ((Collection<?>)result).size() == 1 ) {
+//            result = ( (Collection< ? >)result ).iterator().next();
+//        }
         
+        addAttributeParagraphs( res, result );
+    }
+    
+    public void addAttributeParagraphs( List<DocumentElement> res, Object result ) {
         if ( result instanceof Element && getFrom() != null ) {
             Element e = (Element)result;
-            res.add( new DBParagraph( Utils.getElementAttribute( e, attribute ), e, getFrom() ) );
-        } else if ( !Utils2.isNullOrEmpty( result ) ){
-            res.add( new DBParagraph( result ) );
+            Object v = Utils.getElementAttribute( e, attribute );
+            if ( !Utils2.isNullOrEmpty( v ) ) {
+                res.add( new DBParagraph( v, e, getFrom() ) );
+            }
+        } else if ( !Utils2.isNullOrEmpty( result ) ) {
+            if ( result instanceof Collection ) {
+                // Get the attribute for each element in the result list and
+                // create a paragraph for each.
+                // TODO -- REVIEW -- Do we want to make this a DBList so that we
+                // can distinguish nested collections as subparagraphs?
+                for ( Object o : (Collection<?>)result ) {
+                    addAttributeParagraphs( res, o );
+                }
+            } else {
+                if ( !Utils2.isNullOrEmpty( result ) ) {
+                    res.add( new DBParagraph( result ) );
+                }
+            }
         }
     }
     
@@ -186,24 +226,36 @@ public class Paragraph extends Query {
         List< Reference > refs = new ArrayList< Reference >();
         if (getIgnore())
             return res;
-        boolean gotText = getText() != null && !getText().equals("");
+        boolean gotText = getText() != null;// && !getText().equals("");
         boolean gotTargets = getTargets() != null && !getTargets().isEmpty();
         boolean gotStereotypeProperties = 
                 !Utils2.isNullOrEmpty( getStereotypeProperties() );
+        boolean allTargetsAreProperties = false;
         Debug.outln("gotText = " + gotText + ", " + getText());
         Debug.outln("gotTargets = " + gotTargets + ", " + MoreToString.Helper.toLongString( getTargets()) );
         Debug.outln("gotStereotypeProperties = " + gotStereotypeProperties + ", " + getStereotypeProperties());
         Debug.outln("desiredAttribute = " + attribute);
         if (gotText && !tryOcl) { // ignoring targets -- should be none -- REVIEW
             Debug.outln( "case 4" );
-            // case 4: return a paragraph of the text, tied to an attribute (the
-            // Documentation attribute as set from parseView) of dgElement
+            // case 4: return a paragraph of the text, tied to the "body" slot
+            // of dgElement or the documentation of the dgElement if dgElement
+            // is something other than a Paragraph
             if (forViewEditor || !getText().trim().equals("")) {
                 //GeneratorUtils.getObjectProperty( getDgElement(), DocGen3Profile.paragraphStereotype, "body", null );
                 Stereotype paragraphStereotype = Utils.getStereotype( DocGen3Profile.paragraphStereotype );
                 Slot s = Utils.getSlot( getDgElement(), Utils.getStereotypePropertyByName( paragraphStereotype, "body" ) );
                 //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
-                res.add(new DBParagraph(getText(), s, From.DVALUE));
+                if (s != null) {
+                    res.add(new DBParagraph(getText(), s, From.DVALUE));
+                } else { // dgElement is not a Paragraph
+                    if (getDgElement() != null && getFrom() != null) {
+                        res.add(new DBParagraph(getText(), getDgElement(), getFrom()));
+                    } else if ( getDgElement() != null ) { // getFrom() must be null
+                        res.add(new DBParagraph(getText(), getDgElement(), From.DOCUMENTATION));
+                    } else {
+                        res.add(new DBParagraph(getText()));
+                    }
+                }
             } //else {
                 //res.add(new DBParagraph(getText()));
             //}
@@ -212,7 +264,19 @@ public class Paragraph extends Query {
             // case 7: return a paragraph of the evaluation of the text as OCL on dgElement 
             addOclParagraph( res, getText(), dgElement );
         } else if ( gotTargets ) {
-            // build up a list of References before generating DBParagraphs
+            // In case 5, we get the OCL from the targets; if the targets are
+            // Properties, then we look for the OCL in their values; otherwise,
+            // we use the documentation as OCL.
+            allTargetsAreProperties = true;
+            for (Object o: targets) {
+                if ( o != null && !( o instanceof Property ) ) {
+                    if ( ! ( o instanceof Slot ) ) {
+                        allTargetsAreProperties = false;
+                        break;
+                    }
+                }
+            }
+            // Build up a list of References before generating DBParagraphs.
             for (Object o: targets) {
                 Element e = null;
                 if ( o instanceof Element ) {
@@ -234,7 +298,13 @@ public class Paragraph extends Query {
                     } else {
                         Debug.outln( "case 2 or 5" );
                         // for cases 2 and 5
-                        ref = new Reference(e, From.DOCUMENTATION, ModelHelper.getComment(e));
+                        //Object ocl = allTargetsAreProperties ? : ModelHelper.getComment( e );
+                        if ( allTargetsAreProperties ) {
+                            Object v = Utils.getElementAttribute( e, AvailableAttribute.Value );
+                            ref = new Reference(e, From.DVALUE, v);
+                        } else {
+                            ref = new Reference(e, From.DOCUMENTATION, ModelHelper.getComment(e));
+                        }
                     }
                     refs.add( ref );
                 }
