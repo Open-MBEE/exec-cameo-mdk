@@ -667,11 +667,13 @@ public class ExportUtility {
 			elementInfo.put("name", "");
 		
 		elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
-		if (e.getOwner() == null || e.getOwner() == Application.getInstance().getProject().getModel())
-			elementInfo.put("owner", "null");
+		if (e.getOwner() == null)
+				elementInfo.put("owner", "null");
+		else if (e.getOwner() == Application.getInstance().getProject().getModel())
+			elementInfo.put("owner", Application.getInstance().getProject().getPrimaryProject().getProjectID());
 		else
 			elementInfo.put("owner", "" + e.getOwner().getID());
-		elementInfo.put("id", getElementID(e));
+		elementInfo.put("sysmlid", getElementID(e));
 	}
 
 	// TODO -- Can DocGenUtils.getLiteralValue() be used to simplify this; maybe

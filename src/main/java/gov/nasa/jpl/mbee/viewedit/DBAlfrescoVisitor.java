@@ -335,16 +335,24 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         
     @SuppressWarnings("unchecked")
     protected void startView(Element e) {
-        //gl.log("Processing view: " + ((NamedElement)e).getName());
         JSONObject view = new JSONObject();
+        JSONObject specialization = new JSONObject();
+        
+        //MDEV #673
+        //Update code to create a specialization
+        //object and then insert appropriate
+        //sub-elements in that specialization object.
+        //
+        specialization.put("type", "View");
+        view.put("specialization", specialization);
         String id = e.getID();
-        view.put("id", id);
+        view.put("sysmlid", id);
         views.put(id, view);
         Set<String> viewE = new HashSet<String>();
         viewElements.push(viewE);
         //JJS : may need to make this a Stack
         JSONArray contains = new JSONArray();
-        view.put("contains", contains);
+        specialization.put("contains", contains);
         this.curContains.push(contains);
         addToElements(e);
         //MDEV-443 add view exposed elements to view elements
@@ -360,11 +368,16 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     protected void endView(Element e) {
         JSONArray viewEs = new JSONArray();
         viewEs.addAll(viewElements.pop());
+        //MDEV #673: update code to use the
+        //specialization element.
+        //
         JSONObject view = (JSONObject)views.get(e.getID());
-        view.put("displayedElements", viewEs);
-        view.put("allowedElements", viewEs);
+        JSONObject specialization = (JSONObject)view.get("specialization");
+        
+        specialization.put("displayedElements", viewEs);
+        specialization.put("allowedElements", viewEs);
         if (recurse && !doc)
-            view.put("childrenViews", sibviews.peek());
+        	specialization.put("childrenViews", sibviews.peek());
         view2view.put(e.getID(), sibviews.pop());
         this.curContains.pop();
     }

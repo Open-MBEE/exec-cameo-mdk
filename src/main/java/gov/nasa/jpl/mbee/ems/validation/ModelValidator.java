@@ -173,12 +173,14 @@ public class ModelValidator {
     private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all) {
         //Set<Element> all = new HashSet<Element>();
         Set<String> checked = new HashSet<String>();
-        //getAllMissing(start, all, elementsKeyed);
+
+        //MDEV #673: update to handle specialization elements.
+        //
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
         for (JSONObject elementInfo: (List<JSONObject>)elements) {
-            String elementId = (String)elementInfo.get("id");
+            String elementId = (String)elementInfo.get("sysmlid");
             if (elementId.contains("-slot-")) {
                 Element e = ExportUtility.getElementFromID(elementId);
                 if (e != null)
@@ -296,9 +298,10 @@ public class ModelValidator {
             if (v != null)
                 valueDiff.addViolation(v);
         } else if (e instanceof DirectedRelationship) {
-            String websourceId = (String)elementInfo.get("source");
+        	JSONObject specialization = (JSONObject)elementInfo.get("specialization");
+            String websourceId = (String)specialization.get("source");
             Element websource = null;
-            String webtargetId = (String)elementInfo.get("target");
+            String webtargetId = (String)specialization.get("target");
             Element webtarget = null;
             Element localsource = ModelHelper.getClientElement(e);
             Element localtarget = ModelHelper.getSupplierElement(e);
@@ -347,9 +350,24 @@ public class ModelValidator {
     
     
     private ValidationRuleViolation valueDiff(Property e, JSONObject info) {
+    	//MDEV #673
+    	//
+    	JSONObject specialization = (JSONObject)info.get("specialization");
+    	String valueTypes;
+    	JSONObject firstObject = null;
+    	
         ValueSpecification vs = e.getDefaultValue();
-        String valueTypes = (String)info.get("valueType");
-        JSONArray value = (JSONArray)info.get("value");
+        JSONArray value = (JSONArray)specialization.get("value");
+        if ((value==null) || (value.isEmpty()))
+        	valueTypes = null;
+        else {
+        	//retrieve the type of the first element
+        	//in the value array.
+        	//
+        	firstObject = (JSONObject)value.get(0);
+        	valueTypes = (String)firstObject.get("type");
+        }
+        
         if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
                 (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null))
                 && (valueTypes == null || value == null || value.isEmpty()))
@@ -379,8 +397,8 @@ public class ModelValidator {
         if (valueType == PropertyValueType.LiteralString) {
             if (vs instanceof LiteralString) {
                 modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
-                webString = ExportUtility.cleanHtml((String)value.get(0));
-                value.set(0, webString);
+                webString = ExportUtility.cleanHtml((String)firstObject.get("string"));
+                firstObject.put("string", webString);
                 if (!modelString.equals(webString)) {
                     stringMatch = true;
                     message = "[VALUE] model: " + truncate(modelString) + ", web: " + truncate(webString);
@@ -390,7 +408,7 @@ public class ModelValidator {
             }
         } else if (valueType == PropertyValueType.LiteralBoolean) {
             if (vs instanceof LiteralBoolean) {
-                if ((Boolean)value.get(0) != ((LiteralBoolean)vs).isValue()) {
+                if ((Boolean)firstObject.get("boolean") != ((LiteralBoolean)vs).isValue()) {
                     message = "[VALUE] model: " + ((LiteralBoolean)vs).isValue() + ", web: " + value.toString();
                 }
             } else {
@@ -398,11 +416,11 @@ public class ModelValidator {
             }
         } else if (valueType == PropertyValueType.LiteralInteger) {
             if (vs instanceof LiteralInteger) {
-                if (((LiteralInteger)vs).getValue() != (Long)value.get(0)) {
+                if (((LiteralInteger)vs).getValue() != (Long)firstObject.get("integer")) {
                     message = "[VALUE] model: " + ((LiteralInteger)vs).getValue() + ", web: " + value.toString();
                 }
             } else if (vs instanceof LiteralUnlimitedNatural) {
-                if (((LiteralUnlimitedNatural)vs).getValue() != (Long)value.get(0)) {
+                if (((LiteralUnlimitedNatural)vs).getValue() != (Long)firstObject.get("naturalValue")) {
                     message = "[VALUE] model: " + ((LiteralUnlimitedNatural)vs).getValue() + ", web: " + value.toString();
                     valueType = PropertyValueType.LiteralUnlimitedNatural;
                 }
@@ -412,10 +430,10 @@ public class ModelValidator {
         } else if (valueType == PropertyValueType.LiteralReal) {
             if (vs instanceof LiteralReal) {
                 Double webValue = null;
-                if (value.get(0) instanceof Long)
-                    webValue = Double.parseDouble(((Long)value.get(0)).toString());
+                if (firstObject.get("double") instanceof Long)
+                    webValue = Double.parseDouble(((Long)firstObject.get("double")).toString());
                 else
-                    webValue = (Double)value.get(0);
+                    webValue = (Double)firstObject.get("double");
                 if (((LiteralReal)vs).getValue() != webValue) {
                     message = "[VALUE] model: " + ((LiteralReal)vs).getValue() + ", web: " + webValue.toString();
                 }
