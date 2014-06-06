@@ -129,21 +129,30 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
     @SuppressWarnings("unchecked")
     private JSONObject getInfo(Element e) {
         JSONObject elementInfo = new JSONObject();
+        JSONObject specialization = new JSONObject();
         JSONArray value = new JSONArray();
+        specialization.put("value", value);
+        specialization.put("type", "Property");
+        
         if (e instanceof Property) {
             ValueSpecification vs = ((Property)e).getDefaultValue();
             if (vs != null) {
-                ExportUtility.addValues(e, value, elementInfo, vs);
+            	JSONObject jsonObj = new JSONObject();
+            	ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
+                value.add(jsonObj);
             }
         } else if (e instanceof Slot) {
             List<ValueSpecification> vsl = ((Slot)e).getValue();
             if (vsl != null && vsl.size() > 0) {
                 for (ValueSpecification vs: vsl) {
-                    ExportUtility.addValues(e, value, elementInfo, vs);
+                	JSONObject jsonObj = new JSONObject();
+                	ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
+                    value.add(jsonObj);
                 }
             }
         }
-        elementInfo.put("id", ExportUtility.getElementID(e));
+        elementInfo.put("specialization", specialization);
+        elementInfo.put("sysmlid", ExportUtility.getElementID(e));
         return elementInfo;
     }
 /*    
