@@ -106,6 +106,7 @@ public class ModelValidator {
     private Set<Element> elementSet;
     
     public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet) {
+        //result is from web, elementSet is from model
         this.start = start;
         suite.addValidationRule(nameDiff);
         suite.addValidationRule(docDiff);
@@ -294,9 +295,9 @@ public class ModelValidator {
             if (v != null)
                 valueDiff.addViolation(v);
         } else if (e instanceof Comment) {
-            ValidationRuleViolation v = commentDiff((Comment)e, elementInfo);
-            if (v != null)
-                valueDiff.addViolation(v);
+            //ValidationRuleViolation v = commentDiff((Comment)e, elementInfo);
+            //if (v != null)
+             //   valueDiff.addViolation(v);
         } else if (e instanceof DirectedRelationship) {
         	JSONObject specialization = (JSONObject)elementInfo.get("specialization");
             String websourceId = (String)specialization.get("source");
@@ -358,7 +359,7 @@ public class ModelValidator {
     	
         ValueSpecification vs = e.getDefaultValue();
         JSONArray value = (JSONArray)specialization.get("value");
-        if ((value==null) || (value.isEmpty()))
+        if ((value == null) || (value.isEmpty()))
         	valueTypes = null;
         else {
         	//retrieve the type of the first element
@@ -370,11 +371,11 @@ public class ModelValidator {
         
         if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
                 (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null))
-                && (valueTypes == null || value == null || value.isEmpty()))
+                && (valueTypes == null))
             return null;
         if ((vs != null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) || 
                 (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() != null))
-                && (valueTypes == null || value == null || value.isEmpty())) {
+                && (valueTypes == null)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
             v.addAction(new ImportValue(e, null, null, result));
             v.addAction(new ExportValue(e));
@@ -388,7 +389,94 @@ public class ModelValidator {
             v.addAction(new ExportValue(e));
             return v;
         }
+        PropertyValueType valueType = PropertyValueType.valueOf((String)firstObject.get("type"));
+        Map<String, Object> results = valueSpecDiff(vs, firstObject);
+        String message = (String)results.get("message");
+        boolean stringMatch = (Boolean)results.get("stringMatch");
+        String webString = (String)results.get("webString");
+        String modelString = (String)results.get("modelString");
+        if (!message.equals("")) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, message);
+            if (stringMatch)
+                v.addAction(new CompareText(e, webString, modelString, result));
+            v.addAction(new ImportValue(e, value, valueType, result));
+            v.addAction(new ExportValue(e));
+            return v;
+        }
+        return null;
+    }
+    
+    private ValidationRuleViolation valueDiff(Slot e, JSONObject info) {
+        Debug.outln( "valueDiff(Slot:" + Utils.slotValueToString( e )
+                     + ", JSONObjec info=" + info );
+        JSONObject specialization = (JSONObject)info.get("specialization");
+        String valueTypes;
+        JSONObject firstObject = null;
+        
+        List<ValueSpecification> vss = e.getValue();
+        JSONArray value = (JSONArray)specialization.get("value");
+        if ((value == null) || (value.isEmpty()))
+            valueTypes = null;
+        else {
+            firstObject = (JSONObject)value.get(0);
+            valueTypes = (String)firstObject.get("type");
+        }
+        Debug.outln("JSONArray value = " + value);
+        boolean nullElementValues = areNullElementValues(vss);
+        if ((vss == null || vss.isEmpty() || nullElementValues) && (valueTypes == null)) {
+            Debug.outln("returning null: vs=" + vss + ", valueTypes=" + valueTypes + ", value=" + value);
+            return null;
+        }
+        if (vss != null && vss.size() > 0 && !nullElementValues && (valueTypes == null)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
+            v.addAction(new ImportValue(e, null, null, result));
+            v.addAction(new ExportValue(e));
+            Debug.outln("1) returning ValidationRuleViolation: " + v );
+            return v;
+        }
+        if ((vss == null || vss.isEmpty() || nullElementValues) && value != null && value.size() > 0 && valueTypes != null) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
+            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
+            v.addAction(new ExportValue(e));
+            Debug.outln("2) returning ValidationRuleViolation: " + v );
+            return v;
+        }
+        if ((vss.size() != value.size())) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model and web values don't match");
+            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
+            v.addAction(new ExportValue(e));
+            Debug.outln("3) returning ValidationRuleViolation: " + v );
+            return v;
+        }
+
         PropertyValueType valueType = PropertyValueType.valueOf(valueTypes);
+        String message = "";
+        String badMessage = "[VALUE] model: " + truncate(RepresentationTextCreator.getRepresentedText(e)) + ", web: " + truncate(value.toString());
+        String modelString = null;
+        String webString = null;
+        boolean stringMatch = false;
+        Map<String, Object> results = null;
+        for (int i = 0; i < vss.size(); i++) {
+            results = valueSpecDiff(vss.get(i), (JSONObject)value.get(i));
+            message = (String)results.get("message");
+            stringMatch = (Boolean)results.get("stringMatch");
+            webString = (String)results.get("webString");
+            modelString = (String)results.get("modelString");
+            if (!message.equals("")) {
+                ValidationRuleViolation v = new ValidationRuleViolation(e, message);
+                if (stringMatch)
+                    v.addAction(new CompareText(e, webString, modelString, result));
+                v.addAction(new ImportValue(e, value, valueType, result));
+                v.addAction(new ExportValue(e));
+                return v;
+            }
+        }        
+        return null;
+    }
+    
+    private Map<String, Object> valueSpecDiff(ValueSpecification vs, JSONObject firstObject) {
+        Map<String, Object> result = new HashMap<String, Object>();
+        PropertyValueType valueType = PropertyValueType.valueOf((String)firstObject.get("type"));
         String message = "";
         String typeMismatchMessage = "[VALUE] value spec types don't match";
         String modelString = null;
@@ -409,7 +497,7 @@ public class ModelValidator {
         } else if (valueType == PropertyValueType.LiteralBoolean) {
             if (vs instanceof LiteralBoolean) {
                 if ((Boolean)firstObject.get("boolean") != ((LiteralBoolean)vs).isValue()) {
-                    message = "[VALUE] model: " + ((LiteralBoolean)vs).isValue() + ", web: " + value.toString();
+                    message = "[VALUE] model: " + ((LiteralBoolean)vs).isValue() + ", web: " + firstObject.get("boolean");
                 }
             } else {
                 message = typeMismatchMessage;
@@ -417,12 +505,15 @@ public class ModelValidator {
         } else if (valueType == PropertyValueType.LiteralInteger) {
             if (vs instanceof LiteralInteger) {
                 if (((LiteralInteger)vs).getValue() != (Long)firstObject.get("integer")) {
-                    message = "[VALUE] model: " + ((LiteralInteger)vs).getValue() + ", web: " + value.toString();
+                    message = "[VALUE] model: " + ((LiteralInteger)vs).getValue() + ", web: " + firstObject.get("integer");
                 }
-            } else if (vs instanceof LiteralUnlimitedNatural) {
+            } else {
+                message = typeMismatchMessage;
+            }
+        } else if (valueType == PropertyValueType.LiteralUnlimitedNatural) {
+            if (vs instanceof LiteralUnlimitedNatural) {
                 if (((LiteralUnlimitedNatural)vs).getValue() != (Long)firstObject.get("naturalValue")) {
-                    message = "[VALUE] model: " + ((LiteralUnlimitedNatural)vs).getValue() + ", web: " + value.toString();
-                    valueType = PropertyValueType.LiteralUnlimitedNatural;
+                    message = "[VALUE] model: " + ((LiteralUnlimitedNatural)vs).getValue() + ", web: " + firstObject.get("naturalValue");
                 }
             } else {
                 message = typeMismatchMessage;
@@ -435,19 +526,23 @@ public class ModelValidator {
                 else
                     webValue = (Double)firstObject.get("double");
                 if (((LiteralReal)vs).getValue() != webValue) {
-                    message = "[VALUE] model: " + ((LiteralReal)vs).getValue() + ", web: " + webValue.toString();
+                    message = "[VALUE] model: " + ((LiteralReal)vs).getValue() + ", web: " + firstObject.get("double");
                 }
             } else {
                 message = typeMismatchMessage;
             }
         } else if (valueType == PropertyValueType.ElementValue) {
             if (vs instanceof ElementValue) {
-                if (((ElementValue)vs).getElement() == null || !ExportUtility.getElementID(((ElementValue)vs).getElement()).equals(value.get(0))) {
-                    message = "[VALUE] model: " + ((ElementValue)vs).getElement() + ", web: " + value.toString();
+                if (((ElementValue)vs).getElement() == null || !ExportUtility.getElementID(((ElementValue)vs).getElement()).equals(firstObject.get("element"))) {
+                    message = "[VALUE] model: " + ((ElementValue)vs).getElement() + ", web: " + firstObject.get("element");
                 }
-            } else if (vs instanceof InstanceValue) {
-                if (((InstanceValue)vs).getInstance() == null || !ExportUtility.getElementID(((InstanceValue)vs).getInstance()).equals(value.get(0))) {
-                    message = "[VALUE] model: " + ((InstanceValue)vs).getInstance() + ", web: " + value.toString();
+            } else {
+                message = typeMismatchMessage;
+            }
+        } else if (valueType == PropertyValueType.InstanceValue) {
+            if (vs instanceof InstanceValue) {
+                if (((InstanceValue)vs).getInstance() == null || !ExportUtility.getElementID(((InstanceValue)vs).getInstance()).equals(firstObject.get("instance"))) {
+                    message = "[VALUE] model: " + ((InstanceValue)vs).getInstance() + ", web: " + firstObject.get("instance");
                 }
             } else {
                 message = typeMismatchMessage;
@@ -458,153 +553,11 @@ public class ModelValidator {
         } else { //type of value in model and alfresco don't match or unknown type
             
         }   
-        if (!message.equals("")) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, message);
-            if (stringMatch)
-                v.addAction(new CompareText(e, webString, modelString, result));
-            v.addAction(new ImportValue(e, value, valueType, result));
-            v.addAction(new ExportValue(e));
-            return v;
-        }
-        return null;
-    }
-    
-    private ValidationRuleViolation valueDiff(Slot e, JSONObject info) {
-        Debug.outln( "valueDiff(Slot:" + Utils.slotValueToString( e )
-                     + ", JSONObjec info=" + info );
-        List<ValueSpecification> vs = e.getValue();
-        String valueTypes = (String)info.get("valueType");
-        JSONArray value = (JSONArray)info.get("value");
-        Debug.outln("JSONArray value = " + value);
-        boolean nullElementValues = areNullElementValues(vs);
-        if ((vs == null || vs.isEmpty() || nullElementValues) && (valueTypes == null || value == null || value.size() == 0)) {
-            Debug.outln("returning null: vs=" + vs + ", valueTypes=" + valueTypes + ", value=" + value);
-            return null;
-        }
-        if (vs != null && vs.size() > 0 && !nullElementValues && (valueTypes == null || value == null || value.size() == 0)) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
-            v.addAction(new ImportValue(e, null, null, result));
-            v.addAction(new ExportValue(e));
-            Debug.outln("1) returning ValidationRuleViolation: " + v );
-            return v;
-        }
-        if ((vs == null || vs.isEmpty() || nullElementValues) && value != null && value.size() > 0 && valueTypes != null) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
-            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
-            v.addAction(new ExportValue(e));
-            Debug.outln("2) returning ValidationRuleViolation: " + v );
-            return v;
-        }
-        if ((vs.size() != value.size())) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model and web values don't match");
-            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
-            v.addAction(new ExportValue(e));
-            Debug.outln("3) returning ValidationRuleViolation: " + v );
-            return v;
-        }
-
-        PropertyValueType valueType = PropertyValueType.valueOf(valueTypes);
-        String message = "";
-        String typeMismatchMessage = "[VALUE] value spec types don't match";
-        String badMessage = "[VALUE] model: " + truncate(RepresentationTextCreator.getRepresentedText(e)) + ", web: " + truncate(value.toString());
-        String modelString = null;
-        String webString = null;
-        boolean stringMatch = false;
-        if (valueType == PropertyValueType.LiteralString) {
-            if (vs.get(0) instanceof LiteralString) {
-                for (int i = 0; i < vs.size(); i++) {
-                    modelString = ExportUtility.cleanHtml(((LiteralString)vs.get(i)).getValue());
-                    webString = ExportUtility.cleanHtml((String)value.get(i));
-                    value.set(i, webString);
-                    if (!modelString.equals(webString)) {
-                        stringMatch = true;
-                        message = badMessage;
-                        break;
-                    }
-                }
-            } else {
-                message = typeMismatchMessage;
-            }
-        } else if (valueType == PropertyValueType.LiteralBoolean) {
-            if (vs.get(0) instanceof LiteralBoolean) {
-                for (int i = 0; i < vs.size(); i++) {
-                    if (((Boolean)value.get(i)) != (((LiteralBoolean)vs.get(i)).isValue())) {
-                        message = badMessage;
-                        break;
-                    }
-                }
-            } else {
-                message = typeMismatchMessage;
-            }
-        } else if (valueType == PropertyValueType.LiteralInteger) {
-            if (vs.get(0) instanceof LiteralInteger) {
-                for (int i = 0; i < vs.size(); i++) {
-                    if (((LiteralInteger)vs.get(i)).getValue() != ((Long)value.get(i)).intValue()) {
-                        message = badMessage;
-                        break;
-                    }
-                }
-            } else if (vs.get(0) instanceof LiteralUnlimitedNatural) {
-                for (int i = 0; i < vs.size(); i++) {
-                    if (((LiteralUnlimitedNatural)vs.get(i)).getValue() != ((Long)value.get(i)).intValue()) {
-                        message = badMessage;
-                        valueType = PropertyValueType.LiteralUnlimitedNatural;
-                        break;
-                    }
-                }
-            } else {
-                message = "[VALUE] value spec types don't match";
-            }
-        } else if (valueType == PropertyValueType.LiteralReal) {
-            if (vs.get(0) instanceof LiteralReal) {
-                for (int i = 0; i < vs.size(); i++) {
-                    Double webValue = null;
-                    if (value.get(i) instanceof Long)
-                        webValue = Double.parseDouble(((Long)value.get(i)).toString());
-                    else
-                        webValue = (Double)value.get(i);
-                    if (((LiteralReal)vs.get(i)).getValue() != webValue) {
-                        message = badMessage;
-                        break;
-                    }
-                }
-            } else {
-                message = typeMismatchMessage;
-            }
-        } else if (valueType == PropertyValueType.ElementValue) {
-            if (vs.get(0) instanceof ElementValue) {
-                for (int i = 0; i < vs.size(); i++) {
-                    if (((ElementValue)vs.get(i)).getElement() == null || !ExportUtility.getElementID(((ElementValue)vs.get(i)).getElement()).equals(value.get(i))) {
-                        message = badMessage;
-                        break;
-                    }
-                }
-            } else if (vs.get(0) instanceof InstanceValue) {
-                for (int i = 0; i < vs.size(); i++) {
-                    if (((InstanceValue)vs.get(i)).getInstance() == null || !ExportUtility.getElementID(((InstanceValue)vs.get(i)).getInstance()).equals(value.get(i))) {
-                        message = badMessage;
-                        break;
-                    }
-                }
-            } else
-                message = typeMismatchMessage;
-        } else if (valueType == PropertyValueType.Expression) {
-            //???
-            
-        } else { //unsupported type
-            
-        }   
-        if (!message.equals("")) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, message);
-            if (stringMatch)
-                v.addAction(new CompareText(e, webString, modelString, result));
-            v.addAction(new ImportValue(e, value, valueType, result));
-            v.addAction(new ExportValue(e));
-            Debug.outln("4) returning ValidationRuleViolation: " + v );
-            return v;
-        }
-        Debug.outln("5) returning null" );
-        return null;
+        result.put("message", message);
+        result.put("webString", webString);
+        result.put("modelString", modelString);
+        result.put("stringMatch", stringMatch);
+        return result;
     }
     
     @SuppressWarnings("unchecked")
@@ -638,6 +591,7 @@ public class ModelValidator {
         }
         return v;
     }
+    
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);

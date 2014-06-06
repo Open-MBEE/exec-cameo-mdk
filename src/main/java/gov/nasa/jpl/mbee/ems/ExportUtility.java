@@ -403,10 +403,10 @@ public class ExportUtility {
 
 	@SuppressWarnings( "unchecked" )
 	public static void fillValueSpecification(ValueSpecification vs, JSONObject elementInfo, Stereotype view, Stereotype viewpoint) {
-		ValueSpecification expr = vs.getExpression();
-		if ( expr != null ) {
-			elementInfo.put( "valueExpression", expr.getID() );
-		}
+		//ValueSpecification expr = vs.getExpression();
+		//if ( expr != null ) {
+		//	elementInfo.put( "valueExpression", expr.getID() );
+		//}
 		if ( vs instanceof Duration ) {
 			elementInfo.put("type", "Duration");
 		} 
@@ -421,7 +421,7 @@ public class ExportUtility {
 			elementInfo.put("type", "ElementValue");
 			Element elem = ((ElementValue)vs).getElement();
 			if ( elem != null ) {
-				elementInfo.put( "elementValueOfElement", elem.getID() );
+				elementInfo.put( "element", ExportUtility.getElementID(elem));
 			}
 		} 
 		else if (vs instanceof Expression) {
@@ -431,7 +431,13 @@ public class ExportUtility {
 			}
 			List<ValueSpecification> vsl = ((Expression)vs).getOperand();
 			if (vsl != null && vsl.size() > 0) {
-				elementInfo.put( "operand", makeJsonArrayOfIDs( vsl ) );
+			    JSONArray operand = new JSONArray();
+			    for (ValueSpecification vs2: vsl) {
+			        JSONObject res = new JSONObject();
+			        fillValueSpecification(vs2, res, view, viewpoint);
+			        operand.add(res);
+			    }
+				elementInfo.put( "operand", operand);
 			}
 		} 
 		else if (vs instanceof InstanceValue) {
@@ -439,7 +445,7 @@ public class ExportUtility {
 			InstanceValue iv = (InstanceValue)vs;
 			InstanceSpecification i = iv.getInstance();
 			if ( i != null ) {
-				elementInfo.put( "instance", i.getID() );
+				elementInfo.put( "instance", ExportUtility.getElementID(i));
 			}
 		} 
 		else if (vs instanceof Interval) {
@@ -597,7 +603,7 @@ public class ExportUtility {
 		else if (e instanceof DirectedRelationship) {   
 			specialization.put("type", "DirectedRelationship");
 		} 
-		else if (e instanceof Comment) {
+		/*else if (e instanceof Comment) {
 			specialization.put("type", "Comment");
 			specialization.put("body", Utils.stripHtmlWrapper(((Comment)e).getBody()));
 			specialization.put("annotatedElements",
@@ -615,7 +621,7 @@ public class ExportUtility {
 			}
 			JSONArray ids = makeJsonArrayOfIDs( roles );
 			specialization.put("connectorRole", ids);
-		} 
+		} */
 		else if (e instanceof Operation) {
 			specialization.put("type", "Operation");
 			List<Parameter> vsl = ((Operation)e).getOwnedParameter();
@@ -649,7 +655,7 @@ public class ExportUtility {
 			}
 		} 
 		else {
-			elementInfo.put("type", "Element");
+			specialization.put("type", "Element");
 		}
 		if (e instanceof DirectedRelationship) {
 			Element client = ModelHelper.getClientElement(e);
