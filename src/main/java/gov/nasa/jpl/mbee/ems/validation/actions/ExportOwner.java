@@ -77,7 +77,7 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
             if (owner == Application.getInstance().getProject().getModel())
                 ownerId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             info.put("owner", ownerId);
-            info.put("id", ExportUtility.getElementID(e));
+            info.put("sysmlid", ExportUtility.getElementID(e));
             infos.add(info);
         }
         if (!ExportUtility.okToExport(set))
@@ -106,7 +106,7 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         if (owner == Application.getInstance().getProject().getModel())
             ownerId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         info.put("owner", ownerId);
-        info.put("id", ExportUtility.getElementID(element));
+        info.put("sysmlid", ExportUtility.getElementID(element));
         
         elements.add(info);
         send.put("elements", elements);

@@ -264,9 +264,12 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
-            doc.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
-            doc.put("noSections", visitor2.getNosections());
+            JSONObject spec = new JSONObject();
+            spec.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
+            spec.put("noSections", visitor2.getNosections());
+            spec.put("type", "Product");
             doc.put("id", view.getID());
+            doc.put("specialization", spec);
             documents.add(doc);
             send.put("products", documents);
             if (!ExportUtility.send(docurl, send.toJSONString(), null, false))

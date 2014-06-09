@@ -74,8 +74,11 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
                 if (!e.isEditable()) {
                     continue;
                 }
-                String sourceId = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("source");
-                String targetId = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("target");
+                JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+                JSONObject specialization = (JSONObject)tmpObj.get("specialization");
+                String sourceId = (String)specialization.get("source");
+                String targetId = (String)specialization.get("target");
+                
                 Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);
                 Element target = (Element)Application.getInstance().getProject().getElementByID(targetId);
                 ModelHelper.setClientElement(e, source);
@@ -101,8 +104,11 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
         }
         SessionManager.getInstance().createSession("Change Rel");
         try {
-            String sourceId = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID()).get("source");
-            String targetId = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID()).get("target");
+            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            JSONObject specialization = (JSONObject)tmpObj.get("specialization");
+            String sourceId = (String)specialization.get("source");
+            String targetId = (String)specialization.get("target");
+
             Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);
             Element target = (Element)Application.getInstance().getProject().getElementByID(targetId);
             ModelHelper.setClientElement(element, source);

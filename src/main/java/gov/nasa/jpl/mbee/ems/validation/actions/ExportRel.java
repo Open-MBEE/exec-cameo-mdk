@@ -71,9 +71,11 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
             Element e = (Element)anno.getTarget();
             set.add(e);
             JSONObject info = new JSONObject();
-            info.put("source", ModelHelper.getClientElement(e).getID());
-            info.put("target", ModelHelper.getSupplierElement(e).getID());
-            info.put("id", e.getID());
+            JSONObject specialization = new JSONObject();
+            info.put("specialization", specialization);
+            specialization.put("source", ModelHelper.getClientElement(e).getID());
+            specialization.put("target", ModelHelper.getSupplierElement(e).getID());
+            info.put("sysmlid", e.getID());
             infos.add(info);
         }
         if (!ExportUtility.okToExport(set))
@@ -97,9 +99,11 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
         JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        info.put("source", ModelHelper.getClientElement(element).getID());
-        info.put("target", ModelHelper.getSupplierElement(element).getID());
-        info.put("id", element.getID());
+        JSONObject specialization = new JSONObject();
+        info.put("specialization", specialization);
+        specialization.put("source", ModelHelper.getClientElement(element).getID());
+        specialization.put("target", ModelHelper.getSupplierElement(element).getID());
+        info.put("sysmlid", e.getID());
         elements.add(info);
         send.put("elements", elements);
         String url = ExportUtility.getPostElementsUrl();
