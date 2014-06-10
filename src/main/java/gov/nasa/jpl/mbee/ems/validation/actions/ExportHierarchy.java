@@ -111,7 +111,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             doc.put("specialization", specialization);
             specialization.put("view2view", ExportUtility.formatView2View(view2view));
             specialization.put("noSections", vhv.getNosections());
-            doc.put("sysmlid", view.getID());
+            doc.put("id", view.getID());
             documents.add(doc);
             send.put("products", documents);
             if (!ExportUtility.send(docurl, send.toJSONString()))

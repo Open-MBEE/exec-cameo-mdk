@@ -644,28 +644,28 @@ public class ExportUtility {
             List<Parameter> vsl = ((Operation) e).getOwnedParameter();
             if (vsl != null && vsl.size() > 0) {
 
-                specialization.put("operationParameter",
+                specialization.put("parameter",
                         makeJsonArrayOfIDs(vsl));
             }
         } else if (e instanceof Constraint) {
             specialization.put("type", "Constraint");
-            ValueSpecification spec = ((Constraint) e).getSpecification();
+            /*ValueSpecification spec = ((Constraint) e).getSpecification();
             if (spec != null)
-                specialization.put("constraintSpecification", spec.getID());
+                specialization.put("constraintSpecification", spec.getID());*/
         } else if (e instanceof InstanceSpecification) {
             specialization.put("type", "InstanceSpecification");
 
-            ValueSpecification spec = ((InstanceSpecification) e)
+            /*ValueSpecification spec = ((InstanceSpecification) e)
                     .getSpecification();
             if (spec != null)
-                specialization.put("instanceSpecificationSpecification",
-                        spec.getID());
+                specialization.put("specification",
+                        spec.getID());*/
 
         } else if (e instanceof Parameter) {
             Parameter p = (Parameter) e;
             specialization.put("type", "Parameter");
             if (p.getDirection() != null)
-                specialization.put("parameterDirection", p.getDirection());
+                specialization.put("direction", p.getDirection().toString());
             if (p.getType() != null)
                 specialization.put("parameterType", p.getType().getID());
             //ValueSpecification defaultValue = p.getDefaultValue();

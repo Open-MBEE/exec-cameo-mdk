@@ -424,7 +424,8 @@ public class ViewValidator {
                     return false;
             }
         } else if (a.get("type").equals("Image")) {
-            
+            if (!a.get("sysmlid").equals(b.get("sysmlid")))
+                return false;
         }
         return true;
     }
