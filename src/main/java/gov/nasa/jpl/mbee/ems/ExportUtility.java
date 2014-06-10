@@ -221,6 +221,28 @@ public class ExportUtility {
         return url;
     }
 
+    public static String getSite() {
+        Element model = Application.getInstance().getProject().getModel();
+        String site = (String) StereotypesHelper.getStereotypePropertyFirst(
+                model, "ModelManagementSystem", "MMS Site");
+        if (site == null || site.equals("")) {
+            JOptionPane
+                    .showMessageDialog(
+                            null,
+                            "Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
+            site = null;
+        }
+        if (site == null && MDUtils.isDeveloperMode()) {
+            site = JOptionPane.showInputDialog(
+                    "[DEVELOPER MODE] Enter the site:", developerSite);
+        }
+        if (site == null || site.equals(""))
+            return null;
+        developerSite = site;
+        // do switch here
+        return site;
+    }
+    
     public static String getUrlWithSite() {
         Element model = Application.getInstance().getProject().getModel();
         String url = getUrl();

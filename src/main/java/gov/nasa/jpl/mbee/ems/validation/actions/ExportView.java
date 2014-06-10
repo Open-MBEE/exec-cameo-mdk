@@ -209,8 +209,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
             File imageFile = new File(filename);
             
-            String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
-           
+            String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String site = ExportUtility.getSite();
+            String posturl = url + "/workspaces/master/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             // check whether the image already exists
             GetMethod get = new GetMethod(baseurl);
             int status = 0;
@@ -230,7 +231,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             if (status == HttpURLConnection.HTTP_OK) {
                 gl.log("[INFO] Image file already exists, not uploading");
             } else {
-                PostMethod post = new PostMethod(baseurl);
+                PostMethod post = new PostMethod(posturl);
                 try {
                     if (isAlfresco) {
                         Part[] parts = {new FilePart("content", imageFile)};
