@@ -205,6 +205,9 @@ public class OclEvaluator {
                     }
                 }
             }
+        } else {
+            // Assume it's a LiteralString or some other value expression.
+            expr = DocGenUtils.fixString( query, false );
         }
         return expr;
     }
