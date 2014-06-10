@@ -206,7 +206,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //MDEV #674 -- Update the type and id: was hard coded.
         //
         entry.put("type", "Image");
-        entry.put("id", image.getImage().getID());
+        entry.put("sysmlid", image.getImage().getID());
         curContains.peek().add(entry);
     }
 

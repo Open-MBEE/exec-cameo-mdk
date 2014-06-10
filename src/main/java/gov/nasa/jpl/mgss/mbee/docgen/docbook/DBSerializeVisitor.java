@@ -32,6 +32,7 @@ import gov.nasa.jpl.mbee.DocGenUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -360,8 +361,13 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
     public void visit(DBParagraph para) {
         if (para.getText() == null)
             out.append("<para></para>\n");
-        else
-            out.append(DocGenUtils.addDocbook(DocGenUtils.fixString(para.getText())) + "\n");
+        else {
+            if (para.getText() instanceof Collection) {
+                for (Object p: (Collection)para.getText())
+                    out.append(DocGenUtils.addDocbook(DocGenUtils.fixString(p)));
+            } else
+                out.append(DocGenUtils.addDocbook(DocGenUtils.fixString(para.getText())) + "\n");
+        }
 
     }
 

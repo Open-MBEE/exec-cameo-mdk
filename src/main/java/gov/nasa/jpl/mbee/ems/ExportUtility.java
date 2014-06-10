@@ -514,7 +514,6 @@ public class ExportUtility {
             if (minD != null)
                 elementInfo.put("timeIntervalMin", minD.getID());
         }
-
     }
 
     @SuppressWarnings("unchecked")
@@ -664,16 +663,16 @@ public class ExportUtility {
 
         } else if (e instanceof Parameter) {
             Parameter p = (Parameter) e;
-            specialization.put("type", "Element");
+            specialization.put("type", "Parameter");
             if (p.getDirection() != null)
                 specialization.put("parameterDirection", p.getDirection());
             if (p.getType() != null)
                 specialization.put("parameterType", p.getType().getID());
-            ValueSpecification defaultValue = p.getDefaultValue();
-            if (defaultValue != null) {
-                specialization.put("parameterDefaultValue",
-                        defaultValue.getID());
-            }
+            //ValueSpecification defaultValue = p.getDefaultValue();
+            //if (defaultValue != null) {
+            //    specialization.put("parameterDefaultValue",
+             //           defaultValue.getID());
+            // }
         } else {
             specialization.put("type", "Element");
         }

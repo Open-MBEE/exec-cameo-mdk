@@ -66,11 +66,11 @@ public class Common {
                 res.add(new DBParagraph(ref.result));
             }
         } else {
-            if (ref.result instanceof Collection && !((Collection<?>)ref.result).isEmpty()) {
-                res.add(new DBParagraph(((Collection<?>)ref.result).iterator().next(), ref.element, ref.from));
-            } else {
+            //if (ref.result instanceof Collection && !((Collection<?>)ref.result).isEmpty()) {
+            //    res.add(new DBParagraph(((Collection<?>)ref.result).iterator().next(), ref.element, ref.from));
+            //} else {
                 res.add(new DBParagraph(ref.result, ref.element, ref.from));
-            }
+            //}
         }
         return res;
     }

@@ -155,9 +155,9 @@ public class Reference {
         if (result == null
                 || element == null
                 || from == null
-                || (element instanceof Slot && (((Slot)element).getDefiningFeature().getUpper() > 1 || ((Slot)element)
-                        .getDefiningFeature().getUpper() == -1))
-                || (result instanceof Collection && ((Collection<?>)result).size() > 1)
+                //|| (element instanceof Slot && (((Slot)element).getDefiningFeature().getUpper() > 1 || ((Slot)element)
+                //        .getDefiningFeature().getUpper() == -1))
+                //|| (result instanceof Collection && ((Collection<?>)result).size() > 1)
                 || !Utils.isLiteral(result))
             return false;
         return true;
