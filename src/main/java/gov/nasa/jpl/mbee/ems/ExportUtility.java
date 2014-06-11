@@ -511,7 +511,7 @@ public class ExportUtility {
                 elementInfo.put("double", ((LiteralReal) vs).getValue());
             } else if (vs instanceof LiteralString) {
                 elementInfo.put("type", "LiteralString");
-                elementInfo.put("string", ((LiteralString) vs).getValue());
+                elementInfo.put("string", Utils.stripHtmlWrapper(((LiteralString) vs).getValue()));
             } else if (vs instanceof LiteralUnlimitedNatural) {
                 elementInfo.put("type", "LiteralUnlimitedNatural");
                 elementInfo.put("naturalValue",
