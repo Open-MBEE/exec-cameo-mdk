@@ -2592,7 +2592,7 @@ public class Utils {
      * @return a Slot with zero or more values or null if no such Slot exists
      */
     public static Slot getSlot(Element elem, Property prop) {
-        if (prop == null)
+        if (prop == null || elem == null)
             return null;
         Element myOwner = prop.getOwner();
         if (myOwner instanceof Stereotype

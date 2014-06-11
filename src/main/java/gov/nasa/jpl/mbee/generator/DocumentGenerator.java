@@ -300,10 +300,10 @@ public class DocumentGenerator {
                 String viewDoc = ModelHelper.getComment(view);
                 if (viewDoc != null) {
                     Paragraph para = new Paragraph(viewDoc);
-                    if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
+                    //if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
                         para.setDgElement(view);
                         para.setFrom(From.DOCUMENTATION);
-                    }
+                    //}
                     viewSection.addElement(para);
                 }
             }
