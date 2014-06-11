@@ -413,6 +413,8 @@ public class ViewValidator {
                     return false;
             }
         } else if (a.get("type").equals("Section")) {
+            if (!a.get("name").equals(b.get("name")))
+                return false;
             JSONArray acontains = (JSONArray)a.get("contains");
             JSONArray bcontains = (JSONArray)b.get("contains"); 
             if (acontains.size() != bcontains.size())
