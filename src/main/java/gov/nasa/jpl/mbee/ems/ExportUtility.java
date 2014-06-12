@@ -575,6 +575,7 @@ public class ExportUtility {
             specialization.put("isDerived", ((Property) e).isDerived());
             specialization.put("isSlot", false);
             ValueSpecification vs = ((Property) e).getDefaultValue();
+            JSONArray singleElementSpecVsArray = new JSONArray();
             if (vs != null) {
                 // Create a new JSONObject and a new JSONArray. Fill in
                 // the values to the new JSONObject and then insert
@@ -583,12 +584,12 @@ public class ExportUtility {
                 // the array into the specialization element as the
                 // value of the "value" property.
                 //
-                JSONArray singleElementSpecVsArray = new JSONArray();
+                
                 JSONObject newElement = new JSONObject();
                 fillValueSpecification(vs, newElement, view, viewpoint);
                 singleElementSpecVsArray.add(newElement);
-                specialization.put("value", singleElementSpecVsArray);
             }
+            specialization.put("value", singleElementSpecVsArray);
             Type type = ((Property) e).getType();
             if (type != null) {
                 specialization.put("propertyType", "" + type.getID());
@@ -611,15 +612,15 @@ public class ExportUtility {
             // new specialization element.
             //
             List<ValueSpecification> vsl = ((Slot) e).getValue();
+            JSONArray specVsArray = new JSONArray();
             if (vsl != null && vsl.size() > 0) {
-                JSONArray specVsArray = new JSONArray();
                 for (ValueSpecification vs : vsl) {
                     JSONObject newElement = new JSONObject();
                     fillValueSpecification(vs, newElement, view, viewpoint);
                     specVsArray.add(newElement);
                 }
-                specialization.put("value", specVsArray);
             }
+            specialization.put("value", specVsArray);
             Element type = ((Slot) e).getDefiningFeature();
             if (type != null) {
                 specialization.put("propertyType", "" + type.getID());
