@@ -21,7 +21,7 @@
     <property name="plugin.resource" value="${plugin.resources}/data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
     <property name="plugin.archive" value="gov.nasa.jpl.mbee.docgen"/>
 
-    <target name="all" depends="all.error,all.ok,zip.bundle"/>
+    <target name="all" depends="all.error,all.ok,install"/>
     
     <target name="all.error" unless="all.precondition.md">
         <echo message="Check the environment variables tested in the target 'all.precondition.md'"/>
@@ -40,9 +40,7 @@
     <!-- use the build from build-nojenkins, need to keep IMCE's zip target--> 
 	<import file="${plugin.dir}/build-nojenkins.xml"/>
     <target name="zip" depends="dist"/>
-    
-	<target name="zip.bundle"><md.zip.all bundle.dest.dir="${plugin.dir}/artifacts" bundle.name="${bundle.name}" bundle.source.dir="${md.install.dir}"/></target>
-		
+    		
     <target name="install">
         <md.install.zip
             plugin.dir="${plugin.dir}" 
