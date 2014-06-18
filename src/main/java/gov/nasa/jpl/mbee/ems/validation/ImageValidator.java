@@ -62,7 +62,7 @@ public class ImageValidator {
             Element e = (Element)ExportUtility.getElementFromID(key);
             String cs = (String)images.get(key).get("cs");
             String extension = (String)images.get(key).get("extension");            
-            String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
+            String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
            
             GetMethod get = new GetMethod(baseurl);
             int status = 0;
