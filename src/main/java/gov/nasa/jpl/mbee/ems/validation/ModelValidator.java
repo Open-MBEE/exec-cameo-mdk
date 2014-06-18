@@ -341,7 +341,7 @@ public class ModelValidator {
                 if (webOwnerID != null)
                     owner = (Element)prj.getElementByID(webOwnerID);
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? "null" : owner.getHumanName()));
-                v.addAction(new FixModelOwner(e, owner, result));
+                //v.addAction(new FixModelOwner(e, owner, result)); //disable owner import for now since nothing can change the owner on the web
                 v.addAction(new ExportOwner(e));
                 ownership.addViolation(v);
             }
