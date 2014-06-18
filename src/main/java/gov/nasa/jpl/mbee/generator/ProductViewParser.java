@@ -120,6 +120,8 @@ public class ProductViewParser {
         List<Class> childSections = new ArrayList<Class>();
         List<Class> childNoSections = new ArrayList<Class>();
         for (Property prop: view.getOwnedAttribute()) {
+            if (!(prop.getType() instanceof Class))
+                continue;
             Class type = (Class)prop.getType();
             if (type == null || !StereotypesHelper.hasStereotypeOrDerived(type, dg.getView())
                     || excludeViews.contains(prop) || excludeViews.contains(type))
