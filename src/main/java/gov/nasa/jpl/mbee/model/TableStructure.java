@@ -263,7 +263,9 @@ public class TableStructure extends Table {
                                 continue;
                             }
                             Object attr = Utils.getElementAttribute(re, at); // attr can be string, value spec, or list of value spec
-                            if (attr != null) {
+                            if (attr == null && tc.editable && at == Utils.AvailableAttribute.Value && re instanceof Property)
+                                cell.add(new Reference(re, Utils.getFromAttribute(at), ""));
+                            else if (attr != null) {
                                 if (tc.editable)
                                     cell.add(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn)tc).attribute), attr));
                                 else

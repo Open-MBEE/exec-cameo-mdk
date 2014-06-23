@@ -327,7 +327,7 @@ public class ExportUtility {
             log.info(response);
             return true;
         }
-        if (response.length() > 3000) {
+        if (response.length() > 1000) {
             // System.out.println(response);
             log.info(response);
             Application.getInstance().getGUILog()
