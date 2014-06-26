@@ -145,7 +145,7 @@ public class ModelValidator {
         if (start == Application.getInstance().getProject().getModel())
             id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         url += "/javawebscripts/elements/" + id + "?recurse=true";
-        response = ExportUtility.get(url);
+        response = ExportUtility.get(url, false);
         if (response == null) {
             response = "{\"elements\": []}";
         }

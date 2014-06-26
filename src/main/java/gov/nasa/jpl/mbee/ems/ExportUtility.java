@@ -327,14 +327,15 @@ public class ExportUtility {
             log.info(response);
             return true;
         }
-        if (response.length() > 1000) {
+        if (response.length() > 500) {
+            
             // System.out.println(response);
             log.info(response);
             Application.getInstance().getGUILog()
                     .log("see md.log for what got received - too big to show");
         } else {
-            log.info(response);
-            // Application.getInstance().getGUILog().log(response);
+            //log.info(response);
+            Application.getInstance().getGUILog().log(response);
         }
         return false;
     }
@@ -461,12 +462,12 @@ public class ExportUtility {
             elementInfo.put("type", "Duration");
         } else if (vs instanceof DurationInterval) {
             elementInfo.put("type", "DurationInterval");
-            Duration maxD = ((DurationInterval) vs).getMax();
-            if (maxD != null)
-                elementInfo.put("durationMax", maxD.getID());
+            /*Duration maxD = ((DurationInterval) vs).getMax();
+            if (maxD != null) {
+                elementInfo.put("max", maxD.getID());
             Duration minD = ((DurationInterval) vs).getMin();
             if (minD != null)
-                elementInfo.put("durationMin", minD.getID());
+                elementInfo.put("durationMin", minD.getID());*/
         } else if (vs instanceof ElementValue) {
             elementInfo.put("type", "ElementValue");
             Element elem = ((ElementValue) vs).getElement();
@@ -495,8 +496,6 @@ public class ExportUtility {
             if (i != null) {
                 elementInfo.put("instance", ExportUtility.getElementID(i));
             }
-        } else if (vs instanceof Interval) {
-            elementInfo.put("type", "Interval");
         } else if (vs instanceof LiteralSpecification) {
             if (vs instanceof LiteralBoolean) {
                 elementInfo.put("type", "LiteralBoolean");
@@ -529,12 +528,12 @@ public class ExportUtility {
             elementInfo.put("type", "TimeExpression");
         } else if (vs instanceof TimeInterval) {
             elementInfo.put("type", "TimeInterval");
-            TimeExpression maxD = ((TimeInterval) vs).getMax();
+            /*TimeExpression maxD = ((TimeInterval) vs).getMax();
             if (maxD != null)
                 elementInfo.put("timeIntervalMax", maxD.getID());
             TimeExpression minD = ((TimeInterval) vs).getMin();
             if (minD != null)
-                elementInfo.put("timeIntervalMin", minD.getID());
+                elementInfo.put("timeIntervalMin", minD.getID());*/
         }
     }
 
