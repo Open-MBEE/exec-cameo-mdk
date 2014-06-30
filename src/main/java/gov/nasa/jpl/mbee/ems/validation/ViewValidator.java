@@ -176,6 +176,7 @@ public class ViewValidator {
                 JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
                 //get the current model view structure
                 JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
+                Boolean editable = (Boolean)webView.get("editable");
                 //this is the json object for the view on the web
                 Object containsObj = ((JSONObject)webView.get("specialization")).get("contains");
                 //this is the web view structure
@@ -209,11 +210,12 @@ public class ViewValidator {
                 boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, response); //this compares the view hierarchy structure
                 if (!matches) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor structure is outdated.");
-                    v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
-                    v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
-                    v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
-                    v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
-                    
+                    if (editable) {
+                        v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
+                        v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
+                        v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
+                        v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
+                    }
                     //v.addAction(new ExportHierarchy(currentView));
                     match.addViolation(v);
                 } 
@@ -221,7 +223,8 @@ public class ViewValidator {
                     //add hierarchy fix option to only update TOC of document on web
                     //currently user is not allowed to change hierarchy from the web, this will change soon
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy] The hierarchy from this view/doc is outdated");
-                    v.addAction(new ExportHierarchy(currentView));
+                    if (editable)
+                        v.addAction(new ExportHierarchy(currentView));
                     hierarchy.addViolation(v);
                     
                 }
