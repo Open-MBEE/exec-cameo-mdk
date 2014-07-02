@@ -94,7 +94,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background? You'll get an email when done.");
         if (background != null && background)
             url += "?background=true";
-        if (ExportUtility.send(url, send.toJSONString(), "Post", false)) {
+        if (ExportUtility.send(url, send.toJSONString(), null, false)) {
             this.removeViolationsAndUpdateWindow(annos);
             ExportUtility.sendProjectVersions();
         }
