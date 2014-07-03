@@ -170,15 +170,25 @@ public class ViewValidator {
                 exists.addViolation(v);
             } else {
                 //view has been on the web
+                JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
+                Object containsObj = ((JSONObject)webView.get("specialization")).get("contains");
+                if (containsObj == null) {
+                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
+                    v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
+                    v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
+                    v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
+                    v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
+                    exists.addViolation(v);
+                } else {
                 String viewElementsUrl = existurl + "/elements";
                 JSONArray localElements = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("displayedElements");
                 //get the current elements referenced by the view in the current model
                 JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
                 //get the current model view structure
-                JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
+                
                 Boolean editable = (Boolean)webView.get("editable");
                 //this is the json object for the view on the web
-                Object containsObj = ((JSONObject)webView.get("specialization")).get("contains");
+                
                 //this is the web view structure
                 JSONArray webContains = null;
                 if ( containsObj instanceof JSONArray ) {
@@ -251,6 +261,7 @@ public class ViewValidator {
                     v.addAction(new ImportElementComments(currentView, commentresults));
                     comments.addViolation(v);
                 }*/
+            }
             }
         }
         resultElements.addAll(cachedResultElements.values());
