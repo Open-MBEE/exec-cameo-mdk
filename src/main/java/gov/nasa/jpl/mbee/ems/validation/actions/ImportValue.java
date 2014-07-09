@@ -91,10 +91,12 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         Collection<Annotation> toremove = new HashSet<Annotation>();
         ValueSpecification newVal = null;
         try {
+            boolean noneditable = false;
             for (Annotation anno: annos) {
                 Element e = (Element)anno.getTarget();
                 if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
+                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                    noneditable = true;
                     continue;
                 }
                 Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
@@ -121,7 +123,10 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            saySuccess();
+            if (noneditable) {
+                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
+            } else
+                saySuccess();
             //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {
