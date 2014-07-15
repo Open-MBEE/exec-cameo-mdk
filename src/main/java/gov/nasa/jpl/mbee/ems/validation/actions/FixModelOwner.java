@@ -72,9 +72,12 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
         Project prj = Application.getInstance().getProject();
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
+            boolean noneditable = false;
             for (Annotation anno: annos) {
                 Element e = (Element)anno.getTarget();
                 if (!e.isEditable()) {
+                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                    noneditable = true;
                     continue;
                 }
                 String ownerID = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("owner");
@@ -87,7 +90,10 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            saySuccess();
+            if (noneditable) {
+                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
+            } else
+                saySuccess();
             //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {

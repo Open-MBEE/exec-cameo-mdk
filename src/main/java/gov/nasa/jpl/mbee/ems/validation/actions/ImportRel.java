@@ -69,11 +69,15 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
         SessionManager.getInstance().createSession("Change Rels");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
+            boolean noneditable = false;
             for (Annotation anno: annos) {
                 Element e = (Element)anno.getTarget();
                 if (!e.isEditable()) {
+                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                    noneditable = true;
                     continue;
                 }
+                
                 JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
                 JSONObject specialization = (JSONObject)tmpObj.get("specialization");
                 String sourceId = (String)specialization.get("source");
@@ -87,7 +91,10 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            saySuccess();
+            if (noneditable) {
+                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
+            } else
+                saySuccess();
             //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {

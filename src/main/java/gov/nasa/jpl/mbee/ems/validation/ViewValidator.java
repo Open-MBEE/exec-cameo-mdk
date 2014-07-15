@@ -66,6 +66,7 @@ import org.json.simple.JSONValue;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
@@ -122,7 +123,7 @@ public class ViewValidator {
     }
     
     @SuppressWarnings("unchecked")
-    public boolean validate() {
+    public boolean validate(ProgressStatus ps) {
         //first run a local generation of the view model to get the current model view structure
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = dg.parseDocument(true, true);
@@ -149,6 +150,8 @@ public class ViewValidator {
         Element startView = getStartView();
         Map<String, JSONObject> cachedResultElements = new HashMap<String, JSONObject>();
         for (Object viewid: visitor2.getViews().keySet()) {
+            if (ps != null && ps.isCancel())
+                break;
             //viewid is a string that's the view's magicdraw id
             if (!recurse && !viewid.equals(startView.getID()))
                 continue;
@@ -269,7 +272,7 @@ public class ViewValidator {
         //elements gotten from web
         ModelValidator mv = new ModelValidator(view, results, true, visitor2.getElementSet()); //visitor2.getElementSet() has the local model elements
         //do the actual element validations between model and web
-        mv.validate(false);
+        mv.validate(false, ps);
         modelSuite = mv.getSuite();
         
         ImageValidator iv = new ImageValidator(visitor2.getImages());

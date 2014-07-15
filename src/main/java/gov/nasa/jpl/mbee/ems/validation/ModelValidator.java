@@ -66,6 +66,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
+import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
@@ -155,7 +156,7 @@ public class ModelValidator {
     }
     
     @SuppressWarnings("unchecked")
-    public void validate(boolean fillContainment) {
+    public void validate(boolean fillContainment, ProgressStatus ps) {
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
@@ -163,15 +164,15 @@ public class ModelValidator {
         if (fillContainment) {
             elementSet = new HashSet<Element>();
             getAllMissing(start, elementSet, elementsKeyed);
-            validateModel(elementsKeyed, elementSet);
+            validateModel(elementsKeyed, elementSet, ps);
         } else {
-            validateModel(elementsKeyed, elementSet);
+            validateModel(elementsKeyed, elementSet, ps);
         }
         result.put("elementsKeyed", elementsKeyed);
     }
     
     @SuppressWarnings("unchecked")
-    private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all) {
+    private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all, ProgressStatus ps) {
         //Set<Element> all = new HashSet<Element>();
         Set<String> checked = new HashSet<String>();
 
@@ -192,6 +193,8 @@ public class ModelValidator {
             elementsKeyed.put(elementId, elementInfo);
         }
         for (Element e: all) {
+            if (ps != null && ps.isCancel())
+                break;
             if (!elementsKeyed.containsKey(e.getID())) {
                 if (checkExist && ExportUtility.shouldAdd(e)) {
                     JSONObject maybeMissing = getAlfrescoElement(e);
