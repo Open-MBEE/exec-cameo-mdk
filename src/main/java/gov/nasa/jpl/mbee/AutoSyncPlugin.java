@@ -14,25 +14,38 @@ import com.nomagic.uml2.transaction.TransactionManager;
  */
 public class AutoSyncPlugin extends MDPlugin {
 	AutoSyncCommitListener listener = null;
+	private static AutoSyncPlugin instance;
+	private boolean active;
 	
 	public AutoSyncPlugin() {
+		instance = this;
+	}
+	
+	public static AutoSyncPlugin getInstance() {
+		return instance;
 	}
 	
 	@Override
 	public void initConfigurations() {
 		System.err.println("Initiatlizing the AutoSyncPlugin...");
+		setActive(true);
 		
 		System.err.println("Create the Listener...");
 		listener = new AutoSyncCommitListener();
 		
 		if (listener != null) {
 			System.err.println("Finished creating the Listener.");
+			//Add a Listener which reacts when a Project is opened.
+			//Once this listener is called, create the TransactionManager object and setup
+			//the listener for event changes.
+			//
 			Application.getInstance().getProjectsManager().addProjectListener(new ProjectEventListenerAdapter()
 			{
 				@Override
 				public void projectOpened(Project project)
 				{
 					TransactionManager transactionManager = project.getRepository().getTransactionManager();
+					listener.setTm(transactionManager);
 					transactionManager.addTransactionCommitListener(listener);
 				}
 
@@ -51,6 +64,13 @@ public class AutoSyncPlugin extends MDPlugin {
 		//
 		System.err.println("Finish AutoSyncPlugin initialization!");
 
+	}
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 	
 	public boolean isSupported()
