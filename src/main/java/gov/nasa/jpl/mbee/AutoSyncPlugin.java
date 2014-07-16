@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -13,7 +13,6 @@ import com.nomagic.uml2.transaction.TransactionManager;
  * This class is also responsible for start the REST webservices.
  */
 public class AutoSyncPlugin extends MDPlugin {
-	AutoSyncCommitListener listener = null;
 	private static AutoSyncPlugin instance;
 	private boolean active;
 	
@@ -29,41 +28,13 @@ public class AutoSyncPlugin extends MDPlugin {
 	public void initConfigurations() {
 		System.err.println("Initiatlizing the AutoSyncPlugin...");
 		setActive(true);
-		
-		System.err.println("Create the Listener...");
-		listener = new AutoSyncCommitListener();
-		
-		if (listener != null) {
-			System.err.println("Finished creating the Listener.");
+
 			//Add a Listener which reacts when a Project is opened.
 			//Once this listener is called, create the TransactionManager object and setup
 			//the listener for event changes.
 			//
-			Application.getInstance().getProjectsManager().addProjectListener(new ProjectEventListenerAdapter()
-			{
-				@Override
-				public void projectOpened(Project project)
-				{
-					TransactionManager transactionManager = project.getRepository().getTransactionManager();
-					listener.setTm(transactionManager);
-					transactionManager.addTransactionCommitListener(listener);
-				}
-
-				@Override
-				public void projectClosed(Project project)
-				{
-					project.getRepository().getTransactionManager().removeTransactionCommitListener(listener);
-				}
-		});
-		}
-		else
-			System.err.println("Unable to create the Listener");
-
-
-        //Start REST webservices
-		//
-		System.err.println("Finish AutoSyncPlugin initialization!");
-
+		Application.getInstance().getProjectsManager().addProjectListener(new AutoSyncProjectListener());
+		
 	}
 	public boolean isActive() {
 		return active;

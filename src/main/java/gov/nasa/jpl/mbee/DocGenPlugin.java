@@ -55,6 +55,7 @@ public class DocGenPlugin extends Plugin {
     private boolean                     runEmbeddedServer     = false;
     protected OclEvaluatorPlugin        oclPlugin             = null;
     protected ValidateConstraintsPlugin vcPlugin              = null;
+    protected AutoSyncPlugin            autoSyncPlugin        = null;
     public static ClassLoader           extensionsClassloader = null;
 
     public DocGenPlugin() {
@@ -92,6 +93,7 @@ public class DocGenPlugin extends Plugin {
 
         getOclPlugin().init();
         getVcPlugin().init();
+        getAutoSyncPlugin().init();
 
         ApplicationSyncEventSubscriber.subscribe();
 
@@ -126,6 +128,13 @@ public class DocGenPlugin extends Plugin {
         return vcPlugin;
     }
 
+    public AutoSyncPlugin getAutoSyncPlugin() {
+        if (autoSyncPlugin == null) {
+            autoSyncPlugin = new AutoSyncPlugin();
+        }
+        return autoSyncPlugin;
+    }
+    
     @Override
     public boolean isSupported() {
         return true;
