@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -27,9 +29,14 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         listener.setTm(transactionManager);
         transactionManager.addTransactionCommitListener(listener);
         
+        String url = ExportUtility.getUrl();
+        if (url == null) {
+            
+        }
+                
         try {
      // Create a ConnectionFactory
-        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost");
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://europaems-dev-staging-b:61616");
 
         // Create a Connection
         connection = connectionFactory.createConnection();
@@ -46,7 +53,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         consumer = session.createConsumer(destination);
 
         // Wait for a message
-        consumer.setMessageListener(new JMSMessageListener());
+        consumer.setMessageListener(new JMSMessageListener(project));
         connection.start();
      // Wait for a message
         /*Message message = consumer.receive(1000);
