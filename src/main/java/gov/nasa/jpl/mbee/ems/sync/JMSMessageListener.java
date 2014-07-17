@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import java.util.Map;
+
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 
 import javax.jms.Message;
@@ -33,6 +35,10 @@ public class JMSMessageListener implements MessageListener {
 
             Runnable runnable = new Runnable() {
                 public void run() {
+                    Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+                    AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+                    if (listener != null)
+                        listener.disable();
                     SessionManager sm = SessionManager.getInstance();
                     sm.createSession("mms sync change");
                     try {
@@ -51,6 +57,8 @@ public class JMSMessageListener implements MessageListener {
                        
                        sm.cancelSession();
                     } 
+                    if (listener != null)
+                        listener.enable();
                 }
             };
             project.getRepository().invokeAfterTransaction(runnable);

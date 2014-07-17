@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -47,6 +49,7 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -87,6 +90,11 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
 
     @Override
     public void execute(Collection<Annotation> annos) {
+        Project project = Application.getInstance().getProject();
+        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        if (listener != null)
+            listener.disable();
         SessionManager.getInstance().createSession("Change values");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         ValueSpecification newVal = null;
@@ -133,6 +141,8 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
         }
+        if (listener != null)
+            listener.enable();
         
     }
 
@@ -142,6 +152,11 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
             return;
         }
+        Project project = Application.getInstance().getProject();
+        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        if (listener != null)
+            listener.disable();
         SessionManager.getInstance().createSession("Change value");
         ValueSpecification newVal = null;
         try {
@@ -172,6 +187,8 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
         }
+        if (listener != null)
+            listener.enable();
     }
     
     // TODO -- move to Utils and have setProperty() call this instead of always creating a new Property?

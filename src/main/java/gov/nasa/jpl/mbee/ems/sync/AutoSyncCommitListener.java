@@ -14,7 +14,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.teamwork.application.MUManager;
 import com.nomagic.uml2.ext.jmi.InstanceDeletedEvent;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
@@ -57,6 +56,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 
         @Override
         public void run() {
+            if (disabled)
+                return;
         	for (PropertyChangeEvent event: events) {
 
         		String strTmp = "NULL";

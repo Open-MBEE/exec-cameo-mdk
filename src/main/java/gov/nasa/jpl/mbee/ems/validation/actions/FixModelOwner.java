@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -68,6 +70,11 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
 
     @Override
     public void execute(Collection<Annotation> annos) {
+        Project project = Application.getInstance().getProject();
+        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        if (listener != null)
+            listener.disable();
         SessionManager.getInstance().createSession("Change Owners");
         Project prj = Application.getInstance().getProject();
         Collection<Annotation> toremove = new HashSet<Annotation>();
@@ -100,6 +107,8 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
         }
+        if (listener != null)
+            listener.enable();
     }
     
     @Override
@@ -108,6 +117,11 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
             Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
             return;
         }
+        Project project = Application.getInstance().getProject();
+        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        if (listener != null)
+            listener.disable();
         SessionManager.getInstance().createSession("Change Owner");
         try {
             element.setOwner(owner);
@@ -120,5 +134,7 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
         }
+        if (listener != null)
+            listener.enable();
     }
 }

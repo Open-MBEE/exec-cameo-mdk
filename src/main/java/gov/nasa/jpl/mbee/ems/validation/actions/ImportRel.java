@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -42,6 +44,7 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -66,6 +69,11 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
 
     @Override
     public void execute(Collection<Annotation> annos) {
+        Project project = Application.getInstance().getProject();
+        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        if (listener != null)
+            listener.disable();
         SessionManager.getInstance().createSession("Change Rels");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
@@ -100,6 +108,8 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
         }
+        if (listener != null)
+            listener.enable();
         
     }
 
@@ -109,6 +119,11 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
             Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
             return;
         }
+        Project project = Application.getInstance().getProject();
+        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        if (listener != null)
+            listener.disable();
         SessionManager.getInstance().createSession("Change Rel");
         try {
             JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
@@ -129,5 +144,7 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
         }
+        if (listener != null)
+            listener.enable();
     }
 }
