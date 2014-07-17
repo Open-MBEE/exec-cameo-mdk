@@ -43,14 +43,7 @@ public class JMSMessageListener implements MessageListener {
                     sm.createSession("mms sync change");
                     try {
                         for (Object element: updated) {
-                            Element ele = ExportUtility.getElementFromID((String)((JSONObject)element).get("sysmlid"));
-                            if (ele == null) {
-                                Application.getInstance().getGUILog().log("element not found from mms sync change");
-                                continue;
-                            }
-                            String newName = (String)((JSONObject)element).get("name");
-                            if (ele instanceof NamedElement && !((NamedElement)ele).getName().equals(newName)) 
-                                ((NamedElement)ele).setName(newName);
+                            makeChange((JSONObject)element);
                         }
                         sm.closeSession();
                     } catch (Exception e) {
@@ -59,6 +52,17 @@ public class JMSMessageListener implements MessageListener {
                     } 
                     if (listener != null)
                         listener.enable();
+                }
+                
+                private void makeChange(JSONObject ob) {
+                    Element ele = ExportUtility.getElementFromID((String)(ob).get("sysmlid"));
+                    if (ele == null) {
+                        Application.getInstance().getGUILog().log("element not found from mms sync change");
+                        return;
+                    }
+                    String newName = (String)(ob).get("name");
+                    if (ele instanceof NamedElement && newName!= null && !((NamedElement)ele).getName().equals(newName)) 
+                        ((NamedElement)ele).setName(newName);
                 }
             };
             project.getRepository().invokeAfterTransaction(runnable);

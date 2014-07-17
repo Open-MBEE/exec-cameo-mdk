@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.AutoSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.InstanceDeletedEvent;
+import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
@@ -103,16 +106,34 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             if (property.equals(PropertyNames.NAME)) {
                 if (elements.containsKey(ExportUtility.getElementID(e))) {
                     elementOb = elements.get(ExportUtility.getElementID(e));
-                    elementOb.put("name", newValue);
                 } else {
                     elementOb = new JSONObject();
                     elementOb.put("sysmlid", ExportUtility.getElementID(e));
-                    elementOb.put("name", newValue);
                     elements.put(ExportUtility.getElementID(e), elementOb);
                 }
-            } else if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e) && property.equals(PropertyNames.BODY)) {
-                
+                elementOb.put("name", newValue);
+            } else if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e) && property.equals(PropertyNames.BODY)) { //doc changed
+                Element actual = e.getOwner();
+                if (elements.containsKey(ExportUtility.getElementID(actual))) {
+                    elementOb = elements.get(ExportUtility.getElementID(e));
+                } else {
+                    elementOb = new JSONObject();
+                    elementOb.put("sysmlid", ExportUtility.getElementID(actual));
+                    elements.put(ExportUtility.getElementID(actual), elementOb);
+                }
+                elementOb.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(actual)));
             } else if (e instanceof ValueSpecification && property.equals(PropertyNames.VALUE)) {
+                
+            } else if (property.equals(UML2MetamodelConstants.INSTANCE_CREATED) && ExportUtility.shouldAdd(e)) {
+                if (elements.containsKey(ExportUtility.getElementID(e))) {
+                    elementOb = elements.get(ExportUtility.getElementID(e));
+                } else {
+                    elementOb = new JSONObject();
+                    elementOb.put("sysmlid", ExportUtility.getElementID(e));
+                    elements.put(ExportUtility.getElementID(e), elementOb);
+                }
+                ExportUtility.fillElement(e, elementOb, null, null);
+            } else if (property.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
                 
             }
         }

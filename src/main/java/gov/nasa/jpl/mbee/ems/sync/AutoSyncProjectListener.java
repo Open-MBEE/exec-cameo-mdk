@@ -28,6 +28,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         AutoSyncCommitListener listener = new AutoSyncCommitListener();
         TransactionManager transactionManager = project.getRepository().getTransactionManager();
         listener.setTm(transactionManager);
+        //project.getRepository().setTransactionModelListener(new AutoSyncModelListener());
         transactionManager.addTransactionCommitListener(listener);
         
         projectInstances.put("AutoSyncCommitListener", listener);
