@@ -69,21 +69,19 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
         		}   
         		Object source = event.getSource();
         		if (source instanceof Element) {
-        		    if (event instanceof InstanceDeletedEvent) {
-        		        
+
+        		    String changedProperty = event.getPropertyName();
+        		    if (changedProperty == null) {
+        		        //multliple property changed...
         		    } else {
-        		        String changedProperty = event.getPropertyName();
-        		        if (changedProperty == null) {
-        		            //multliple property changed...
-        		        } else {
-        		            if (event.getNewValue() == null && event.getOldValue() == null)
-        		                continue;
-        		            if (event.getNewValue() == null && event.getOldValue() != null || 
-        		                    event.getNewValue() != null && event.getOldValue() == null ||
-        		                    !event.getNewValue().equals(event.getOldValue()))
-        		                handleChangedProperty((Element)source, changedProperty, event.getNewValue(), event.getOldValue());
-        		        }
+        		        if (event.getNewValue() == null && event.getOldValue() == null)
+        		            continue;
+        		        if (event.getNewValue() == null && event.getOldValue() != null || 
+        		                event.getNewValue() != null && event.getOldValue() == null ||
+        		                !event.getNewValue().equals(event.getOldValue()))
+        		            handleChangedProperty((Element)source, changedProperty, event.getNewValue(), event.getOldValue());
         		    }
+
         		}
         	}
         	if (!elements.isEmpty())
@@ -134,7 +132,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 }
                 ExportUtility.fillElement(e, elementOb, null, null);
             } else if (property.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
-                
+                if (elements.containsKey(ExportUtility.getElementID(e)))
+                    elements.remove(ExportUtility.getElementID(e));
             }
         }
 	}

@@ -15,6 +15,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
+import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
 import com.nomagic.uml2.transaction.TransactionManager;
 
 public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
@@ -26,10 +27,10 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Map<String, Object> projectInstances = new HashMap<String, Object>();
         
         AutoSyncCommitListener listener = new AutoSyncCommitListener();
-        TransactionManager transactionManager = project.getRepository().getTransactionManager();
+        MDTransactionManager transactionManager = (MDTransactionManager)project.getRepository().getTransactionManager();
         listener.setTm(transactionManager);
         //project.getRepository().setTransactionModelListener(new AutoSyncModelListener());
-        transactionManager.addTransactionCommitListener(listener);
+        transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
         
         projectInstances.put("AutoSyncCommitListener", listener);
         
