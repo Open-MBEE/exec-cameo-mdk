@@ -210,7 +210,8 @@ public class ViewValidator {
                     webContains = new JSONArray();
                     webContains.add( containsObj );
                 }
-        
+                if (ps != null && ps.isCancel())
+                    break;
               //quick way to get all element info referenced by view from the web
                 String viewelements = ExportUtility.get(viewElementsUrl, false); 
                 if (viewelements == null)
