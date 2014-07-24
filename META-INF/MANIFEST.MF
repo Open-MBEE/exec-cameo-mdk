@@ -7,12 +7,12 @@ Bundle-ClassPath: .
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: gov.nasa.jpl.mgss.mbee.docgen.dgview,
- gov.nasa.jpl.mgss.mbee.docgen.dgview.impl,
- gov.nasa.jpl.mgss.mbee.docgen.dgview.util,
- gov.nasa.jpl.mgss.mbee.docgen.dgvalidation,
- gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.impl,
- gov.nasa.jpl.mgss.mbee.docgen.dgvalidation.util
+Export-Package: gov.nasa.jpl.mbee.dgvalidation,
+ gov.nasa.jpl.mbee.dgvalidation.impl,
+ gov.nasa.jpl.mbee.dgvalidation.util,
+ gov.nasa.jpl.mbee.dgview,
+ gov.nasa.jpl.mbee.dgview.impl,
+ gov.nasa.jpl.mbee.dgview.util
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.emf.ecore;visibility:=reexport
 Bundle-ActivationPolicy: lazy

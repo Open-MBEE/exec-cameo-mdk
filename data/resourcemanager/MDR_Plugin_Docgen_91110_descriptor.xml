@@ -4,7 +4,7 @@
 	description="DocGen and common profiles" 
 	id="91110" 
 	mdVersionMax="higher" 
-	mdVersionMin="17.0.2" 
+	mdVersionMin="17.0.5" 
 	name="Model Development Kit" 
 	product="JPL Model Development Kit" 
 	type="Plugin">
@@ -26,6 +26,8 @@
 	<file from="data/defaults/data/diagrams/DocGen 3 View Diagram/descriptor.xml" to="data/defaults/data/diagrams/DocGen 3 View Diagram/descriptor.xml"/>
 	<file from="data/defaults/data/diagrams/Module Management/descriptor.xml" to="data/defaults/data/diagrams/Module Management/descriptor.xml"/>
 	<file from="data/defaults/data/diagrams/View Class Diagram/descriptor.xml" to="data/defaults/data/diagrams/View Class Diagram/descriptor.xml"/>
+	<file from="data/defaults/data/diagrams/View Diagram/descriptor.xml" to="data/defaults/data/diagrams/View Diagram/descriptor.xml"/>
+	<file from="data/defaults/data/diagrams/Viewpoint Method Diagram/descriptor.xml" to="data/defaults/data/diagrams/Viewpoint Method Diagram/descriptor.xml"/>
 	<file from="data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml" to="data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
 	<file from="DocGenUserScripts/common/CustomDependencyValidation.py" to="DocGenUserScripts/common/CustomDependencyValidation.py"/>
 	<file from="DocGenUserScripts/common/DocGenAutoOrganize.py" to="DocGenUserScripts/common/DocGenAutoOrganize.py"/>
@@ -129,10 +131,6 @@
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-core-7.0.16.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-core-7.0.16.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-jasper.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-jasper.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-logging-juli-7.0.37.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-logging-juli-7.0.37.jar"/>
-	<file from="profiles/MDK/BPMN Extensions.mdxml" to="profiles/MDK/BPMN Extensions.mdxml"/>
-	<file from="profiles/MDK/Common Extensions.mdxml" to="profiles/MDK/Common Extensions.mdxml"/>
-	<file from="profiles/MDK/CoP Extensions.mdxml" to="profiles/MDK/CoP Extensions.mdxml"/>
-	<file from="profiles/MDK/ISO 42010 Profile.mdxml" to="profiles/MDK/ISO 42010 Profile.mdxml"/>
 	<file from="profiles/MDK/SysML Extensions.mdxml" to="profiles/MDK/SysML Extensions.mdxml"/>
 
   </installation>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<diagram abbreviation="ViewClass" baseType="Class Diagram" category="MBEE DocGen" type="View Class Diagram" version="5">
+<diagram abbreviation="ViewClass" baseType="Class Diagram" category="zzMBEE DocGen" type="View Class Diagram" version="5">
     <toolbarConfiguration>
         <baseCategory expandedByDefault="true" id="COMMON_ELEMENTS_STATIC" parentCategoryID="COMMON_ELEMENTS_STATIC"/>
         <category expandedByDefault="true" id="action_category_1378760795058_456847_0" name="View Class Diagram">
@@ -47,8 +47,8 @@
             </actions>
         </category>
     </toolbarConfiguration>
-    <module location="/Applications/MagicDraw UML 17.0.2/profiles/MDK/CoP Extensions.mdxml" name="CoP Extensions.mdxml">
-        <root id="_17_0_2_3_e9f034d_1372781831901_334575_29028"/>
+    <module location="/Applications/MagicDraw UML 17.0.2/profiles/MDK/SysML Extensions.mdxml" name="SysML Extensions.mdxml">
+        <root id="_17_0_1_2_8c20286_1339022620435_958581_14857"/>
     </module>
     <module location="/Applications/MagicDraw UML 17.0.2/profiles/UML_Standard_Profile.mdzip" name="UML_Standard_Profile.mdzip">
         <root id="magicdraw_uml_standard_profile_v_0001"/>

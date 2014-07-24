@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<diagram abbreviation="DocGen3" baseType="Activity Diagram" category="MBEE DocGen" type="DocGen 3 Diagram" version="7">
+<diagram abbreviation="DocGen3" baseType="Activity Diagram" category="zzMBEE DocGen" type="DocGen 3 Diagram" version="7">
     <toolbarConfiguration>
         <baseCategory expandedByDefault="true" id="COMMON_ELEMENTS_DYNAMIC" parentCategoryID="COMMON_ELEMENTS_DYNAMIC"/>
         <category expandedByDefault="true" id="action_category_1326673754018_667011_1" name="DocGen 3 Common">
@@ -258,6 +258,14 @@
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
+                <custom description="TableColumnGroup" id="IDaction_1392936426911_728447_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode">
+                    <stereotype id="_17_0_2_3_407019f_1392933505529_270043_29089"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
                 <group>
                     <custom description="TableExpressionColumn" id="IDaction_1377890109777_395711_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
                         <stereotype id="_17_0_2_3_e9f034d_1375474838719_217024_29345"/>
@@ -343,6 +351,14 @@
                             <mdElement elementClass="PropertyManager">
                                 <propertyManagerID>_17_0_3_244d03ea_1326674039621_354029_16227</propertyManagerID>
                             </mdElement>
+                        </PropertyVisitorAcceptor>
+                    </defaults>
+                </custom>
+                <custom description="ViewpointConstraint" id="IDaction_1383599191103_493373_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction">
+                    <stereotype id="_17_0_2_3_407019f_1383246724224_41450_29079"/>
+                    <defaults>
+                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
+                            <mdElement elementClass="PropertyManager"/>
                         </PropertyVisitorAcceptor>
                     </defaults>
                 </custom>
