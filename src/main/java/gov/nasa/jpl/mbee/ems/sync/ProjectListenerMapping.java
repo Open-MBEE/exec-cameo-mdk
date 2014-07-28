@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.nomagic.magicdraw.core.Project;
 
-public class ProjectListenerMapping extends ConcurrentHashMap<Project, Map<String, ?>>{
+public class ProjectListenerMapping extends ConcurrentHashMap<Project, Map<String, Object>>{
 
     private final static ProjectListenerMapping instance = new ProjectListenerMapping();
     

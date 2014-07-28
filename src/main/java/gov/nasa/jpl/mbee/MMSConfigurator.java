@@ -28,8 +28,10 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import gov.nasa.jpl.mbee.actions.ems.CloseAutoSyncAction;
 import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
+import gov.nasa.jpl.mbee.actions.ems.StartAutoSyncAction;
 
 import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
@@ -54,9 +56,8 @@ public class MMSConfigurator implements AMConfigurator {
             manager.addCategory((ActionsCategory)category);
             category.addAction(new EMSLogoutAction());
             category.addAction(new EMSLoginAction());
+            category.addAction(new StartAutoSyncAction());
+            category.addAction(new CloseAutoSyncAction());
         }
-        
     }
-    
-
 }
