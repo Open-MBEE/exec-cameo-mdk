@@ -1,11 +1,9 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
-import gov.nasa.jpl.mbee.AutoSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -14,26 +12,22 @@ import java.util.Map;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.jmi.InstanceDeletedEvent;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
 import com.nomagic.uml2.transaction.TransactionManager;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.impl.PropertyNames;
 
 /**
- * This class responds to commit done in the document.
+ * This class responds to commits done in the document.
+ * 
  * @author jsalcedo
- *
+ * 
  */
 public class AutoSyncCommitListener implements TransactionCommitListener {
 	/**
@@ -43,110 +37,276 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 	private TransactionManager tm;
 
 	public AutoSyncCommitListener() {
-		
+
 	}
-    /**
-     * Adapter to call handleChangeEvent() from the TransactionCommitListener
-     * interface.
-     */
+
+	/**
+	 * Adapter to call handleChangeEvent() from the TransactionCommitListener
+	 * interface.
+	 */
 	private class TransactionCommitHandler implements Runnable {
 		private final Collection<PropertyChangeEvent> events;
 		private Map<String, JSONObject> elements = new HashMap<String, JSONObject>();
-		
+
 		TransactionCommitHandler(final Collection<PropertyChangeEvent> events) {
 			this.events = events;
 		}
 
-        @Override
-        public void run() {
-            if (disabled)
-                return;
-        	for (PropertyChangeEvent event: events) {
+		@Override
+		public void run() {
+			// If the plugin has been disabled,
+			// simply return without processing
+			// the events.
+			//
+			if (disabled)
+				return;
 
-        		String strTmp = "NULL";
-        		if(event != null) {
-        			strTmp = event.toString();
-        		}   
-        		Object source = event.getSource();
-        		if (source instanceof Element) {
+			for (PropertyChangeEvent event : events) {
 
-        		    String changedProperty = event.getPropertyName();
-        		    if (changedProperty == null) {
-        		        //multliple property changed...
-        		    } else {
-        		        if (event.getNewValue() == null && event.getOldValue() == null)
-        		            continue;
-        		        if (event.getNewValue() == null && event.getOldValue() != null || 
-        		                event.getNewValue() != null && event.getOldValue() == null ||
-        		                !event.getNewValue().equals(event.getOldValue()))
-        		            handleChangedProperty((Element)source, changedProperty, event.getNewValue(), event.getOldValue());
-        		    }
+				String strTmp = "NULL";
+				if (event != null) {
+					strTmp = event.toString();
+				}
 
-        		}
-        	}
-        	if (!elements.isEmpty())
-        	    sendChanges();
-        	
-        }
-        
-        private void sendChanges() {
-            JSONObject toSend = new JSONObject();
-            JSONArray eles = new JSONArray();
-            eles.addAll(elements.values());
-            toSend.put("elements", eles);
-            String url = ExportUtility.getPostElementsUrl();
-            if (url != null)
-                ExportUtility.send(url, toSend.toJSONString());
-        }
-        
-        private void handleChangedProperty(Element e, String property, Object newValue, Object oldValue) {
-            JSONObject elementOb = null;
-            if (property.equals(PropertyNames.NAME)) {
-                if (elements.containsKey(ExportUtility.getElementID(e))) {
-                    elementOb = elements.get(ExportUtility.getElementID(e));
-                } else {
-                    elementOb = new JSONObject();
-                    elementOb.put("sysmlid", ExportUtility.getElementID(e));
-                    elements.put(ExportUtility.getElementID(e), elementOb);
-                }
-                elementOb.put("name", newValue);
-            } else if (e instanceof Comment && ExportUtility.isElementDocumentation((Comment)e) && property.equals(PropertyNames.BODY)) { //doc changed
-                Element actual = e.getOwner();
-                if (elements.containsKey(ExportUtility.getElementID(actual))) {
-                    elementOb = elements.get(ExportUtility.getElementID(e));
-                } else {
-                    elementOb = new JSONObject();
-                    elementOb.put("sysmlid", ExportUtility.getElementID(actual));
-                    elements.put(ExportUtility.getElementID(actual), elementOb);
-                }
-                elementOb.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(actual)));
-            } else if (e instanceof ValueSpecification && property.equals(PropertyNames.VALUE)) {
-                
-            } else if (property.equals(UML2MetamodelConstants.INSTANCE_CREATED) && ExportUtility.shouldAdd(e)) {
-                if (elements.containsKey(ExportUtility.getElementID(e))) {
-                    elementOb = elements.get(ExportUtility.getElementID(e));
-                } else {
-                    elementOb = new JSONObject();
-                    elementOb.put("sysmlid", ExportUtility.getElementID(e));
-                    elements.put(ExportUtility.getElementID(e), elementOb);
-                }
-                ExportUtility.fillElement(e, elementOb, null, null);
-            } else if (property.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
-                if (elements.containsKey(ExportUtility.getElementID(e)))
-                    elements.remove(ExportUtility.getElementID(e));
-            }
-        }
+				// Get the object (e.g. Element) that
+				// contains the change.
+				//
+				Object source = event.getSource();
+				if (source instanceof Element) {
+
+					String changedPropertyName = event.getPropertyName();
+					if (changedPropertyName == null) {
+						// If the property name is null, this indicates
+						// there multliple properties were changed, so
+						// simply continue.
+						//
+						continue;
+					}
+					else {
+						if (event.getNewValue() == null && event.getOldValue() == null)
+							continue;
+						if ((event.getNewValue() == null && event.getOldValue() != null)
+								|| (event.getNewValue() != null && event.getOldValue() == null)
+								|| (!event.getNewValue().equals(event.getOldValue())))
+							handleChangedProperty((Element) source, changedPropertyName, event.getNewValue(),
+									event.getOldValue());
+					}
+				}
+			}
+			if (!elements.isEmpty())
+				sendChanges();
+
+		}
+
+		private void sendChanges() {
+			JSONObject toSend = new JSONObject();
+			JSONArray eles = new JSONArray();
+			eles.addAll(elements.values());
+			toSend.put("elements", eles);
+			String url = ExportUtility.getPostElementsUrl();
+			if (url != null)
+				ExportUtility.send(url, toSend.toJSONString());
+		}
+
+		@SuppressWarnings("unchecked")
+		private void handleChangedProperty(Element sourceElement, String propertyName, Object newValue, Object oldValue) {
+			JSONObject elementOb = null;
+			String elementID = null;
+			//
+			// Examine property name to determine how to
+			// process the change.
+			//
+			if (propertyName.equals(PropertyNames.NAME)) {
+				elementID = ExportUtility.getElementID(sourceElement);
+				if (elements.containsKey(elementID)) {
+					elementOb = elements.get(elementID);
+				}
+				else {
+					elementOb = new JSONObject();
+					elementOb.put("sysmlid", elementID);
+					elements.put(elementID, elementOb);
+				}
+				elementOb.put("name", newValue);
+			}
+			else if (sourceElement instanceof Comment && ExportUtility.isElementDocumentation((Comment) sourceElement)
+					&& propertyName.equals(PropertyNames.BODY)) { // doc changed
+
+				Element actual = sourceElement.getOwner();
+				if (elements.containsKey(ExportUtility.getElementID(actual))) {
+					elementOb = elements.get(ExportUtility.getElementID(sourceElement));
+				}
+				else {
+					elementOb = new JSONObject();
+					elementOb.put("sysmlid", ExportUtility.getElementID(actual));
+					elements.put(ExportUtility.getElementID(actual), elementOb);
+				}
+				elementOb.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(actual)));
+			}
+			else if ((sourceElement instanceof ValueSpecification) && (propertyName.equals(PropertyNames.VALUE))) {
+				//
+				// Need to find the actual element that needs to be sent (mostly
+				// likely a Property or Slot that's the closest owner of this
+				// value spec).
+				Element actual = sourceElement.getOwner();
+
+				// There may multiple ValueSpecification changes
+				// so go up the chain of owners until we find
+				// the actual owner (Element) that has the changes.
+				//
+				while (actual instanceof ValueSpecification)
+					actual = actual.getOwner();
+
+				// If we found the appropriate owner,
+				// get its element id.
+				if (actual != null)
+					elementID = ExportUtility.getElementID(actual);
+				else
+					elementID = ExportUtility.getElementID(sourceElement);
+
+				JSONObject specialization = new JSONObject();
+				if (actual instanceof Property) {
+
+					specialization.put("type", "Property");
+					specialization.put("isDerived", ((Property) actual).isDerived());
+					specialization.put("isSlot", false);
+					ValueSpecification vs = ((Property) actual).getDefaultValue();
+					JSONArray singleElementSpecVsArray = new JSONArray();
+
+					if (vs != null) {
+						// Create a new JSONObject and a new JSONArray. Fill in
+						// the values to the new JSONObject and then insert
+						// that JSONObject into the array (NOTE: there will
+						// be single element in this array). Finally, insert
+						// the array into the specialization element as the
+						// value of the "value" property.
+						//
+
+						JSONObject newElement = new JSONObject();
+						ExportUtility.fillValueSpecification(vs, newElement, null, null);
+						singleElementSpecVsArray.add(newElement);
+					}
+					specialization.put("value", singleElementSpecVsArray);
+				}
+				else if (actual instanceof Slot) {
+					specialization.put("type", "Property");
+					specialization.put("isDerived", false);
+					specialization.put("isSlot", true);
+
+					if (((Slot) actual).getDefiningFeature().getID()
+							.equals("_17_0_2_3_e9f034d_1375396269655_665865_29411"))
+						specialization.put("stylesaver", true);
+
+					List<ValueSpecification> vsl = ((Slot) actual).getValue();
+					JSONArray specVsArray = new JSONArray();
+					if (vsl != null && vsl.size() > 0) {
+						for (ValueSpecification vs : vsl) {
+							JSONObject newElement = new JSONObject();
+							ExportUtility.fillValueSpecification(vs, newElement, null, null);
+							specVsArray.add(newElement);
+						}
+					}
+					specialization.put("value", specVsArray);
+					Element type = ((Slot) actual).getDefiningFeature();
+					if (type != null) {
+						specialization.put("propertyType", "" + type.getID());
+					}
+				}
+				else
+					return;
+
+				// If the element is already in the elements Map,
+				// retrieve it and then update it; otherwise
+				// create a new JSONObject object, update it
+				// and store it in the elements Map structure
+				//
+				if (elements.containsKey(elementID)) {
+					elementOb = elements.get(elementID);
+					elementOb.put("specialization", specialization);
+				}
+				else {
+					elementOb = new JSONObject();
+					elementOb.put("sysmlid", ExportUtility.getElementID(actual));
+					elementOb.put("specialization", specialization);
+					elements.put(ExportUtility.getElementID(actual), elementOb);
+				}
+			}
+			// Check if this is a Property or Slot
+			//
+			else if (sourceElement instanceof Property) {
+				elementID = ExportUtility.getElementID(sourceElement);
+				ValueSpecification vs = ((Property) sourceElement).getDefaultValue();
+				if (vs != null) {
+					JSONObject jsonObj = new JSONObject();
+					JSONArray value = new JSONArray();
+					JSONObject specialization = new JSONObject();
+
+					elementOb = new JSONObject();
+
+					specialization.put("value", value);
+					specialization.put("type", "Property");
+
+					ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
+					value.add(jsonObj);
+
+					elementOb.put("specialization", specialization);
+					elementOb.put("sysmlid", elementID);
+					elements.put(elementID, elementOb);
+				}
+			}
+			else if ((sourceElement instanceof Slot) && propertyName.equals(PropertyNames.VALUE)) {
+				JSONObject specialization = new JSONObject();
+				JSONArray value = new JSONArray();
+				List<ValueSpecification> vsl = ((Slot) sourceElement).getValue();
+				elementOb = new JSONObject();
+				elementID = ExportUtility.getElementID(sourceElement);
+
+				if (vsl != null && vsl.size() > 0) {
+					specialization.put("value", value);
+					specialization.put("type", "Property");
+					for (ValueSpecification vs : vsl) {
+						JSONObject jsonObj = new JSONObject();
+						ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
+						value.add(jsonObj);
+					}
+
+					elementOb.put("specialization", specialization);
+					elementOb.put("sysmlid", elementID);
+					elements.put(elementID, elementOb);
+				}
+			}
+			else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
+					&& ExportUtility.shouldAdd(sourceElement)) {
+
+				elementID = ExportUtility.getElementID(sourceElement);
+
+				if (elements.containsKey(elementID)) {
+					elementOb = elements.get(elementID);
+				}
+				else {
+					elementOb = new JSONObject();
+					elementOb.put("sysmlid", elementID);
+					elements.put(elementID, elementOb);
+				}
+				ExportUtility.fillElement(sourceElement, elementOb, null, null);
+			}
+			else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
+				elementID = ExportUtility.getElementID(sourceElement);
+
+				if (elements.containsKey(elementID))
+					elements.remove(elementID);
+			}
+		}
 	}
 
 	public void disable() {
 		disabled = true;
 	}
 
-	public  void enable() {
+	public void enable() {
 		disabled = false;
 	}
 
-    public TransactionManager getTm() {
+	public TransactionManager getTm() {
 		return tm;
 	}
 
@@ -156,6 +316,6 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 
 	@Override
 	public Runnable transactionCommited(Collection<PropertyChangeEvent> events) {
-        return new TransactionCommitHandler(events);
+		return new TransactionCommitHandler(events);
 	}
 }
