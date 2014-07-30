@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 
@@ -14,6 +15,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -144,7 +146,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 			}
 			else if ((sourceElement instanceof ValueSpecification) && (propertyName.equals(PropertyNames.VALUE))) {
 				//
-				// Need to find the actual element that needs to be sent (mostly
+				// Need to find the actual element that needs to be sent (most
 				// likely a Property or Slot that's the closest owner of this
 				// value spec).
 				Element actual = sourceElement.getOwner();
@@ -189,8 +191,6 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				}
 				else if (actual instanceof Slot) {
 					specialization.put("type", "Property");
-					specialization.put("isDerived", false);
-					specialization.put("isSlot", true);
 
 					if (((Slot) actual).getDefiningFeature().getID()
 							.equals("_17_0_2_3_e9f034d_1375396269655_665865_29411"))
@@ -206,10 +206,6 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 						}
 					}
 					specialization.put("value", specVsArray);
-					Element type = ((Slot) actual).getDefiningFeature();
-					if (type != null) {
-						specialization.put("propertyType", "" + type.getID());
-					}
 				}
 				else
 					return;
@@ -230,9 +226,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 					elements.put(ExportUtility.getElementID(actual), elementOb);
 				}
 			}
-			// Check if this is a Property or Slot
+			// Check if this is a Property or Slot. Need these next two if
+			// statement
+			// to handle the case where a value is being deleted.
 			//
-			else if (sourceElement instanceof Property) {
+			else if ((sourceElement instanceof Property) && propertyName.equals(PropertyNames.DEFAULT_VALUE)) {
 				elementID = ExportUtility.getElementID(sourceElement);
 				ValueSpecification vs = ((Property) sourceElement).getDefaultValue();
 				if (vs != null) {
@@ -295,6 +293,87 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				if (elements.containsKey(elementID))
 					elements.remove(elementID);
 			}
+			else if (propertyName.equals(PropertyNames.SUPPLIER)) {
+				// This event represents a move of a relationship from
+				// one element (A) to another element (B). Process only
+				// the events associated with the element B.
+				//
+				if ((newValue != null) && (oldValue == null)) {
+					JSONObject specialization = new JSONObject();
+					elementOb = new JSONObject();
+					elementID = ExportUtility.getElementID(sourceElement);
+					Element client = ModelHelper.getClientElement(sourceElement);
+					Element supplier = ModelHelper.getSupplierElement(sourceElement);
+					specialization.put("source", client.getID());
+					specialization.put("target", supplier.getID());
+
+					elementOb.put("specialization", specialization);
+					elementOb.put("sysmlid", elementID);
+					elements.put(elementID, elementOb);
+				}
+
+			}
+			else if (propertyName.equals(PropertyNames.CLIENT)) {
+				// This event represents a move of a directed relationship
+				// from one element (A) to another element (B). Process
+				// only the events associated with the element B.
+				//
+				if ((newValue != null) && (oldValue == null)) {
+					JSONObject specialization = new JSONObject();
+					elementOb = new JSONObject();
+					elementID = ExportUtility.getElementID(sourceElement);
+					Element client = ModelHelper.getClientElement(sourceElement);
+					Element supplier = ModelHelper.getSupplierElement(sourceElement);
+					specialization.put("source", client.getID());
+					specialization.put("target", supplier.getID());
+
+					elementOb.put("specialization", specialization);
+					elementOb.put("sysmlid", elementID);
+					elements.put(elementID, elementOb);
+				}
+			}
+			else if (propertyName.equals(PropertyNames.GENERALIZATION)) {
+				if ((newValue != null) && (oldValue == null)) {
+					JSONObject specialization = new JSONObject();
+					elementOb = new JSONObject();
+					elementID = ExportUtility.getElementID(sourceElement);
+					boolean isConform = StereotypesHelper.hasStereotypeOrDerived(sourceElement,
+							DocGen3Profile.conformStereotype);
+
+					if (isConform)
+						specialization.put("type", "Conform");
+					else if (StereotypesHelper.hasStereotypeOrDerived(sourceElement, DocGen3Profile.queriesStereotype))
+						specialization.put("type", "Expose");
+					else
+						specialization.put("type", "Generalization");
+
+					elementOb.put("specialization", specialization);
+					elementOb.put("sysmlid", elementID);
+					elements.put(elementID, elementOb);
+				}
+				else if (propertyName.equals(PropertyNames.CLIENT_DEPENDENCY)) {
+					if ((newValue != null) && (oldValue == null)) {
+						JSONObject specialization = new JSONObject();
+						elementOb = new JSONObject();
+						elementID = ExportUtility.getElementID(sourceElement);
+						boolean isConform = StereotypesHelper.hasStereotypeOrDerived(sourceElement,
+								DocGen3Profile.conformStereotype);
+
+						if (isConform)
+							specialization.put("type", "Conform");
+						else if (StereotypesHelper.hasStereotypeOrDerived(sourceElement,
+								DocGen3Profile.queriesStereotype))
+							specialization.put("type", "Expose");
+						else
+							specialization.put("type", "Generalization");
+
+						elementOb.put("specialization", specialization);
+						elementOb.put("sysmlid", elementID);
+						elements.put(elementID, elementOb);
+					}
+				}
+			}
+
 		}
 	}
 
