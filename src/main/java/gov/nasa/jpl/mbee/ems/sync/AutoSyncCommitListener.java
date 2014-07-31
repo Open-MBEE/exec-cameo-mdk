@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.beans.PropertyChangeEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -13,11 +14,13 @@ import java.util.Map;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
@@ -114,6 +117,28 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 		private void handleChangedProperty(Element sourceElement, String propertyName, Object newValue, Object oldValue) {
 			JSONObject elementOb = null;
 			String elementID = null;
+			ArrayList<String> moveKeywords = new ArrayList<String>();
+			// Create a list of the 'owning' property names.
+			//
+			moveKeywords.add(PropertyNames.OWNING_ASSOCIATION);
+			moveKeywords.add(PropertyNames.OWNING_CONSTRAINT);
+			moveKeywords.add(PropertyNames.OWNING_ELEMENT);
+			moveKeywords.add(PropertyNames.OWNING_EXPRESSION);
+			moveKeywords.add(PropertyNames.OWNING_INSTANCE);
+			moveKeywords.add(PropertyNames.OWNING_INSTANCE_SPEC);
+			moveKeywords.add(PropertyNames.OWNING_LOWER);
+			moveKeywords.add(PropertyNames.OWNING_PACKAGE);
+			moveKeywords.add(PropertyNames.OWNING_PARAMETER);
+			moveKeywords.add(PropertyNames.OWNING_PROPERTY);
+			moveKeywords.add(PropertyNames.OWNING_SIGNAL);
+			moveKeywords.add(PropertyNames.OWNING_SLOT);
+			moveKeywords.add(PropertyNames.OWNING_STATE);
+			moveKeywords.add(PropertyNames.OWNING_TEMPLATE_PARAMETER);
+			moveKeywords.add(PropertyNames.OWNING_TRANSITION);
+			moveKeywords.add(PropertyNames.OWNING_UPPER);
+			moveKeywords.add(PropertyNames._U_M_L_CLASS);
+			moveKeywords.add(PropertyNames.OWNER);
+
 			//
 			// Examine property name to determine how to
 			// process the change.
@@ -290,6 +315,9 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 			else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
 				elementID = ExportUtility.getElementID(sourceElement);
 
+				// JJS TO DO: implement the actual delete when there is the
+				// call to make the a delete in the server.
+				//
 				if (elements.containsKey(elementID))
 					elements.remove(elementID);
 			}
@@ -300,8 +328,16 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				//
 				if ((newValue != null) && (oldValue == null)) {
 					JSONObject specialization = new JSONObject();
-					elementOb = new JSONObject();
 					elementID = ExportUtility.getElementID(sourceElement);
+
+					if (elements.containsKey(elementID)) {
+						elementOb = elements.get(elementID);
+					}
+					else {
+						elementOb = new JSONObject();
+						elementOb.put("sysmlid", elementID);
+						elements.put(elementID, elementOb);
+					}
 					Element client = ModelHelper.getClientElement(sourceElement);
 					Element supplier = ModelHelper.getSupplierElement(sourceElement);
 					specialization.put("source", client.getID());
@@ -311,7 +347,6 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 					elementOb.put("sysmlid", elementID);
 					elements.put(elementID, elementOb);
 				}
-
 			}
 			else if (propertyName.equals(PropertyNames.CLIENT)) {
 				// This event represents a move of a directed relationship
@@ -320,8 +355,15 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				//
 				if ((newValue != null) && (oldValue == null)) {
 					JSONObject specialization = new JSONObject();
-					elementOb = new JSONObject();
 					elementID = ExportUtility.getElementID(sourceElement);
+					if (elements.containsKey(elementID)) {
+						elementOb = elements.get(elementID);
+					}
+					else {
+						elementOb = new JSONObject();
+						elementOb.put("sysmlid", elementID);
+						elements.put(elementID, elementOb);
+					}
 					Element client = ModelHelper.getClientElement(sourceElement);
 					Element supplier = ModelHelper.getSupplierElement(sourceElement);
 					specialization.put("source", client.getID());
@@ -332,11 +374,19 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 					elements.put(elementID, elementOb);
 				}
 			}
-			else if (propertyName.equals(PropertyNames.GENERALIZATION)) {
+			else if ((sourceElement instanceof Generalization)
+					&& ((propertyName.equals(PropertyNames.SPECIFIC)) || (propertyName.equals(PropertyNames.GENERAL)))) {
 				if ((newValue != null) && (oldValue == null)) {
 					JSONObject specialization = new JSONObject();
-					elementOb = new JSONObject();
 					elementID = ExportUtility.getElementID(sourceElement);
+					if (elements.containsKey(elementID)) {
+						elementOb = elements.get(elementID);
+					}
+					else {
+						elementOb = new JSONObject();
+						elementOb.put("sysmlid", elementID);
+						elements.put(elementID, elementOb);
+					}
 					boolean isConform = StereotypesHelper.hasStereotypeOrDerived(sourceElement,
 							DocGen3Profile.conformStereotype);
 
@@ -347,33 +397,38 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 					else
 						specialization.put("type", "Generalization");
 
+					Element client = ModelHelper.getClientElement(sourceElement);
+					Element supplier = ModelHelper.getSupplierElement(sourceElement);
+					specialization.put("source", client.getID());
+					specialization.put("target", supplier.getID());
+
 					elementOb.put("specialization", specialization);
 					elementOb.put("sysmlid", elementID);
 					elements.put(elementID, elementOb);
 				}
-				else if (propertyName.equals(PropertyNames.CLIENT_DEPENDENCY)) {
-					if ((newValue != null) && (oldValue == null)) {
-						JSONObject specialization = new JSONObject();
-						elementOb = new JSONObject();
-						elementID = ExportUtility.getElementID(sourceElement);
-						boolean isConform = StereotypesHelper.hasStereotypeOrDerived(sourceElement,
-								DocGen3Profile.conformStereotype);
-
-						if (isConform)
-							specialization.put("type", "Conform");
-						else if (StereotypesHelper.hasStereotypeOrDerived(sourceElement,
-								DocGen3Profile.queriesStereotype))
-							specialization.put("type", "Expose");
-						else
-							specialization.put("type", "Generalization");
-
-						elementOb.put("specialization", specialization);
-						elementOb.put("sysmlid", elementID);
-						elements.put(elementID, elementOb);
-					}
-				}
 			}
+			else if ((moveKeywords.contains(propertyName)) && ExportUtility.shouldAdd(sourceElement)) {
+				// This code handle moving an element (not a relationship)
+				// from one class to another.
+				//
+				if (elements.containsKey(elementID)) {
+					elementOb = elements.get(elementID);
+				}
+				else {
+					elementOb = new JSONObject();
+					elementOb.put("sysmlid", elementID);
+					elements.put(elementID, elementOb);
+				}
 
+				elementID = ExportUtility.getElementID(sourceElement);
+				elementOb.put("sysmlid", elementID);
+				if (sourceElement.getOwner() == null)
+					elementOb.put("owner", "null");
+				else if (sourceElement.getOwner() == Application.getInstance().getProject().getModel())
+					elementOb.put("owner", Application.getInstance().getProject().getPrimaryProject().getProjectID());
+				else
+					elementOb.put("owner", "" + sourceElement.getOwner().getID());
+			}
 		}
 	}
 
