@@ -138,7 +138,7 @@ public class JMSMessageListener implements MessageListener {
 					if (tmpComment != null)
 						ModelHelper.setComment(changedElement, Utils.addHtmlWrapper(tmpComment));
 
-					if (changedElement instanceof Property) {
+					if ((changedElement instanceof Property) || (changedElement instanceof Slot)) {
 						ValueSpecification newVal = null;
 						JSONArray vals = (JSONArray) ((JSONObject) (ob).get("specialization")).get("value");
 						// Check if this is a slot. If so, process
@@ -146,7 +146,8 @@ public class JMSMessageListener implements MessageListener {
 						// to process the Property element using only the
 						// first value in the array.
 						//
-						Boolean isSlot = (Boolean) (ob).get("isSlot");
+						JSONObject specialization = (JSONObject) ob.get("specialization");
+						Boolean isSlot = (Boolean) (specialization).get("isSlot");
 						if ((isSlot != null) && (isSlot == true)) {
 
 							if ((vals == null || vals.isEmpty())) {
