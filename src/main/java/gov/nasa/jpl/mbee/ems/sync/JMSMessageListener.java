@@ -197,7 +197,13 @@ public class JMSMessageListener implements MessageListener {
 						return;
 					}
 
-					String valueType = (String) ob.get("type");
+					specialization = (JSONObject) ob.get("specialization");
+					if (specialization == null)
+						return;
+
+					String valueType = (String) specialization.get("type");
+
+					// String valueType = (String) ob.get("type");
 
 					if (valueType.equalsIgnoreCase("element")) {
 						Class newElement = elemFactory.createClassInstance();
