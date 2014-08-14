@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Debug;
@@ -133,10 +134,37 @@ public class JMSMessageListener implements MessageListener {
 						((NamedElement) changedElement).setName(newName);
 					}
 
-					String tmpComment = (String) (ob).get("comment");
-					String newComment = ExportUtility.unescapeHtml(tmpComment);
-					if (newComment != null) {
-						((Comment) changedElement).setBody(Utils.addHtmlWrapper(newComment));
+					String tmpComment = (String) (ob).get("documentation");
+					if (tmpComment != null)
+						ModelHelper.setComment(changedElement, Utils.addHtmlWrapper(tmpComment));
+
+					if (changedElement instanceof Property) {
+						ValueSpecification newVal = null;
+						JSONArray vals = (JSONArray) ((JSONObject) (ob).get("specialization")).get("value");
+						// Check if this is a slot. If so, process
+						// the associated values; otherwise continue
+						// to process the Property element using only the
+						// first value in the array.
+						//
+						Boolean isSlot = (Boolean) (ob).get("isSlot");
+						if ((isSlot != null) && (isSlot == true)) {
+
+							if ((vals == null || vals.isEmpty())) {
+								((Slot) changedElement).getValue().clear();
+							}
+							else {
+								((Slot) changedElement).getValue().clear();
+								for (Object value : vals) {
+									newVal = this.getNewValue((JSONObject) value);
+									((Slot) changedElement).getValue().add(newVal);
+								}
+							}
+						}
+						else {
+							newVal = getNewValue((JSONObject) vals.get(0));
+							((Property) changedElement).setDefaultValue(newVal);
+						}
+
 					}
 				}
 
@@ -156,7 +184,7 @@ public class JMSMessageListener implements MessageListener {
 					//
 					elementName = (String) (ob).get("name");
 					ownerName = (String) (ob).get("owner");
-					documentation = (String) (ob).get("documentation");
+					documentation = Utils.addHtmlWrapper((String) (ob).get("documentation"));
 					sysmlID = (String) (ob).get("sysmlid");
 
 					if ((ownerName == null) || (ownerName.isEmpty())) {
