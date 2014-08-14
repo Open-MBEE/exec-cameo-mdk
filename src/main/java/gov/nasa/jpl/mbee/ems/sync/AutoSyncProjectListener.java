@@ -19,6 +19,16 @@ import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
 import com.nomagic.uml2.transaction.TransactionManager;
 
+/*
+ * This class is responsible for taking action when a project is opened.
+ * This class does the following when instantiated:
+ *   1. Create a transaction manager
+ *   2. Create a TransactionCommitListener object
+ *   3. Add the listener to the transaction manager object 
+ *   4. Create a JMS topic and connection to that topic
+ *   5. Store that connection so we keep track of the connections to JMS.
+ *   
+ */
 public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 
     private static final String CONNECTION = "Connection";
@@ -101,7 +111,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 
     @Override
     public void projectClosed(Project project) {
-        //close(project);
+        close(project);
         ProjectListenerMapping.getInstance().remove(project);
     }
 }
