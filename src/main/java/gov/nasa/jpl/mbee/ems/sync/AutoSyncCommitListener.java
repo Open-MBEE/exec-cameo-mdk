@@ -160,7 +160,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 
 				Element actual = sourceElement.getOwner();
 				if (elements.containsKey(ExportUtility.getElementID(actual))) {
-					elementOb = elements.get(ExportUtility.getElementID(sourceElement));
+					elementOb = elements.get(ExportUtility.getElementID(actual));
 				}
 				else {
 					elementOb = new JSONObject();
