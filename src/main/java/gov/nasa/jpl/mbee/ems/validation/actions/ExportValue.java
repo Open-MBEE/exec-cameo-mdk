@@ -85,8 +85,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            if (e instanceof Property || e instanceof Slot)
-                infos.addAll(ExportUtility.getReferencedElements(e).values());
+            //if (e instanceof Property || e instanceof Slot)
+            //    infos.addAll(ExportUtility.getReferencedElements(e).values());
             JSONObject info = getInfo(e);
             infos.add(info);
         }
@@ -111,8 +111,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         JSONObject info = getInfo(element);
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        if (element instanceof Property || element instanceof Slot)
-            elements.addAll(ExportUtility.getReferencedElements(element).values());
+        //if (element instanceof Property || element instanceof Slot)
+        //    elements.addAll(ExportUtility.getReferencedElements(element).values());
         elements.add(info);
         send.put("elements", elements);
         String url = ExportUtility.getPostElementsUrl();
