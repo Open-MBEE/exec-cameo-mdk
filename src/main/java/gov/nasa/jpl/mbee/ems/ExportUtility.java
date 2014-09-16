@@ -143,6 +143,8 @@ public class ExportUtility {
     }
 
     public static Element getElementFromID(String id) {
+        if (id == null)
+            return null;
         Project prj = Application.getInstance().getProject();
         String[] ids = id.split("-slot-");
         if (ids.length < 2) {

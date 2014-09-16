@@ -108,6 +108,21 @@ public class ImportUtility {
         return newE;
     }
     
+    public static void updateElement(Element e, JSONObject o) {
+        setName(e, o);
+        setDocumentation(e, o);
+        JSONObject spec = (JSONObject)o.get("specialization");
+        if (spec != null) {
+            String type = (String)spec.get("type");
+            if (type != null && type.equals("Property") && e instanceof Property)
+                setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
+            if (type != null && type.equals("Property") && e instanceof Slot)
+                setSlotValues((Slot)e, (JSONArray)spec.get("value"));
+            if (type != null && e instanceof DirectedRelationship)
+                setRelationshipEnds((DirectedRelationship)e, spec);
+        }
+    }
+    
     public static void setName(Element e, JSONObject o) {
         String name = (String)o.get("name");
         setName(e, name);
@@ -147,19 +162,23 @@ public class ImportUtility {
         String targetId = (String) specialization.get("target");
         Element source = ExportUtility.getElementFromID(sourceId);
         Element target = ExportUtility.getElementFromID(targetId);
-        ModelHelper.setSupplierElement(dr, target);
-        ModelHelper.setClientElement(dr, source);
+        if (source != null && target != null) {
+            ModelHelper.setSupplierElement(dr, target);
+            ModelHelper.setClientElement(dr, source);
+        }
     }
     
     public static void setPropertyDefaultValue(Property p, JSONArray values) {
         if (values != null && values.size() > 0)
             p.setDefaultValue(createValueSpec((JSONObject)values.get(0)));
+        if (values != null && values.isEmpty())
+            p.setDefaultValue(null);
     }
     
     public static void setSlotValues(Slot s, JSONArray values) {
-        s.getValue().clear();
         if (values == null)
             return;
+        s.getValue().clear();
         for (Object o: values) {
             s.getValue().add(createValueSpec((JSONObject)o));
         }
