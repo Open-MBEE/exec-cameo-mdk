@@ -34,7 +34,7 @@ public enum PropertyValueType {
     LiteralBoolean(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean.class), 
     LiteralInteger(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger.class), 
     LiteralUnlimitedNatural(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural.class), 
-    LiteralNull(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural.class),
+    LiteralNull(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralNull.class),
     ElementValue(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue.class), 
     Expression(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression.class),
     InstanceValue(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue.class),
