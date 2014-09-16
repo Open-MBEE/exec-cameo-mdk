@@ -19,6 +19,7 @@ import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -100,10 +101,10 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 			}
 			if (!elements.isEmpty())
 				sendChanges();
-
 		}
 
-		private void sendChanges() {
+		@SuppressWarnings("unchecked")
+        private void sendChanges() {
 			JSONObject toSend = new JSONObject();
 			JSONArray eles = new JSONArray();
 			eles.addAll(elements.values());
@@ -113,6 +114,21 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				ExportUtility.send(url, toSend.toJSONString());
 		}
 
+		@SuppressWarnings("unchecked")
+        private JSONObject getElementObject(Element e) {
+		    JSONObject elementOb = null;
+		    String elementID = ExportUtility.getElementID(e);
+		    if (elements.containsKey(elementID)) {
+                elementOb = elements.get(elementID);
+            }
+            else {
+                elementOb = new JSONObject();
+                elementOb.put("sysmlid", elementID);
+                elements.put(elementID, elementOb);
+            }
+		    return elementOb;
+		}
+		
 		@SuppressWarnings("unchecked")
 		private void handleChangedProperty(Element sourceElement, String propertyName, Object newValue, Object oldValue) {
 			JSONObject elementOb = null;
@@ -144,30 +160,15 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 			// process the change.
 			//
 			if (propertyName.equals(PropertyNames.NAME)) {
-				elementID = ExportUtility.getElementID(sourceElement);
-				if (elements.containsKey(elementID)) {
-					elementOb = elements.get(elementID);
-				}
-				else {
-					elementOb = new JSONObject();
-					elementOb.put("sysmlid", elementID);
-					elements.put(elementID, elementOb);
-				}
-				elementOb.put("name", newValue);
+				elementOb = getElementObject(sourceElement);
+				ExportUtility.fillName(sourceElement, elementOb);
 			}
-			else if (sourceElement instanceof Comment && ExportUtility.isElementDocumentation((Comment) sourceElement)
-					&& propertyName.equals(PropertyNames.BODY)) { // doc changed
-
+			else if (sourceElement instanceof Comment && 
+			        ExportUtility.isElementDocumentation((Comment) sourceElement) && 
+			        propertyName.equals(PropertyNames.BODY)) { // doc changed
 				Element actual = sourceElement.getOwner();
-				if (elements.containsKey(ExportUtility.getElementID(actual))) {
-					elementOb = elements.get(ExportUtility.getElementID(actual));
-				}
-				else {
-					elementOb = new JSONObject();
-					elementOb.put("sysmlid", ExportUtility.getElementID(actual));
-					elements.put(ExportUtility.getElementID(actual), elementOb);
-				}
-				elementOb.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(actual)));
+				elementOb = getElementObject(actual);
+				ExportUtility.fillDoc(actual, elementOb);
 			}
 			else if ((sourceElement instanceof ValueSpecification) && (propertyName.equals(PropertyNames.VALUE))) {
 				//
@@ -182,134 +183,28 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				//
 				while (actual instanceof ValueSpecification)
 					actual = actual.getOwner();
-
-				// If we found the appropriate owner,
-				// get its element id.
-				if (actual != null)
-					elementID = ExportUtility.getElementID(actual);
-				else
-					elementID = ExportUtility.getElementID(sourceElement);
-
-				JSONObject specialization = new JSONObject();
-				if (actual instanceof Property) {
-
-					specialization.put("type", "Property");
-					specialization.put("isDerived", ((Property) actual).isDerived());
-					specialization.put("isSlot", false);
-					ValueSpecification vs = ((Property) actual).getDefaultValue();
-					JSONArray singleElementSpecVsArray = new JSONArray();
-
-					if (vs != null) {
-						// Create a new JSONObject and a new JSONArray. Fill in
-						// the values to the new JSONObject and then insert
-						// that JSONObject into the array (NOTE: there will
-						// be single element in this array). Finally, insert
-						// the array into the specialization element as the
-						// value of the "value" property.
-						//
-
-						JSONObject newElement = new JSONObject();
-						ExportUtility.fillValueSpecification(vs, newElement, null, null);
-						singleElementSpecVsArray.add(newElement);
-					}
-					specialization.put("value", singleElementSpecVsArray);
-				}
-				else if (actual instanceof Slot) {
-					specialization.put("type", "Property");
-
-					if (((Slot) actual).getDefiningFeature().getID()
-							.equals("_17_0_2_3_e9f034d_1375396269655_665865_29411"))
-						specialization.put("stylesaver", true);
-
-					List<ValueSpecification> vsl = ((Slot) actual).getValue();
-					JSONArray specVsArray = new JSONArray();
-					if (vsl != null && vsl.size() > 0) {
-						for (ValueSpecification vs : vsl) {
-							JSONObject newElement = new JSONObject();
-							ExportUtility.fillValueSpecification(vs, newElement, null, null);
-							specVsArray.add(newElement);
-						}
-					}
-					specialization.put("value", specVsArray);
-				}
-				else
-					return;
-
-				// If the element is already in the elements Map,
-				// retrieve it and then update it; otherwise
-				// create a new JSONObject object, update it
-				// and store it in the elements Map structure
-				//
-				if (elements.containsKey(elementID)) {
-					elementOb = elements.get(elementID);
-					elementOb.put("specialization", specialization);
-				}
-				else {
-					elementOb = new JSONObject();
-					elementOb.put("sysmlid", ExportUtility.getElementID(actual));
-					elementOb.put("specialization", specialization);
-					elements.put(ExportUtility.getElementID(actual), elementOb);
-				}
+				
+				elementOb = getElementObject(actual);
+				JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, false);
+				elementOb.put("specialization", specialization);
 			}
 			// Check if this is a Property or Slot. Need these next two if
 			// statement
 			// to handle the case where a value is being deleted.
 			//
 			else if ((sourceElement instanceof Property) && propertyName.equals(PropertyNames.DEFAULT_VALUE)) {
-				elementID = ExportUtility.getElementID(sourceElement);
-				ValueSpecification vs = ((Property) sourceElement).getDefaultValue();
-				if (vs != null) {
-					JSONObject jsonObj = new JSONObject();
-					JSONArray value = new JSONArray();
-					JSONObject specialization = new JSONObject();
-
-					elementOb = new JSONObject();
-
-					specialization.put("value", value);
-					specialization.put("type", "Property");
-
-					ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
-					value.add(jsonObj);
-
-					elementOb.put("specialization", specialization);
-					elementOb.put("sysmlid", elementID);
-					elements.put(elementID, elementOb);
-				}
+				JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
+				elementOb = getElementObject(sourceElement);
+                elementOb.put("specialization", specialization);
 			}
 			else if ((sourceElement instanceof Slot) && propertyName.equals(PropertyNames.VALUE)) {
-				JSONObject specialization = new JSONObject();
-				JSONArray value = new JSONArray();
-				List<ValueSpecification> vsl = ((Slot) sourceElement).getValue();
-				elementOb = new JSONObject();
-				elementID = ExportUtility.getElementID(sourceElement);
-
-				if (vsl != null && vsl.size() > 0) {
-					specialization.put("value", value);
-					specialization.put("type", "Property");
-					for (ValueSpecification vs : vsl) {
-						JSONObject jsonObj = new JSONObject();
-						ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
-						value.add(jsonObj);
-					}
-
-					elementOb.put("specialization", specialization);
-					elementOb.put("sysmlid", elementID);
-					elements.put(elementID, elementOb);
-				}
+			    elementOb = getElementObject(sourceElement);
+			    JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
+                elementOb.put("specialization", specialization);
 			}
 			else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
 					&& ExportUtility.shouldAdd(sourceElement)) {
-
-				elementID = ExportUtility.getElementID(sourceElement);
-
-				if (elements.containsKey(elementID)) {
-					elementOb = elements.get(elementID);
-				}
-				else {
-					elementOb = new JSONObject();
-					elementOb.put("sysmlid", elementID);
-					elements.put(elementID, elementOb);
-				}
+				elementOb = getElementObject(sourceElement);
 				ExportUtility.fillElement(sourceElement, elementOb, null, null);
 			}
 			else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
@@ -321,113 +216,31 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				if (elements.containsKey(elementID))
 					elements.remove(elementID);
 			}
-			else if (propertyName.equals(PropertyNames.SUPPLIER)) {
+			else if (sourceElement instanceof DirectedRelationship && 
+			        (propertyName.equals(PropertyNames.SUPPLIER) || propertyName.equals(PropertyNames.CLIENT))) {
 				// This event represents a move of a relationship from
 				// one element (A) to another element (B). Process only
 				// the events associated with the element B.
 				//
 				if ((newValue != null) && (oldValue == null)) {
-					JSONObject specialization = new JSONObject();
-					elementID = ExportUtility.getElementID(sourceElement);
-
-					if (elements.containsKey(elementID)) {
-						elementOb = elements.get(elementID);
-					}
-					else {
-						elementOb = new JSONObject();
-						elementOb.put("sysmlid", elementID);
-						elements.put(elementID, elementOb);
-					}
-					Element client = ModelHelper.getClientElement(sourceElement);
-					Element supplier = ModelHelper.getSupplierElement(sourceElement);
-					specialization.put("source", client.getID());
-					specialization.put("target", supplier.getID());
-
+					JSONObject specialization = ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)sourceElement, null);
+					elementOb = getElementObject(sourceElement);
 					elementOb.put("specialization", specialization);
-					elementOb.put("sysmlid", elementID);
-					elements.put(elementID, elementOb);
-				}
-			}
-			else if (propertyName.equals(PropertyNames.CLIENT)) {
-				// This event represents a move of a directed relationship
-				// from one element (A) to another element (B). Process
-				// only the events associated with the element B.
-				//
-				if ((newValue != null) && (oldValue == null)) {
-					JSONObject specialization = new JSONObject();
-					elementID = ExportUtility.getElementID(sourceElement);
-					if (elements.containsKey(elementID)) {
-						elementOb = elements.get(elementID);
-					}
-					else {
-						elementOb = new JSONObject();
-						elementOb.put("sysmlid", elementID);
-						elements.put(elementID, elementOb);
-					}
-					Element client = ModelHelper.getClientElement(sourceElement);
-					Element supplier = ModelHelper.getSupplierElement(sourceElement);
-					specialization.put("source", client.getID());
-					specialization.put("target", supplier.getID());
-
-					elementOb.put("specialization", specialization);
-					elementOb.put("sysmlid", elementID);
-					elements.put(elementID, elementOb);
 				}
 			}
 			else if ((sourceElement instanceof Generalization)
 					&& ((propertyName.equals(PropertyNames.SPECIFIC)) || (propertyName.equals(PropertyNames.GENERAL)))) {
 				if ((newValue != null) && (oldValue == null)) {
-					JSONObject specialization = new JSONObject();
-					elementID = ExportUtility.getElementID(sourceElement);
-					if (elements.containsKey(elementID)) {
-						elementOb = elements.get(elementID);
-					}
-					else {
-						elementOb = new JSONObject();
-						elementOb.put("sysmlid", elementID);
-						elements.put(elementID, elementOb);
-					}
-					boolean isConform = StereotypesHelper.hasStereotypeOrDerived(sourceElement,
-							DocGen3Profile.conformStereotype);
-
-					if (isConform)
-						specialization.put("type", "Conform");
-					else if (StereotypesHelper.hasStereotypeOrDerived(sourceElement, DocGen3Profile.queriesStereotype))
-						specialization.put("type", "Expose");
-					else
-						specialization.put("type", "Generalization");
-
-					Element client = ModelHelper.getClientElement(sourceElement);
-					Element supplier = ModelHelper.getSupplierElement(sourceElement);
-					specialization.put("source", client.getID());
-					specialization.put("target", supplier.getID());
-
+					JSONObject specialization = ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)sourceElement, null);
+					elementOb = getElementObject(sourceElement);
 					elementOb.put("specialization", specialization);
-					elementOb.put("sysmlid", elementID);
-					elements.put(elementID, elementOb);
 				}
 			}
 			else if ((moveKeywords.contains(propertyName)) && ExportUtility.shouldAdd(sourceElement)) {
 				// This code handle moving an element (not a relationship)
 				// from one class to another.
-				//
-				if (elements.containsKey(elementID)) {
-					elementOb = elements.get(elementID);
-				}
-				else {
-					elementOb = new JSONObject();
-					elementOb.put("sysmlid", elementID);
-					elements.put(elementID, elementOb);
-				}
-
-				elementID = ExportUtility.getElementID(sourceElement);
-				elementOb.put("sysmlid", elementID);
-				if (sourceElement.getOwner() == null)
-					elementOb.put("owner", "null");
-				else if (sourceElement.getOwner() == Application.getInstance().getProject().getModel())
-					elementOb.put("owner", Application.getInstance().getProject().getPrimaryProject().getProjectID());
-				else
-					elementOb.put("owner", "" + sourceElement.getOwner().getID());
+				elementOb = getElementObject(sourceElement);
+				ExportUtility.fillOwner(sourceElement, elementOb);
 			}
 		}
 	}

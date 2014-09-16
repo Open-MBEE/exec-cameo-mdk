@@ -132,29 +132,7 @@ public class ExportUtility {
             "_be00301_1073394345322_922552_1", // diagraminfo
             "_16_8beta_8ca0285_1257244649124_794756_344")); // diagraminfo
 
-    public static String getBaselineTag() {
-        Element model = Application.getInstance().getProject().getModel();
-        String tag = null;
-        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
-            tag = (String) StereotypesHelper.getStereotypePropertyFirst(model,
-                    "ModelManagementSystem", "baselineTag");
-            if (tag == null || tag.equals("")) {
-                baselineNotSet = true;
-                // JOptionPane
-                // .showMessageDialog(null,
-                // "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
-                return null;
-            }
-        } else {
-            // JOptionPane
-            // .showMessageDialog(null,
-            // "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
-            baselineNotSet = true;
-            return null;
-        }
-        baselineNotSet = false;
-        return tag;
-    }
+    
 
     public static String getElementID(Element e) {
         if (e instanceof Slot) {
@@ -387,6 +365,7 @@ public class ExportUtility {
         return send(url, json, null);
     }
 
+    //convert the view2view json object given by alfresco visitor to json server expects
     @SuppressWarnings("unchecked")
     public static JSONArray formatView2View(JSONObject vv) {
         JSONArray response = new JSONArray();
@@ -400,6 +379,7 @@ public class ExportUtility {
         return response;
     }
 
+    //convert view2view json array given by alfresco server to format created by alfresco visitor
     @SuppressWarnings("unchecked")
     public static JSONObject keyView2View(JSONArray vv) {
         JSONObject response = new JSONObject();
@@ -442,6 +422,7 @@ public class ExportUtility {
         return null;
     }
 
+    //check if comment is actually the documentation of its owner
     public static boolean isElementDocumentation(Comment c) {
         if (c.getAnnotatedElement().size() > 1
                 || c.getAnnotatedElement().isEmpty())
@@ -451,9 +432,13 @@ public class ExportUtility {
         return false;
     }
 
+    //given value spec and value object, fill in stuff
     @SuppressWarnings("unchecked")
-    public static void fillValueSpecification(ValueSpecification vs,
-            JSONObject elementInfo, Stereotype view, Stereotype viewpoint) {
+    public static JSONObject fillValueSpecification(ValueSpecification vs,
+            JSONObject einfo) {
+        JSONObject elementInfo = einfo;
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
         // ValueSpecification expr = vs.getExpression();
         // if ( expr != null ) {
         // elementInfo.put( "valueExpression", expr.getID() );
@@ -484,7 +469,7 @@ public class ExportUtility {
                 JSONArray operand = new JSONArray();
                 for (ValueSpecification vs2 : vsl) {
                     JSONObject res = new JSONObject();
-                    fillValueSpecification(vs2, res, view, viewpoint);
+                    fillValueSpecification(vs2, res);
                     operand.add(res);
                 }
                 elementInfo.put("operand", operand);
@@ -535,133 +520,46 @@ public class ExportUtility {
             if (minD != null)
                 elementInfo.put("timeIntervalMin", minD.getID());*/
         }
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    protected static void add(JSONArray arr, Object o) {
-        arr.add(o);
-    }
-
     protected static <T extends MDObject> JSONArray makeJsonArrayOfIDs(
             Collection<T> collection) {
         JSONArray ids = new JSONArray();
         for (T t : collection) {
             if (t != null)
-                add(ids, t.getID());
+                ids.add(t.getID());
         }
         return ids;
     }
 
+    @SuppressWarnings("unchecked")
     protected static <T> JSONArray makeJsonArray(Collection<T> collection) {
         JSONArray arr = new JSONArray();
         for (T t : collection) {
             if (t != null)
-                add(arr, t);
+                arr.add(t);
         }
         return arr;
     }
 
     @SuppressWarnings("unchecked")
-    public static void fillElement(Element e, JSONObject elementInfo,
+    public static JSONObject fillElement(Element e, JSONObject eInfo,
             Stereotype view, Stereotype viewpoint) {
+        JSONObject elementInfo = eInfo;
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
         JSONObject specialization = new JSONObject();
         elementInfo.put("specialization", specialization);
 
         if (e instanceof Package) {
             specialization.put("type", "Package");
-        } else if (e instanceof Property) {
-            specialization.put("type", "Property");
-            specialization.put("isDerived", ((Property) e).isDerived());
-            specialization.put("isSlot", false);
-            ValueSpecification vs = ((Property) e).getDefaultValue();
-            JSONArray singleElementSpecVsArray = new JSONArray();
-            if (vs != null) {
-                // Create a new JSONObject and a new JSONArray. Fill in
-                // the values to the new JSONObject and then insert
-                // that JSONObject into the array (NOTE: there will
-                // be single element in this array). Finally, insert
-                // the array into the specialization element as the
-                // value of the "value" property.
-                //
-                
-                JSONObject newElement = new JSONObject();
-                fillValueSpecification(vs, newElement, view, viewpoint);
-                singleElementSpecVsArray.add(newElement);
-            }
-            specialization.put("value", singleElementSpecVsArray);
-            Type type = ((Property) e).getType();
-            if (type != null) {
-                specialization.put("propertyType", "" + type.getID());
-            } else
-                specialization.put("propertyType", "null");
-        } else if (e instanceof Slot) {
-            specialization.put("type", "Property");
-            specialization.put("isDerived", false);
-            specialization.put("isSlot", true);
-            if (((Slot) e).getDefiningFeature().getID()
-                    .equals("_17_0_2_3_e9f034d_1375396269655_665865_29411"))
-                specialization.put("stylesaver", true);
-
-            // Retrieve a list of ValueSpecification objects.
-            // Loop through these objects, creating a new JSONObject
-            // for each value spec. Fill in the new JSONObject and
-            // insert them into a new JSONArray.
-            // Finally, once you've looped through all the value
-            // specifications, insert the JSONArray into the
-            // new specialization element.
-            //
-            List<ValueSpecification> vsl = ((Slot) e).getValue();
-            JSONArray specVsArray = new JSONArray();
-            if (vsl != null && vsl.size() > 0) {
-                for (ValueSpecification vs : vsl) {
-                    JSONObject newElement = new JSONObject();
-                    fillValueSpecification(vs, newElement, view, viewpoint);
-                    specVsArray.add(newElement);
-                }
-            }
-            specialization.put("value", specVsArray);
-            Element type = ((Slot) e).getDefiningFeature();
-            if (type != null) {
-                specialization.put("propertyType", "" + type.getID());
-            }
-        } else if (e instanceof Dependency) {
-            if (StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.conformStereotype))// (e,
-                                                      // Utils.getConformsStereotype()))
-                specialization.put("type", "Conform");
-            else if (StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.queriesStereotype))
-                specialization.put("type", "Expose");
-            else
-                specialization.put("type", "Dependency");
-        } else if (e instanceof Generalization) {
-            boolean isConform = StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.conformStereotype);// (e,
-                                                      // Utils.getConformsStereotype()))
-            if (isConform)
-                specialization.put("type", "Conform");
-            else if (StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.queriesStereotype))
-                specialization.put("type", "Expose");
-            else
-                specialization.put("type", "Generalization");
+        } else if (e instanceof Property || e instanceof Slot) {
+            fillPropertySpecialization(e, specialization, true);
         } else if (e instanceof DirectedRelationship) {
-            specialization.put("type", "DirectedRelationship");
-        }
-        /*
-         * else if (e instanceof Comment) { specialization.put("type",
-         * "Comment"); specialization.put("body",
-         * Utils.stripHtmlWrapper(((Comment)e).getBody()));
-         * specialization.put("annotatedElements", makeJsonArrayOfIDs(
-         * ((Comment)e).getAnnotatedElement() )); } else if (e instanceof
-         * Connector) { specialization.put("type", "Connector"); Connector c =
-         * (Connector)e; List< ConnectorEnd > ends = c.getEnd();
-         * ArrayList<Element> roles = new ArrayList< Element >(); for (
-         * ConnectorEnd end : ends ) { if ( end.getRole() != null ) { roles.add(
-         * end.getRole() ); } } JSONArray ids = makeJsonArrayOfIDs( roles );
-         * specialization.put("connectorRole", ids); }
-         */
-        else if (e instanceof Operation) {
+            fillDirectedRelationshipSpecialization((DirectedRelationship)e, specialization);
+        } else if (e instanceof Operation) {
             specialization.put("type", "Operation");
             List<Parameter> vsl = ((Operation) e).getOwnedParameter();
             if (vsl != null && vsl.size() > 0) {
@@ -698,85 +596,185 @@ public class ExportUtility {
         } else {
             specialization.put("type", "Element");
         }
-        if (e instanceof DirectedRelationship) {
-            Element client = ModelHelper.getClientElement(e);
-            Element supplier = ModelHelper.getSupplierElement(e);
-            specialization.put("source", client.getID());
-            specialization.put("target", supplier.getID());
-        }
         if (viewpoint != null
                 && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
             specialization.put("type", "Viewpoint");
 
-        if (e instanceof NamedElement) {
-            elementInfo.put("name", ((NamedElement) e).getName());
-        } else
-            elementInfo.put("name", "");
-
-        elementInfo.put("documentation",
-                Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
-        if (e.getOwner() == null)
-            elementInfo.put("owner", "null");
-        else if (e.getOwner() == Application.getInstance().getProject()
-                .getModel())
-            elementInfo.put("owner", Application.getInstance().getProject()
-                    .getPrimaryProject().getProjectID());
-        else
-            elementInfo.put("owner", "" + e.getOwner().getID());
+        fillName(e, elementInfo);
+        fillDoc(e, elementInfo);
+        fillOwner(e, elementInfo);
         elementInfo.put("sysmlid", getElementID(e));
+        return elementInfo;
     }
 
-    // TODO -- Can DocGenUtils.getLiteralValue() be used to simplify this; maybe
-    // create a Class<?> getValueClass( ValueSpecification) that gets the
-    // valueType. Then this would be three lines (forgetting error checking):
-    // elementInfo.put( "valueType", getValueClass( vs ).getSimpleName() );
-    // value.add( DocGenUtils.getLiteralValue( vs ) );
-    // elementInfo.put( "value", value );
     @SuppressWarnings("unchecked")
-    public static void addValues(Element e, JSONArray value,
-            JSONObject elementInfo, ValueSpecification vs) {
-        if (vs instanceof LiteralBoolean) {
-            elementInfo.put("valueType",
-                    PropertyValueType.LiteralBoolean.toString());
-            value.add(((LiteralBoolean) vs).isValue());
-        } else if (vs instanceof LiteralString) {
-            elementInfo.put("valueType",
-                    PropertyValueType.LiteralString.toString());
-            value.add(Utils.stripHtmlWrapper(((LiteralString) vs).getValue()));
-        } else if (vs instanceof LiteralInteger
-                || vs instanceof LiteralUnlimitedNatural) {
-            elementInfo.put("valueType",
-                    PropertyValueType.LiteralInteger.toString());
-            if (vs instanceof LiteralInteger) {
-                value.add(((LiteralInteger) vs).getValue());
-            } else
-                value.add(((LiteralUnlimitedNatural) vs).getValue());
-        } else if (vs instanceof LiteralReal) {
-            elementInfo.put("valueType",
-                    PropertyValueType.LiteralReal.toString());
-            value.add(((LiteralReal) vs).getValue());
-        } else if (vs instanceof Expression) {
-            elementInfo.put("valueType",
-                    PropertyValueType.Expression.toString());
-            value.add(RepresentationTextCreator.getRepresentedText(vs));
-        } else if (vs instanceof ElementValue) {
-            elementInfo.put("valueType",
-                    PropertyValueType.ElementValue.toString());
-            Element ev = ((ElementValue) vs).getElement();
-            if (ev != null) {
-                value.add(ev.getID());
+    public static JSONObject fillPropertySpecialization(Element e, JSONObject spec, boolean ptype) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        if (e instanceof Property) {
+            specialization.put("type", "Property");
+            specialization.put("isDerived", ((Property) e).isDerived());
+            specialization.put("isSlot", false);
+            ValueSpecification vs = ((Property) e).getDefaultValue();
+            JSONArray singleElementSpecVsArray = new JSONArray();
+            if (vs != null) {
+                // Create a new JSONObject and a new JSONArray. Fill in
+                // the values to the new JSONObject and then insert
+                // that JSONObject into the array (NOTE: there will
+                // be single element in this array). Finally, insert
+                // the array into the specialization element as the
+                // value of the "value" property.
+                //
+                
+                JSONObject newElement = new JSONObject();
+                fillValueSpecification(vs, newElement);
+                singleElementSpecVsArray.add(newElement);
             }
-        } else if (vs instanceof InstanceValue) {
-            elementInfo.put("valueType",
-                    PropertyValueType.ElementValue.toString());
-            Element ev = ((InstanceValue) vs).getInstance();
-            if (ev != null) {
-                value.add(ExportUtility.getElementID(ev));
+            specialization.put("value", singleElementSpecVsArray);
+            if (ptype) {
+                Type type = ((Property) e).getType();
+                if (type != null) {
+                    specialization.put("propertyType", "" + type.getID());
+                } else
+                    specialization.put("propertyType", "null");
+            }
+        } else if (e instanceof Slot) {
+            specialization.put("type", "Property");
+            specialization.put("isDerived", false);
+            specialization.put("isSlot", true);
+            /*if (((Slot) e).getDefiningFeature().getID()
+                    .equals("_17_0_2_3_e9f034d_1375396269655_665865_29411"))
+                specialization.put("stylesaver", true);*/
+
+            // Retrieve a list of ValueSpecification objects.
+            // Loop through these objects, creating a new JSONObject
+            // for each value spec. Fill in the new JSONObject and
+            // insert them into a new JSONArray.
+            // Finally, once you've looped through all the value
+            // specifications, insert the JSONArray into the
+            // new specialization element.
+            //
+            List<ValueSpecification> vsl = ((Slot) e).getValue();
+            JSONArray specVsArray = new JSONArray();
+            if (vsl != null && vsl.size() > 0) {
+                for (ValueSpecification vs : vsl) {
+                    JSONObject newElement = new JSONObject();
+                    fillValueSpecification(vs, newElement);
+                    specVsArray.add(newElement);
+                }
+            }
+            specialization.put("value", specVsArray);
+            if (ptype) {
+                Element type = ((Slot) e).getDefiningFeature();
+                if (type != null) {
+                    specialization.put("propertyType", "" + type.getID());
+                }
             }
         }
-        elementInfo.put("value", value);
+        return specialization;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillDirectedRelationshipSpecialization(DirectedRelationship e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        if (e instanceof Dependency) {
+            if (StereotypesHelper.hasStereotypeOrDerived(e,
+                    DocGen3Profile.conformStereotype))// (e,
+                                                      // Utils.getConformsStereotype()))
+                specialization.put("type", "Conform");
+            else if (StereotypesHelper.hasStereotypeOrDerived(e,
+                    DocGen3Profile.queriesStereotype))
+                specialization.put("type", "Expose");
+            else
+                specialization.put("type", "Dependency");
+        } else if (e instanceof Generalization) {
+            boolean isConform = StereotypesHelper.hasStereotypeOrDerived(e,
+                    DocGen3Profile.conformStereotype);// (e,
+                                                      // Utils.getConformsStereotype()))
+            if (isConform)
+                specialization.put("type", "Conform");
+            else
+                specialization.put("type", "Generalization");
+        } else {
+            specialization.put("type", "DirectedRelationship");
+        }
+        Element client = ModelHelper.getClientElement(e);
+        Element supplier = ModelHelper.getSupplierElement(e);
+        specialization.put("source", getElementID(client));
+        specialization.put("target", getElementID(supplier));
+        return specialization;
     }
 
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillName(Element e, JSONObject einfo) {
+        JSONObject info = einfo;
+        if (info == null) {
+            info = new JSONObject();
+            info.put("sysmlid", getElementID(e));
+        }
+        if (e instanceof NamedElement) 
+            info.put("name", ((NamedElement)e).getName());
+        else
+            info.put("name", "");
+        return info;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillDoc(Element e, JSONObject einfo) {
+        JSONObject info = einfo;
+        if (info == null) {
+            info = new JSONObject();
+            info.put("sysmlid", getElementID(e));
+        }
+        info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
+        return info;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillOwner(Element e, JSONObject einfo) {
+        JSONObject info = einfo;
+        if (info == null) {
+            info = new JSONObject();
+            info.put("sysmlid", getElementID(e));
+        }
+        if (e.getOwner() == null)
+            info.put("owner", "null");
+        else if (e.getOwner() == Application.getInstance().getProject().getModel())
+            info.put("owner", Application.getInstance().getProject().getPrimaryProject().getProjectID());
+        else
+            info.put("owner", "" + e.getOwner().getID());
+        return info;
+    }
+    
+  //no one's using this, should consider removing it
+    public static String getBaselineTag() {
+        Element model = Application.getInstance().getProject().getModel();
+        String tag = null;
+        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
+            tag = (String) StereotypesHelper.getStereotypePropertyFirst(model,
+                    "ModelManagementSystem", "baselineTag");
+            if (tag == null || tag.equals("")) {
+                baselineNotSet = true;
+                // JOptionPane
+                // .showMessageDialog(null,
+                // "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+                return null;
+            }
+        } else {
+            // JOptionPane
+            // .showMessageDialog(null,
+            // "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+            baselineNotSet = true;
+            return null;
+        }
+        baselineNotSet = false;
+        return tag;
+    }
+    
+    //no one uses this, should remove
     public static boolean checkBaselineMount() {
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
@@ -811,7 +809,7 @@ public class ExportUtility {
             baselineNotSet = false;
         return true;
     }
-
+    //no one uses this, should remove
     public static boolean checkBaseline() {
         if (!ExportUtility.checkBaselineMount()) {
             Boolean con = Utils
@@ -1006,6 +1004,7 @@ public class ExportUtility {
         return StringEscapeUtils.unescapeHtml(s);
     }
 
+    //whether something should be sent to alfresco - ignore specific slots, documentation comment elements, value specs, empty instance specs (most likely from just stereotype application)
     public static boolean shouldAdd(Element e) {
         if (e instanceof ValueSpecification || e instanceof Extension
                 || e instanceof ProfileApplication)
@@ -1021,66 +1020,6 @@ public class ExportUtility {
                         .getDefiningFeature().getID()))
             return false;
         return true;
-    }
-
-    /**
-     * Add nested Expression elements to the set recursively.
-     * 
-     * @param set
-     */
-    protected static void getNestedValueElements(Set<Element> set) {
-        LinkedList<Element> queue = new LinkedList<Element>(set);
-        while (!queue.isEmpty()) {
-            Element e = queue.pollFirst();
-            Element value = null;
-            HashSet<Element> moreElements = new HashSet<Element>();
-            if (e instanceof Expression) {
-                moreElements.addAll(((Expression) e).getOperand());
-            } else if (e instanceof Slot) {
-                moreElements.addAll(((Slot) e).getValue());
-            } else {
-                if (e instanceof Property) {
-                    ValueSpecification propVal = ((Property) e)
-                            .getDefaultValue();
-                    value = propVal;
-                } else if (e instanceof ElementValue) {
-                    value = ((ElementValue) e).getElement();
-                } else if (e instanceof InstanceValue) {
-                    value = ((InstanceValue) e).getInstance();
-                }
-                if (value != null) {
-                    moreElements.add(value);
-                }
-            }
-            for (Element ee : moreElements) {
-                if (!set.contains(ee)) {
-                    set.add(ee);
-                    queue.add(ee);
-                }
-            }
-        }
-    }
-
-    // public static Map<String, JSONObject> getReferencedElements(Element e) {
-    // return getReferencedElements( e, true );
-    // }
-    public static Map<String, JSONObject> getReferencedElements(Element e) {
-        // boolean justValues) {
-        Stereotype view = Utils.getViewStereotype();
-        Stereotype viewpoint = Utils.getViewpointStereotype();
-        Map<String, JSONObject> result = new HashMap<String, JSONObject>();
-        HashSet<Element> values = new HashSet<Element>();
-        values.add(e);
-        getNestedValueElements(values);
-        for (Element value : values) {
-            if (value != null) {// && !result.containsKey( value.getID() ) ) {
-                JSONObject j = new JSONObject();
-                fillElement(value, j, view, viewpoint);
-                result.put(value.getID(), j);
-            }
-        }
-        values.remove(e);
-        return result;
     }
 
     public static final Pattern HTML_WHITESPACE_END = Pattern.compile(

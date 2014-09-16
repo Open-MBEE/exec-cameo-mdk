@@ -43,6 +43,7 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportRel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -71,10 +72,7 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
             Element e = (Element)anno.getTarget();
             set.add(e);
             JSONObject info = new JSONObject();
-            JSONObject specialization = new JSONObject();
-            info.put("specialization", specialization);
-            specialization.put("source", ModelHelper.getClientElement(e).getID());
-            specialization.put("target", ModelHelper.getSupplierElement(e).getID());
+            info.put("specialization", ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)e, null));
             info.put("sysmlid", e.getID());
             infos.add(info);
         }
@@ -99,10 +97,7 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
         JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        JSONObject specialization = new JSONObject();
-        info.put("specialization", specialization);
-        specialization.put("source", ModelHelper.getClientElement(element).getID());
-        specialization.put("target", ModelHelper.getSupplierElement(element).getID());
+        info.put("specialization", ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)element, null));
         info.put("sysmlid", e.getID());
         elements.add(info);
         send.put("elements", elements);

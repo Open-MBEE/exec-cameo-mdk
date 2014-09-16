@@ -76,11 +76,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            JSONObject info = new JSONObject();
-            ExportUtility.fillElement(e, info, view, viewpoint);
-            infos.add(info);
-            //if (e instanceof Property || e instanceof Slot)
-            //    infos.addAll(ExportUtility.getReferencedElements(e).values());
+            infos.add(ExportUtility.fillElement(e, null, view, viewpoint));
         }
         if (!ExportUtility.okToExport(set))
             return;
@@ -105,13 +101,9 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport(element))
             return;
-        JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        ExportUtility.fillElement(element, info, view, viewpoint);
-        elements.add(info);
-        //if (element instanceof Property || element instanceof Slot)
-        //    elements.addAll(ExportUtility.getReferencedElements(element).values());
+        elements.add(ExportUtility.fillElement(element, null, view, viewpoint));
         send.put("elements", elements);
         //gl.log(send.toJSONString());
         String url = ExportUtility.getPostElementsUrl();

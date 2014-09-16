@@ -71,10 +71,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            JSONObject info = new JSONObject();
-            info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
-            info.put("sysmlid", ExportUtility.getElementID(e));
-            infos.add(info);
+            infos.add(ExportUtility.fillDoc(e, null));
         }
         if (!ExportUtility.okToExport(set))
             return;
@@ -94,12 +91,9 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport(element))
             return;
-        JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
-        info.put("sysmlid", ExportUtility.getElementID(element));
-        elements.add(info);
+        elements.add(ExportUtility.fillDoc(element, null));
         send.put("elements", elements);
 
         String url = ExportUtility.getPostElementsUrl();
