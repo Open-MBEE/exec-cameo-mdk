@@ -110,8 +110,12 @@ public class ImportUtility {
     
     public static void setName(Element e, JSONObject o) {
         String name = (String)o.get("name");
+        setName(e, name);
+    }
+    
+    public static void setName(Element e, String name) {
         if (e instanceof NamedElement && name != null)
-            ((NamedElement)e).setName(name);
+            ((NamedElement)e).setName(ExportUtility.unescapeHtml(name));
     }
     
     public static void setOwner(Element e, JSONObject o) {
@@ -130,10 +134,12 @@ public class ImportUtility {
     
     public static void setDocumentation(Element e, JSONObject o) {
         String doc = (String)o.get("documentation");
-        if (doc != null) {
-            doc = Utils.addHtmlWrapper(doc);
-            ModelHelper.setComment(e, doc);
-        }
+        setDocumentation(e, doc);
+    }
+    
+    public static void setDocumentation(Element e, String doc) {
+        if (doc != null)
+            ModelHelper.setComment(e, Utils.addHtmlWrapper(doc));
     }
     
     public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) {

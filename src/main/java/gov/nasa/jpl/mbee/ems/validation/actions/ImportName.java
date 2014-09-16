@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -88,10 +89,8 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
                     noneditable = true;
                     continue;
                 }
-                String resultName = ExportUtility.unescapeHtml((String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("name"));
-                if (resultName == null)
-                    continue;
-                ((NamedElement)e).setName(resultName);
+                JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+                ImportUtility.setName(e, resultOb);
                 //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
@@ -123,7 +122,7 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
             listener.disable();
         SessionManager.getInstance().createSession("Change Name");
         try {
-            element.setName(name);
+            ImportUtility.setName(element, name);
             SessionManager.getInstance().closeSession();
             saySuccess();
             //AnnotationManager.getInstance().remove(annotation);
