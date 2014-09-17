@@ -118,6 +118,7 @@ public class ExportUtility {
     public static Map<String, Integer> mountedVersions;
     private static String developerUrl = "https://sheldon.jpl.nasa.gov";
     private static String developerSite = "europa";
+    private static String developerWs = "master";
     public static boolean baselineNotSet = false;
 
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
@@ -223,31 +224,24 @@ public class ExportUtility {
         return site;
     }
     
+    public static String getWorkspace() {
+        String ws = null;
+        if (MDUtils.isDeveloperMode()) {
+            ws = JOptionPane.showInputDialog(
+                    "[DEVELOPER MODE] Enter workspace:", developerWs);
+        }
+        return ws;
+    }
+    
     public static String getUrlWithSite() {
-        Element model = Application.getInstance().getProject().getModel();
         String url = getUrl();
         if (url == null)
             return null;
-        String site = (String) StereotypesHelper.getStereotypePropertyFirst(
-                model, "ModelManagementSystem", "MMS Site");
-        if (site == null || site.equals("")) {
-            JOptionPane
-                    .showMessageDialog(
-                            null,
-                            "Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
-            site = null;
-        }
-        if (site == null && MDUtils.isDeveloperMode()) {
-            site = JOptionPane.showInputDialog(
-                    "[DEVELOPER MODE] Enter the site:", developerSite);
-        }
-        if (site == null || site.equals(""))
+        String site = getSite();
+        if (site == null)
             return null;
-        developerSite = site;
         // do switch here
         return url + "/javawebscripts/sites/" + site;
-
-        // return url + "/javawebscripts/sites/europa";
     }
 
     public static String getUrlWithSiteAndProject() {
