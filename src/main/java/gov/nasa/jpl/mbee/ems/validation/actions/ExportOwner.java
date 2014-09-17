@@ -71,14 +71,7 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            JSONObject info = new JSONObject();
-            Element owner = e.getOwner();
-            String ownerId = owner.getID();
-            if (owner == Application.getInstance().getProject().getModel())
-                ownerId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-            info.put("owner", ownerId);
-            info.put("sysmlid", ExportUtility.getElementID(e));
-            infos.add(info);
+            infos.add(ExportUtility.fillOwner(e, null));
         }
         if (!ExportUtility.okToExport(set))
             return;
@@ -98,17 +91,10 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport(element))
             return;
-        JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        Element owner = element.getOwner();
-        String ownerId = owner.getID();
-        if (owner == Application.getInstance().getProject().getModel())
-            ownerId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        info.put("owner", ownerId);
-        info.put("sysmlid", ExportUtility.getElementID(element));
-        
-        elements.add(info);
+
+        elements.add(ExportUtility.fillOwner(element, null));
         send.put("elements", elements);
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {

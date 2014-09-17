@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -87,12 +88,8 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
                     noneditable = true;
                     continue;
                 }
-                String ownerID = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("owner");
-                if (ownerID == null)
-                    continue;
-                Element own = (Element)prj.getElementByID(ownerID);
-                if (own != null)
-                    e.setOwner(own);
+                JSONObject ob = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+                ImportUtility.setOwner(e, ob);
                 //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }

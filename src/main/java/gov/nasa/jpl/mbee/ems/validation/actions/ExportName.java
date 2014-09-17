@@ -72,10 +72,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
             Element e = (Element)anno.getTarget();
             if (e instanceof NamedElement) {
                 set.add(e);
-                JSONObject info = new JSONObject();
-                info.put("name", ((NamedElement)e).getName());
-                info.put("sysmlid", e.getID());
-                infos.add(info);
+                infos.add(ExportUtility.fillName(e, null));
             }
         }
         if (!ExportUtility.okToExport(set))
@@ -96,13 +93,9 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport(element))
             return;
-        JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        
-        info.put("name", element.getName());
-        info.put("sysmlid", element.getID());
-        elements.add(info);
+        elements.add(ExportUtility.fillName(element, null));
         send.put("elements", elements);
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {

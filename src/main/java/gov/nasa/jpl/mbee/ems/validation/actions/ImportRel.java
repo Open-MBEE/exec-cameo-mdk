@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -47,6 +48,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ImportRel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -88,13 +90,7 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
                 
                 JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
                 JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-                String sourceId = (String)specialization.get("source");
-                String targetId = (String)specialization.get("target");
-                
-                Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);
-                Element target = (Element)Application.getInstance().getProject().getElementByID(targetId);
-                ModelHelper.setClientElement(e, source);
-                ModelHelper.setSupplierElement(e, target);
+                ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
                 //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
@@ -126,15 +122,10 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
             listener.disable();
         SessionManager.getInstance().createSession("Change Rel");
         try {
-            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID());
             JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-            String sourceId = (String)specialization.get("source");
-            String targetId = (String)specialization.get("target");
+            ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
 
-            Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);
-            Element target = (Element)Application.getInstance().getProject().getElementByID(targetId);
-            ModelHelper.setClientElement(element, source);
-            ModelHelper.setSupplierElement(element, target);
             SessionManager.getInstance().closeSession();
             saySuccess();
             //AnnotationManager.getInstance().remove(annotation);

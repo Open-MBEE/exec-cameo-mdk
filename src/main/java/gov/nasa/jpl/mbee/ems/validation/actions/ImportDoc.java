@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -87,10 +88,8 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
                     noneditable = true;
                     continue;
                 }
-                String resultDoc = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("documentation");
-                if (resultDoc == null)
-                    continue;
-                ModelHelper.setComment(e, Utils.addHtmlWrapper(resultDoc));
+                JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+                ImportUtility.setDocumentation(e, resultOb);
                 //AnnotationManager.getInstance().remove(anno);
                 toremove.add(anno);
             }
@@ -123,7 +122,7 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
             listener.disable();
         SessionManager.getInstance().createSession("Change Doc");
         try {
-            ModelHelper.setComment(element, Utils.addHtmlWrapper(doc));
+            ImportUtility.setDocumentation(element, doc);
             SessionManager.getInstance().closeSession();
             saySuccess();
             //AnnotationManager.getInstance().remove(annotation);
