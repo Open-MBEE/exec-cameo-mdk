@@ -82,7 +82,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 					String changedPropertyName = event.getPropertyName();
 					if (changedPropertyName == null) {
 						// If the property name is null, this indicates
-						// there multliple properties were changed, so
+						// multiple properties were changed, so
 						// simply continue.
 						//
 						continue;
