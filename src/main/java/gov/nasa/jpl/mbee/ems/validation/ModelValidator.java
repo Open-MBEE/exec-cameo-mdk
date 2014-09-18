@@ -96,6 +96,7 @@ public class ModelValidator {
     private ValidationRule valueDiff = new ValidationRule("Mismatched Value", "value is different", ViolationSeverity.ERROR);
     private ValidationRule ownership = new ValidationRule("Moved", "Wrong containment", ViolationSeverity.ERROR);
     private ValidationRule exist = new ValidationRule("Exist", "Doesn't Exist or Moved", ViolationSeverity.WARNING);
+    private ValidationRule delete = new ValidationRule("Delete", "Doesn't Exist", ViolationSeverity.WARNING);
     private ValidationRule relDiff = new ValidationRule("Relationship", "Relationship source or target", ViolationSeverity.ERROR);
     private ValidationRule commentDiff = new ValidationRule("Comment", "Comment different", ViolationSeverity.ERROR);
     private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
@@ -105,6 +106,8 @@ public class ModelValidator {
     private JSONObject result;
     private boolean checkExist;
     private Set<Element> elementSet;
+    
+    private boolean isAlfrescoMaster = true;
     
     public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet) {
         //result is from web, elementSet is from model
@@ -201,9 +204,17 @@ public class ModelValidator {
                     if (maybeMissing != null) {
                         elementsKeyed.put(e.getID(), maybeMissing);
                     } else {
-                        ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
-                        v.addAction(new ExportElement(e));
-                        exist.addViolation(v);
+                    	if(isAlfrescoMaster){
+                    		ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] MagicDraw element doesn't exist on alfresco and needs to be deleted in MagicDraw");
+                            v.addAction(new ExportElement(e));
+                            exist.addViolation(v);
+                    	}
+                    	else{
+                    		ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
+                            v.addAction(new ExportElement(e));
+                            exist.addViolation(v);
+                    	}
+                        
                         continue;
                     }
                 } else
@@ -218,6 +229,14 @@ public class ModelValidator {
         for (String elementsKeyedId: elementsKeyedIds) {
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
             if (e == null)
+            	
+            	//TODO
+//            	ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MagicDraw or it may be moved");
+//            v.addAction(new ExportElement(e));
+//            exist.addViolation(v);
+            	
+            	
+            	
                 continue;
             checkElement(e, elementsKeyed.get(elementsKeyedId));
         }
