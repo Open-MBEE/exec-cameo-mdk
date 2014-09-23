@@ -75,7 +75,7 @@ public class DeleteMagicDrawElement extends RuleViolationAction implements
 	@Override
 	public void execute(Collection<Annotation> annos) {
 		// check that session was created by SessionManager
-		if (SessionManager.getInstance() == null) {
+		if (!SessionManager.getInstance().isSessionCreated()) {
 			SessionManager.getInstance().createSession(
 					"Delete MagicDraw Element");
 			for (Annotation anno : annos) {
@@ -104,7 +104,7 @@ public class DeleteMagicDrawElement extends RuleViolationAction implements
 	@SuppressWarnings("unchecked")
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (SessionManager.getInstance() == null) {
+		if (!SessionManager.getInstance().isSessionCreated()) {
 			SessionManager.getInstance().createSession(
 					"Delete MagicDraw Element");
 			try {
