@@ -146,7 +146,13 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     
     @SuppressWarnings("unchecked")
     private boolean exportView(Element view) {
-        DocumentGenerator dg = new DocumentGenerator(view, new DocumentValidator( view ), null);
+        DocumentValidator dv = new DocumentValidator(view);
+        dv.validateDocument();
+        if (dv.isFatal()) {
+            dv.printErrors(false);
+            return false;
+        }
+        DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = dg.parseDocument(true, recurse);
         (new PostProcessor()).process(dge);
         boolean document = false;

@@ -62,7 +62,7 @@ public class ExportModelAction extends MDAction {
         }
     	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
     	//
-        Boolean packageOnly = Utils.getUserYesNoAnswer("Commit package structure only?");
+        Boolean packageOnly = false;//Utils.getUserYesNoAnswer("Commit package structure only?");
         if (packageOnly == null)
             return;
         String depths = (String)JOptionPane.showInputDialog("Max Depth? 0 is infinite");

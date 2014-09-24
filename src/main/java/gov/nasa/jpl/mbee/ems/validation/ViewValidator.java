@@ -107,7 +107,7 @@ public class ViewValidator {
         String projectUrl = ExportUtility.getUrlWithSiteAndProject();
         if (projectUrl == null)
             return false;
-        String response = ExportUtility.get(projectUrl);
+        String response = ExportUtility.get(projectUrl, false);
         if (response == null) {
             ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "This project doesn't exist on the web yet, or the site has been moved");
             v.addAction(new InitializeProjectModel(true));
@@ -124,6 +124,11 @@ public class ViewValidator {
     
     @SuppressWarnings("unchecked")
     public boolean validate(ProgressStatus ps) {
+        dv.validateDocument();
+        if (dv.isFatal()) {
+            dv.printErrors(false);
+            return false;
+        }
         //first run a local generation of the view model to get the current model view structure
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = dg.parseDocument(true, true);
@@ -149,6 +154,7 @@ public class ViewValidator {
         
         Element startView = getStartView();
         Map<String, JSONObject> cachedResultElements = new HashMap<String, JSONObject>();
+        Application.getInstance().getGUILog().log("[INFO] Validating view(s)");
         for (Object viewid: visitor2.getViews().keySet()) {
             if (ps != null && ps.isCancel())
                 break;
@@ -271,11 +277,13 @@ public class ViewValidator {
         resultElements.addAll(cachedResultElements.values());
         ResultHolder.lastResults = results;
         //elements gotten from web
+        Application.getInstance().getGUILog().log("[INFO] Validating view elements");
         ModelValidator mv = new ModelValidator(view, results, true, visitor2.getElementSet()); //visitor2.getElementSet() has the local model elements
         //do the actual element validations between model and web
         mv.validate(false, ps);
         modelSuite = mv.getSuite();
         
+        Application.getInstance().getGUILog().log("[INFO] Validating images");
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         //this checks images generated from the local generation against what's on the web based on checksum
         iv.validate();
@@ -338,7 +346,7 @@ public class ViewValidator {
         if (dge.getDgElement() != null && dge.getDgElement() == view) {//view is a document
             String url = ExportUtility.getUrl();
             url += "/javawebscripts/products/" + view.getID();
-            String docresponse = ExportUtility.get(url);
+            String docresponse = ExportUtility.get(url, false);
             if (docresponse  == null)
                 return false;
             JSONObject docResponse = (JSONObject)JSONValue.parse(docresponse);
