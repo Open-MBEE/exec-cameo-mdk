@@ -68,6 +68,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.teamwork2.ProjectVersion;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
@@ -225,12 +226,17 @@ public class ExportUtility {
     }
     
     public static String getWorkspace() {
-        String ws = null;
-        if (MDUtils.isDeveloperMode()) {
-            ws = JOptionPane.showInputDialog(
-                    "[DEVELOPER MODE] Enter workspace:", developerWs);
+        Project project = Application.getInstance().getProject();
+        String branch = "master";
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(project).getURI());
+            if (branch == null)
+                branch = "master";
         }
-        return ws;
+        if (MDUtils.isDeveloperMode()) {
+            //ws = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter workspace:", developerWs);
+        }
+        return branch;
     }
     
     public static String getUrlWithSite() {
