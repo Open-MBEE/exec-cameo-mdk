@@ -63,6 +63,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
@@ -146,7 +147,10 @@ public class ModelValidator {
         if (start == Application.getInstance().getProject().getModel())
             id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         url += "/javawebscripts/elements/" + id + "?recurse=true";
+        GUILog log = Application.getInstance().getGUILog();
+        log.log("[INFO] Getting elements from server...");
         response = ExportUtility.get(url, false);
+        log.log("[INFO] Finished getting elements");
         if (response == null) {
             response = "{\"elements\": []}";
         }
