@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
+import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
@@ -103,11 +104,11 @@ public class ModelValidator {
     private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
     private Project prj;
     private Element start;
-    private JSONObject result;
-    private boolean checkExist;
+    private JSONObject result;       
+	private boolean checkExist;
     private Set<Element> elementSet;
     
-    private boolean isAlfrescoMaster = true;
+    private boolean isAlfrescoMaster = false;
     
     public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet) {
         //result is from web, elementSet is from model
@@ -195,10 +196,14 @@ public class ModelValidator {
             }
             elementsKeyed.put(elementId, elementInfo);
         }
+        // elementsKeyed.keySet() refers to all MagicDraw element IDs on Alfresco
+        // all refers to MagicDraw view element and owned elements
+        // 1st loop: MagicDraw elements get compared with Alfresco elements 
         for (Element e: all) {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
+            	// MagicDraw element is not on Alfresco
                 if (checkExist && ExportUtility.shouldAdd(e)) {
                     JSONObject maybeMissing = getAlfrescoElement(e);
                     if (maybeMissing != null) {
@@ -226,19 +231,35 @@ public class ModelValidator {
         }
         Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
+        
+        // 2nd loop: unchecked Alfresco elements with sysml ID are now processed 
         for (String elementsKeyedId: elementsKeyedIds) {
+        	   	
+        	// MagicDraw element that has not been compared to Alfresco
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
-            if (e == null)
-            	
-            	//TODO
-//            	ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MagicDraw or it may be moved");
-//            v.addAction(new ExportElement(e));
-//            exist.addViolation(v);
-            	
-            	
-            	
-                continue;
-            checkElement(e, elementsKeyed.get(elementsKeyedId));
+            if (e == null){
+            	// Alfresco sysml element is not in MagicDraw 
+            	if(isAlfrescoMaster){
+            		// add element to MagicDraw
+            		
+            		// check out ImportUtility
+            		
+            		
+//            		ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] Alfresco is master + Alfresco SysML element isn't in MagicDraw -> Alfresco SysML element needs to be added to MagicDraw");
+//                    v.addAction(new ExportElement(e));
+//                    exist.addViolation(v);
+            	}
+            	else{
+            		// delete element on Alfresco 
+            		ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] MagicDraw is master + Alfresco SysML element isn't in MagicDraw -> Alfresco SysML element needs to be deleted");
+                    v.addAction(new DeleteAlfrescoElement(start, elementsKeyedId));
+                    exist.addViolation(v);
+            	}
+            }   
+            else{
+            	checkElement(e, elementsKeyed.get(elementsKeyedId));
+            }
+            
         }
     }
     
@@ -669,4 +690,6 @@ public class ModelValidator {
             return null;
         return (JSONObject)elements.get(0);
     }
+    
+    
 }
