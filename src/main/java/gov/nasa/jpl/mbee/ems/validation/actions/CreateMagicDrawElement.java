@@ -29,25 +29,18 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -61,24 +54,21 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
-import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
-
-public class DeleteAlfrescoElement extends RuleViolationAction implements
+public class CreateMagicDrawElement extends RuleViolationAction implements
 		AnnotationAction, IRuleViolationAction {
 
 	private static final long serialVersionUID = 1L;
+	private JSONObject ob;
 	private String elementID;
-	private Element start;
 	private Stereotype view = Utils.getViewStereotype();
 	private Stereotype viewpoint = Utils.getViewpointStereotype();
 
-	public DeleteAlfrescoElement(Element start, String elementID) {
+	public CreateMagicDrawElement(JSONObject ob, String elementsKeyedId) {
 		// JJS--MDEV-567 fix: changed 'Export' to 'Commit'
 		//
-		super("DeleteElement", "Delete Alfresco element", null, null);
-		this.elementID = elementID;
-		this.start = start;
+		super("CreateMagicDrawElement", "Create MagicDraw element", null, null);
+		this.ob = ob;
+		this.elementID = elementsKeyedId;
 	}
 
 	@Override
@@ -94,32 +84,17 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void actionPerformed(ActionEvent e) {
-		
-		// perform a DELETE on https://ems-stg.jpl.nasa.gov/alfresco/service/workspaces/master/elements/elementID
-		HttpClient client = new HttpClient();
-		String url = "https://ems-stg.jpl.nasa.gov/alfresco/service/workspaces/master/elements/" + elementID;
-        ViewEditUtils.setCredentials(client, url);      
-        DeleteMethod dm = new DeleteMethod(url);
-        int code = 0;
-		try {
-			code = client.executeMethod(dm);			
-		} catch (HttpException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
+	public void actionPerformed(ActionEvent e) {		
+		Element magicDrawElement = ImportUtility.createElement(ob);	
 		GUILog gl = Application.getInstance().getGUILog();
-		gl.log("[INFO] Deleting..." + elementID + " on Alfresco");
-		if (code == 200) {
+		gl.log("[INFO] Creating..." + elementID + " in MagicDraw");
+		if (magicDrawElement != null) {
             this.removeViolationAndUpdateWindow();               
             gl.log("[INFO] Successful.");
         }
 		else{
-			gl.log("[ERROR CODE] " + code);
+			gl.log("[ERROR]" );
 		}
+		
 	}
 }

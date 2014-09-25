@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
+import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
@@ -108,7 +109,7 @@ public class ModelValidator {
 	private boolean checkExist;
     private Set<Element> elementSet;
     
-    private boolean isAlfrescoMaster = false;
+    private boolean isAlfrescoMaster = true;
     
     public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet) {
         //result is from web, elementSet is from model
@@ -240,14 +241,11 @@ public class ModelValidator {
             if (e == null){
             	// Alfresco sysml element is not in MagicDraw 
             	if(isAlfrescoMaster){
-            		// add element to MagicDraw
-            		
-            		// check out ImportUtility
-            		
-            		
-//            		ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] Alfresco is master + Alfresco SysML element isn't in MagicDraw -> Alfresco SysML element needs to be added to MagicDraw");
-//                    v.addAction(new ExportElement(e));
-//                    exist.addViolation(v);
+            		// add element to MagicDraw           		
+            		JSONObject jSONobject = (JSONObject)elementsKeyed.get(elementsKeyedId);          		           		
+            		ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] Alfresco is master + Alfresco SysML element isn't in MagicDraw -> Alfresco SysML element needs to be added to MagicDraw");
+                    v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyedId));
+                    exist.addViolation(v);
             	}
             	else{
             		// delete element on Alfresco 

@@ -85,12 +85,20 @@ public class ImportUtility {
                 newE = newProperty;
             }
         }
-        else if ((elementType.equalsIgnoreCase("Dependency")) || (elementType.equalsIgnoreCase("Conforms"))
+        else if ((elementType.equalsIgnoreCase("Dependency")) || (elementType.equalsIgnoreCase("Conform"))
                 || (elementType.equalsIgnoreCase("Expose"))
                 || (elementType.equalsIgnoreCase("DirectedRelationship"))) {
-            Dependency newDependency = ef.createDependencyInstance();
-            setRelationshipEnds(newDependency, specialization);
-            newE = newDependency;
+            if(elementType.equalsIgnoreCase("Conform")){
+            	Generalization newGeneralization = ef.createGeneralizationInstance();          	
+                setRelationshipEnds(newGeneralization, specialization);
+                newE = newGeneralization;
+            }
+            else{
+            	Dependency newDependency = ef.createDependencyInstance();
+                setRelationshipEnds(newDependency, specialization);
+                newE = newDependency;
+            }
+        	
         }
         else if (elementType.equalsIgnoreCase("Generalization")) {
             Generalization newGeneralization = ef.createGeneralizationInstance();
