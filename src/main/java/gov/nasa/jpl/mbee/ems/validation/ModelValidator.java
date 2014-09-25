@@ -146,6 +146,7 @@ public class ModelValidator {
         String id = start.getID();
         if (start == Application.getInstance().getProject().getModel())
             id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        id = id.replace(".", "%2E");
         url += "/javawebscripts/elements/" + id + "?recurse=true";
         GUILog log = Application.getInstance().getGUILog();
         log.log("[INFO] Getting elements from server...");
@@ -644,6 +645,7 @@ public class ModelValidator {
     private JSONObject getAlfrescoElement(Element e) {
         String url = ExportUtility.getUrl();
         String id = ExportUtility.getElementID(e);
+        id = id.replace(".", "%2E");
         url += "/javawebscripts/elements/" + id;
         String response = ExportUtility.get(url, false);
         if (response == null)
