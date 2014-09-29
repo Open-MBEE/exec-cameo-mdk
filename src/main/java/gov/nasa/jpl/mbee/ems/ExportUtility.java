@@ -292,17 +292,15 @@ public class ExportUtility {
             } else if (code == 404) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
-                else
-                    Application
-                            .getInstance()
-                            .getGUILog()
-                            .log("The thing you're trying to validate or get wasn't found on the server, see validation window");
+                //else
+                    //Application.getInstance().getGUILog()
+                            //.log("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
-                Application.getInstance().getGUILog().log(response);
+                //Application.getInstance().getGUILog().log(response);
                 log.info(response);
                 return false;
             } else {
-                Application.getInstance().getGUILog().log(response);
+                //Application.getInstance().getGUILog().log(response);
             }
             log.info(response);
             return true;
@@ -311,11 +309,10 @@ public class ExportUtility {
             
             // System.out.println(response);
             log.info(response);
-            Application.getInstance().getGUILog()
-                    .log("see md.log for what got received - too big to show");
+            //Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else {
-            //log.info(response);
-            Application.getInstance().getGUILog().log(response);
+            log.info(response);
+            //Application.getInstance().getGUILog().log(response);
         }
         return false;
     }
@@ -405,8 +402,8 @@ public class ExportUtility {
         try {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
-            Application.getInstance().getGUILog().log("[INFO] Getting...");
-            Application.getInstance().getGUILog().log("url=" + url);
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
 
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
@@ -414,7 +411,7 @@ public class ExportUtility {
             if (showErrors(code, json, showPopupErrors)) {
                 return null;
             }
-            Application.getInstance().getGUILog().log("[INFO] Successful...");
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
         } catch (Exception ex) {
             Utils.printException(ex);

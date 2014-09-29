@@ -549,8 +549,11 @@ public class DocumentValidator {
         return res;
     }
 
-    // the 2 print errors should be consolidated...
     public void printErrors() {
+        printErrors(true);
+    }
+    // the 2 print errors should be consolidated...
+    public void printErrors(boolean showWindow) {
 
         String fatal = "[FATAL] DocGen: ";
         StrongConnectivityInspector<NamedElement, Element> sci = new StrongConnectivityInspector<NamedElement, Element>(
@@ -584,10 +587,10 @@ public class DocumentValidator {
         if (this.fatal)
             log.log(fatal + "There are loops in this document! Do not generate document!");
 
-        else
+        else if (showWindow)
             log.log("Validation done.");
-
-        Utils.displayValidationWindow(validationOutput, "Document Validation Results");
+        if (showWindow)
+            Utils.displayValidationWindow(validationOutput, "Document Validation Results");
     }
 
     public void printErrors(PrintWriter pw) {
