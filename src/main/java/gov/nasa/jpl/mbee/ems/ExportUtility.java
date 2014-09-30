@@ -563,7 +563,7 @@ public class ExportUtility {
             Stereotype view, Stereotype viewpoint) {
         JSONObject specialization = new JSONObject();
         elementInfo.put("specialization", specialization);
-
+        Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
             specialization.put("type", "Package");
         } else if (e instanceof Property) {
@@ -692,6 +692,8 @@ public class ExportUtility {
             //    specialization.put("parameterDefaultValue",
              //           defaultValue.getID());
             // }
+        } else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
+            specialization.put("type", "Comment");
         } else {
             specialization.put("type", "Element");
         }
