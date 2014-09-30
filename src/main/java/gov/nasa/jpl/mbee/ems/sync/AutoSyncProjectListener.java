@@ -123,15 +123,16 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 		try {
 			// should use tag value to get host
 			//
-			ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://ems-stg:61616");
+			ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://ems-stg.jpl.nasa.gov:61616");
 
 			Connection connection = connectionFactory.createConnection();
+			connection.setClientID("jsalcedo");
 			// connection.setExceptionListener(this);
 			Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
 			Topic topic = session.createTopic("master");
 
-			String subscriberID = UUID.randomUUID().toString();
+			String subscriberID = "jsalcedo";
 			String messageSelector = constructSelectorString(projectID, wsID);
 			;
 			MessageConsumer consumer = session.createDurableSubscriber(topic, subscriberID, messageSelector, true);
@@ -144,14 +145,14 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 			Application.getInstance().getGUILog().log("sync initiated");
 		}
 		catch (Exception e) {
-			Application.getInstance().getGUILog().log("sync initialization failed");
+			Application.getInstance().getGUILog().log("sync initialization failed: " + e.getMessage());
 		}
 	}
 
 	public static String constructSelectorString(String projectID, String workspaceID) {
 		StringBuilder selectorBuilder = new StringBuilder();
 
-		selectorBuilder.append("(").append(MSG_SELECTOR_WS_ID).append(" = '").append(workspaceID).append("')");
+		selectorBuilder.append("(").append(MSG_SELECTOR_WS_ID).append("='").append(workspaceID).append("')");
 
 		// selectorBuilder.append("(").append(MSG_SELECTOR_PROJECT_ID).append(" = '").append(projectID).append("\')")
 		// .append(" AND ").append("(").append(MSG_SELECTOR_WS_ID).append(" = '").append(workspaceID).append("')");
