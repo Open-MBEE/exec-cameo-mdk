@@ -275,12 +275,7 @@ public class DocumentGenerator {
                     }
                 }
             }
-            //MDEV-555 only do view replacement if using class views
-            if (view instanceof Class && expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
-                return parseView(expose.get(0)); // substitute another view
-            }
-            if (view instanceof Diagram) { // if a diagram, show diagram and
-                                           // documentation
+            if (view instanceof Diagram) { // if a diagram, show diagram and documentation
                 Image image = new Image();
                 List<Object> images = new ArrayList<Object>();
                 images.add(view);
@@ -300,11 +295,16 @@ public class DocumentGenerator {
                 String viewDoc = ModelHelper.getComment(view);
                 if (viewDoc != null) {
                     Paragraph para = new Paragraph(viewDoc);
-                    //if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
-                        para.setDgElement(view);
-                        para.setFrom(From.DOCUMENTATION);
-                    //}
+                    para.setDgElement(view);
+                    para.setFrom(From.DOCUMENTATION);
                     viewSection.addElement(para);
+                }
+                if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
+                    Image image = new Image();
+                    List<Object> images = new ArrayList<Object>();
+                    images.add(expose.get(0));
+                    image.setTargets(images);
+                    viewSection.addElement(image);
                 }
             }
         }

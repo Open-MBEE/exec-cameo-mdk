@@ -93,7 +93,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
                 ViewEditUtils.setCredentials(client, baseurl);
                 client.executeMethod(post);
                 int status = post.getStatusCode();
-                if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), true)) {
+                if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
                     Application.getInstance().getGUILog().log("[INFO] Successful");
                 }
             } catch (Exception ex) {
@@ -126,7 +126,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             ViewEditUtils.setCredentials(client, baseurl);
             client.executeMethod(post);
             int status = post.getStatusCode();
-            if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), true)) {
+            if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
                 Application.getInstance().getGUILog().log("[INFO] Successful");
             }
         } catch (Exception ex) {

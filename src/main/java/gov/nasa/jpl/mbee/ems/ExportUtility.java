@@ -68,6 +68,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.teamwork2.ProjectVersion;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
@@ -225,12 +226,17 @@ public class ExportUtility {
     }
     
     public static String getWorkspace() {
-        String ws = null;
-        if (MDUtils.isDeveloperMode()) {
-            ws = JOptionPane.showInputDialog(
-                    "[DEVELOPER MODE] Enter workspace:", developerWs);
+        Project project = Application.getInstance().getProject();
+        String branch = "master";
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(project).getURI());
+            if (branch == null)
+                branch = "master";
         }
-        return ws;
+        if (MDUtils.isDeveloperMode()) {
+            //ws = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter workspace:", developerWs);
+        }
+        return branch;
     }
     
     public static String getUrlWithSite() {
@@ -286,17 +292,15 @@ public class ExportUtility {
             } else if (code == 404) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
-                else
-                    Application
-                            .getInstance()
-                            .getGUILog()
-                            .log("The thing you're trying to validate or get wasn't found on the server, see validation window");
+                //else
+                    //Application.getInstance().getGUILog()
+                            //.log("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
-                Application.getInstance().getGUILog().log(response);
+                //Application.getInstance().getGUILog().log(response);
                 log.info(response);
                 return false;
             } else {
-                Application.getInstance().getGUILog().log(response);
+                //Application.getInstance().getGUILog().log(response);
             }
             log.info(response);
             return true;
@@ -305,11 +309,10 @@ public class ExportUtility {
             
             // System.out.println(response);
             log.info(response);
-            Application.getInstance().getGUILog()
-                    .log("see md.log for what got received - too big to show");
+            //Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else {
-            //log.info(response);
-            Application.getInstance().getGUILog().log(response);
+            log.info(response);
+            //Application.getInstance().getGUILog().log(response);
         }
         return false;
     }
@@ -399,8 +402,8 @@ public class ExportUtility {
         try {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
-            Application.getInstance().getGUILog().log("[INFO] Getting...");
-            Application.getInstance().getGUILog().log("url=" + url);
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
 
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
@@ -408,7 +411,7 @@ public class ExportUtility {
             if (showErrors(code, json, showPopupErrors)) {
                 return null;
             }
-            Application.getInstance().getGUILog().log("[INFO] Successful...");
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -548,7 +551,7 @@ public class ExportUtility {
             elementInfo = new JSONObject();
         JSONObject specialization = new JSONObject();
         elementInfo.put("specialization", specialization);
-
+        Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
             specialization.put("type", "Package");
         } else if (e instanceof Property || e instanceof Slot) {
@@ -576,7 +579,6 @@ public class ExportUtility {
             if (spec != null)
                 specialization.put("specification",
                         spec.getID());*/
-
         } else if (e instanceof Parameter) {
             Parameter p = (Parameter) e;
             specialization.put("type", "Parameter");
@@ -589,6 +591,8 @@ public class ExportUtility {
             //    specialization.put("parameterDefaultValue",
              //           defaultValue.getID());
             // }
+        } else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
+            specialization.put("type", "Comment");
         } else {
             specialization.put("type", "Element");
         }

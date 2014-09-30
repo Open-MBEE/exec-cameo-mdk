@@ -63,6 +63,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
@@ -145,8 +146,12 @@ public class ModelValidator {
         String id = start.getID();
         if (start == Application.getInstance().getProject().getModel())
             id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        id = id.replace(".", "%2E");
         url += "/javawebscripts/elements/" + id + "?recurse=true";
+        GUILog log = Application.getInstance().getGUILog();
+        log.log("[INFO] Getting elements from server...");
         response = ExportUtility.get(url, false);
+        log.log("[INFO] Finished getting elements");
         if (response == null) {
             response = "{\"elements\": []}";
         }
@@ -183,6 +188,8 @@ public class ModelValidator {
             return;
         for (JSONObject elementInfo: (List<JSONObject>)elements) {
             String elementId = (String)elementInfo.get("sysmlid");
+            if (elementId == null)
+                continue;
             if (elementId.contains("-slot-")) {
                 Element e = ExportUtility.getElementFromID(elementId);
                 if (e != null)
@@ -640,6 +647,7 @@ public class ModelValidator {
     private JSONObject getAlfrescoElement(Element e) {
         String url = ExportUtility.getUrl();
         String id = ExportUtility.getElementID(e);
+        id = id.replace(".", "%2E");
         url += "/javawebscripts/elements/" + id;
         String response = ExportUtility.get(url, false);
         if (response == null)
