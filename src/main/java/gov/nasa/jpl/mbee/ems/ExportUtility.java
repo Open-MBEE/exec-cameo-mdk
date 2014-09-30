@@ -551,7 +551,7 @@ public class ExportUtility {
             elementInfo = new JSONObject();
         JSONObject specialization = new JSONObject();
         elementInfo.put("specialization", specialization);
-
+        Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
             specialization.put("type", "Package");
         } else if (e instanceof Property || e instanceof Slot) {
@@ -579,7 +579,6 @@ public class ExportUtility {
             if (spec != null)
                 specialization.put("specification",
                         spec.getID());*/
-
         } else if (e instanceof Parameter) {
             Parameter p = (Parameter) e;
             specialization.put("type", "Parameter");
@@ -592,6 +591,8 @@ public class ExportUtility {
             //    specialization.put("parameterDefaultValue",
              //           defaultValue.getID());
             // }
+        } else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
+            specialization.put("type", "Comment");
         } else {
             specialization.put("type", "Element");
         }

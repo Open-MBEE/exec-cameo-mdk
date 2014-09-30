@@ -188,6 +188,8 @@ public class ModelValidator {
             return;
         for (JSONObject elementInfo: (List<JSONObject>)elements) {
             String elementId = (String)elementInfo.get("sysmlid");
+            if (elementId == null)
+                continue;
             if (elementId.contains("-slot-")) {
                 Element e = ExportUtility.getElementFromID(elementId);
                 if (e != null)
