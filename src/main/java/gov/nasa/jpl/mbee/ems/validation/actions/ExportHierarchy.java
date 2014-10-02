@@ -107,8 +107,10 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             JSONObject send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
-            doc.put("view2view", ExportUtility.formatView2View(view2view));
-            doc.put("noSections", vhv.getNosections());
+            JSONObject specialization = new JSONObject();
+            doc.put("specialization", specialization);
+            specialization.put("view2view", ExportUtility.formatView2View(view2view));
+            specialization.put("noSections", vhv.getNosections());
             doc.put("id", view.getID());
             documents.add(doc);
             send.put("products", documents);
@@ -118,8 +120,10 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             JSONArray views = new JSONArray();
             for (Object viewid: view2view.keySet()) {
                 JSONObject viewinfo = new JSONObject();
-                viewinfo.put("id", viewid);
-                viewinfo.put("childrenViews", view2view.get(viewid));
+                JSONObject specialization = new JSONObject();
+                viewinfo.put("sysmlid", viewid);
+                specialization.put("childrenViews", view2view.get(viewid));
+                viewinfo.put("specialization", specialization);
                 views.add(viewinfo);
             }
             JSONObject send  = new JSONObject();

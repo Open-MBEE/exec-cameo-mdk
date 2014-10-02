@@ -9,7 +9,7 @@
   <!-- set global properties for this build -->
   <!-- <property name="md" location="${mdpath}"/> -->
   <!-- Conditional properties to load based on whether or not this is being called from jenkins build -->
-  <condition property="md" value="${md.install.dir}" else="/Applications/MagicDraw UML 17.0.2">
+  <condition property="md" value="${md.install.dir}" else="/Applications/MagicDraw UML 17.0.5">
 	<isset property="plugin.dir"/>
   </condition>
 

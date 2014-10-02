@@ -1972,6 +1972,10 @@ public class Utils {
         return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view");
     }
     
+    public static Stereotype getCommentStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Comment");
+    }
+    
     public static Stereotype getConformsStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Conform");
     }
@@ -2592,7 +2596,7 @@ public class Utils {
      * @return a Slot with zero or more values or null if no such Slot exists
      */
     public static Slot getSlot(Element elem, Property prop) {
-        if (prop == null)
+        if (prop == null || elem == null)
             return null;
         Element myOwner = prop.getOwner();
         if (myOwner instanceof Stereotype

@@ -89,33 +89,44 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     public void execute(Collection<Annotation> annos) {
         SessionManager.getInstance().createSession("Change values");
         Collection<Annotation> toremove = new HashSet<Annotation>();
+        ValueSpecification newVal = null;
         try {
+            boolean noneditable = false;
             for (Annotation anno: annos) {
                 Element e = (Element)anno.getTarget();
                 if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
+                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                    noneditable = true;
                     continue;
                 }
-                PropertyValueType valueType = PropertyValueType.valueOf((String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("valueType"));
-                JSONArray vals = (JSONArray)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("value");
+                Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
+                JSONArray vals = (JSONArray)((JSONObject)((JSONObject)map.get(e.getID())).get("specialization")).get("value");
                 if (e instanceof Property) {
                     if (vals == null || vals.isEmpty()) {
                         ((Property)e).setDefaultValue(null);
                     } else {
-                        update((Property)e, valueType, vals.get(0));
+                    	newVal = update((JSONObject)vals.get(0));
+                        ((Property)e).setDefaultValue(newVal);
                     }
                 } else if (e instanceof Slot) {
                     if (values == null || values.isEmpty()) {
-                        ((Slot)element).getValue().clear();
+                        ((Slot)e).getValue().clear();
                     } else {
-                        update((Slot)e, type, values);
+                        ((Slot)e).getValue().clear();
+                        for (Object value: vals) {
+                        	newVal = update((JSONObject)value);
+                        	((Slot)e).getValue().add(newVal);
+                        }
                     }
                 }
                 //AnnotationManager.getInstance().remove(annotation);
                 toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            saySuccess();
+            if (noneditable) {
+                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
+            } else
+                saySuccess();
             //AnnotationManager.getInstance().update();
             this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {
@@ -132,18 +143,24 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             return;
         }
         SessionManager.getInstance().createSession("Change value");
+        ValueSpecification newVal = null;
         try {
             if (element instanceof Property) {
                 if (values == null || values.isEmpty()) {
                     ((Property)element).setDefaultValue(null);
                 } else {
-                    update((Property)element, type, values.get(0));
+                    newVal = update((JSONObject)values.get(0));
+                    ((Property)element).setDefaultValue(newVal);
                 }
             } else if (element instanceof Slot) {
                 if (values == null || values.isEmpty()) {
                     ((Slot)element).getValue().clear();
                 } else {
-                    update((Slot)element, type, values);
+                    ((Slot)element).getValue().clear();
+                    for (Object value: values) {
+                    	newVal = update((JSONObject)value);
+                    	((Slot)element).getValue().add(newVal);
+                    }
                 }
             }
             SessionManager.getInstance().closeSession();
@@ -158,6 +175,67 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     }
     
     // TODO -- move to Utils and have setProperty() call this instead of always creating a new Property?
+    private ValueSpecification update(JSONObject o) {
+    	String valueType = (String)o.get("type");
+    	ValueSpecification newval = null;
+    	PropertyValueType propValueType = PropertyValueType.valueOf(valueType);
+    	
+    	switch ( propValueType ) {
+    	case LiteralString:
+    		newval = ef.createLiteralStringInstance();
+    		((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o.get("string")));
+    		break;
+    	case LiteralInteger:
+    		newval = ef.createLiteralIntegerInstance();
+    		((LiteralInteger)newval).setValue(((Long)o.get("integer")).intValue());
+    		break;
+    	case LiteralBoolean:
+    		newval = ef.createLiteralBooleanInstance();
+    		((LiteralBoolean)newval).setValue((Boolean)o.get("boolean"));
+    		break;
+    	case LiteralUnlimitedNatural:
+    		newval = ef.createLiteralUnlimitedNaturalInstance();
+    		((LiteralUnlimitedNatural)newval).setValue(((Long)o.get("naturalValue")).intValue());
+    		break;
+    	case LiteralReal:
+    		Double value;
+    		if (o.get("double") instanceof Long)
+    			value = Double.parseDouble(((Long)o.get("double")).toString());
+    		else
+    			value = (Double)o.get("double");
+
+    		newval = ef.createLiteralRealInstance();
+    		((LiteralReal)newval).setValue(value);
+    		break;
+    	case ElementValue:
+    		Element find = ExportUtility.getElementFromID((String)o.get("element"));
+    		if (find == null) {
+    			Application.getInstance().getGUILog().log("Element with id " + o.get("element") + " not found!");
+    			break;
+            }
+            newval = ef.createElementValueInstance();
+            ((ElementValue)newval).setElement(find);
+            break;
+    	case InstanceValue:
+    		Element findInst = ExportUtility.getElementFromID((String)o.get("instance"));
+    		if (findInst == null) {
+    			Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " not found!");
+    			break;
+    		}
+    		if (!(findInst instanceof InstanceSpecification)) {
+    			Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
+    			break;
+    		}
+    		newval = ef.createInstanceValueInstance();
+    		((InstanceValue)newval).setInstance((InstanceSpecification)findInst);
+    	default:
+    		Debug.error("Bad PropertyValueType: " + valueType);
+    	};
+
+    	
+        return newval;
+    }
+    
     private void update(Property e, PropertyValueType valueType, Object o) {
         //use nondestructive update if possible
         ValueSpecification newval = e.getDefaultValue();

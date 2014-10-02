@@ -110,7 +110,7 @@ public class ImportElementComments extends RuleViolationAction implements Annota
             if (!changed.isEmpty()) {
                 String url = ExportUtility.getUrl();
                 if (url != null) {
-                    ExportUtility.send(url + "/javawebscripts/elements", changed.toJSONString(), "PUT");
+                    ExportUtility.send(url + "/javawebscripts/elements", changed.toJSONString(), null);
                 }
             }
             

@@ -34,9 +34,18 @@ public enum PropertyValueType {
     LiteralBoolean(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean.class), 
     LiteralInteger(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger.class), 
     LiteralUnlimitedNatural(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural.class), 
+    LiteralNull(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural.class),
     ElementValue(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue.class), 
     Expression(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression.class),
-    InstanceValue(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue.class);
+    InstanceValue(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue.class),
+    Duration( com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration.class),
+    DurationInterval( com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval.class),
+    TimeInterval( com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval.class),
+    TimeExpression( com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression.class),
+    OpaqueExpression( com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression.class),
+    Element( com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue.class);
+    
+    
     
     Class<?> type;
     PropertyValueType( Class<?> type ) {

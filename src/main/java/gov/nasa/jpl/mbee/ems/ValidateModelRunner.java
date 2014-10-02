@@ -46,7 +46,7 @@ public class ValidateModelRunner implements RunnableWithProgress {
     public void run(ProgressStatus arg0) {
         ModelValidator validator = new ModelValidator(start, null, true, null);
         if (validator.checkProject()) 
-            validator.validate(true);
+            validator.validate(true, arg0);
         validator.showWindow();
     }
 }

@@ -300,10 +300,10 @@ public class DocumentGenerator {
                 String viewDoc = ModelHelper.getComment(view);
                 if (viewDoc != null) {
                     Paragraph para = new Paragraph(viewDoc);
-                    if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
+                    //if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
                         para.setDgElement(view);
                         para.setFrom(From.DOCUMENTATION);
-                    }
+                    //}
                     viewSection.addElement(para);
                 }
             }
@@ -377,19 +377,19 @@ public class DocumentGenerator {
                 }
             } else if (next instanceof StructuredActivityNode) {
                 Boolean loop = (Boolean)GeneratorUtils.getObjectProperty(next,
-                        DocGen3Profile.templateStereotype, "loop", false);
+                        DocGen3Profile.structuredQueryStereotype, "loop", false);
                 Boolean ignore = (Boolean)GeneratorUtils.getObjectProperty(next,
-                        DocGen3Profile.templateStereotype, "ignore", false);
+                        DocGen3Profile.structuredQueryStereotype, "ignore", false);
                 Boolean createSections = (Boolean)GeneratorUtils.getObjectProperty(next,
                         DocGen3Profile.structuredQueryStereotype, "createSections", false);
                 Boolean useContextNameAsTitle = (Boolean)GeneratorUtils.getObjectProperty(next,
-                        DocGen3Profile.templateStereotype, "useSectionNameAsTitle", false);
-                String titlePrefix = (String)StereotypesHelper.getStereotypePropertyFirst(a,
-                        DocGen3Profile.templateStereotype, "titlePrefix");
-                String titleSuffix = (String)StereotypesHelper.getStereotypePropertyFirst(a,
-                        DocGen3Profile.templateStereotype, "titleSuffix");
-                List<String> titles = StereotypesHelper.getStereotypePropertyValue(next,
-                        DocGen3Profile.templateStereotype, "titles");
+                        DocGen3Profile.structuredQueryStereotype, "useSectionNameAsTitle", false);
+                String titlePrefix = (String)GeneratorUtils.getObjectProperty(next,
+                        DocGen3Profile.structuredQueryStereotype, "titlePrefix", "");
+                String titleSuffix = (String)GeneratorUtils.getObjectProperty(next,
+                        DocGen3Profile.structuredQueryStereotype, "titleSuffix", "");
+                List<String> titles = (List<String>)GeneratorUtils.getListProperty(next,
+                        DocGen3Profile.structuredQueryStereotype, "titles", null);
                 if (titles == null)
                     titles = new ArrayList<String>();
 

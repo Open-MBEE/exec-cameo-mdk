@@ -4,7 +4,7 @@
 	description="DocGen and common profiles" 
 	id="91110" 
 	mdVersionMax="higher" 
-	mdVersionMin="17.0.2" 
+	mdVersionMin="17.0.5" 
 	name="Model Development Kit" 
 	product="JPL Model Development Kit" 
 	type="Plugin">

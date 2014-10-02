@@ -146,7 +146,13 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     
     @SuppressWarnings("unchecked")
     private boolean exportView(Element view) {
-        DocumentGenerator dg = new DocumentGenerator(view, new DocumentValidator( view ), null);
+        DocumentValidator dv = new DocumentValidator(view);
+        dv.validateDocument();
+        if (dv.isFatal()) {
+            dv.printErrors(false);
+            return false;
+        }
+        DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = dg.parseDocument(true, recurse);
         (new PostProcessor()).process(dge);
         boolean document = false;
@@ -209,8 +215,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
             File imageFile = new File(filename);
             
-            String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
-           
+            String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String site = ExportUtility.getSite();
+            String posturl = url + "/workspaces/master/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             // check whether the image already exists
             GetMethod get = new GetMethod(baseurl);
             int status = 0;
@@ -230,7 +237,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             if (status == HttpURLConnection.HTTP_OK) {
                 gl.log("[INFO] Image file already exists, not uploading");
             } else {
-                PostMethod post = new PostMethod(baseurl);
+                PostMethod post = new PostMethod(posturl);
                 try {
                     if (isAlfresco) {
                         Part[] parts = {new FilePart("content", imageFile)};
@@ -264,9 +271,12 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
-            doc.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
-            doc.put("noSections", visitor2.getNosections());
+            JSONObject spec = new JSONObject();
+            spec.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
+            spec.put("noSections", visitor2.getNosections());
+            spec.put("type", "Product");
             doc.put("id", view.getID());
+            doc.put("specialization", spec);
             documents.add(doc);
             send.put("products", documents);
             if (!ExportUtility.send(docurl, send.toJSONString(), null, false))

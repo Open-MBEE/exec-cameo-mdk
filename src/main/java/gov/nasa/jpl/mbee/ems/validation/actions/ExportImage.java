@@ -78,9 +78,14 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             String cs = (String)images.get(key).get("cs");
             String extension = (String)images.get(key).get("extension");
             String url = ExportUtility.getUrl();
-            String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
+            
+            String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String site = ExportUtility.getSite();
+            String posturl = url + "/workspaces/master/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+
+            //String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
             File imageFile = new File(filename);
-            PostMethod post = new PostMethod(baseurl);
+            PostMethod post = new PostMethod(posturl);
             try { 
                 Part[] parts = {new FilePart("content", imageFile)};
                 post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
@@ -88,7 +93,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
                 ViewEditUtils.setCredentials(client, baseurl);
                 client.executeMethod(post);
                 int status = post.getStatusCode();
-                if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), true)) {
+                if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
                     Application.getInstance().getGUILog().log("[INFO] Successful");
                 }
             } catch (Exception ex) {
@@ -107,9 +112,13 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         String cs = (String)images.get(key).get("cs");
         String extension = (String)images.get(key).get("extension");
         String url = ExportUtility.getUrl();
-        String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
+        
+        String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+        String site = ExportUtility.getSite();
+        String posturl = url + "/workspaces/master/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+
         File imageFile = new File(filename);
-        PostMethod post = new PostMethod(baseurl);
+        PostMethod post = new PostMethod(posturl);
         try { 
             Part[] parts = {new FilePart("content", imageFile)};
             post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
@@ -117,7 +126,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             ViewEditUtils.setCredentials(client, baseurl);
             client.executeMethod(post);
             int status = post.getStatusCode();
-            if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), true)) {
+            if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
                 Application.getInstance().getGUILog().log("[INFO] Successful");
             }
         } catch (Exception ex) {

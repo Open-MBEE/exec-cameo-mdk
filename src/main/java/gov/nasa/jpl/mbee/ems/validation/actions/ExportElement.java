@@ -79,8 +79,8 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
             JSONObject info = new JSONObject();
             ExportUtility.fillElement(e, info, view, viewpoint);
             infos.add(info);
-            if (e instanceof Property || e instanceof Slot)
-                infos.addAll(ExportUtility.getReferencedElements(e).values());
+            //if (e instanceof Property || e instanceof Slot)
+            //    infos.addAll(ExportUtility.getReferencedElements(e).values());
         }
         if (!ExportUtility.okToExport(set))
             return;
@@ -94,7 +94,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background? You'll get an email when done.");
         if (background != null && background)
             url += "?background=true";
-        if (ExportUtility.send(url, send.toJSONString())) {
+        if (ExportUtility.send(url, send.toJSONString(), null, false)) {
             this.removeViolationsAndUpdateWindow(annos);
             ExportUtility.sendProjectVersions();
         }
@@ -110,8 +110,8 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         JSONObject send = new JSONObject();
         ExportUtility.fillElement(element, info, view, viewpoint);
         elements.add(info);
-        if (element instanceof Property || element instanceof Slot)
-            elements.addAll(ExportUtility.getReferencedElements(element).values());
+        //if (element instanceof Property || element instanceof Slot)
+        //    elements.addAll(ExportUtility.getReferencedElements(element).values());
         send.put("elements", elements);
         //gl.log(send.toJSONString());
         String url = ExportUtility.getPostElementsUrl();

@@ -85,8 +85,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            if (e instanceof Property || e instanceof Slot)
-                infos.addAll(ExportUtility.getReferencedElements(e).values());
+            //if (e instanceof Property || e instanceof Slot)
+            //    infos.addAll(ExportUtility.getReferencedElements(e).values());
             JSONObject info = getInfo(e);
             infos.add(info);
         }
@@ -111,8 +111,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         JSONObject info = getInfo(element);
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        if (element instanceof Property || element instanceof Slot)
-            elements.addAll(ExportUtility.getReferencedElements(element).values());
+        //if (element instanceof Property || element instanceof Slot)
+        //    elements.addAll(ExportUtility.getReferencedElements(element).values());
         elements.add(info);
         send.put("elements", elements);
         String url = ExportUtility.getPostElementsUrl();
@@ -129,21 +129,30 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
     @SuppressWarnings("unchecked")
     private JSONObject getInfo(Element e) {
         JSONObject elementInfo = new JSONObject();
+        JSONObject specialization = new JSONObject();
         JSONArray value = new JSONArray();
+        specialization.put("value", value);
+        specialization.put("type", "Property");
+        
         if (e instanceof Property) {
             ValueSpecification vs = ((Property)e).getDefaultValue();
             if (vs != null) {
-                ExportUtility.addValues(e, value, elementInfo, vs);
+            	JSONObject jsonObj = new JSONObject();
+            	ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
+                value.add(jsonObj);
             }
         } else if (e instanceof Slot) {
             List<ValueSpecification> vsl = ((Slot)e).getValue();
             if (vsl != null && vsl.size() > 0) {
                 for (ValueSpecification vs: vsl) {
-                    ExportUtility.addValues(e, value, elementInfo, vs);
+                	JSONObject jsonObj = new JSONObject();
+                	ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
+                    value.add(jsonObj);
                 }
             }
         }
-        elementInfo.put("id", ExportUtility.getElementID(e));
+        elementInfo.put("specialization", specialization);
+        elementInfo.put("sysmlid", ExportUtility.getElementID(e));
         return elementInfo;
     }
 /*    

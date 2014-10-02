@@ -73,7 +73,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
             set.add(e);
             JSONObject info = new JSONObject();
             info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
-            info.put("id", ExportUtility.getElementID(e));
+            info.put("sysmlid", ExportUtility.getElementID(e));
             infos.add(info);
         }
         if (!ExportUtility.okToExport(set))
@@ -98,7 +98,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
         info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
-        info.put("id", ExportUtility.getElementID(element));
+        info.put("sysmlid", ExportUtility.getElementID(element));
         elements.add(info);
         send.put("elements", elements);
 

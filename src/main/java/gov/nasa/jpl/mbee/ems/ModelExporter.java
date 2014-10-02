@@ -106,7 +106,9 @@ public class ModelExporter {
     private boolean addToElements(Element e, int curdepth) {
         if (elements.containsKey(e.getID()))
             return true;
-        if (!(e instanceof Package) && packageOnly)
+        if (//e instanceof ValueSpecification || 
+            (packageOnly && !(e instanceof Package)) || e instanceof Extension || e instanceof ProfileApplication)
+        //if (!(e instanceof Package) && packageOnly)
             return false;
         if (ProjectUtilities.isElementInAttachedProject(e))
             return false;
@@ -115,8 +117,8 @@ public class ModelExporter {
         JSONObject elementInfo = new JSONObject();
         ExportUtility.fillElement(e, elementInfo, view, viewpoint);
         elements.put(e.getID(), elementInfo);
-        if (e instanceof Property || e instanceof Slot)
-            elements.putAll(ExportUtility.getReferencedElements(e));
+        //if (e instanceof Property || e instanceof Slot)
+        //    elements.putAll(ExportUtility.getReferencedElements(e));
         if ((depth != 0 && curdepth > depth) || curdepth == 0)
             return true;
         //JSONArray children = new JSONArray();
