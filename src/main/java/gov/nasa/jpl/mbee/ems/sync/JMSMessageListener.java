@@ -130,6 +130,7 @@ public class JMSMessageListener implements MessageListener {
 				}
 			};
 			project.getRepository().invokeAfterTransaction(runnable);
+			message.acknowledge();
 
 		}
 		catch (Exception e) {

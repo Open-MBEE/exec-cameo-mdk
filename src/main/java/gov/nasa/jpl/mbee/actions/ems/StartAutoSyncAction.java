@@ -9,17 +9,17 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 
 public class StartAutoSyncAction extends MDAction {
-    private static final long serialVersionUID = 1L;
-    public static final String actionid = "StartAutoSync";
+	private static final long serialVersionUID = 1L;
+	public static final String actionid = "StartAutoSync";
 
-    public StartAutoSyncAction() {
-        super(actionid, "Start EMS Session", null, null);
-    }
+	public StartAutoSyncAction() {
+		super(actionid, "Start EMS Session", null, null);
+	}
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        Project project = Application.getInstance().getProject();
-        AutoSyncProjectListener.init(project);
-    }
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Project project = Application.getInstance().getProject();
+		AutoSyncProjectListener.initDurable(project);
+	}
 
 }

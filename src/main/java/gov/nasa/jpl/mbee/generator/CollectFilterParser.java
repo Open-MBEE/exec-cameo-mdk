@@ -131,9 +131,9 @@ public class CollectFilterParser {
             if (node.getNode() instanceof CallBehaviorAction) {
                 if (ins.size() == 1) {
                     res = collectAndFilter((CallBehaviorAction)node.getNode(), ins.iterator().next());
-                    System.out.println( "collectAndFilter(): returned (after removing duplicates) res["
+                    /*System.out.println( "collectAndFilter(): returned (after removing duplicates) res["
                             + res.size() + "]="
-                            + MoreToString.Helper.toLongString( res ) );
+                            + MoreToString.Helper.toLongString( res ) );*/
                     node.setResult(res);
                 } else {
                     // ???
@@ -200,8 +200,8 @@ public class CollectFilterParser {
      */
     @SuppressWarnings("unchecked")
     private static List<Element> collectAndFilter(CallBehaviorAction cba, List<Element> in) {
-        System.out.println("collectAndFilter(): cba=" + MoreToString.Helper.toLongString( cba ) );
-        System.out.println("collectAndFilter(): in[" + in.size() + "]=" + MoreToString.Helper.toLongString( in ) );
+        //System.out.println("collectAndFilter(): cba=" + MoreToString.Helper.toLongString( cba ) );
+        //System.out.println("collectAndFilter(): in[" + in.size() + "]=" + MoreToString.Helper.toLongString( in ) );
         Integer depth = (Integer)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.depthChoosable,
                 "depth", 0);
         int direction = ((Boolean)GeneratorUtils.getObjectProperty(cba, DocGen3Profile.directionChoosable,
@@ -317,9 +317,9 @@ public class CollectFilterParser {
             res.addAll(sortElements(in, DocGen3Profile.sortByExpression, cba));
         }
         // TODO -- duplicates should probably not be removed if just sorting!
-        System.out.println( "collectAndFilter(): returning (before removing duplicates) res["
+        /*System.out.println( "collectAndFilter(): returning (before removing duplicates) res["
                             + res.size() + "]="
-                            + MoreToString.Helper.toLongString( res ) );
+                            + MoreToString.Helper.toLongString( res ) );*/
 
         return Utils.removeDuplicates(res);
     }
