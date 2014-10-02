@@ -89,6 +89,8 @@ public class ViewValidator {
     private Element view;
     private boolean recurse;
     
+    private boolean isAlfrescoMaster = true;
+    
     public ViewValidator(Element view, boolean recursive) {
         this.view = view;
         this.dv = new DocumentValidator( view );
@@ -233,13 +235,17 @@ public class ViewValidator {
                     //v.addAction(new ExportHierarchy(currentView));
                     match.addViolation(v);
                 } 
-                if (!hierarchyMatches) {
-                    //add hierarchy fix option to only update TOC of document on web
-                    //currently user is not allowed to change hierarchy from the web, this will change soon
-                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy] The hierarchy from this view/doc is outdated");
-                    if (editable)
-                        v.addAction(new ExportHierarchy(currentView));
-                    hierarchy.addViolation(v);
+                if (!hierarchyMatches) {                   
+                    if(isAlfrescoMaster){
+                    	//currently user is not allowed to change hierarchy from the web, this will change soon
+                    }
+                    else{
+                    	//add hierarchy fix option to only update TOC of document on web
+                    	ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy] The hierarchy from this view/doc is outdated");
+                        if (editable)
+                            v.addAction(new ExportHierarchy(currentView));
+                        hierarchy.addViolation(v);
+                    }
                     
                 }
                 

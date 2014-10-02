@@ -14,6 +14,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -109,6 +110,12 @@ public class ImportUtility {
             Package newPackage = ef.createPackageInstance();
             newE = newPackage;
         }
+        
+        else if (elementType.equalsIgnoreCase("Constraint")) {
+            Constraint newConstraint = ef.createConstraintInstance();
+            newE = newConstraint;
+        }
+        
         setName(newE, ob);
         setOwner(newE, ob);
         setDocumentation(newE, ob);

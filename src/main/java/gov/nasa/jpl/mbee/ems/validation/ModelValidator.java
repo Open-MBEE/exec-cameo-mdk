@@ -109,7 +109,7 @@ public class ModelValidator {
 	private boolean checkExist;
     private Set<Element> elementSet;
     
-    private boolean isAlfrescoMaster = true;
+    private boolean isAlfrescoMaster = false;
     
     public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet) {
         //result is from web, elementSet is from model
