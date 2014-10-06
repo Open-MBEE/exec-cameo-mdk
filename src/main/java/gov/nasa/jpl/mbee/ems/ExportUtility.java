@@ -121,7 +121,8 @@ public class ExportUtility {
     private static String developerSite = "europa";
     private static String developerWs = "master";
     public static boolean baselineNotSet = false;
-
+    public static Map<String, String> wsIdMapping = new HashMap<String, String>();
+    
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", // stylesaver
             "_17_0_2_2_ff3038a_1358222938684_513628_2513", // integrity
@@ -237,6 +238,15 @@ public class ExportUtility {
             //ws = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter workspace:", developerWs);
         }
         return branch;
+    }
+    
+    public static String getUrlWithWorkspaceAndSite() {
+        String url = getUrl();
+        String workspace = getWorkspace();
+        String site = getSite();
+        if (url != null && workspace != null && site != null)
+            return url + "/alfresco/service/workspaces/" + workspace + "/sites/" + site;
+        return null;
     }
     
     public static String getUrlWithSite() {
