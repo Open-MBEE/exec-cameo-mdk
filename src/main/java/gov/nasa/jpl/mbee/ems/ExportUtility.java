@@ -51,6 +51,7 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -121,7 +122,31 @@ public class ExportUtility {
     private static String developerSite = "europa";
     private static String developerWs = "master";
     public static boolean baselineNotSet = false;
-    public static Map<String, String> wsIdMapping = new HashMap<String, String>();
+    public static Map<String, Map<String, String>> wsIdMapping = new HashMap<String, Map<String, String>>();
+    
+    public static void updateWorkspaceIdMapping() {
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Map<String, String> idmapping = null;
+        if (wsIdMapping.containsKey(projId))
+            idmapping = wsIdMapping.get(projId);
+        else {
+            idmapping = new HashMap<String, String>();
+            wsIdMapping.put(projId, idmapping);
+        }
+        idmapping.clear();
+        String url = getUrl();
+        if (url == null)
+            return;
+        url += "/workspaces";
+        String result = get(url, false);
+        JSONObject ob =  (JSONObject) JSONValue.parse(result);
+        JSONArray array = (JSONArray)ob.get("workspaces");
+        for (Object ws: array) {
+            JSONObject workspace = (JSONObject)ws;
+            String id = (String)workspace.get("id");
+            String qname = (String)workspace.get("qualifiedName");
+        }
+    }
     
     public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", // stylesaver
@@ -228,16 +253,8 @@ public class ExportUtility {
     
     public static String getWorkspace() {
         Project project = Application.getInstance().getProject();
-        String branch = "master";
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-            branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(project).getURI());
-            if (branch == null)
-                branch = "master";
-        }
-        if (MDUtils.isDeveloperMode()) {
-            //ws = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter workspace:", developerWs);
-        }
-        return branch;
+        String twbranch = getTeamworkBranch(project);
+        return twbranch;
     }
     
     public static String getUrlWithWorkspace() {
@@ -321,10 +338,37 @@ public class ExportUtility {
         return false;
     }
 
+    public static String delete(String url) {
+        if (url == null)
+            return null;
+        DeleteMethod gm = new DeleteMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url);
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
+
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+
+            if (showErrors(code, json, false)) {
+                return null;
+            }
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            return json;
+        } catch (Exception ex) {
+            Utils.printException(ex);
+        } finally {
+            gm.releaseConnection();
+        }
+        return null;
+        
+    }
+    
     public static boolean send(String url, String json, String method) {
         return send(url, json, method, true);
     }
-
+    
     public static boolean send(String url, String json, String method,
             boolean showPopupErrors) {
         if (url == null)
@@ -572,9 +616,12 @@ public class ExportUtility {
             }
         } else if (e instanceof Constraint) {
             specialization.put("type", "Constraint");
-            /*ValueSpecification spec = ((Constraint) e).getSpecification();
-            if (spec != null)
-                specialization.put("constraintSpecification", spec.getID());*/
+            ValueSpecification spec = ((Constraint) e).getSpecification();
+            if (spec != null) {
+                JSONObject cspec = new JSONObject();
+                fillValueSpecification(spec, cspec);
+                specialization.put("constraintSpecification", cspec);
+            }
         } else if (e instanceof InstanceSpecification) {
             specialization.put("type", "InstanceSpecification");
 
@@ -815,13 +862,13 @@ public class ExportUtility {
     }
     //no one uses this, should remove
     public static boolean checkBaseline() {
-        if (!ExportUtility.checkBaselineMount()) {
+        /*if (!ExportUtility.checkBaselineMount()) {
             Boolean con = Utils
                     .getUserYesNoAnswer("Mount structure check did not pass (your project or mounts are not baseline versions)! Do you want to continue?");
             // Utils.showPopupMessage("Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed");
             if (con == null || !con)
                 return false;
-        }
+        }*/
         return true;
     }
 
@@ -844,7 +891,7 @@ public class ExportUtility {
     }
 
     public static void sendProjectVersion(Element e) {
-        Project prj = Application.getInstance().getProject();
+        /*Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isElementInAttachedProject(e)) {
             IProject module = ProjectUtilities.getAttachedProject(e);
             if (ProjectUtilities.isFromTeamworkServer(module)) {
@@ -859,12 +906,12 @@ public class ExportUtility {
                         TeamworkService.getInstance(prj).getVersion(prj)
                                 .getNumber());
             }
-        }
+        }*/
 
     }
 
     public static boolean okToExport(Element e) {
-        if (mountedVersions == null)
+        /*if (mountedVersions == null)
             mountedVersions = new HashMap<String, Integer>();
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isElementInAttachedProject(e)) {
@@ -908,11 +955,12 @@ public class ExportUtility {
                     return false;
             }
             return true;
-        }
+        }*/
+        return true;
     }
 
     public static boolean okToExport(Set<Element> set) {
-        Project prj = Application.getInstance().getProject();
+        /*Project prj = Application.getInstance().getProject();
         mountedVersions = new HashMap<String, Integer>();
         Map<String, String> projectNames = new HashMap<String, String>();
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
@@ -948,12 +996,12 @@ public class ExportUtility {
                 if (con == null || !con)
                     return false;
             }
-        }
+        }*/
         return true;
     }
 
     public static boolean okToExport() {
-        mountedVersions = new HashMap<String, Integer>();
+        /*mountedVersions = new HashMap<String, Integer>();
         Map<String, String> projectNames = new HashMap<String, String>();
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
@@ -985,7 +1033,7 @@ public class ExportUtility {
                 if (con == null || !con)
                     return false;
             }
-        }
+        }*/
         return true;
     }
 
@@ -1062,6 +1110,20 @@ public class ExportUtility {
             spec.put("projectVersion", version.toString());
         result.put("specialization", spec);
         return result;
+    }
+    
+    public static String getProjectId(Project proj) {
+        return proj.getPrimaryProject().getProjectID();
+    }
+    
+    public static String getTeamworkBranch(Project proj) {
+        String branch = "master";
+        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
+            branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(proj).getURI());
+            if (branch == null)
+                branch = "master";
+        }
+        return branch;
     }
 
 }

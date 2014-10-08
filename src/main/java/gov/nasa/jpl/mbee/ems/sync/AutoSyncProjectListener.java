@@ -41,6 +41,21 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 	private static final String MSG_SELECTOR_PROJECT_ID = "projectId";
 	private static final String MSG_SELECTOR_WS_ID = "workspace";
 
+	public static String getJMSUrl() {
+	    String url = ExportUtility.getUrl();
+        if (url != null) {
+            if (url.startsWith("https://"))
+                url = url.substring(8);
+            else if (url.startsWith("http://"))
+                url = url.substring(7);
+            int index = url.indexOf(":");
+            if (index != -1)
+                url = url.substring(0, index);
+            url = "tcp://" + url + ":61616";
+        } 
+        return url;
+	}
+	
 	public static void init(Project project) {
 		Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
 
@@ -60,11 +75,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 		// AutoSyncModelListener());
 		transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
 		projectInstances.put(LISTENER, listener);
-
+		String url = getJMSUrl();
+		if (url == null) {
+		    Application.getInstance().getGUILog().log("sync initialization failed");
+		    return;
+		}
 		try {
-			// should use tag value to get host
-			//
-			ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://europaems-dev-staging-b:61616");
+			ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
 
 			Connection connection = connectionFactory.createConnection();
 			// connection.setExceptionListener(this);
@@ -102,9 +119,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 
 	public static void initDurable(Project project) {
 		Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
-		String projectID = project.getID();
-		String wsID = "jose";
-
+		String projectID = project.getPrimaryProject().getProjectID();
+		String wsID = ExportUtility.getWorkspace();
+		String subscriberId = getSubscriberId(project);
 		// Check if the keywords are found in the current project. If so, it
 		// indicates that this JMS subscriber has already been init'ed.
 		//
@@ -119,23 +136,24 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 
 		transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
 		projectInstances.put(LISTENER, listener);
-
+		String url = getJMSUrl();
+        if (url == null) {
+            Application.getInstance().getGUILog().log("sync initialization failed - cannot get server url");
+            return;
+        }
 		try {
-			// should use tag value to get host
-			//
-			ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://ems-stg.jpl.nasa.gov:61616");
+			ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
 
 			Connection connection = connectionFactory.createConnection();
-			connection.setClientID("jsalcedo");
+			connection.setClientID(subscriberId);
 			// connection.setExceptionListener(this);
 			Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
 			Topic topic = session.createTopic("master");
 
-			String subscriberID = "jsalcedo";
 			String messageSelector = constructSelectorString(projectID, wsID);
 			;
-			MessageConsumer consumer = session.createDurableSubscriber(topic, subscriberID, messageSelector, true);
+			MessageConsumer consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
 			consumer.setMessageListener(new JMSMessageListener(project));
 			connection.start();
 			projectInstances.put(CONNECTION, connection);
@@ -149,6 +167,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 		}
 	}
 
+	public static String getSubscriberId(Project proj) {
+	    String projId = ExportUtility.getProjectId(proj);
+	    String ws = ExportUtility.getTeamworkBranch(proj);
+	    return projId + "/" + ws;
+	}
+	
 	public static String constructSelectorString(String projectID, String workspaceID) {
 		StringBuilder selectorBuilder = new StringBuilder();
 

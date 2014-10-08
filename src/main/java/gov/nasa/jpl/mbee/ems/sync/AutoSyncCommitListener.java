@@ -8,8 +8,10 @@ import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -53,7 +55,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 	private class TransactionCommitHandler implements Runnable {
 		private final Collection<PropertyChangeEvent> events;
 		private Map<String, JSONObject> elements = new HashMap<String, JSONObject>();
-
+		private Set<String> deletes = new HashSet<String>();
 		TransactionCommitHandler(final Collection<PropertyChangeEvent> events) {
 			this.events = events;
 		}
@@ -112,6 +114,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 			String url = ExportUtility.getPostElementsUrl();
 			if (url != null)
 				ExportUtility.send(url, toSend.toJSONString());
+			String deleteUrl = ExportUtility.getUrlWithWorkspace();
+			for (String id: deletes) {
+			    String durl = deleteUrl + "/elements/" + id;
+			    ExportUtility.delete(durl);
+			}
 		}
 
 		@SuppressWarnings("unchecked")
@@ -215,6 +222,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				//
 				if (elements.containsKey(elementID))
 					elements.remove(elementID);
+				deletes.add(elementID);
 			}
 			else if (sourceElement instanceof DirectedRelationship && 
 			        (propertyName.equals(PropertyNames.SUPPLIER) || propertyName.equals(PropertyNames.CLIENT))) {
