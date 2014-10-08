@@ -37,6 +37,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -68,19 +69,18 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
-        JSONObject result = new JSONObject();
-        result.put("name", Application.getInstance().getProject().getName());
-        String json = result.toJSONString();
-        //gl.log(json);
-        String url = ExportUtility.getUrlWithSiteAndProject();
+        JSONObject tosend = new JSONObject();
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        JSONObject result = ExportUtility.getProjectJson();
+        array.add(result);
+        String url = ExportUtility.getUrlWithWorkspaceAndSite();
         if (url == null) {
             return;
         }
-        url += "?fix=true";
-        //url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        if (!ExportUtility.send(url, json))
+        if (!ExportUtility.send(url, tosend.toJSONString()))
             return;
-        ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
+        //ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
         if (!initOnly) {
             url = ExportUtility.getPostElementsUrl();
             if (url == null) {

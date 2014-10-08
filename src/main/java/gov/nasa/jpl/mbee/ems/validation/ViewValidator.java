@@ -104,7 +104,7 @@ public class ViewValidator {
     public boolean checkProject() {
         if (ExportUtility.baselineNotSet)
             baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(view).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
-        String projectUrl = ExportUtility.getUrlWithSiteAndProject();
+        String projectUrl = ExportUtility.getUrlForProject();
         if (projectUrl == null)
             return false;
         String response = ExportUtility.get(projectUrl, false);
@@ -148,7 +148,7 @@ public class ViewValidator {
         JSONArray resultElements = new JSONArray();
         results.put("elements", resultElements);
         
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
             return false;//return; //do some error
         
@@ -164,7 +164,7 @@ public class ViewValidator {
             Element currentView = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
             
             //check to see if view exists on alfresco
-            String existurl = url + "/javawebscripts/views/" + viewid;
+            String existurl = url + "/elements/" + viewid;
             String response = ExportUtility.get(existurl, false);
             //response is the string version of the view json gotten from the web
             if (!ViewEditUtils.isPasswordSet())
@@ -189,7 +189,7 @@ public class ViewValidator {
                     v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
                     exists.addViolation(v);
                 } else {
-                String viewElementsUrl = existurl + "/elements";
+                String viewElementsUrl = url + "/views/" + viewid + "/elements";
                 JSONArray localElements = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("displayedElements");
                 //get the current elements referenced by the view in the current model
                 JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
@@ -344,13 +344,13 @@ public class ViewValidator {
          *    }
          */
         if (dge.getDgElement() != null && dge.getDgElement() == view) {//view is a document
-            String url = ExportUtility.getUrl();
-            url += "/javawebscripts/products/" + view.getID();
+            String url = ExportUtility.getUrlWithWorkspace();
+            url += "/elements/" + view.getID();
             String docresponse = ExportUtility.get(url, false);
             if (docresponse  == null)
                 return false;
             JSONObject docResponse = (JSONObject)JSONValue.parse(docresponse);
-            JSONArray docs = (JSONArray)docResponse.get("products");
+            JSONArray docs = (JSONArray)docResponse.get("elements");
             for (Object docresult: docs) {
                 if (((JSONObject)docresult).get("sysmlid").equals(view.getID())) {
                     JSONArray view2view = (JSONArray)((JSONObject)((JSONObject)docresult).get("specialization")).get("view2view");
@@ -374,7 +374,7 @@ public class ViewValidator {
         } else if (dge.getDgElement() == null){
             //canonical view children comparison
             JSONObject viewresponse = (JSONObject)JSONValue.parse(response);
-            JSONArray views = (JSONArray)viewresponse.get("views");
+            JSONArray views = (JSONArray)viewresponse.get("elements");
             for (Object viewresult: views) {
                 if (((JSONObject)viewresult).get("sysmlid").equals(view.getID())) {
                     JSONArray childrenViews = (JSONArray)((JSONObject)((JSONObject)viewresult).get("specialization")).get("childrenViews");

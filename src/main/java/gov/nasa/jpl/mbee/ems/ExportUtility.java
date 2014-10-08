@@ -240,6 +240,14 @@ public class ExportUtility {
         return branch;
     }
     
+    public static String getUrlWithWorkspace() {
+        String url = getUrl();
+        String workspace = getWorkspace();
+        if (url != null && workspace != null)
+            return url + "/alfresco/service/workspaces/" + workspace;
+        return null;
+    }
+    
     public static String getUrlWithWorkspaceAndSite() {
         String url = getUrl();
         String workspace = getWorkspace();
@@ -248,30 +256,16 @@ public class ExportUtility {
             return url + "/alfresco/service/workspaces/" + workspace + "/sites/" + site;
         return null;
     }
-    
-    public static String getUrlWithSite() {
-        String url = getUrl();
-        if (url == null)
-            return null;
-        String site = getSite();
-        if (site == null)
-            return null;
-        // do switch here
-        return url + "/javawebscripts/sites/" + site;
-    }
 
-    public static String getUrlWithSiteAndProject() {
-        String url = getUrlWithSite();
+    public static String getUrlForProject() {
+        String url = getPostElementsUrl();
         if (url != null)
-            return url
-                    + "/projects/"
-                    + Application.getInstance().getProject()
-                            .getPrimaryProject().getProjectID();
+            return url + "/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         return null;
     }
 
     public static String getPostElementsUrl() {
-        String url = getUrlWithSiteAndProject();
+        String url = getUrlWithWorkspaceAndSite();
         if (url == null)
             return null;
         return url + "/elements";
@@ -832,14 +826,20 @@ public class ExportUtility {
     }
 
     public static Integer getAlfrescoProjectVersion(String projectId) {
-        String baseUrl = getUrl();
-        String checkProjUrl = baseUrl + "/javawebscripts/projects/" + projectId;
+        String baseUrl = getUrlWithWorkspace();
+        String checkProjUrl = baseUrl + "/elements/" + projectId;
         String json = get(checkProjUrl, false);
         if (json == null)
             return null; // ??
         JSONObject result = (JSONObject) JSONValue.parse(json);
-        if (result.containsKey("projectVersion"))
-            return Integer.valueOf(result.get("projectVersion").toString());
+        if (result.containsKey("elements")) {
+            JSONArray elements = (JSONArray)result.get("elements");
+            if (!elements.isEmpty() && ((JSONObject)elements.get(0)).containsKey("specialization")) {
+                JSONObject spec = (JSONObject)((JSONObject)elements.get(0)).get("specialization");
+                if (spec.containsKey("projectVersion"))
+                    return Integer.valueOf(result.get("projectVersion").toString());
+            }
+        }
         return null;
     }
 
@@ -994,13 +994,15 @@ public class ExportUtility {
     }
 
     public static void sendProjectVersion(String projId, Integer version) {
-        String baseurl = getUrl();
+        String baseurl = getUrlWithWorkspace();
         if (baseurl == null)
             return;
-        String url = baseurl + "/javawebscripts/projects/" + projId
-                + "?fix=true";
+        JSONObject result = ExportUtility.getProjectJSON(null, projId, version);
         JSONObject tosend = new JSONObject();
-        tosend.put("projectVersion", version.toString());
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        array.add(result);
+        String url = baseurl + "/elements";
         send(url, tosend.toJSONString(), null, false);
     }
 
@@ -1042,6 +1044,24 @@ public class ExportUtility {
                 .replace("<br>", "").replace("</br>", "");// .replace("\n", "");
         // inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
         // return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
+    }
+    
+    public static JSONObject getProjectJson() {
+        return getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), null);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject getProjectJSON(String name, String projId, Integer version) {
+        JSONObject result = new JSONObject();
+        if (name != null)
+            result.put("name", name);
+        result.put("sysmlid", projId);
+        JSONObject spec = new JSONObject();
+        spec.put("type", "Project");
+        if (version != null)
+            spec.put("projectVersion", version.toString());
+        result.put("specialization", spec);
+        return result;
     }
 
 }

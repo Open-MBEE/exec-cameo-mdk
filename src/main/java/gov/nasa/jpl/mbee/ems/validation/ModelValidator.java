@@ -128,7 +128,7 @@ public class ModelValidator {
     public boolean checkProject() {
         if (ExportUtility.baselineNotSet)
             baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(start).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
-        String projectUrl = ExportUtility.getUrlWithSiteAndProject();
+        String projectUrl = ExportUtility.getUrlForProject();
         if (projectUrl == null)
             return false;
         String response = ExportUtility.get(projectUrl, false);
@@ -142,12 +142,12 @@ public class ModelValidator {
             Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
             return false;
         }
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrlWithWorkspace();
         String id = start.getID();
         if (start == Application.getInstance().getProject().getModel())
             id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         id = id.replace(".", "%2E");
-        url += "/javawebscripts/elements/" + id + "?recurse=true";
+        url += "/elements/" + id + "?recurse=true";
         GUILog log = Application.getInstance().getGUILog();
         log.log("[INFO] Getting elements from server...");
         response = ExportUtility.get(url, false);
@@ -645,10 +645,10 @@ public class ModelValidator {
     }
 
     private JSONObject getAlfrescoElement(Element e) {
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrlWithWorkspace();
         String id = ExportUtility.getElementID(e);
         id = id.replace(".", "%2E");
-        url += "/javawebscripts/elements/" + id;
+        url += "/elements/" + id;
         String response = ExportUtility.get(url, false);
         if (response == null)
             return null;

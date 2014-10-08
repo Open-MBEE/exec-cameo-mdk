@@ -93,7 +93,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
         Document dge = dg.parseDocument(true, true);
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
         dge.accept(vhv);
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrlWithWorkspace();
         boolean document = false;
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
@@ -102,7 +102,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
         
         JSONObject view2view = vhv.getView2View();
         if (document) {
-            String docurl = url + "/javawebscripts/products";
+            String docurl = url + "/elements";
             
             JSONObject send = new JSONObject();
             JSONArray documents = new JSONArray();
@@ -111,9 +111,9 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             doc.put("specialization", specialization);
             specialization.put("view2view", ExportUtility.formatView2View(view2view));
             specialization.put("noSections", vhv.getNosections());
-            doc.put("id", view.getID());
+            doc.put("sysmlid", view.getID());
             documents.add(doc);
-            send.put("products", documents);
+            send.put("elements", documents);
             if (!ExportUtility.send(docurl, send.toJSONString()))
                 return false;
         } else {
@@ -127,8 +127,8 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
                 views.add(viewinfo);
             }
             JSONObject send  = new JSONObject();
-            send.put("views", views);
-            if (!ExportUtility.send(url + "/javawebscripts/views", send.toJSONString()))
+            send.put("elements", views);
+            if (!ExportUtility.send(url + "/elements", send.toJSONString()))
                 return false;
         }
         return true;

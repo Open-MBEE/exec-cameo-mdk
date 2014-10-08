@@ -98,7 +98,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     public void execute(Collection<Annotation> annos) {
         if (!ExportUtility.okToExport())
             return;
-        url = ExportUtility.getUrl();
+        url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
             return;
         sendElementsUrl = ExportUtility.getPostElementsUrl();
@@ -111,7 +111,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport())
             return;
-        url = ExportUtility.getUrl();
+        url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
             return;
         sendElementsUrl = ExportUtility.getPostElementsUrl();
@@ -197,10 +197,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         JSONArray viewsArray = new JSONArray();
         viewsArray.addAll(viewjson.values());
         send = new JSONObject();
-        send.put("views", viewsArray);
+        send.put("elements", viewsArray);
         //gl.log(send.toJSONString());
-        String sendViewsUrl = url +  "/javawebscripts/views";
-        if (!ExportUtility.send(sendViewsUrl, send.toJSONString(), null, false))
+        //String sendViewsUrl = url +  "/javawebscripts/views";
+        if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
             return false;
         
         // Upload images to view editor (JSON keys are specified in
@@ -215,9 +215,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
             File imageFile = new File(filename);
             
-            String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             String site = ExportUtility.getSite();
-            String posturl = url + "/workspaces/master/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             // check whether the image already exists
             GetMethod get = new GetMethod(baseurl);
             int status = 0;
@@ -267,7 +267,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         visitor2.removeImages();
         gl.log("[INFO] Done");
         if (document && recurse) {
-            String docurl = url + "/javawebscripts/products";
+            //String docurl = url + "/javawebscripts/products";
             send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
@@ -275,11 +275,11 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             spec.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
             spec.put("noSections", visitor2.getNosections());
             spec.put("type", "Product");
-            doc.put("id", view.getID());
+            doc.put("sysmlid", view.getID());
             doc.put("specialization", spec);
             documents.add(doc);
-            send.put("products", documents);
-            if (!ExportUtility.send(docurl, send.toJSONString(), null, false))
+            send.put("elements", documents);
+            if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
                 return false;
         } /*else if (recurse) {
             JSONArray views = new JSONArray();

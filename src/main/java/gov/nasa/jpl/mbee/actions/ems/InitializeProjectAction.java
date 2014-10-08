@@ -32,10 +32,10 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 
 import java.awt.event.ActionEvent;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
 
 public class InitializeProjectAction extends MDAction {
 
@@ -50,17 +50,17 @@ public class InitializeProjectAction extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
+        JSONObject tosend = new JSONObject();
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        JSONObject result = ExportUtility.getProjectJson();
+        array.add(result);
+        String json = tosend.toJSONString();
 
-        JSONObject result = new JSONObject();
-        result.put("name", Application.getInstance().getProject().getName());
-        String json = result.toJSONString();
-
-        //gl.log(json);
-        String url = ExportUtility.getUrlWithSite();
+        String url = ExportUtility.getUrlWithWorkspaceAndSite();
         if (url == null) {
             return;
         }
-        url += "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         ExportUtility.send(url, json);
     }
 }
