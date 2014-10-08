@@ -15,6 +15,8 @@ import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -115,9 +117,12 @@ public class JMSMessageListener implements MessageListener {
 						Application.getInstance().getGUILog().log("element not found from mms sync delete");
 						return;
 					}
-					// modelelementsmanager util functions.
-					//
-					project.removeElementByID(changedElement);
+					try {
+                        ModelElementsManager.getInstance().removeElement(changedElement);
+                    } catch (ReadOnlyElementException e) {
+                        e.printStackTrace();
+                    }
+					//project.removeElementByID(changedElement);
 				}
 
 				private void moveElement(JSONObject ob) {

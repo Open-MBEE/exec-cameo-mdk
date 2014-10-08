@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -145,7 +146,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 			ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
 
 			Connection connection = connectionFactory.createConnection();
-			connection.setClientID(subscriberId);
+			connection.setClientID(subscriberId + (new Date()).toString());
 			// connection.setExceptionListener(this);
 			Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
