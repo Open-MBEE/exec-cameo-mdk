@@ -21,9 +21,12 @@ import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
@@ -113,7 +116,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 			toSend.put("elements", eles);
 			String url = ExportUtility.getPostElementsUrl();
 			if (url != null)
-				ExportUtility.send(url, toSend.toJSONString());
+				ExportUtility.send(url, toSend.toJSONString(), null, false);
 			String deleteUrl = ExportUtility.getUrlWithWorkspace();
 			for (String id: deletes) {
 			    String durl = deleteUrl + "/elements/" + id;
@@ -177,7 +180,9 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 				elementOb = getElementObject(actual);
 				ExportUtility.fillDoc(actual, elementOb);
 			}
-			else if ((sourceElement instanceof ValueSpecification) && (propertyName.equals(PropertyNames.VALUE))) {
+			else if ((sourceElement instanceof ValueSpecification) && (propertyName.equals(PropertyNames.VALUE)) ||
+			        (sourceElement instanceof OpaqueExpression) && (propertyName.equals(PropertyNames.BODY)) ||
+			        (sourceElement instanceof Expression) && (propertyName.equals(PropertyNames.OPERAND))) {
 				//
 				// Need to find the actual element that needs to be sent (most
 				// likely a Property or Slot that's the closest owner of this
@@ -192,8 +197,13 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 					actual = actual.getOwner();
 				
 				elementOb = getElementObject(actual);
-				JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, false);
-				elementOb.put("specialization", specialization);
+				if (actual instanceof Slot || actual instanceof Property) {
+				    JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, false);
+				    elementOb.put("specialization", specialization);
+				} if (actual instanceof Constraint) {
+				    JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)actual, null);
+				    elementOb.put("specialization", specialization);
+				}
 			}
 			// Check if this is a Property or Slot. Need these next two if
 			// statement
@@ -209,12 +219,18 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 			    JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
                 elementOb.put("specialization", specialization);
 			}
+			else if ((sourceElement instanceof Constraint) && propertyName.equals(PropertyNames.SPECIFICATION)) {
+			    elementOb = getElementObject(sourceElement);
+                JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)sourceElement, null);
+                elementOb.put("specialization", specialization);
+			}
 			else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
 					&& ExportUtility.shouldAdd(sourceElement)) {
 				elementOb = getElementObject(sourceElement);
 				ExportUtility.fillElement(sourceElement, elementOb, null, null);
 			}
-			else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
+			else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)
+			        && ExportUtility.shouldAdd(sourceElement)) {
 				elementID = ExportUtility.getElementID(sourceElement);
 
 				// JJS TO DO: implement the actual delete when there is the

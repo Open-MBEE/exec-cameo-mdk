@@ -261,7 +261,7 @@ public class ExportUtility {
         String url = getUrl();
         String workspace = getWorkspace();
         if (url != null && workspace != null)
-            return url + "/alfresco/service/workspaces/" + workspace;
+            return url + "/workspaces/" + workspace;
         return null;
     }
     
@@ -270,7 +270,7 @@ public class ExportUtility {
         String workspace = getWorkspace();
         String site = getSite();
         if (url != null && workspace != null && site != null)
-            return url + "/alfresco/service/workspaces/" + workspace + "/sites/" + site;
+            return url + "/workspaces/" + workspace + "/sites/" + site;
         return null;
     }
 
@@ -385,7 +385,7 @@ public class ExportUtility {
             if (json.length() > 3000) {
                 // System.out.println(json);
                 log.info(json);
-                gl.log("(see md.log for what got sent - too big to show)");
+                //gl.log("(see md.log for what got sent - too big to show)");
             } else
                 log.info(json);// gl.log(json);
             pm.setRequestHeader("Content-Type",
@@ -615,13 +615,7 @@ public class ExportUtility {
                         makeJsonArrayOfIDs(vsl));
             }
         } else if (e instanceof Constraint) {
-            specialization.put("type", "Constraint");
-            ValueSpecification spec = ((Constraint) e).getSpecification();
-            if (spec != null) {
-                JSONObject cspec = new JSONObject();
-                fillValueSpecification(spec, cspec);
-                specialization.put("constraintSpecification", cspec);
-            }
+            fillConstraintSpecialization((Constraint)e, specialization);
         } else if (e instanceof InstanceSpecification) {
             specialization.put("type", "InstanceSpecification");
 
@@ -722,6 +716,21 @@ public class ExportUtility {
                     specialization.put("propertyType", "" + type.getID());
                 }
             }
+        }
+        return specialization;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        specialization.put("type", "Constraint");
+        ValueSpecification vspec = ((Constraint) e).getSpecification();
+        if (vspec != null) {
+            JSONObject cspec = new JSONObject();
+            fillValueSpecification(vspec, cspec);
+            specialization.put("constraintSpecification", cspec);
         }
         return specialization;
     }

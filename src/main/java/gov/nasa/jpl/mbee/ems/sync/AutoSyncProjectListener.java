@@ -52,6 +52,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             int index = url.indexOf(":");
             if (index != -1)
                 url = url.substring(0, index);
+            if (url.endsWith("/alfresco/service"))
+                url = url.substring(0, url.length() - 17);
             url = "tcp://" + url + ":61616";
         } 
         return url;
@@ -146,7 +148,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 			ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
 
 			Connection connection = connectionFactory.createConnection();
-			connection.setClientID(subscriberId + (new Date()).toString());
+			connection.setClientID(subscriberId);// + (new Date()).toString());
 			// connection.setExceptionListener(this);
 			Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 

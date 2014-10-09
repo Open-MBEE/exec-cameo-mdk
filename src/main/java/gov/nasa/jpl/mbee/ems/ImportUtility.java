@@ -14,6 +14,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -48,7 +49,9 @@ public class ImportUtility {
         // should be present: name, owner, and documentation
         //
         String sysmlID = (String) ob.get("sysmlid");
-
+        Element existing = ExportUtility.getElementFromID(sysmlID);
+        if (existing != null)
+            return null; //maybe jms feedback
         JSONObject specialization = (JSONObject) ob.get("specialization");
         String elementType = "Element";
         if (specialization != null) {
@@ -100,6 +103,11 @@ public class ImportUtility {
         else if (elementType.equalsIgnoreCase("Package")) {
             Package newPackage = ef.createPackageInstance();
             newE = newPackage;
+        } 
+        else if (elementType.equalsIgnoreCase("Constraint")) {
+            Constraint c = ef.createConstraintInstance();
+            setConstraintSpecification(c, specialization);
+            newE = c;
         }
         setName(newE, ob);
         setOwner(newE, ob);
@@ -120,6 +128,8 @@ public class ImportUtility {
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
             if (type != null && e instanceof DirectedRelationship)
                 setRelationshipEnds((DirectedRelationship)e, spec);
+            if (type != null && e instanceof Constraint && type.equals("Constraint"))
+                setConstraintSpecification((Constraint)e, spec);
         }
     }
     
@@ -181,6 +191,13 @@ public class ImportUtility {
         s.getValue().clear();
         for (Object o: values) {
             s.getValue().add(createValueSpec((JSONObject)o));
+        }
+    }
+    
+    public static void setConstraintSpecification(Constraint c, JSONObject spec) {
+        JSONObject sp = (JSONObject)spec.get("constraintSpecification");
+        if (sp != null) {
+            c.setSpecification(createValueSpec(sp));
         }
     }
     
