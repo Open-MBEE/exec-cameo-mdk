@@ -94,14 +94,15 @@ public class JMSMessageListener implements MessageListener {
 				}
 
 				private void makeChange(JSONObject ob) {
-					Element changedElement = ExportUtility.getElementFromID((String) (ob).get("sysmlid"));
+				    String sysmlid = (String) ob.get("sysmlid");
+					Element changedElement = ExportUtility.getElementFromID(sysmlid);
 					if (changedElement == null) {
-						Application.getInstance().getGUILog().log("element not found from mms sync change");
+						Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync change");
 						return;
 					}
 					else if (!changedElement.isEditable()) {
 						Application.getInstance().getGUILog()
-								.log("[ERROR] " + changedElement.getID() + " is not editable!");
+								.log("[ERROR] Sync: " + changedElement.getID() + " is not editable!");
 						return;
 					}
 					ImportUtility.updateElement(changedElement, ob);
@@ -112,23 +113,25 @@ public class JMSMessageListener implements MessageListener {
 				}
 
 				private void deleteElement(JSONObject ob) {
-					Element changedElement = ExportUtility.getElementFromID((String) (ob).get("sysmlid"));
+				    String sysmlid = (String) ob.get("sysmlid");
+					Element changedElement = ExportUtility.getElementFromID(sysmlid);
 					if (changedElement == null) {
-						Application.getInstance().getGUILog().log("element not found from mms sync delete");
+						Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync delete");
 						return;
 					}
 					try {
                         ModelElementsManager.getInstance().removeElement(changedElement);
                     } catch (ReadOnlyElementException e) {
-                        e.printStackTrace();
+                        Application.getInstance().getGUILog()
+                        .log("[ERROR] Sync: " + changedElement.getID() + " cannot be deleted!");
                     }
-					//project.removeElementByID(changedElement);
 				}
 
 				private void moveElement(JSONObject ob) {
-					Element changedElement = ExportUtility.getElementFromID((String) (ob).get("sysmlid"));
+				    String sysmlid = (String) ob.get("sysmlid");
+					Element changedElement = ExportUtility.getElementFromID(sysmlid);
 					if (changedElement == null) {
-						Application.getInstance().getGUILog().log("element not found from mms sync move");
+						Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync move");
 						return;
 					}
 					ImportUtility.setOwner(changedElement, ob);

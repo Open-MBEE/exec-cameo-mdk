@@ -209,7 +209,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 			// statement
 			// to handle the case where a value is being deleted.
 			//
-			else if ((sourceElement instanceof Property) && propertyName.equals(PropertyNames.DEFAULT_VALUE)) {
+			else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE))) {
 				JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
 				elementOb = getElementObject(sourceElement);
                 elementOb.put("specialization", specialization);

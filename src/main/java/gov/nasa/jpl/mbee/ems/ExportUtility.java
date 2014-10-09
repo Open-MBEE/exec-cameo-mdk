@@ -195,32 +195,21 @@ public class ExportUtility {
     }
 
     public static String getUrl() {
-        if (false) {
-            return "http://localhost:8080/alfresco/service";
-            // //return "https://sheldon/alfresco/service";
-        }
         String url = null;
         Element model = Application.getInstance().getProject().getModel();
         if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
             url = (String) StereotypesHelper.getStereotypePropertyFirst(model,
                     "ModelManagementSystem", "MMS URL");
             if (url == null || url.equals("")) {
-                JOptionPane
-                        .showMessageDialog(
-                                null,
-                                "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+                JOptionPane.showMessageDialog(null, "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
                 url = null;
             }
         } else {
-            JOptionPane
-                    .showMessageDialog(
-                            null,
-                            "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+            JOptionPane.showMessageDialog(null,"Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
             url = null;
         }
         if (url == null && MDUtils.isDeveloperMode()) {
-            url = JOptionPane.showInputDialog(
-                    "[DEVELOPER MODE] Enter the editor URL:", developerUrl);
+            url = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the editor URL:", developerUrl);
         }
         if (url == null || url.equals(""))
             return null;
@@ -234,15 +223,11 @@ public class ExportUtility {
         String site = (String) StereotypesHelper.getStereotypePropertyFirst(
                 model, "ModelManagementSystem", "MMS Site");
         if (site == null || site.equals("")) {
-            JOptionPane
-                    .showMessageDialog(
-                            null,
-                            "Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
+            JOptionPane.showMessageDialog(null,"Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
             site = null;
         }
         if (site == null && MDUtils.isDeveloperMode()) {
-            site = JOptionPane.showInputDialog(
-                    "[DEVELOPER MODE] Enter the site:", developerSite);
+            site = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
         }
         if (site == null || site.equals(""))
             return null;
@@ -254,6 +239,8 @@ public class ExportUtility {
     public static String getWorkspace() {
         Project project = Application.getInstance().getProject();
         String twbranch = getTeamworkBranch(project);
+        if (twbranch == null)
+            return "master";
         return twbranch;
     }
     
@@ -299,17 +286,14 @@ public class ExportUtility {
                 if (showPopupErrors)
                     Utils.showPopupMessage("You are not authorized or don't have permission, (you can login and try again).");
                 else
-                    Application
-                            .getInstance()
-                            .getGUILog()
+                    Application.getInstance().getGUILog()
                             .log("You are not authorized or don't have permission, (you can login and try again).");
                 ViewEditUtils.clearCredentials();
             } else if (code == 403) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("You do not have permission to do this");
                 else
-                    Application.getInstance().getGUILog()
-                            .log("You do not have permission to do this");
+                    Application.getInstance().getGUILog().log("You do not have permission to do this");
             } else if (code == 404) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
@@ -327,8 +311,6 @@ public class ExportUtility {
             return true;
         }
         if (response.length() > 500) {
-            
-            // System.out.println(response);
             log.info(response);
             //Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else {
@@ -688,9 +670,6 @@ public class ExportUtility {
             specialization.put("type", "Property");
             specialization.put("isDerived", false);
             specialization.put("isSlot", true);
-            /*if (((Slot) e).getDefiningFeature().getID()
-                    .equals("_17_0_2_3_e9f034d_1375396269655_665865_29411"))
-                specialization.put("stylesaver", true);*/
 
             // Retrieve a list of ValueSpecification objects.
             // Loop through these objects, creating a new JSONObject
@@ -1126,11 +1105,9 @@ public class ExportUtility {
     }
     
     public static String getTeamworkBranch(Project proj) {
-        String branch = "master";
+        String branch = null;
         if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
             branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(proj).getURI());
-            if (branch == null)
-                branch = "master";
         }
         return branch;
     }

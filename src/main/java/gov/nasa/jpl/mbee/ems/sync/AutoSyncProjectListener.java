@@ -173,6 +173,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 	public static String getSubscriberId(Project proj) {
 	    String projId = ExportUtility.getProjectId(proj);
 	    String ws = ExportUtility.getTeamworkBranch(proj);
+	    if (ws == null)
+	        ws = "master";
 	    return projId + "/" + ws;
 	}
 	
