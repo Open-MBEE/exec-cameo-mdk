@@ -145,6 +145,7 @@ public class ExportUtility {
             JSONObject workspace = (JSONObject)ws;
             String id = (String)workspace.get("id");
             String qname = (String)workspace.get("qualifiedName");
+            idmapping.put(qname, id);
         }
     }
     
@@ -241,14 +242,15 @@ public class ExportUtility {
         String twbranch = getTeamworkBranch(project);
         if (twbranch == null)
             return "master";
-        /*String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        twbranch = "master/" + twbranch;
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> wsmap = wsIdMapping.get(projId);
         if (wsmap != null) {
             String id = wsmap.get(twbranch);
             if (id != null)
                 return id;
-        }*/
-        return twbranch;
+        }
+        return null;
     }
     
     public static String getUrlWithWorkspace() {

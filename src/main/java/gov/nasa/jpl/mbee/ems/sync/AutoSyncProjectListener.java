@@ -158,6 +158,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public void projectOpened(Project project) {
         Map<String, Object> projectInstances = new HashMap<String, Object>();
         ProjectListenerMapping.getInstance().put(project, projectInstances);
+        ExportUtility.updateWorkspaceIdMapping();
         // init(project);
     }
 
