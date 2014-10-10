@@ -18,6 +18,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class JMSMessageListener implements MessageListener {
@@ -101,9 +102,11 @@ public class JMSMessageListener implements MessageListener {
                         return;
                     }
                     else if (!changedElement.isEditable()) {
-                        Application.getInstance().getGUILog()
-                        .log("[ERROR] Sync: " + changedElement.getID() + " is not editable!");
-                        return;
+                        if (!TeamworkUtils.lockElement(project, changedElement, false)) {
+                            Application.getInstance().getGUILog()
+                                .log("[ERROR] Sync: " + changedElement.getID() + " is not editable!");
+                            return;
+                        }
                     }
                     ImportUtility.updateElement(changedElement, ob);
                 }
@@ -116,9 +119,11 @@ public class JMSMessageListener implements MessageListener {
                     String sysmlid = (String) ob.get("sysmlid");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
-                        Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync delete");
+                        //Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync delete");
                         return;
                     }
+                    if (!changedElement.isEditable())
+                        TeamworkUtils.lockElement(project, changedElement, false);
                     try {
                         ModelElementsManager.getInstance().removeElement(changedElement);
                     } catch (ReadOnlyElementException e) {
