@@ -241,6 +241,13 @@ public class ExportUtility {
         String twbranch = getTeamworkBranch(project);
         if (twbranch == null)
             return "master";
+        /*String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Map<String, String> wsmap = wsIdMapping.get(projId);
+        if (wsmap != null) {
+            String id = wsmap.get(twbranch);
+            if (id != null)
+                return id;
+        }*/
         return twbranch;
     }
     
@@ -262,9 +269,9 @@ public class ExportUtility {
     }
 
     public static String getUrlForProject() {
-        String url = getPostElementsUrl();
+        String url = getUrlWithWorkspaceAndSite();
         if (url != null)
-            return url + "/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+            return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         return null;
     }
 

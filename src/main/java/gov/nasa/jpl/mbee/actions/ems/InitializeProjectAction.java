@@ -61,6 +61,7 @@ public class InitializeProjectAction extends MDAction {
         if (url == null) {
             return;
         }
+        url += "/projects";
         ExportUtility.send(url, json);
     }
 }
