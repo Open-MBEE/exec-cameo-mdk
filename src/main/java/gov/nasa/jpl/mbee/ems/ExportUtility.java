@@ -1037,7 +1037,7 @@ public class ExportUtility {
     }
 
     public static void sendProjectVersion(String projId, Integer version) {
-        String baseurl = getUrlWithWorkspace();
+        String baseurl = getUrlWithWorkspaceAndSite();
         if (baseurl == null)
             return;
         JSONObject result = ExportUtility.getProjectJSON(null, projId, version);
@@ -1045,7 +1045,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         array.add(result);
-        String url = baseurl + "/elements";
+        String url = baseurl + "/projects";
         send(url, tosend.toJSONString(), null, false);
     }
 
