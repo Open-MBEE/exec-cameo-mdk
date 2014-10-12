@@ -124,7 +124,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         
         if (exportView(view)) {
             this.removeViolationAndUpdateWindow();
-            ExportUtility.sendProjectVersions();
+            //ExportUtility.sendProjectVersions();
         }
     }
     
@@ -138,7 +138,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             } else
                 break;
         }
-        ExportUtility.sendProjectVersions();
+        //ExportUtility.sendProjectVersions();
         if (!toremove.isEmpty()) {
             this.removeViolationsAndUpdateWindow(toremove);
         }

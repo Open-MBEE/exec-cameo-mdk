@@ -92,7 +92,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
             url += "?background=true";
         if (ExportUtility.send(url, send.toJSONString(), null, false)) {
             this.removeViolationsAndUpdateWindow(annos);
-            ExportUtility.sendProjectVersions();
+            //ExportUtility.sendProjectVersions();
         }
     }
 
@@ -112,7 +112,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         }
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
-            ExportUtility.sendProjectVersion(element);
+            //ExportUtility.sendProjectVersion(element);
         }
     }
 }

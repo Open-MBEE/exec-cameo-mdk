@@ -179,7 +179,7 @@ public class ViewValidator {
                 exists.addViolation(v);
             } else {
                 //view has been on the web
-                JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("views")).get(0);
+                JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("elements")).get(0);
                 Object containsObj = ((JSONObject)webView.get("specialization")).get("contains");
                 if (containsObj == null) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");

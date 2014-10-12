@@ -271,10 +271,15 @@ public class ExportUtility {
     }
 
     public static String getUrlForProject() {
-        String url = getUrlWithWorkspaceAndSite();
+        String url = getUrl();
+        String site = getSite();
+        if (url == null || site == null)
+            return null;
+        return url + "/workspaces/master/sites/" +  site + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        /*String url = getUrlWithWorkspaceAndSite();
         if (url != null)
             return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        return null;
+        return null;*/
     }
 
     public static String getPostElementsUrl() {
@@ -375,10 +380,10 @@ public class ExportUtility {
             gl.log("[INFO] Sending...");
             if (json.length() > 3000) {
                 // System.out.println(json);
-                log.info(json);
+                log.info(url + ": " + json);
                 //gl.log("(see md.log for what got sent - too big to show)");
             } else
-                log.info(json);// gl.log(json);
+                log.info(url + ": " + json);// gl.log(json);
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));

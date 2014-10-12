@@ -84,7 +84,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         }
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationsAndUpdateWindow(annos);
-            ExportUtility.sendProjectVersions();
+            //ExportUtility.sendProjectVersions();
         }
     }
 
@@ -103,7 +103,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         }
         if (ExportUtility.send(url, send.toJSONString())) {
             this.removeViolationAndUpdateWindow();
-            ExportUtility.sendProjectVersion(element);
+            //ExportUtility.sendProjectVersion(element);
         }
     }
 }
