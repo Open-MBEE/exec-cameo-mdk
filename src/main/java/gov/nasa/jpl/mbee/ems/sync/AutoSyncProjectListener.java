@@ -76,6 +76,10 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Application.getInstance().getGUILog().log("sync initialization failed - cannot get server url");
             return;
         }
+        if (wsID == null) {
+            Application.getInstance().getGUILog().log("sync initialization failed - cannot get server workspace that corresponds to this project branch");
+            return;
+        }
         try {
             AutoSyncCommitListener listener = new AutoSyncCommitListener();
             MDTransactionManager transactionManager = (MDTransactionManager) project.getRepository()

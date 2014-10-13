@@ -78,7 +78,8 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             String cs = (String)images.get(key).get("cs");
             String extension = (String)images.get(key).get("extension");
             String url = ExportUtility.getUrlWithWorkspace();
-            
+            if (url == null)
+                return;
             String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             String site = ExportUtility.getSite();
             String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
@@ -112,7 +113,8 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         String cs = (String)images.get(key).get("cs");
         String extension = (String)images.get(key).get("extension");
         String url = ExportUtility.getUrlWithWorkspace();
-        
+        if (url == null)
+            return;
         String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
         String site = ExportUtility.getSite();
         String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;

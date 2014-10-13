@@ -133,19 +133,22 @@ public class ExportUtility {
             idmapping = new HashMap<String, String>();
             wsIdMapping.put(projId, idmapping);
         }
-        idmapping.clear();
+        
         String url = getUrl();
         if (url == null)
             return;
         url += "/workspaces";
         String result = get(url, false);
-        JSONObject ob =  (JSONObject) JSONValue.parse(result);
-        JSONArray array = (JSONArray)ob.get("workspaces");
-        for (Object ws: array) {
-            JSONObject workspace = (JSONObject)ws;
-            String id = (String)workspace.get("id");
-            String qname = (String)workspace.get("qualifiedName");
-            idmapping.put(qname, id);
+        if (result != null) {
+            idmapping.clear();
+            JSONObject ob =  (JSONObject) JSONValue.parse(result);
+            JSONArray array = (JSONArray)ob.get("workspaces");
+            for (Object ws: array) {
+                JSONObject workspace = (JSONObject)ws;
+                String id = (String)workspace.get("id");
+                String qname = (String)workspace.get("qualifiedName");
+                idmapping.put(qname, id);
+            }
         }
     }
     
@@ -245,11 +248,20 @@ public class ExportUtility {
         twbranch = "master/" + twbranch;
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> wsmap = wsIdMapping.get(projId);
+        if (wsmap == null) {
+            updateWorkspaceIdMapping();
+            wsmap = wsIdMapping.get(projId);
+        }
         if (wsmap != null) {
             String id = wsmap.get(twbranch);
+            if (id == null) {
+                updateWorkspaceIdMapping();
+                id = wsmap.get(twbranch);
+            }
             if (id != null)
                 return id;
         }
+        Application.getInstance().getGUILog().log("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
         return null;
     }
     

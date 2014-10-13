@@ -345,6 +345,8 @@ public class ViewValidator {
          */
         if (dge.getDgElement() != null && dge.getDgElement() == view) {//view is a document
             String url = ExportUtility.getUrlWithWorkspace();
+            if (url == null)
+                return true;
             url += "/elements/" + view.getID();
             String docresponse = ExportUtility.get(url, false);
             if (docresponse  == null)

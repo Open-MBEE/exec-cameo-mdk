@@ -143,6 +143,8 @@ public class ModelValidator {
             return false;
         }
         String url = ExportUtility.getUrlWithWorkspace();
+        if (url == null)
+            return false;
         String id = start.getID();
         if (start == Application.getInstance().getProject().getModel())
             id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
@@ -646,6 +648,8 @@ public class ModelValidator {
 
     private JSONObject getAlfrescoElement(Element e) {
         String url = ExportUtility.getUrlWithWorkspace();
+        if (url == null)
+            return null;
         String id = ExportUtility.getElementID(e);
         id = id.replace(".", "%2E");
         url += "/elements/" + id;
