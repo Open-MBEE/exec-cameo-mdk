@@ -9,7 +9,7 @@
   <!-- set global properties for this build -->
   <!-- <property name="md" location="${mdpath}"/> -->
   <!-- Conditional properties to load based on whether or not this is being called from jenkins build -->
-  <condition property="md" value="${md.install.dir}" else="/Applications/MagicDraw UML 17.0.5">
+  <condition property="md" value="${md.install.dir}" else="/home/reichwei/Programs/SECAE-MD17.0.5-Unsupported-J-Crushinator-build26-20140813">
 	<isset property="plugin.dir"/>
   </condition>
 
