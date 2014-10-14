@@ -240,7 +240,7 @@ public class ModelValidator {
             if (e == null){
                 // Alfresco sysml element is not in MagicDraw 
                 JSONObject jSONobject = (JSONObject)elementsKeyed.get(elementsKeyedId);          		           		
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on Al] '" + elementsKeyedId + "' Element exists on Alfresco but no in Magicdraw");
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on Alfresco] '" + elementsKeyedId + "' Element exists on Alfresco but not in Magicdraw");
                 v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
                 v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
                 exist.addViolation(v);

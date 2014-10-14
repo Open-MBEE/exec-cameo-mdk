@@ -215,7 +215,7 @@ public class ViewValidator {
 
                     boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
                     // see if the list of view elements referenced matches and view structures match
-                    boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, response); // this compares the view hierarchy structure
+                    boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
                     if (!matches) {
                         ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor structure is outdated.");
                         if (editable) {
@@ -230,7 +230,11 @@ public class ViewValidator {
                     if (!hierarchyMatches) {
                         // Update the hierarchy in MagicDraw based on MagicDraw
                         ValidationRuleViolation v = new ValidationRuleViolation( currentView, "[Hierarchy] Document Hierarchy is different");
-                        v.addAction(new ImportHierarchy(currentView, vhv));
+                        JSONArray view2view = (JSONArray)((JSONObject)webView.get("specialization")).get("view2view");
+                        if (view2view != null) {
+                            JSONObject keyed = ExportUtility.keyView2View(view2view);
+                            v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
+                        }
                         if (editable)
                             v.addAction(new ExportHierarchy(currentView));
                         hierarchy.addViolation(v);
@@ -289,25 +293,14 @@ public class ViewValidator {
          */
     }
 
-    private boolean viewHierarchyMatch(Element view, Document dge, ViewHierarchyVisitor vhv, String response) {
+    private boolean viewHierarchyMatch(Element view, Document dge, ViewHierarchyVisitor vhv, JSONObject spec) {
         JSONObject hierarchy = vhv.getView2View();
         // hierarchy is a mapping from parent views to array of children views
         /*
          * { "parentId": ["firstchildId", "secondChildId", ...], ... }
          */
         if (dge.getDgElement() != null && dge.getDgElement() == view) {//view is a document
-            String url = ExportUtility.getUrlWithWorkspace();
-            if (url == null)
-                return true;
-            url += "/elements/" + view.getID();
-            String docresponse = ExportUtility.get(url, false);
-            if (docresponse == null)
-                return false;
-            JSONObject docResponse = (JSONObject)JSONValue.parse(docresponse);
-            JSONArray docs = (JSONArray)docResponse.get("elements");
-            for (Object docresult: docs) {
-                if (((JSONObject)docresult).get("sysmlid").equals(view.getID())) {
-                    JSONArray view2view = (JSONArray)((JSONObject)((JSONObject)docresult).get("specialization")).get("view2view");
+                    JSONArray view2view = (JSONArray)spec.get("view2view");
                     if (view2view == null)
                         return false;
                     JSONObject keyed = ExportUtility.keyView2View(view2view);
@@ -323,11 +316,10 @@ public class ViewValidator {
                                 return false;
                         }
                     }
-                }
-            }
         } else if (dge.getDgElement() == null) {
+            return true;
             //canonical view children comparison
-            JSONObject viewresponse = (JSONObject)JSONValue.parse(response);
+            /*JSONObject viewresponse = (JSONObject)JSONValue.parse(response);
             JSONArray views = (JSONArray)viewresponse.get("elements");
             for (Object viewresult: views) {
                 if (((JSONObject)viewresult).get("sysmlid").equals(view.getID())) {
@@ -342,7 +334,7 @@ public class ViewValidator {
                             return false;
                     }
                 }
-            }
+            }*/
         }
         return true;
     }

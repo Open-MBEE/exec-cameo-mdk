@@ -31,6 +31,8 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
@@ -41,6 +43,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.uml2.uml.AggregationKind;
 import org.json.simple.JSONArray;
@@ -51,6 +56,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
@@ -60,106 +66,116 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 public class ImportHierarchy extends RuleViolationAction implements
-		AnnotationAction, IRuleViolationAction {
-	private static final long serialVersionUID = 1L;
-	private Element view;
-	private ViewHierarchyVisitor vhv;
+AnnotationAction, IRuleViolationAction {
+    private static final long serialVersionUID = 1L;
+    private Element view;
+    private JSONObject keyed;
+    private JSONObject md;
 
-	public ImportHierarchy(Element e, ViewHierarchyVisitor vhv) {
-		// JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-		//
-		super("ImportHierarchy", "Import Hierarchy", null, null);
-		this.view = e;
-		this.vhv = vhv;
-	}
+    public ImportHierarchy(Element e, JSONObject md, JSONObject keyed) {
+        super("ImportHierarchy", "Import Hierarchy", null, null);
+        this.view = e;
+        this.keyed = keyed;
+        this.md = md;
+    }
 
-	@Override
-	public boolean canExecute(Collection<Annotation> arg0) {
-		return true;
-	}
+    @Override
+    public boolean canExecute(Collection<Annotation> arg0) {
+        return false;
+    }
 
-	@Override
-	public void execute(Collection<Annotation> annos) {
-		Collection<Annotation> toremove = new ArrayList<Annotation>();
-		for (Annotation anno : annos) {
-			Element e = (Element) anno.getTarget();
-			if (importHierarchy(e)) {
-				toremove.add(anno);
-			}
-		}
-		if (!toremove.isEmpty()) {
-			this.removeViolationsAndUpdateWindow(toremove);
-		}
-	}
+    @Override
+    public void execute(Collection<Annotation> annos) {
+        Collection<Annotation> toremove = new ArrayList<Annotation>();
+        for (Annotation anno : annos) {
+            Element e = (Element) anno.getTarget();
+            if (importHierarchy(e)) {
+                toremove.add(anno);
+            }
+        }
+        if (!toremove.isEmpty()) {
+            this.removeViolationsAndUpdateWindow(toremove);
+        }
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if (importHierarchy(view)) {
-			this.removeViolationAndUpdateWindow();
-		}
-	}
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Project project = Application.getInstance().getProject();
+        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        if (listener != null)
+            listener.disable();
+        SessionManager.getInstance().createSession("Change Hierarchy");
+        try {
+            if (importHierarchy(view))
+                this.removeViolationAndUpdateWindow();
+            SessionManager.getInstance().closeSession();
+        } catch (Exception ex) {
+            SessionManager.getInstance().cancelSession();
+            Utils.printException(ex);
+        }
+    }
 
-	@SuppressWarnings("unchecked")
-	private boolean importHierarchy(Element document) {
-		// get JSON of MagicDraw
-		JSONObject hierarchy = vhv.getView2View(); 
+    @SuppressWarnings("unchecked")
+    private boolean importHierarchy(Element document) {		
+        Stereotype viewS = Utils.getViewClassStereotype();
+        Map<String, List<Property>> viewId2props = new HashMap<String, List<Property>>();
+        for (Object vid: keyed.keySet()) {
+            String viewid = (String)vid;
+            Element view = ExportUtility.getElementFromID(viewid);
+            if (view != null && view instanceof Class) {
+                for (Property p: ((Class)view).getOwnedAttribute()) {
+                    Type t = p.getType();
+                    if (keyed.keySet().contains(t.getID())) {
+                        List<Property> viewprops = viewId2props.get(t.getID());
+                        if (viewprops == null) {
+                            viewprops = new ArrayList<Property>();
+                            viewId2props.put(t.getID(), viewprops);
+                        }
+                        viewprops.add(p);
+                    }
+                }
+            } else {
+                //create the view
+                
+            }
+        }
+        for (Object vid: keyed.keySet()) {
+            String viewid = (String)vid;
+            JSONArray children = (JSONArray)keyed.get(vid);
+            List<Property> cprops = new ArrayList<Property>();
+            for (Object cid: children) {
+                String childId = (String)cid;
+                List<Property> availableProps = viewId2props.get(childId);
+                if (availableProps == null || availableProps.isEmpty()) {
+                    //create new property 
+                } else {
+                    cprops.add(availableProps.remove(0));
+                }
+            }
+            Element view = ExportUtility.getElementFromID(viewid);
+            if (view != null && view instanceof Class) {
+                for (Property p: ((Class)view).getOwnedAttribute()) {
+                    if (p.getType() == null || !StereotypesHelper.hasStereotypeOrDerived(p.getType(), viewS)) {
+                        cprops.add(p);
+                    }
+                }
+                ((Class)view).getOwnedAttribute().clear();
+                ((Class)view).getOwnedAttribute().addAll(cprops);
+            }
+        }
+        return true;
 
-		// get JSON of Alfresco
-		String url = ExportUtility.getUrl();
-		url += "/javawebscripts/products/" + document.getID();
-		String docresponse = ExportUtility.get(url, false);
-		if (docresponse == null)
-			return false;
-		JSONObject docResponse = (JSONObject) JSONValue.parse(docresponse);
-		JSONArray docs = (JSONArray) docResponse.get("products");
-		JSONObject keyed = null;
-		for (Object docresult : docs) {
-			if (((JSONObject) docresult).get("sysmlid").equals(document.getID())) {
-				JSONArray view2view = (JSONArray) ((JSONObject) ((JSONObject) docresult)
-						.get("specialization")).get("view2view");
-				if (view2view == null)
-					return false;
-				keyed = ExportUtility.keyView2View(view2view);
-				break;
-			}
-		}
-		if (keyed == null) {
-			return false;
-		}
-				
-		// compare both JSON representations
-		JSONArray webChildrenArray = (JSONArray) keyed.get(document.getID());
-		JSONArray modelChildrenArray = (JSONArray) hierarchy.get(document.getID());	
-		
-		Object webChildrenObject = keyed.get(document.getID()); 		// can cast to JSONArray!!
-		Object modelChildrenObject = hierarchy.get(document.getID());	
-		
-		String webChildrenString = webChildrenObject.toString();
-		webChildrenString = webChildrenString.replace("[", "");
-		webChildrenString = webChildrenString.replace("]", "");
-		webChildrenString = webChildrenString.replace("\"", "");
-		
-		String modelChildrenString = modelChildrenObject.toString();
-		modelChildrenString = modelChildrenString.replace("[", "");
-		modelChildrenString = modelChildrenString.replace("]", "");
-		modelChildrenString = modelChildrenString.replace("\"", "");
-		
-		String[] webChildrenObjectArray = webChildrenString.split(",");
-		String[] modelChildrenObjectArray = modelChildrenString.split(",");
-		
-		if(!(webChildrenArray != null & modelChildrenArray != null)){
-			return false;
-		}
-		
-		// set up key MagicDraw objects
-		Project project = Application.getInstance().getProject();  		
-        ElementsFactory ef = project.getElementsFactory();
-        project.getCounter().setCanResetIDForObject(true);
-		
+
+
+
+
+        /*
 		// go through all web child elements
 		for (String webChild : webChildrenObjectArray) {
 
@@ -173,24 +189,24 @@ public class ImportHierarchy extends RuleViolationAction implements
 					break;
 				}
 			}
-			
+
 			// add element to MagicDraw if necessary 							
 			Element viewType = null;
 			if(isElementInMagicDraw){
 				continue;
 			}					
 			else{
-				
+
 				// check if Magicdraw View Class exists
 				boolean magicDrawViewClassExists = false;
 				viewType = (Element) project.getElementByID((String) webChild);
 				if(viewType != null){
 					magicDrawViewClassExists = true;
 				}
-				
+
 				// create Magicdraw View Class if it doesn't exist
 				if(!magicDrawViewClassExists){
-					
+
 					// get JSON of Alfresco element				
 					String elementUrl = "https://ems-stg.jpl.nasa.gov/alfresco/service/workspaces/master/elements/" + webChild;		
 					String elementResponse = ExportUtility.get(elementUrl, false);
@@ -199,29 +215,29 @@ public class ImportHierarchy extends RuleViolationAction implements
 					JSONObject elementJSONResponse = (JSONObject) JSONValue.parse(elementResponse);
 					JSONArray elementJSONArray = (JSONArray) elementJSONResponse.get("elements");					
 					JSONObject elementJSONObject = (JSONObject) elementJSONArray.get(0);
-										
+
 					// create new MagicDraw view class
 					com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class newClass = ef.createClassInstance();
-					
+
 					// set class name
 					String elementName = (String)elementJSONObject.get("name");
 					newClass.setName(elementName);
-					
+
 					// place class under the same owner as document view					
 					Element owner = ExportUtility.getElementFromID(view.getOwner().getID());
 					newClass.setOwner(owner);
-					
+
 					// add view stereotype
 					Stereotype sysmlView = Utils.getViewClassStereotype();
 					StereotypesHelper.addStereotype(newClass, sysmlView);
-					
+
 					viewType = newClass;
-					
+
 				}
-				
+
 				// define association and part property				
 		        Association association = ef.createAssociationInstance();
-		        
+
 		        ModelHelper.setSupplierElement(association, viewType);
 		        Property propType1 = 
 				        ModelHelper.getFirstMemberEnd(association);
@@ -231,35 +247,35 @@ public class ImportHierarchy extends RuleViolationAction implements
 				Stereotype partPropertyST = Utils.getStereotype("PartProperty");
 				StereotypesHelper.addStereotype(propType1, partPropertyST);
 				propType1.setOwner(document);
-				
+
 		        ModelHelper.setClientElement(association, document);
-		        
-		        
+
+
 		        // set id of part property identical to Alfresco element
 				// class can have any id. 
 //		        propType1.setID((String) webChild);
-		        
-		        
+
+
 		        // association owner
 		        association.setOwner(document.getOwner());
-		        
+
 				// go recursively through all children elements ?
-		        
-				
+
+
 			}
 		}
-		
-		
+
+
 		// go through all model child elements
 		// if MagicDraw element not in Alfresco, delete it in MagicDraw
-		
-		
 
-			
 
-		
-		
-		return true;
 
-	}
+
+
+
+
+		return true;*/
+
+    }
 }
