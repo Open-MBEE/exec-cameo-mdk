@@ -56,7 +56,7 @@ public class JMSMessageListener implements MessageListener {
                 public void run() {
                     Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
                     AutoSyncCommitListener listener = (AutoSyncCommitListener) projectInstances
-                            .get("AutoSyncCommitListener");
+                            .get(AutoSyncProjectListener.LISTENER);
 
                     // Disable the listener so we do not react to the
                     // changes we are importing from MMS.
@@ -119,7 +119,7 @@ public class JMSMessageListener implements MessageListener {
                     String sysmlid = (String) ob.get("sysmlid");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
-                        //Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync delete");
+                        Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync delete");
                         return;
                     }
                     if (!changedElement.isEditable())

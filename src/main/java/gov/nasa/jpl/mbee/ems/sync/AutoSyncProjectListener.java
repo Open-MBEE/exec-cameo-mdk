@@ -35,7 +35,7 @@ import com.nomagic.uml2.transaction.TransactionManager;
 public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 
     private static final String CONNECTION = "Connection";
-    private static final String LISTENER = "AutoSyncCommitListener";
+    public static final String LISTENER = "AutoSyncCommitListener";
     private static final String SESSION = "Session";
     private static final String CONSUMER = "MessageConsumer";
 
