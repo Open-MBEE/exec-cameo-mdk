@@ -149,16 +149,18 @@ AnnotationAction, IRuleViolationAction {
                 
             }
         }
-        for (Object vid: keyed.keySet()) {
+        for (Object vid: keyed.keySet()) { //go through all parent views on mms
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
-            List<Property> cprops = new ArrayList<Property>();
+            List<Property> cprops = new ArrayList<Property>(); //new owned attribute array for the parent view
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                for (Object cid: children) {
+                for (Object cid: children) { //for all children views
                     String childId = (String)cid;
-                    List<Property> availableProps = viewId2props.get(childId);
+                    List<Property> availableProps = viewId2props.get(childId); 
+                    //get a list of properties we can repurpose with type of the child view
                     if (availableProps == null || availableProps.isEmpty()) {
+                        //no free property available, make one
                         Element cview = ExportUtility.getElementFromID(childId);
                         if (cview instanceof Type) {
                             Association association = ef.createAssociationInstance();
@@ -178,14 +180,17 @@ AnnotationAction, IRuleViolationAction {
                             cprops.add(propType1);
                         }
                     } else {
+                        //add the property to owned attribute array
                         cprops.add(availableProps.remove(0));
                     }
                 }
                 for (Property p: ((Class)view).getOwnedAttribute()) {
+                    //keep any non view owned attribute ("regular" attribute)
                     if (p.getType() == null || !StereotypesHelper.hasStereotypeOrDerived(p.getType(), viewS)) {
                         cprops.add(p);
                     }
                 }
+                //
                 ((Class)view).getOwnedAttribute().clear();
                 ((Class)view).getOwnedAttribute().addAll(cprops);
             }
