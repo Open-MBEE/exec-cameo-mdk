@@ -128,6 +128,7 @@ AnnotationAction, IRuleViolationAction {
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         Stereotype viewS = Utils.getViewClassStereotype();
         Map<String, List<Property>> viewId2props = new HashMap<String, List<Property>>();
+        //curate all properties in current model with type of view that's referenced on mms
         for (Object vid: keyed.keySet()) {
             String viewid = (String)vid;
             Element view = ExportUtility.getElementFromID(viewid);
