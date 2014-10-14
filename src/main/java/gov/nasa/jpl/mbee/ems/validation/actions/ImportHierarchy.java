@@ -56,6 +56,8 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -91,7 +93,7 @@ AnnotationAction, IRuleViolationAction {
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        Collection<Annotation> toremove = new ArrayList<Annotation>();
+        /*Collection<Annotation> toremove = new ArrayList<Annotation>();
         for (Annotation anno : annos) {
             Element e = (Element) anno.getTarget();
             if (importHierarchy(e)) {
@@ -100,7 +102,7 @@ AnnotationAction, IRuleViolationAction {
         }
         if (!toremove.isEmpty()) {
             this.removeViolationsAndUpdateWindow(toremove);
-        }
+        }*/
     }
 
     @Override
@@ -122,7 +124,8 @@ AnnotationAction, IRuleViolationAction {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean importHierarchy(Element document) {		
+    private boolean importHierarchy(Element document) throws ReadOnlyElementException {	
+        ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         Stereotype viewS = Utils.getViewClassStereotype();
         Map<String, List<Property>> viewId2props = new HashMap<String, List<Property>>();
         for (Object vid: keyed.keySet()) {
@@ -149,17 +152,34 @@ AnnotationAction, IRuleViolationAction {
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
             List<Property> cprops = new ArrayList<Property>();
-            for (Object cid: children) {
-                String childId = (String)cid;
-                List<Property> availableProps = viewId2props.get(childId);
-                if (availableProps == null || availableProps.isEmpty()) {
-                    //create new property 
-                } else {
-                    cprops.add(availableProps.remove(0));
-                }
-            }
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
+                for (Object cid: children) {
+                    String childId = (String)cid;
+                    List<Property> availableProps = viewId2props.get(childId);
+                    if (availableProps == null || availableProps.isEmpty()) {
+                        Element cview = ExportUtility.getElementFromID(childId);
+                        if (cview instanceof Type) {
+                            Association association = ef.createAssociationInstance();
+                            //ModelHelper.setSupplierElement(association, viewType);
+                            Property propType1 = ModelHelper.getFirstMemberEnd(association);
+                            propType1.setName(((NamedElement)cview).getName().toLowerCase());
+                            propType1.setAggregation(AggregationKindEnum.COMPOSITE);
+                            propType1.setType((Type)cview);
+                            ModelHelper.setNavigable(propType1, true);
+                            Stereotype partPropertyST = Utils.getStereotype("PartProperty");
+                            StereotypesHelper.addStereotype(propType1, partPropertyST);
+                            Property propType2 = ModelHelper.getSecondMemberEnd(association);
+                            propType2.setType((Type)view);
+                            propType2.setOwner(association);
+                            //ModelHelper.setClientElement(association, document);
+                            association.setOwner(document.getOwner());
+                            cprops.add(propType1);
+                        }
+                    } else {
+                        cprops.add(availableProps.remove(0));
+                    }
+                }
                 for (Property p: ((Class)view).getOwnedAttribute()) {
                     if (p.getType() == null || !StereotypesHelper.hasStereotypeOrDerived(p.getType(), viewS)) {
                         cprops.add(p);
@@ -167,6 +187,11 @@ AnnotationAction, IRuleViolationAction {
                 }
                 ((Class)view).getOwnedAttribute().clear();
                 ((Class)view).getOwnedAttribute().addAll(cprops);
+            }
+        }
+        for (List<Property> props: viewId2props.values()) {
+            for (Property p: props) {
+                ModelElementsManager.getInstance().removeElement(p);
             }
         }
         return true;
