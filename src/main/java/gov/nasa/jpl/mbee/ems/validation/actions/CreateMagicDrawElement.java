@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
@@ -39,36 +40,42 @@ import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
-public class ImportDoc extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class CreateMagicDrawElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
-    private Element element;
-    private String doc;
-    private JSONObject result;
-    public ImportDoc(Element e, String doc, JSONObject result) {
-    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
-    	//
-        super("ImportDoc", "Accept doc", null, null);
-        this.element = e;
-        this.doc = doc;
-        this.result = result;
+    private JSONObject ob;
+    private Map<String, JSONObject> elementsKeyed;
+
+    public CreateMagicDrawElement(JSONObject ob, Map<String, JSONObject> elementsKeyed) {
+        super("CreateMagicDrawElement", "Create MagicDraw element", null, null);
+        this.ob = ob;
+        this.elementsKeyed = elementsKeyed;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void execute(Collection<Annotation> annos) {
         Project project = Application.getInstance().getProject();
@@ -76,57 +83,28 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
         AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
         if (listener != null)
             listener.disable();
-        SessionManager.getInstance().createSession("Change Docs");
+        SessionManager.getInstance().createSession("create elements");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
             boolean noneditable = false;
             for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
-                    noneditable = true;
-                    continue;
+                String message = anno.getText();
+                String[] mes = message.split("'");
+                String eid = null;
+                if (mes.length > 2)
+                    eid = mes[1];
+                if (eid != null) {
+                    JSONObject newe = elementsKeyed.get(eid);
+                    if (newe != null) {
+                        Element newElement = ImportUtility.createElement(newe);
+                        if (newElement != null)
+                            toremove.add(anno);
+                    }
                 }
-                JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-                ImportUtility.setDocumentation(e, resultOb);
-                //AnnotationManager.getInstance().remove(anno);
-                toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-            
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
-        if (listener != null)
-            listener.enable();
-    }
-    
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
-            return;
-        }
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Change Doc");
-        try {
-            ImportUtility.setDocumentation(element, doc);
-            SessionManager.getInstance().closeSession();
             saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
+            this.removeViolationsAndUpdateWindow(toremove);
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
@@ -135,4 +113,29 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
             listener.enable();
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public void actionPerformed(ActionEvent e) {		
+        Project project = Application.getInstance().getProject();
+        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        if (listener != null)
+            listener.disable();
+        SessionManager.getInstance().createSession("Create Element");
+        try {
+            Element magicDrawElement = ImportUtility.createElement(ob); 
+            SessionManager.getInstance().closeSession();
+            if (magicDrawElement != null) {
+                this.removeViolationAndUpdateWindow();
+                saySuccess();
+            } else{
+                //error
+            }
+        } catch (Exception ex) {
+            SessionManager.getInstance().cancelSession();
+            Utils.printException(ex);
+        }
+        if (listener != null)
+            listener.enable();
+	}
 }

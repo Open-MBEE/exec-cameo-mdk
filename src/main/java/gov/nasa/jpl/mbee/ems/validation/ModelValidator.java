@@ -30,6 +30,9 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
+import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
@@ -103,10 +106,10 @@ public class ModelValidator {
     private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
     private Project prj;
     private Element start;
-    private JSONObject result;
-    private boolean checkExist;
+    private JSONObject result;       
+	private boolean checkExist;
     private Set<Element> elementSet;
-    
+        
     public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet) {
         //result is from web, elementSet is from model
         this.start = start;
@@ -201,16 +204,21 @@ public class ModelValidator {
             }
             elementsKeyed.put(elementId, elementInfo);
         }
+        // elementsKeyed.keySet() refers to all MagicDraw element IDs on Alfresco
+        // all refers to MagicDraw view element and owned elements
+        // 1st loop: MagicDraw elements get compared with Alfresco elements 
         for (Element e: all) {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
+            	// MagicDraw element is not on Alfresco
                 if (checkExist && ExportUtility.shouldAdd(e)) {
                     JSONObject maybeMissing = getAlfrescoElement(e);
                     if (maybeMissing != null) {
                         elementsKeyed.put(e.getID(), maybeMissing);
                     } else {
                         ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
+                        v.addAction(new DeleteMagicDrawElement(e));
                         v.addAction(new ExportElement(e));
                         exist.addViolation(v);
                         continue;
@@ -224,11 +232,23 @@ public class ModelValidator {
         }
         Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
+        
+        // 2nd loop: unchecked Alfresco elements with sysml ID are now processed 
         for (String elementsKeyedId: elementsKeyedIds) {
+            // MagicDraw element that has not been compared to Alfresco
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
-            if (e == null)
-                continue;
-            checkElement(e, elementsKeyed.get(elementsKeyedId));
+            if (e == null){
+                // Alfresco sysml element is not in MagicDraw 
+                JSONObject jSONobject = (JSONObject)elementsKeyed.get(elementsKeyedId);          		           		
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on Al] '" + elementsKeyedId + "' Element exists on Alfresco but no in Magicdraw");
+                v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
+                v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
+                exist.addViolation(v);
+            }  
+            else {
+            	checkElement(e, elementsKeyed.get(elementsKeyedId));
+            }
+            
         }
     }
     
@@ -662,4 +682,6 @@ public class ModelValidator {
             return null;
         return (JSONObject)elements.get(0);
     }
+    
+    
 }

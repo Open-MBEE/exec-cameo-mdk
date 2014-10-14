@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -40,30 +39,24 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ImportDoc extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class DeleteMagicDrawElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private Element element;
-    private String doc;
-    private JSONObject result;
-    public ImportDoc(Element e, String doc, JSONObject result) {
-    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
-    	//
-        super("ImportDoc", "Accept doc", null, null);
+
+    public DeleteMagicDrawElement(Element e) {
+        super("DeleteElement", "Delete MagicDraw element", null, null);
         this.element = e;
-        this.doc = doc;
-        this.result = result;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -76,63 +69,72 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
         AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
         if (listener != null)
             listener.disable();
-        SessionManager.getInstance().createSession("Change Docs");
+        boolean noneditable = false;
         Collection<Annotation> toremove = new HashSet<Annotation>();
-        try {
-            boolean noneditable = false;
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+        if (!SessionManager.getInstance().isSessionCreated()) {
+            SessionManager.getInstance().createSession("Delete MagicDraw Elements");
+            for (Annotation anno : annos) {
+                Element e = (Element) anno.getTarget();
+                try {
+                    ModelElementsManager.getInstance().removeElement(e);
+                    toremove.add(anno);
+                } catch (Exception ex) {
+                    Utils.printException(ex);
                     noneditable = true;
-                    continue;
                 }
-                JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-                ImportUtility.setDocumentation(e, resultOb);
-                //AnnotationManager.getInstance().remove(anno);
-                toremove.add(anno);
             }
             SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
+            saySuccess();
             this.removeViolationsAndUpdateWindow(toremove);
-            
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
+        } else {
+            for (Annotation anno : annos) {
+                Element e = (Element) anno.getTarget();
+                try {
+                    ModelElementsManager.getInstance().removeElement(e);
+                    toremove.add(anno);
+                } catch (Exception ex) {
+                    Utils.printException(ex);
+                    noneditable = true;
+                }
+            }
         }
+        if (noneditable) {
+            Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable and not deleted");
+        } else
+            saySuccess();
+        this.removeViolationsAndUpdateWindow(toremove);
         if (listener != null)
             listener.enable();
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
-            return;
-        }
         Project project = Application.getInstance().getProject();
         Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
         AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
         if (listener != null)
             listener.disable();
-        SessionManager.getInstance().createSession("Change Doc");
-        try {
-            ImportUtility.setDocumentation(element, doc);
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
+        if (!SessionManager.getInstance().isSessionCreated()) {
+            SessionManager.getInstance().createSession("Delete MagicDraw Element");
+            try {
+                ModelElementsManager.getInstance().removeElement(element);
+                SessionManager.getInstance().closeSession();
+                saySuccess();
+                this.removeViolationAndUpdateWindow();
+            } catch (Exception ex) {
+                Utils.printException(ex);
+                SessionManager.getInstance().cancelSession();
+            }
+        } else {
+            try {
+                ModelElementsManager.getInstance().removeElement(element);
+                saySuccess();
+                this.removeViolationAndUpdateWindow();
+            } catch (Exception ex) {
+                Utils.printException(ex);
+            }
         }
         if (listener != null)
             listener.enable();
     }
-
 }

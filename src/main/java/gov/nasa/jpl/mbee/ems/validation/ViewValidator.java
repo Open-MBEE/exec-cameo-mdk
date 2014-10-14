@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportElementComments;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
@@ -88,7 +89,7 @@ public class ViewValidator {
     private DocumentValidator dv;
     private Element view;
     private boolean recurse;
-    
+
     public ViewValidator(Element view, boolean recursive) {
         this.view = view;
         this.dv = new DocumentValidator( view );
@@ -115,13 +116,13 @@ public class ViewValidator {
             projectExist.addViolation(v);
             return false;
         }
-        if (ProjectUtilities.isElementInAttachedProject(view)){
+        if (ProjectUtilities.isElementInAttachedProject(view)) {
             Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
             return false;
         }
         return true;
     }
-    
+
     @SuppressWarnings("unchecked")
     public boolean validate(ProgressStatus ps) {
         dv.validateDocument();
@@ -142,16 +143,16 @@ public class ViewValidator {
         dge.accept(vhv);
         DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
         book.accept(visitor2);
-        
-        //this is going to house the elements gotten from web
+
+        // this is going to house the elements gotten from web
         JSONObject results = new JSONObject();
         JSONArray resultElements = new JSONArray();
         results.put("elements", resultElements);
-        
+
         String url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
-            return false;//return; //do some error
-        
+            return false;
+
         Element startView = getStartView();
         Map<String, JSONObject> cachedResultElements = new HashMap<String, JSONObject>();
         Application.getInstance().getGUILog().log("[INFO] Validating view(s)");
@@ -162,7 +163,7 @@ public class ViewValidator {
             if (!recurse && !viewid.equals(startView.getID()))
                 continue;
             Element currentView = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
-            
+
             //check to see if view exists on alfresco
             String existurl = url + "/elements/" + viewid;
             String response = ExportUtility.get(existurl, false);
@@ -189,89 +190,59 @@ public class ViewValidator {
                     v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
                     exists.addViolation(v);
                 } else {
-                String viewElementsUrl = url + "/views/" + viewid + "/elements";
-                JSONArray localElements = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("displayedElements");
-                //get the current elements referenced by the view in the current model
-                JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
-                //get the current model view structure
-                
-                Boolean editable = (Boolean)webView.get("editable");
-                //this is the json object for the view on the web
-                
-                //this is the web view structure
-                JSONArray webContains = null;
-                if ( containsObj instanceof JSONArray ) {
-                    webContains = (JSONArray)containsObj;
-                } else if ( containsObj instanceof String ) { 
-                    //this is a fallback for when the server was sending back the contains json array as a string, probably not needed anymore
-                    Object arr = JSONValue.parse( (String)containsObj );
-                    if ( arr instanceof JSONArray ) {
-                        webContains = (JSONArray)arr;
-                    } else {
-                        webContains = new JSONArray();
-                        webContains.add( containsObj );
+                    String viewElementsUrl = url + "/views/" + viewid + "/elements";
+                    JSONArray localElements = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("displayedElements");
+                    // get the current elements referenced by the view in the current model
+                    JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
+                    // get the current model view structure
+
+                    Boolean editable = (Boolean) webView.get("editable");
+                    // this is the json object for the view on the web
+
+                    // this is the web view structure
+                    JSONArray webContains = null;
+                    if (containsObj instanceof JSONArray) {
+                        webContains = (JSONArray) containsObj;
+                    } 
+                    if (ps != null && ps.isCancel())
+                        break;
+                    // quick way to get all element info referenced by view from the web
+                    String viewelements = ExportUtility.get(viewElementsUrl, false);
+                    if (viewelements == null)
+                        continue;
+                    JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
+                    // parse the view elements json from web into JSONObject
+
+                    boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
+                    // see if the list of view elements referenced matches and view structures match
+                    boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, response); // this compares the view hierarchy structure
+                    if (!matches) {
+                        ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor structure is outdated.");
+                        if (editable) {
+                            v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
+                            v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
+                            v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
+                            v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
+                        }
+                        // v.addAction(new ExportHierarchy(currentView));
+                        match.addViolation(v);
                     }
-                } else {
-                    //this is probably wrong
-                    webContains = new JSONArray();
-                    webContains.add( containsObj );
-                }
-                if (ps != null && ps.isCancel())
-                    break;
-              //quick way to get all element info referenced by view from the web
-                String viewelements = ExportUtility.get(viewElementsUrl, false); 
-                if (viewelements == null)
-                    continue;
-                JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
-                //parse the view elements json from web into JSONObject
-                
-                boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
-                //see if the list of view elements referenced matches and view structures match
-                boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, response); //this compares the view hierarchy structure
-                if (!matches) {
-                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor structure is outdated.");
-                    if (editable) {
-                        v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
-                        v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
-                        v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
-                        v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
+                    if (!hierarchyMatches) {
+                        // Update the hierarchy in MagicDraw based on MagicDraw
+                        ValidationRuleViolation v = new ValidationRuleViolation( currentView, "[Hierarchy] Document Hierarchy is different");
+                        v.addAction(new ImportHierarchy(currentView, vhv));
+                        if (editable)
+                            v.addAction(new ExportHierarchy(currentView));
+                        hierarchy.addViolation(v);
                     }
-                    //v.addAction(new ExportHierarchy(currentView));
-                    match.addViolation(v);
-                } 
-                if (!hierarchyMatches) {
-                    //add hierarchy fix option to only update TOC of document on web
-                    //currently user is not allowed to change hierarchy from the web, this will change soon
-                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Hierarchy] The hierarchy from this view/doc is outdated");
-                    if (editable)
-                        v.addAction(new ExportHierarchy(currentView));
-                    hierarchy.addViolation(v);
-                    
-                }
-                
-                for (Object reselement: (JSONArray)viewresults.get("elements")) {
-                    //add view referenced elements to a cache to later get validated by ModelValidator
-                    if (cachedResultElements.containsKey(((JSONObject)reselement).get("sysmlid")))
+
+                    for (Object reselement: (JSONArray)viewresults.get("elements")) {
+                        // add view referenced elements to a cache to later get validated by ModelValidator
+                        if (cachedResultElements.containsKey(((JSONObject) reselement).get("sysmlid")))
                             continue;
-                    cachedResultElements.put((String)((JSONObject)reselement).get("sysmlid"), (JSONObject)reselement);
+                        cachedResultElements.put((String)((JSONObject)reselement).get("sysmlid"), (JSONObject) reselement);
+                    }
                 }
-                //resultElements.addAll((JSONArray)viewresults.get("elements")); //need cinyoung's side
-                
-                //syncing of view comments will go away 
-                /*String viewCommentsUrl = url + "/javawebscripts/elements/" + viewid + "/comments";
-                String viewcomments = ExportUtility.get(viewCommentsUrl, false);
-                if (viewcomments == null)
-                    continue;
-                JSONObject commentresults = (JSONObject)JSONValue.parse(viewcomments);
-                resultElements.addAll((JSONArray)commentresults.get("elements"));
-                boolean commentMatches = viewCommentsMatch(currentView, commentresults);
-                if (!commentMatches) {
-                    ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[Comments] The view has different comments on either side");
-                    v.addAction(new ExportElementComments(currentView));
-                    v.addAction(new ImportElementComments(currentView, commentresults));
-                    comments.addViolation(v);
-                }*/
-            }
             }
         }
         resultElements.addAll(cachedResultElements.values());
@@ -282,19 +253,15 @@ public class ViewValidator {
         //do the actual element validations between model and web
         mv.validate(false, ps);
         modelSuite = mv.getSuite();
-        
+
         Application.getInstance().getGUILog().log("[INFO] Validating images");
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         //this checks images generated from the local generation against what's on the web based on checksum
         iv.validate();
         imageSuite = iv.getSuite();
-        
-        //if (!exists.getViolations().isEmpty()) {
-        //    Utils.showPopupMessage("There's view(s) that are missing on the server, see validation window."); //Chris doens't like popups
-        //}
         return true;
     }
-    
+
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);
@@ -304,44 +271,29 @@ public class ViewValidator {
             vss.add(imageSuite);
         Utils.displayValidationWindow(vss, "View Web Difference Validation");
     }
-    
+
     @SuppressWarnings("unchecked")
     private boolean viewElementsMatch(JSONArray viewDisplayedElements, JSONObject veResults) {
-        return true; //workaround for server not giving back the right number of elements
-        //this does a "shallow" comparison of what elements are being referenced in the views
-        /*Set<String> localElements = new HashSet<String>(viewDisplayedElements);
-        Set<String> webElements = new HashSet<String>();
-        for (Object o: (JSONArray)veResults.get("elements")) {
-            webElements.add((String)((JSONObject)o).get("sysmlid"));
-        }
-        if (webElements.containsAll(localElements) && localElements.containsAll(webElements))
-            return true;
-        return false;*/
+        return true; // workaround for server not giving back the right number
+        // of elements
+        // this does a "shallow" comparison of what elements are being
+        // referenced in the views
+        /*
+         * Set<String> localElements = new
+         * HashSet<String>(viewDisplayedElements); Set<String> webElements = new
+         * HashSet<String>(); for (Object o:
+         * (JSONArray)veResults.get("elements")) {
+         * webElements.add((String)((JSONObject)o).get("sysmlid")); } if
+         * (webElements.containsAll(localElements) &&
+         * localElements.containsAll(webElements)) return true; return false;
+         */
     }
-    
-    private boolean viewCommentsMatch(Element view, JSONObject commentresults) {
-        Set<String> modelComments = new HashSet<String>();
-        JSONArray elements = (JSONArray)commentresults.get("elements");
-        Set<String> webComments = new HashSet<String>();
-        for (Object elinfo: elements) {
-            webComments.add((String)((JSONObject)elinfo).get("id"));
-        }
-        for (Comment el: view.get_commentOfAnnotatedElement()) {
-            if (!ExportUtility.isElementDocumentation(el))
-                modelComments.add(el.getID());
-        }
-        if (!modelComments.containsAll(webComments) || !webComments.containsAll(modelComments))
-            return false;
-        return true;
-    }
-    
+
     private boolean viewHierarchyMatch(Element view, Document dge, ViewHierarchyVisitor vhv, String response) {
         JSONObject hierarchy = vhv.getView2View();
-        //hierarchy is a mapping from parent views to array of children views
+        // hierarchy is a mapping from parent views to array of children views
         /*
-         * { "parentId": ["firstchildId", "secondChildId", ...], 
-         *    ...
-         *    }
+         * { "parentId": ["firstchildId", "secondChildId", ...], ... }
          */
         if (dge.getDgElement() != null && dge.getDgElement() == view) {//view is a document
             String url = ExportUtility.getUrlWithWorkspace();
@@ -349,7 +301,7 @@ public class ViewValidator {
                 return true;
             url += "/elements/" + view.getID();
             String docresponse = ExportUtility.get(url, false);
-            if (docresponse  == null)
+            if (docresponse == null)
                 return false;
             JSONObject docResponse = (JSONObject)JSONValue.parse(docresponse);
             JSONArray docs = (JSONArray)docResponse.get("elements");
@@ -373,7 +325,7 @@ public class ViewValidator {
                     }
                 }
             }
-        } else if (dge.getDgElement() == null){
+        } else if (dge.getDgElement() == null) {
             //canonical view children comparison
             JSONObject viewresponse = (JSONObject)JSONValue.parse(response);
             JSONArray views = (JSONArray)viewresponse.get("elements");
@@ -394,7 +346,7 @@ public class ViewValidator {
         }
         return true;
     }
-    
+
     private boolean viewContentsMatch(JSONArray localContains, JSONArray webContains) {
         //this recursively compares the structure of the views between local generation and web
         if (localContains.size() != webContains.size())
@@ -407,7 +359,7 @@ public class ViewValidator {
         }
         return true;
     }
-    
+
     private boolean contentMatch(JSONObject a, JSONObject b) {
         //this compares the paragraph/list/table/section/image objects in the view structure
         if (!a.get("type").equals(b.get("type")))
@@ -426,11 +378,11 @@ public class ViewValidator {
                 return false;
             }
         } else if (a.get("type").equals("Table")) {
-            JSONArray localtable = (JSONArray)a.get("body");
-            JSONArray webtable = (JSONArray)b.get("body");
+            JSONArray localtable = (JSONArray) a.get("body");
+            JSONArray webtable = (JSONArray) b.get("body");
             if (!tableMatch(localtable, webtable))
                 return false;
-            if (!tableMatch((JSONArray)a.get("header"), (JSONArray)b.get("header")))
+            if (!tableMatch((JSONArray) a.get("header"), (JSONArray) b.get("header")))
                 return false;
         } else if (a.get("type").equals("List")) {
             JSONArray alist = (JSONArray)a.get("list");
@@ -438,19 +390,19 @@ public class ViewValidator {
             if (alist.size() != blist.size())
                 return false;
             for (int i = 0; i < alist.size(); i++) {
-                if (!listMatch((JSONArray)alist.get(i), (JSONArray)blist.get(i)))
+                if (!listMatch((JSONArray) alist.get(i), (JSONArray) blist.get(i)))
                     return false;
             }
         } else if (a.get("type").equals("Section")) {
             if (!a.get("name").equals(b.get("name")))
                 return false;
-            JSONArray acontains = (JSONArray)a.get("contains");
-            JSONArray bcontains = (JSONArray)b.get("contains"); 
+            JSONArray acontains = (JSONArray) a.get("contains");
+            JSONArray bcontains = (JSONArray) b.get("contains");
             if (acontains.size() != bcontains.size())
                 return false;
             for (int i = 0; i < acontains.size(); i++) {
-                JSONObject ao = (JSONObject)acontains.get(i);
-                JSONObject bo = (JSONObject)bcontains.get(i);
+                JSONObject ao = (JSONObject) acontains.get(i);
+                JSONObject bo = (JSONObject) bcontains.get(i);
                 if (!contentMatch(ao, bo))
                     return false;
             }
@@ -460,50 +412,49 @@ public class ViewValidator {
         }
         return true;
     }
-    
+
     private boolean tableMatch(JSONArray a, JSONArray b) {
-        //helper for comparing table structure
+        // helper for comparing table structure
         if (a.size() != b.size())
             return false;
         for (int j = 0; j < a.size(); j++) {
-            JSONArray localrow = (JSONArray)a.get(j);
-            JSONArray webrow = (JSONArray)b.get(j);
+            JSONArray localrow = (JSONArray) a.get(j);
+            JSONArray webrow = (JSONArray) b.get(j);
             if (localrow.size() != webrow.size())
                 return false;
             for (int k = 0; k < localrow.size(); k++) {
-                JSONObject localcell = (JSONObject)localrow.get(k);
-                JSONObject webcell = (JSONObject)webrow.get(k);
-                if (!listMatch((JSONArray)localcell.get("content"), (JSONArray)webcell.get("content")))
+                JSONObject localcell = (JSONObject) localrow.get(k);
+                JSONObject webcell = (JSONObject) webrow.get(k);
+                if (!listMatch((JSONArray) localcell.get("content"), (JSONArray) webcell.get("content")))
                     return false;
             }
         }
         return true;
     }
-    
+
     private boolean listMatch(JSONArray a, JSONArray b) {
-        //helper for comparing list structure
+        // helper for comparing list structure
         if (a.size() != b.size())
             return false;
         for (int i = 0; i < a.size(); i++) {
-            if (!contentMatch((JSONObject)a.get(i), (JSONObject)b.get(i)))
+            if (!contentMatch((JSONObject) a.get(i), (JSONObject) b.get(i)))
                 return false;
         }
         return true;
     }
-    
-    private Element getStartView() {
-        Stereotype conforms  = Utils.getConformsStereotype();
-        Stereotype sysml14conforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
 
+    private Element getStartView() {
+        Stereotype conforms = Utils.getConformsStereotype();
+        Stereotype sysml14conforms = Utils.getSysML14ConformsStereotype();
         Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
         if (viewpoint == null)
             viewpoint = GeneratorUtils.findStereotypedRelationship(view, sysml14conforms);
-       
-        if (viewpoint != null && viewpoint instanceof Class) 
+
+        if (viewpoint != null && viewpoint instanceof Class)
             return view;
         Stereotype sysmlview = Utils.getViewStereotype();
-        List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-                DocGen3Profile.queriesStereotype, 1, false, 1);
+        List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
+                        view, DocGen3Profile.queriesStereotype, 1, false, 1);
         if (expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
             return expose.get(0); // substitute another view
         }
