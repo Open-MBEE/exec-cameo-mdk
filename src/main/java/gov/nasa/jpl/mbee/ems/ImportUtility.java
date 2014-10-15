@@ -1,5 +1,9 @@
 package gov.nasa.jpl.mbee.ems;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -35,7 +39,14 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 public class ImportUtility {
-
+    public static final Set<String> VALUESPECS = new HashSet<String>(Arrays.asList(
+            new String[] {"LiteralInteger", "LiteralString", "LiteralBoolean", 
+                    "LiteralUnlimitedNatural", "Expression", "InstanceValue", 
+                    "ElementValue", "OpaqueExpression", "Interval", "LiteralReal", 
+                    "Duration", "DurationInterval", "TimeInterval", "TimeExpression", "StringExpression"}
+                    
+       ));
+    
     public static Element createElement(JSONObject ob) {
         Project project = Application.getInstance().getProject();
         ElementsFactory ef = project.getElementsFactory();

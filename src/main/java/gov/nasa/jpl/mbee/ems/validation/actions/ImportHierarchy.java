@@ -44,8 +44,10 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.uml2.uml.AggregationKind;
 import org.json.simple.JSONArray;
@@ -114,28 +116,56 @@ AnnotationAction, IRuleViolationAction {
             listener.disable();
         SessionManager.getInstance().createSession("Change Hierarchy");
         try {
-            if (importHierarchy(view))
+            if (importHierarchy(view, md, keyed)) {
+                SessionManager.getInstance().closeSession();
                 this.removeViolationAndUpdateWindow();
-            SessionManager.getInstance().closeSession();
+            } else {
+                SessionManager.getInstance().cancelSession();
+            }
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
         }
+        if (listener != null)
+            listener.enable();
     }
 
     @SuppressWarnings("unchecked")
-    private boolean importHierarchy(Element document) throws ReadOnlyElementException {	
+    private boolean importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {	
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         Stereotype viewS = Utils.getViewClassStereotype();
+        //keep track of current models views with properties that are typed by them
         Map<String, List<Property>> viewId2props = new HashMap<String, List<Property>>();
-        //curate all properties in current model with type of view that's referenced on mms
-        for (Object vid: keyed.keySet()) {
+        //curate all properties in current md doc model with type of view 
+        Set<String> processedViews = new HashSet<String>();
+        for (Object vid: md.keySet()) {
             String viewid = (String)vid;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
                 for (Property p: ((Class)view).getOwnedAttribute()) {
                     Type t = p.getType();
-                    if (keyed.keySet().contains(t.getID())) {
+                    if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, viewS)) {
+                        List<Property> viewprops = viewId2props.get(t.getID());
+                        if (viewprops == null) {
+                            viewprops = new ArrayList<Property>();
+                            viewId2props.put(t.getID(), viewprops);
+                        }
+                        viewprops.add(p);
+                    }
+                }
+                processedViews.add(view.getID());
+            } 
+        }
+        //curate properties with type view from views that may not be connected in the model but is referenced on alfresco
+        for (Object vid: keyed.keySet()) {
+            String viewid = (String)vid;
+            if (processedViews.contains(viewid))
+                continue;
+            Element view = ExportUtility.getElementFromID(viewid);
+            if (view != null && view instanceof Class) {
+                for (Property p: ((Class)view).getOwnedAttribute()) {
+                    Type t = p.getType();
+                    if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, viewS)) {
                         List<Property> viewprops = viewId2props.get(t.getID());
                         if (viewprops == null) {
                             viewprops = new ArrayList<Property>();
@@ -145,11 +175,32 @@ AnnotationAction, IRuleViolationAction {
                     }
                 }
             } else {
-                //create the view
-                
+                //try to create the view
+                Element newview = null;
+                String url = ExportUtility.getUrlWithWorkspace();
+                url += "/elements/" + viewid;
+                String result = ExportUtility.get(url, false);
+                if (result != null) {
+                    JSONObject ob = (JSONObject)JSONValue.parse(result);
+                    if (ob != null) {
+                        JSONArray elements = (JSONArray)ob.get("elements");
+                        if (elements != null && !elements.isEmpty()) {
+                            JSONObject viewob = (JSONObject)elements.get(0);
+                            newview = ImportUtility.createElement(viewob);
+                            if (newview != null) {
+                                List<Property> viewprops = new ArrayList<Property>();
+                                viewId2props.put(newview.getID(), viewprops);
+                            }
+                        }
+                    }
+                }
+                if (newview == null) {
+                    Application.getInstance().getGUILog().log("[ERROR] trying to create new view " + viewid + " not found in model failed");
+                    return false;
+                }
             }
         }
-        for (Object vid: keyed.keySet()) { //go through all parent views on mms
+        for (Object vid: keyed.keySet()) { //go through all views on mms
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
             List<Property> cprops = new ArrayList<Property>(); //new owned attribute array for the parent view

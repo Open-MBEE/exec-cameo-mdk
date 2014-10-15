@@ -86,7 +86,6 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
         SessionManager.getInstance().createSession("create elements");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
-            boolean noneditable = false;
             for (Annotation anno: annos) {
                 String message = anno.getText();
                 String[] mes = message.split("'");
@@ -99,6 +98,9 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                         Element newElement = ImportUtility.createElement(newe);
                         if (newElement != null)
                             toremove.add(anno);
+                        else {
+                            Application.getInstance().getGUILog().log("[ERROR] Cannot create element " + eid + " (id already exists or owner not found)");
+                        }
                     }
                 }
             }
@@ -108,9 +110,10 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
+        } finally {
+            if (listener != null)
+                listener.enable();
         }
-        if (listener != null)
-            listener.enable();
     }
 
     @SuppressWarnings("unchecked")
@@ -124,18 +127,20 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
         SessionManager.getInstance().createSession("Create Element");
         try {
             Element magicDrawElement = ImportUtility.createElement(ob); 
-            SessionManager.getInstance().closeSession();
-            if (magicDrawElement != null) {
-                this.removeViolationAndUpdateWindow();
-                saySuccess();
-            } else{
-                //error
+            if (magicDrawElement == null) {
+                SessionManager.getInstance().cancelSession();
+                Application.getInstance().getGUILog().log("[ERROR] Element not created (id already exists or owner not found)");
+                return;
             }
+            SessionManager.getInstance().closeSession();
+            this.removeViolationAndUpdateWindow();
+            saySuccess();
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
+        } finally {
+            if (listener != null)
+                listener.enable();
         }
-        if (listener != null)
-            listener.enable();
 	}
 }

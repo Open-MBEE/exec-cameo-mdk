@@ -29,10 +29,12 @@
 package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.ElementDetail;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
@@ -239,8 +241,17 @@ public class ModelValidator {
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
             if (e == null){
                 // Alfresco sysml element is not in MagicDraw 
-                JSONObject jSONobject = (JSONObject)elementsKeyed.get(elementsKeyedId);          		           		
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on Alfresco] '" + elementsKeyedId + "' Element exists on Alfresco but not in Magicdraw");
+                JSONObject jSONobject = (JSONObject)elementsKeyed.get(elementsKeyedId);
+                String type = null;
+                if (jSONobject.containsKey("specialization")) {
+                    type = (String)((JSONObject)jSONobject.get("specialization")).get("type");
+                }
+                if (type == null)
+                    type = "Element";
+                if (ImportUtility.VALUESPECS.contains(type))
+                    continue;
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on Alfresco] " + type + " '" + elementsKeyedId + "' exists on Alfresco but not in Magicdraw");
+                v.addAction(new ElementDetail(jSONobject));
                 v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
                 v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
                 exist.addViolation(v);
