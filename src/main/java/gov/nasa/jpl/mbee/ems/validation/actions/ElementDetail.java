@@ -51,9 +51,11 @@ public class ElementDetail extends RuleViolationAction implements AnnotationActi
             }
             detail += key + ": " + result.get(key).toString() + "\n\n";
         }
-        for (Object o: spec.keySet()) {
-            String key = (String)o;
-            detail += key + ": " + spec.get(key).toString() + "\n\n";
+        if (spec != null) {
+            for (Object o: spec.keySet()) {
+                String key = (String)o;
+                detail += key + ": " + spec.get(key).toString() + "\n\n";
+            }
         }
         JTextArea web = new JTextArea(detail);
         web.setEditable(false);
