@@ -1,9 +1,18 @@
 package gov.nasa.jpl.mbee.ems;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
+import gov.nasa.jpl.graphs.DirectedEdgeVector;
+import gov.nasa.jpl.graphs.DirectedGraphHashSet;
+import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -46,6 +55,35 @@ public class ImportUtility {
                     "Duration", "DurationInterval", "TimeInterval", "TimeExpression", "StringExpression"}
                     
        ));
+    
+    public static List<JSONObject> getCreationOrder(List<JSONObject> newElements) {
+        DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>> graph = new DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>>();
+        Map<String, JSONObject> id2ob = new HashMap<String, JSONObject>();
+        for (JSONObject ob: newElements) {
+            String sysmlid = (String)ob.get("sysmlid");
+            if (sysmlid == null)
+                continue;
+            id2ob.put(sysmlid, ob);
+            graph.addVertex(ob);
+        }
+        for (JSONObject ob: newElements) {
+            String sysmlid = (String)ob.get("sysmlid");
+            String ownerid = (String)ob.get("owner");
+            Element newE = ExportUtility.getElementFromID(sysmlid);
+            Element ownerE = ExportUtility.getElementFromID(ownerid);
+            if (ownerE == null && !id2ob.containsKey(ownerid))
+                return null; //cannot all be created
+            if (newE != null || ownerE != null)
+                continue;
+            JSONObject newj = id2ob.get(sysmlid);
+            JSONObject ownerj = id2ob.get(ownerid);
+            graph.addEdge(newj, ownerj);
+        }
+        SortedSet<JSONObject> reverse = (new TopologicalSort()).topological_sort(graph);
+        List<JSONObject> toposort = new ArrayList<JSONObject>(reverse);
+        Collections.reverse(toposort);
+        return toposort;
+    }
     
     public static Element createElement(JSONObject ob) {
         Project project = Application.getInstance().getProject();
