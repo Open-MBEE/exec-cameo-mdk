@@ -3,12 +3,14 @@ package gov.nasa.jpl.mbee.ems.sync;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -24,7 +26,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 public class JMSMessageListener implements MessageListener {
 
     private Project project;
-
+    private static Logger log = Logger.getLogger(JMSMessageListener.class);
     public JMSMessageListener(Project project) {
         this.project = project;
     }
@@ -69,12 +71,18 @@ public class JMSMessageListener implements MessageListener {
                     try {
                         // Loop through each specified element.
                         //
+                        List<JSONObject> sortedAdded = ImportUtility.getCreationOrder((List<JSONObject>)added);
+                        if (sortedAdded != null) {
+                            for (Object element : added) {
+                                addElement((JSONObject) element);
+                            }
+                        } else {
+                            log.error("jms message added can't be executed - " + added.toJSONString());
+                        }
                         for (Object element : updated) {
                             makeChange((JSONObject) element);
                         }
-                        for (Object element : added) {
-                            addElement((JSONObject) element);
-                        }
+                        
                         for (Object element : deleted) {
                             deleteElement((JSONObject) element);
                         }
@@ -85,6 +93,7 @@ public class JMSMessageListener implements MessageListener {
                     }
                     catch (Exception e) {
                         sm.cancelSession();
+                        log.error(e);
                     }
 
                     // Once we've completed make all the

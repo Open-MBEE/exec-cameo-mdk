@@ -119,6 +119,7 @@ AnnotationAction, IRuleViolationAction {
             if (importHierarchy(view, md, keyed)) {
                 SessionManager.getInstance().closeSession();
                 this.removeViolationAndUpdateWindow();
+                saySuccess();
             } else {
                 SessionManager.getInstance().cancelSession();
             }
@@ -138,6 +139,7 @@ AnnotationAction, IRuleViolationAction {
         Map<String, List<Property>> viewId2props = new HashMap<String, List<Property>>();
         //curate all properties in current md doc model with type of view 
         Set<String> processedViews = new HashSet<String>();
+        List<JSONObject> newviews = new ArrayList<JSONObject>();
         for (Object vid: md.keySet()) {
             String viewid = (String)vid;
             Element view = ExportUtility.getElementFromID(viewid);
@@ -176,7 +178,7 @@ AnnotationAction, IRuleViolationAction {
                 }
             } else {
                 //try to create the view
-                Element newview = null;
+                //Element newview = null;
                 String url = ExportUtility.getUrlWithWorkspace();
                 url += "/elements/" + viewid;
                 String result = ExportUtility.get(url, false);
@@ -186,18 +188,34 @@ AnnotationAction, IRuleViolationAction {
                         JSONArray elements = (JSONArray)ob.get("elements");
                         if (elements != null && !elements.isEmpty()) {
                             JSONObject viewob = (JSONObject)elements.get(0);
-                            newview = ImportUtility.createElement(viewob);
+                            newviews.add(viewob);
+                            /*newview = ImportUtility.createElement(viewob);
                             if (newview != null) {
                                 List<Property> viewprops = new ArrayList<Property>();
                                 viewId2props.put(newview.getID(), viewprops);
-                            }
+                            }*/
                         }
                     }
                 }
-                if (newview == null) {
+                /*if (newview == null) {
                     Application.getInstance().getGUILog().log("[ERROR] trying to create new view " + viewid + " not found in model failed");
                     return false;
-                }
+                }*/
+            }
+        }
+        List<JSONObject> sortedNewviews = ImportUtility.getCreationOrder(newviews);
+        if (sortedNewviews == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Creating new view(s) failed.");
+            return false;
+        }
+        for (JSONObject ob: sortedNewviews) {
+            Element newview = ImportUtility.createElement(ob);
+            if (newview != null) {
+                List<Property> viewprops = new ArrayList<Property>();
+                viewId2props.put(newview.getID(), viewprops);
+            } else {
+                Application.getInstance().getGUILog().log("[ERROR] Creating new view(s) failed.");
+                return false;
             }
         }
         for (Object vid: keyed.keySet()) { //go through all views on mms

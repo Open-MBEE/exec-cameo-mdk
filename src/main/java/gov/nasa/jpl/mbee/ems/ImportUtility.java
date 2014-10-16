@@ -81,7 +81,7 @@ public class ImportUtility {
         }
         SortedSet<JSONObject> reverse = (new TopologicalSort()).topological_sort(graph);
         List<JSONObject> toposort = new ArrayList<JSONObject>(reverse);
-        Collections.reverse(toposort);
+        //Collections.reverse(toposort);
         return toposort;
     }
     
@@ -100,7 +100,7 @@ public class ImportUtility {
         String sysmlID = (String) ob.get("sysmlid");
         Element existing = ExportUtility.getElementFromID(sysmlID);
         if (existing != null)
-            return null; //maybe jms feedback
+            return existing; //maybe jms feedback
         JSONObject specialization = (JSONObject) ob.get("specialization");
         String elementType = "Element";
         if (specialization != null) {

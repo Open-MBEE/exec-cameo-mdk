@@ -125,10 +125,10 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public static String constructSelectorString(String projectID, String workspaceID) {
         StringBuilder selectorBuilder = new StringBuilder();
 
-        selectorBuilder.append("(").append(MSG_SELECTOR_WS_ID).append("='").append(workspaceID).append("')");
+        //selectorBuilder.append("(").append(MSG_SELECTOR_WS_ID).append("='").append(workspaceID).append("')");
 
-        // selectorBuilder.append("(").append(MSG_SELECTOR_PROJECT_ID).append(" = '").append(projectID).append("')")
-         //.append(" AND ").append("(").append(MSG_SELECTOR_WS_ID).append(" = '").append(workspaceID).append("')");
+         selectorBuilder.append("(").append(MSG_SELECTOR_PROJECT_ID).append(" = '").append(projectID).append("')")
+         .append(" AND ").append("(").append(MSG_SELECTOR_WS_ID).append(" = '").append(workspaceID).append("')");
 
         String outputMsgSelector = selectorBuilder.toString();
         selectorBuilder.delete(0, selectorBuilder.length());
