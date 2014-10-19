@@ -276,6 +276,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             
             for (DocumentElement de: section.getChildren()) {
                 // if (recurse || !(de instanceof DBSection))
+                if (!recurse && de instanceof DBSection && ((DBSection)de).isView())
+                    break;
                 de.accept(this);
             }
             //sibviews.pop();
