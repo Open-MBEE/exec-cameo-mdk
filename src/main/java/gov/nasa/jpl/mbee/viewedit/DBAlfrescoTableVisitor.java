@@ -49,6 +49,8 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
             tableelements.addAll(inner.getTableElements());
             elementSet.addAll(inner.getElementSet());
         } else {
+            if (table.isTranspose())
+                table.transpose();
             JSONArray body = new JSONArray();
             tablejson.put("body", body);
             for (List<DocumentElement> row: table.getBody()) {
@@ -73,22 +75,24 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
             }
             JSONArray headers = new JSONArray();
             tablejson.put("header", headers);
-            for (List<DocumentElement> row: table.getHeaders()) {
-                curRow = new JSONArray();
-                headers.add(curRow);
-                for (DocumentElement de: row) {
-                    rowspan = 1;
-                    colspan = 1;
-                    if (de != null) {
-                        if (de instanceof DBTableEntry)
-                            de.accept(this);
-                        else {
-                            curCell = new JSONArray();
-                            de.accept(this);
-                            JSONObject entry = new JSONObject();
-                            entry.put("content", curCell);
-                            addSpans(entry);
-                            curRow.add(entry);
+            if (table.getHeaders() != null) {
+                for (List<DocumentElement> row: table.getHeaders()) {
+                    curRow = new JSONArray();
+                    headers.add(curRow);
+                    for (DocumentElement de: row) {
+                        rowspan = 1;
+                        colspan = 1;
+                        if (de != null) {
+                            if (de instanceof DBTableEntry)
+                                de.accept(this);
+                            else {
+                                curCell = new JSONArray();
+                                de.accept(this);
+                                JSONObject entry = new JSONObject();
+                                entry.put("content", curCell);
+                                addSpans(entry);
+                                curRow.add(entry);
+                            }
                         }
                     }
                 }
