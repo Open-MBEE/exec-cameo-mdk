@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
@@ -83,6 +84,7 @@ public class ViewValidator {
     private ValidationRule hierarchy = new ValidationRule("View Hierarchy", "view hierarchy", ViolationSeverity.WARNING);
     private ValidationRule comments = new ValidationRule("View Comments", "view comments", ViolationSeverity.WARNING);
     private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
+    private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
     
     private ValidationSuite modelSuite;
     private ValidationSuite imageSuite;
@@ -99,6 +101,7 @@ public class ViewValidator {
         suite.addValidationRule(comments);
         suite.addValidationRule(projectExist);
         suite.addValidationRule(baselineTag);
+        suite.addValidationRule(productView);
         this.recurse = recursive;
     }
     
@@ -212,7 +215,7 @@ public class ViewValidator {
                         continue;
                     JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
                     // parse the view elements json from web into JSONObject
-
+                    JSONObject webViewSpec = (JSONObject)webView.get("specialization");
                     boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
                     // see if the list of view elements referenced matches and view structures match
                     boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
@@ -226,6 +229,12 @@ public class ViewValidator {
                         }
                         // v.addAction(new ExportHierarchy(currentView));
                         match.addViolation(v);
+                    }
+                    if (webViewSpec.get("type") instanceof String && ((String)webViewSpec.get("type")).equals("Product") && 
+                            !StereotypesHelper.hasStereotypeOrDerived(currentView, Utils.getProductStereotype())) {
+                        ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[METACLASS] This is no longer a product/document.");
+                        v.addAction(new Downgrade(currentView, webView));
+                        productView.addViolation(v);
                     }
                     if (!hierarchyMatches) {
                         // Update the hierarchy in MagicDraw based on MagicDraw

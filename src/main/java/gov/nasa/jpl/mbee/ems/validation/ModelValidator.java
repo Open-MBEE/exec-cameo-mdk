@@ -106,6 +106,7 @@ public class ModelValidator {
     private ValidationRule commentDiff = new ValidationRule("Comment", "Comment different", ViolationSeverity.ERROR);
     private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
     private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
+    private ValidationRule metaclassDiff = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
     private Project prj;
     private Element start;
     private JSONObject result;       
@@ -124,6 +125,7 @@ public class ModelValidator {
         suite.addValidationRule(commentDiff);
         suite.addValidationRule(projectExist);
         suite.addValidationRule(baselineTag);
+        suite.addValidationRule(metaclassDiff);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();

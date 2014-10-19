@@ -107,7 +107,7 @@ public class DocumentGenerator {
 
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
         start = e;
-        product = StereotypesHelper.getStereotype(Project.getProject(e), "Document", "SysML Extensions");
+        product = Utils.getProductStereotype();
         doc = new Document();
         context = new GenerationContext(new Stack<List<Object>>(), null, dv, Application.getInstance()
                 .getGUILog());
@@ -115,7 +115,7 @@ public class DocumentGenerator {
 
     public DocumentGenerator(Element e, PrintWriter wlog) {
         start = e;
-        product = StereotypesHelper.getStereotype(Project.getProject(e), "Document", "SysML Extensions");
+        product = Utils.getProductStereotype();
         doc = new Document();
         context = new GenerationContext(new Stack<List<Object>>(), null, Application.getInstance()
                 .getGUILog());
