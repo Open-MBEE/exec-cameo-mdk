@@ -299,7 +299,7 @@ public class Paragraph extends Query {
                         Debug.outln( "case 2 or 5" );
                         // for cases 2 and 5
                         //Object ocl = allTargetsAreProperties ? : ModelHelper.getComment( e );
-                        if ( allTargetsAreProperties ) {
+                        if ( allTargetsAreProperties && tryOcl ) {
                             Object v = Utils.getElementAttribute( e, AvailableAttribute.Value );
                             ref = new Reference(e, From.DVALUE, v);
                         } else {

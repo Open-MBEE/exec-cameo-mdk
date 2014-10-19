@@ -404,8 +404,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             elements.put(source.getID(), sourceInfo);
             elements.put(target.getID(), targetInfo);
         }
-        if (e instanceof Property || e instanceof Slot)
-            elements.putAll(ExportUtility.getReferencedElements(e));
+        //if (e instanceof Property || e instanceof Slot)
+        //   elements.putAll(ExportUtility.getReferencedElements(e));
     }
     
     public JSONObject getElements() {
