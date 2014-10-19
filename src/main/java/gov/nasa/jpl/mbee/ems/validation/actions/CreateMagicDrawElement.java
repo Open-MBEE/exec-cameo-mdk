@@ -37,8 +37,10 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -86,6 +88,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
         SessionManager.getInstance().createSession("create elements");
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
+            List<JSONObject> tocreate = new ArrayList<JSONObject>();
             for (Annotation anno: annos) {
                 String message = anno.getText();
                 String[] mes = message.split("'");
@@ -95,18 +98,31 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                 if (eid != null) {
                     JSONObject newe = elementsKeyed.get(eid);
                     if (newe != null) {
-                        Element newElement = ImportUtility.createElement(newe);
+                        tocreate.add(newe);
+                        /*Element newElement = ImportUtility.createElement(newe);
                         if (newElement != null)
                             toremove.add(anno);
                         else {
                             Application.getInstance().getGUILog().log("[ERROR] Cannot create element " + eid + " (id already exists or owner not found)");
-                        }
+                        }*/
                     }
                 }
             }
+            tocreate = ImportUtility.getCreationOrder(tocreate);
+            if (tocreate == null) {
+                Application.getInstance().getGUILog().log("[ERROR] Cannot create elements (id already exists or owner(s) not found)");
+            } else {
+                for (JSONObject newe: tocreate) {
+                    Element newElement = ImportUtility.createElement(newe);
+                    if (newElement == null) {
+                        Application.getInstance().getGUILog().log("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
+                    }
+                }
+                saySuccess();
+                this.removeViolationsAndUpdateWindow(toremove);
+            }
             SessionManager.getInstance().closeSession();
-            saySuccess();
-            this.removeViolationsAndUpdateWindow(toremove);
+            
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
