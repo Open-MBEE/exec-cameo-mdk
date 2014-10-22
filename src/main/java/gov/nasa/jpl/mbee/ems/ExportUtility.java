@@ -614,6 +614,18 @@ public class ExportUtility {
             fillPropertySpecialization(e, specialization, true);
         } else if (e instanceof DirectedRelationship) {
             fillDirectedRelationshipSpecialization((DirectedRelationship)e, specialization);
+        } else if (e instanceof Connector) {
+            specialization.put("type", "Connector");
+            Connector c = (Connector)e;
+            List< ConnectorEnd > ends = c.getEnd();
+            ArrayList<Element> roles = new ArrayList< Element >();
+            for ( ConnectorEnd end : ends ) {
+                if ( end.getRole() != null ) {
+                    roles.add( end.getRole() );
+                }
+            }
+            JSONArray ids = makeJsonArrayOfIDs( roles );
+            specialization.put("connectorRole", ids);
         } else if (e instanceof Operation) {
             specialization.put("type", "Operation");
             List<Parameter> vsl = ((Operation) e).getOwnedParameter();
