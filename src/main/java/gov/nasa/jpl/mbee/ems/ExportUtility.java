@@ -615,25 +615,9 @@ public class ExportUtility {
         } else if (e instanceof DirectedRelationship) {
             fillDirectedRelationshipSpecialization((DirectedRelationship)e, specialization);
         } else if (e instanceof Connector) {
-            specialization.put("type", "Connector");
-            Connector c = (Connector)e;
-            List< ConnectorEnd > ends = c.getEnd();
-            ArrayList<Element> roles = new ArrayList< Element >();
-            for ( ConnectorEnd end : ends ) {
-                if ( end.getRole() != null ) {
-                    roles.add( end.getRole() );
-                }
-            }
-            JSONArray ids = makeJsonArrayOfIDs( roles );
-            specialization.put("connectorRoles", ids);
+            fillConnectorSpecialization((Connector)e, specialization);
         } else if (e instanceof Operation) {
-            specialization.put("type", "Operation");
-            List<Parameter> vsl = ((Operation) e).getOwnedParameter();
-            if (vsl != null && vsl.size() > 0) {
-
-                specialization.put("parameter",
-                        makeJsonArrayOfIDs(vsl));
-            }
+            fillOperationSpecialization((Operation)e, specialization);
         } else if (e instanceof Constraint) {
             fillConstraintSpecialization((Constraint)e, specialization);
         } else if (e instanceof InstanceSpecification) {
@@ -645,17 +629,7 @@ public class ExportUtility {
                 specialization.put("specification",
                         spec.getID());*/
         } else if (e instanceof Parameter) {
-            Parameter p = (Parameter) e;
-            specialization.put("type", "Parameter");
-            if (p.getDirection() != null)
-                specialization.put("direction", p.getDirection().toString());
-            if (p.getType() != null)
-                specialization.put("parameterType", p.getType().getID());
-            //ValueSpecification defaultValue = p.getDefaultValue();
-            //if (defaultValue != null) {
-            //    specialization.put("parameterDefaultValue",
-             //           defaultValue.getID());
-            // }
+            fillParameterSpecialization((Parameter)e, specialization);
         } else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
             specialization.put("type", "Comment");
         } else {
@@ -749,6 +723,55 @@ public class ExportUtility {
             fillValueSpecification(vspec, cspec);
             specialization.put("constraintSpecification", cspec);
         }
+        return specialization;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillConnectorSpecialization(Connector e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        specialization.put("type", "Connector");
+        List< ConnectorEnd > ends = e.getEnd();
+        ArrayList<Element> roles = new ArrayList< Element >();
+        for ( ConnectorEnd end : ends ) {
+            if ( end.getRole() != null ) {
+                roles.add( end.getRole() );
+            }
+        }
+        JSONArray ids = makeJsonArrayOfIDs( roles );
+        specialization.put("roles", ids);
+        return specialization;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillOperationSpecialization(Operation e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        specialization.put("type", "Operation");
+        List<Parameter> vsl = ((Operation) e).getOwnedParameter();
+        if (vsl != null && vsl.size() > 0) {
+            specialization.put("parameters", makeJsonArrayOfIDs(vsl));
+        }
+        return specialization;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillParameterSpecialization(Parameter e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        specialization.put("type", "Parameter");
+        if (e.getDirection() != null)
+            specialization.put("direction", e.getDirection().toString());
+        if (e.getType() != null)
+            specialization.put("parameterType", e.getType().getID());
+        //ValueSpecification defaultValue = p.getDefaultValue();
+        //if (defaultValue != null) {
+        //    specialization.put("parameterDefaultValue",
+         //           defaultValue.getID());
+        // }
         return specialization;
     }
     
