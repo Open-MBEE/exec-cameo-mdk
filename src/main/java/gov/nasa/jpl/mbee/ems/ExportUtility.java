@@ -625,7 +625,7 @@ public class ExportUtility {
                 }
             }
             JSONArray ids = makeJsonArrayOfIDs( roles );
-            specialization.put("connectorRole", ids);
+            specialization.put("connectorRoles", ids);
         } else if (e instanceof Operation) {
             specialization.put("type", "Operation");
             List<Parameter> vsl = ((Operation) e).getOwnedParameter();

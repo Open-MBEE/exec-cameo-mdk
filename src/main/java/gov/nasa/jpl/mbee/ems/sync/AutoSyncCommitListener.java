@@ -104,7 +104,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     }
                 }
             }
-            if (!elements.isEmpty())
+            if (!elements.isEmpty() || !deletes.isEmpty())
                 sendChanges();
         }
 
@@ -172,6 +172,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             if (propertyName.equals(PropertyNames.NAME)) {
                 elementOb = getElementObject(sourceElement);
                 ExportUtility.fillName(sourceElement, elementOb);
+                ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if (sourceElement instanceof Comment && 
                     ExportUtility.isElementDocumentation((Comment) sourceElement) && 
@@ -179,6 +180,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 Element actual = sourceElement.getOwner();
                 elementOb = getElementObject(actual);
                 ExportUtility.fillDoc(actual, elementOb);
+                ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof ValueSpecification) && (propertyName.equals(PropertyNames.VALUE)) ||
                     (sourceElement instanceof OpaqueExpression) && (propertyName.equals(PropertyNames.BODY)) ||
@@ -204,6 +206,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)actual, null);
                     elementOb.put("specialization", specialization);
                 }
+                ExportUtility.fillOwner(actual, elementOb);
             }
             // Check if this is a Property or Slot. Need these next two if
             // statement
@@ -213,16 +216,19 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
                 elementOb = getElementObject(sourceElement);
                 elementOb.put("specialization", specialization);
+                ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof Slot) && propertyName.equals(PropertyNames.VALUE)) {
                 elementOb = getElementObject(sourceElement);
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
                 elementOb.put("specialization", specialization);
+                ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof Constraint) && propertyName.equals(PropertyNames.SPECIFICATION)) {
                 elementOb = getElementObject(sourceElement);
                 JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)sourceElement, null);
                 elementOb.put("specialization", specialization);
+                ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
                     && ExportUtility.shouldAdd(sourceElement)) {
@@ -250,6 +256,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     JSONObject specialization = ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)sourceElement, null);
                     elementOb = getElementObject(sourceElement);
                     elementOb.put("specialization", specialization);
+                    ExportUtility.fillOwner(sourceElement, elementOb);
                 }
             }
             else if ((sourceElement instanceof Generalization)
@@ -258,6 +265,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     JSONObject specialization = ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)sourceElement, null);
                     elementOb = getElementObject(sourceElement);
                     elementOb.put("specialization", specialization);
+                    ExportUtility.fillOwner(sourceElement, elementOb);
                 }
             }
             else if ((moveKeywords.contains(propertyName)) && ExportUtility.shouldAdd(sourceElement)) {
@@ -266,6 +274,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 elementOb = getElementObject(sourceElement);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }
+            
         }
     }
 

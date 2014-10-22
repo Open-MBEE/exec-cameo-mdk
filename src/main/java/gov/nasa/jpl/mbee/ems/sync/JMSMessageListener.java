@@ -63,8 +63,8 @@ public class JMSMessageListener implements MessageListener {
                     // Disable the listener so we do not react to the
                     // changes we are importing from MMS.
                     //
-                    if (listener != null)
-                        listener.disable();
+                    //if (listener != null)
+                      //  listener.disable();
 
                     SessionManager sm = SessionManager.getInstance();
                     sm.createSession("mms sync change");
@@ -89,15 +89,22 @@ public class JMSMessageListener implements MessageListener {
                         for (Object element : moved) {
                             moveElement((JSONObject) element);
                         }
+                        if (listener != null)
+                            listener.disable();
+
                         sm.closeSession();
+                        if (listener != null)
+                            listener.enable();
                     }
                     catch (Exception e) {
                         sm.cancelSession();
                         log.error(e);
+                        if (listener != null)
+                            listener.enable();
                     }
 
                     // Once we've completed make all the
-                    // changes, enable the listener.
+                    // changes, enable the listener, duplicated everywhere seems like some timing issue/bug isn't always reenabling it
                     //
                     if (listener != null)
                         listener.enable();
