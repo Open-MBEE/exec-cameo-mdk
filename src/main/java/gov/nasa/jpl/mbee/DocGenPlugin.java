@@ -78,7 +78,7 @@ public class DocGenPlugin extends Plugin {
     @Override
     public void init() {
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
-
+        System.setProperty ("jsse.enableSNIExtension", "false");
         DocGenConfigurator dgc = new DocGenConfigurator();
         acm.addContainmentBrowserContextConfigurator(dgc);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, dgc);

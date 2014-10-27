@@ -220,7 +220,7 @@ public class ViewValidator {
                     // see if the list of view elements referenced matches and view structures match
                     boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
                     if (!matches) {
-                        ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor structure is outdated.");
+                        ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor content is outdated.");
                         if (editable) {
                             v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
                             v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
@@ -287,19 +287,19 @@ public class ViewValidator {
 
     @SuppressWarnings("unchecked")
     private boolean viewElementsMatch(JSONArray viewDisplayedElements, JSONObject veResults) {
-        return true; // workaround for server not giving back the right number
+        //return true; // workaround for server not giving back the right number
         // of elements
         // this does a "shallow" comparison of what elements are being
         // referenced in the views
-        /*
-         * Set<String> localElements = new
-         * HashSet<String>(viewDisplayedElements); Set<String> webElements = new
-         * HashSet<String>(); for (Object o:
-         * (JSONArray)veResults.get("elements")) {
-         * webElements.add((String)((JSONObject)o).get("sysmlid")); } if
-         * (webElements.containsAll(localElements) &&
-         * localElements.containsAll(webElements)) return true; return false;
-         */
+        
+        Set<String> localElements = new HashSet<String>(viewDisplayedElements); 
+        Set<String> webElements = new HashSet<String>(); 
+        for (Object o: (JSONArray)veResults.get("elements")) {
+            webElements.add((String)((JSONObject)o).get("sysmlid")); 
+        }
+        if (webElements.containsAll(localElements) && localElements.containsAll(webElements)) 
+            return true; 
+        return false;
     }
 
     private boolean viewHierarchyMatch(Element view, Document dge, ViewHierarchyVisitor vhv, JSONObject spec) {
