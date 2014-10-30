@@ -29,9 +29,14 @@
 package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.dgview.FromProperty;
+import gov.nasa.jpl.mbee.dgview.Table;
+import gov.nasa.jpl.mbee.dgview.TableEntry;
+import gov.nasa.jpl.mbee.dgview.TableRow;
 import gov.nasa.jpl.mbee.dgview.ViewElement;
 import gov.nasa.jpl.mbee.lib.HtmlManipulator;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 
@@ -460,20 +465,6 @@ public class DocGenUtils {
     public static DocumentElement ecoreTranslateView(ViewElement ve, boolean forViewEditor) {
         DocumentElement de = null;
         de = (new DgviewDBSwitch(forViewEditor)).doSwitch(ve);
-        if (ve.getFromElementId() != null && !ve.getFromElementId().equals("")) {
-            de.setFrom((Element)Application.getInstance().getProject().getElementByID(ve.getFromElementId()));
-            if (ve.getFromProperty() != null) {
-                if (ve.getFromProperty() == FromProperty.NAME)
-                    de.setFromProperty(From.NAME);
-                else if (ve.getFromProperty() == FromProperty.DOCUMENTATION)
-                    de.setFromProperty(From.DOCUMENTATION);
-                else
-                    de.setFromProperty(From.DVALUE);
-            }
-        }
-        de.setId(ve.getId());
-        de.setTitle(ve.getTitle());
         return de;
     }
-
 }

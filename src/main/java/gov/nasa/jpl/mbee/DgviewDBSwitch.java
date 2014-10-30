@@ -51,6 +51,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
 
@@ -75,6 +76,22 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         forViewEditor = false;
     }
 
+    private void setVe(ViewElement ve, DocumentElement de) {
+        if (ve.getFromElementId() != null && !ve.getFromElementId().equals("")) {
+            de.setFrom((Element)Application.getInstance().getProject().getElementByID(ve.getFromElementId()));
+            if (ve.getFromProperty() != null) {
+                if (ve.getFromProperty() == FromProperty.NAME)
+                    de.setFromProperty(From.NAME);
+                else if (ve.getFromProperty() == FromProperty.DOCUMENTATION)
+                    de.setFromProperty(From.DOCUMENTATION);
+                else
+                    de.setFromProperty(From.DVALUE);
+            }
+        }
+        de.setId(ve.getId());
+        de.setTitle(ve.getTitle());
+    }
+    
     @Override
     public DocumentElement caseColSpec(ColSpec object) {
         DBColSpec res = new DBColSpec();
@@ -82,6 +99,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         res.setColnum(object.getColnum());
         if (object.getColwidth() != null && !object.getColwidth().equals(""))
             res.setColwidth(object.getColwidth());
+        setVe(object, res);
         return res;
     }
 
@@ -95,6 +113,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         BaseElement i = Application.getInstance().getProject().getElementByID(object.getDiagramId());
         if (i instanceof Diagram)
             res.setImage((Diagram)i);
+        setVe(object, res);
         return res;
     }
 
@@ -104,6 +123,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         for (ViewElement ve: object.getChildren()) {
             res.addElement(this.doSwitch(ve));
         }
+        setVe(object, res);
         return res;
     }
 
@@ -113,6 +133,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         for (ViewElement ve: object.getChildren()) {
             res.addElement(this.doSwitch(ve));
         }
+        setVe(object, res);
         return res;
     }
 
@@ -120,6 +141,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
     public DocumentElement caseParagraph(Paragraph object) {
         DBParagraph res = new DBParagraph();
         res.setText(object.getText());
+        setVe(object, res);
         return res;
     }
 
@@ -164,6 +186,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
                 colspecs.add((DBColSpec)this.doSwitch(cs));
             res.setColspecs(colspecs);
         }
+        setVe(object, res);
         return res;
     }
 
@@ -179,6 +202,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         for (ViewElement ve: object.getChildren()) {
             res.addElement(this.doSwitch(ve));
         }
+        setVe(object, res);
         return res;
     }
 
@@ -186,6 +210,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
     public DocumentElement caseText(Text object) {
         DBText res = new DBText();
         res.setText(object.getText());
+        setVe(object, res);
         return res;
     }
 
