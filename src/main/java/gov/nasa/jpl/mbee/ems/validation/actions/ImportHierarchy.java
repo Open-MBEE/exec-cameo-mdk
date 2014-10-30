@@ -116,8 +116,10 @@ AnnotationAction, IRuleViolationAction {
             listener.disable();
         SessionManager.getInstance().createSession("Change Hierarchy");
         try {
-            if (importHierarchy(view, md, keyed)) {
+            Map<String, Object> result = importHierarchy(view, md, keyed);
+            if ((Boolean)result.get("success")) {
                 SessionManager.getInstance().closeSession();
+                sendChanges(result);
                 this.removeViolationAndUpdateWindow();
                 saySuccess();
             } else {
@@ -131,8 +133,27 @@ AnnotationAction, IRuleViolationAction {
             listener.enable();
     }
 
+    private void sendChanges(Map<String, Object> results) {
+        List<Element> added = (List<Element>)results.get("added");
+        List<Property> moved = (List<Property>)results.get("moved");
+        List<Property> deleted = (List<Property>)results.get("deleted");
+        JSONArray changes = new JSONArray();
+        for (Element e: added) {
+            changes.add(ExportUtility.fillElement(e, null, null, null));
+        }
+        for (Property p: moved) {
+            changes.add(ExportUtility.fillOwner(p, null));
+        }
+        JSONObject tosend = new JSONObject();
+        tosend.put("elements", changes);
+        String url = ExportUtility.getPostElementsUrl();
+        ExportUtility.send(url, tosend.toJSONString(), null, false);
+    }
+    
     @SuppressWarnings("unchecked")
-    private boolean importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {	
+    private Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {	
+        Map<String, Object> retval = new HashMap<String, Object>();
+        retval.put("success", true);
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         Stereotype viewS = Utils.getViewClassStereotype();
         //keep track of current models views with properties that are typed by them
@@ -206,7 +227,8 @@ AnnotationAction, IRuleViolationAction {
         List<JSONObject> sortedNewviews = ImportUtility.getCreationOrder(newviews);
         if (sortedNewviews == null) {
             Application.getInstance().getGUILog().log("[ERROR] Creating new view(s) failed.");
-            return false;
+            retval.put("success", false);
+            return retval;
         }
         for (JSONObject ob: sortedNewviews) {
             Element newview = ImportUtility.createElement(ob);
@@ -215,9 +237,13 @@ AnnotationAction, IRuleViolationAction {
                 viewId2props.put(newview.getID(), viewprops);
             } else {
                 Application.getInstance().getGUILog().log("[ERROR] Creating new view(s) failed.");
-                return false;
+                retval.put("success", false);
+                return retval;
             }
         }
+        List<Property> moved = new ArrayList<Property>();
+        List<Element> added = new ArrayList<Element>();
+        List<Property> deleted = new ArrayList<Property>();
         for (Object vid: keyed.keySet()) { //go through all views on mms
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
@@ -247,8 +273,13 @@ AnnotationAction, IRuleViolationAction {
                             //ModelHelper.setClientElement(association, document);
                             association.setOwner(document.getOwner());
                             cprops.add(propType1);
+                            added.add(propType1);
+                            added.add(propType2);
+                            added.add(association);
                         }
                     } else {
+                        Property p = availableProps.remove(0);
+                        moved.add(p);
                         //add the property to owned attribute array
                         cprops.add(availableProps.remove(0));
                     }
@@ -266,10 +297,14 @@ AnnotationAction, IRuleViolationAction {
         }
         for (List<Property> props: viewId2props.values()) {
             for (Property p: props) {
+                deleted.add(p);
                 ModelElementsManager.getInstance().removeElement(p);
             }
         }
-        return true;
+        retval.put("deleted", deleted);
+        retval.put("added", added);
+        retval.put("moved", moved);
+        return retval;
 
 
 

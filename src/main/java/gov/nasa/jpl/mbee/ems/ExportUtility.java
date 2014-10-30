@@ -162,7 +162,8 @@ public class ExportUtility {
             "_be00301_1073306188629_537791_2", // diagraminfo
             "_be00301_1077726770128_871366_1", // diagraminfo
             "_be00301_1073394345322_922552_1", // diagraminfo
-            "_16_8beta_8ca0285_1257244649124_794756_344")); // diagraminfo
+            "_16_8beta_8ca0285_1257244649124_794756_344",
+            "_11_5EAPbeta_be00301_1147431377925_245593_1615")); // propertyPath
 
     
 
@@ -732,12 +733,26 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         specialization.put("type", "Connector");
-        List< ConnectorEnd > ends = e.getEnd();
         ArrayList<Element> roles = new ArrayList< Element >();
-        for ( ConnectorEnd end : ends ) {
+        int i = 0;
+        for ( ConnectorEnd end : e.getEnd()) {
             if ( end.getRole() != null ) {
                 roles.add( end.getRole() );
             }
+            JSONArray propertyPath = new JSONArray();
+            if (StereotypesHelper.hasStereotype(end, "NestedConnectorEnd")) {
+                List<Element> ps = StereotypesHelper.getStereotypePropertyValue(end, "NestedConnectorEnd", "propertyPath");
+                for (Element path: ps) {
+                    if (path instanceof ValueSpecification) {
+                        propertyPath.add(ExportUtility.fillValueSpecification((ValueSpecification)path, null));
+                    }
+                }
+            }
+            if (i == 0)
+                specialization.put("sourcePropertyPath", propertyPath);
+            else
+                specialization.put("targetPropertyPath", propertyPath);
+            i++;
         }
         JSONArray ids = makeJsonArrayOfIDs( roles );
         specialization.put("roles", ids);
@@ -1123,6 +1138,8 @@ public class ExportUtility {
             return false;
         if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty()
                 && !(e instanceof EnumerationLiteral))
+            return false;
+        if (e instanceof ConnectorEnd)
             return false;
         if (e instanceof Slot
                 && ExportUtility.ignoreSlots.contains(((Slot) e)
