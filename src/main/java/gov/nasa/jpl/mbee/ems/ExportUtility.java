@@ -78,6 +78,7 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
@@ -633,11 +634,12 @@ public class ExportUtility {
             fillParameterSpecialization((Parameter)e, specialization);
         } else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
             specialization.put("type", "Comment");
+        } else if (e instanceof Association) {
+            fillAssociationSpecialization((Association)e, specialization);
         } else {
             specialization.put("type", "Element");
         }
-        if (viewpoint != null
-                && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
+        if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
             specialization.put("type", "Viewpoint");
 
         fillName(e, elementInfo);
@@ -709,6 +711,22 @@ public class ExportUtility {
                 }
             }
         }
+        return specialization;
+    }
+    
+    public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        int i = 0;
+        for (Property p: e.getMemberEnd()) {
+            if (i == 0)
+                specialization.put("source", p.getID());
+            else
+                specialization.put("target", p.getID());
+            i++;
+        }
+        specialization.put("type", "Association");
         return specialization;
     }
     
