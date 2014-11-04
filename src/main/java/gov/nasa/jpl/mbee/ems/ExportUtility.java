@@ -612,6 +612,7 @@ public class ExportUtility {
         Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
             specialization.put("type", "Package");
+            //check for site characterization here
         } else if (e instanceof Property || e instanceof Slot) {
             fillPropertySpecialization(e, specialization, true);
         } else if (e instanceof DirectedRelationship) {

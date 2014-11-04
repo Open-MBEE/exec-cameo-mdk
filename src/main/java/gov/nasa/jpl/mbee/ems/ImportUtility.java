@@ -43,6 +43,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
@@ -129,6 +130,7 @@ public class ImportUtility {
             else {
                 Property newProperty = ef.createPropertyInstance();
                 setPropertyDefaultValue(newProperty, vals);
+                setPropertyType(newProperty, (String)specialization.get("propertyType"));
                 newE = newProperty;
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
@@ -174,8 +176,10 @@ public class ImportUtility {
         JSONObject spec = (JSONObject)o.get("specialization");
         if (spec != null) {
             String type = (String)spec.get("type");
-            if (type != null && type.equals("Property") && e instanceof Property)
+            if (type != null && type.equals("Property") && e instanceof Property) {
                 setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
+                setPropertyType((Property)e, (Type)ExportUtility.getElementFromID((String)spec.get("propertyType")));
+            }
             if (type != null && type.equals("Property") && e instanceof Slot)
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
             if (type != null && e instanceof DirectedRelationship)
@@ -235,6 +239,14 @@ public class ImportUtility {
             p.setDefaultValue(createValueSpec((JSONObject)values.get(0)));
         if (values != null && values.isEmpty())
             p.setDefaultValue(null);
+    }
+    
+    public static void setPropertyType(Property p, String typeId) {
+        p.setType((Type)ExportUtility.getElementFromID(typeId));
+    }
+    
+    public static void setPropertyType(Property p, Type type) {
+        p.setType(type);
     }
     
     public static void setSlotValues(Slot s, JSONArray values) {
