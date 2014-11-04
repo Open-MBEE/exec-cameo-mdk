@@ -30,6 +30,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
 import com.nomagic.uml2.transaction.TransactionManager;
@@ -100,12 +102,12 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                                 || (event.getNewValue() != null && event.getOldValue() == null)
                                 || (!event.getNewValue().equals(event.getOldValue())))
                             handleChangedProperty((Element) source, changedPropertyName, event.getNewValue(),
-                                    event.getOldValue());
+                                    event.getOldValue()); 
                     }
                 }
             }
-            if (!elements.isEmpty() || !deletes.isEmpty())
-                sendChanges();
+            //if (!elements.isEmpty() || !deletes.isEmpty())
+              //  sendChanges();
         }
 
         @SuppressWarnings("unchecked")
@@ -197,10 +199,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 //
                 while (actual instanceof ValueSpecification)
                     actual = actual.getOwner();
-
+                if (!ExportUtility.shouldAdd(actual))
+                    return;
                 elementOb = getElementObject(actual);
                 if (actual instanceof Slot || actual instanceof Property) {
-                    JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, false);
+                    JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true);
                     elementOb.put("specialization", specialization);
                 } if (actual instanceof Constraint) {
                     JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)actual, null);
@@ -213,12 +216,12 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             // to handle the case where a value is being deleted.
             //
             else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE))) {
-                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
+                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true);
                 elementOb = getElementObject(sourceElement);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }
-            else if ((sourceElement instanceof Slot) && propertyName.equals(PropertyNames.VALUE)) {
+            else if ((sourceElement instanceof Slot) && propertyName.equals(PropertyNames.VALUE) && ExportUtility.shouldAdd(sourceElement)) {
                 elementOb = getElementObject(sourceElement);
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
                 elementOb.put("specialization", specialization);
@@ -273,6 +276,12 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 // from one class to another.
                 elementOb = getElementObject(sourceElement);
                 ExportUtility.fillOwner(sourceElement, elementOb);
+            } else if (sourceElement instanceof ConnectorEnd && propertyName.equals(PropertyNames.ROLE)) {
+                Connector conn = ((ConnectorEnd)sourceElement).get_connectorOfEnd();
+                elementOb = getElementObject(conn);
+                JSONObject specialization = ExportUtility.fillConnectorSpecialization(conn, null);
+                elementOb.put("specialization", specialization);
+                ExportUtility.fillOwner(conn, elementOb);
             }
             
         }

@@ -153,7 +153,7 @@ public class ExportUtility {
         }
     }
     
-    public static Set<String> ignoreSlots = new HashSet<String>(Arrays.asList(
+    public static Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", // stylesaver
             "_17_0_2_2_ff3038a_1358222938684_513628_2513", // integrity
             "_17_0_2_2_ff3038a_1358666613056_344763_2540", // integrity
@@ -163,9 +163,12 @@ public class ExportUtility {
             "_be00301_1073306188629_537791_2", // diagraminfo
             "_be00301_1077726770128_871366_1", // diagraminfo
             "_be00301_1073394345322_922552_1", // diagraminfo
-            "_16_8beta_8ca0285_1257244649124_794756_344",
+            "_16_8beta_8ca0285_1257244649124_794756_344", //diagraminfo
             "_11_5EAPbeta_be00301_1147431377925_245593_1615")); // propertyPath
 
+    public static Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
+            "_11_5EAPbeta_be00301_1147431307463_773225_1455" //nested connector end
+            ));
     
 
     public static String getElementID(Element e) {
@@ -752,18 +755,22 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         specialization.put("type", "Connector");
-        ArrayList<Element> roles = new ArrayList< Element >();
+        //ArrayList<Element> roles = new ArrayList< Element >();
         int i = 0;
         for ( ConnectorEnd end : e.getEnd()) {
             if ( end.getRole() != null ) {
-                roles.add( end.getRole() );
+                if (i == 0)
+                    specialization.put("source", end.getRole().getID());
+                else
+                    specialization.put("target", end.getRole().getID());
             }
             JSONArray propertyPath = new JSONArray();
             if (StereotypesHelper.hasStereotype(end, "NestedConnectorEnd")) {
                 List<Element> ps = StereotypesHelper.getStereotypePropertyValue(end, "NestedConnectorEnd", "propertyPath");
                 for (Element path: ps) {
-                    if (path instanceof ValueSpecification) {
-                        propertyPath.add(ExportUtility.fillValueSpecification((ValueSpecification)path, null));
+                    if (path instanceof ElementValue) {
+                        propertyPath.add(((ElementValue)path).getElement().getID());
+                        //propertyPath.add(ExportUtility.fillValueSpecification((ValueSpecification)path, null));
                     }
                 }
             }
@@ -773,8 +780,8 @@ public class ExportUtility {
                 specialization.put("targetPropertyPath", propertyPath);
             i++;
         }
-        JSONArray ids = makeJsonArrayOfIDs( roles );
-        specialization.put("roles", ids);
+        //JSONArray ids = makeJsonArrayOfIDs( roles );
+        //specialization.put("roles", ids);
         return specialization;
     }
     
@@ -1155,13 +1162,17 @@ public class ExportUtility {
         if (e instanceof Comment
                 && ExportUtility.isElementDocumentation((Comment) e))
             return false;
-        if (e instanceof InstanceSpecification && e.getOwnedElement().isEmpty()
-                && !(e instanceof EnumerationLiteral))
-            return false;
+        if (e instanceof InstanceSpecification && !(e instanceof EnumerationLiteral)) {
+            if (e.getOwnedElement().isEmpty())
+                return false;
+            if (((InstanceSpecification)e).getClassifier().size() == 1 && 
+                    IGNORE_INSTANCE_CLASSIFIERS.contains(((InstanceSpecification)e).getClassifier().get(0).getID()))
+                return false;
+        }
         if (e instanceof ConnectorEnd)
             return false;
-        if (e instanceof Slot
-                && ExportUtility.ignoreSlots.contains(((Slot) e)
+        if (e instanceof Slot && ((Slot)e).getDefiningFeature() != null
+                && ExportUtility.IGNORE_SLOT_FEATURES.contains(((Slot) e)
                         .getDefiningFeature().getID()))
             return false;
         return true;

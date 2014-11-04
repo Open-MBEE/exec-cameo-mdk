@@ -94,6 +94,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 
@@ -111,6 +112,7 @@ public class ModelValidator {
     private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
     private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
     private ValidationRule metaclassDiff = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
+    private ValidationRule connectorDiff = new ValidationRule("Connector", "role/property paths are different", ViolationSeverity.ERROR);
     private Project prj;
     private Element start;
     private JSONObject result;       
@@ -131,6 +133,7 @@ public class ModelValidator {
         suite.addValidationRule(baselineTag);
         suite.addValidationRule(metaclassDiff);
         suite.addValidationRule(propertyTypeDiff);
+        suite.addValidationRule(connectorDiff);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -345,7 +348,7 @@ public class ModelValidator {
                 valueDiff.addViolation(v);
             ValidationRuleViolation v2 = propertyTypeDiff((Property)e, elementInfo);
             if (v2 != null)
-                propertyTypeDiff.addViolation(v2);            
+                propertyTypeDiff.addViolation(v2);
         } else if (e instanceof Slot) {
             ValidationRuleViolation v = valueDiff((Slot)e, elementInfo);
             if (v != null)
@@ -378,6 +381,10 @@ public class ModelValidator {
                     v.addAction(new ExportRel(e));
                 relDiff.addViolation(v);
             }
+        } else if (e instanceof Connector) {
+            ValidationRuleViolation v = connectorDiff((Connector)e, elementInfo);
+            if (v != null)
+                connectorDiff.addViolation(v);
         }
         if ( e.getOwner() != null ) {
             String ownerID = e.getOwner().getID();
@@ -559,6 +566,16 @@ public class ModelValidator {
                 return v;
             }
         }        
+        return null;
+    }
+    
+    private ValidationRuleViolation connectorDiff(Connector e, JSONObject info) {
+        JSONObject spec = (JSONObject)info.get("specialization");
+        JSONArray sourcePropPath = (JSONArray)spec.get("sourcePropertyPath");
+        JSONArray targetPropPath = (JSONArray)spec.get("targetPropertyPath");
+        String webSource = (String)spec.get("source");
+        String webTarget = (String)spec.get("target");
+        
         return null;
     }
     

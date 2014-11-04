@@ -45,6 +45,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectableElement;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
@@ -186,6 +188,8 @@ public class ImportUtility {
                 setRelationshipEnds((DirectedRelationship)e, spec);
             if (type != null && e instanceof Constraint && type.equals("Constraint"))
                 setConstraintSpecification((Constraint)e, spec);
+            if (type != null && e instanceof Connector && type.equals("Connector"))
+                setConnectorEnds((Connector)e, spec);
         }
     }
     
@@ -263,6 +267,43 @@ public class ImportUtility {
         if (sp != null) {
             c.setSpecification(createValueSpec(sp));
         }
+    }
+    
+    public static void setConnectorEnds(Connector c, JSONObject spec) {
+        String webSource = (String)spec.get("source");
+        String webTarget = (String)spec.get("target");
+        Element webSourceE = ExportUtility.getElementFromID(webSource);
+        Element webTargetE = ExportUtility.getElementFromID(webTarget);
+        if (webSourceE instanceof ConnectableElement && webTargetE instanceof ConnectableElement) {
+            c.getEnd().get(0).setRole((ConnectableElement)webSourceE);
+            c.getEnd().get(1).setRole((ConnectableElement)webTargetE);
+        }
+        JSONArray webSourcePath = (JSONArray)spec.get("sourcePropertyPath");
+        JSONArray webTargetPath = (JSONArray)spec.get("targetPropertyPath");
+        Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
+        if (webSourcePath != null) {
+            List<ValueSpecification> evs = createElementValues((List<String>)webSourcePath);
+            StereotypesHelper.setStereotypePropertyValue(c.getEnd().get(0), nestedend, "propertyPath", evs);
+        }
+        if (webTargetPath != null) {
+            List<ValueSpecification> evs = createElementValues((List<String>)webTargetPath);
+            StereotypesHelper.setStereotypePropertyValue(c.getEnd().get(1), nestedend, "propertyPath", evs);
+        }
+        
+    }
+    
+    public static List<ValueSpecification> createElementValues(List<String> ids) {
+        List<ValueSpecification> result = new ArrayList<ValueSpecification>();
+        ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+        for (String id: ids) {
+            Element e = ExportUtility.getElementFromID(id);
+            if (e == null)
+                continue;
+            ElementValue ev = ef.createElementValueInstance();
+            ev.setElement(e);
+            result.add(ev);
+        }
+        return result;
     }
     
     public static ValueSpecification createValueSpec(JSONObject o) {
