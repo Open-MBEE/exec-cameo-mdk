@@ -43,6 +43,7 @@ import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+@Deprecated
 public class ExportElementComments extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element element;

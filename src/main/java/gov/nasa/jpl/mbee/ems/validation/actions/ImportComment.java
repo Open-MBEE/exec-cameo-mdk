@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -48,6 +49,7 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+@Deprecated
 public class ImportComment extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
@@ -105,6 +107,11 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
             SessionManager.getInstance().cancelSession();
             Utils.printException(ex);
         }
+    }
+    
+    @Override
+    protected boolean doAction(Annotation anno) {
+        return true;
     }
     
     @SuppressWarnings("unchecked")

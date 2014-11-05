@@ -71,71 +71,34 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Change Rels");
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        try {
-            boolean noneditable = false;
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
-                    noneditable = true;
-                    continue;
-                }
-                
-                JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-                JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-                ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
-                //AnnotationManager.getInstance().remove(anno);
-                toremove.add(anno);
-            }
-            SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-        }
-        if (listener != null)
-            listener.enable();
-        
+        executeMany(annos, "Change Rels");
     }
-
+    
+    @Override
+    protected boolean doAction(Annotation anno) {
+        if (anno != null) {
+            Element e = (Element)anno.getTarget();
+            if (!e.isEditable()) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                return false;
+            }
+            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            JSONObject specialization = (JSONObject)tmpObj.get("specialization");
+            ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
+        } else {
+            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID());
+            JSONObject specialization = (JSONObject)tmpObj.get("specialization");
+            ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
+        }
+        return true;
+    }
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
             Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
             return;
         }
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Change Rel");
-        try {
-            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID());
-            JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-            ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
-
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
-        if (listener != null)
-            listener.enable();
+        execute("Change Rel");
     }
 }

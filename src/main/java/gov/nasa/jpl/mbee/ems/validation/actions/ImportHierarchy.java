@@ -106,33 +106,28 @@ AnnotationAction, IRuleViolationAction {
             this.removeViolationsAndUpdateWindow(toremove);
         }*/
     }
-
+    
     @Override
-    public void actionPerformed(ActionEvent e) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Change Hierarchy");
-        try {
+    protected boolean doAction(Annotation anno) throws ReadOnlyElementException {
+        if (anno != null) {
+            
+        } else {
             Map<String, Object> result = importHierarchy(view, md, keyed);
             if ((Boolean)result.get("success")) {
-                SessionManager.getInstance().closeSession();
                 sendChanges(result);
-                this.removeViolationAndUpdateWindow();
-                saySuccess();
-            } else {
-                SessionManager.getInstance().cancelSession();
-            }
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
+                return true;
+            } else
+                return false;
         }
-        if (listener != null)
-            listener.enable();
+        return true;
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        execute("Change Hierarchy");
     }
 
+    @SuppressWarnings("unchecked")
     private void sendChanges(Map<String, Object> results) {
         List<Element> added = (List<Element>)results.get("added");
         List<Property> moved = (List<Property>)results.get("moved");
@@ -150,7 +145,6 @@ AnnotationAction, IRuleViolationAction {
         ExportUtility.send(url, tosend.toJSONString(), null, false);
     }
     
-    @SuppressWarnings("unchecked")
     private Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {	
         Map<String, Object> retval = new HashMap<String, Object>();
         retval.put("success", true);

@@ -91,78 +91,40 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Change values");
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        ValueSpecification newVal = null;
-        try {
-            boolean noneditable = false;
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
-                    noneditable = true;
-                    continue;
-                }
-                Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
-                JSONArray vals = (JSONArray)((JSONObject)((JSONObject)map.get(e.getID())).get("specialization")).get("value");
-                if (e instanceof Property) {
-                    ImportUtility.setPropertyDefaultValue((Property)e, vals);
-                } else if (e instanceof Slot) {
-                    ImportUtility.setSlotValues((Slot)e, vals);
-                }
-                //AnnotationManager.getInstance().remove(annotation);
-                toremove.add(anno);
-            }
-            SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
-        if (listener != null)
-            listener.enable();
-        
+        executeMany(annos, "Change Values");
     }
 
+    @Override
+    protected boolean doAction(Annotation anno) {
+        if (anno != null) {
+            Element e = (Element)anno.getTarget();
+            if (!e.isEditable()) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                return false;
+            }
+            Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
+            JSONArray vals = (JSONArray)((JSONObject)((JSONObject)map.get(e.getID())).get("specialization")).get("value");
+            if (e instanceof Property) {
+                ImportUtility.setPropertyDefaultValue((Property)e, vals);
+            } else if (e instanceof Slot) {
+                ImportUtility.setSlotValues((Slot)e, vals);
+            }
+        } else {
+            if (element instanceof Property) {
+                ImportUtility.setPropertyDefaultValue((Property)element, values);
+            } else if (element instanceof Slot) {
+                ImportUtility.setSlotValues((Slot)element, values);
+            }
+        }
+        return true;
+    }
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
             Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
             return;
         }
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Change value");
-        ValueSpecification newVal = null;
-        try {
-            if (element instanceof Property) {
-                ImportUtility.setPropertyDefaultValue((Property)element, values);
-            } else if (element instanceof Slot) {
-                ImportUtility.setSlotValues((Slot)element, values);
-            }
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
-        if (listener != null)
-            listener.enable();
+        execute("Change Value");
     }
 }

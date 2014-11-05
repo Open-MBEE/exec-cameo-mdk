@@ -70,42 +70,24 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
     }
 
     @Override
-    public void execute(Collection<Annotation> annos) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Change Owners");
-        Project prj = Application.getInstance().getProject();
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        try {
-            boolean noneditable = false;
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
-                    noneditable = true;
-                    continue;
-                }
-                JSONObject ob = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-                ImportUtility.setOwner(e, ob);
-                //AnnotationManager.getInstance().remove(anno);
-                toremove.add(anno);
+    protected boolean doAction(Annotation anno) {
+        if (anno != null) {
+            Element e = (Element)anno.getTarget();
+            if (!e.isEditable()) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                return false;
             }
-            SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
+            JSONObject ob = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            ImportUtility.setOwner(e, ob);
+        } else {
+            element.setOwner(owner);
         }
-        if (listener != null)
-            listener.enable();
+        return true;
+    }
+    
+    @Override
+    public void execute(Collection<Annotation> annos) {
+        executeMany(annos, "Change Owners");
     }
     
     @Override
@@ -114,24 +96,6 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
             Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
             return;
         }
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Change Owner");
-        try {
-            element.setOwner(owner);
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
-        if (listener != null)
-            listener.enable();
+        execute("Change Owner");
     }
 }

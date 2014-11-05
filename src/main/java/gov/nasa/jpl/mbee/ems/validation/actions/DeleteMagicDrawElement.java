@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -39,11 +40,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
+import org.json.simple.JSONObject;
+
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -63,78 +67,23 @@ public class DeleteMagicDrawElement extends RuleViolationAction implements Annot
     }
 
     @Override
-    public void execute(Collection<Annotation> annos) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        boolean noneditable = false;
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        if (!SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().createSession("Delete MagicDraw Elements");
-            for (Annotation anno : annos) {
-                Element e = (Element) anno.getTarget();
-                try {
-                    ModelElementsManager.getInstance().removeElement(e);
-                    toremove.add(anno);
-                } catch (Exception ex) {
-                    Utils.printException(ex);
-                    noneditable = true;
-                }
-            }
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            this.removeViolationsAndUpdateWindow(toremove);
+    protected boolean doAction(Annotation anno) throws ReadOnlyElementException {
+        if (anno != null) {
+            Element e = (Element) anno.getTarget();
+            ModelElementsManager.getInstance().removeElement(e);
         } else {
-            for (Annotation anno : annos) {
-                Element e = (Element) anno.getTarget();
-                try {
-                    ModelElementsManager.getInstance().removeElement(e);
-                    toremove.add(anno);
-                } catch (Exception ex) {
-                    Utils.printException(ex);
-                    noneditable = true;
-                }
-            }
+            ModelElementsManager.getInstance().removeElement(element);
         }
-        if (noneditable) {
-            Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable and not deleted");
-        } else
-            saySuccess();
-        this.removeViolationsAndUpdateWindow(toremove);
-        if (listener != null)
-            listener.enable();
+        return true;
+    }
+    
+    @Override
+    public void execute(Collection<Annotation> annos) {
+        executeMany(annos, "Delete Elements");
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        if (!SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().createSession("Delete MagicDraw Element");
-            try {
-                ModelElementsManager.getInstance().removeElement(element);
-                SessionManager.getInstance().closeSession();
-                saySuccess();
-                this.removeViolationAndUpdateWindow();
-            } catch (Exception ex) {
-                Utils.printException(ex);
-                SessionManager.getInstance().cancelSession();
-            }
-        } else {
-            try {
-                ModelElementsManager.getInstance().removeElement(element);
-                saySuccess();
-                this.removeViolationAndUpdateWindow();
-            } catch (Exception ex) {
-                Utils.printException(ex);
-            }
-        }
-        if (listener != null)
-            listener.enable();
+        execute("Delete Element");
     }
 }
