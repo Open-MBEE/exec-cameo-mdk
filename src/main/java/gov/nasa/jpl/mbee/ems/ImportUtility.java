@@ -24,7 +24,9 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdassociationclasses.AssociationClass;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
@@ -161,6 +163,10 @@ public class ImportUtility {
             Stereotype product = Utils.getProductStereotype();
             StereotypesHelper.addStereotype(prod, product);
             newE = prod;
+        } else if (elementType.equalsIgnoreCase("Association")) {
+            AssociationClass ac = ef.createAssociationClassInstance();
+            setAssociation(ac, specialization);
+            newE = ac;
         } else {
             Class newElement = ef.createClassInstance();
             newE = newElement;
@@ -270,16 +276,20 @@ public class ImportUtility {
     }
     
     public static void setConnectorEnds(Connector c, JSONObject spec) {
-        String webSource = (String)spec.get("source");
-        String webTarget = (String)spec.get("target");
+        JSONArray webSourcePath = (JSONArray)spec.get("source");
+        JSONArray webTargetPath = (JSONArray)spec.get("target");
+        String webSource = null;
+        String webTarget = null;
+        if (webSourcePath != null && !webSourcePath.isEmpty())
+            webSource = (String)webSourcePath.remove(webSourcePath.size()-1);
+        if (webTargetPath != null && !webTargetPath.isEmpty())
+            webTarget = (String)webTargetPath.remove(webTargetPath.size()-1);
         Element webSourceE = ExportUtility.getElementFromID(webSource);
         Element webTargetE = ExportUtility.getElementFromID(webTarget);
         if (webSourceE instanceof ConnectableElement && webTargetE instanceof ConnectableElement) {
             c.getEnd().get(0).setRole((ConnectableElement)webSourceE);
             c.getEnd().get(1).setRole((ConnectableElement)webTargetE);
         }
-        JSONArray webSourcePath = (JSONArray)spec.get("sourcePropertyPath");
-        JSONArray webTargetPath = (JSONArray)spec.get("targetPropertyPath");
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
         if (webSourcePath != null) {
             List<ValueSpecification> evs = createElementValues((List<String>)webSourcePath);
@@ -289,6 +299,13 @@ public class ImportUtility {
             List<ValueSpecification> evs = createElementValues((List<String>)webTargetPath);
             StereotypesHelper.setStereotypePropertyValue(c.getEnd().get(1), nestedend, "propertyPath", evs);
         }
+        String type = (String)spec.get("connectorType");
+        Element asso = ExportUtility.getElementFromID(type);
+        if (asso instanceof Association)
+            c.setType((Association)asso);
+    }
+    
+    public static void setAssociation(Association a, JSONObject spec) {
         
     }
     

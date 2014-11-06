@@ -724,12 +724,20 @@ public class ExportUtility {
             specialization = new JSONObject();
         int i = 0;
         for (Property p: e.getMemberEnd()) {
-            if (i == 0)
+            if (i == 0) {
                 specialization.put("source", p.getID());
-            else
+                specialization.put("sourceAggregation", p.getAggregation().toString());
+            } else {
                 specialization.put("target", p.getID());
+                specialization.put("targetAggregation", p.getAggregation().toString());
+            }
             i++;
         }
+        JSONArray owned = new JSONArray();
+        for (Property p: e.getOwnedEnd()) {
+            owned.add(p.getID());
+        }
+        specialization.put("ownedEnd", owned);
         specialization.put("type", "Association");
         return specialization;
     }
@@ -755,33 +763,30 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         specialization.put("type", "Connector");
-        //ArrayList<Element> roles = new ArrayList< Element >();
         int i = 0;
         for ( ConnectorEnd end : e.getEnd()) {
-            if ( end.getRole() != null ) {
-                if (i == 0)
-                    specialization.put("source", end.getRole().getID());
-                else
-                    specialization.put("target", end.getRole().getID());
-            }
             JSONArray propertyPath = new JSONArray();
-            if (StereotypesHelper.hasStereotype(end, "NestedConnectorEnd")) {
-                List<Element> ps = StereotypesHelper.getStereotypePropertyValue(end, "NestedConnectorEnd", "propertyPath");
-                for (Element path: ps) {
-                    if (path instanceof ElementValue) {
-                        propertyPath.add(((ElementValue)path).getElement().getID());
-                        //propertyPath.add(ExportUtility.fillValueSpecification((ValueSpecification)path, null));
+            if ( end.getRole() != null ) {
+                if (StereotypesHelper.hasStereotype(end, "NestedConnectorEnd")) {
+                    List<Element> ps = StereotypesHelper.getStereotypePropertyValue(end, "NestedConnectorEnd", "propertyPath");
+                    for (Element path: ps) {
+                        if (path instanceof ElementValue) {
+                            propertyPath.add(((ElementValue)path).getElement().getID());
+                        }
                     }
                 }
+                propertyPath.add(end.getRole().getID());
             }
             if (i == 0)
-                specialization.put("sourcePropertyPath", propertyPath);
+                specialization.put("source", propertyPath);
             else
-                specialization.put("targetPropertyPath", propertyPath);
+                specialization.put("target", propertyPath);
             i++;
         }
-        //JSONArray ids = makeJsonArrayOfIDs( roles );
-        //specialization.put("roles", ids);
+        if (e.getType() == null)
+            specialization.put("connectorType", "null");
+        else
+            specialization.put("connectorType", e.getType().getID());
         return specialization;
     }
     
