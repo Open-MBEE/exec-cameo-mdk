@@ -276,8 +276,8 @@ public class ImportUtility {
     }
     
     public static void setConnectorEnds(Connector c, JSONObject spec) {
-        JSONArray webSourcePath = (JSONArray)spec.get("source");
-        JSONArray webTargetPath = (JSONArray)spec.get("target");
+        JSONArray webSourcePath = (JSONArray)spec.get("sourcePath");
+        JSONArray webTargetPath = (JSONArray)spec.get("targetPath");
         String webSource = null;
         String webTarget = null;
         if (webSourcePath != null && !webSourcePath.isEmpty())
@@ -291,11 +291,11 @@ public class ImportUtility {
             c.getEnd().get(1).setRole((ConnectableElement)webTargetE);
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
-        if (webSourcePath != null) {
+        if (webSourcePath != null && !webSourcePath.isEmpty()) {
             List<ValueSpecification> evs = createElementValues((List<String>)webSourcePath);
             StereotypesHelper.setStereotypePropertyValue(c.getEnd().get(0), nestedend, "propertyPath", evs);
         }
-        if (webTargetPath != null) {
+        if (webTargetPath != null && !webTargetPath.isEmpty()) {
             List<ValueSpecification> evs = createElementValues((List<String>)webTargetPath);
             StereotypesHelper.setStereotypePropertyValue(c.getEnd().get(1), nestedend, "propertyPath", evs);
         }

@@ -778,9 +778,9 @@ public class ExportUtility {
                 propertyPath.add(end.getRole().getID());
             }
             if (i == 0)
-                specialization.put("source", propertyPath);
+                specialization.put("sourcePath", propertyPath);
             else
-                specialization.put("target", propertyPath);
+                specialization.put("targetPath", propertyPath);
             i++;
         }
         if (e.getType() == null)
