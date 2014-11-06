@@ -65,7 +65,10 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
     private static final long serialVersionUID = 1L;
     private JSONObject ob;
     private Map<String, JSONObject> elementsKeyed;
-
+    private Collection<Annotation> annos;
+    private boolean multiple = false;
+    private boolean multipleSuccess = true;
+    
     public CreateMagicDrawElement(JSONObject ob, Map<String, JSONObject> elementsKeyed) {
         super("CreateMagicDrawElement", "Create MagicDraw element", null, null);
         this.ob = ob;
@@ -80,17 +83,31 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
     @SuppressWarnings("unchecked")
     @Override
     public void execute(Collection<Annotation> annos) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("create elements");
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        try {
+        multiple = false;
+        multipleSuccess = true;
+        this.annos = annos;
+        executeMany(annos, "Create Elements");
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        execute("Create Element");
+    }
+    
+    @Override
+    protected boolean doAction(Annotation anno) {
+        if (anno != null) {
+            if (multiple) {
+                if (multipleSuccess)
+                    return true;
+                else
+                    return false;
+            }
+            multiple = true;
             List<JSONObject> tocreate = new ArrayList<JSONObject>();
-            for (Annotation anno: annos) {
-                String message = anno.getText();
+            for (Annotation ann: annos) {
+                String message = ann.getText();
                 String[] mes = message.split("'");
                 String eid = null;
                 if (mes.length > 2)
@@ -99,64 +116,31 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                     JSONObject newe = elementsKeyed.get(eid);
                     if (newe != null) {
                         tocreate.add(newe);
-                        /*Element newElement = ImportUtility.createElement(newe);
-                        if (newElement != null)
-                            toremove.add(anno);
-                        else {
-                            Application.getInstance().getGUILog().log("[ERROR] Cannot create element " + eid + " (id already exists or owner not found)");
-                        }*/
                     }
                 }
             }
             tocreate = ImportUtility.getCreationOrder(tocreate);
             if (tocreate == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Cannot create elements (id already exists or owner(s) not found)");
+                multipleSuccess = false;
+                return false;
             } else {
                 for (JSONObject newe: tocreate) {
                     Element newElement = ImportUtility.createElement(newe);
                     if (newElement == null) {
                         Application.getInstance().getGUILog().log("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
+                        multipleSuccess = false;
+                        return false;
                     }
                 }
-                saySuccess();
-                this.removeViolationsAndUpdateWindow(toremove);
             }
-            SessionManager.getInstance().closeSession();
-            
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        } finally {
-            if (listener != null)
-                listener.enable();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void actionPerformed(ActionEvent e) {		
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
-        if (listener != null)
-            listener.disable();
-        SessionManager.getInstance().createSession("Create Element");
-        try {
+        } else {
             Element magicDrawElement = ImportUtility.createElement(ob); 
             if (magicDrawElement == null) {
-                SessionManager.getInstance().cancelSession();
                 Application.getInstance().getGUILog().log("[ERROR] Element not created (id already exists or owner not found)");
-                return;
+                return false;
             }
-            SessionManager.getInstance().closeSession();
-            this.removeViolationAndUpdateWindow();
-            saySuccess();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        } finally {
-            if (listener != null)
-                listener.enable();
         }
-	}
+        return true;
+    }
 }
