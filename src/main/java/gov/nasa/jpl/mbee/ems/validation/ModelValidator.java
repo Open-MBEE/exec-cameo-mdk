@@ -193,13 +193,9 @@ public class ModelValidator {
         result.put("elementsKeyed", elementsKeyed);
     }
     
-    @SuppressWarnings("unchecked")
-    private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all, ProgressStatus ps) {
-        //Set<Element> all = new HashSet<Element>();
-        Set<String> checked = new HashSet<String>();
-
-        //MDEV #673: update to handle specialization elements.
-        //
+    private void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
+        if (result == null)
+            return;
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
@@ -216,14 +212,38 @@ public class ModelValidator {
             }
             elementsKeyed.put(elementId, elementInfo);
         }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all, ProgressStatus ps) {
+        //Set<Element> all = new HashSet<Element>();
+        Set<String> checked = new HashSet<String>();
+
+        //MDEV #673: update to handle specialization elements.
+        //
+        updateElementsKeyed(result, elementsKeyed);
         // elementsKeyed.keySet() refers to all MagicDraw element IDs on Alfresco
         // all refers to MagicDraw view element and owned elements
         // 1st loop: MagicDraw elements get compared with Alfresco elements 
+        Set<Element> missing = new HashSet<Element>();
         for (Element e: all) {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
             	// MagicDraw element is not on Alfresco
+                if (checkExist && ExportUtility.shouldAdd(e)) {
+                    missing.add(e);
+                } else
+                    continue;
+            }
+        }
+        JSONObject missingResult = getManyAlfrescoElements(missing);
+        updateElementsKeyed(missingResult, elementsKeyed);
+        for (Element e: all) {
+            if (ps != null && ps.isCancel())
+                break;
+            if (!elementsKeyed.containsKey(e.getID())) {
+                // MagicDraw element is not on Alfresco
                 if (checkExist && ExportUtility.shouldAdd(e)) {
                     JSONObject maybeMissing = getAlfrescoElement(e);
                     if (maybeMissing != null) {
@@ -242,6 +262,7 @@ public class ModelValidator {
             checkElement(e, elementInfo);
             checked.add(e.getID());
         }
+        
         Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
         
@@ -742,5 +763,20 @@ public class ModelValidator {
         return (JSONObject)elements.get(0);
     }
     
-    
+    private JSONObject getManyAlfrescoElements(Set<Element> es) {
+        if (es.isEmpty())
+            return null;
+        JSONArray elements = new JSONArray();
+        for (Element e: es) {
+            JSONObject ob = new JSONObject();
+            ob.put("sysmlid", ExportUtility.getElementID(e));
+            elements.add(ob);
+        }
+        JSONObject tosend = new JSONObject();
+        tosend.put("elements", elements);
+        String url = ExportUtility.getUrlWithWorkspace();
+        url += "/elements";
+        String response = ExportUtility.getWithBody(url, tosend.toJSONString());
+        return (JSONObject)JSONValue.parse(response);
+    }
 }
