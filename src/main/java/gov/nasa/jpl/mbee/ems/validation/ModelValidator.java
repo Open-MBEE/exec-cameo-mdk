@@ -208,7 +208,7 @@ public class ModelValidator {
                 if (e != null)
                     elementId = e.getID();
                 else
-                    continue;
+                    continue; //??
             }
             elementsKeyed.put(elementId, elementInfo);
         }
@@ -243,20 +243,11 @@ public class ModelValidator {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
-                // MagicDraw element is not on Alfresco
-                if (checkExist && ExportUtility.shouldAdd(e)) {
-                    JSONObject maybeMissing = getAlfrescoElement(e);
-                    if (maybeMissing != null) {
-                        elementsKeyed.put(e.getID(), maybeMissing);
-                    } else {
-                        ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
-                        v.addAction(new DeleteMagicDrawElement(e));
-                        v.addAction(new ExportElement(e));
-                        exist.addViolation(v);
-                        continue;
-                    }
-                } else
-                    continue;
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
+                v.addAction(new DeleteMagicDrawElement(e));
+                v.addAction(new ExportElement(e));
+                exist.addViolation(v);
+                continue;
             }
             JSONObject elementInfo = (JSONObject)elementsKeyed.get(e.getID());
             checkElement(e, elementInfo);
