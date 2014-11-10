@@ -42,6 +42,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportPropertyType;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportSite;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportComment;
@@ -92,6 +93,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
@@ -420,6 +422,14 @@ public class ModelValidator {
     }
     
     private ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
+        JSONObject model = ExportUtility.fillPackage(e, null);
+        Boolean serversite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("site");
+        Boolean modelsite = (Boolean)model.get("site");
+        if (!serversite && modelsite || serversite && !modelsite) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE] model: " + modelsite + ", web: " + serversite);
+            v.addAction(new ExportSite(e));
+            return v;
+        }
         return null;
     }
     
