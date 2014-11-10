@@ -119,19 +119,13 @@ public class ImportUtility {
             newE = view;
         } else if (elementType.equalsIgnoreCase("Property")) {
             JSONArray vals = (JSONArray) specialization.get("value");
-
-            // Check if this is a slot. If so, process
-            // the associated values; otherwise continue
-            // to process the Property element using only the
-            // first value in the array.
-            //
+            
             Boolean isSlot = (Boolean) specialization.get("isSlot");
             if ((isSlot != null) && (isSlot == true)) {
                 Slot newSlot = ef.createSlotInstance();
                 setSlotValues(newSlot, vals);
                 newE = newSlot;
-            }
-            else {
+            } else {
                 Property newProperty = ef.createPropertyInstance();
                 setPropertyDefaultValue(newProperty, vals);
                 setPropertyType(newProperty, (String)specialization.get("propertyType"));
@@ -167,6 +161,10 @@ public class ImportUtility {
             AssociationClass ac = ef.createAssociationClassInstance();
             setAssociation(ac, specialization);
             newE = ac;
+        } else if (elementType.equalsIgnoreCase("Connector")) { 
+            Connector conn = ef.createConnectorInstance();
+            setConnectorEnds(conn, specialization);
+            newE = conn;
         } else {
             Class newElement = ef.createClassInstance();
             newE = newElement;
@@ -196,6 +194,8 @@ public class ImportUtility {
                 setConstraintSpecification((Constraint)e, spec);
             if (type != null && e instanceof Connector && type.equals("Connector"))
                 setConnectorEnds((Connector)e, spec);
+            if (type != null && e instanceof Association && type.equals("Association"))
+                setAssociation((Association)e, spec);
         }
     }
     

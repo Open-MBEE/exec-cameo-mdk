@@ -283,7 +283,6 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(conn, elementOb);
             }
-            
         }
     }
 

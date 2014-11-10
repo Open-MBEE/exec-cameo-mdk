@@ -358,27 +358,8 @@ public class ModelValidator {
             //if (v != null)
              //   valueDiff.addViolation(v);
         } else if (e instanceof DirectedRelationship) {
-        	JSONObject specialization = (JSONObject)elementInfo.get("specialization");
-            String websourceId = (String)specialization.get("source");
-            Element websource = null;
-            String webtargetId = (String)specialization.get("target");
-            Element webtarget = null;
-            Element localsource = ModelHelper.getClientElement(e);
-            Element localtarget = ModelHelper.getSupplierElement(e);
-            if (websourceId != null)
-                websource = (Element)prj.getElementByID(websourceId);
-            if (webtargetId != null)
-                webtarget = (Element)prj.getElementByID(webtargetId);
-            if (websource != null && webtarget != null && localsource != null && localtarget != null && (websource != localsource || webtarget != localtarget)) {
-                String msg = "[REL] ";
-                if (websource != localsource)
-                    msg += "model source: " + localsource.getHumanName() + ", web source: " + websource == null ? "null" : websource.getHumanName() + " ";
-                if (webtarget != localtarget)
-                    msg += "model target: " + localtarget.getHumanName() + ", web target: " + webtarget == null ? "null" : webtarget.getHumanName();
-                ValidationRuleViolation v = new ValidationRuleViolation(e, msg);
-                v.addAction(new ImportRel(e, result));
-                if (editable)
-                    v.addAction(new ExportRel(e));
+        	ValidationRuleViolation v = relationshipDiff((DirectedRelationship)e, elementInfo);
+        	if (v != null) {
                 relDiff.addViolation(v);
             }
         } else if (e instanceof Connector) {
@@ -386,6 +367,13 @@ public class ModelValidator {
             if (v != null)
                 connectorDiff.addViolation(v);
         }
+        ValidationRuleViolation v = ownerDiff(e, elementInfo);
+        if (v != null)
+            ownership.addViolation(v);
+    }
+    
+    private ValidationRuleViolation ownerDiff(Element e, JSONObject elementInfo) {
+        Boolean editable = (Boolean)elementInfo.get("editable");
         if ( e.getOwner() != null ) {
             String ownerID = e.getOwner().getID();
             String webOwnerID = (String)elementInfo.get("owner");
@@ -408,9 +396,10 @@ public class ModelValidator {
                 //v.addAction(new FixModelOwner(e, owner, result)); //disable owner import for now since nothing can change the owner on the web
                 if (editable)
                     v.addAction(new ExportOwner(e));
-                ownership.addViolation(v);
+                return v;
             }
         }
+        return null;
     }
     
     private ValidationRuleViolation propertyTypeDiff(Property e, JSONObject info) {
@@ -431,6 +420,34 @@ public class ModelValidator {
             v.addAction(new ImportPropertyType(e, (Type)webTypeElement, result));
             if (editable)
                 v.addAction(new ExportPropertyType(e));
+            return v;
+        }
+        return null;
+    }
+    
+    private ValidationRuleViolation relationshipDiff(DirectedRelationship e, JSONObject elementInfo) {
+        JSONObject specialization = (JSONObject)elementInfo.get("specialization");
+        Boolean editable = (Boolean)elementInfo.get("editable");
+        String websourceId = (String)specialization.get("source");
+        Element websource = null;
+        String webtargetId = (String)specialization.get("target");
+        Element webtarget = null;
+        Element localsource = ModelHelper.getClientElement(e);
+        Element localtarget = ModelHelper.getSupplierElement(e);
+        if (websourceId != null)
+            websource = (Element)prj.getElementByID(websourceId);
+        if (webtargetId != null)
+            webtarget = (Element)prj.getElementByID(webtargetId);
+        if (websource != null && webtarget != null && localsource != null && localtarget != null && (websource != localsource || webtarget != localtarget)) {
+            String msg = "[REL] ";
+            if (websource != localsource)
+                msg += "model source: " + localsource.getHumanName() + ", web source: " + websource == null ? "null" : websource.getHumanName() + " ";
+            if (webtarget != localtarget)
+                msg += "model target: " + localtarget.getHumanName() + ", web target: " + webtarget == null ? "null" : webtarget.getHumanName();
+            ValidationRuleViolation v = new ValidationRuleViolation(e, msg);
+            v.addAction(new ImportRel(e, result));
+            if (editable)
+                v.addAction(new ExportRel(e));
             return v;
         }
         return null;
@@ -571,10 +588,9 @@ public class ModelValidator {
     
     private ValidationRuleViolation connectorDiff(Connector e, JSONObject info) {
         JSONObject spec = (JSONObject)info.get("specialization");
-        JSONArray sourcePropPath = (JSONArray)spec.get("sourcePropertyPath");
-        JSONArray targetPropPath = (JSONArray)spec.get("targetPropertyPath");
-        String webSource = (String)spec.get("source");
-        String webTarget = (String)spec.get("target");
+        JSONArray sourcePropPath = (JSONArray)spec.get("sourcePath");
+        JSONArray targetPropPath = (JSONArray)spec.get("targetPath");
+        
         
         return null;
     }

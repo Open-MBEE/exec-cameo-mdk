@@ -895,6 +895,15 @@ public class ExportUtility {
         return info;
     }
     
+    public static JSONObject fillId(Element e, JSONObject einfo) {
+        JSONObject info = einfo;
+        if (info == null) {
+            info = new JSONObject();
+            info.put("sysmlid", getElementID(e));
+        }
+        return info;
+    }
+    
   //no one's using this, should consider removing it
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
