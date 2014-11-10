@@ -77,7 +77,9 @@ import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -103,7 +105,7 @@ public class ModelValidator {
     private ValidationSuite suite = new ValidationSuite("Model Sync");
     private ValidationRule nameDiff = new ValidationRule("Mismatched Name", "name is different", ViolationSeverity.ERROR);
     private ValidationRule docDiff = new ValidationRule("Mismatched Doc", "documentation is different", ViolationSeverity.ERROR);
-    private ValidationRule valueDiff = new ValidationRule("Mismatched Value", "value is different", ViolationSeverity.ERROR);
+    private ValidationRule valueDiff = new ValidationRule("Mismatched Value", "property/slot value is different", ViolationSeverity.ERROR);
     private ValidationRule propertyTypeDiff = new ValidationRule("Mismatched Property Type", "property type is different", ViolationSeverity.ERROR);
     private ValidationRule ownership = new ValidationRule("Moved", "Wrong containment", ViolationSeverity.ERROR);
     private ValidationRule exist = new ValidationRule("Exist", "Doesn't Exist or Moved", ViolationSeverity.WARNING);
@@ -113,6 +115,8 @@ public class ModelValidator {
     private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
     private ValidationRule metaclassDiff = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
     private ValidationRule connectorDiff = new ValidationRule("Connector", "role/property paths are different", ViolationSeverity.ERROR);
+    private ValidationRule constraintDiff = new ValidationRule("Constraint", "constraint spec is different", ViolationSeverity.ERROR);
+    private ValidationRule associationDiff = new ValidationRule("Association", "association roles are different", ViolationSeverity.ERROR);
     private Project prj;
     private Element start;
     private JSONObject result;       
@@ -134,6 +138,8 @@ public class ModelValidator {
         suite.addValidationRule(metaclassDiff);
         suite.addValidationRule(propertyTypeDiff);
         suite.addValidationRule(connectorDiff);
+        suite.addValidationRule(constraintDiff);
+        suite.addValidationRule(associationDiff);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -273,32 +279,6 @@ public class ModelValidator {
         }
     }
     
-    /*
-    @SuppressWarnings("unchecked")
-    private void validateViews(Map<String, JSONObject> elementsKeyed) {
-        JSONArray elements = (JSONArray)result.get("elements");
-        if (elements == null)
-            return;
-        for (JSONObject elementInfo: (List<JSONObject>)elements) {
-            String elementId = (String)elementInfo.get("id");
-            //Debug.outln("validating " + elementInfo + ", id = " + elementId);
-            Element e = ExportUtility.getElementFromID(elementId);
-            //Debug.outln("element = " + e);
-            if (e == null) {
-                continue;
-            }
-            if (elementsKeyed.containsKey(e.getID())) {
-                //Debug.outln("elementKeyed (" + elementsKeyed + ") contains " + elementId);
-                continue;
-            }
-            elementsKeyed.put(e.getID(), elementInfo);
-            //Debug.outln( "element.getClass() = "
-                         //+ e.getClass().getSimpleName() );
-            checkElement(e, elementInfo);
-            
-        }
-    }*/
-    
     private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed) {
         if (ProjectUtilities.isElementInAttachedProject(current))
             return;
@@ -366,6 +346,14 @@ public class ModelValidator {
             ValidationRuleViolation v = connectorDiff((Connector)e, elementInfo);
             if (v != null)
                 connectorDiff.addViolation(v);
+        } else if (e instanceof Constraint) {
+            ValidationRuleViolation v = constraintDiff((Constraint)e, elementInfo);
+            if (v != null)
+                constraintDiff.addViolation(v);
+        } else if (e instanceof Association) {
+            ValidationRuleViolation v = associationDiff((Association)e, elementInfo);
+            if (v != null)
+                associationDiff.addViolation(v);
         }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null)
@@ -592,6 +580,15 @@ public class ModelValidator {
         JSONArray targetPropPath = (JSONArray)spec.get("targetPath");
         
         
+        return null;
+    }
+    
+    private ValidationRuleViolation constraintDiff(Constraint e, JSONObject info) {
+        return null;
+        
+    }
+    
+    private ValidationRuleViolation associationDiff(Association e, JSONObject info) {
         return null;
     }
     
