@@ -117,8 +117,13 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             eles.addAll(elements.values());
             toSend.put("elements", eles);
             String url = ExportUtility.getPostElementsUrl();
-            if (url != null)
-                ExportUtility.send(url, toSend.toJSONString(), null, false);
+            if (url != null) {
+                //ExportUtility.send(url, toSend.toJSONString(), null, false);
+                Request r = new Request();
+                r.setJson(toSend.toJSONString());
+                r.setUrl(url);
+                OutputQueue.getInstance().offer(r);
+            }
             String deleteUrl = ExportUtility.getUrlWithWorkspace();
             for (String id: deletes) {
                 String durl = deleteUrl + "/elements/" + id;
