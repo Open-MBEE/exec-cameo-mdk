@@ -117,6 +117,7 @@ public class ModelValidator {
     private ValidationRule connectorDiff = new ValidationRule("Connector", "role/property paths are different", ViolationSeverity.ERROR);
     private ValidationRule constraintDiff = new ValidationRule("Constraint", "constraint spec is different", ViolationSeverity.ERROR);
     private ValidationRule associationDiff = new ValidationRule("Association", "association roles are different", ViolationSeverity.ERROR);
+    private ValidationRule siteDiff = new ValidationRule("Site", "site existence", ViolationSeverity.ERROR);
     private Project prj;
     private Element start;
     private JSONObject result;       
@@ -140,6 +141,7 @@ public class ModelValidator {
         suite.addValidationRule(connectorDiff);
         suite.addValidationRule(constraintDiff);
         suite.addValidationRule(associationDiff);
+        suite.addValidationRule(siteDiff);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -354,6 +356,10 @@ public class ModelValidator {
             ValidationRuleViolation v = associationDiff((Association)e, elementInfo);
             if (v != null)
                 associationDiff.addViolation(v);
+        } else if (e instanceof Package) {
+            ValidationRuleViolation v = siteDiff((Package)e, elementInfo);
+            if (v != null)
+                siteDiff.addViolation(v);
         }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null)
@@ -410,6 +416,10 @@ public class ModelValidator {
                 v.addAction(new ExportPropertyType(e));
             return v;
         }
+        return null;
+    }
+    
+    private ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
         return null;
     }
     

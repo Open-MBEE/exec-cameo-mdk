@@ -1960,6 +1960,10 @@ public class Utils {
         return StereotypesHelper.getStereotype(getProject(), stereotypeName);
     }
 
+    public static Stereotype getCharacterizesStereotype() {
+        return null;
+    }
+    
     public static Stereotype getViewpointStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Viewpoint");
     }

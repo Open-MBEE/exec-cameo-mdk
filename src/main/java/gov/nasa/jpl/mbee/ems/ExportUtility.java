@@ -614,8 +614,7 @@ public class ExportUtility {
         elementInfo.put("specialization", specialization);
         Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
-            specialization.put("type", "Package");
-            //check for site characterization here
+            fillPackage((Package)e, specialization);
         } else if (e instanceof Property || e instanceof Slot) {
             fillPropertySpecialization(e, specialization, true);
         } else if (e instanceof DirectedRelationship) {
@@ -739,6 +738,19 @@ public class ExportUtility {
         }
         specialization.put("ownedEnd", owned);
         specialization.put("type", "Association");
+        return specialization;
+    }
+    
+    public static JSONObject fillPackage(Package e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        specialization.put("type", "Package");
+        Stereotype characterizes = Utils.getCharacterizesStereotype();
+        if (Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1).size() > 0)
+            specialization.put("site", true);
+        else
+            specialization.put("site", false);
         return specialization;
     }
     
