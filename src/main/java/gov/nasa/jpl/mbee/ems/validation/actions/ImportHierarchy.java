@@ -32,7 +32,9 @@ import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
@@ -135,11 +137,19 @@ AnnotationAction, IRuleViolationAction {
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
         String url = ExportUtility.getPostElementsUrl();
-        ExportUtility.send(url, tosend.toJSONString(), null, false);
+        //ExportUtility.send(url, tosend.toJSONString(), null, false);
+        Request r = new Request();
+        r.setUrl(url);
+        r.setJson(tosend.toJSONString());
+        OutputQueue.getInstance().offer(r);
         url = ExportUtility.getUrlWithWorkspace();
         for (Element e: deleted) {
             String durl = url + "/elements/" + e.getID();
-            ExportUtility.delete(durl);
+            //ExportUtility.delete(durl);
+            Request rr = new Request();
+            r.setUrl(durl);
+            r.setMethod("DELETE");
+            OutputQueue.getInstance().offer(rr);
         }
     }
     
