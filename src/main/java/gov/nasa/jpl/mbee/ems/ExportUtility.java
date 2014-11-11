@@ -766,7 +766,7 @@ public class ExportUtility {
         if (vspec != null) {
             JSONObject cspec = new JSONObject();
             fillValueSpecification(vspec, cspec);
-            specialization.put("constraintSpecification", cspec);
+            specialization.put("specification", cspec);
         }
         return specialization;
     }

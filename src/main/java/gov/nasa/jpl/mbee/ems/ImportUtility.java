@@ -269,7 +269,7 @@ public class ImportUtility {
     }
     
     public static void setConstraintSpecification(Constraint c, JSONObject spec) {
-        JSONObject sp = (JSONObject)spec.get("constraintSpecification");
+        JSONObject sp = (JSONObject)spec.get("specification");
         if (sp != null) {
             c.setSpecification(createValueSpec(sp));
         }

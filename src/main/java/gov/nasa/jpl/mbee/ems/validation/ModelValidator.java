@@ -621,7 +621,7 @@ public class ModelValidator {
     private ValidationRuleViolation constraintDiff(Constraint e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject spec = (JSONObject)info.get("specialization");
-        JSONObject value = (JSONObject)spec.get("constraintSpecification");
+        JSONObject value = (JSONObject)spec.get("specification");
         Map<String, Object> results = valueSpecDiff(e.getSpecification(), value);
         String message = (String)results.get("message");
         boolean stringMatch = (Boolean)results.get("stringMatch");
