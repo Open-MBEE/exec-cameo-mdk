@@ -605,11 +605,14 @@ public class ModelValidator {
         Boolean editable = (Boolean)info.get("editable");
         JSONArray webSourcePropPath = (JSONArray)webspec.get("sourcePath");
         JSONArray webTargetPropPath = (JSONArray)webspec.get("targetPath");
+        String webtype = (String)webspec.get("connectorType");
         JSONObject modelspec = ExportUtility.fillConnectorSpecialization(e, null);
         JSONArray modelSourcePropPath = (JSONArray)modelspec.get("sourcePath");
         JSONArray modelTargetPropPath = (JSONArray)modelspec.get("targetPath");
-        if (!webSourcePropPath.equals(modelSourcePropPath) || !webTargetPropPath.equals(modelTargetPropPath)) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONNECTOR] connector roles/paths doesn't match");
+        String modeltype = (String)modelspec.get("connectorType");
+        if (!webSourcePropPath.equals(modelSourcePropPath) || !webTargetPropPath.equals(modelTargetPropPath) || 
+                (modeltype != null && !modeltype.equals(webtype) || webtype != null && !webtype.equals(modeltype))) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONNECTOR] connector roles/paths/types doesn't match");
             if (editable)
                 v.addAction(new ExportConnector(e));
             v.addAction(new ImportConnector(e, webspec, result));
@@ -622,15 +625,18 @@ public class ModelValidator {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject spec = (JSONObject)info.get("specialization");
         JSONObject value = (JSONObject)spec.get("specification");
-        Map<String, Object> results = valueSpecDiff(e.getSpecification(), value);
+        JSONObject modelspec = ExportUtility.fillConstraintSpecialization(e, null);
+        JSONObject modelvalue = (JSONObject)modelspec.get("specification");
+        /*Map<String, Object> results = valueSpecDiff(e.getSpecification(), value);
         String message = (String)results.get("message");
         boolean stringMatch = (Boolean)results.get("stringMatch");
         String webString = (String)results.get("webString");
-        String modelString = (String)results.get("modelString");
-        if (!message.equals("")) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, message);
-            if (stringMatch)
-                v.addAction(new CompareText(e, webString, modelString, result));
+        String modelString = (String)results.get("modelString");*/
+        //if (!message.equals("")) {
+        if (modelvalue != null && !modelvalue.equals(value) || value != null && !value.equals(modelvalue)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONSTRAINT] specifications don't match");
+            //if (stringMatch)
+              //  v.addAction(new CompareText(e, webString, modelString, result));
             v.addAction(new ImportConstraint(e, spec, result));
             if (editable)
                 v.addAction(new ExportConstraint(e));
