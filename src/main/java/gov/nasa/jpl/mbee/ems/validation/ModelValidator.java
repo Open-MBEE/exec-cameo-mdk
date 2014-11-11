@@ -35,6 +35,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ElementDetail;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportAssociation;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportConnector;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportConstraint;
@@ -47,6 +48,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportSite;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportAssociation;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportConnector;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportConstraint;
@@ -638,6 +640,28 @@ public class ModelValidator {
     }
     
     private ValidationRuleViolation associationDiff(Association e, JSONObject info) {
+        Boolean editable = (Boolean)info.get("editable");
+        JSONObject webspec = (JSONObject)info.get("specialization");
+        JSONObject modelspec = ExportUtility.fillAssociationSpecialization(e, null);
+        String modelSource = (String)modelspec.get("source");
+        String modelTarget = (String)modelspec.get("target");
+        String modelSourceAggr = (String)modelspec.get("sourceAggregation");
+        String modelTargetAggr = (String)modelspec.get("targetAggregation");
+        JSONArray modelOwned = (JSONArray)modelspec.get("owned");
+        String webSource = (String)webspec.get("source");
+        String webTarget = (String)webspec.get("target");
+        String webSourceAggr = (String)webspec.get("sourceAggregation");
+        String webTargetAggr = (String)webspec.get("targetAggregation");
+        JSONArray webOwned = (JSONArray)webspec.get("ownedEnd");
+        if (!modelSource.equals(webSource) || !modelTarget.equals(webTarget) || 
+                !modelSourceAggr.equals(webSourceAggr) || !modelTargetAggr.equals(webTargetAggr) ||
+                !modelOwned.equals(webOwned)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[ASSOC] Association roles/aggregation/navigability are different");
+            if (editable)
+                v.addAction(new ExportAssociation(e));
+            v.addAction(new ImportAssociation(e, webspec, result));
+            return v;
+        }
         return null;
     }
     

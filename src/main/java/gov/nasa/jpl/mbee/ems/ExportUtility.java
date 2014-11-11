@@ -749,7 +749,7 @@ public class ExportUtility {
             specialization = new JSONObject();
         specialization.put("type", "Package");
         Stereotype characterizes = Utils.getCharacterizesStereotype();
-        if (Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1).size() > 0)
+        if (characterizes != null && Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1).size() > 0)
             specialization.put("site", true);
         else
             specialization.put("site", false);
