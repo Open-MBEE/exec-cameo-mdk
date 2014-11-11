@@ -138,8 +138,10 @@ public class JMSMessageListener implements MessageListener {
                             ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
                             dge.accept(vhv);
                             JSONObject model = vhv.getView2View();
-                            ImportHierarchy.importHierarchy(changedElement, model, web);
+                            Map<String, Object> result = ImportHierarchy.importHierarchy(changedElement, model, web);
                             guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
+                            ImportHierarchy.sendChanges(result);
+                            
                         }
                     }
                     ImportUtility.updateElement(changedElement, ob);

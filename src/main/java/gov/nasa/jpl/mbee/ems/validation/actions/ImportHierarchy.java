@@ -121,10 +121,10 @@ AnnotationAction, IRuleViolationAction {
     }
 
     @SuppressWarnings("unchecked")
-    private void sendChanges(Map<String, Object> results) {
-        List<Element> added = (List<Element>)results.get("added");
-        List<Property> moved = (List<Property>)results.get("moved");
-        List<Property> deleted = (List<Property>)results.get("deleted");
+    public static void sendChanges(Map<String, Object> results) {
+        Set<Element> added = (Set<Element>)results.get("added");
+        Set<Property> moved = (Set<Property>)results.get("moved");
+        Set<Element> deleted = (Set<Element>)results.get("deleted");
         JSONArray changes = new JSONArray();
         for (Element e: added) {
             changes.add(ExportUtility.fillElement(e, null, null, null));
@@ -136,6 +136,11 @@ AnnotationAction, IRuleViolationAction {
         tosend.put("elements", changes);
         String url = ExportUtility.getPostElementsUrl();
         ExportUtility.send(url, tosend.toJSONString(), null, false);
+        url = ExportUtility.getUrlWithWorkspace();
+        for (Element e: deleted) {
+            String durl = url + "/elements/" + e.getID();
+            ExportUtility.delete(durl);
+        }
     }
     
     public static Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {
@@ -224,9 +229,9 @@ AnnotationAction, IRuleViolationAction {
                 return retval;
             }
         }
-        List<Property> moved = new ArrayList<Property>();
-        List<Element> added = new ArrayList<Element>();
-        List<Property> deleted = new ArrayList<Property>();
+        Set<Property> moved = new HashSet<Property>();
+        Set<Element> added = new HashSet<Element>();
+        Set<Element> deleted = new HashSet<Element>();
         for (Object vid: keyed.keySet()) { //go through all views on mms
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
@@ -281,6 +286,11 @@ AnnotationAction, IRuleViolationAction {
         for (List<Property> props: viewId2props.values()) {
             for (Property p: props) {
                 deleted.add(p);
+                Association asso = p.get_associationOfNavigableOwnedEnd();
+                if (asso != null) {
+                    deleted.addAll(asso.getOwnedEnd());
+                    deleted.add(asso);
+                }
                 ModelElementsManager.getInstance().removeElement(p);
             }
         }
