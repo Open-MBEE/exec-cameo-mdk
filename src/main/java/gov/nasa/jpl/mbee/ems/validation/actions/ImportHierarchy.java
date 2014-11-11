@@ -95,16 +95,7 @@ AnnotationAction, IRuleViolationAction {
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        /*Collection<Annotation> toremove = new ArrayList<Annotation>();
-        for (Annotation anno : annos) {
-            Element e = (Element) anno.getTarget();
-            if (importHierarchy(e)) {
-                toremove.add(anno);
-            }
-        }
-        if (!toremove.isEmpty()) {
-            this.removeViolationsAndUpdateWindow(toremove);
-        }*/
+        
     }
     
     @Override
@@ -145,7 +136,7 @@ AnnotationAction, IRuleViolationAction {
         ExportUtility.send(url, tosend.toJSONString(), null, false);
     }
     
-    private Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {	
+    public static Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {	
         Map<String, Object> retval = new HashMap<String, Object>();
         retval.put("success", true);
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
@@ -204,18 +195,9 @@ AnnotationAction, IRuleViolationAction {
                         if (elements != null && !elements.isEmpty()) {
                             JSONObject viewob = (JSONObject)elements.get(0);
                             newviews.add(viewob);
-                            /*newview = ImportUtility.createElement(viewob);
-                            if (newview != null) {
-                                List<Property> viewprops = new ArrayList<Property>();
-                                viewId2props.put(newview.getID(), viewprops);
-                            }*/
                         }
                     }
                 }
-                /*if (newview == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] trying to create new view " + viewid + " not found in model failed");
-                    return false;
-                }*/
             }
         }
         List<JSONObject> sortedNewviews = ImportUtility.getCreationOrder(newviews);
@@ -299,112 +281,5 @@ AnnotationAction, IRuleViolationAction {
         retval.put("added", added);
         retval.put("moved", moved);
         return retval;
-
-
-
-
-
-        /*
-		// go through all web child elements
-		for (String webChild : webChildrenObjectArray) {
-
-			// is element in MagicDraw? 
-			// Checking if element with MagicDraw ID exists is possible - but no guarantee of element being in the correct hierarchy
-			// Comparing document child elements of Alfresco and MagicDraw
-			boolean isElementInMagicDraw = false;
-			for (String modelChild : modelChildrenObjectArray) {
-				if(webChild.equals(modelChild)){
-					isElementInMagicDraw = true;
-					break;
-				}
-			}
-
-			// add element to MagicDraw if necessary 							
-			Element viewType = null;
-			if(isElementInMagicDraw){
-				continue;
-			}					
-			else{
-
-				// check if Magicdraw View Class exists
-				boolean magicDrawViewClassExists = false;
-				viewType = (Element) project.getElementByID((String) webChild);
-				if(viewType != null){
-					magicDrawViewClassExists = true;
-				}
-
-				// create Magicdraw View Class if it doesn't exist
-				if(!magicDrawViewClassExists){
-
-					// get JSON of Alfresco element				
-					String elementUrl = "https://ems-stg.jpl.nasa.gov/alfresco/service/workspaces/master/elements/" + webChild;		
-					String elementResponse = ExportUtility.get(elementUrl, false);
-					if (docresponse == null)
-						return false;
-					JSONObject elementJSONResponse = (JSONObject) JSONValue.parse(elementResponse);
-					JSONArray elementJSONArray = (JSONArray) elementJSONResponse.get("elements");					
-					JSONObject elementJSONObject = (JSONObject) elementJSONArray.get(0);
-
-					// create new MagicDraw view class
-					com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class newClass = ef.createClassInstance();
-
-					// set class name
-					String elementName = (String)elementJSONObject.get("name");
-					newClass.setName(elementName);
-
-					// place class under the same owner as document view					
-					Element owner = ExportUtility.getElementFromID(view.getOwner().getID());
-					newClass.setOwner(owner);
-
-					// add view stereotype
-					Stereotype sysmlView = Utils.getViewClassStereotype();
-					StereotypesHelper.addStereotype(newClass, sysmlView);
-
-					viewType = newClass;
-
-				}
-
-				// define association and part property				
-		        Association association = ef.createAssociationInstance();
-
-		        ModelHelper.setSupplierElement(association, viewType);
-		        Property propType1 = 
-				        ModelHelper.getFirstMemberEnd(association);
-				        propType1.setName(((NamedElement)viewType).getName().toLowerCase());
-				        propType1.setAggregation(AggregationKindEnum.COMPOSITE);		       
-				        ModelHelper.setNavigable(propType1, true);
-				Stereotype partPropertyST = Utils.getStereotype("PartProperty");
-				StereotypesHelper.addStereotype(propType1, partPropertyST);
-				propType1.setOwner(document);
-
-		        ModelHelper.setClientElement(association, document);
-
-
-		        // set id of part property identical to Alfresco element
-				// class can have any id. 
-//		        propType1.setID((String) webChild);
-
-
-		        // association owner
-		        association.setOwner(document.getOwner());
-
-				// go recursively through all children elements ?
-
-
-			}
-		}
-
-
-		// go through all model child elements
-		// if MagicDraw element not in Alfresco, delete it in MagicDraw
-
-
-
-
-
-
-
-		return true;*/
-
     }
 }

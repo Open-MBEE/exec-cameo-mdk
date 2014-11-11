@@ -2,6 +2,10 @@ package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
+import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 
 import java.util.List;
 import java.util.Map;
@@ -116,12 +120,23 @@ public class JMSMessageListener implements MessageListener {
                     if (changedElement == null) {
                         Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync change");
                         return;
-                    }
-                    else if (!changedElement.isEditable()) {
+                    } else if (!changedElement.isEditable()) {
                         if (!TeamworkUtils.lockElement(project, changedElement, false)) {
                             Application.getInstance().getGUILog()
                                 .log("[ERROR] Sync: " + changedElement.getID() + " is not editable!");
                             return;
+                        }
+                    }
+                    if (ob.containsKey("specialization")) {
+                        JSONArray view2view = (JSONArray)((JSONObject)ob.get("specialization")).get("view2view");
+                        if (view2view != null) {
+                            JSONObject web = ExportUtility.keyView2View(view2view);
+                            DocumentGenerator dg = new DocumentGenerator(changedElement, null, null);
+                            Document dge = dg.parseDocument(true, true);
+                            ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+                            dge.accept(vhv);
+                            JSONObject model = vhv.getView2View();
+                            ImportHierarchy.importHierarchy(changedElement, model, web);
                         }
                     }
                     ImportUtility.updateElement(changedElement, ob);

@@ -717,6 +717,7 @@ public class ExportUtility {
         return specialization;
     }
     
+    @SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
         JSONObject specialization = spec;
         if (specialization == null)
@@ -741,6 +742,7 @@ public class ExportUtility {
         return specialization;
     }
     
+    @SuppressWarnings("unchecked")
     public static JSONObject fillPackage(Package e, JSONObject spec) {
         JSONObject specialization = spec;
         if (specialization == null)
