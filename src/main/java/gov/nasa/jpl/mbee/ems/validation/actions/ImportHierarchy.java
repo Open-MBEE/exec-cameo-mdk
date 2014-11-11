@@ -129,7 +129,7 @@ AnnotationAction, IRuleViolationAction {
         Set<Element> deleted = (Set<Element>)results.get("deleted");
         JSONArray changes = new JSONArray();
         for (Element e: added) {
-            changes.add(ExportUtility.fillElement(e, null, null, null));
+            changes.add(ExportUtility.fillElement(e, null));
         }
         for (Property p: moved) {
             changes.add(ExportUtility.fillOwner(p, null));

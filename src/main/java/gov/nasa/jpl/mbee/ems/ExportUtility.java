@@ -79,6 +79,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
@@ -605,8 +606,7 @@ public class ExportUtility {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillElement(Element e, JSONObject eInfo,
-            Stereotype view, Stereotype viewpoint) {
+    public static JSONObject fillElement(Element e, JSONObject eInfo) {
         JSONObject elementInfo = eInfo;
         if (elementInfo == null)
             elementInfo = new JSONObject();
@@ -639,12 +639,18 @@ public class ExportUtility {
             specialization.put("type", "Comment");
         } else if (e instanceof Association) {
             fillAssociationSpecialization((Association)e, specialization);
+        } else if (e instanceof Class) {
+            Stereotype viewpoint = Utils.getViewpointStereotype();
+            //Stereotype view = Utils.getViewStereotype();
+            if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
+                specialization.put("type", "Viewpoint");
+            else
+                specialization.put("type", "Element");
+            //if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view))
+              //  specialization.put("type", "View");
         } else {
             specialization.put("type", "Element");
         }
-        if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
-            specialization.put("type", "Viewpoint");
-
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
@@ -841,20 +847,16 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         if (e instanceof Dependency) {
-            if (StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.conformStereotype))// (e,
-                                                      // Utils.getConformsStereotype()))
-                specialization.put("type", "Conform");
+            if (StereotypesHelper.hasStereotype(e, "characterizes"))
+                specialization.put("type", "Characterizes");
             else if (StereotypesHelper.hasStereotypeOrDerived(e,
                     DocGen3Profile.queriesStereotype))
                 specialization.put("type", "Expose");
             else
                 specialization.put("type", "Dependency");
         } else if (e instanceof Generalization) {
-            boolean isConform = StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.conformStereotype);// (e,
-                                                      // Utils.getConformsStereotype()))
-            if (isConform)
+            Stereotype conforms = Utils.getSysML14ConformsStereotype();
+            if (conforms != null && StereotypesHelper.hasStereotypeOrDerived(e, conforms))
                 specialization.put("type", "Conform");
             else
                 specialization.put("type", "Generalization");

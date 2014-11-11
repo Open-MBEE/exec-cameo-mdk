@@ -117,9 +117,13 @@ public class ImportUtility {
             Stereotype sysmlView = Utils.getViewClassStereotype();
             StereotypesHelper.addStereotype(view, sysmlView);
             newE = view;
+        } else if (elementType.equalsIgnoreCase("viewpoint")) {
+            Class view = ef.createClassInstance();
+            Stereotype sysmlView = Utils.getViewpointStereotype();
+            StereotypesHelper.addStereotype(view, sysmlView);
+            newE = view;
         } else if (elementType.equalsIgnoreCase("Property")) {
             JSONArray vals = (JSONArray) specialization.get("value");
-            
             Boolean isSlot = (Boolean) specialization.get("isSlot");
             if ((isSlot != null) && (isSlot == true)) {
                 Slot newSlot = ef.createSlotInstance();
@@ -133,9 +137,16 @@ public class ImportUtility {
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
-                || elementType.equalsIgnoreCase("DirectedRelationship")) {
+                || elementType.equalsIgnoreCase("DirectedRelationship")
+                || elementType.equalsIgnoreCase("Characterizes")) {
             Dependency newDependency = ef.createDependencyInstance();
             setRelationshipEnds(newDependency, specialization);
+            if (elementType.equalsIgnoreCase("Characterizes")) {
+                Stereotype character = Utils.getCharacterizesStereotype();
+                StereotypesHelper.addStereotype(newDependency, character);
+            } else if (elementType.equalsIgnoreCase("Expose")) {
+               
+            }
             newE = newDependency;
         } else if (elementType.equalsIgnoreCase("Generalization") || elementType.equalsIgnoreCase("Conform")) {
             Generalization newGeneralization = ef.createGeneralizationInstance();

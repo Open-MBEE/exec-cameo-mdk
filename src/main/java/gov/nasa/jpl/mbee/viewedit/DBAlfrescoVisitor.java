@@ -394,18 +394,18 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             return;
         elementSet.add(e);
         JSONObject elementInfo = new JSONObject();
-        ExportUtility.fillElement(e, elementInfo, view, viewpoint);
+        ExportUtility.fillElement(e, elementInfo);
         elements.put(e.getID(), elementInfo);
-        if (e instanceof DirectedRelationship) {
+        /*if (e instanceof DirectedRelationship) {
             JSONObject sourceInfo = new JSONObject();
             JSONObject targetInfo = new JSONObject();
             Element source = ModelHelper.getClientElement(e);
             Element target = ModelHelper.getSupplierElement(e);
-            ExportUtility.fillElement(source, sourceInfo, view, viewpoint);
-            ExportUtility.fillElement(target, targetInfo, view, viewpoint);
+            ExportUtility.fillElement(source, sourceInfo);
+            ExportUtility.fillElement(target, targetInfo);
             elements.put(source.getID(), sourceInfo);
             elements.put(target.getID(), targetInfo);
-        }
+        }*/
         //if (e instanceof Property || e instanceof Slot)
         //   elements.putAll(ExportUtility.getReferencedElements(e));
     }

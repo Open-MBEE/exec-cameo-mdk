@@ -246,7 +246,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
                     && ExportUtility.shouldAdd(sourceElement)) {
                 elementOb = getElementObject(sourceElement);
-                ExportUtility.fillElement(sourceElement, elementOb, null, null);
+                ExportUtility.fillElement(sourceElement, elementOb);
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)
                     && ExportUtility.shouldAdd(sourceElement)) {
