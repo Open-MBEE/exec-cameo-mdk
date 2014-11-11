@@ -4,6 +4,8 @@ public class Request {
 
     private String json;
     private String url;
+    private String method = "POST";
+    
     public String getJson() {
         return json;
     }
@@ -15,5 +17,11 @@ public class Request {
     }
     public void setUrl(String url) {
         this.url = url;
+    }
+    public void setMethod(String method) {
+        this.method = method;
+    }
+    public String getMethod() {
+        return method;
     }
 }

@@ -11,7 +11,10 @@ public class OutputSyncRunner implements Runnable {
             Request r;
             try {
                 r = q.take();
-                ExportUtility.send(r.getUrl(), r.getJson(), null, false);
+                if (r.getMethod().equals("DELETE"))
+                    ExportUtility.delete(r.getUrl());
+                else
+                    ExportUtility.send(r.getUrl(), r.getJson(), null, false);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 continue;

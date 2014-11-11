@@ -127,7 +127,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             String deleteUrl = ExportUtility.getUrlWithWorkspace();
             for (String id: deletes) {
                 String durl = deleteUrl + "/elements/" + id;
-                ExportUtility.delete(durl);
+                //ExportUtility.delete(durl);
+                Request r = new Request();
+                r.setMethod("DELETE");
+                r.setUrl(durl);
+                OutputQueue.getInstance().offer(r);
             }
         }
 
