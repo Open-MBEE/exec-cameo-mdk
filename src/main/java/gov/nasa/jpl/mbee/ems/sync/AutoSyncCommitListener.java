@@ -20,6 +20,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
@@ -291,6 +292,19 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONObject specialization = ExportUtility.fillConnectorSpecialization(conn, null);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(conn, elementOb);
+            } else if (sourceElement instanceof Association && propertyName.equals(PropertyNames.OWNED_END)) {
+                elementOb = getElementObject(sourceElement);
+                JSONObject specialization = ExportUtility.fillAssociationSpecialization((Association)sourceElement, null);
+                elementOb.put("specialization", specialization);
+                ExportUtility.fillOwner(sourceElement, elementOb);
+            } else if (sourceElement instanceof Property && propertyName.equals(PropertyNames.AGGREGATION)) {
+                Association a = ((Property)sourceElement).getAssociation();
+                if (a != null) {
+                    elementOb = getElementObject(a);
+                    JSONObject specialization = ExportUtility.fillAssociationSpecialization(a, null);
+                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillOwner(a, elementOb);
+                }
             }
         }
     }
