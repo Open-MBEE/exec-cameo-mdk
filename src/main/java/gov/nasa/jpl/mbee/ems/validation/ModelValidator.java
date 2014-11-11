@@ -744,9 +744,14 @@ public class ModelValidator {
             } else {
                 message = typeMismatchMessage;
             }
-        } else if (vs instanceof Expression && valueType == PropertyValueType.Expression) {
-            //???
-            
+        } else if (valueType == PropertyValueType.Expression) {
+            if (vs instanceof Expression) {
+                JSONObject model = ExportUtility.fillValueSpecification(vs, null);
+                if (!model.equals(firstObject))
+                    message = "[VALUE] expressions don't match";
+            } else {
+                message = typeMismatchMessage;
+            }
         } else { //type of value in model and alfresco don't match or unknown type
             
         }   
