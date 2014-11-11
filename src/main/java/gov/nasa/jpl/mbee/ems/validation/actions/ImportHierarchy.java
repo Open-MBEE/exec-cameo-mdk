@@ -58,9 +58,11 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
@@ -136,7 +138,8 @@ AnnotationAction, IRuleViolationAction {
         ExportUtility.send(url, tosend.toJSONString(), null, false);
     }
     
-    public static Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {	
+    public static Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {
+        Project project = Application.getInstance().getProject();
         Map<String, Object> retval = new HashMap<String, Object>();
         retval.put("success", true);
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
@@ -150,6 +153,8 @@ AnnotationAction, IRuleViolationAction {
             String viewid = (String)vid;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
+                if (!view.isEditable() && !ProjectUtilities.isElementInAttachedProject(view)) 
+                    TeamworkUtils.lockElement(project, view, false);
                 for (Property p: ((Class)view).getOwnedAttribute()) {
                     Type t = p.getType();
                     if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, viewS)) {
@@ -171,6 +176,8 @@ AnnotationAction, IRuleViolationAction {
                 continue;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
+                if (!view.isEditable() && !ProjectUtilities.isElementInAttachedProject(view)) 
+                    TeamworkUtils.lockElement(project, view, false);
                 for (Property p: ((Class)view).getOwnedAttribute()) {
                     Type t = p.getType();
                     if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, viewS)) {

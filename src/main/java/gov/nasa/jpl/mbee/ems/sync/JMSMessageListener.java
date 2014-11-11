@@ -20,6 +20,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
@@ -42,6 +43,7 @@ public class JMSMessageListener implements MessageListener {
             // JSONObject.
             //
             TextMessage message = (TextMessage) msg;
+            log.info("From JMS: " + message.getText());
             JSONObject ob = (JSONObject) JSONValue.parse(message.getText());
 
             // Changed element are encapsulated in the "workspace2"
@@ -59,6 +61,7 @@ public class JMSMessageListener implements MessageListener {
             final JSONArray moved = (JSONArray) ws2.get("movedElements");
 
             Runnable runnable = new Runnable() {
+                private GUILog guilog = Application.getInstance().getGUILog();
                 public void run() {
                     Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
                     AutoSyncCommitListener listener = (AutoSyncCommitListener) projectInstances
@@ -114,16 +117,15 @@ public class JMSMessageListener implements MessageListener {
                         listener.enable();
                 }
 
-                private void makeChange(JSONObject ob) {
+                private void makeChange(JSONObject ob) throws ReadOnlyElementException {
                     String sysmlid = (String) ob.get("sysmlid");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
-                        Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync change");
+                        guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync change");
                         return;
                     } else if (!changedElement.isEditable()) {
                         if (!TeamworkUtils.lockElement(project, changedElement, false)) {
-                            Application.getInstance().getGUILog()
-                                .log("[ERROR] Sync: " + changedElement.getID() + " is not editable!");
+                            guilog.log("[ERROR - Autosync] " + changedElement.getHumanName() + " is not editable!");
                             return;
                         }
                     }
@@ -137,29 +139,32 @@ public class JMSMessageListener implements MessageListener {
                             dge.accept(vhv);
                             JSONObject model = vhv.getView2View();
                             ImportHierarchy.importHierarchy(changedElement, model, web);
+                            guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
                         }
                     }
                     ImportUtility.updateElement(changedElement, ob);
+                    guilog.log("[Autosync] " + changedElement.getHumanName() + " updated");
                 }
 
                 private void addElement(JSONObject ob) {
-                    ImportUtility.createElement(ob);
+                    Element e = ImportUtility.createElement(ob);
+                    guilog.log("[Autosync] " + e.getHumanName() + " created");
                 }
 
                 private void deleteElement(JSONObject ob) {
                     String sysmlid = (String) ob.get("sysmlid");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
-                        Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync delete");
+                        Application.getInstance().getGUILog().log("[ERROR - Autosync] element " + sysmlid + " not found for autosync delete");
                         return;
                     }
                     if (!changedElement.isEditable())
                         TeamworkUtils.lockElement(project, changedElement, false);
                     try {
                         ModelElementsManager.getInstance().removeElement(changedElement);
+                        guilog.log("[Autosync] " + changedElement.getHumanName() + " deleted");
                     } catch (ReadOnlyElementException e) {
-                        Application.getInstance().getGUILog()
-                        .log("[ERROR] Sync: " + changedElement.getID() + " cannot be deleted!");
+                        guilog.log("[ERROR - Autosync] Sync: " + changedElement.getHumanName() + " cannot be deleted!");
                     }
                 }
 
@@ -167,10 +172,11 @@ public class JMSMessageListener implements MessageListener {
                     String sysmlid = (String) ob.get("sysmlid");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
-                        Application.getInstance().getGUILog().log("element " + sysmlid + " not found from mms sync move");
+                        guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync move");
                         return;
                     }
                     ImportUtility.setOwner(changedElement, ob);
+                    guilog.log("[Autosync] " + changedElement.getHumanName() + " moved");
                 }
             };
             project.getRepository().invokeAfterTransaction(runnable);

@@ -212,12 +212,12 @@ public class ImportUtility {
     public static void setOwner(Element e, JSONObject o) {
         String ownerId = (String) o.get("owner");
         if ((ownerId == null) || (ownerId.isEmpty())) {
-            Application.getInstance().getGUILog().log("Owner not specified for mms sync add");
+            Application.getInstance().getGUILog().log("[ERROR] Owner not specified for mms sync add");
             return;
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            Application.getInstance().getGUILog().log("Owner not found for mms sync add");
+            Application.getInstance().getGUILog().log("[ERROR] Owner not found for mms sync add");
             return;
         }
         e.setOwner(owner);
