@@ -36,6 +36,8 @@ import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ElementDetail;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportConnector;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
@@ -46,6 +48,8 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportSite;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportComment;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportConnector;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportPropertyType;
@@ -595,17 +599,42 @@ public class ModelValidator {
     }
     
     private ValidationRuleViolation connectorDiff(Connector e, JSONObject info) {
-        JSONObject spec = (JSONObject)info.get("specialization");
-        JSONArray sourcePropPath = (JSONArray)spec.get("sourcePath");
-        JSONArray targetPropPath = (JSONArray)spec.get("targetPath");
-        
-        
+        JSONObject webspec = (JSONObject)info.get("specialization");
+        Boolean editable = (Boolean)info.get("editable");
+        JSONArray webSourcePropPath = (JSONArray)webspec.get("sourcePath");
+        JSONArray webTargetPropPath = (JSONArray)webspec.get("targetPath");
+        JSONObject modelspec = ExportUtility.fillConnectorSpecialization(e, null);
+        JSONArray modelSourcePropPath = (JSONArray)modelspec.get("sourcePath");
+        JSONArray modelTargetPropPath = (JSONArray)modelspec.get("targetPath");
+        if (!webSourcePropPath.equals(modelSourcePropPath) || !webTargetPropPath.equals(modelTargetPropPath)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONNECTOR] connector roles/paths doesn't match");
+            if (editable)
+                v.addAction(new ExportConnector(e));
+            v.addAction(new ImportConnector(e, webspec, result));
+            return v;
+        }
         return null;
     }
     
     private ValidationRuleViolation constraintDiff(Constraint e, JSONObject info) {
+        Boolean editable = (Boolean)info.get("editable");
+        JSONObject spec = (JSONObject)info.get("specialization");
+        JSONObject value = (JSONObject)spec.get("constraintSpecification");
+        Map<String, Object> results = valueSpecDiff(e.getSpecification(), value);
+        String message = (String)results.get("message");
+        boolean stringMatch = (Boolean)results.get("stringMatch");
+        String webString = (String)results.get("webString");
+        String modelString = (String)results.get("modelString");
+        if (!message.equals("")) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, message);
+            if (stringMatch)
+                v.addAction(new CompareText(e, webString, modelString, result));
+            v.addAction(new ImportConstraint(e, spec, result));
+            if (editable)
+                v.addAction(new ExportConstraint(e));
+            return v;
+        }
         return null;
-        
     }
     
     private ValidationRuleViolation associationDiff(Association e, JSONObject info) {
