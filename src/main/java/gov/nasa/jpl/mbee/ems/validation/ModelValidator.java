@@ -441,8 +441,11 @@ public class ModelValidator {
     
     private ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
         JSONObject model = ExportUtility.fillPackage(e, null);
-        Boolean serversite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("site");
-        Boolean modelsite = (Boolean)model.get("site");
+        Boolean serverSite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("site");
+        boolean serversite = false;
+        if (serverSite != null && serverSite)
+            serversite = true;
+        boolean modelsite = (Boolean)model.get("site");
         if (!serversite && modelsite || serversite && !modelsite) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE] model: " + modelsite + ", web: " + serversite);
             v.addAction(new ExportSite(e));
@@ -622,7 +625,7 @@ public class ModelValidator {
         JSONArray modelSourcePropPath = (JSONArray)modelspec.get("sourcePath");
         JSONArray modelTargetPropPath = (JSONArray)modelspec.get("targetPath");
         String modeltype = (String)modelspec.get("connectorType");
-        if (!webSourcePropPath.equals(modelSourcePropPath) || !webTargetPropPath.equals(modelTargetPropPath) || 
+        if (!modelSourcePropPath.equals(webSourcePropPath) || !modelTargetPropPath.equals(webTargetPropPath) || 
                 (modeltype != null && !modeltype.equals(webtype) || webtype != null && !webtype.equals(modeltype))) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONNECTOR] connector roles/paths/types doesn't match");
             if (editable)
@@ -743,7 +746,7 @@ public class ModelValidator {
         } else if (valueType == PropertyValueType.ElementValue) {
             if (vs instanceof ElementValue) {
                 if (((ElementValue)vs).getElement() == null || !ExportUtility.getElementID(((ElementValue)vs).getElement()).equals(firstObject.get("element"))) {
-                    message = "[VALUE] model: " + ((ElementValue)vs).getElement() + ", web: " + firstObject.get("element");
+                    message = "[VALUE] model: " + ((ElementValue)vs).getElement().getHumanName() + ", web: " + firstObject.get("element");
                 }
             } else {
                 message = typeMismatchMessage;
@@ -751,7 +754,7 @@ public class ModelValidator {
         } else if (valueType == PropertyValueType.InstanceValue) {
             if (vs instanceof InstanceValue) {
                 if (((InstanceValue)vs).getInstance() == null || !ExportUtility.getElementID(((InstanceValue)vs).getInstance()).equals(firstObject.get("instance"))) {
-                    message = "[VALUE] model: " + ((InstanceValue)vs).getInstance() + ", web: " + firstObject.get("instance");
+                    message = "[VALUE] model: " + ((InstanceValue)vs).getInstance().getHumanName() + ", web: " + firstObject.get("instance");
                 }
             } else {
                 message = typeMismatchMessage;
@@ -865,6 +868,11 @@ public class ModelValidator {
         String url = ExportUtility.getUrlWithWorkspace();
         url += "/elements";
         String response = ExportUtility.getWithBody(url, tosend.toJSONString());
+        if (response == null) {
+            JSONObject res = new JSONObject();
+            res.put("elements", new JSONArray());
+            return res;
+        }
         return (JSONObject)JSONValue.parse(response);
     }
 }
