@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee;
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
+import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
 import gov.nasa.jpl.mbee.web.sync.ApplicationSyncEventSubscriber;
@@ -94,7 +95,7 @@ public class DocGenPlugin extends Plugin {
         getOclPlugin().init();
         getVcPlugin().init();
         getAutoSyncPlugin().init();
-
+        (new Thread(new OutputSyncRunner())).start();
         ApplicationSyncEventSubscriber.subscribe();
 
         getEmbeddedSystemProperty();

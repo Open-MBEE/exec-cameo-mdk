@@ -79,6 +79,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
@@ -629,8 +630,7 @@ public class ExportUtility {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillElement(Element e, JSONObject eInfo,
-            Stereotype view, Stereotype viewpoint) {
+    public static JSONObject fillElement(Element e, JSONObject eInfo) {
         JSONObject elementInfo = eInfo;
         if (elementInfo == null)
             elementInfo = new JSONObject();
@@ -638,8 +638,7 @@ public class ExportUtility {
         elementInfo.put("specialization", specialization);
         Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
-            specialization.put("type", "Package");
-            //check for site characterization here
+            fillPackage((Package)e, specialization);
         } else if (e instanceof Property || e instanceof Slot) {
             fillPropertySpecialization(e, specialization, true);
         } else if (e instanceof DirectedRelationship) {
@@ -664,12 +663,18 @@ public class ExportUtility {
             specialization.put("type", "Comment");
         } else if (e instanceof Association) {
             fillAssociationSpecialization((Association)e, specialization);
+        } else if (e instanceof Class) {
+            Stereotype viewpoint = Utils.getViewpointStereotype();
+            //Stereotype view = Utils.getViewStereotype();
+            if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
+                specialization.put("type", "Viewpoint");
+            else
+                specialization.put("type", "Element");
+            //if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view))
+              //  specialization.put("type", "View");
         } else {
             specialization.put("type", "Element");
         }
-        if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
-            specialization.put("type", "Viewpoint");
-
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
@@ -742,6 +747,7 @@ public class ExportUtility {
         return specialization;
     }
     
+    @SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
         JSONObject specialization = spec;
         if (specialization == null)
@@ -767,6 +773,20 @@ public class ExportUtility {
     }
     
     @SuppressWarnings("unchecked")
+    public static JSONObject fillPackage(Package e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        specialization.put("type", "Package");
+        Stereotype characterizes = Utils.getCharacterizesStereotype();
+        if (characterizes != null && Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1).size() > 0)
+            specialization.put("site", true);
+        else
+            specialization.put("site", false);
+        return specialization;
+    }
+    
+    @SuppressWarnings("unchecked")
     public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject spec) {
         JSONObject specialization = spec;
         if (specialization == null)
@@ -776,7 +796,7 @@ public class ExportUtility {
         if (vspec != null) {
             JSONObject cspec = new JSONObject();
             fillValueSpecification(vspec, cspec);
-            specialization.put("constraintSpecification", cspec);
+            specialization.put("specification", cspec);
         }
         return specialization;
     }
@@ -851,20 +871,16 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         if (e instanceof Dependency) {
-            if (StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.conformStereotype))// (e,
-                                                      // Utils.getConformsStereotype()))
-                specialization.put("type", "Conform");
+            if (StereotypesHelper.hasStereotype(e, "characterizes"))
+                specialization.put("type", "Characterizes");
             else if (StereotypesHelper.hasStereotypeOrDerived(e,
                     DocGen3Profile.queriesStereotype))
                 specialization.put("type", "Expose");
             else
                 specialization.put("type", "Dependency");
         } else if (e instanceof Generalization) {
-            boolean isConform = StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.conformStereotype);// (e,
-                                                      // Utils.getConformsStereotype()))
-            if (isConform)
+            Stereotype conforms = Utils.getSysML14ConformsStereotype();
+            if (conforms != null && StereotypesHelper.hasStereotypeOrDerived(e, conforms))
                 specialization.put("type", "Conform");
             else
                 specialization.put("type", "Generalization");
@@ -916,6 +932,15 @@ public class ExportUtility {
             info.put("owner", Application.getInstance().getProject().getPrimaryProject().getProjectID());
         else
             info.put("owner", "" + e.getOwner().getID());
+        return info;
+    }
+    
+    public static JSONObject fillId(Element e, JSONObject einfo) {
+        JSONObject info = einfo;
+        if (info == null) {
+            info = new JSONObject();
+            info.put("sysmlid", getElementID(e));
+        }
         return info;
     }
     

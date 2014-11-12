@@ -115,7 +115,7 @@ public class ModelExporter {
         if (!ExportUtility.shouldAdd(e))
             return false;
         JSONObject elementInfo = new JSONObject();
-        ExportUtility.fillElement(e, elementInfo, view, viewpoint);
+        ExportUtility.fillElement(e, elementInfo);
         elements.put(e.getID(), elementInfo);
         //if (e instanceof Property || e instanceof Slot)
         //    elements.putAll(ExportUtility.getReferencedElements(e));

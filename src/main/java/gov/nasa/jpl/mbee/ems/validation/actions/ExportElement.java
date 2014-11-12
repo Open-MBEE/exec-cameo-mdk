@@ -76,7 +76,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            infos.add(ExportUtility.fillElement(e, null, view, viewpoint));
+            infos.add(ExportUtility.fillElement(e, null));
         }
         if (!ExportUtility.okToExport(set))
             return;
@@ -103,7 +103,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
             return;
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        elements.add(ExportUtility.fillElement(element, null, view, viewpoint));
+        elements.add(ExportUtility.fillElement(element, null));
         send.put("elements", elements);
         //gl.log(send.toJSONString());
         String url = ExportUtility.getPostElementsUrl();

@@ -20,6 +20,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
@@ -117,12 +118,21 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             eles.addAll(elements.values());
             toSend.put("elements", eles);
             String url = ExportUtility.getPostElementsUrl();
-            if (url != null)
-                ExportUtility.send(url, toSend.toJSONString(), null, false);
+            if (url != null) {
+                //ExportUtility.send(url, toSend.toJSONString(), null, false);
+                Request r = new Request();
+                r.setJson(toSend.toJSONString());
+                r.setUrl(url);
+                OutputQueue.getInstance().offer(r);
+            }
             String deleteUrl = ExportUtility.getUrlWithWorkspace();
             for (String id: deletes) {
                 String durl = deleteUrl + "/elements/" + id;
-                ExportUtility.delete(durl);
+                //ExportUtility.delete(durl);
+                Request r = new Request();
+                r.setMethod("DELETE");
+                r.setUrl(durl);
+                OutputQueue.getInstance().offer(r);
             }
         }
 
@@ -236,7 +246,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
                     && ExportUtility.shouldAdd(sourceElement)) {
                 elementOb = getElementObject(sourceElement);
-                ExportUtility.fillElement(sourceElement, elementOb, null, null);
+                ExportUtility.fillElement(sourceElement, elementOb);
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)
                     && ExportUtility.shouldAdd(sourceElement)) {
@@ -282,8 +292,20 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONObject specialization = ExportUtility.fillConnectorSpecialization(conn, null);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(conn, elementOb);
+            } else if (sourceElement instanceof Association && propertyName.equals(PropertyNames.OWNED_END)) {
+                elementOb = getElementObject(sourceElement);
+                JSONObject specialization = ExportUtility.fillAssociationSpecialization((Association)sourceElement, null);
+                elementOb.put("specialization", specialization);
+                ExportUtility.fillOwner(sourceElement, elementOb);
+            } else if (sourceElement instanceof Property && propertyName.equals(PropertyNames.AGGREGATION)) {
+                Association a = ((Property)sourceElement).getAssociation();
+                if (a != null) {
+                    elementOb = getElementObject(a);
+                    JSONObject specialization = ExportUtility.fillAssociationSpecialization(a, null);
+                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillOwner(a, elementOb);
+                }
             }
-            
         }
     }
 

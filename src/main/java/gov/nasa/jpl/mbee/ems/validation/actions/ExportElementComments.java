@@ -71,7 +71,7 @@ public class ExportElementComments extends RuleViolationAction implements Annota
                 if (ExportUtility.isElementDocumentation(c))
                     continue;
                 JSONObject info = new JSONObject();
-                ExportUtility.fillElement(c, info, null, null);
+                ExportUtility.fillElement(c, info);
                 infos.add(info);
             }
         }
@@ -94,7 +94,7 @@ public class ExportElementComments extends RuleViolationAction implements Annota
             if (ExportUtility.isElementDocumentation(c))
                 continue;
             JSONObject info = new JSONObject();
-            ExportUtility.fillElement(c, info, null, null);
+            ExportUtility.fillElement(c, info);
             elements.add(info);
         }
         send.put("elements", elements);

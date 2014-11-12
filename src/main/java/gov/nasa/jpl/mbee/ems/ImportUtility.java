@@ -117,21 +117,19 @@ public class ImportUtility {
             Stereotype sysmlView = Utils.getViewClassStereotype();
             StereotypesHelper.addStereotype(view, sysmlView);
             newE = view;
+        } else if (elementType.equalsIgnoreCase("viewpoint")) {
+            Class view = ef.createClassInstance();
+            Stereotype sysmlView = Utils.getViewpointStereotype();
+            StereotypesHelper.addStereotype(view, sysmlView);
+            newE = view;
         } else if (elementType.equalsIgnoreCase("Property")) {
             JSONArray vals = (JSONArray) specialization.get("value");
-
-            // Check if this is a slot. If so, process
-            // the associated values; otherwise continue
-            // to process the Property element using only the
-            // first value in the array.
-            //
             Boolean isSlot = (Boolean) specialization.get("isSlot");
             if ((isSlot != null) && (isSlot == true)) {
                 Slot newSlot = ef.createSlotInstance();
                 setSlotValues(newSlot, vals);
                 newE = newSlot;
-            }
-            else {
+            } else {
                 Property newProperty = ef.createPropertyInstance();
                 setPropertyDefaultValue(newProperty, vals);
                 setPropertyType(newProperty, (String)specialization.get("propertyType"));
@@ -139,9 +137,16 @@ public class ImportUtility {
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
-                || elementType.equalsIgnoreCase("DirectedRelationship")) {
+                || elementType.equalsIgnoreCase("DirectedRelationship")
+                || elementType.equalsIgnoreCase("Characterizes")) {
             Dependency newDependency = ef.createDependencyInstance();
             setRelationshipEnds(newDependency, specialization);
+            if (elementType.equalsIgnoreCase("Characterizes")) {
+                Stereotype character = Utils.getCharacterizesStereotype();
+                StereotypesHelper.addStereotype(newDependency, character);
+            } else if (elementType.equalsIgnoreCase("Expose")) {
+               
+            }
             newE = newDependency;
         } else if (elementType.equalsIgnoreCase("Generalization") || elementType.equalsIgnoreCase("Conform")) {
             Generalization newGeneralization = ef.createGeneralizationInstance();
@@ -167,6 +172,10 @@ public class ImportUtility {
             AssociationClass ac = ef.createAssociationClassInstance();
             setAssociation(ac, specialization);
             newE = ac;
+        } else if (elementType.equalsIgnoreCase("Connector")) { 
+            Connector conn = ef.createConnectorInstance();
+            setConnectorEnds(conn, specialization);
+            newE = conn;
         } else {
             Class newElement = ef.createClassInstance();
             newE = newElement;
@@ -196,6 +205,8 @@ public class ImportUtility {
                 setConstraintSpecification((Constraint)e, spec);
             if (type != null && e instanceof Connector && type.equals("Connector"))
                 setConnectorEnds((Connector)e, spec);
+            if (type != null && e instanceof Association && type.equals("Association"))
+                setAssociation((Association)e, spec);
         }
     }
     
@@ -212,12 +223,12 @@ public class ImportUtility {
     public static void setOwner(Element e, JSONObject o) {
         String ownerId = (String) o.get("owner");
         if ((ownerId == null) || (ownerId.isEmpty())) {
-            Application.getInstance().getGUILog().log("Owner not specified for mms sync add");
+            Application.getInstance().getGUILog().log("[ERROR] Owner not specified for mms sync add");
             return;
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            Application.getInstance().getGUILog().log("Owner not found for mms sync add");
+            Application.getInstance().getGUILog().log("[ERROR] Owner not found for mms sync add");
             return;
         }
         e.setOwner(owner);
@@ -269,7 +280,7 @@ public class ImportUtility {
     }
     
     public static void setConstraintSpecification(Constraint c, JSONObject spec) {
-        JSONObject sp = (JSONObject)spec.get("constraintSpecification");
+        JSONObject sp = (JSONObject)spec.get("specification");
         if (sp != null) {
             c.setSpecification(createValueSpec(sp));
         }
