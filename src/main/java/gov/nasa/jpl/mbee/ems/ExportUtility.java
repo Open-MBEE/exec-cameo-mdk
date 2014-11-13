@@ -174,6 +174,8 @@ public class ExportUtility {
 
     public static String getElementID(Element e) {
         if (e instanceof Slot) {
+            if (e.getOwner() == null || ((Slot)e).getDefiningFeature() == null)
+                return null;
             return e.getOwner().getID() + "-slot-"
                     + ((Slot) e).getDefiningFeature().getID();
         }
@@ -1212,7 +1214,7 @@ public class ExportUtility {
 
     //whether something should be sent to alfresco - ignore specific slots, documentation comment elements, value specs, empty instance specs (most likely from just stereotype application)
     public static boolean shouldAdd(Element e) {
-        if (e instanceof ValueSpecification || e instanceof Extension
+        if (e == null || e instanceof ValueSpecification || e instanceof Extension
                 || e instanceof ProfileApplication)
             return false;
         if (e instanceof Comment
@@ -1231,6 +1233,8 @@ public class ExportUtility {
                 && ExportUtility.IGNORE_SLOT_FEATURES.contains(((Slot) e)
                         .getDefiningFeature().getID()))
             return false;
+        if (e instanceof Slot && (e.getOwner() == null || ((Slot)e).getDefiningFeature() == null)) //model is messed up
+                return false;
         return true;
     }
 
