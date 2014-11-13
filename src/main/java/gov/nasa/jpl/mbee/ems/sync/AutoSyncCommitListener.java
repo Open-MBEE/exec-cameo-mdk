@@ -107,8 +107,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     }
                 }
             }
-            //if (!elements.isEmpty() || !deletes.isEmpty())
-              //  sendChanges();
+            if (!elements.isEmpty() || !deletes.isEmpty())
+                sendChanges();
         }
 
         @SuppressWarnings("unchecked")

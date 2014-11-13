@@ -334,19 +334,19 @@ public class ExportUtility {
                             //.log("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
                 //Application.getInstance().getGUILog().log(response);
-                log.info(response);
+                //log.info(response);
                 return false;
             } else {
                 //Application.getInstance().getGUILog().log(response);
             }
-            log.info(response);
+            //log.info(response);
             return true;
         }
         if (response.length() > 500) {
-            log.info(response);
+            //log.info(response);
             //Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
         } else {
-            log.info(response);
+            //log.info(response);
             //Application.getInstance().getGUILog().log(response);
         }
         return false;
@@ -361,10 +361,10 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
-
+            log.info("delete: " + url);
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-
+            log.info("delete response: " + json);
             if (showErrors(code, json, false)) {
                 return null;
             }
@@ -398,10 +398,10 @@ public class ExportUtility {
             gl.log("[INFO] Sending...");
             if (json.length() > 3000) {
                 // System.out.println(json);
-                log.info(url + ": " + json);
+                log.info("send: " + url + ": " + json);
                 //gl.log("(see md.log for what got sent - too big to show)");
             } else
-                log.info(url + ": " + json);// gl.log(json);
+                log.info("send: " + url + ": " + json);// gl.log(json);
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
@@ -409,6 +409,7 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
+            log.info("send response: " + response);
             if (showErrors(code, response, showPopupErrors)) {
                 return false;
             }
@@ -430,7 +431,7 @@ public class ExportUtility {
         EntityEnclosingMethod pm = null;
         pm = new GetMethodWithEntity(url);
         try {
-            log.info(url + ": " + json);// gl.log(json);
+            log.info("getWithBody: " + url + ": " + json);// gl.log(json);
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
@@ -438,6 +439,7 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
+            log.info("getWithBody Response: " + response);
             if (showErrors(code, response, false)) {
                 return null;
             }
@@ -490,10 +492,10 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
-
+            log.info("get: " + url);
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-
+            log.info("get response: " + json);
             if (showErrors(code, json, showPopupErrors)) {
                 return null;
             }
