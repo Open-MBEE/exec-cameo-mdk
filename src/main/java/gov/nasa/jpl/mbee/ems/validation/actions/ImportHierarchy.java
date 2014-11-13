@@ -279,7 +279,7 @@ AnnotationAction, IRuleViolationAction {
                         Property p = availableProps.remove(0);
                         moved.add(p);
                         //add the property to owned attribute array
-                        cprops.add(availableProps.remove(0));
+                        cprops.add(p);
                     }
                 }
                 for (Property p: ((Class)view).getOwnedAttribute()) {

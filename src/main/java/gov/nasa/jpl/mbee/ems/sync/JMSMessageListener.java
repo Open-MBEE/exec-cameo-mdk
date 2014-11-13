@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.model.Document;
@@ -138,10 +139,11 @@ public class JMSMessageListener implements MessageListener {
                             ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
                             dge.accept(vhv);
                             JSONObject model = vhv.getView2View();
-                            Map<String, Object> result = ImportHierarchy.importHierarchy(changedElement, model, web);
-                            guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
-                            ImportHierarchy.sendChanges(result);
-                            
+                            if (!ViewValidator.viewHierarchyMatch(changedElement, dge, vhv, (JSONObject)ob.get("specialization"))) {
+                                Map<String, Object> result = ImportHierarchy.importHierarchy(changedElement, model, web);
+                                guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
+                                ImportHierarchy.sendChanges(result);
+                            }
                         }
                     }
                     ImportUtility.updateElement(changedElement, ob);

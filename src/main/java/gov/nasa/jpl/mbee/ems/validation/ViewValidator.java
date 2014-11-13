@@ -302,7 +302,7 @@ public class ViewValidator {
         return false;
     }
 
-    private boolean viewHierarchyMatch(Element view, Document dge, ViewHierarchyVisitor vhv, JSONObject spec) {
+    public static boolean viewHierarchyMatch(Element view, Document dge, ViewHierarchyVisitor vhv, JSONObject spec) {
         JSONObject hierarchy = vhv.getView2View();
         // hierarchy is a mapping from parent views to array of children views
         /*
