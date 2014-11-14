@@ -152,7 +152,10 @@ public class JMSMessageListener implements MessageListener {
 
                 private void addElement(JSONObject ob) {
                     Element e = ImportUtility.createElement(ob);
-                    guilog.log("[Autosync] " + e.getHumanName() + " created");
+                    if (e == null)
+                        guilog.log("[ERROR -- Autosync] create element failed, owner not found");
+                    else
+                        guilog.log("[Autosync] " + e.getHumanName() + " created");
                 }
 
                 private void deleteElement(JSONObject ob) {
