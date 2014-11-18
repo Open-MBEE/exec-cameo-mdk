@@ -76,6 +76,7 @@ import com.nomagic.magicdraw.teamwork2.TeamworkService;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
@@ -178,6 +179,8 @@ public class ExportUtility {
                 return null;
             return e.getOwner().getID() + "-slot-"
                     + ((Slot) e).getDefiningFeature().getID();
+        } else if (e instanceof Model && e == Application.getInstance().getProject().getModel()) {
+            return Application.getInstance().getProject().getPrimaryProject().getProjectID();
         }
         return e.getID();
     }
@@ -188,6 +191,9 @@ public class ExportUtility {
         Project prj = Application.getInstance().getProject();
         String[] ids = id.split("-slot-");
         if (ids.length < 2) {
+            if (id.equals(prj.getPrimaryProject().getProjectID())) {
+                return prj.getModel();
+            }
             return (Element) prj.getElementByID(ids[0]);
         } else {
             Element instancespec = (Element) prj.getElementByID(ids[0]);
@@ -760,10 +766,10 @@ public class ExportUtility {
         for (Property p: e.getMemberEnd()) {
             if (i == 0) {
                 specialization.put("source", p.getID());
-                specialization.put("sourceAggregation", p.getAggregation().toString());
+                //specialization.put("sourceAggregation", p.getAggregation().toString());
             } else {
                 specialization.put("target", p.getID());
-                specialization.put("targetAggregation", p.getAggregation().toString());
+                //specialization.put("targetAggregation", p.getAggregation().toString());
             }
             i++;
         }
@@ -784,9 +790,9 @@ public class ExportUtility {
         specialization.put("type", "Package");
         Stereotype characterizes = Utils.getCharacterizesStereotype();
         if (characterizes != null && Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1).size() > 0)
-            specialization.put("site", true);
+            specialization.put("isSite", true);
         else
-            specialization.put("site", false);
+            specialization.put("isSite", false);
         return specialization;
     }
     

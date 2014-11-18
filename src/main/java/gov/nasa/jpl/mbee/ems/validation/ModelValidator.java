@@ -445,11 +445,11 @@ public class ModelValidator {
     
     private ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
         JSONObject model = ExportUtility.fillPackage(e, null);
-        Boolean serverSite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("site");
+        Boolean serverSite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("isSite");
         boolean serversite = false;
         if (serverSite != null && serverSite)
             serversite = true;
-        boolean modelsite = (Boolean)model.get("site");
+        boolean modelsite = (Boolean)model.get("isSite");
         if (!serversite && modelsite || serversite && !modelsite) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE] model: " + modelsite + ", web: " + serversite);
             v.addAction(new ExportSite(e));

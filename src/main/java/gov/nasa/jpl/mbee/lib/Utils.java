@@ -1961,7 +1961,7 @@ public class Utils {
     }
 
     public static Stereotype getCharacterizesStereotype() {
-        return null;
+        return (Stereotype)getElementByQualifiedName("test::characterizes");
     }
     
     public static Stereotype getViewpointStereotype() {
