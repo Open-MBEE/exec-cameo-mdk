@@ -531,6 +531,8 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillValueSpecification(ValueSpecification vs,
             JSONObject einfo) {
+        if (vs == null)
+            return null;
         JSONObject elementInfo = einfo;
         if (elementInfo == null)
             elementInfo = new JSONObject();
@@ -717,12 +719,14 @@ public class ExportUtility {
                 singleElementSpecVsArray.add(newElement);
             }
             specialization.put("value", singleElementSpecVsArray);
+            specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
+            specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
             if (ptype) {
                 Type type = ((Property) e).getType();
                 if (type != null) {
                     specialization.put("propertyType", "" + type.getID());
                 } else
-                    specialization.put("propertyType", "null");
+                    specialization.put("propertyType", null);
             }
         } else if (e instanceof Slot) {
             specialization.put("type", "Property");
@@ -766,10 +770,10 @@ public class ExportUtility {
         for (Property p: e.getMemberEnd()) {
             if (i == 0) {
                 specialization.put("source", p.getID());
-                //specialization.put("sourceAggregation", p.getAggregation().toString());
+                specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
             } else {
                 specialization.put("target", p.getID());
-                //specialization.put("targetAggregation", p.getAggregation().toString());
+                specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
         }
@@ -826,21 +830,28 @@ public class ExportUtility {
                     for (Element path: ps) {
                         if (path instanceof ElementValue) {
                             propertyPath.add(((ElementValue)path).getElement().getID());
-                        }
+                        } else if (path instanceof Property)
+                            propertyPath.add(path.getID());
                     }
                 }
                 propertyPath.add(end.getRole().getID());
             }
-            if (i == 0)
+            if (i == 0) {
+                specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
+                specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
                 specialization.put("sourcePath", propertyPath);
-            else
+            } else {
+                specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
+                specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
                 specialization.put("targetPath", propertyPath);
+            }
             i++;
         }
         if (e.getType() == null)
-            specialization.put("connectorType", "null");
+            specialization.put("connectorType", null);
         else
             specialization.put("connectorType", e.getType().getID());
+        specialization.put("connectorKind", "NONE");
         return specialization;
     }
     
@@ -938,10 +949,8 @@ public class ExportUtility {
         }
         if (e.getOwner() == null)
             info.put("owner", "null");
-        else if (e.getOwner() == Application.getInstance().getProject().getModel())
-            info.put("owner", Application.getInstance().getProject().getPrimaryProject().getProjectID());
         else
-            info.put("owner", "" + e.getOwner().getID());
+            info.put("owner", "" + getElementID(e.getOwner()));
         return info;
     }
     

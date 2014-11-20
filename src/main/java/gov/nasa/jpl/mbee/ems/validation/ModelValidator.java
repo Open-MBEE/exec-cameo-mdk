@@ -277,7 +277,7 @@ public class ModelValidator {
         for (String elementsKeyedId: elementsKeyedIds) {
             // MagicDraw element that has not been compared to Alfresco
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
-            if (e == null){
+            if (e == null || e == prj.getModel()){
                 if (elementsKeyedId.startsWith("PROJECT"))
                     continue;
                 // Alfresco sysml element is not in MagicDraw 

@@ -303,11 +303,11 @@ public class ImportUtility {
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
         if (webSourcePath != null && !webSourcePath.isEmpty()) {
-            List<ValueSpecification> evs = createElementValues((List<String>)webSourcePath);
+            List<Property> evs = createPropertyPath((List<String>)webSourcePath);
             StereotypesHelper.setStereotypePropertyValue(c.getEnd().get(0), nestedend, "propertyPath", evs);
         }
         if (webTargetPath != null && !webTargetPath.isEmpty()) {
-            List<ValueSpecification> evs = createElementValues((List<String>)webTargetPath);
+            List<Property> evs = createPropertyPath((List<String>)webTargetPath);
             StereotypesHelper.setStereotypePropertyValue(c.getEnd().get(1), nestedend, "propertyPath", evs);
         }
         String type = (String)spec.get("connectorType");
@@ -330,6 +330,17 @@ public class ImportUtility {
             ElementValue ev = ef.createElementValueInstance();
             ev.setElement(e);
             result.add(ev);
+        }
+        return result;
+    }
+    
+    public static List<Property> createPropertyPath(List<String> ids) {
+        List<Property> result = new ArrayList<Property>();
+        for (String id: ids) {
+            Element e = ExportUtility.getElementFromID(id);
+            if (e == null || !(e instanceof Property))
+                continue;
+            result.add((Property)e);
         }
         return result;
     }
