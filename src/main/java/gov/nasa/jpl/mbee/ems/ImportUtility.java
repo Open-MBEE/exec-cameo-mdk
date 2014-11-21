@@ -22,10 +22,14 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdassociationclasses.AssociationClass;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
@@ -90,7 +94,7 @@ public class ImportUtility {
         return toposort;
     }
     
-    public static Element createElement(JSONObject ob) {
+    public static Element createElement(JSONObject ob, boolean updateRelations) {
         Project project = Application.getInstance().getProject();
         ElementsFactory ef = project.getElementsFactory();
         project.getCounter().setCanResetIDForObject(true);
@@ -104,79 +108,102 @@ public class ImportUtility {
         //
         String sysmlID = (String) ob.get("sysmlid");
         Element existing = ExportUtility.getElementFromID(sysmlID);
-        if (existing != null)
+        if (existing != null && !updateRelations)
             return existing; //maybe jms feedback
         JSONObject specialization = (JSONObject) ob.get("specialization");
         String elementType = "Element";
         if (specialization != null) {
             elementType = (String) specialization.get("type");
         }
-        Element newE = null;
+        Element newE = existing;
         if (elementType.equalsIgnoreCase("view")) {
-            Class view = ef.createClassInstance();
+            if (newE == null) {
+                Class view = ef.createClassInstance();
+                newE = view;
+            }
             Stereotype sysmlView = Utils.getViewClassStereotype();
-            StereotypesHelper.addStereotype(view, sysmlView);
-            newE = view;
+            StereotypesHelper.addStereotype(newE, sysmlView);
         } else if (elementType.equalsIgnoreCase("viewpoint")) {
-            Class view = ef.createClassInstance();
+            if (newE == null) {
+                Class view = ef.createClassInstance();
+                newE = view;
+            }
             Stereotype sysmlView = Utils.getViewpointStereotype();
-            StereotypesHelper.addStereotype(view, sysmlView);
-            newE = view;
+            StereotypesHelper.addStereotype(newE, sysmlView);
         } else if (elementType.equalsIgnoreCase("Property")) {
             JSONArray vals = (JSONArray) specialization.get("value");
             Boolean isSlot = (Boolean) specialization.get("isSlot");
             if ((isSlot != null) && (isSlot == true)) {
-                Slot newSlot = ef.createSlotInstance();
-                setSlotValues(newSlot, vals);
-                newE = newSlot;
+                if (newE == null) {
+                    Slot newSlot = ef.createSlotInstance();
+                    newE = newSlot;
+                }
+                setSlotValues((Slot)newE, vals);
             } else {
-                Property newProperty = ef.createPropertyInstance();
-                setPropertyDefaultValue(newProperty, vals);
-                setPropertyType(newProperty, (String)specialization.get("propertyType"));
-                newE = newProperty;
+                if (newE == null) {
+                    Property newProperty = ef.createPropertyInstance();
+                    newE = newProperty;
+                }
+                setPropertyDefaultValue((Property)newE, vals);
+                setPropertyType((Property)newE, (String)specialization.get("propertyType"));
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
                 || elementType.equalsIgnoreCase("DirectedRelationship")
                 || elementType.equalsIgnoreCase("Characterizes")) {
-            Dependency newDependency = ef.createDependencyInstance();
-            setRelationshipEnds(newDependency, specialization);
+            if (newE == null) {
+                Dependency newDependency = ef.createDependencyInstance();
+                newE = newDependency;
+            }
+            setRelationshipEnds((Dependency)newE, specialization);
             if (elementType.equalsIgnoreCase("Characterizes")) {
                 Stereotype character = Utils.getCharacterizesStereotype();
-                StereotypesHelper.addStereotype(newDependency, character);
+                StereotypesHelper.addStereotype((Dependency)newE, character);
             } else if (elementType.equalsIgnoreCase("Expose")) {
-               
+                Stereotype expose = Utils.getExposeStereotype();
+                StereotypesHelper.addStereotype((Dependency)newE, expose);
             }
-            newE = newDependency;
         } else if (elementType.equalsIgnoreCase("Generalization") || elementType.equalsIgnoreCase("Conform")) {
-            Generalization newGeneralization = ef.createGeneralizationInstance();
-            setRelationshipEnds(newGeneralization, specialization);
+            if (newE == null) {
+                Generalization newGeneralization = ef.createGeneralizationInstance();
+                newE = newGeneralization;
+            }
+            setRelationshipEnds((Generalization)newE, specialization);
             if (elementType.equalsIgnoreCase("Conform")) {
                 Stereotype conform = Utils.getSysML14ConformsStereotype();
-                StereotypesHelper.addStereotype(newGeneralization, conform);
+                StereotypesHelper.addStereotype((Generalization)newE, conform);
             }
-            newE = newGeneralization;
         } else if (elementType.equalsIgnoreCase("Package")) {
-            Package newPackage = ef.createPackageInstance();
-            newE = newPackage;
+            if (newE == null) {
+                Package newPackage = ef.createPackageInstance();
+                newE = newPackage;
+            }
         } else if (elementType.equalsIgnoreCase("Constraint")) {
-            Constraint c = ef.createConstraintInstance();
-            setConstraintSpecification(c, specialization);
-            newE = c;
+            if (newE == null) {
+                Constraint c = ef.createConstraintInstance();
+                newE = c;
+            }
+            setConstraintSpecification((Constraint)newE, specialization);
         } else if (elementType.equalsIgnoreCase("Product")) {
-            Class prod = ef.createClassInstance();
+            if (newE == null) {
+                Class prod = ef.createClassInstance();
+                newE = prod;
+            }
             Stereotype product = Utils.getProductStereotype();
-            StereotypesHelper.addStereotype(prod, product);
-            newE = prod;
+            StereotypesHelper.addStereotype(newE, product);
         } else if (elementType.equalsIgnoreCase("Association")) {
-            AssociationClass ac = ef.createAssociationClassInstance();
-            setAssociation(ac, specialization);
-            newE = ac;
+            if (newE == null) {
+                AssociationClass ac = ef.createAssociationClassInstance();
+                newE = ac;
+            }
+            setAssociation((Association)newE, specialization);
         } else if (elementType.equalsIgnoreCase("Connector")) { 
-            Connector conn = ef.createConnectorInstance();
-            setConnectorEnds(conn, specialization);
-            newE = conn;
-        } else {
+            if (newE == null) {
+                Connector conn = ef.createConnectorInstance();
+                newE = conn;
+            }
+            setConnectorEnds((Connector)newE, specialization);
+        } else if (newE == null) {
             Class newElement = ef.createClassInstance();
             newE = newElement;
         }
@@ -317,7 +344,49 @@ public class ImportUtility {
     }
     
     public static void setAssociation(Association a, JSONObject spec) {
-        
+        String webSourceId = (String)spec.get("source");
+        String webTargetId = (String)spec.get("target");
+        Element webSource = ExportUtility.getElementFromID(webSourceId);
+        Element webTarget = ExportUtility.getElementFromID(webTargetId);
+        Property modelSource = null;
+        Property modelTarget = null;
+        String webSourceA = (String)spec.get("sourceAggregation");
+        String webTargetA = (String)spec.get("targetAggregation");
+        List<Property> todelete = new ArrayList<Property>();
+        int i = 0;
+        for (Property end: a.getMemberEnd()) {
+            if (end != webSource && end != webTarget)
+                todelete.add(end);
+            else if (i == 0) {
+                modelSource = end;
+            } else {
+                modelTarget = end;
+            }
+        }
+        for (Property p: todelete) {
+            try {
+                ModelElementsManager.getInstance().removeElement(p);
+            } catch (ReadOnlyElementException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        if (modelSource == null && webSource instanceof Property) {
+            a.getMemberEnd().add(0, (Property)webSource);
+            modelSource = (Property)webSource;
+        }
+        if (modelTarget == null && webTarget instanceof Property) {
+            a.getMemberEnd().add((Property)webTarget);
+            modelTarget = (Property)webTarget;
+        }
+        if (modelSource != null && webSourceA != null) {
+            AggregationKindEnum agg = AggregationKindEnum.get(webSourceA);
+            modelSource.setAggregation(agg);
+        }
+        if (modelTarget != null && webTargetA != null) {
+            AggregationKindEnum agg = AggregationKindEnum.get(webTargetA);
+            modelTarget.setAggregation(agg);
+        }
     }
     
     public static List<ValueSpecification> createElementValues(List<String> ids) {

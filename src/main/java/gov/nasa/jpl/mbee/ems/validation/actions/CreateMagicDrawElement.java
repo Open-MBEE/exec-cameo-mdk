@@ -121,21 +121,24 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
             }
             tocreate = ImportUtility.getCreationOrder(tocreate);
             if (tocreate == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Cannot create elements (id already exists or owner(s) not found)");
+                Application.getInstance().getGUILog().log("[ERROR] Cannot create elements (owner(s) not found)");
                 multipleSuccess = false;
                 return false;
             } else {
                 for (JSONObject newe: tocreate) {
-                    Element newElement = ImportUtility.createElement(newe);
+                    Element newElement = ImportUtility.createElement(newe, false);
                     if (newElement == null) {
                         Application.getInstance().getGUILog().log("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
                         multipleSuccess = false;
                         return false;
                     }
                 }
+                for (JSONObject newe: tocreate) {
+                    ImportUtility.createElement(newe, true);
+                }
             }
         } else {
-            Element magicDrawElement = ImportUtility.createElement(ob); 
+            Element magicDrawElement = ImportUtility.createElement(ob, true); 
             if (magicDrawElement == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Element not created (id already exists or owner not found)");
                 return false;

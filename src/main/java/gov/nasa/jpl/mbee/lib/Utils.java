@@ -1961,7 +1961,7 @@ public class Utils {
     }
 
     public static Stereotype getCharacterizesStereotype() {
-        return (Stereotype)getElementByQualifiedName("test::characterizes");
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::characterizes");
     }
     
     public static Stereotype getViewpointStereotype() {
@@ -1990,6 +1990,10 @@ public class Utils {
     
     public static Stereotype getProductStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::Product");
+    }
+    
+    public static Stereotype getExposeStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Expose");
     }
 
     /********************************************* User interaction ****************************************************/

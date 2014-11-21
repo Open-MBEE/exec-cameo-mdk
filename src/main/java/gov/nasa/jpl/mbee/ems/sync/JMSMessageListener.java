@@ -82,7 +82,10 @@ public class JMSMessageListener implements MessageListener {
                         List<JSONObject> sortedAdded = ImportUtility.getCreationOrder((List<JSONObject>)added);
                         if (sortedAdded != null) {
                             for (Object element : added) {
-                                addElement((JSONObject) element);
+                                addElement((JSONObject) element, false);
+                            }
+                            for (Object element : added) { //do a second pass to update relations in case relations are part of new elements
+                                addElement((JSONObject) element, true);
                             }
                         } else {
                             log.error("jms message added can't be executed - " + added.toJSONString());
@@ -150,11 +153,11 @@ public class JMSMessageListener implements MessageListener {
                     guilog.log("[Autosync] " + changedElement.getHumanName() + " updated");
                 }
 
-                private void addElement(JSONObject ob) {
-                    Element e = ImportUtility.createElement(ob);
-                    if (e == null)
+                private void addElement(JSONObject ob, boolean updateRelations) {
+                    Element e = ImportUtility.createElement(ob, updateRelations);
+                    if (e == null && updateRelations)
                         guilog.log("[ERROR -- Autosync] create element failed, owner not found");
-                    else
+                    else if (e != null && updateRelations)
                         guilog.log("[Autosync] " + e.getHumanName() + " created");
                 }
 
