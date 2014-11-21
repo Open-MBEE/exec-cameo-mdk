@@ -672,7 +672,7 @@ public class ModelValidator {
         String modelTarget = (String)modelspec.get("target");
         String modelSourceAggr = (String)modelspec.get("sourceAggregation");
         String modelTargetAggr = (String)modelspec.get("targetAggregation");
-        JSONArray modelOwned = (JSONArray)modelspec.get("owned");
+        JSONArray modelOwned = (JSONArray)modelspec.get("ownedEnd");
         String webSource = (String)webspec.get("source");
         String webTarget = (String)webspec.get("target");
         String webSourceAggr = (String)webspec.get("sourceAggregation");

@@ -948,7 +948,7 @@ public class ExportUtility {
             info.put("sysmlid", getElementID(e));
         }
         if (e.getOwner() == null)
-            info.put("owner", "null");
+            info.put("owner", null);
         else
             info.put("owner", "" + getElementID(e.getOwner()));
         return info;
