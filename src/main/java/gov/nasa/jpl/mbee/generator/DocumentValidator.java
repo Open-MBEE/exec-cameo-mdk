@@ -480,8 +480,14 @@ public class DocumentValidator {
                 else if (napplied.size() > 1 || bapplied.size() > 1)
                     multipleStereotypes.addViolation(n, multipleStereotypes.getDescription());
                 else if (!napplied.isEmpty() && !bapplied.isEmpty()
-                        && napplied.iterator().next() != bapplied.iterator().next())
-                    mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
+                        && napplied.iterator().next() != bapplied.iterator().next()) {
+                    Stereotype ns = napplied.iterator().next();
+                    if (!ns.getName().equals(DocGen3Profile.tableAttributeColumnStereotype) &&
+                            !ns.getName().equals(DocGen3Profile.tableColumnStereotype) &&
+                            !ns.getName().equals(DocGen3Profile.tableExpressionColumnStereotype) &&
+                            !ns.getName().equals(DocGen3Profile.tablePropertyColumnStereotype))
+                        mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
+                }
                 /*
                  * if (StereotypesHelper.hasStereotype(b,
                  * DocGen3Profile.sectionStereotype) ||
