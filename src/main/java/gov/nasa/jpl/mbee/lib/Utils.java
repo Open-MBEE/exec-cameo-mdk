@@ -1442,7 +1442,7 @@ public class Utils {
                 if (o2 == null)
                     return 1;
                 if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
-                    return ((NamedElement)o1).getName().compareTo(((NamedElement)o2).getName());
+                    return ((NamedElement)o1).getName().toLowerCase().compareTo(((NamedElement)o2).getName().toLowerCase());
                 }
                 return CompareUtils.compare(o1, o2);
             }
@@ -1506,7 +1506,7 @@ public class Utils {
                     return 1;
                 switch (attribute) {
                     case Name:
-                        return CompareUtils.compare(a.toString(), b.toString(), true);
+                        return CompareUtils.compare(a.toString().toLowerCase(), b.toString().toLowerCase(), true);
                     case Documentation:
                         return CompareUtils.compare(a.toString().length(), b.toString().length(), true);
                     case Value:
