@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +19,11 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.transaction.TransactionManager;
 
 /*
@@ -87,9 +90,22 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Application.getInstance().getGUILog().log("[ERROR] autosync not allowed - project versions currently don't match - project may be out of date");
             return;
         }
-        if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
-            Application.getInstance().getGUILog().log("[ERROR] cannot lock project recursively - autosync will not start");
-            return;
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            String user = TeamworkUtils.getLoggedUserName();
+            if (user == null) {
+                Application.getInstance().getGUILog().log("[ERROR] You must be logged into teamwork - autosync will not start");
+                return;
+            }
+            Collection<Element> lockedByUser = TeamworkUtils.getLockedElement(project, user);
+            Collection<Element> lockedByAll = TeamworkUtils.getLockedElement(project, null);
+            if (!lockedByUser.equals(lockedByAll)) {
+                Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
+                return;
+            }
+            if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
+                Application.getInstance().getGUILog().log("[ERROR] cannot lock project recursively - autosync will not start");
+                return;
+            }
         }
         try {
             AutoSyncCommitListener listener = new AutoSyncCommitListener();
