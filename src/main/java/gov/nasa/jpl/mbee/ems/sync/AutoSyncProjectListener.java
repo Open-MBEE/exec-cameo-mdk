@@ -19,6 +19,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
 import com.nomagic.uml2.transaction.TransactionManager;
 
@@ -61,7 +62,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 
     public static void initDurable(Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        String projectID = project.getPrimaryProject().getProjectID();
+        String projectID = ExportUtility.getProjectId(project);
         String wsID = ExportUtility.getWorkspace();
         String subscriberId = getSubscriberId(project);
         // Check if the keywords are found in the current project. If so, it
@@ -73,11 +74,21 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
         String url = getJMSUrl();
         if (url == null) {
-            Application.getInstance().getGUILog().log("sync initialization failed - cannot get server url");
+            Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server url");
             return;
         }
         if (wsID == null) {
-            Application.getInstance().getGUILog().log("sync initialization failed - cannot get server workspace that corresponds to this project branch");
+            Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server workspace that corresponds to this project branch");
+            return;
+        }
+        Integer webVersion = ExportUtility.getAlfrescoProjectVersion(ExportUtility.getProjectId(project));
+        Integer localVersion = ExportUtility.getProjectVersion(project);
+        if (localVersion != null && !localVersion.equals(webVersion)) {
+            Application.getInstance().getGUILog().log("[ERROR] autosync not allowed - project versions currently don't match - project may be out of date");
+            return;
+        }
+        if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
+            Application.getInstance().getGUILog().log("[ERROR] cannot lock project recursively - autosync will not start");
             return;
         }
         try {
@@ -170,5 +181,15 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public void projectClosed(Project project) {
         close(project);
         ProjectListenerMapping.getInstance().remove(project);
+    }
+    
+    @Override
+    public void projectSaved(Project project, boolean savedInServer) {
+        Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
+                || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(LISTENER)) {
+            //autosync is on
+            ExportUtility.sendProjectVersion();
+        }
     }
 }

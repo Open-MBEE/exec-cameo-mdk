@@ -362,6 +362,7 @@ public class ImportUtility {
             } else {
                 modelTarget = end;
             }
+            i++;
         }
         for (Property p: todelete) {
             try {
@@ -380,11 +381,11 @@ public class ImportUtility {
             modelTarget = (Property)webTarget;
         }
         if (modelSource != null && webSourceA != null) {
-            AggregationKindEnum agg = AggregationKindEnum.get(webSourceA);
+            AggregationKindEnum agg = AggregationKindEnum.getByName(webSourceA.toLowerCase());
             modelSource.setAggregation(agg);
         }
         if (modelTarget != null && webTargetA != null) {
-            AggregationKindEnum agg = AggregationKindEnum.get(webTargetA);
+            AggregationKindEnum agg = AggregationKindEnum.getByName(webTargetA.toLowerCase());
             modelTarget.setAggregation(agg);
         }
     }
