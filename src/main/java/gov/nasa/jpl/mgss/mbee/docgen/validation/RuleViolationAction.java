@@ -83,6 +83,8 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     }
 
     public void removeViolationAndUpdateWindow() {
+        if (vwr == null)
+            return;
         vwr.results.remove(rvr);
         AnnotationManager.getInstance().remove(annotation);
         AnnotationManager.getInstance().update();

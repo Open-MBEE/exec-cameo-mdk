@@ -145,7 +145,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     }
     
     @SuppressWarnings("unchecked")
-    private boolean exportView(Element view) {
+    public boolean exportView(Element view) {
         DocumentValidator dv = new DocumentValidator(view);
         dv.validateDocument();
         if (dv.isFatal()) {
