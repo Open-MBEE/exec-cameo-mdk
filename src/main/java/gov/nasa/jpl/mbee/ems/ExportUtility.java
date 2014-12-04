@@ -1037,7 +1037,7 @@ public class ExportUtility {
 
     public static Integer getAlfrescoProjectVersion(String projectId) {
         String baseUrl = getUrlWithWorkspace();
-        String checkProjUrl = baseUrl + "/elements/" + projectId;
+        String checkProjUrl = baseUrl + "/projects/" + projectId;
         String json = get(checkProjUrl, false);
         if (json == null)
             return null; // ??
@@ -1046,8 +1046,8 @@ public class ExportUtility {
             JSONArray elements = (JSONArray)result.get("elements");
             if (!elements.isEmpty() && ((JSONObject)elements.get(0)).containsKey("specialization")) {
                 JSONObject spec = (JSONObject)((JSONObject)elements.get(0)).get("specialization");
-                if (spec.containsKey("projectVersion"))
-                    return Integer.valueOf(result.get("projectVersion").toString());
+                if (spec.containsKey("projectVersion") && spec.get("projectVersion") != null)
+                    return Integer.valueOf(spec.get("projectVersion").toString());
             }
         }
         return null;
@@ -1204,6 +1204,19 @@ public class ExportUtility {
         return mountedVersions;
     }
 
+    public static void sendProjectVersion() {
+        String baseurl = getUrlWithWorkspaceAndSite();
+        if (baseurl == null)
+            return;
+        JSONObject result = ExportUtility.getProjectJson();
+        JSONObject tosend = new JSONObject();
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        array.add(result);
+        String url = baseurl + "/projects";
+        send(url, tosend.toJSONString(), null, false);
+    }
+    
     public static void sendProjectVersion(String projId, Integer version) {
         String baseurl = getUrlWithWorkspaceAndSite();
         if (baseurl == null)
@@ -1266,7 +1279,9 @@ public class ExportUtility {
     }
     
     public static JSONObject getProjectJson() {
-        return getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), null);
+        Project prj = Application.getInstance().getProject();
+        Integer ver = getProjectVersion(prj);
+        return getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), ver);
     }
     
     @SuppressWarnings("unchecked")
@@ -1285,6 +1300,13 @@ public class ExportUtility {
     
     public static String getProjectId(Project proj) {
         return proj.getPrimaryProject().getProjectID();
+    }
+    
+    public static Integer getProjectVersion(Project proj) {
+        Integer ver = null;
+        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject()))
+            ver = TeamworkService.getInstance(proj).getVersion(proj).getNumber();
+        return ver;
     }
     
     public static String getTeamworkBranch(Project proj) {
