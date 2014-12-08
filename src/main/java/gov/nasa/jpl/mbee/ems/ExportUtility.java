@@ -675,7 +675,7 @@ public class ExportUtility {
             specialization.put("type", "Comment");
         } else if (e instanceof Association) {
             fillAssociationSpecialization((Association)e, specialization);
-        } else if (e instanceof Class) {
+        } else if (e.getClass().getSimpleName().equals("ClassImpl")) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
             //Stereotype view = Utils.getViewStereotype();
             if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
@@ -685,7 +685,7 @@ public class ExportUtility {
             //if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view))
               //  specialization.put("type", "View");
         } else {
-            specialization.put("type", "Element");
+            specialization.put("type", "Untyped");
         }
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
