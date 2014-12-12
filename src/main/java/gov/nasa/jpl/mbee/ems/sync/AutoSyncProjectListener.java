@@ -84,12 +84,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server workspace that corresponds to this project branch");
             return;
         }
-        //Integer webVersion = ExportUtility.getAlfrescoProjectVersion(ExportUtility.getProjectId(project));
-        //Integer localVersion = ExportUtility.getProjectVersion(project);
-        //if (localVersion != null && !localVersion.equals(webVersion)) {
-        //    Application.getInstance().getGUILog().log("[ERROR] autosync not allowed - project versions currently don't match - project may be out of date");
-        //    return;
-        //}
+        Integer webVersion = ExportUtility.getAlfrescoProjectVersion(ExportUtility.getProjectId(project));
+        Integer localVersion = ExportUtility.getProjectVersion(project);
+        if (localVersion != null && !localVersion.equals(webVersion)) {
+            Application.getInstance().getGUILog().log("[ERROR] autosync not allowed - project versions currently don't match - project may be out of date");
+            return;
+        }
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             String user = TeamworkUtils.getLoggedUserName();
             if (user == null) {
