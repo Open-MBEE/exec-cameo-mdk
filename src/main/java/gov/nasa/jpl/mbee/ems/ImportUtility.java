@@ -302,7 +302,9 @@ public class ImportUtility {
             return;
         s.getValue().clear();
         for (Object o: values) {
-            s.getValue().add(createValueSpec((JSONObject)o));
+            ValueSpecification vs = createValueSpec((JSONObject)o);
+            if (vs != null)
+                s.getValue().add(vs);
         }
     }
     
