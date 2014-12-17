@@ -1214,6 +1214,8 @@ public class ExportUtility {
         tosend.put("elements", array);
         array.add(result);
         String url = baseurl + "/projects";
+        if (!url.contains("master"))
+            url += "?createSite=true";
         send(url, tosend.toJSONString(), null, false);
     }
     
@@ -1227,6 +1229,8 @@ public class ExportUtility {
         tosend.put("elements", array);
         array.add(result);
         String url = baseurl + "/projects";
+        if (!url.contains("master"))
+            url += "?createSite=true";
         send(url, tosend.toJSONString(), null, false);
     }
 
