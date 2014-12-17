@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
+import gov.nasa.jpl.mbee.actions.TestAction;
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
@@ -78,6 +79,7 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
@@ -145,7 +147,10 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 "Document Profile");
         if (e == null)
             return;
-        
+        //if (e instanceof Class) {
+        //    ActionsCategory hmm = myCategory(manager, "AlfrescoModel", "MMS");
+         //   hmm.addAction(new TestAction((Class)e));
+        //}
         if (ViewEditUtils.isPasswordSet()) {
             if (MDUtils.isDeveloperMode()) {
                 ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
@@ -201,13 +206,13 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
             if (ViewEditUtils.isPasswordSet()) {
                 ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-                NMAction action = manager.getActionFor(ValidateViewAction.actionid);
-                if (action == null)
-                    modelLoad2.addAction(new ValidateViewAction(e));
-                action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
-                if (action == null)
-                    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
-                action = manager.getActionFor("ExportView");
+                //NMAction action = manager.getActionFor(ValidateViewAction.actionid);
+                //if (action == null)
+                //    modelLoad2.addAction(new ValidateViewAction(e));
+                //action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
+                //if (action == null)
+                //    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
+                NMAction action = manager.getActionFor("ExportView");
                 if (action == null)
                     modelLoad2.addAction(new ExportViewAction(e, false));
                 action = manager.getActionFor("ExportViewRecursive");
