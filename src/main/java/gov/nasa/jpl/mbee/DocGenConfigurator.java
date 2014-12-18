@@ -28,7 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
+import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
@@ -44,7 +46,6 @@ import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
-
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
@@ -145,6 +146,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 "Document Profile");
         if (e == null)
             return;
+        
+        // top-level context menu: Refactor With ID
+        ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");       
+        if(e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)){
+        	refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(e));   
+        }
+        if(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component){
+        	refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(e));   
+        }
+        manager.addCategory(refactorWithIDActionCat);
         
         if (ViewEditUtils.isPasswordSet()) {
             if (MDUtils.isDeveloperMode()) {
