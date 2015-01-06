@@ -94,7 +94,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
             if (mes.length > 2)
                 eid = mes[1];
             if (eid != null) {
-                String eurl = url += "/elements/" + eid;
+                String eurl = url + "/elements/" + eid;
                 String result = ExportUtility.delete(eurl);
                 if (result != null)
                     toremove.add(anno);
