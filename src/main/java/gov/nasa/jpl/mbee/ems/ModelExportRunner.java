@@ -31,7 +31,9 @@ package gov.nasa.jpl.mbee.ems;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.simple.JSONObject;
 
@@ -64,9 +66,9 @@ public class ModelExportRunner implements RunnableWithProgress {
         if (start == Application.getInstance().getProject().getModel()) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
         } else {
-            List<Element> root = new ArrayList<Element>();
+            Set<Element> root = new HashSet<Element>();
             root.add(start);
-            me = new ModelExporter(root, depth, packageOnly);
+            me = new ModelExporter(root, depth, packageOnly, Application.getInstance().getProject().getPrimaryProject());
         }
         JSONObject result = me.getResult();
         String json = result.toJSONString();

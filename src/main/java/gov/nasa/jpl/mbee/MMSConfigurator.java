@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
 import gov.nasa.jpl.mbee.actions.ems.SendProjectVersionAction;
 import gov.nasa.jpl.mbee.actions.ems.StartAutoSyncAction;
 import gov.nasa.jpl.mbee.actions.ems.UpdateWorkspacesAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateMountStructureAction;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 
 import com.nomagic.actions.AMConfigurator;
@@ -59,6 +60,7 @@ public class MMSConfigurator implements AMConfigurator {
             manager.addCategory((ActionsCategory)category);
             category.addAction(new EMSLogoutAction());
             category.addAction(new EMSLoginAction());
+            category.addAction(new ValidateMountStructureAction());
             category.addAction(new StartAutoSyncAction());
             category.addAction(new CloseAutoSyncAction());
             category.addAction(new SendProjectVersionAction());

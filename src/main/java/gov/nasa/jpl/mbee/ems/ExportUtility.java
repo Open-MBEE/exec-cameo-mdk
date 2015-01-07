@@ -126,6 +126,7 @@ public class ExportUtility {
     private static String developerWs = "master";
     public static boolean baselineNotSet = false;
     public static Map<String, Map<String, String>> wsIdMapping = new HashMap<String, Map<String, String>>();
+    public static Map<String, Set<String>> sites = new HashMap<String, Set<String>>();
     
     public static void updateWorkspaceIdMapping() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
@@ -153,6 +154,45 @@ public class ExportUtility {
                 idmapping.put(qname, id);
             }
         }
+    }
+    
+    public static void updateMasterSites() {
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Set<String> idmapping = null;
+        if (sites.containsKey(projId))
+            idmapping = sites.get(projId);
+        else {
+            idmapping = new HashSet<String>();
+            sites.put(projId, idmapping);
+        }
+        
+        String url = getUrl();
+        if (url == null)
+            return;
+        url += "/workspaces/master/sites";
+        String result = get(url, false);
+        if (result != null) {
+            idmapping.clear();
+            JSONObject ob =  (JSONObject) JSONValue.parse(result);
+            JSONArray array = (JSONArray)ob.get("sites");
+            for (Object ws: array) {
+                JSONObject site = (JSONObject)ws;
+                String id = (String)site.get("sysmlid");
+                idmapping.add(id);
+            }
+        }
+    }
+    
+    public static boolean siteExists(String site) {
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Set<String> idmapping = null;
+        if (sites.containsKey(projId))
+            idmapping = sites.get(projId);
+        else {
+            idmapping = new HashSet<String>();
+            sites.put(projId, idmapping);
+        }
+        return idmapping.contains(site);
     }
     
     public static Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
@@ -254,6 +294,10 @@ public class ExportUtility {
         return site;
     }
     
+    public static String getSiteForProject(IProject prj) {
+        return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace(".", "");
+    }
+    
     public static String getWorkspace() {
         Project project = Application.getInstance().getProject();
         String twbranch = getTeamworkBranch(project);
@@ -308,6 +352,14 @@ public class ExportUtility {
         return null;*/
     }
 
+    public static String getUrlForProject(IProject prj) {
+        String url = getUrl();
+        String site = getSiteForProject(prj);
+        if (url != null && site != null)
+            return url + "/workspaces/master/sites/" + site + "/projects/" + prj.getProjectID();
+        return null;
+    }
+    
     public static String getPostElementsUrl() {
         String url = getUrlWithWorkspaceAndSite();
         if (url == null)
@@ -1286,6 +1338,10 @@ public class ExportUtility {
         Project prj = Application.getInstance().getProject();
         Integer ver = getProjectVersion(prj);
         return getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), ver);
+    }
+    
+    public static JSONObject getProjectJsonForProject(IProject prj) {
+        return getProjectJSON(prj.getName(), prj.getProjectID(), null);
     }
     
     @SuppressWarnings("unchecked")

@@ -472,6 +472,10 @@ public class ImportUtility {
             newval = ef.createInstanceValueInstance();
             ((InstanceValue)newval).setInstance((InstanceSpecification)findInst);
             break;
+        case Expression:
+            //todo
+            
+            break;
         default:
             Debug.error("Bad PropertyValueType: " + valueType);
         };
