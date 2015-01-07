@@ -17,6 +17,7 @@ import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -37,6 +38,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
@@ -57,6 +59,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 public class ImportUtility {
+    public static Logger log = Logger.getLogger(ImportUtility.class);
+    
     public static final Set<String> VALUESPECS = new HashSet<String>(Arrays.asList(
             new String[] {"LiteralInteger", "LiteralString", "LiteralBoolean", 
                     "LiteralUnlimitedNatural", "Expression", "InstanceValue", 
@@ -473,11 +477,18 @@ public class ImportUtility {
             ((InstanceValue)newval).setInstance((InstanceSpecification)findInst);
             break;
         case Expression:
-            //todo
-            
+            Expression ex = ef.createExpressionInstance();
+            newval = ex;
+            if (!o.containsKey("operand"))
+                break;
+            for (Object op: (JSONArray)o.get("operand")) {
+                ValueSpecification operand = createValueSpec((JSONObject)op);
+                if (operand != null)
+                    ex.getOperand().add(operand);
+            }
             break;
         default:
-            Debug.error("Bad PropertyValueType: " + valueType);
+            log.error("Bad PropertyValueType: " + valueType);
         };
         return newval;
     }
