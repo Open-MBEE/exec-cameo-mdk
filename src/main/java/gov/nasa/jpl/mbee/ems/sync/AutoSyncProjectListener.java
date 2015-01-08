@@ -67,7 +67,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         String projectID = ExportUtility.getProjectId(project);
         String wsID = ExportUtility.getWorkspace();
-        String subscriberId = getSubscriberId(project);
+        
         // Check if the keywords are found in the current project. If so, it
         // indicates that this JMS subscriber has already been init'ed.
         //
@@ -117,7 +117,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             projectInstances.put(LISTENER, listener);
 
             ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
-
+            String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
             Connection connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
             // connection.setExceptionListener(this);

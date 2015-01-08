@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.ems.validation;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,12 +19,14 @@ import com.nomagic.ci.persistence.sharing.ISharePoint;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.teamwork.application.BranchData;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.CreateTeamworkBranch;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportLocalModule;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
@@ -34,8 +37,8 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 public class BranchAndModulesValidator {
 
     private ValidationSuite suite = new ValidationSuite("structure");
-    private ValidationRule alfrescoTask = new ValidationRule("Task on alfresco", "Task on alfresco", ViolationSeverity.WARNING);
-    private ValidationRule teamworkBranch = new ValidationRule("Teamwork branch", "Branch on teamwork", ViolationSeverity.WARNING);
+    private ValidationRule alfrescoTask = new ValidationRule("Task on alfresco", "Task on alfresco not in teamwork", ViolationSeverity.WARNING);
+    private ValidationRule teamworkBranch = new ValidationRule("Teamwork branch", "Branch on teamwork not on alfresco", ViolationSeverity.WARNING);
     private ValidationRule unexportedModule = new ValidationRule("Unexported module", "Unexported module", ViolationSeverity.ERROR);
     
     public BranchAndModulesValidator() {
@@ -78,10 +81,37 @@ public class BranchAndModulesValidator {
             return;
         ExportUtility.updateWorkspaceIdMapping();
         Map<String, String> wsMapping = ExportUtility.wsIdMapping.get(prj.getProjectID());
+        Map<String, String> wsIdMapping = new HashMap<String, String>();
+        for (String key: wsMapping.keySet()) {
+            wsIdMapping.put(wsMapping.get(key), key);
+        }
+        Set<String> seenTasks = new HashSet<String>();
+        Map<String, ProjectDescriptor> branchDescriptors = new HashMap<String, ProjectDescriptor>();
         try {
-            Set<BranchData> branches = TeamworkUtils.getBranches(ProjectDescriptorsFactory.getDescriptorForProject(proj));
+            ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(proj);
+            Set<BranchData> branches = TeamworkUtils.getBranches(currentProj);
+            String currentBranch = ExportUtility.getTeamworkBranch(proj);
+            if (currentBranch == null)
+                currentBranch = "master";
+            branchDescriptors.put(currentBranch, currentProj);
             for (BranchData bd: branches) {
-                
+                ProjectDescriptor rpd = TeamworkUtils.getRemoteProjectDescriptor(bd.getBranchId());
+                String branchName = ProjectDescriptorsFactory.getProjectBranchPath(rpd.getURI());
+                branchDescriptors.put("master/" + branchName, rpd);
+                if (wsMapping.containsKey("master/" + branchName)) {
+                    seenTasks.add("master/" + branchName);
+                    continue;
+                }
+                ValidationRuleViolation v = new ValidationRuleViolation(null, "The teamwork branch " + branchName + " doesn't have a corresponding task on the server.");
+                teamworkBranch.addViolation(v);
+            }
+            Set<String> allTasks = wsMapping.keySet();
+            allTasks.removeAll(seenTasks);
+            allTasks.remove("master");
+            for (String branchName: allTasks) {
+                ValidationRuleViolation v = new ValidationRuleViolation(null, "The alfresco task " + branchName + " doesn't have a corresponding teamwork branch.");
+                alfrescoTask.addViolation(v);
+                v.addAction(new CreateTeamworkBranch(branchName, wsMapping.get(branchName), wsMapping, wsIdMapping, branchDescriptors));
             }
         } catch (RemoteException e) {
             e.printStackTrace();
