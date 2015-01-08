@@ -5,30 +5,43 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
+import java.sql.Date;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import org.joda.time.DateTime;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class CreateAlfrescoTask extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
-    private NamedElement element;
+    private String branchName;
+    private Map<String, String> wsMapping;
+    private Map<String, String> wsIdMapping;
+    private Map<String, ProjectDescriptor> branchDescriptors;
     
-    public CreateAlfrescoTask() {
+    public CreateAlfrescoTask(String branchName, Map<String, String> wsMapping, Map<String, String> wsIdMapping, Map<String, ProjectDescriptor> branchDescriptors) {
         super("CreateAlfrescoTask", "Create Alfresco Task", null, null);
+        this.branchName = branchName;
+        this.wsMapping = wsMapping;
+        this.wsIdMapping = wsIdMapping;
+        this.branchDescriptors = branchDescriptors;
     }
     
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
-        return true;
+        return false;
     }
 
     @SuppressWarnings("unchecked")
@@ -40,6 +53,19 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
-        
+        String [] branches = branchName.split("/");
+        String parentBranch = "master";
+        for (int i = 1; i < branches.length - 1; i++) {
+            parentBranch += "/" + branches[i];
+        }
+        String parentId = wsMapping.get(parentBranch);
+        if (parentId == null) {
+            Application.getInstance().getGUILog().log("The parent branch doesn't have a corresponding alfresco task yet, cannot create this task");
+            return;
+        }
+        String url = ExportUtility.getUrl();
+        DateTime current = new DateTime();
+        String now = current.toString();
+        url += "/workspaces/" + branches[branches.length-1] + "?sourceWorkspace=" + parentId + "&copyTime=" + now;
     }
 }

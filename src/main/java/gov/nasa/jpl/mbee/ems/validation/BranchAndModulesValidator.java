@@ -26,6 +26,7 @@ import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.CreateAlfrescoTask;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateTeamworkBranch;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportLocalModule;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -89,25 +90,34 @@ public class BranchAndModulesValidator {
         Map<String, ProjectDescriptor> branchDescriptors = new HashMap<String, ProjectDescriptor>();
         try {
             ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(proj);
-            Set<BranchData> branches = TeamworkUtils.getBranches(currentProj);
+            ProjectDescriptor trunk = currentProj;
+            String trunkBranch = ProjectDescriptorsFactory.getProjectBranchPath(trunk.getURI());
+            while (trunkBranch != null) {
+                BranchData parent = TeamworkUtils.getBranchedFrom(trunk);
+                trunk = TeamworkUtils.getRemoteProjectDescriptor(parent.getBranchId());
+                trunkBranch = ProjectDescriptorsFactory.getProjectBranchPath(trunk.getURI());
+            }
             String currentBranch = ExportUtility.getTeamworkBranch(proj);
             if (currentBranch == null)
                 currentBranch = "master";
+            else
+                currentBranch = "master/" + currentBranch;
             branchDescriptors.put(currentBranch, currentProj);
-            for (BranchData bd: branches) {
-                ProjectDescriptor rpd = TeamworkUtils.getRemoteProjectDescriptor(bd.getBranchId());
-                String branchName = ProjectDescriptorsFactory.getProjectBranchPath(rpd.getURI());
-                branchDescriptors.put("master/" + branchName, rpd);
-                if (wsMapping.containsKey("master/" + branchName)) {
-                    seenTasks.add("master/" + branchName);
+            fillBranchData(trunk, branchDescriptors);
+            //Set<BranchData> branches = TeamworkUtils.getBranches(currentProj);
+            for (String branchName: branchDescriptors.keySet()) {
+                if (wsMapping.containsKey(branchName)) {
+                    seenTasks.add(branchName);
                     continue;
                 }
                 ValidationRuleViolation v = new ValidationRuleViolation(null, "The teamwork branch " + branchName + " doesn't have a corresponding task on the server.");
                 teamworkBranch.addViolation(v);
+                v.addAction(new CreateAlfrescoTask(branchName, wsMapping, wsIdMapping, branchDescriptors));
             }
-            Set<String> allTasks = wsMapping.keySet();
+            Set<String> allTasks = new HashSet<String>(wsMapping.keySet());
             allTasks.removeAll(seenTasks);
-            allTasks.remove("master");
+            //allTasks.remove("master");
+            //allTasks.remove(currentBranch);
             for (String branchName: allTasks) {
                 ValidationRuleViolation v = new ValidationRuleViolation(null, "The alfresco task " + branchName + " doesn't have a corresponding teamwork branch.");
                 alfrescoTask.addViolation(v);
@@ -121,6 +131,16 @@ public class BranchAndModulesValidator {
         //can only do project version inits on branches where the trunk project already exists
         
         
+    }
+    
+    private void fillBranchData(ProjectDescriptor currentProj, Map<String, ProjectDescriptor> branchDescriptors) throws RemoteException {
+        Set<BranchData> branches = TeamworkUtils.getBranches(currentProj);
+        for (BranchData bd: branches) {
+            ProjectDescriptor rpd = TeamworkUtils.getRemoteProjectDescriptor(bd.getBranchId());
+            String branchName = "master/" + ProjectDescriptorsFactory.getProjectBranchPath(rpd.getURI());
+            branchDescriptors.put(branchName, rpd);
+            fillBranchData(rpd, branchDescriptors);
+        }
     }
     
     public void showWindow() {
