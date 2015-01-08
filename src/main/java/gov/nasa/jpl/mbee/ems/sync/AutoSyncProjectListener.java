@@ -98,10 +98,17 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             }
             Collection<Element> lockedByUser = TeamworkUtils.getLockedElement(project, user);
             Collection<Element> lockedByAll = TeamworkUtils.getLockedElement(project, null);
-            if (!lockedByUser.equals(lockedByAll)) {
-                Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
-                return;
+            lockedByAll.removeAll(lockedByUser);
+            for (Element locked: lockedByAll) {
+                if (!ProjectUtilities.isElementInAttachedProject(locked)) {
+                    Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
+                    return;
+                }
             }
+            //if (!lockedByUser.equals(lockedByAll)) {
+            //    Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
+            //    return;
+            //}
             if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
                 Application.getInstance().getGUILog().log("[ERROR] cannot lock project recursively - autosync will not start");
                 return;
