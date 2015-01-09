@@ -84,20 +84,8 @@ public class CreateTeamworkBranch extends RuleViolationAction implements Annotat
         //initialize jms queue
         
         Application.getInstance().getGUILog().log("Initializing Branch Sync");
-        initializeBranchVersion();
+        ExportUtility.initializeBranchVersion(taskId);
         initializeDurableQueue();
-    }
-    
-    private void initializeBranchVersion() {
-        String baseUrl = ExportUtility.getUrl();
-        String site = ExportUtility.getSite();
-        String projUrl = baseUrl + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true";
-        JSONObject moduleJson = ExportUtility.getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), 0);
-        JSONObject tosend = new JSONObject();
-        JSONArray array = new JSONArray();
-        tosend.put("elements", array);
-        array.add(moduleJson);
-        ExportUtility.send(projUrl, tosend.toJSONString(), null, false);
     }
     
     private void initializeDurableQueue() {

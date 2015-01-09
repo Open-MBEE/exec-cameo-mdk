@@ -439,14 +439,14 @@ public class ExportUtility {
         
     }
     
-    public static boolean send(String url, String json, String method) {
+    public static String send(String url, String json, String method) {
         return send(url, json, method, true);
     }
     
-    public static boolean send(String url, String json, String method,
+    public static String send(String url, String json, String method,
             boolean showPopupErrors) {
         if (url == null)
-            return false;
+            return null;
 
         EntityEnclosingMethod pm = null;
         if (method == null)
@@ -471,19 +471,19 @@ public class ExportUtility {
             String response = pm.getResponseBodyAsString();
             log.info("send response: " + response);
             if (showErrors(code, response, showPopupErrors)) {
-                return false;
+                return null;
             }
             gl.log("[INFO] Successful.");
-            return true;
+            return response;
         } catch (Exception ex) {
             Utils.printException(ex);
-            return false;
+            return null;
         } finally {
             pm.releaseConnection();
         }
     }
 
-    public static boolean send(String url, String json) {
+    public static String send(String url, String json) {
         return send(url, json, null);
     }
 
@@ -1286,6 +1286,18 @@ public class ExportUtility {
         send(url, tosend.toJSONString(), null, false);
     }
 
+    public static String initializeBranchVersion(String taskId) {
+        String baseUrl = ExportUtility.getUrl();
+        String site = ExportUtility.getSite();
+        String projUrl = baseUrl + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true";
+        JSONObject moduleJson = ExportUtility.getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), 0);
+        JSONObject tosend = new JSONObject();
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        array.add(moduleJson);
+        return ExportUtility.send(projUrl, tosend.toJSONString(), null, false);
+    }
+    
     public static void sendProjectVersions() {
         for (String projid : mountedVersions.keySet()) {
             sendProjectVersion(projid, mountedVersions.get(projid));

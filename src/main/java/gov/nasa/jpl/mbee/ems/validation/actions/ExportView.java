@@ -189,7 +189,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             send.put("elements", elementsArray);
             if (url == null)
                 return false;
-            if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
+            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
                 return false;
         }
         //send elements first, then view info
@@ -200,7 +200,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         send.put("elements", viewsArray);
         //gl.log(send.toJSONString());
         //String sendViewsUrl = url +  "/javawebscripts/views";
-        if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
+        if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
             return false;
         
         // Upload images to view editor (JSON keys are specified in
@@ -279,7 +279,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             doc.put("specialization", spec);
             documents.add(doc);
             send.put("elements", documents);
-            if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
+            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
                 return false;
         } /*else if (recurse) {
             JSONArray views = new JSONArray();

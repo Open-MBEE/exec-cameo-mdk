@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -67,5 +68,16 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
         DateTime current = new DateTime();
         String now = current.toString();
         url += "/workspaces/" + branches[branches.length-1] + "?sourceWorkspace=" + parentId + "&copyTime=" + now;
+        String result = ExportUtility.send(url, "{}", null, false);
+        JSONObject ob =  (JSONObject) JSONValue.parse(result);
+        JSONArray array = (JSONArray)ob.get("workspaces");
+        if (array.size() == 1) {
+            JSONObject workspace = (JSONObject)array.get(0);
+            String newid = (String)workspace.get("id");
+            String newname = (String)workspace.get("qualifiedName");
+            wsMapping.put(newname, newid);
+            wsIdMapping.put(newid, newname);
+            ExportUtility.initializeBranchVersion(newid);
+        }
     }
 }

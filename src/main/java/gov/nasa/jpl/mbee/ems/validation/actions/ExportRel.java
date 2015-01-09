@@ -83,7 +83,7 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
+        if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
             //ExportUtility.sendProjectVersions();
         }
@@ -105,7 +105,7 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
+        if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationAndUpdateWindow();
             //ExportUtility.sendProjectVersion(element);
         }

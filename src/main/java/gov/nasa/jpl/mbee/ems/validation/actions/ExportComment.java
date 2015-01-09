@@ -83,7 +83,7 @@ public class ExportComment extends RuleViolationAction implements AnnotationActi
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
+        if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
         }
     }
@@ -107,7 +107,7 @@ public class ExportComment extends RuleViolationAction implements AnnotationActi
         String url = ExportUtility.getPostElementsUrl();
         if (url == null)
             return;
-        if (ExportUtility.send(url, send.toJSONString())) {
+        if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationAndUpdateWindow();
         }
     }

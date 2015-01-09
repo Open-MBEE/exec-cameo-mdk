@@ -42,14 +42,14 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
                 return;
             String purl = url + "/workspaces/master/sites/" + siteName + "/projects";
             gl.log("Initializing module");
-            if (!ExportUtility.send(purl, tosend.toJSONString()))
+            if (ExportUtility.send(purl, tosend.toJSONString()) == null)
                 return;
             
             ModelExporter me = new ModelExporter(mounts, 0, false, module);
             JSONObject result = me.getResult();
             String json = result.toJSONString();
             gl.log("Number of Elements: " + me.getNumberOfElements());
-            if (ExportUtility.send(url + "/workspaces/master/sites/" + siteName + "/elements?background=true", json))
+            if (ExportUtility.send(url + "/workspaces/master/sites/" + siteName + "/elements?background=true", json) != null)
                 gl.log("You'll receive an email when the module has finished loading.");
         }
     }

@@ -80,7 +80,7 @@ public class ExportElementComments extends RuleViolationAction implements Annota
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
+        if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
         }
     }
@@ -102,7 +102,7 @@ public class ExportElementComments extends RuleViolationAction implements Annota
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
+        if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationAndUpdateWindow();
         }
     }

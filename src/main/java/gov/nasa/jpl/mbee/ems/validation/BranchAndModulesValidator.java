@@ -66,8 +66,6 @@ public class BranchAndModulesValidator {
                     Set<Element> packages = new HashSet<Element>();
                     for (IMountPoint mp: mounts) {
                         EObject mount = mp.getMountedPoint();
-                        //ISharePoint sp = ProjectUtilities.getSharePoint(mp);
-                        //mount = sp.getPoint();
                         if (mount instanceof Element && ProjectUtilities.isAttachedProjectRoot((Element)mount, module))
                             packages.add((Element)mount);
                     }
@@ -94,7 +92,7 @@ public class BranchAndModulesValidator {
             String trunkBranch = ProjectDescriptorsFactory.getProjectBranchPath(trunk.getURI());
             while (trunkBranch != null) {
                 BranchData parent = TeamworkUtils.getBranchedFrom(trunk);
-                trunk = TeamworkUtils.getRemoteProjectDescriptor(parent.getBranchId());
+                trunk = TeamworkUtils.getRemoteProjectDescriptor(parent.getBranchedFromId());
                 trunkBranch = ProjectDescriptorsFactory.getProjectBranchPath(trunk.getURI());
             }
             String currentBranch = ExportUtility.getTeamworkBranch(proj);
@@ -119,6 +117,8 @@ public class BranchAndModulesValidator {
             //allTasks.remove("master");
             //allTasks.remove(currentBranch);
             for (String branchName: allTasks) {
+                if (branchName.equals("master"))
+                    continue;
                 ValidationRuleViolation v = new ValidationRuleViolation(null, "The alfresco task " + branchName + " doesn't have a corresponding teamwork branch.");
                 alfrescoTask.addViolation(v);
                 v.addAction(new CreateTeamworkBranch(branchName, wsMapping.get(branchName), wsMapping, wsIdMapping, branchDescriptors));
