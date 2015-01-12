@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
 import gov.nasa.jpl.mbee.ems.validation.actions.ElementDetail;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportAssociation;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
@@ -83,6 +84,7 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
@@ -126,6 +128,8 @@ public class ModelValidator {
     private ValidationRule constraintDiff = new ValidationRule("Constraint", "constraint spec is different", ViolationSeverity.ERROR);
     private ValidationRule associationDiff = new ValidationRule("Association", "association roles are different", ViolationSeverity.ERROR);
     private ValidationRule siteDiff = new ValidationRule("Site", "site existence", ViolationSeverity.ERROR);
+    private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
+
     private Project prj;
     private Element start;
     private JSONObject result;       
@@ -150,6 +154,7 @@ public class ModelValidator {
         suite.addValidationRule(constraintDiff);
         suite.addValidationRule(associationDiff);
         suite.addValidationRule(siteDiff);
+        suite.addValidationRule(productView);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -388,6 +393,21 @@ public class ModelValidator {
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null)
             ownership.addViolation(v);
+        docDiff(e, elementInfo);
+    }
+    
+    private ValidationRuleViolation docDiff(Element e, JSONObject elementInfo) {
+        JSONObject webViewSpec = (JSONObject)elementInfo.get("specialization");
+        if (webViewSpec == null)
+            return null;
+        if (webViewSpec.get("type") instanceof String && ((String)webViewSpec.get("type")).equals("Product") && 
+                !StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype())) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[METATYPE] This is no longer a product/document.");
+            v.addAction(new Downgrade(e, elementInfo));
+            productView.addViolation(v);
+            return v;
+        }
+        return null;
     }
     
     private ValidationRuleViolation ownerDiff(Element e, JSONObject elementInfo) {
