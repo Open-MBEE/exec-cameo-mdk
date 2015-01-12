@@ -77,8 +77,10 @@ public class CreateTeamworkBranch extends RuleViolationAction implements Annotat
             return;
         }
         ProjectDescriptor child = createBranch(branches[branches.length-1], parentBranchPd);
-        if (child == null)
+        if (child == null) {
+            Application.getInstance().getGUILog().log("Creat branch failed");
             return;
+        }
         branchDescriptors.put(branchName, child);
         Application.getInstance().getGUILog().log("Created Branch");
         //initialize jms queue
@@ -86,6 +88,7 @@ public class CreateTeamworkBranch extends RuleViolationAction implements Annotat
         Application.getInstance().getGUILog().log("Initializing Branch Sync");
         ExportUtility.initializeBranchVersion(taskId);
         ExportUtility.initializeDurableQueue(taskId);
+        //Application.getInstance().getGUILog().log("Initialized");
     }
     
     private ProjectDescriptor createBranch(String name, ProjectDescriptor parentBranch) {

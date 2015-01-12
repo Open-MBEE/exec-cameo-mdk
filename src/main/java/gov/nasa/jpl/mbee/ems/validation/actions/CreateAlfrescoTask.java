@@ -5,6 +5,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
+import java.rmi.RemoteException;
 import java.sql.Date;
 import java.util.Collection;
 import java.util.HashSet;
@@ -21,6 +22,8 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
@@ -77,8 +80,16 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
             String newname = (String)workspace.get("qualifiedName");
             wsMapping.put(newname, newid);
             wsIdMapping.put(newid, newname);
+            ProjectDescriptor newBranch = branchDescriptors.get(newname);
+            int version;
+            try {
+                version = TeamworkUtils.getLastVersion(newBranch);
+            } catch (RemoteException e1) {
+                version = -1;
+            }
             ExportUtility.initializeBranchVersion(newid);
-            ExportUtility.initializeDurableQueue(newid);
+            if (version == 0)
+                ExportUtility.initializeDurableQueue(newid);
         }
         
     }
