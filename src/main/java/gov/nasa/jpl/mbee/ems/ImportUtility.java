@@ -142,14 +142,17 @@ public class ImportUtility {
                     Slot newSlot = ef.createSlotInstance();
                     newE = newSlot;
                 }
-                setSlotValues((Slot)newE, vals);
+                if (specialization.containsKey("value"))
+                    setSlotValues((Slot)newE, vals);
             } else {
                 if (newE == null) {
                     Property newProperty = ef.createPropertyInstance();
                     newE = newProperty;
                 }
-                setPropertyDefaultValue((Property)newE, vals);
-                setPropertyType((Property)newE, (String)specialization.get("propertyType"));
+                if (specialization.containsKey("value"))
+                    setPropertyDefaultValue((Property)newE, vals);
+                if (specialization.containsKey("propertyType"))
+                    setPropertyType((Property)newE, (String)specialization.get("propertyType"));
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
@@ -225,10 +228,12 @@ public class ImportUtility {
         if (spec != null) {
             String type = (String)spec.get("type");
             if (type != null && type.equals("Property") && e instanceof Property) {
-                setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
-                setPropertyType((Property)e, (Type)ExportUtility.getElementFromID((String)spec.get("propertyType")));
+                if (spec.containsKey("value"))
+                    setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
+                if (spec.containsKey("propertyType"))
+                    setPropertyType((Property)e, (Type)ExportUtility.getElementFromID((String)spec.get("propertyType")));
             }
-            if (type != null && type.equals("Property") && e instanceof Slot)
+            if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
             if (type != null && e instanceof DirectedRelationship)
                 setRelationshipEnds((DirectedRelationship)e, spec);
@@ -242,6 +247,8 @@ public class ImportUtility {
     }
     
     public static void setName(Element e, JSONObject o) {
+        if (!o.containsKey("name"))
+            return;
         String name = (String)o.get("name");
         setName(e, name);
     }
@@ -252,6 +259,8 @@ public class ImportUtility {
     }
     
     public static void setOwner(Element e, JSONObject o) {
+        if (!o.containsKey("owner"))
+            return;
         String ownerId = (String) o.get("owner");
         if ((ownerId == null) || (ownerId.isEmpty())) {
             Application.getInstance().getGUILog().log("[ERROR] Owner not specified for mms sync add");
@@ -266,6 +275,8 @@ public class ImportUtility {
     }
     
     public static void setDocumentation(Element e, JSONObject o) {
+        if (!o.containsKey("documentation"))
+            return;
         String doc = (String)o.get("documentation");
         setDocumentation(e, doc);
     }
@@ -313,6 +324,8 @@ public class ImportUtility {
     }
     
     public static void setConstraintSpecification(Constraint c, JSONObject spec) {
+        if (!spec.containsKey("specification"))
+            return;
         JSONObject sp = (JSONObject)spec.get("specification");
         if (sp != null) {
             c.setSpecification(createValueSpec(sp));
