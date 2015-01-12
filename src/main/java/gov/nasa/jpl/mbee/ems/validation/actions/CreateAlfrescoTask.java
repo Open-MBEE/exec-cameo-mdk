@@ -78,6 +78,8 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
             wsMapping.put(newname, newid);
             wsIdMapping.put(newid, newname);
             ExportUtility.initializeBranchVersion(newid);
+            ExportUtility.initializeDurableQueue(newid);
         }
+        
     }
 }

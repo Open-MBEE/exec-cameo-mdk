@@ -85,45 +85,7 @@ public class CreateTeamworkBranch extends RuleViolationAction implements Annotat
         
         Application.getInstance().getGUILog().log("Initializing Branch Sync");
         ExportUtility.initializeBranchVersion(taskId);
-        initializeDurableQueue();
-    }
-    
-    private void initializeDurableQueue() {
-        String projectId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        Connection connection = null;
-        Session session = null;
-        MessageConsumer consumer = null;
-        try {
-            String url = AutoSyncProjectListener.getJMSUrl();
-            if (url == null) {
-                return;
-            }
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
-            connection = connectionFactory.createConnection();
-            String subscriberId = projectId + "/" + taskId;
-            connection.setClientID(subscriberId);
-            // connection.setExceptionListener(this);
-            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            String messageSelector = AutoSyncProjectListener.constructSelectorString(projectId, taskId);
-            Topic topic = session.createTopic("master");
-            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
-            connection.start();
-        } catch (JMSException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        } finally {
-            try {
-                if (consumer != null)
-                    consumer.close();
-                if (session != null)
-                    session.close();
-                if (connection != null)
-                    connection.close();
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
-        }
-        
+        ExportUtility.initializeDurableQueue(taskId);
     }
     
     private ProjectDescriptor createBranch(String name, ProjectDescriptor parentBranch) {

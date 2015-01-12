@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -48,8 +49,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.MessageConsumer;
+import javax.jms.Session;
+import javax.jms.Topic;
 import javax.swing.JOptionPane;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
@@ -1296,6 +1304,43 @@ public class ExportUtility {
         tosend.put("elements", array);
         array.add(moduleJson);
         return ExportUtility.send(projUrl, tosend.toJSONString(), null, false);
+    }
+    
+    public static void initializeDurableQueue(String taskId) {
+        String projectId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Connection connection = null;
+        Session session = null;
+        MessageConsumer consumer = null;
+        try {
+            String url = AutoSyncProjectListener.getJMSUrl();
+            if (url == null) {
+                return;
+            }
+            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
+            connection = connectionFactory.createConnection();
+            String subscriberId = projectId + "/" + taskId;
+            connection.setClientID(subscriberId);
+            // connection.setExceptionListener(this);
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+            String messageSelector = AutoSyncProjectListener.constructSelectorString(projectId, taskId);
+            Topic topic = session.createTopic("master");
+            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
+            connection.start();
+        } catch (JMSException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } finally {
+            try {
+                if (consumer != null)
+                    consumer.close();
+                if (session != null)
+                    session.close();
+                if (connection != null)
+                    connection.close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
     }
     
     public static void sendProjectVersions() {
