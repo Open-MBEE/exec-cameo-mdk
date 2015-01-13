@@ -477,7 +477,7 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            log.info("send response: " + response);
+            log.info("send response: " + code + " " + response);
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
@@ -507,7 +507,7 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            log.info("getWithBody Response: " + response);
+            log.info("getWithBody Response: " + code + " " + response);
             if (showErrors(code, response, false)) {
                 return null;
             }
@@ -563,7 +563,7 @@ public class ExportUtility {
             log.info("get: " + url);
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-            log.info("get response: " + json);
+            log.info("get response: " + code + " " + json);
             if (showErrors(code, json, showPopupErrors)) {
                 return null;
             }
