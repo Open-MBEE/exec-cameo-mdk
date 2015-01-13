@@ -65,7 +65,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
         TransactionCommitHandler(final Collection<PropertyChangeEvent> events) {
             this.events = events;
         }
-
+        private Set<String> toRemove = new HashSet<String>();
+        
         @Override
         public void run() {
             // If the plugin has been disabled,
@@ -106,6 +107,9 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                                     event.getOldValue()); 
                     }
                 }
+            }
+            for (String id: toRemove) {
+                elements.remove(id);
             }
             if (!elements.isEmpty() || !deletes.isEmpty())
                 sendChanges();
@@ -151,6 +155,16 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             return elementOb;
         }
 
+        private boolean isDiagramCreated(Element e) {
+            Element cur = e;
+            while (cur.getOwner() != null) {
+                cur = cur.getOwner();
+            }
+            if (cur != Application.getInstance().getProject().getModel())
+                return true;
+            return false;
+        }
+        
         @SuppressWarnings("unchecked")
         private void handleChangedProperty(Element sourceElement, String propertyName, Object newValue, Object oldValue) {
             JSONObject elementOb = null;
@@ -245,8 +259,12 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
                     && ExportUtility.shouldAdd(sourceElement)) {
-                elementOb = getElementObject(sourceElement);
-                ExportUtility.fillElement(sourceElement, elementOb);
+                if (isDiagramCreated(sourceElement)) 
+                    toRemove.add(ExportUtility.getElementID(sourceElement));
+                else {
+                    elementOb = getElementObject(sourceElement);
+                    ExportUtility.fillElement(sourceElement, elementOb);
+                }
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)
                     && ExportUtility.shouldAdd(sourceElement)) {
