@@ -44,6 +44,7 @@ import java.util.Set;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -699,7 +700,7 @@ public class PropertiesTable {
         Property p = getPropertyElement(e, propSpec, includeInherited);
         if (p == null)
             return "n/a";
-        return p.getDefault();
+        return UML2ModelUtil.getDefault(p);
     }
 
     public static Property getPropertyElement(Class e, List<String> propSpec, boolean includeInherited) {

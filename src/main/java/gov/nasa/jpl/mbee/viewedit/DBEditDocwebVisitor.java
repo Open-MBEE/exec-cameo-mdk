@@ -59,6 +59,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -396,7 +397,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
         }
         if (e instanceof Property) {
             o.put("type", "Property");
-            o.put("dvalue", ((Property)e).getDefault());
+            o.put("dvalue", UML2ModelUtil.getDefault((Property)e));
         }
         if (e instanceof NamedElement) {
             o.put("name", ((NamedElement)e).getName());

@@ -53,6 +53,7 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -226,7 +227,7 @@ public class ImportViewAction extends MDAction {
                             }
                         }
                         if (mdelement instanceof Property && element.containsKey("dvalue")) {
-                            if (!((Property)mdelement).getDefault().equals(element.get("dvalue"))) {
+                            if (!UML2ModelUtil.getDefault(((Property)mdelement)).equals(element.get("dvalue"))) {
                                 if (!mdelement.isEditable()) {
                                     notLocked.addViolation((Element)mdelement,
                                             "Default value can't be changed - not editable");

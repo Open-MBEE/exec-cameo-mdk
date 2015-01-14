@@ -40,6 +40,7 @@ import javax.swing.table.AbstractTableModel;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
@@ -98,7 +99,7 @@ public class EditableTableModel extends AbstractTableModel {
         if (element instanceof String)
             return element;
         if (element instanceof Property && what == PropertyEnum.VALUE)
-            return Utils.floatTruncate(((Property)element).getDefault(), precision);
+            return Utils.floatTruncate(UML2ModelUtil.getDefault((Property)element), precision);
         if (element instanceof Slot && what == PropertyEnum.VALUE) {
             String s = Utils.slotValueToString((Slot)element);
             return Utils.floatTruncate(s, precision);

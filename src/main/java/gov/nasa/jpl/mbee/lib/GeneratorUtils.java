@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
@@ -221,14 +222,14 @@ public class GeneratorUtils {
             Property propertyByName = StereotypesHelper
                     .getPropertyByName(documentView, "Footer Legal Notice");
             if (propertyByName != null) {
-                FooterLegalNotice = propertyByName.getDefault();
+                FooterLegalNotice = UML2ModelUtil.getDefault(propertyByName);
             }
         }
         if (TitlePageLegalNotice == null || TitlePageLegalNotice.equals("")) {
             Property propertyByName = StereotypesHelper.getPropertyByName(documentView,
                     "Title Page Legal Notice");
             if (propertyByName != null) {
-                TitlePageLegalNotice = propertyByName.getDefault();
+                TitlePageLegalNotice = UML2ModelUtil.getDefault(propertyByName);
             }
 
         }

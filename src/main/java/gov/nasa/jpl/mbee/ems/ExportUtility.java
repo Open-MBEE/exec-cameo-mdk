@@ -727,7 +727,7 @@ public class ExportUtility {
             /*ValueSpecification spec = ((InstanceSpecification) e)
                     .getSpecification();
             if (spec != null)
-                specialization.put("specification",
+                specialization.put("instanceSpecificationSpecification",
                         spec.getID());*/
         } else if (e instanceof Parameter) {
             fillParameterSpecialization((Parameter)e, specialization);
