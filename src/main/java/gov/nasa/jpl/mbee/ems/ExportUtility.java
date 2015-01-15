@@ -782,8 +782,8 @@ public class ExportUtility {
                 singleElementSpecVsArray.add(newElement);
             }
             specialization.put("value", singleElementSpecVsArray);
-            specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
-            specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
+            //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
+            //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
             if (ptype) {
                 Type type = ((Property) e).getType();
                 if (type != null) {
@@ -900,12 +900,12 @@ public class ExportUtility {
                 propertyPath.add(end.getRole().getID());
             }
             if (i == 0) {
-                specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
-                specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
+                //specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
+                //specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
                 specialization.put("sourcePath", propertyPath);
             } else {
-                specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
-                specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
+                //specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
+                //specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
                 specialization.put("targetPath", propertyPath);
             }
             i++;
