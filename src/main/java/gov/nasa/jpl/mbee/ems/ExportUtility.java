@@ -303,7 +303,7 @@ public class ExportUtility {
     }
     
     public static String getSiteForProject(IProject prj) {
-        return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace(".", "");
+        return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace('.', '-');
     }
     
     public static String getWorkspace() {
