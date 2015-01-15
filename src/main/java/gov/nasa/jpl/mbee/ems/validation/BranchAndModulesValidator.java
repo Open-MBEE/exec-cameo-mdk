@@ -27,6 +27,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateAlfrescoTask;
+import gov.nasa.jpl.mbee.ems.validation.actions.CreateModuleSite;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateTeamworkBranch;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportLocalModule;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -41,11 +42,15 @@ public class BranchAndModulesValidator {
     private ValidationRule alfrescoTask = new ValidationRule("Task on alfresco", "Task on alfresco not in teamwork", ViolationSeverity.WARNING);
     private ValidationRule teamworkBranch = new ValidationRule("Teamwork branch", "Branch on teamwork not on alfresco", ViolationSeverity.WARNING);
     private ValidationRule unexportedModule = new ValidationRule("Unexported module", "Unexported module", ViolationSeverity.ERROR);
+    private ValidationRule siteExist = new ValidationRule("Site Existence", "Site Existence", ViolationSeverity.ERROR);
+    private ValidationRule versionMatch = new ValidationRule("Version", "Version", ViolationSeverity.INFO);
     
     public BranchAndModulesValidator() {
         suite.addValidationRule(alfrescoTask);
         suite.addValidationRule(teamworkBranch);
         suite.addValidationRule(unexportedModule);
+        suite.addValidationRule(siteExist);
+        suite.addValidationRule(versionMatch);
     }
     
     public void validate() {
@@ -69,10 +74,15 @@ public class BranchAndModulesValidator {
                         if (mount instanceof Element && ProjectUtilities.isAttachedProjectRoot((Element)mount, module))
                             packages.add((Element)mount);
                     }
-                    ValidationRuleViolation v = new ValidationRuleViolation(null, "The local module " + module.getName() + " isn't uploaded yet.");
+                    ValidationRuleViolation v = new ValidationRuleViolation(null, "[LOCAL] The local module " + module.getName() + " isn't uploaded yet.");
                     unexportedModule.addViolation(v);
                     v.addAction(new ExportLocalModule(module, packages, site));
                 }
+            } else {
+                ValidationRuleViolation v = new ValidationRuleViolation(null, "[SITE] The site for local module " + module.getName() + " doesn't exist. (" + site + ")");
+                siteExist.addViolation(v);
+                String[] urls = baseUrl.split("/alfresco");
+                v.addAction(new CreateModuleSite(site, urls[0]));
             }
         }
 
@@ -106,9 +116,16 @@ public class BranchAndModulesValidator {
             for (String branchName: branchDescriptors.keySet()) {
                 if (wsMapping.containsKey(branchName)) {
                     seenTasks.add(branchName);
+                    Integer webVersion = ExportUtility.getAlfrescoProjectVersion(prj.getProjectID(), wsMapping.get(branchName));
+                    int localVersion = TeamworkUtils.getLastVersion(branchDescriptors.get(branchName));
+                    if (webVersion == null || webVersion != localVersion) {
+                        ValidationRuleViolation v = new ValidationRuleViolation(null, "[VERSION] The versions of branch " + branchName + " for this project doesn't match.");
+                        versionMatch.addViolation(v);
+                    }
+                    //check project version
                     continue;
                 }
-                ValidationRuleViolation v = new ValidationRuleViolation(null, "The teamwork branch " + branchName + " doesn't have a corresponding task on the server.");
+                ValidationRuleViolation v = new ValidationRuleViolation(null, "[BRANCH] The teamwork branch " + branchName + " doesn't have a corresponding task on the server.");
                 teamworkBranch.addViolation(v);
                 v.addAction(new CreateAlfrescoTask(branchName, wsMapping, wsIdMapping, branchDescriptors));
             }
@@ -119,7 +136,7 @@ public class BranchAndModulesValidator {
             for (String branchName: allTasks) {
                 if (branchName.equals("master"))
                     continue;
-                ValidationRuleViolation v = new ValidationRuleViolation(null, "The alfresco task " + branchName + " doesn't have a corresponding teamwork branch.");
+                ValidationRuleViolation v = new ValidationRuleViolation(null, "[TASK] The alfresco task " + branchName + " doesn't have a corresponding teamwork branch.");
                 alfrescoTask.addViolation(v);
                 v.addAction(new CreateTeamworkBranch(branchName, wsMapping.get(branchName), wsMapping, wsIdMapping, branchDescriptors));
             }

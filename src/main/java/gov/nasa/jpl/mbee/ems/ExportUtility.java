@@ -1101,7 +1101,18 @@ public class ExportUtility {
     public static Integer getAlfrescoProjectVersion(String projectId) {
         String baseUrl = getUrlWithWorkspace();
         String checkProjUrl = baseUrl + "/projects/" + projectId;
-        String json = get(checkProjUrl, false);
+        return getAlfrescoProjectVersionWithUrl(checkProjUrl);
+    }
+    
+    public static Integer getAlfrescoProjectVersion(String projectId, String wsId) {
+        String baseUrl = getUrl();//WithWorkspace();
+        baseUrl += "/workspaces/" + wsId;
+        String checkProjUrl = baseUrl + "/projects/" + projectId;
+        return getAlfrescoProjectVersionWithUrl(checkProjUrl);
+    }
+    
+    private static Integer getAlfrescoProjectVersionWithUrl(String url) {
+        String json = get(url, false);
         if (json == null)
             return null; // ??
         JSONObject result = (JSONObject) JSONValue.parse(json);
