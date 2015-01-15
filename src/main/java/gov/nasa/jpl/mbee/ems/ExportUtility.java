@@ -401,6 +401,9 @@ public class ExportUtility {
                     //Application.getInstance().getGUILog()
                             //.log("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
+                Object o = JSONValue.parse(response);
+                if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                    Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
                 //Application.getInstance().getGUILog().log(response);
                 //log.info(response);
                 return false;
@@ -481,7 +484,7 @@ public class ExportUtility {
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
-            gl.log("[INFO] Successful.");
+            gl.log("[INFO] Send Successful.");
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -618,9 +621,9 @@ public class ExportUtility {
             }
         } else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
-            if (((Expression) vs).getSymbol() != null) {
-                elementInfo.put("symbol", ((Expression) vs).getSymbol());
-            }
+            //if (((Expression) vs).getSymbol() != null) {
+            //    elementInfo.put("symbol", ((Expression) vs).getSymbol());
+            //}
             List<ValueSpecification> vsl = ((Expression) vs).getOperand();
             if (vsl != null && vsl.size() > 0) {
                 JSONArray operand = new JSONArray();
@@ -644,7 +647,7 @@ public class ExportUtility {
                 elementInfo.put("boolean", ((LiteralBoolean) vs).isValue());
             } else if (vs instanceof LiteralInteger) {
                 elementInfo.put("type", "LiteralInteger");
-                elementInfo.put("integer", ((LiteralInteger) vs).getValue());
+                elementInfo.put("integer", new Long(((LiteralInteger) vs).getValue()));
             } else if (vs instanceof LiteralNull) {
                 elementInfo.put("type", "LiteralNull");
             } else if (vs instanceof LiteralReal) {
@@ -655,8 +658,8 @@ public class ExportUtility {
                 elementInfo.put("string", Utils.stripHtmlWrapper(((LiteralString) vs).getValue()));
             } else if (vs instanceof LiteralUnlimitedNatural) {
                 elementInfo.put("type", "LiteralUnlimitedNatural");
-                elementInfo.put("naturalValue",
-                        ((LiteralUnlimitedNatural) vs).getValue());
+                elementInfo.put("naturalValue", new Long(
+                        ((LiteralUnlimitedNatural) vs).getValue()));
             }
         } else if (vs instanceof OpaqueExpression) {
             elementInfo.put("type", "OpaqueExpression");

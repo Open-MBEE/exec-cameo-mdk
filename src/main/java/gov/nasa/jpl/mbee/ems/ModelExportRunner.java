@@ -76,7 +76,7 @@ public class ModelExportRunner implements RunnableWithProgress {
         //gl.log(json);
         gl.log("Number of Elements: " + me.getNumberOfElements());
        // gl.log("*** Starting export view comments ***");
-        ExportUtility.send(url, json);
+        ExportUtility.send(url, json, null, false);
         
     }
 
