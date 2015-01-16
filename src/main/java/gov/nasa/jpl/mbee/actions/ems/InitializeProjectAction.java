@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 
 import java.awt.event.ActionEvent;
 
@@ -62,6 +64,6 @@ public class InitializeProjectAction extends MDAction {
             return;
         }
         url += "/projects";
-        ExportUtility.send(url, json);
+        OutputQueue.getInstance().offer(new Request(url, json));
     }
 }

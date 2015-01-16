@@ -30,6 +30,8 @@ package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -423,7 +425,7 @@ public class ExportUtility {
         return false;
     }
 
-    public static String delete(String url) {
+    public static String delete(String url, boolean feedback) {
         if (url == null)
             return null;
         DeleteMethod gm = new DeleteMethod(url);
@@ -439,7 +441,8 @@ public class ExportUtility {
             if (showErrors(code, json, false)) {
                 return null;
             }
-            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            if (feedback)
+                Application.getInstance().getGUILog().log("[INFO] Delete Successful");
             return json;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -1290,7 +1293,8 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        send(url, tosend.toJSONString(), null, false);
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        //send(url, tosend.toJSONString(), null, false);
     }
     
     public static void sendProjectVersion(String projId, Integer version) {
@@ -1305,7 +1309,8 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        send(url, tosend.toJSONString(), null, false);
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        //send(url, tosend.toJSONString(), null, false);
     }
 
     public static String initializeBranchVersion(String taskId) {
@@ -1317,6 +1322,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         array.add(moduleJson);
+        //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
         return ExportUtility.send(projUrl, tosend.toJSONString(), null, false);
     }
     

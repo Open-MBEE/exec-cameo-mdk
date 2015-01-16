@@ -62,6 +62,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 
@@ -95,13 +97,14 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
                 eid = mes[1];
             if (eid != null) {
                 String eurl = url + "/elements/" + eid;
-                String result = ExportUtility.delete(eurl);
-                if (result != null)
-                    toremove.add(anno);
+                OutputQueue.getInstance().offer(new Request(eurl, "{}", "DELETE", true));
+                //String result = ExportUtility.delete(eurl);
+                //if (result != null)
+                //    toremove.add(anno);
             }
         }
-        saySuccess();
-        this.removeViolationsAndUpdateWindow(toremove);
+        //saySuccess();
+        //this.removeViolationsAndUpdateWindow(toremove);
     }
 
     @SuppressWarnings("unchecked")
@@ -110,12 +113,13 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
         // perform a DELETE on https://ems-stg.jpl.nasa.gov/alfresco/service/workspaces/master/elements/elementID
         String url = ExportUtility.getUrlWithWorkspace();
         url += "/elements/" + id;
-        String result = ExportUtility.delete(url);
-        if (result != null) {
+        //String result = ExportUtility.delete(url);
+        OutputQueue.getInstance().offer(new Request(url, "{}", "DELETE", true));
+        /*if (result != null) {
             saySuccess();
             this.removeViolationAndUpdateWindow();
         } else {
             //error
-        }
+        }*/
     }
 }

@@ -5,6 +5,27 @@ public class Request {
     private String json;
     private String url;
     private String method = "POST";
+    private boolean feedback = false;
+    
+    public Request(String url, String json, String method, boolean feedback) {
+        this.url = url;
+        this.json = json;
+        this.method = method;
+        this.feedback = feedback;
+    }
+    
+    public Request(String url, String json, String method) {
+        this.url = url;
+        this.json = json;
+        this.method = method;
+    }
+    
+    public Request(String url, String json) {
+        this.url = url;
+        this.json = json;
+    }
+    
+    public Request() {}
     
     public String getJson() {
         return json;
@@ -23,5 +44,13 @@ public class Request {
     }
     public String getMethod() {
         return method;
+    }
+
+    public boolean isFeedback() {
+        return feedback;
+    }
+
+    public void setFeedback(boolean feedback) {
+        this.feedback = feedback;
     }
 }

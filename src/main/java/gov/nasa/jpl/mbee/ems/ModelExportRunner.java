@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.ArrayList;
@@ -76,8 +78,7 @@ public class ModelExportRunner implements RunnableWithProgress {
         //gl.log(json);
         gl.log("Number of Elements: " + me.getNumberOfElements());
        // gl.log("*** Starting export view comments ***");
-        ExportUtility.send(url, json, null, false);
-        
+        OutputQueue.getInstance().offer(new Request(url, json));
+        //ExportUtility.send(url, json, null, false);
     }
-
 }

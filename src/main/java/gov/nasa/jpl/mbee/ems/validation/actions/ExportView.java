@@ -31,6 +31,8 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ViewExportRunner;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
@@ -198,10 +200,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         viewsArray.addAll(viewjson.values());
         send = new JSONObject();
         send.put("elements", viewsArray);
-        //gl.log(send.toJSONString());
-        //String sendViewsUrl = url +  "/javawebscripts/views";
-        if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
-            return false;
+        
+        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
+        //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
+        //    return false;
         
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
@@ -279,8 +281,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             doc.put("specialization", spec);
             documents.add(doc);
             send.put("elements", documents);
-            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
-                return false;
+            OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
+            //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
+            //   return false;
         } /*else if (recurse) {
             JSONArray views = new JSONArray();
             JSONObject view2view = visitor2.getHierarchy();

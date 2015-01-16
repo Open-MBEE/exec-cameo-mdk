@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -80,9 +82,10 @@ public class ExportElementComments extends RuleViolationAction implements Annota
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString()) != null) {
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
-        }
+        }*/
     }
 
     @SuppressWarnings("unchecked")
@@ -102,8 +105,9 @@ public class ExportElementComments extends RuleViolationAction implements Annota
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationAndUpdateWindow();
-        }
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
+            this.removeViolationsAndUpdateWindow(annos);
+        }*/
     }
 }
