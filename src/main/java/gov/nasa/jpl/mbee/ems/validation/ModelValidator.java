@@ -666,12 +666,10 @@ public class ModelValidator {
         JSONObject value = (JSONObject)spec.get("specification");
         JSONObject modelspec = ExportUtility.fillConstraintSpecialization(e, null);
         JSONObject modelvalue = (JSONObject)modelspec.get("specification");
-        /*Map<String, Object> results = valueSpecDiff(e.getSpecification(), value);
-        String message = (String)results.get("message");
-        boolean stringMatch = (Boolean)results.get("stringMatch");
-        String webString = (String)results.get("webString");
-        String modelString = (String)results.get("modelString");*/
-        //if (!message.equals("")) {
+        //if (jsonObjectEquals(value, modelvalue))
+        //    return null;
+        if (modelvalue != null && modelvalue.equals(value))
+            return null;
         if (modelvalue != null && !modelvalue.equals(value) || value != null && !value.equals(modelvalue)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONSTRAINT] specifications don't match");
             //if (stringMatch)

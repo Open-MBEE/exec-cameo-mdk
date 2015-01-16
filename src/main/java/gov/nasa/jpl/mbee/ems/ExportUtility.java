@@ -303,7 +303,7 @@ public class ExportUtility {
     }
     
     public static String getSiteForProject(IProject prj) {
-        return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace(".", "");
+        return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace('.', '-');
     }
     
     public static String getWorkspace() {
@@ -401,6 +401,9 @@ public class ExportUtility {
                     //Application.getInstance().getGUILog()
                             //.log("The thing you're trying to validate or get wasn't found on the server, see validation window");
             } else if (code == 400) {
+                Object o = JSONValue.parse(response);
+                if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                    Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
                 //Application.getInstance().getGUILog().log(response);
                 //log.info(response);
                 return false;
@@ -481,7 +484,7 @@ public class ExportUtility {
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
-            gl.log("[INFO] Successful.");
+            gl.log("[INFO] Send Successful.");
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -618,9 +621,9 @@ public class ExportUtility {
             }
         } else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
-            if (((Expression) vs).getSymbol() != null) {
-                elementInfo.put("symbol", ((Expression) vs).getSymbol());
-            }
+            //if (((Expression) vs).getSymbol() != null) {
+            //    elementInfo.put("symbol", ((Expression) vs).getSymbol());
+            //}
             List<ValueSpecification> vsl = ((Expression) vs).getOperand();
             if (vsl != null && vsl.size() > 0) {
                 JSONArray operand = new JSONArray();
@@ -644,7 +647,7 @@ public class ExportUtility {
                 elementInfo.put("boolean", ((LiteralBoolean) vs).isValue());
             } else if (vs instanceof LiteralInteger) {
                 elementInfo.put("type", "LiteralInteger");
-                elementInfo.put("integer", ((LiteralInteger) vs).getValue());
+                elementInfo.put("integer", new Long(((LiteralInteger) vs).getValue()));
             } else if (vs instanceof LiteralNull) {
                 elementInfo.put("type", "LiteralNull");
             } else if (vs instanceof LiteralReal) {
@@ -655,8 +658,8 @@ public class ExportUtility {
                 elementInfo.put("string", Utils.stripHtmlWrapper(((LiteralString) vs).getValue()));
             } else if (vs instanceof LiteralUnlimitedNatural) {
                 elementInfo.put("type", "LiteralUnlimitedNatural");
-                elementInfo.put("naturalValue",
-                        ((LiteralUnlimitedNatural) vs).getValue());
+                elementInfo.put("naturalValue", new Long(
+                        ((LiteralUnlimitedNatural) vs).getValue()));
             }
         } else if (vs instanceof OpaqueExpression) {
             elementInfo.put("type", "OpaqueExpression");
@@ -779,8 +782,8 @@ public class ExportUtility {
                 singleElementSpecVsArray.add(newElement);
             }
             specialization.put("value", singleElementSpecVsArray);
-            specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
-            specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
+            //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
+            //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
             if (ptype) {
                 Type type = ((Property) e).getType();
                 if (type != null) {
@@ -897,12 +900,12 @@ public class ExportUtility {
                 propertyPath.add(end.getRole().getID());
             }
             if (i == 0) {
-                specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
-                specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
+                //specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
+                //specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
                 specialization.put("sourcePath", propertyPath);
             } else {
-                specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
-                specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
+                //specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
+                //specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
                 specialization.put("targetPath", propertyPath);
             }
             i++;
@@ -1098,7 +1101,18 @@ public class ExportUtility {
     public static Integer getAlfrescoProjectVersion(String projectId) {
         String baseUrl = getUrlWithWorkspace();
         String checkProjUrl = baseUrl + "/projects/" + projectId;
-        String json = get(checkProjUrl, false);
+        return getAlfrescoProjectVersionWithUrl(checkProjUrl);
+    }
+    
+    public static Integer getAlfrescoProjectVersion(String projectId, String wsId) {
+        String baseUrl = getUrl();//WithWorkspace();
+        baseUrl += "/workspaces/" + wsId;
+        String checkProjUrl = baseUrl + "/projects/" + projectId;
+        return getAlfrescoProjectVersionWithUrl(checkProjUrl);
+    }
+    
+    private static Integer getAlfrescoProjectVersionWithUrl(String url) {
+        String json = get(url, false);
         if (json == null)
             return null; // ??
         JSONObject result = (JSONObject) JSONValue.parse(json);
