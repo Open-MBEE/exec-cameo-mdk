@@ -63,8 +63,9 @@ public class BranchAndModulesValidator {
         for (IAttachedProject module: modules) {
             if (ProjectUtilities.isFromTeamworkServer(module))
                 continue;
-            String site = ExportUtility.getSiteForProject(module);
-            boolean siteExists = ExportUtility.siteExists(site);
+            String siteHuman = ExportUtility.getHumanSiteForProject(module);
+            
+            boolean siteExists = ExportUtility.siteExists(siteHuman);
             if (siteExists) {
                 String response = ExportUtility.get(ExportUtility.getUrlForProject(module), false);
                 if (response == null) {
@@ -76,18 +77,23 @@ public class BranchAndModulesValidator {
                     }
                     ValidationRuleViolation v = new ValidationRuleViolation(null, "[LOCAL] The local module " + module.getName() + " isn't uploaded yet.");
                     unexportedModule.addViolation(v);
+                    String site = ExportUtility.getSiteForProject(module);
                     v.addAction(new ExportLocalModule(module, packages, site));
                 }
             } else {
-                ValidationRuleViolation v = new ValidationRuleViolation(null, "[SITE] The site for local module " + module.getName() + " doesn't exist. (" + site + ")");
+                ValidationRuleViolation v = new ValidationRuleViolation(null, "[SITE] The site for local module " + module.getName() + " doesn't exist. (" + siteHuman + ")");
                 siteExist.addViolation(v);
                 String[] urls = baseUrl.split("/alfresco");
-                v.addAction(new CreateModuleSite(site, urls[0]));
+                v.addAction(new CreateModuleSite(siteHuman, urls[0]));
             }
         }
 
         if (!ProjectUtilities.isFromTeamworkServer(prj))
             return;
+        if (TeamworkUtils.getLoggedUserName() == null) {
+            Application.getInstance().getGUILog().log("You need to log in to teamwork first to do branches validation.");
+            return;
+        }
         ExportUtility.updateWorkspaceIdMapping();
         Map<String, String> wsMapping = ExportUtility.wsIdMapping.get(prj.getProjectID());
         Map<String, String> wsIdMapping = new HashMap<String, String>();

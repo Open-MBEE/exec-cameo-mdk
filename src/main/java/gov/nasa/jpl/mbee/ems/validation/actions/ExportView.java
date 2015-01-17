@@ -36,6 +36,7 @@ import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
@@ -155,22 +156,28 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             return false;
         }
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
-        Document dge = dg.parseDocument(true, recurse);
-        (new PostProcessor()).process(dge);
+        Document dge = null;
         boolean document = false;
         
-        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGen3Profile.documentViewStereotype, "Document Profile");
-        if (StereotypesHelper.hasStereotypeOrDerived(view, documentView))
+        if (StereotypesHelper.hasStereotypeOrDerived(view, Utils.getProductStereotype()))
             document = true;
-
+        if (document)
+            dge = dg.parseDocument(true, true);
+        else
+            dge = dg.parseDocument(true, recurse);
+        (new PostProcessor()).process(dge);
+        
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
         dge.accept(visitor);
         DBBook book = visitor.getBook();
         if (book == null)
             return false;
 
-        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
+        DBAlfrescoVisitor visitor2 = null;
+        if (document)
+            visitor2 = new DBAlfrescoVisitor(true);
+        else
+            visitor2 = new DBAlfrescoVisitor(recurse);
         book.accept(visitor2);
         /*int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {
@@ -268,7 +275,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         // clean up the local images
         visitor2.removeImages();
         gl.log("[INFO] Done");
-        if (document && recurse) {
+        if (document) {//&& recurse) {
             //String docurl = url + "/javawebscripts/products";
             send = new JSONObject();
             JSONArray documents = new JSONArray();

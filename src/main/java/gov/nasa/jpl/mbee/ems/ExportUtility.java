@@ -136,7 +136,7 @@ public class ExportUtility {
     private static String developerWs = "master";
     public static boolean baselineNotSet = false;
     public static Map<String, Map<String, String>> wsIdMapping = new HashMap<String, Map<String, String>>();
-    public static Map<String, Set<String>> sites = new HashMap<String, Set<String>>();
+    public static Map<String, Map<String, String>> sites = new HashMap<String, Map<String, String>>();
     
     public static void updateWorkspaceIdMapping() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
@@ -168,11 +168,11 @@ public class ExportUtility {
     
     public static void updateMasterSites() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        Set<String> idmapping = null;
+        Map<String, String> idmapping = null;
         if (sites.containsKey(projId))
             idmapping = sites.get(projId);
         else {
-            idmapping = new HashSet<String>();
+            idmapping = new HashMap<String, String>();
             sites.put(projId, idmapping);
         }
         
@@ -188,21 +188,21 @@ public class ExportUtility {
             for (Object ws: array) {
                 JSONObject site = (JSONObject)ws;
                 String id = (String)site.get("sysmlid");
-                idmapping.add(id);
+                idmapping.put((String)site.get("name"), id);
             }
         }
     }
     
     public static boolean siteExists(String site) {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        Set<String> idmapping = null;
+        Map<String, String> idmapping = null;
         if (sites.containsKey(projId))
             idmapping = sites.get(projId);
         else {
-            idmapping = new HashSet<String>();
+            idmapping = new HashMap<String, String>();
             sites.put(projId, idmapping);
         }
-        return idmapping.contains(site);
+        return idmapping.keySet().contains(site);
     }
     
     public static Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
@@ -305,6 +305,11 @@ public class ExportUtility {
     }
     
     public static String getSiteForProject(IProject prj) {
+        String human = getHumanSiteForProject(prj);
+        return sites.get(Application.getInstance().getProject().getPrimaryProject().getProjectID()).get(human);
+    }
+    
+    public static String getHumanSiteForProject(IProject prj) {
         return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace('.', '-');
     }
     
