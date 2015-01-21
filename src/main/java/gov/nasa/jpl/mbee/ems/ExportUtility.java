@@ -404,9 +404,15 @@ public class ExportUtility {
             } else if (code == 404) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
-                //else
-                    //Application.getInstance().getGUILog()
-                            //.log("The thing you're trying to validate or get wasn't found on the server, see validation window");
+                else {
+                    try {
+                        Object o = JSONValue.parse(response);
+                        if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                            Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
+                    } catch (Exception c) {
+                        
+                    }
+                }
             } else if (code == 400) {
                 Object o = JSONValue.parse(response);
                 if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
