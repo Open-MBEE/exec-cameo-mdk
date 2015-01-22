@@ -30,6 +30,8 @@ package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -134,7 +136,7 @@ public class ExportUtility {
     private static String developerWs = "master";
     public static boolean baselineNotSet = false;
     public static Map<String, Map<String, String>> wsIdMapping = new HashMap<String, Map<String, String>>();
-    public static Map<String, Set<String>> sites = new HashMap<String, Set<String>>();
+    public static Map<String, Map<String, String>> sites = new HashMap<String, Map<String, String>>();
     
     public static void updateWorkspaceIdMapping() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
@@ -166,11 +168,11 @@ public class ExportUtility {
     
     public static void updateMasterSites() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        Set<String> idmapping = null;
+        Map<String, String> idmapping = null;
         if (sites.containsKey(projId))
             idmapping = sites.get(projId);
         else {
-            idmapping = new HashSet<String>();
+            idmapping = new HashMap<String, String>();
             sites.put(projId, idmapping);
         }
         
@@ -186,21 +188,24 @@ public class ExportUtility {
             for (Object ws: array) {
                 JSONObject site = (JSONObject)ws;
                 String id = (String)site.get("sysmlid");
-                idmapping.add(id);
+                idmapping.put((String)site.get("name"), id);
             }
         }
     }
     
-    public static boolean siteExists(String site) {
+    public static boolean siteExists(String site, boolean human) {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        Set<String> idmapping = null;
+        Map<String, String> idmapping = null;
         if (sites.containsKey(projId))
             idmapping = sites.get(projId);
         else {
-            idmapping = new HashSet<String>();
+            idmapping = new HashMap<String, String>();
             sites.put(projId, idmapping);
         }
-        return idmapping.contains(site);
+        if (human)
+            return idmapping.keySet().contains(site);
+        else
+            return idmapping.values().contains(site);
     }
     
     public static Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
@@ -303,6 +308,11 @@ public class ExportUtility {
     }
     
     public static String getSiteForProject(IProject prj) {
+        String human = getHumanSiteForProject(prj);
+        return sites.get(Application.getInstance().getProject().getPrimaryProject().getProjectID()).get(human);
+    }
+    
+    public static String getHumanSiteForProject(IProject prj) {
         return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace('.', '-');
     }
     
@@ -397,9 +407,15 @@ public class ExportUtility {
             } else if (code == 404) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
-                //else
-                    //Application.getInstance().getGUILog()
-                            //.log("The thing you're trying to validate or get wasn't found on the server, see validation window");
+                else {
+                    try {
+                        Object o = JSONValue.parse(response);
+                        if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                            Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
+                    } catch (Exception c) {
+                        
+                    }
+                }
             } else if (code == 400) {
                 Object o = JSONValue.parse(response);
                 if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
@@ -423,7 +439,7 @@ public class ExportUtility {
         return false;
     }
 
-    public static String delete(String url) {
+    public static String delete(String url, boolean feedback) {
         if (url == null)
             return null;
         DeleteMethod gm = new DeleteMethod(url);
@@ -439,7 +455,8 @@ public class ExportUtility {
             if (showErrors(code, json, false)) {
                 return null;
             }
-            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            if (feedback)
+                Application.getInstance().getGUILog().log("[INFO] Delete Successful");
             return json;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -452,6 +469,31 @@ public class ExportUtility {
     
     public static String send(String url, String json, String method) {
         return send(url, json, method, true);
+    }
+    
+    public static String send(String url, PostMethod pm) {
+        if (url == null)
+            return null;
+        try {
+            GUILog gl = Application.getInstance().getGUILog();
+            gl.log("[INFO] Sending file...");
+            log.info("send file: " + url);
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url);
+            int code = client.executeMethod(pm);
+            String response = pm.getResponseBodyAsString();
+            log.info("send file response: " + code + " " + response);
+            if (showErrors(code, response, false)) {
+                return null;
+            }
+            gl.log("[INFO] Send File Successful.");
+            return response;
+        } catch (Exception ex) {
+            Utils.printException(ex);
+            return null;
+        } finally {
+            pm.releaseConnection();
+        }
     }
     
     public static String send(String url, String json, String method,
@@ -1290,7 +1332,8 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        send(url, tosend.toJSONString(), null, false);
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        //send(url, tosend.toJSONString(), null, false);
     }
     
     public static void sendProjectVersion(String projId, Integer version) {
@@ -1305,7 +1348,8 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        send(url, tosend.toJSONString(), null, false);
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        //send(url, tosend.toJSONString(), null, false);
     }
 
     public static String initializeBranchVersion(String taskId) {
@@ -1317,6 +1361,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         array.add(moduleJson);
+        //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
         return ExportUtility.send(projUrl, tosend.toJSONString(), null, false);
     }
     

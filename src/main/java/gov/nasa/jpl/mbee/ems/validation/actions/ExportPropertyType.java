@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -53,10 +55,10 @@ public class ExportPropertyType extends RuleViolationAction implements Annotatio
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString()) != null) {
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
-            //ExportUtility.sendProjectVersions();
-        }
+        }*/
     }
 
     @SuppressWarnings("unchecked")
@@ -75,10 +77,10 @@ public class ExportPropertyType extends RuleViolationAction implements Annotatio
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationAndUpdateWindow();
-            //ExportUtility.sendProjectVersion(element);
-        }
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
+            this.removeViolationsAndUpdateWindow(annos);
+        }*/
 
     }
 

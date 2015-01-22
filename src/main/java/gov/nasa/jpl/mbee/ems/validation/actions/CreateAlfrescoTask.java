@@ -70,8 +70,21 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
         String url = ExportUtility.getUrl();
         DateTime current = new DateTime();
         String now = current.toString();
-        url += "/workspaces/" + branches[branches.length-1] + "?sourceWorkspace=" + parentId + "&copyTime=" + now;
-        String result = ExportUtility.send(url, "{}", null, false);
+        url += "/workspaces";// + branches[branches.length-1] + "?sourceWorkspace=" + parentId + "&copyTime=" + now;
+        
+        JSONObject tosend = new JSONObject();
+        JSONArray news = new JSONArray();
+        tosend.put("workspaces", news);
+        JSONObject newws = new JSONObject();
+        newws.put("name", branches[branches.length-1]);
+        newws.put("parent", parentId);
+        newws.put("branched", now);
+        newws.put("description", "Created from magicdraw.");
+        news.add(newws);
+        
+        String result = ExportUtility.send(url, tosend.toJSONString(), null, false);
+        if (result == null || !result.startsWith("{"))
+            return;
         JSONObject ob =  (JSONObject) JSONValue.parse(result);
         JSONArray array = (JSONArray)ob.get("workspaces");
         if (array.size() == 1) {

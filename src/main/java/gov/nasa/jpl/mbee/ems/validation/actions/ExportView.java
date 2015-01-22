@@ -31,13 +31,17 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ViewExportRunner;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -153,22 +157,28 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             return false;
         }
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
-        Document dge = dg.parseDocument(true, recurse);
-        (new PostProcessor()).process(dge);
+        Document dge = null;
         boolean document = false;
         
-        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGen3Profile.documentViewStereotype, "Document Profile");
-        if (StereotypesHelper.hasStereotypeOrDerived(view, documentView))
+        if (StereotypesHelper.hasStereotypeOrDerived(view, Utils.getProductStereotype()))
             document = true;
-
+        if (document)
+            dge = dg.parseDocument(true, true);
+        else
+            dge = dg.parseDocument(true, recurse);
+        (new PostProcessor()).process(dge);
+        
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
         dge.accept(visitor);
         DBBook book = visitor.getBook();
         if (book == null)
             return false;
 
-        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
+        DBAlfrescoVisitor visitor2 = null;
+        //if (document)
+        //    visitor2 = new DBAlfrescoVisitor(true);
+        //else
+        visitor2 = new DBAlfrescoVisitor(recurse);
         book.accept(visitor2);
         /*int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {
@@ -198,10 +208,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         viewsArray.addAll(viewjson.values());
         send = new JSONObject();
         send.put("elements", viewsArray);
-        //gl.log(send.toJSONString());
-        //String sendViewsUrl = url +  "/javawebscripts/views";
-        if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
-            return false;
+        
+        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
+        //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
+        //    return false;
         
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
@@ -246,41 +256,45 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                         post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile),
                                 imageFile.length()));
                     }
-                    HttpClient client = new HttpClient();
-                    ViewEditUtils.setCredentials(client, baseurl);
+                    OutputQueue.getInstance().offer(new Request(posturl, post));
+                    //HttpClient client = new HttpClient();
+                    //ViewEditUtils.setCredentials(client, baseurl);
                     gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
-                    client.executeMethod(post);
+                    //client.executeMethod(post);
 
-                    status = post.getStatusCode();
-                    if (status != HttpURLConnection.HTTP_OK) {
-                        gl.log("[ERROR] Could not upload image file to view editor");
-                    }
+                    //status = post.getStatusCode();
+                    //if (status != HttpURLConnection.HTTP_OK) {
+                    //    gl.log("[ERROR] Could not upload image file to view editor");
+                    //}
                 } catch (Exception ex) {
                     //printStackTrace(ex, gl);
                 } finally {
-                    post.releaseConnection();
+                    //post.releaseConnection();
                 }
             }
         }
 
         // clean up the local images
-        visitor2.removeImages();
-        gl.log("[INFO] Done");
-        if (document && recurse) {
+        //visitor2.removeImages();
+        //gl.log("[INFO] Done");
+        if (document) {//&& recurse) {
             //String docurl = url + "/javawebscripts/products";
             send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
             JSONObject spec = new JSONObject();
-            spec.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
-            spec.put("noSections", visitor2.getNosections());
+            ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+            dge.accept(vhv);
+            spec.put("view2view", ExportUtility.formatView2View(vhv.getView2View()));
+            //spec.put("noSections", visitor2.getNosections());
             spec.put("type", "Product");
             doc.put("sysmlid", view.getID());
             doc.put("specialization", spec);
             documents.add(doc);
             send.put("elements", documents);
-            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
-                return false;
+            OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
+            //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
+            //   return false;
         } /*else if (recurse) {
             JSONArray views = new JSONArray();
             JSONObject view2view = visitor2.getHierarchy();

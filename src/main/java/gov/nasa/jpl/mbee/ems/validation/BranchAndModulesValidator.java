@@ -44,6 +44,7 @@ public class BranchAndModulesValidator {
     private ValidationRule unexportedModule = new ValidationRule("Unexported module", "Unexported module", ViolationSeverity.ERROR);
     private ValidationRule siteExist = new ValidationRule("Site Existence", "Site Existence", ViolationSeverity.ERROR);
     private ValidationRule versionMatch = new ValidationRule("Version", "Version", ViolationSeverity.INFO);
+    private ValidationRule projectSiteExist = new ValidationRule("Site", "Project Site", ViolationSeverity.ERROR);
     
     public BranchAndModulesValidator() {
         suite.addValidationRule(alfrescoTask);
@@ -51,6 +52,7 @@ public class BranchAndModulesValidator {
         suite.addValidationRule(unexportedModule);
         suite.addValidationRule(siteExist);
         suite.addValidationRule(versionMatch);
+        suite.addValidationRule(projectSiteExist);
     }
     
     public void validate() {
@@ -58,13 +60,18 @@ public class BranchAndModulesValidator {
         IPrimaryProject prj = proj.getPrimaryProject();
         Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(prj);
         String baseUrl = ExportUtility.getUrl();
+        String projectSite = ExportUtility.getSite();
         ExportUtility.updateMasterSites();
         Set<IMountPoint> mounts = ProjectUtilities.getAllMountPoints(prj);
+        if (projectSite != null && !ExportUtility.siteExists(projectSite, false)) {
+            projectSiteExist.addViolation(new ValidationRuleViolation(null, "[PSITE] The site for this project doesn't exist."));
+        }
         for (IAttachedProject module: modules) {
             if (ProjectUtilities.isFromTeamworkServer(module))
                 continue;
-            String site = ExportUtility.getSiteForProject(module);
-            boolean siteExists = ExportUtility.siteExists(site);
+            String siteHuman = ExportUtility.getHumanSiteForProject(module);
+            
+            boolean siteExists = ExportUtility.siteExists(siteHuman, true);
             if (siteExists) {
                 String response = ExportUtility.get(ExportUtility.getUrlForProject(module), false);
                 if (response == null) {
@@ -76,18 +83,23 @@ public class BranchAndModulesValidator {
                     }
                     ValidationRuleViolation v = new ValidationRuleViolation(null, "[LOCAL] The local module " + module.getName() + " isn't uploaded yet.");
                     unexportedModule.addViolation(v);
+                    String site = ExportUtility.getSiteForProject(module);
                     v.addAction(new ExportLocalModule(module, packages, site));
                 }
             } else {
-                ValidationRuleViolation v = new ValidationRuleViolation(null, "[SITE] The site for local module " + module.getName() + " doesn't exist. (" + site + ")");
+                ValidationRuleViolation v = new ValidationRuleViolation(null, "[SITE] The site for local module " + module.getName() + " doesn't exist. (" + siteHuman + ")");
                 siteExist.addViolation(v);
                 String[] urls = baseUrl.split("/alfresco");
-                v.addAction(new CreateModuleSite(site, urls[0]));
+                v.addAction(new CreateModuleSite(siteHuman, urls[0]));
             }
         }
 
         if (!ProjectUtilities.isFromTeamworkServer(prj))
             return;
+        if (TeamworkUtils.getLoggedUserName() == null) {
+            Application.getInstance().getGUILog().log("You need to log in to teamwork first to do branches validation.");
+            return;
+        }
         ExportUtility.updateWorkspaceIdMapping();
         Map<String, String> wsMapping = ExportUtility.wsIdMapping.get(prj.getProjectID());
         Map<String, String> wsIdMapping = new HashMap<String, String>();

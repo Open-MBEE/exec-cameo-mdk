@@ -38,6 +38,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -345,7 +346,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //object and then insert appropriate
         //sub-elements in that specialization object.
         //
-        specialization.put("type", "View");
+        if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype()))
+            specialization.put("type", "Product");
+        else
+            specialization.put("type", "View");
         view.put("specialization", specialization);
         String id = e.getID();
         view.put("sysmlid", id);

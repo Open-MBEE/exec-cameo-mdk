@@ -34,7 +34,7 @@ public class CreateModuleSite extends RuleViolationAction implements AnnotationA
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        String message = "Go to " + url + "/share/page and create a site with URL Name of " + site + ", then rerun validation.";
+        String message = "Go to " + url + "/share/page and create a site with name of " + site + ", then rerun validation.";
         Utils.showPopupMessage(message);
     }
 
