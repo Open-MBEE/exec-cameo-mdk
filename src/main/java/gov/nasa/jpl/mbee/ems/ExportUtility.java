@@ -193,7 +193,7 @@ public class ExportUtility {
         }
     }
     
-    public static boolean siteExists(String site) {
+    public static boolean siteExists(String site, boolean human) {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> idmapping = null;
         if (sites.containsKey(projId))
@@ -202,7 +202,10 @@ public class ExportUtility {
             idmapping = new HashMap<String, String>();
             sites.put(projId, idmapping);
         }
-        return idmapping.keySet().contains(site);
+        if (human)
+            return idmapping.keySet().contains(site);
+        else
+            return idmapping.values().contains(site);
     }
     
     public static Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
@@ -466,6 +469,31 @@ public class ExportUtility {
     
     public static String send(String url, String json, String method) {
         return send(url, json, method, true);
+    }
+    
+    public static String send(String url, PostMethod pm) {
+        if (url == null)
+            return null;
+        try {
+            GUILog gl = Application.getInstance().getGUILog();
+            gl.log("[INFO] Sending file...");
+            log.info("send file: " + url);
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url);
+            int code = client.executeMethod(pm);
+            String response = pm.getResponseBodyAsString();
+            log.info("send file response: " + code + " " + response);
+            if (showErrors(code, response, false)) {
+                return null;
+            }
+            gl.log("[INFO] Send File Successful.");
+            return response;
+        } catch (Exception ex) {
+            Utils.printException(ex);
+            return null;
+        } finally {
+            pm.releaseConnection();
+        }
     }
     
     public static String send(String url, String json, String method,

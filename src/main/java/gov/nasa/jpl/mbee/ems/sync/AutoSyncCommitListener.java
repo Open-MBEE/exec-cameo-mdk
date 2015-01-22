@@ -206,7 +206,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 Element actual = sourceElement.getOwner();
                 elementOb = getElementObject(actual);
                 ExportUtility.fillDoc(actual, elementOb);
-                ExportUtility.fillOwner(sourceElement, elementOb);
+                ExportUtility.fillOwner(actual, elementOb);
             }
             else if ((sourceElement instanceof ValueSpecification) && (propertyName.equals(PropertyNames.VALUE)) ||
                     (sourceElement instanceof OpaqueExpression) && (propertyName.equals(PropertyNames.BODY)) ||

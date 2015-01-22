@@ -44,6 +44,7 @@ public class BranchAndModulesValidator {
     private ValidationRule unexportedModule = new ValidationRule("Unexported module", "Unexported module", ViolationSeverity.ERROR);
     private ValidationRule siteExist = new ValidationRule("Site Existence", "Site Existence", ViolationSeverity.ERROR);
     private ValidationRule versionMatch = new ValidationRule("Version", "Version", ViolationSeverity.INFO);
+    private ValidationRule projectSiteExist = new ValidationRule("Site", "Project Site", ViolationSeverity.ERROR);
     
     public BranchAndModulesValidator() {
         suite.addValidationRule(alfrescoTask);
@@ -51,6 +52,7 @@ public class BranchAndModulesValidator {
         suite.addValidationRule(unexportedModule);
         suite.addValidationRule(siteExist);
         suite.addValidationRule(versionMatch);
+        suite.addValidationRule(projectSiteExist);
     }
     
     public void validate() {
@@ -58,14 +60,18 @@ public class BranchAndModulesValidator {
         IPrimaryProject prj = proj.getPrimaryProject();
         Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(prj);
         String baseUrl = ExportUtility.getUrl();
+        String projectSite = ExportUtility.getSite();
         ExportUtility.updateMasterSites();
         Set<IMountPoint> mounts = ProjectUtilities.getAllMountPoints(prj);
+        if (projectSite != null && !ExportUtility.siteExists(projectSite, false)) {
+            projectSiteExist.addViolation(new ValidationRuleViolation(null, "[PSITE] The site for this project doesn't exist."));
+        }
         for (IAttachedProject module: modules) {
             if (ProjectUtilities.isFromTeamworkServer(module))
                 continue;
             String siteHuman = ExportUtility.getHumanSiteForProject(module);
             
-            boolean siteExists = ExportUtility.siteExists(siteHuman);
+            boolean siteExists = ExportUtility.siteExists(siteHuman, true);
             if (siteExists) {
                 String response = ExportUtility.get(ExportUtility.getUrlForProject(module), false);
                 if (response == null) {

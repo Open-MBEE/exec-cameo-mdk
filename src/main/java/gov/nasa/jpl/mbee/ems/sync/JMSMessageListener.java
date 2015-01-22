@@ -165,7 +165,7 @@ public class JMSMessageListener implements MessageListener {
                     String sysmlid = (String) ob.get("sysmlid");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
-                        Application.getInstance().getGUILog().log("[ERROR - Autosync] element " + sysmlid + " not found for autosync delete");
+                        //Application.getInstance().getGUILog().log("[ERROR - Autosync] element " + sysmlid + " not found for autosync delete");
                         return;
                     }
                     if (!changedElement.isEditable())

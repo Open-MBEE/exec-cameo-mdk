@@ -277,7 +277,8 @@ AnnotationAction, IRuleViolationAction {
                         }
                     } else {
                         Property p = availableProps.remove(0);
-                        moved.add(p);
+                        if (p.getOwner() != view)
+                            moved.add(p);
                         //add the property to owned attribute array
                         cprops.add(p);
                     }

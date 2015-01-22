@@ -41,6 +41,7 @@ import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -174,10 +175,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             return false;
 
         DBAlfrescoVisitor visitor2 = null;
-        if (document)
-            visitor2 = new DBAlfrescoVisitor(true);
-        else
-            visitor2 = new DBAlfrescoVisitor(recurse);
+        //if (document)
+        //    visitor2 = new DBAlfrescoVisitor(true);
+        //else
+        visitor2 = new DBAlfrescoVisitor(recurse);
         book.accept(visitor2);
         /*int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {
@@ -255,34 +256,37 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                         post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile),
                                 imageFile.length()));
                     }
-                    HttpClient client = new HttpClient();
-                    ViewEditUtils.setCredentials(client, baseurl);
+                    OutputQueue.getInstance().offer(new Request(posturl, post));
+                    //HttpClient client = new HttpClient();
+                    //ViewEditUtils.setCredentials(client, baseurl);
                     gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
-                    client.executeMethod(post);
+                    //client.executeMethod(post);
 
-                    status = post.getStatusCode();
-                    if (status != HttpURLConnection.HTTP_OK) {
-                        gl.log("[ERROR] Could not upload image file to view editor");
-                    }
+                    //status = post.getStatusCode();
+                    //if (status != HttpURLConnection.HTTP_OK) {
+                    //    gl.log("[ERROR] Could not upload image file to view editor");
+                    //}
                 } catch (Exception ex) {
                     //printStackTrace(ex, gl);
                 } finally {
-                    post.releaseConnection();
+                    //post.releaseConnection();
                 }
             }
         }
 
         // clean up the local images
-        visitor2.removeImages();
-        gl.log("[INFO] Done");
+        //visitor2.removeImages();
+        //gl.log("[INFO] Done");
         if (document) {//&& recurse) {
             //String docurl = url + "/javawebscripts/products";
             send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
             JSONObject spec = new JSONObject();
-            spec.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
-            spec.put("noSections", visitor2.getNosections());
+            ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+            dge.accept(vhv);
+            spec.put("view2view", ExportUtility.formatView2View(vhv.getView2View()));
+            //spec.put("noSections", visitor2.getNosections());
             spec.put("type", "Product");
             doc.put("sysmlid", view.getID());
             doc.put("specialization", spec);
