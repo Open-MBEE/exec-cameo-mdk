@@ -84,7 +84,7 @@ AnnotationAction, IRuleViolationAction {
     private Element view;
     private JSONObject keyed;
     private JSONObject md;
-
+    
     public ImportHierarchy(Element e, JSONObject md, JSONObject keyed) {
         super("ImportHierarchy", "Import Hierarchy", null, null);
         this.view = e;
@@ -127,12 +127,16 @@ AnnotationAction, IRuleViolationAction {
         Set<Element> added = (Set<Element>)results.get("added");
         Set<Property> moved = (Set<Property>)results.get("moved");
         Set<Element> deleted = (Set<Element>)results.get("deleted");
+        Set<Property> ptyped = (Set<Property>) results.get("ptyped");
         JSONArray changes = new JSONArray();
         for (Element e: added) {
             changes.add(ExportUtility.fillElement(e, null));
         }
         for (Property p: moved) {
             changes.add(ExportUtility.fillOwner(p, null));
+        }
+        for (Property p: ptyped) {
+            changes.add(ExportUtility.fillElement(p, null));
         }
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
@@ -242,6 +246,7 @@ AnnotationAction, IRuleViolationAction {
         Set<Property> moved = new HashSet<Property>();
         Set<Element> added = new HashSet<Element>();
         Set<Element> deleted = new HashSet<Element>();
+        Set<Property> ptyped = new HashSet<Property>();
         for (Object vid: keyed.keySet()) { //go through all views on mms
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
@@ -277,8 +282,20 @@ AnnotationAction, IRuleViolationAction {
                         }
                     } else {
                         Property p = availableProps.remove(0);
-                        if (p.getOwner() != view)
+                        if (p.getOwner() != view) {
                             moved.add(p);
+                            Property opposite = p.getOpposite();
+                            if (opposite != null) {
+                                opposite.setType((Type)view);
+                                JSONObject ptype = new JSONObject();
+                                ptype.put("sysmlid", opposite.getID());
+                                JSONObject spec = new JSONObject();
+                                spec.put("type", "Property");
+                                spec.put("propertyType", view.getID());
+                                ptype.put("specialization", spec);
+                                ptyped.add(opposite);
+                            }
+                        }
                         //add the property to owned attribute array
                         cprops.add(p);
                     }
@@ -308,6 +325,7 @@ AnnotationAction, IRuleViolationAction {
         retval.put("deleted", deleted);
         retval.put("added", added);
         retval.put("moved", moved);
+        retval.put("ptyped", ptyped);
         return retval;
     }
 }
