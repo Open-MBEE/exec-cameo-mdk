@@ -109,7 +109,10 @@ AnnotationAction, IRuleViolationAction {
         } else {
             Map<String, Object> result = importHierarchy(view, md, keyed);
             if ((Boolean)result.get("success")) {
-                sendChanges(result);
+                List<Request> requests = sendChanges(result);
+                for (Request r: requests) {
+                    OutputQueue.getInstance().offer(r);
+                }
                 return true;
             } else
                 return false;
@@ -123,11 +126,12 @@ AnnotationAction, IRuleViolationAction {
     }
 
     @SuppressWarnings("unchecked")
-    public static void sendChanges(Map<String, Object> results) {
+    public static List<Request> sendChanges(Map<String, Object> results) {
         Set<Element> added = (Set<Element>)results.get("added");
         Set<Property> moved = (Set<Property>)results.get("moved");
         Set<Element> deleted = (Set<Element>)results.get("deleted");
         Set<Property> ptyped = (Set<Property>) results.get("ptyped");
+        List<Request> returns = new ArrayList<Request>();
         JSONArray changes = new JSONArray();
         for (Element e: added) {
             changes.add(ExportUtility.fillElement(e, null));
@@ -145,7 +149,8 @@ AnnotationAction, IRuleViolationAction {
         Request r = new Request();
         r.setUrl(url);
         r.setJson(tosend.toJSONString());
-        OutputQueue.getInstance().offer(r);
+        //OutputQueue.getInstance().offer(r);
+        returns.add(r);
         url = ExportUtility.getUrlWithWorkspace();
         for (Element e: deleted) {
             String durl = url + "/elements/" + e.getID();
@@ -153,8 +158,10 @@ AnnotationAction, IRuleViolationAction {
             Request rr = new Request();
             r.setUrl(durl);
             r.setMethod("DELETE");
-            OutputQueue.getInstance().offer(rr);
+            returns.add(r);
+            //OutputQueue.getInstance().offer(rr);
         }
+        return returns;
     }
     
     public static Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {

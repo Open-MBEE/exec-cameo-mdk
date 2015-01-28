@@ -8,6 +8,7 @@ import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +78,7 @@ public class JMSMessageListener implements MessageListener {
                     SessionManager sm = SessionManager.getInstance();
                     sm.createSession("mms sync change");
                     try {
+                        List<Request> toChange = new ArrayList<Request>();
                         // Loop through each specified element.
                         //
                         List<JSONObject> sortedAdded = ImportUtility.getCreationOrder((List<JSONObject>)added);
@@ -90,26 +92,31 @@ public class JMSMessageListener implements MessageListener {
                         } else {
                             log.error("jms message added can't be executed - " + added.toJSONString());
                         }
-                        for (Object element : updated) {
-                            makeChange((JSONObject) element);
-                        }
-                        
-                        for (Object element : deleted) {
-                            deleteElement((JSONObject) element);
-                        }
                         for (Object element : moved) {
                             moveElement((JSONObject) element);
                         }
+                        for (Object element : updated) {
+                            List<Request> requests = makeChange((JSONObject) element);
+                            if (requests != null)
+                                toChange.addAll(requests);
+                        }
+                        for (Object element : deleted) {
+                            deleteElement((JSONObject) element);
+                        }
+                        
                         if (listener != null)
                             listener.disable();
 
                         sm.closeSession();
+                        for (Request r: toChange) {
+                            OutputQueue.getInstance().offer(r);
+                        }
                         if (listener != null)
                             listener.enable();
                     }
                     catch (Exception e) {
                         sm.cancelSession();
-                        log.error(e);
+                        log.error(e, e);
                         if (listener != null)
                             listener.enable();
                     }
@@ -121,18 +128,20 @@ public class JMSMessageListener implements MessageListener {
                         listener.enable();
                 }
 
-                private void makeChange(JSONObject ob) throws ReadOnlyElementException {
+                private List<Request> makeChange(JSONObject ob) throws ReadOnlyElementException {
                     String sysmlid = (String) ob.get("sysmlid");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
                         guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync change");
-                        return;
+                        return null;
                     } else if (!changedElement.isEditable()) {
                         if (!TeamworkUtils.lockElement(project, changedElement, false)) {
                             guilog.log("[ERROR - Autosync] " + changedElement.getHumanName() + " is not editable!");
-                            return;
+                            return null;
                         }
                     }
+                    ImportUtility.updateElement(changedElement, ob);
+                    guilog.log("[Autosync] " + changedElement.getHumanName() + " updated");
                     if (ob.containsKey("specialization")) {
                         JSONArray view2view = (JSONArray)((JSONObject)ob.get("specialization")).get("view2view");
                         if (view2view != null) {
@@ -145,12 +154,12 @@ public class JMSMessageListener implements MessageListener {
                             if (!ViewValidator.viewHierarchyMatch(changedElement, dge, vhv, (JSONObject)ob.get("specialization"))) {
                                 Map<String, Object> result = ImportHierarchy.importHierarchy(changedElement, model, web);
                                 guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
-                                ImportHierarchy.sendChanges(result);
+                                List<Request> requests = ImportHierarchy.sendChanges(result);
+                                return requests;
                             }
                         }
                     }
-                    ImportUtility.updateElement(changedElement, ob);
-                    guilog.log("[Autosync] " + changedElement.getHumanName() + " updated");
+                    return null;
                 }
 
                 private void addElement(JSONObject ob, boolean updateRelations) {
@@ -194,7 +203,7 @@ public class JMSMessageListener implements MessageListener {
 
         }
         catch (Exception e) {
-
+            log.error("", e);
         }
     }
 }
