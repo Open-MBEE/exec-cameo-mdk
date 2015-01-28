@@ -106,6 +106,8 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     
     protected boolean doAction(Annotation anno) throws ReadOnlyElementException{return true;}
     
+    protected void doAfterSuccess(){};
+    
     protected void executeMany(Collection<Annotation> annos, String sessionName) {
         Project project = Application.getInstance().getProject();
         Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
@@ -149,6 +151,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
             if (doAction(null)) {
                 SessionManager.getInstance().closeSession();
                 saySuccess();
+                doAfterSuccess();
                 this.removeViolationAndUpdateWindow();
             } else
                 SessionManager.getInstance().cancelSession();

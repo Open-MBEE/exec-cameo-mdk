@@ -84,6 +84,7 @@ AnnotationAction, IRuleViolationAction {
     private Element view;
     private JSONObject keyed;
     private JSONObject md;
+    private Map<String, Object> tosend;
     
     public ImportHierarchy(Element e, JSONObject md, JSONObject keyed) {
         super("ImportHierarchy", "Import Hierarchy", null, null);
@@ -103,16 +104,24 @@ AnnotationAction, IRuleViolationAction {
     }
     
     @Override
+    protected void doAfterSuccess() {
+        if (tosend != null)
+            sendChanges(tosend);
+    }
+    
+    @Override
     protected boolean doAction(Annotation anno) throws ReadOnlyElementException {
         if (anno != null) {
             
         } else {
             Map<String, Object> result = importHierarchy(view, md, keyed);
+            
             if ((Boolean)result.get("success")) {
-                List<Request> requests = sendChanges(result);
-                for (Request r: requests) {
-                    OutputQueue.getInstance().offer(r);
-                }
+                tosend = result;
+                //List<Request> requests = sendChanges(result);
+                //for (Request r: requests) {
+                //    OutputQueue.getInstance().offer(r);
+                //}
                 return true;
             } else
                 return false;
@@ -149,8 +158,8 @@ AnnotationAction, IRuleViolationAction {
         Request r = new Request();
         r.setUrl(url);
         r.setJson(tosend.toJSONString());
-        //OutputQueue.getInstance().offer(r);
-        returns.add(r);
+        OutputQueue.getInstance().offer(r);
+        //returns.add(r);
         url = ExportUtility.getUrlWithWorkspace();
         for (Element e: deleted) {
             String durl = url + "/elements/" + e.getID();
@@ -158,8 +167,8 @@ AnnotationAction, IRuleViolationAction {
             Request rr = new Request();
             r.setUrl(durl);
             r.setMethod("DELETE");
-            returns.add(r);
-            //OutputQueue.getInstance().offer(rr);
+            //returns.add(r);
+            OutputQueue.getInstance().offer(rr);
         }
         return returns;
     }
@@ -291,7 +300,8 @@ AnnotationAction, IRuleViolationAction {
                         Property p = availableProps.remove(0);
                         if (p.getOwner() != view) {
                             moved.add(p);
-                            Property opposite = p.getOpposite();
+                            
+                            Property opposite = getOpposite(p);//p.getOpposite();
                             if (opposite != null) {
                                 opposite.setType((Type)view);
                                 JSONObject ptype = new JSONObject();
@@ -334,5 +344,16 @@ AnnotationAction, IRuleViolationAction {
         retval.put("moved", moved);
         retval.put("ptyped", ptyped);
         return retval;
+    }
+    
+    public static Property getOpposite(Property p) {
+        Association a = p.getAssociation();
+        if (a != null) {
+            for (NamedElement e: a.getMember()) {
+                if (e instanceof Property && e != p)
+                    return (Property)e;
+            }
+        }
+        return null;
     }
 }

@@ -78,7 +78,7 @@ public class JMSMessageListener implements MessageListener {
                     SessionManager sm = SessionManager.getInstance();
                     sm.createSession("mms sync change");
                     try {
-                        List<Request> toChange = new ArrayList<Request>();
+                        List<Map<String, Object>> toChange = new ArrayList<Map<String, Object>>();
                         // Loop through each specified element.
                         //
                         List<JSONObject> sortedAdded = ImportUtility.getCreationOrder((List<JSONObject>)added);
@@ -96,9 +96,9 @@ public class JMSMessageListener implements MessageListener {
                             moveElement((JSONObject) element);
                         }
                         for (Object element : updated) {
-                            List<Request> requests = makeChange((JSONObject) element);
-                            if (requests != null)
-                                toChange.addAll(requests);
+                            Map<String, Object> results = makeChange((JSONObject) element);
+                            if (results != null)
+                                toChange.add(results);
                         }
                         for (Object element : deleted) {
                             deleteElement((JSONObject) element);
@@ -108,8 +108,9 @@ public class JMSMessageListener implements MessageListener {
                             listener.disable();
 
                         sm.closeSession();
-                        for (Request r: toChange) {
-                            OutputQueue.getInstance().offer(r);
+                        for (Map<String, Object> r: toChange) {
+                            ImportHierarchy.sendChanges(r);
+                            //OutputQueue.getInstance().offer(r);
                         }
                         if (listener != null)
                             listener.enable();
@@ -128,7 +129,7 @@ public class JMSMessageListener implements MessageListener {
                         listener.enable();
                 }
 
-                private List<Request> makeChange(JSONObject ob) throws ReadOnlyElementException {
+                private Map<String, Object> makeChange(JSONObject ob) throws ReadOnlyElementException {
                     String sysmlid = (String) ob.get("sysmlid");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
@@ -154,8 +155,9 @@ public class JMSMessageListener implements MessageListener {
                             if (!ViewValidator.viewHierarchyMatch(changedElement, dge, vhv, (JSONObject)ob.get("specialization"))) {
                                 Map<String, Object> result = ImportHierarchy.importHierarchy(changedElement, model, web);
                                 guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
-                                List<Request> requests = ImportHierarchy.sendChanges(result);
-                                return requests;
+                                return result;
+                                //List<Request> requests = ImportHierarchy.sendChanges(result);
+                                //return requests;
                             }
                         }
                     }
