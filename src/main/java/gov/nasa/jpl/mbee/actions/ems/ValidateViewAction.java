@@ -54,7 +54,7 @@ public class ValidateViewAction extends MDAction {
         if (!ExportUtility.checkBaseline()) {    
             return;
         }
-        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false), "Validating View", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false, false), "Validating View", true, 0);
     }
 }
 
