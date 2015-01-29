@@ -166,8 +166,8 @@ AnnotationAction, IRuleViolationAction {
             String durl = url + "/elements/" + e;
             //ExportUtility.delete(durl);
             Request rr = new Request();
-            r.setUrl(durl);
-            r.setMethod("DELETE");
+            rr.setUrl(durl);
+            rr.setMethod("DELETE");
             //returns.add(r);
             OutputQueue.getInstance().offer(rr);
         }
@@ -332,7 +332,7 @@ AnnotationAction, IRuleViolationAction {
         for (List<Property> props: viewId2props.values()) {
             for (Property p: props) {
                 deleted.add(p);
-                Association asso = p.get_associationOfNavigableOwnedEnd();
+                Association asso = p.getAssociation();
                 if (asso != null) {
                     deleted.addAll(asso.getOwnedEnd());
                     deleted.add(asso);
