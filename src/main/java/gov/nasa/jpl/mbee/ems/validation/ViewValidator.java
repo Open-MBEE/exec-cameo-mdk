@@ -91,18 +91,22 @@ public class ViewValidator {
     private DocumentValidator dv;
     private Element view;
     private boolean recurse;
+    private boolean hierarchyOnly;
 
-    public ViewValidator(Element view, boolean recursive) {
+    public ViewValidator(Element view, boolean recursive, boolean hierarchyOnly) {
         this.view = view;
         this.dv = new DocumentValidator( view );
-        suite.addValidationRule(exists);
-        suite.addValidationRule(match);
+        if (!hierarchyOnly) {
+            suite.addValidationRule(exists);
+            suite.addValidationRule(match);
+            suite.addValidationRule(comments);
+            suite.addValidationRule(projectExist);
+            suite.addValidationRule(baselineTag);
+            suite.addValidationRule(productView);
+        }
         suite.addValidationRule(hierarchy);
-        suite.addValidationRule(comments);
-        suite.addValidationRule(projectExist);
-        suite.addValidationRule(baselineTag);
-        suite.addValidationRule(productView);
         this.recurse = recursive;
+        this.hierarchyOnly = hierarchyOnly;
     }
     
     public boolean checkProject() {
@@ -137,15 +141,19 @@ public class ViewValidator {
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = dg.parseDocument(true, true);
         (new PostProcessor()).process(dge);
+        
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
-        dge.accept(visitor);
-        DBBook book = visitor.getBook();
-        if (book == null)
-            return false;
+        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
+        if (!hierarchyOnly) {
+            dge.accept(visitor);
+            DBBook book = visitor.getBook();
+            if (book == null)
+                return false;
+            book.accept(visitor2);
+        }
+        
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
         dge.accept(vhv);
-        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
-        book.accept(visitor2);
 
         // this is going to house the elements gotten from web
         JSONObject results = new JSONObject();
@@ -158,8 +166,16 @@ public class ViewValidator {
 
         Element startView = getStartView();
         Map<String, JSONObject> cachedResultElements = new HashMap<String, JSONObject>();
-        Application.getInstance().getGUILog().log("[INFO] Validating view(s)");
-        for (Object viewid: visitor2.getViews().keySet()) {
+        if (!hierarchyOnly)
+            Application.getInstance().getGUILog().log("[INFO] Validating view(s)");
+        else
+            Application.getInstance().getGUILog().log("[INFO] Validating hierarchy");
+        Set<String> viewIds = new HashSet<String>();
+        if (!hierarchyOnly)
+            viewIds = visitor2.getViews().keySet();
+        else
+            viewIds.add(startView.getID());
+        for (String viewid: viewIds) {
             if (ps != null && ps.isCancel())
                 break;
             //viewid is a string that's the view's magicdraw id
@@ -193,13 +209,15 @@ public class ViewValidator {
                     v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
                     exists.addViolation(v);
                 } else {
+                    Boolean editable = (Boolean) webView.get("editable");
+                    if (!hierarchyOnly) {
                     String viewElementsUrl = url + "/views/" + viewid + "/elements";
                     JSONArray localElements = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("displayedElements");
                     // get the current elements referenced by the view in the current model
                     JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
                     // get the current model view structure
 
-                    Boolean editable = (Boolean) webView.get("editable");
+                    
                     // this is the json object for the view on the web
 
                     // this is the web view structure
@@ -217,8 +235,6 @@ public class ViewValidator {
                     // parse the view elements json from web into JSONObject
                     JSONObject webViewSpec = (JSONObject)webView.get("specialization");
                     boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
-                    // see if the list of view elements referenced matches and view structures match
-                    boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
                     if (!matches) {
                         ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor content is outdated.");
                         if (editable) {
@@ -236,6 +252,16 @@ public class ViewValidator {
                         v.addAction(new Downgrade(currentView, webView));
                         productView.addViolation(v);
                     }
+                    for (Object reselement: (JSONArray)viewresults.get("elements")) {
+                        // add view referenced elements to a cache to later get validated by ModelValidator
+                        if (cachedResultElements.containsKey(((JSONObject) reselement).get("sysmlid")))
+                            continue;
+                        cachedResultElements.put((String)((JSONObject)reselement).get("sysmlid"), (JSONObject) reselement);
+                    }
+                    }
+                    // see if the list of view elements referenced matches and view structures match
+                    boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
+                    
                     if (!hierarchyMatches) {
                         // Update the hierarchy in MagicDraw based on MagicDraw
                         ValidationRuleViolation v = new ValidationRuleViolation( currentView, "[Hierarchy] Document Hierarchy is different");
@@ -248,30 +274,25 @@ public class ViewValidator {
                             v.addAction(new ExportHierarchy(currentView));
                         hierarchy.addViolation(v);
                     }
-
-                    for (Object reselement: (JSONArray)viewresults.get("elements")) {
-                        // add view referenced elements to a cache to later get validated by ModelValidator
-                        if (cachedResultElements.containsKey(((JSONObject) reselement).get("sysmlid")))
-                            continue;
-                        cachedResultElements.put((String)((JSONObject)reselement).get("sysmlid"), (JSONObject) reselement);
-                    }
                 }
             }
         }
         resultElements.addAll(cachedResultElements.values());
         ResultHolder.lastResults = results;
         //elements gotten from web
-        Application.getInstance().getGUILog().log("[INFO] Validating view elements");
-        ModelValidator mv = new ModelValidator(view, results, true, visitor2.getElementSet()); //visitor2.getElementSet() has the local model elements
-        //do the actual element validations between model and web
-        mv.validate(false, ps);
-        modelSuite = mv.getSuite();
+        if (!hierarchyOnly) {
+            Application.getInstance().getGUILog().log("[INFO] Validating view elements");
+            ModelValidator mv = new ModelValidator(view, results, true, visitor2.getElementSet()); //visitor2.getElementSet() has the local model elements
+            //do the actual element validations between model and web
+            mv.validate(false, ps);
+            modelSuite = mv.getSuite();
 
-        Application.getInstance().getGUILog().log("[INFO] Validating images");
-        ImageValidator iv = new ImageValidator(visitor2.getImages());
-        //this checks images generated from the local generation against what's on the web based on checksum
-        iv.validate();
-        imageSuite = iv.getSuite();
+            Application.getInstance().getGUILog().log("[INFO] Validating images");
+            ImageValidator iv = new ImageValidator(visitor2.getImages());
+            //this checks images generated from the local generation against what's on the web based on checksum
+            iv.validate();
+            imageSuite = iv.getSuite();
+        }
         return true;
     }
 

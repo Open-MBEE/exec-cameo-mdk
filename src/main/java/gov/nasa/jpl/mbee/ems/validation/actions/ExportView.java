@@ -52,6 +52,7 @@ import java.io.FileInputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -208,7 +209,24 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         viewsArray.addAll(viewjson.values());
         send = new JSONObject();
         send.put("elements", viewsArray);
-        
+        if (document) {
+            String docId = view.getID();
+            JSONObject doc = null;
+            for (JSONObject ele: (List<JSONObject>)viewsArray) {
+                if (ele.get("sysmlid").equals(docId)) {
+                    doc = ele;
+                    break;
+                }
+            }
+            if (doc != null) {
+                JSONObject spec = (JSONObject)doc.get("specialization");
+                ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+                dge.accept(vhv);
+                spec.put("view2view", ExportUtility.formatView2View(vhv.getView2View()));
+                //spec.put("noSections", visitor2.getNosections());
+                spec.put("type", "Product");
+            }
+        }
         OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
         //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
         //    return false;
@@ -279,7 +297,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         //gl.log("[INFO] Done");
         if (document) {//&& recurse) {
             //String docurl = url + "/javawebscripts/products";
-            send = new JSONObject();
+            /*send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
             JSONObject spec = new JSONObject();
@@ -291,8 +309,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             doc.put("sysmlid", view.getID());
             doc.put("specialization", spec);
             documents.add(doc);
-            send.put("elements", documents);
-            OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
+            send.put("elements", documents);*/
+            //OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
             //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
             //   return false;
         } /*else if (recurse) {

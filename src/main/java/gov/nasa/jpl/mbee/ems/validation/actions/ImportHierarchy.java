@@ -84,7 +84,8 @@ AnnotationAction, IRuleViolationAction {
     private Element view;
     private JSONObject keyed;
     private JSONObject md;
-
+    private Map<String, Object> tosend;
+    
     public ImportHierarchy(Element e, JSONObject md, JSONObject keyed) {
         super("ImportHierarchy", "Import Hierarchy", null, null);
         this.view = e;
@@ -103,13 +104,24 @@ AnnotationAction, IRuleViolationAction {
     }
     
     @Override
+    protected void doAfterSuccess() {
+        if (tosend != null)
+            sendChanges(tosend);
+    }
+    
+    @Override
     protected boolean doAction(Annotation anno) throws ReadOnlyElementException {
         if (anno != null) {
             
         } else {
             Map<String, Object> result = importHierarchy(view, md, keyed);
+            
             if ((Boolean)result.get("success")) {
-                sendChanges(result);
+                tosend = result;
+                //List<Request> requests = sendChanges(result);
+                //for (Request r: requests) {
+                //    OutputQueue.getInstance().offer(r);
+                //}
                 return true;
             } else
                 return false;
@@ -123,16 +135,21 @@ AnnotationAction, IRuleViolationAction {
     }
 
     @SuppressWarnings("unchecked")
-    public static void sendChanges(Map<String, Object> results) {
+    public static List<Request> sendChanges(Map<String, Object> results) {
         Set<Element> added = (Set<Element>)results.get("added");
         Set<Property> moved = (Set<Property>)results.get("moved");
         Set<Element> deleted = (Set<Element>)results.get("deleted");
+        Set<Property> ptyped = (Set<Property>) results.get("ptyped");
+        List<Request> returns = new ArrayList<Request>();
         JSONArray changes = new JSONArray();
         for (Element e: added) {
             changes.add(ExportUtility.fillElement(e, null));
         }
         for (Property p: moved) {
             changes.add(ExportUtility.fillOwner(p, null));
+        }
+        for (Property p: ptyped) {
+            changes.add(ExportUtility.fillElement(p, null));
         }
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
@@ -142,6 +159,7 @@ AnnotationAction, IRuleViolationAction {
         r.setUrl(url);
         r.setJson(tosend.toJSONString());
         OutputQueue.getInstance().offer(r);
+        //returns.add(r);
         url = ExportUtility.getUrlWithWorkspace();
         for (Element e: deleted) {
             String durl = url + "/elements/" + e.getID();
@@ -149,8 +167,10 @@ AnnotationAction, IRuleViolationAction {
             Request rr = new Request();
             r.setUrl(durl);
             r.setMethod("DELETE");
+            //returns.add(r);
             OutputQueue.getInstance().offer(rr);
         }
+        return returns;
     }
     
     public static Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {
@@ -242,6 +262,7 @@ AnnotationAction, IRuleViolationAction {
         Set<Property> moved = new HashSet<Property>();
         Set<Element> added = new HashSet<Element>();
         Set<Element> deleted = new HashSet<Element>();
+        Set<Property> ptyped = new HashSet<Property>();
         for (Object vid: keyed.keySet()) { //go through all views on mms
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
@@ -277,8 +298,21 @@ AnnotationAction, IRuleViolationAction {
                         }
                     } else {
                         Property p = availableProps.remove(0);
-                        if (p.getOwner() != view)
+                        if (p.getOwner() != view) {
                             moved.add(p);
+                            
+                            Property opposite = getOpposite(p);//p.getOpposite();
+                            if (opposite != null) {
+                                opposite.setType((Type)view);
+                                JSONObject ptype = new JSONObject();
+                                ptype.put("sysmlid", opposite.getID());
+                                JSONObject spec = new JSONObject();
+                                spec.put("type", "Property");
+                                spec.put("propertyType", view.getID());
+                                ptype.put("specialization", spec);
+                                ptyped.add(opposite);
+                            }
+                        }
                         //add the property to owned attribute array
                         cprops.add(p);
                     }
@@ -308,6 +342,18 @@ AnnotationAction, IRuleViolationAction {
         retval.put("deleted", deleted);
         retval.put("added", added);
         retval.put("moved", moved);
+        retval.put("ptyped", ptyped);
         return retval;
+    }
+    
+    public static Property getOpposite(Property p) {
+        Association a = p.getAssociation();
+        if (a != null) {
+            for (NamedElement e: a.getMember()) {
+                if (e instanceof Property && e != p)
+                    return (Property)e;
+            }
+        }
+        return null;
     }
 }
