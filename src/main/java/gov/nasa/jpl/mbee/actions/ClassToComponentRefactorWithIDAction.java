@@ -22,11 +22,11 @@ import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
 
     Element element;
-
+    public static final String actionid = "ConvertClass";
     private static final long serialVersionUID = 1L;
 
     public ClassToComponentRefactorWithIDAction(Element e) {
-        super("", "Convert Class To Component", null, null);
+        super(actionid, "Convert Class To Component", null, null);
         this.element = e;
     }
 

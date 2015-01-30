@@ -72,6 +72,7 @@ import com.nomagic.magicdraw.actions.ConfiguratorWithPriority;
 import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
@@ -133,8 +134,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             //Debug.outln( "class name = " + traceElem.getClassName() + ", method name = " + traceElem.getMethodName() + ", last method name = " + lastMethod );
             lastMethod = traceElem.getMethodName();
         }
-        Debug.outln( "@@@ repainting() = false:" );
-        Debug.outln( MoreToString.Helper.toString( trace ) );
+        //Debug.outln( "@@@ repainting() = false:" );
+        //Debug.outln( MoreToString.Helper.toString( trace ) );
         return false;
     }
 
@@ -151,12 +152,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         // top-level context menu: Refactor With ID
         ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");       
         if(e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)){
-        	refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(e));   
+            if (manager.getActionFor(ClassToComponentRefactorWithIDAction.actionid) == null)
+                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(e));   
         }
         if(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component){
-        	refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(e));   
+            if (manager.getActionFor(ComponentToClassRefactorWithIDAction.actionid) == null)
+                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(e));   
         }
-        manager.addCategory(refactorWithIDActionCat);
+        //manager.addCategory(refactorWithIDActionCat);
 
         if (ViewEditUtils.isPasswordSet()) {
             if (MDUtils.isDeveloperMode()) {
@@ -166,11 +169,11 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
                     modelLoad.addAction(new InitializeProjectAction());
                 if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                    modelLoad.addAction(new ValidateModelAction(e));
+                    modelLoad.addAction(new ValidateModelAction(e, (Application.getInstance().getProject().getModel() == e) ? "Validate Model": "Validate SubModel"));
             } else {
                 ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
                 if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                    modelLoad.addAction(new ValidateModelAction(e));
+                    modelLoad.addAction(new ValidateModelAction(e, (Application.getInstance().getProject().getModel() == e) ? "Validate Model": "Validate SubModel"));
             } 
         }
         
@@ -219,11 +222,11 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 //action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
                 //if (action == null)
                 //    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
-                /*if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
+                if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
                     NMAction action = manager.getActionFor(ValidateHierarchyAction.actionid);
                     if (action == null)
                         modelLoad2.addAction(new ValidateHierarchyAction(e));
-                }*/
+                }
                 NMAction action = manager.getActionFor("ExportView");
                 if (action == null)
                     modelLoad2.addAction(new ExportViewAction(e, false));
