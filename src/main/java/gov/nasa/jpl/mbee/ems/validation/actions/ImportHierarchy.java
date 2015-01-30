@@ -140,6 +140,7 @@ AnnotationAction, IRuleViolationAction {
         Set<Property> moved = (Set<Property>)results.get("moved");
         Set<Element> deleted = (Set<Element>)results.get("deleted");
         Set<Property> ptyped = (Set<Property>) results.get("ptyped");
+        Set<String> deletedIds = (Set<String>)results.get("deletedIds");
         List<Request> returns = new ArrayList<Request>();
         JSONArray changes = new JSONArray();
         for (Element e: added) {
@@ -161,12 +162,12 @@ AnnotationAction, IRuleViolationAction {
         OutputQueue.getInstance().offer(r);
         //returns.add(r);
         url = ExportUtility.getUrlWithWorkspace();
-        for (Element e: deleted) {
-            String durl = url + "/elements/" + e.getID();
+        for (String e: deletedIds) {
+            String durl = url + "/elements/" + e;
             //ExportUtility.delete(durl);
             Request rr = new Request();
-            r.setUrl(durl);
-            r.setMethod("DELETE");
+            rr.setUrl(durl);
+            rr.setMethod("DELETE");
             //returns.add(r);
             OutputQueue.getInstance().offer(rr);
         }
@@ -331,7 +332,7 @@ AnnotationAction, IRuleViolationAction {
         for (List<Property> props: viewId2props.values()) {
             for (Property p: props) {
                 deleted.add(p);
-                Association asso = p.get_associationOfNavigableOwnedEnd();
+                Association asso = p.getAssociation();
                 if (asso != null) {
                     deleted.addAll(asso.getOwnedEnd());
                     deleted.add(asso);
@@ -339,7 +340,12 @@ AnnotationAction, IRuleViolationAction {
                 ModelElementsManager.getInstance().removeElement(p);
             }
         }
+        Set<String> deletedIds = new HashSet<String>();
+        for (Element deletedE: deleted) {
+            deletedIds.add(deletedE.getID());
+        }
         retval.put("deleted", deleted);
+        retval.put("deletedIds", deletedIds);
         retval.put("added", added);
         retval.put("moved", moved);
         retval.put("ptyped", ptyped);

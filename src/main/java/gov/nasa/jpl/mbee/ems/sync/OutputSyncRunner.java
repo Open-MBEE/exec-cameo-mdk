@@ -17,9 +17,8 @@ public class OutputSyncRunner implements Runnable {
                     ExportUtility.send(r.getUrl(), r.getPm());
                 else
                     ExportUtility.send(r.getUrl(), r.getJson(), null, false);
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
-                continue;
             }
         }
         
