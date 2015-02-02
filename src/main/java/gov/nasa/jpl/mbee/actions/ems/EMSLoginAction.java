@@ -41,10 +41,16 @@ public class EMSLoginAction extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "Login";
 
+    private EMSLogoutAction logout;
+    
     public EMSLoginAction() {
         super(actionid, "Login", null, null);
     }
 
+    public void setLogoutAction(EMSLogoutAction logout) {
+        this.logout = logout;
+    }
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         ViewEditUtils.clearCredentials();
@@ -59,6 +65,10 @@ public class EMSLoginAction extends MDAction {
         if (response ==  null)
             return;
         Application.getInstance().getGUILog().log("Logged in");
+        this.setEnabled(false);
+        this.updateState();
+        logout.setEnabled(true);
+        logout.updateState(); //doesn't work
     }
 
 }
