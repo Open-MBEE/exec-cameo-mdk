@@ -13,7 +13,7 @@ public class SendProjectVersionAction extends MDAction {
     public static final String actionid = "SendProjectVersion";
 
     public SendProjectVersionAction() {
-        super(actionid, "Initialize Branch Version", null, null);
+        super(actionid, "Send Project Version", null, null);
     }
 
     @Override

@@ -168,17 +168,24 @@ public class ModelValidator {
         if (projectUrl == null)
             return false;
         String response = ExportUtility.get(projectUrl, false);
+        String url = ExportUtility.getUrlWithWorkspace();
         if (response == null) {
-            ValidationRuleViolation v = new ValidationRuleViolation(Project.getProject(start).getModel(), "The project or site doesn't exist on the web.");
-            v.addAction(new InitializeProjectModel(false));
-            projectExist.addViolation(v);
+            if (url == null)
+                return false;
+            if (url.contains("master")) {
+                ValidationRuleViolation v = new ValidationRuleViolation(Project.getProject(start).getModel(), "The project or site doesn't exist on the web.");
+                v.addAction(new InitializeProjectModel(false));
+                projectExist.addViolation(v);
+            } else {
+                ValidationRuleViolation v = new ValidationRuleViolation(Project.getProject(start).getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
+                projectExist.addViolation(v);
+            }
             return false;
         }
         if (ProjectUtilities.isElementInAttachedProject(start)){
             Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
             return false;
         }
-        String url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
             return false;
         String id = start.getID();

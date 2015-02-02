@@ -11,11 +11,14 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
+import javax.jms.ExceptionListener;
+import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.Session;
 import javax.jms.Topic;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.log4j.Logger;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -45,6 +48,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 
     private static final String MSG_SELECTOR_PROJECT_ID = "projectId";
     private static final String MSG_SELECTOR_WS_ID = "workspace";
+    public static Logger log = Logger.getLogger(AutoSyncProjectListener.class);
 
     public static String getJMSUrl() {
         String url = ExportUtility.getUrl();
@@ -126,6 +130,16 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
             String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
             Connection connection = connectionFactory.createConnection();
+            connection.setExceptionListener(new ExceptionListener() {
+                @Override
+                public void onException(JMSException e) {
+                    Application.getInstance().getGUILog().log(e.getMessage());
+                    log.error(e.getMessage(), e);
+                    //if (e instanceof LostServerConnection) {
+                        
+                    //}
+                }
+            });
             connection.setClientID(subscriberId);// + (new Date()).toString());
             // connection.setExceptionListener(this);
             Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
@@ -172,6 +186,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
 
     public static void close(Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances == null)
+            return;
         AutoSyncCommitListener listener = (AutoSyncCommitListener) projectInstances.remove(LISTENER);
         if (listener != null)
             project.getRepository().getTransactionManager().removeTransactionCommitListener(listener);
