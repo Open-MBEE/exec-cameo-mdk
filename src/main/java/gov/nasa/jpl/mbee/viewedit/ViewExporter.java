@@ -130,7 +130,7 @@ public class ViewExporter implements RunnableWithProgress {
             return;
         if (recurse) {
             DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
-            Document dge = dg.parseDocument(true, true);
+            Document dge = dg.parseDocument(true, true, false);
             ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
             dge.accept(vhv);
             JSONObject res = vhv.getResult();
@@ -188,7 +188,7 @@ public class ViewExporter implements RunnableWithProgress {
 
     private boolean postView(Element view, boolean rec) {
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
-        dge = dg.parseDocument(true, rec);
+        dge = dg.parseDocument(true, rec, false);
         (new PostProcessor()).process(dge);
         boolean document = false;
 

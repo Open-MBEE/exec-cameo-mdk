@@ -104,7 +104,8 @@ public class DocumentGenerator {
     private Stereotype        product;
     private Stereotype        conforms  = Utils.getConformsStereotype();
     private Stereotype        sysml14conforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
-
+    private boolean hierarchyOnly;
+    
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
         start = e;
         product = Utils.getProductStereotype();
@@ -122,7 +123,7 @@ public class DocumentGenerator {
     }
 
     public Document parseDocument() {
-        return this.parseDocument(false, true);
+        return this.parseDocument(false, true, false);
     }
 
     public Document getDocument() {
@@ -135,7 +136,8 @@ public class DocumentGenerator {
      * are to accommodate normal docgen to docbook xml and view editor export
      * options
      */
-    public Document parseDocument(boolean singleView, boolean recurse) {
+    public Document parseDocument(boolean singleView, boolean recurse, boolean hierarchyOnly) {
+        this.hierarchyOnly = hierarchyOnly;
         if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
             if (start instanceof Package
                     || start instanceof Diagram
@@ -175,6 +177,7 @@ public class DocumentGenerator {
         if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))
             viewSection.isAppendix(true);
 
+        if (!hierarchyOnly) {
         if (viewpoint != null && viewpoint instanceof Class) { // view conforms
                                                                // to a viewpoint
             if (!(view instanceof Diagram)) { // if it's a diagram, people most
@@ -307,6 +310,7 @@ public class DocumentGenerator {
                     viewSection.addElement(image);
                 }
             }
+        }
         }
         viewSection.setDgElement(view);
         viewSection.setId(view.getID());

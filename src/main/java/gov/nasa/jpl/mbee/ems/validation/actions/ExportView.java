@@ -164,9 +164,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         if (StereotypesHelper.hasStereotypeOrDerived(view, Utils.getProductStereotype()))
             document = true;
         if (document)
-            dge = dg.parseDocument(true, true);
+            dge = dg.parseDocument(true, true, false);
         else
-            dge = dg.parseDocument(true, recurse);
+            dge = dg.parseDocument(true, recurse, false);
         (new PostProcessor()).process(dge);
         
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);

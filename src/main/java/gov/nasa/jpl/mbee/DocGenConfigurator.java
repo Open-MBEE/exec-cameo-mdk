@@ -413,7 +413,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (viewQueryCalled.contains(manager))
             return false;
         DocumentGenerator dg = new DocumentGenerator(e, null, null);
-        Document dge = dg.parseDocument(true, false);
+        Document dge = dg.parseDocument(true, false, false);
         CollectActionsVisitor cav = new CollectActionsVisitor();
         dge.accept(cav);
 

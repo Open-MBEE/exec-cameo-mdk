@@ -90,7 +90,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
     @SuppressWarnings("unchecked")
     private boolean exportHierarchy(Element view) {
         DocumentGenerator dg = new DocumentGenerator(view, null, null);
-        Document dge = dg.parseDocument(true, true);
+        Document dge = dg.parseDocument(true, true, true);
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
         dge.accept(vhv);
         String url = ExportUtility.getUrlWithWorkspace();

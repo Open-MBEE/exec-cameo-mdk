@@ -514,15 +514,25 @@ public class ModelValidator {
     }
     
     private ValidationRuleViolation valueDiff(Property e, JSONObject info) {
-    	//MDEV #673
-    	//
         Boolean editable = (Boolean)info.get("editable");
     	JSONObject specialization = (JSONObject)info.get("specialization");
-    	String valueTypes;
-    	JSONObject firstObject = null;
-    	
+
         ValueSpecification vs = e.getDefaultValue();
         JSONArray value = (JSONArray)specialization.get("value");
+        
+        /*JSONObject modelSpec = ExportUtility.fillPropertySpecialization(e, null, false);
+        JSONArray modelValue = (JSONArray)modelSpec.get("value");
+        if (!modelValue.equals(value)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: " + vs.get_representationText() + ", web: " + value == null ? "null" : value.toString());
+            v.addAction(new ImportValue(e, value, result));
+            if (editable)
+                v.addAction(new ExportValue(e));
+            return v;
+        }
+        return null;*/ //above is much simpler, but the return json from server can fool the json parser into using a long instead of double if it's a whole integer, so doesn't always work
+        
+        String valueTypes;
+        JSONObject firstObject = null;
         if ((value == null) || (value.isEmpty()))
         	valueTypes = null;
         else {
@@ -535,13 +545,13 @@ public class ModelValidator {
         
         if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
                 (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null))
-                && (valueTypes == null))
+                && (valueTypes == null || valueTypes.equals("ElementValue") && firstObject.get("element") == null || valueTypes.equals("InstanceValue") && firstObject.get("instance") == null))
             return null;
         if ((vs != null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) || 
                 (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() != null))
-                && (valueTypes == null)) {
+                && (valueTypes == null || valueTypes.equals("ElementValue") && firstObject.get("element") == null || valueTypes.equals("InstanceValue") && firstObject.get("instance") == null)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
-            v.addAction(new ImportValue(e, null, null, result));
+            v.addAction(new ImportValue(e, null, result));
             if (editable)
                 v.addAction(new ExportValue(e));
             return v;
@@ -550,7 +560,7 @@ public class ModelValidator {
                 (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null)) 
                 && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
-            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
+            v.addAction(new ImportValue(e, value, result));
             if (editable)
                 v.addAction(new ExportValue(e));
             return v;
@@ -565,24 +575,35 @@ public class ModelValidator {
             ValidationRuleViolation v = new ValidationRuleViolation(e, message);
             if (stringMatch)
                 v.addAction(new CompareText(e, webString, modelString, result));
-            v.addAction(new ImportValue(e, value, valueType, result));
+            v.addAction(new ImportValue(e, value, result));
             if (editable)
                 v.addAction(new ExportValue(e));
             return v;
         }
         return null;
+        
     }
     
     private ValidationRuleViolation valueDiff(Slot e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
-        Debug.outln( "valueDiff(Slot:" + Utils.slotValueToString( e )
-                     + ", JSONObjec info=" + info );
         JSONObject specialization = (JSONObject)info.get("specialization");
+        JSONArray value = (JSONArray)specialization.get("value");
+        /*JSONObject modelSpec = ExportUtility.fillPropertySpecialization(e, null, false);
+        JSONArray modelValue = (JSONArray)modelSpec.get("value");
+        if (!modelValue.equals(value)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: " + modelValue.toString() + ", web: " + value == null ? "null" : value.toString());
+            v.addAction(new ImportValue(e, value, result));
+            if (editable)
+                v.addAction(new ExportValue(e));
+            return v;
+        }
+        return null;*/
+        
         String valueTypes;
         JSONObject firstObject = null;
         
         List<ValueSpecification> vss = e.getValue();
-        JSONArray value = (JSONArray)specialization.get("value");
+        
         if ((value == null) || (value.isEmpty()))
             valueTypes = null;
         else {
@@ -597,7 +618,7 @@ public class ModelValidator {
         }
         if (vss != null && vss.size() > 0 && !nullElementValues && (valueTypes == null)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
-            v.addAction(new ImportValue(e, null, null, result));
+            v.addAction(new ImportValue(e, null, result));
             if (editable)
                 v.addAction(new ExportValue(e));
             Debug.outln("1) returning ValidationRuleViolation: " + v );
@@ -605,7 +626,7 @@ public class ModelValidator {
         }
         if ((vss == null || vss.isEmpty() || nullElementValues) && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
-            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
+            v.addAction(new ImportValue(e, value, result));
             if (editable)
                 v.addAction(new ExportValue(e));
             Debug.outln("2) returning ValidationRuleViolation: " + v );
@@ -613,7 +634,7 @@ public class ModelValidator {
         }
         if ((vss.size() != value.size())) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model and web values don't match");
-            v.addAction(new ImportValue(e, value, PropertyValueType.valueOf(valueTypes), result));
+            v.addAction(new ImportValue(e, value, result));
             if (editable)
                 v.addAction(new ExportValue(e));
             Debug.outln("3) returning ValidationRuleViolation: " + v );
@@ -637,13 +658,14 @@ public class ModelValidator {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, message);
                 if (stringMatch)
                     v.addAction(new CompareText(e, webString, modelString, result));
-                v.addAction(new ImportValue(e, value, valueType, result));
+                v.addAction(new ImportValue(e, value, result));
                 if (editable)
                     v.addAction(new ExportValue(e));
                 return v;
             }
         }        
         return null;
+       
     }
     
     private ValidationRuleViolation connectorDiff(Connector e, JSONObject info) {

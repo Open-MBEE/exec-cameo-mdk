@@ -71,16 +71,14 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     private static final long serialVersionUID = 1L;
     private Element element;
     private JSONArray values;
-    private PropertyValueType type;
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
     private JSONObject result;
-    public ImportValue(Element e, JSONArray values, PropertyValueType type, JSONObject result) {
+    public ImportValue(Element e, JSONArray values, JSONObject result) {
     	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
     	//
         super("ImportValue", "Accept value", null, null);
         this.element = e;
         this.values = values;
-        this.type = type;
         this.result = result;
     }
     

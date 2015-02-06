@@ -148,7 +148,7 @@ public class JMSMessageListener implements MessageListener {
                         if (view2view != null) {
                             JSONObject web = ExportUtility.keyView2View(view2view);
                             DocumentGenerator dg = new DocumentGenerator(changedElement, null, null);
-                            Document dge = dg.parseDocument(true, true);
+                            Document dge = dg.parseDocument(true, true, true);
                             ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
                             dge.accept(vhv);
                             JSONObject model = vhv.getView2View();
