@@ -271,7 +271,7 @@ public class ModelValidator {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on alfresco or it may be moved");
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS or it may be moved");
                 v.addAction(new DeleteMagicDrawElement(e));
                 v.addAction(new ExportElement(e));
                 exist.addViolation(v);
@@ -304,7 +304,7 @@ public class ModelValidator {
                     type = "Element";
                 if (ImportUtility.VALUESPECS.contains(type))
                     continue;
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on Alfresco] " + type + " '" + elementsKeyedId + "' exists on Alfresco but not in Magicdraw");
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " '" + elementsKeyedId + "' exists on MMS but not in Magicdraw");
                 v.addAction(new ElementDetail(jSONobject));
                 v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
                 v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
