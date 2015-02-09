@@ -510,13 +510,13 @@ public class ExportUtility {
             }
             //log.info(response);
             return true;
-        }
-        if (response.length() > 500) {
-            //log.info(response);
-            //Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
-        } else {
-            //log.info(response);
-            //Application.getInstance().getGUILog().log(response);
+        } 
+        try {
+            Object o = JSONValue.parse(response);
+            if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
+        } catch (Exception c) {
+                
         }
         return false;
     }
