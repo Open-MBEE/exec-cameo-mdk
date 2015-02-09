@@ -47,7 +47,8 @@ public class JMSMessageListener implements MessageListener {
             TextMessage message = (TextMessage) msg;
             log.info("From JMS: " + message.getText());
             JSONObject ob = (JSONObject) JSONValue.parse(message.getText());
-
+            if (ob.get("source") != null && ob.get("source").equals("magicdraw"))
+                return;
             // Changed element are encapsulated in the "workspace2"
             // JSONObject.
             //

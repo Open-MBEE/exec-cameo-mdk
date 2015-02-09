@@ -35,6 +35,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             JSONObject tosend = new JSONObject();
             JSONArray array = new JSONArray();
             tosend.put("elements", array);
+            tosend.put("source", "magicdraw");
             JSONObject ob = ExportUtility.getProjectJsonForProject(module);
             array.add(ob);
             String url = ExportUtility.getUrl();

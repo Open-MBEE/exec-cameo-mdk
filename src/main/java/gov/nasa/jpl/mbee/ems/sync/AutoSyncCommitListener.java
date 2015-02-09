@@ -121,6 +121,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             JSONArray eles = new JSONArray();
             eles.addAll(elements.values());
             toSend.put("elements", eles);
+            toSend.put("source", "magicdraw");
             String url = ExportUtility.getPostElementsUrl();
             if (url != null) {
                 //ExportUtility.send(url, toSend.toJSONString(), null, false);

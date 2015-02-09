@@ -116,6 +116,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             doc.put("sysmlid", view.getID());
             documents.add(doc);
             send.put("elements", documents);
+            send.put("source", "magicdraw");
             if (ExportUtility.send(docurl, send.toJSONString()) == null)
                 return false;
         } else {
@@ -130,6 +131,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             }
             JSONObject send  = new JSONObject();
             send.put("elements", views);
+            send.put("source", "magicdraw");
             if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
                 return false;
         }

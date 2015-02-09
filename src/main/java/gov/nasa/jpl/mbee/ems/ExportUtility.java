@@ -622,6 +622,31 @@ public class ExportUtility {
         return send(url, json, null);
     }
 
+    public static String deleteWithBody(String url, String json) {
+        EntityEnclosingMethod pm = null;
+        pm = new DeleteMethodWithEntity(url);
+        try {
+            log.info("deleteWithBody: " + url + ": " + json);// gl.log(json);
+            pm.setRequestHeader("Content-Type",
+                    "application/json;charset=utf-8");
+            pm.setRequestEntity(JsonRequestEntity.create(json));
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url);
+            int code = client.executeMethod(pm);
+            String response = pm.getResponseBodyAsString();
+            log.info("deleteWithBody Response: " + code + " " + response);
+            if (showErrors(code, response, false)) {
+                return null;
+            }
+            return response;
+        } catch (Exception ex) {
+            Utils.printException(ex);
+            return null;
+        } finally {
+            pm.releaseConnection();
+        }
+    }
+    
     public static String getWithBody(String url, String json) {
         EntityEnclosingMethod pm = null;
         pm = new GetMethodWithEntity(url);

@@ -198,6 +198,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             JSONArray elementsArray = new JSONArray();
             elementsArray.addAll(elementsjson.values());
             send.put("elements", elementsArray);
+            send.put("source", "magicdraw");
             if (url == null)
                 return false;
             if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
@@ -209,6 +210,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         viewsArray.addAll(viewjson.values());
         send = new JSONObject();
         send.put("elements", viewsArray);
+        send.put("source", "magicdraw");
         if (document) {
             String docId = view.getID();
             JSONObject doc = null;

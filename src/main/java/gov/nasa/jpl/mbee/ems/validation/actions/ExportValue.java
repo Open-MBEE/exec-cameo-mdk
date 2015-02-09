@@ -93,6 +93,7 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -115,6 +116,7 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         //    elements.addAll(ExportUtility.getReferencedElements(element).values());
         elements.add(info);
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
