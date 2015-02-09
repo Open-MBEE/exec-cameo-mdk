@@ -302,12 +302,15 @@ public class DocumentGenerator {
                     para.setFrom(From.DOCUMENTATION);
                     viewSection.addElement(para);
                 }
-                if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
-                    Image image = new Image();
-                    List<Object> images = new ArrayList<Object>();
-                    images.add(expose.get(0));
-                    image.setTargets(images);
-                    viewSection.addElement(image);
+                //if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
+                for (Element ex: expose) {
+                    if (ex instanceof Diagram) {
+                        Image image = new Image();
+                        List<Object> images = new ArrayList<Object>();
+                        images.add(ex);
+                        image.setTargets(images);
+                        viewSection.addElement(image);
+                    }
                 }
             }
         }
