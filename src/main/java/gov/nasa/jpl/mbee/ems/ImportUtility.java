@@ -294,6 +294,8 @@ public class ImportUtility {
         if (source != null && target != null) {
             ModelHelper.setSupplierElement(dr, target);
             ModelHelper.setClientElement(dr, source);
+        } else {
+            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
         }
     }
     
@@ -346,6 +348,8 @@ public class ImportUtility {
         if (webSourceE instanceof ConnectableElement && webTargetE instanceof ConnectableElement) {
             c.getEnd().get(0).setRole((ConnectableElement)webSourceE);
             c.getEnd().get(1).setRole((ConnectableElement)webTargetE);
+        } else {
+            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
         if (webSourcePath != null && !webSourcePath.isEmpty()) {
@@ -373,6 +377,10 @@ public class ImportUtility {
         String webTargetA = (String)spec.get("targetAggregation");
         List<Property> todelete = new ArrayList<Property>();
         int i = 0;
+        if (webSource == null || webTarget == null) {
+            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
+            return;
+        }
         for (Property end: a.getMemberEnd()) {
             if (end != webSource && end != webTarget)
                 todelete.add(end);
@@ -385,9 +393,8 @@ public class ImportUtility {
         }
         for (Property p: todelete) {
             try {
-                ModelElementsManager.getInstance().removeElement(p);
+                ModelElementsManager.getInstance().removeElement(p); //TODO propagate to alfresco?
             } catch (ReadOnlyElementException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
