@@ -40,6 +40,7 @@ import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
+import gov.nasa.jpl.mbee.actions.ems.ExportAllDocuments;
 import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
@@ -84,6 +85,7 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
@@ -162,19 +164,19 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         //manager.addCategory(refactorWithIDActionCat);
 
         if (ViewEditUtils.isPasswordSet()) {
+            ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
             if (MDUtils.isDeveloperMode()) {
-                ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
                     modelLoad.addAction(new ExportModelAction(e));
                 if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
                     modelLoad.addAction(new InitializeProjectAction());
-                if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                    modelLoad.addAction(new ValidateModelAction(e, (Application.getInstance().getProject().getModel() == e) ? "Validate Model": "Validate SubModel"));
-            } else {
-                ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-                if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                    modelLoad.addAction(new ValidateModelAction(e, (Application.getInstance().getProject().getModel() == e) ? "Validate Model": "Validate SubModel"));
-            } 
+            }
+            if (manager.getActionFor(ValidateModelAction.actionid) == null)
+                modelLoad.addAction(new ValidateModelAction(e, (Application.getInstance().getProject().getModel() == e) ? "Validate Model": "Validate SubModel"));
+            if (e instanceof Package) {
+                if (manager.getActionFor(ExportAllDocuments.actionid) == null)
+                    modelLoad.addAction(new ExportAllDocuments(e));
+            }
         }
         
         // add menus in reverse order since they are inserted at top

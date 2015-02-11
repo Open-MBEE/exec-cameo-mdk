@@ -122,28 +122,26 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             eles.addAll(elements.values());
             toSend.put("elements", eles);
             toSend.put("source", "magicdraw");
-            String url = ExportUtility.getPostElementsUrl();
-            if (url != null) {
-                Request r = new Request();
-                r.setJson(toSend.toJSONString());
-                r.setUrl(url);
-                OutputQueue.getInstance().offer(r);
+            if (!eles.isEmpty()) {
+                String url = ExportUtility.getPostElementsUrl();
+                if (url != null) {
+                    Request r = new Request(url, toSend.toJSONString(), "POST", false);
+                    OutputQueue.getInstance().offer(r);
+                }
             }
-            String deleteUrl = ExportUtility.getUrlWithWorkspace();
-            JSONObject send = new JSONObject();
-            JSONArray elements = new JSONArray();
-            send.put("elements", elements);
-            send.put("source", "magicdraw");
-            for (String id: deletes) {
-                JSONObject eo = new JSONObject();
-                eo.put("sysmlid", id);
-                //String durl = deleteUrl + "/elements/" + id;
-                //Request r = new Request();
-                //r.setMethod("DELETE");
-                //r.setUrl(durl);
-                //OutputQueue.getInstance().offer(r);
+            if (!deletes.isEmpty()) {
+                String deleteUrl = ExportUtility.getUrlWithWorkspace();
+                JSONObject send = new JSONObject();
+                JSONArray elements = new JSONArray();
+                send.put("elements", elements);
+                send.put("source", "magicdraw");
+                for (String id: deletes) {
+                    JSONObject eo = new JSONObject();
+                    eo.put("sysmlid", id);
+                    elements.add(eo);
+                }
+                OutputQueue.getInstance().offer(new Request(deleteUrl + "/elements", send.toJSONString(), "DELETEALL", false));
             }
-            OutputQueue.getInstance().offer(new Request(deleteUrl + "/elements", send.toJSONString(), "DELETEALL", false));
         }
 
         @SuppressWarnings("unchecked")
