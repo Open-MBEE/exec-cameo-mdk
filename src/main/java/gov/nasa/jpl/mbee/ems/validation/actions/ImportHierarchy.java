@@ -157,9 +157,7 @@ AnnotationAction, IRuleViolationAction {
         tosend.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (!changes.isEmpty()) {
-            Request r = new Request();
-            r.setUrl(url);
-            r.setJson(tosend.toJSONString());
+            Request r = new Request(url, tosend.toJSONString(), "POST", false);
             OutputQueue.getInstance().offer(r);
         }
         if (!deletedIds.isEmpty()) {
@@ -173,7 +171,7 @@ AnnotationAction, IRuleViolationAction {
                 eo.put("sysmlid", e);
                 elements.add(eo);
             }
-            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", true));
+            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", false));
         }
         return returns;
     }

@@ -16,6 +16,7 @@ public class Request {
         this.json = json;
         this.method = method;
         this.feedback = feedback;
+        this.suppressGui = !feedback;
     }
     
     public Request(String url, String json, String method) {

@@ -92,6 +92,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         this.recurse = recursive;
         this.exportElements = exportElements;
         this.view = e;
+        url = ExportUtility.getUrlWithWorkspace();
+        sendElementsUrl = ExportUtility.getPostElementsUrl();
     }
     
     @Override
@@ -103,10 +105,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     public void execute(Collection<Annotation> annos) {
         if (!ExportUtility.okToExport())
             return;
-        url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
             return;
-        sendElementsUrl = ExportUtility.getPostElementsUrl();
         if (sendElementsUrl == null)
             return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, annos), "Exporting Views", true, 0);
@@ -116,10 +116,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport())
             return;
-        url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
             return;
-        sendElementsUrl = ExportUtility.getPostElementsUrl();
         if (sendElementsUrl == null)
             return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, null), "Exporting View", true, 0);

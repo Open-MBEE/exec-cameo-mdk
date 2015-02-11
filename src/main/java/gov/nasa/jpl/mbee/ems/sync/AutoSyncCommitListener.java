@@ -125,9 +125,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             if (!eles.isEmpty()) {
                 String url = ExportUtility.getPostElementsUrl();
                 if (url != null) {
-                    Request r = new Request();
-                    r.setJson(toSend.toJSONString());
-                    r.setUrl(url);
+                    Request r = new Request(url, toSend.toJSONString(), "POST", false);
                     OutputQueue.getInstance().offer(r);
                 }
             }
