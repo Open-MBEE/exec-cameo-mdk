@@ -121,23 +121,29 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             JSONArray eles = new JSONArray();
             eles.addAll(elements.values());
             toSend.put("elements", eles);
+            toSend.put("source", "magicdraw");
             String url = ExportUtility.getPostElementsUrl();
             if (url != null) {
-                //ExportUtility.send(url, toSend.toJSONString(), null, false);
                 Request r = new Request();
                 r.setJson(toSend.toJSONString());
                 r.setUrl(url);
                 OutputQueue.getInstance().offer(r);
             }
             String deleteUrl = ExportUtility.getUrlWithWorkspace();
+            JSONObject send = new JSONObject();
+            JSONArray elements = new JSONArray();
+            send.put("elements", elements);
+            send.put("source", "magicdraw");
             for (String id: deletes) {
-                String durl = deleteUrl + "/elements/" + id;
-                //ExportUtility.delete(durl);
-                Request r = new Request();
-                r.setMethod("DELETE");
-                r.setUrl(durl);
-                OutputQueue.getInstance().offer(r);
+                JSONObject eo = new JSONObject();
+                eo.put("sysmlid", id);
+                //String durl = deleteUrl + "/elements/" + id;
+                //Request r = new Request();
+                //r.setMethod("DELETE");
+                //r.setUrl(durl);
+                //OutputQueue.getInstance().offer(r);
             }
+            OutputQueue.getInstance().offer(new Request(deleteUrl + "/elements", send.toJSONString(), "DELETEALL", false));
         }
 
         @SuppressWarnings("unchecked")

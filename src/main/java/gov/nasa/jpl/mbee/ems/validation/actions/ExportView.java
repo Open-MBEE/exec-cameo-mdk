@@ -164,9 +164,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         if (StereotypesHelper.hasStereotypeOrDerived(view, Utils.getProductStereotype()))
             document = true;
         if (document)
-            dge = dg.parseDocument(true, true);
+            dge = dg.parseDocument(true, true, false);
         else
-            dge = dg.parseDocument(true, recurse);
+            dge = dg.parseDocument(true, recurse, false);
         (new PostProcessor()).process(dge);
         
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
@@ -198,9 +198,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             JSONArray elementsArray = new JSONArray();
             elementsArray.addAll(elementsjson.values());
             send.put("elements", elementsArray);
+            send.put("source", "magicdraw");
             if (url == null)
                 return false;
-            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
+            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false, false) == null)
                 return false;
         }
         //send elements first, then view info
@@ -209,6 +210,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         viewsArray.addAll(viewjson.values());
         send = new JSONObject();
         send.put("elements", viewsArray);
+        send.put("source", "magicdraw");
         if (document) {
             String docId = view.getID();
             JSONObject doc = null;

@@ -44,6 +44,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
@@ -72,6 +73,10 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         Set<Element> set = new HashSet<Element>();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
+            if (duplicateName(e)) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.getHumanName() + " has the same qualified name as another element. Aborted.");
+                return;
+            }
             if (e instanceof NamedElement) {
                 set.add(e);
                 infos.add(ExportUtility.fillName(e, null));
@@ -80,6 +85,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -95,10 +101,15 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport(element))
             return;
+        if (duplicateName(element)) {
+            Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " has the same qualified name as another element. Aborted.");
+            return;
+        }
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
         elements.add(ExportUtility.fillName(element, null));
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -107,5 +118,17 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
         }*/
+    }
+    
+    private boolean duplicateName(Element e) {
+        if (e instanceof NamedElement) {
+            if (e.getOwner() != null) {
+                for (Element c: e.getOwner().getOwnedElement()) {
+                    if (c instanceof NamedElement && c != e && c.getHumanName().equals(e.getHumanName()) && !((NamedElement)c).equals(""))
+                        return true;
+                }
+            }
+        }
+        return false;
     }
 }

@@ -56,6 +56,7 @@ public class ExportSite extends RuleViolationAction implements AnnotationAction,
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -77,6 +78,7 @@ public class ExportSite extends RuleViolationAction implements AnnotationAction,
         elementOb.put("specialization", ExportUtility.fillPackage(element, null));
         elements.add(elementOb);
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;

@@ -51,6 +51,7 @@ public class ExportPropertyType extends RuleViolationAction implements Annotatio
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -73,6 +74,7 @@ public class ExportPropertyType extends RuleViolationAction implements Annotatio
         //    elements.addAll(ExportUtility.getReferencedElements(element).values());
         elements.add(info);
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;

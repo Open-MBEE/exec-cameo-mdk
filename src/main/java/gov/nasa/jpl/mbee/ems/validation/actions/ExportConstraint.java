@@ -52,6 +52,7 @@ public class ExportConstraint extends RuleViolationAction implements AnnotationA
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -73,6 +74,7 @@ public class ExportConstraint extends RuleViolationAction implements AnnotationA
         elementOb.put("specialization", ExportUtility.fillConstraintSpecialization((Constraint)element, null));
         elements.add(elementOb);
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;

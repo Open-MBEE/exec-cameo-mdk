@@ -152,7 +152,7 @@ public class ImportUtility {
                 if (specialization.containsKey("value"))
                     setPropertyDefaultValue((Property)newE, vals);
                 if (specialization.containsKey("propertyType"))
-                    setPropertyType((Property)newE, (String)specialization.get("propertyType"));
+                    setPropertyType((Property)newE, specialization);
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
@@ -231,7 +231,7 @@ public class ImportUtility {
                 if (spec.containsKey("value"))
                     setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
                 if (spec.containsKey("propertyType"))
-                    setPropertyType((Property)e, (Type)ExportUtility.getElementFromID((String)spec.get("propertyType")));
+                    setPropertyType((Property)e, spec);
             }
             if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
@@ -294,6 +294,8 @@ public class ImportUtility {
         if (source != null && target != null) {
             ModelHelper.setSupplierElement(dr, target);
             ModelHelper.setClientElement(dr, source);
+        } else {
+            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
         }
     }
     
@@ -304,8 +306,18 @@ public class ImportUtility {
             p.setDefaultValue(null);
     }
     
-    public static void setPropertyType(Property p, String typeId) {
-        p.setType((Type)ExportUtility.getElementFromID(typeId));
+    public static void setPropertyType(Property p, JSONObject spec) {
+        String ptype = (String)spec.get("propertyType");
+        if (ptype == null)
+            p.setType(null);
+        else {
+            Type t = (Type)ExportUtility.getElementFromID(ptype);
+            if (t != null)
+                p.setType(t);
+            else
+                log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
+                //something bad happened
+        }
     }
     
     public static void setPropertyType(Property p, Type type) {
@@ -346,6 +358,8 @@ public class ImportUtility {
         if (webSourceE instanceof ConnectableElement && webTargetE instanceof ConnectableElement) {
             c.getEnd().get(0).setRole((ConnectableElement)webSourceE);
             c.getEnd().get(1).setRole((ConnectableElement)webTargetE);
+        } else {
+            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
         if (webSourcePath != null && !webSourcePath.isEmpty()) {
@@ -373,6 +387,10 @@ public class ImportUtility {
         String webTargetA = (String)spec.get("targetAggregation");
         List<Property> todelete = new ArrayList<Property>();
         int i = 0;
+        if (webSource == null || webTarget == null) {
+            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
+            return;
+        }
         for (Property end: a.getMemberEnd()) {
             if (end != webSource && end != webTarget)
                 todelete.add(end);
@@ -385,9 +403,8 @@ public class ImportUtility {
         }
         for (Property p: todelete) {
             try {
-                ModelElementsManager.getInstance().removeElement(p);
+                ModelElementsManager.getInstance().removeElement(p); //TODO propagate to alfresco?
             } catch (ReadOnlyElementException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }

@@ -13,10 +13,12 @@ public class OutputSyncRunner implements Runnable {
                 r = q.take();
                 if (r.getMethod().equals("DELETE"))
                     ExportUtility.delete(r.getUrl(), r.isFeedback());
+                else if (r.getMethod().equals("DELETEALL"))
+                    ExportUtility.deleteWithBody(r.getUrl(), r.getJson(), r.isFeedback());
                 else if (r.getPm() != null)
                     ExportUtility.send(r.getUrl(), r.getPm());
                 else
-                    ExportUtility.send(r.getUrl(), r.getJson(), null, false);
+                    ExportUtility.send(r.getUrl(), r.getJson(), null, false, r.isSuppressGui());
             } catch (Exception e) {
                 e.printStackTrace();
             }

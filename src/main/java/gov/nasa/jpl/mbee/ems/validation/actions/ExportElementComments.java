@@ -78,6 +78,7 @@ public class ExportElementComments extends RuleViolationAction implements Annota
             }
         }
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -101,6 +102,7 @@ public class ExportElementComments extends RuleViolationAction implements Annota
             elements.add(info);
         }
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;

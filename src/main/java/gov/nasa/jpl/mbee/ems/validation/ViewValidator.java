@@ -139,7 +139,7 @@ public class ViewValidator {
         }
         //first run a local generation of the view model to get the current model view structure
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
-        Document dge = dg.parseDocument(true, true);
+        Document dge = dg.parseDocument(true, true, hierarchyOnly);
         (new PostProcessor()).process(dge);
         
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);

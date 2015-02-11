@@ -35,6 +35,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             JSONObject tosend = new JSONObject();
             JSONArray array = new JSONArray();
             tosend.put("elements", array);
+            tosend.put("source", "magicdraw");
             JSONObject ob = ExportUtility.getProjectJsonForProject(module);
             array.add(ob);
             String url = ExportUtility.getUrl();
@@ -42,7 +43,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
                 return;
             String purl = url + "/workspaces/master/sites/" + siteName + "/projects";
             gl.log("Initializing module");
-            if (ExportUtility.send(purl, tosend.toJSONString(), null, false) == null)
+            if (ExportUtility.send(purl, tosend.toJSONString(), null, false, false) == null)
                 return;
             
             ModelExporter me = new ModelExporter(mounts, 0, false, module);

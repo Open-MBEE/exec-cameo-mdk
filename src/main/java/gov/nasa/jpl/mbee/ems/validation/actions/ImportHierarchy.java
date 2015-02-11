@@ -154,6 +154,7 @@ AnnotationAction, IRuleViolationAction {
         }
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
+        tosend.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         //ExportUtility.send(url, tosend.toJSONString(), null, false);
         Request r = new Request();
@@ -162,15 +163,21 @@ AnnotationAction, IRuleViolationAction {
         OutputQueue.getInstance().offer(r);
         //returns.add(r);
         url = ExportUtility.getUrlWithWorkspace();
+        JSONObject send = new JSONObject();
+        JSONArray elements = new JSONArray();
+        send.put("elements", elements);
+        send.put("source", "magicdraw");
         for (String e: deletedIds) {
-            String durl = url + "/elements/" + e;
-            //ExportUtility.delete(durl);
+            JSONObject eo = new JSONObject();
+            eo.put("sysmlid", e);
+            elements.add(eo);
+            /*String durl = url + "/elements/" + e;
             Request rr = new Request();
             rr.setUrl(durl);
             rr.setMethod("DELETE");
-            //returns.add(r);
-            OutputQueue.getInstance().offer(rr);
+            OutputQueue.getInstance().offer(rr);*/
         }
+        OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", true));
         return returns;
     }
     

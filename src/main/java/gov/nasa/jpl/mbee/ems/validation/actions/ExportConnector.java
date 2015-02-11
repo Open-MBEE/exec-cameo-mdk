@@ -51,6 +51,7 @@ public class ExportConnector extends RuleViolationAction implements AnnotationAc
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -72,6 +73,7 @@ public class ExportConnector extends RuleViolationAction implements AnnotationAc
         elementOb.put("specialization", ExportUtility.fillConnectorSpecialization((Connector)element, null));
         elements.add(elementOb);
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;

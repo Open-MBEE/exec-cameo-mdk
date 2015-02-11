@@ -82,7 +82,7 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
         newws.put("description", "Created from magicdraw.");
         news.add(newws);
         
-        String result = ExportUtility.send(url, tosend.toJSONString(), null, false);
+        String result = ExportUtility.send(url, tosend.toJSONString(), null, false, false);
         if (result == null || !result.startsWith("{"))
             return;
         JSONObject ob =  (JSONObject) JSONValue.parse(result);

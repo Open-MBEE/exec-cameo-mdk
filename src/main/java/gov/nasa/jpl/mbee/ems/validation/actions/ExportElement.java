@@ -83,6 +83,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         //gl.log(send.toJSONString());
         
         String url = ExportUtility.getPostElementsUrl();
@@ -107,6 +108,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         JSONObject send = new JSONObject();
         elements.add(ExportUtility.fillElement(element, null));
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         //gl.log(send.toJSONString());
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {

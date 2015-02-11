@@ -78,6 +78,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
@@ -97,7 +98,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         JSONObject send = new JSONObject();
         elements.add(ExportUtility.fillDoc(element, null));
         send.put("elements", elements);
-
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;

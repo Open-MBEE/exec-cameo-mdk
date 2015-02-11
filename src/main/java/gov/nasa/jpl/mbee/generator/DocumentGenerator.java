@@ -103,8 +103,11 @@ public class DocumentGenerator {
     private Stereotype        sysmlview = Utils.getViewStereotype();
     private Stereotype        product;
     private Stereotype        conforms  = Utils.getConformsStereotype();
-    private Stereotype        sysml14conforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
-
+    private Stereotype        ourConforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
+    private Stereotype        md18expose = Utils.get18ExposeStereotype();
+    private Stereotype        ourExpose = Utils.getExposeStereotype();
+    private boolean hierarchyOnly;
+    
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
         start = e;
         product = Utils.getProductStereotype();
@@ -122,7 +125,7 @@ public class DocumentGenerator {
     }
 
     public Document parseDocument() {
-        return this.parseDocument(false, true);
+        return this.parseDocument(false, true, false);
     }
 
     public Document getDocument() {
@@ -135,7 +138,8 @@ public class DocumentGenerator {
      * are to accommodate normal docgen to docbook xml and view editor export
      * options
      */
-    public Document parseDocument(boolean singleView, boolean recurse) {
+    public Document parseDocument(boolean singleView, boolean recurse, boolean hierarchyOnly) {
+        this.hierarchyOnly = hierarchyOnly;
         if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
             if (start instanceof Package
                     || start instanceof Diagram
@@ -167,7 +171,7 @@ public class DocumentGenerator {
     public Section parseView(Element view) {
         Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
         if (viewpoint == null)
-            viewpoint = GeneratorUtils.findStereotypedRelationship(view, sysml14conforms);
+            viewpoint = GeneratorUtils.findStereotypedRelationship(view, ourConforms);
         Section viewSection = new Section(); // Section is a misnomer, should be
                                              // View
         viewSection.setView(true);
@@ -175,6 +179,7 @@ public class DocumentGenerator {
         if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))
             viewSection.isAppendix(true);
 
+        if (!hierarchyOnly) {
         if (viewpoint != null && viewpoint instanceof Class) { // view conforms
                                                                // to a viewpoint
             if (!(view instanceof Diagram)) { // if it's a diagram, people most
@@ -221,8 +226,10 @@ public class DocumentGenerator {
                         view, ElementImport.class, 1, 1);
                 List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
                         view, PackageImport.class, 1, 1);
-                List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
-                        view, DocGen3Profile.queriesStereotype, 1, false, 1);
+                List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotype(
+                        view, ourExpose, 1, false, 1);
+                if (md18expose != null)
+                    expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, md18expose, 1, false, 1));
                 List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
                         view, DocGen3Profile.oldQueriesStereotype, 1, false, 1);
                 if (elementImports == null)
@@ -240,8 +247,8 @@ public class DocumentGenerator {
                 if (view instanceof Class) {
                     for (TypedElement te: ((Class)view).get_typedElementOfType()) {
                         if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
-                            elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(te, 
-                                    DocGen3Profile.queriesStereotype, 1, false, 1));
+                            elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(te, 
+                                    ourExpose, 1, false, 1));
                         }
                     }
                 }
@@ -299,14 +306,18 @@ public class DocumentGenerator {
                     para.setFrom(From.DOCUMENTATION);
                     viewSection.addElement(para);
                 }
-                if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
-                    Image image = new Image();
-                    List<Object> images = new ArrayList<Object>();
-                    images.add(expose.get(0));
-                    image.setTargets(images);
-                    viewSection.addElement(image);
+                //if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
+                for (Element ex: expose) {
+                    if (ex instanceof Diagram) {
+                        Image image = new Image();
+                        List<Object> images = new ArrayList<Object>();
+                        images.add(ex);
+                        image.setTargets(images);
+                        viewSection.addElement(image);
+                    }
                 }
             }
+        }
         }
         viewSection.setDgElement(view);
         viewSection.setId(view.getID());

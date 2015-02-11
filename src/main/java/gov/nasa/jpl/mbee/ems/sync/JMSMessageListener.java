@@ -47,7 +47,8 @@ public class JMSMessageListener implements MessageListener {
             TextMessage message = (TextMessage) msg;
             log.info("From JMS: " + message.getText());
             JSONObject ob = (JSONObject) JSONValue.parse(message.getText());
-
+            if (ob.get("source") != null && ob.get("source").equals("magicdraw"))
+                return;
             // Changed element are encapsulated in the "workspace2"
             // JSONObject.
             //
@@ -148,7 +149,7 @@ public class JMSMessageListener implements MessageListener {
                         if (view2view != null) {
                             JSONObject web = ExportUtility.keyView2View(view2view);
                             DocumentGenerator dg = new DocumentGenerator(changedElement, null, null);
-                            Document dge = dg.parseDocument(true, true);
+                            Document dge = dg.parseDocument(true, true, true);
                             ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
                             dge.accept(vhv);
                             JSONObject model = vhv.getView2View();

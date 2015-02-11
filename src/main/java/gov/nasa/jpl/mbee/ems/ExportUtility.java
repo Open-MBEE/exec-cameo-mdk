@@ -510,13 +510,13 @@ public class ExportUtility {
             }
             //log.info(response);
             return true;
-        }
-        if (response.length() > 500) {
-            //log.info(response);
-            //Application.getInstance().getGUILog().log("see md.log for what got received - too big to show");
-        } else {
-            //log.info(response);
-            //Application.getInstance().getGUILog().log(response);
+        } 
+        try {
+            Object o = JSONValue.parse(response);
+            if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
+        } catch (Exception c) {
+                
         }
         return false;
     }
@@ -550,7 +550,7 @@ public class ExportUtility {
     }
     
     public static String send(String url, String json, String method) {
-        return send(url, json, method, true);
+        return send(url, json, method, true, false);
     }
     
     public static String send(String url, PostMethod pm) {
@@ -579,7 +579,7 @@ public class ExportUtility {
     }
     
     public static String send(String url, String json, String method,
-            boolean showPopupErrors) {
+            boolean showPopupErrors, boolean suppressGuiLog) {
         if (url == null)
             return null;
 
@@ -590,7 +590,8 @@ public class ExportUtility {
             pm = new PutMethod(url);
         GUILog gl = Application.getInstance().getGUILog();
         try {
-            gl.log("[INFO] Sending...");
+            if (!suppressGuiLog)
+                gl.log("[INFO] Sending...");
             if (json.length() > 3000) {
                 // System.out.println(json);
                 log.info("send: " + url + ": " + json);
@@ -608,7 +609,8 @@ public class ExportUtility {
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
-            gl.log("[INFO] Send Successful.");
+            if (!suppressGuiLog)
+                gl.log("[INFO] Send Successful.");
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -622,6 +624,33 @@ public class ExportUtility {
         return send(url, json, null);
     }
 
+    public static String deleteWithBody(String url, String json, boolean feedback) {
+        EntityEnclosingMethod pm = null;
+        pm = new DeleteMethodWithEntity(url);
+        try {
+            log.info("deleteWithBody: " + url + ": " + json);// gl.log(json);
+            pm.setRequestHeader("Content-Type",
+                    "application/json;charset=utf-8");
+            pm.setRequestEntity(JsonRequestEntity.create(json));
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url);
+            int code = client.executeMethod(pm);
+            String response = pm.getResponseBodyAsString();
+            log.info("deleteWithBody Response: " + code + " " + response);
+            if (showErrors(code, response, false)) {
+                return null;
+            }
+            if (feedback)
+                Application.getInstance().getGUILog().log("[INFO] Delete Successful");
+            return response;
+        } catch (Exception ex) {
+            Utils.printException(ex);
+            return null;
+        } finally {
+            pm.releaseConnection();
+        }
+    }
+    
     public static String getWithBody(String url, String json) {
         EntityEnclosingMethod pm = null;
         pm = new GetMethodWithEntity(url);
@@ -1444,7 +1473,7 @@ public class ExportUtility {
         tosend.put("elements", array);
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
-        return ExportUtility.send(projUrl, tosend.toJSONString(), null, false);
+        return ExportUtility.send(projUrl, tosend.toJSONString(), null, false, false);
     }
     
     public static void initializeDurableQueue(String taskId) {
