@@ -43,7 +43,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
                 return;
             String purl = url + "/workspaces/master/sites/" + siteName + "/projects";
             gl.log("Initializing module");
-            if (ExportUtility.send(purl, tosend.toJSONString(), null, false) == null)
+            if (ExportUtility.send(purl, tosend.toJSONString(), null, false, false) == null)
                 return;
             
             ModelExporter me = new ModelExporter(mounts, 0, false, module);

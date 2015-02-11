@@ -9,6 +9,7 @@ public class Request {
     private String method = "POST";
     private boolean feedback = false;
     private PostMethod pm = null;
+    private boolean suppressGui = false;
     
     public Request(String url, String json, String method, boolean feedback) {
         this.url = url;
@@ -68,5 +69,13 @@ public class Request {
 
     public void setPm(PostMethod pm) {
         this.pm = pm;
+    }
+
+    public boolean isSuppressGui() {
+        return suppressGui;
+    }
+
+    public void setSuppressGui(boolean suppressGui) {
+        this.suppressGui = suppressGui;
     }
 }

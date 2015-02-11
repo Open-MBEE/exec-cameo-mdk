@@ -550,7 +550,7 @@ public class ExportUtility {
     }
     
     public static String send(String url, String json, String method) {
-        return send(url, json, method, true);
+        return send(url, json, method, true, false);
     }
     
     public static String send(String url, PostMethod pm) {
@@ -579,7 +579,7 @@ public class ExportUtility {
     }
     
     public static String send(String url, String json, String method,
-            boolean showPopupErrors) {
+            boolean showPopupErrors, boolean suppressGuiLog) {
         if (url == null)
             return null;
 
@@ -590,7 +590,8 @@ public class ExportUtility {
             pm = new PutMethod(url);
         GUILog gl = Application.getInstance().getGUILog();
         try {
-            gl.log("[INFO] Sending...");
+            if (!suppressGuiLog)
+                gl.log("[INFO] Sending...");
             if (json.length() > 3000) {
                 // System.out.println(json);
                 log.info("send: " + url + ": " + json);
@@ -608,7 +609,8 @@ public class ExportUtility {
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
-            gl.log("[INFO] Send Successful.");
+            if (!suppressGuiLog)
+                gl.log("[INFO] Send Successful.");
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -622,7 +624,7 @@ public class ExportUtility {
         return send(url, json, null);
     }
 
-    public static String deleteWithBody(String url, String json) {
+    public static String deleteWithBody(String url, String json, boolean feedback) {
         EntityEnclosingMethod pm = null;
         pm = new DeleteMethodWithEntity(url);
         try {
@@ -638,6 +640,8 @@ public class ExportUtility {
             if (showErrors(code, response, false)) {
                 return null;
             }
+            if (feedback)
+                Application.getInstance().getGUILog().log("[INFO] Delete Successful");
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -1469,7 +1473,7 @@ public class ExportUtility {
         tosend.put("elements", array);
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
-        return ExportUtility.send(projUrl, tosend.toJSONString(), null, false);
+        return ExportUtility.send(projUrl, tosend.toJSONString(), null, false, false);
     }
     
     public static void initializeDurableQueue(String taskId) {

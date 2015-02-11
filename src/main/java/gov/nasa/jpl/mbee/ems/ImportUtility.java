@@ -152,7 +152,7 @@ public class ImportUtility {
                 if (specialization.containsKey("value"))
                     setPropertyDefaultValue((Property)newE, vals);
                 if (specialization.containsKey("propertyType"))
-                    setPropertyType((Property)newE, (String)specialization.get("propertyType"));
+                    setPropertyType((Property)newE, specialization);
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
@@ -231,7 +231,7 @@ public class ImportUtility {
                 if (spec.containsKey("value"))
                     setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
                 if (spec.containsKey("propertyType"))
-                    setPropertyType((Property)e, (Type)ExportUtility.getElementFromID((String)spec.get("propertyType")));
+                    setPropertyType((Property)e, spec);
             }
             if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
@@ -306,8 +306,18 @@ public class ImportUtility {
             p.setDefaultValue(null);
     }
     
-    public static void setPropertyType(Property p, String typeId) {
-        p.setType((Type)ExportUtility.getElementFromID(typeId));
+    public static void setPropertyType(Property p, JSONObject spec) {
+        String ptype = (String)spec.get("propertyType");
+        if (ptype == null)
+            p.setType(null);
+        else {
+            Type t = (Type)ExportUtility.getElementFromID(ptype);
+            if (t != null)
+                p.setType(t);
+            else
+                log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
+                //something bad happened
+        }
     }
     
     public static void setPropertyType(Property p, Type type) {

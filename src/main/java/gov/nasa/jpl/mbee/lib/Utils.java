@@ -1996,6 +1996,10 @@ public class Utils {
         return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Expose");
     }
 
+    public static Stereotype get18ExposeStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Expose");
+    }
+    
     /********************************************* User interaction ****************************************************/
 
     /**

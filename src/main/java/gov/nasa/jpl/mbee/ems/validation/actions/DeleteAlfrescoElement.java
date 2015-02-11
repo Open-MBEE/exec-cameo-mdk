@@ -89,6 +89,10 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
     public void execute(Collection<Annotation> annos) {
         String url = ExportUtility.getUrlWithWorkspace();
         Collection<Annotation> toremove = new HashSet<Annotation>();
+        JSONObject send = new JSONObject();
+        JSONArray elements = new JSONArray();
+        send.put("elements", elements);
+        send.put("source", "magicdraw");
         for (Annotation anno: annos) {
             String message = anno.getText();
             String[] mes = message.split("'");
@@ -96,13 +100,17 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
             if (mes.length > 2)
                 eid = mes[1];
             if (eid != null) {
-                String eurl = url + "/elements/" + eid;
-                OutputQueue.getInstance().offer(new Request(eurl, "{}", "DELETE", true));
+                JSONObject eo = new JSONObject();
+                eo.put("sysmlid", eid);
+                elements.add(eo);
+                //String eurl = url + "/elements/" + eid;
+                //OutputQueue.getInstance().offer(new Request(eurl, "{}", "DELETE", true));
                 //String result = ExportUtility.delete(eurl);
                 //if (result != null)
                 //    toremove.add(anno);
             }
         }
+        OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", true));
         //saySuccess();
         //this.removeViolationsAndUpdateWindow(toremove);
     }

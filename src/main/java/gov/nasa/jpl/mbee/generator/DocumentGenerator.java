@@ -103,7 +103,9 @@ public class DocumentGenerator {
     private Stereotype        sysmlview = Utils.getViewStereotype();
     private Stereotype        product;
     private Stereotype        conforms  = Utils.getConformsStereotype();
-    private Stereotype        sysml14conforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
+    private Stereotype        ourConforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
+    private Stereotype        md18expose = Utils.get18ExposeStereotype();
+    private Stereotype        ourExpose = Utils.getExposeStereotype();
     private boolean hierarchyOnly;
     
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
@@ -169,7 +171,7 @@ public class DocumentGenerator {
     public Section parseView(Element view) {
         Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
         if (viewpoint == null)
-            viewpoint = GeneratorUtils.findStereotypedRelationship(view, sysml14conforms);
+            viewpoint = GeneratorUtils.findStereotypedRelationship(view, ourConforms);
         Section viewSection = new Section(); // Section is a misnomer, should be
                                              // View
         viewSection.setView(true);
@@ -224,8 +226,10 @@ public class DocumentGenerator {
                         view, ElementImport.class, 1, 1);
                 List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
                         view, PackageImport.class, 1, 1);
-                List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
-                        view, DocGen3Profile.queriesStereotype, 1, false, 1);
+                List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotype(
+                        view, ourExpose, 1, false, 1);
+                if (md18expose != null)
+                    expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, md18expose, 1, false, 1));
                 List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
                         view, DocGen3Profile.oldQueriesStereotype, 1, false, 1);
                 if (elementImports == null)
@@ -243,8 +247,8 @@ public class DocumentGenerator {
                 if (view instanceof Class) {
                     for (TypedElement te: ((Class)view).get_typedElementOfType()) {
                         if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
-                            elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(te, 
-                                    DocGen3Profile.queriesStereotype, 1, false, 1));
+                            elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(te, 
+                                    ourExpose, 1, false, 1));
                         }
                     }
                 }

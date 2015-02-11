@@ -201,7 +201,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             send.put("source", "magicdraw");
             if (url == null)
                 return false;
-            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
+            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false, false) == null)
                 return false;
         }
         //send elements first, then view info
