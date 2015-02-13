@@ -101,6 +101,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
@@ -815,6 +816,14 @@ public class ModelValidator {
                 JSONObject model = ExportUtility.fillValueSpecification(vs, null);
                 if (!model.equals(firstObject))
                     message = "[VALUE] expressions don't match";
+            } else {
+                message = typeMismatchMessage;
+            }
+        } else if (valueType == PropertyValueType.OpaqueExpression) { 
+            if (vs instanceof OpaqueExpression) {
+                JSONObject model = ExportUtility.fillValueSpecification(vs, null);
+                if (!model.equals(firstObject))
+                    message = "[VALUE] opaque expressions don't match";
             } else {
                 message = typeMismatchMessage;
             }
