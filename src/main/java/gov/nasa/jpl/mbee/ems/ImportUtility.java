@@ -48,6 +48,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
@@ -515,6 +516,16 @@ public class ImportUtility {
                 ValueSpecification operand = createValueSpec((JSONObject)op);
                 if (operand != null)
                     ex.getOperand().add(operand);
+            }
+            break;
+        case OpaqueExpression:
+            OpaqueExpression oe = ef.createOpaqueExpressionInstance();
+            newval = oe;
+            if (!o.containsKey("expressionBody"))
+                break;
+            for (Object op: (JSONArray)o.get("expressionBody")) {
+                if (op instanceof String)
+                    oe.getBody().add((String)op);
             }
             break;
         default:

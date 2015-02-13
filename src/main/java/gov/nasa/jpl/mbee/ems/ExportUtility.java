@@ -817,7 +817,7 @@ public class ExportUtility {
         } else if (vs instanceof OpaqueExpression) {
             elementInfo.put("type", "OpaqueExpression");
             List<String> body = ((OpaqueExpression) vs).getBody();
-            if (body != null && body.size() > 0) {
+            if (body != null) {
                 elementInfo.put("expressionBody", makeJsonArray(body));
             }
         } else if (vs instanceof StringExpression) {
