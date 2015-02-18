@@ -499,11 +499,16 @@ public class ExportUtility {
                     }
                 }
             } else if (code == 400) {
-                Object o = JSONValue.parse(response);
-                if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
-                    Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
-                //Application.getInstance().getGUILog().log(response);
-                //log.info(response);
+                Object o = null;
+                try {
+                    o = JSONValue.parse(response);
+                    if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                        Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
+                    else if (!(o instanceof JSONObject))
+                        Application.getInstance().getGUILog().log("Server response: " + response);
+                } catch(Exception c) {
+                    Application.getInstance().getGUILog().log("Server response: " + response);
+                }
                 return false;
             } else {
                 //Application.getInstance().getGUILog().log(response);
