@@ -872,6 +872,7 @@ public class ModelValidator {
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);
+        Application.getInstance().getGUILog().log("Showing validations...");
         Utils.displayValidationWindow(vss, "Model Web Difference Validation");
     }
     
@@ -927,7 +928,9 @@ public class ModelValidator {
         tosend.put("elements", elements);
         String url = ExportUtility.getUrlWithWorkspace();
         url += "/elements";
+        Application.getInstance().getGUILog().log("[INFO] Searching for " + es.size() + " elements from server...");
         String response = ExportUtility.getWithBody(url, tosend.toJSONString());
+        Application.getInstance().getGUILog().log("[INFO] Finished getting elements.");
         if (response == null) {
             JSONObject res = new JSONObject();
             res.put("elements", new JSONArray());

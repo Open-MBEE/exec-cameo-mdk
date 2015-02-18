@@ -303,6 +303,7 @@ public class ViewValidator {
             vss.add(modelSuite);
         if (imageSuite != null)
             vss.add(imageSuite);
+        Application.getInstance().getGUILog().log("Showing validations...");
         Utils.displayValidationWindow(vss, "View Web Difference Validation");
     }
 

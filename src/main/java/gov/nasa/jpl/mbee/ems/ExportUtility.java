@@ -531,6 +531,8 @@ public class ExportUtility {
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             log.info("delete: " + url);
+            if (feedback)
+                Application.getInstance().getGUILog().log("[INFO] Deleting...");
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             log.info("delete response: " + json);
