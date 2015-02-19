@@ -49,11 +49,35 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
      */
     private boolean disabled = false;
     private TransactionManager tm;
-
-    public AutoSyncCommitListener() {
-
+    private boolean auto = false;
+    private Map<String, Element> changedElements = new HashMap<String, Element>();
+    private Map<String, Element> deletedElements = new HashMap<String, Element>();
+    private Map<String, Element> addedElements = new HashMap<String, Element>();
+    
+    public AutoSyncCommitListener(boolean auto) {
+        this.auto = auto;
     }
 
+    public boolean isAuto() {
+        return auto;
+    }
+
+    public void setAuto(boolean auto) {
+        this.auto = auto;
+    }
+
+    public Map<String, Element> getChangedElements() {
+        return changedElements;
+    }
+
+    public Map<String, Element> getDeletedElements() {
+        return deletedElements;
+    }
+
+    public Map<String, Element> getAddedElements() {
+        return addedElements;
+    }
+    
     /**
      * Adapter to call handleChangeEvent() from the TransactionCommitListener
      * interface.
@@ -73,7 +97,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             // simply return without processing
             // the events.
             //
-            if (disabled)
+            if (disabled && auto) //take into account delayed sync?
                 return;
 
             for (PropertyChangeEvent event : events) {
@@ -111,7 +135,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             for (String id: toRemove) {
                 elements.remove(id);
             }
-            if (!elements.isEmpty() || !deletes.isEmpty())
+            if ((!elements.isEmpty() || !deletes.isEmpty()) && auto)
                 sendChanges();
         }
 
@@ -144,18 +168,26 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             }
         }
 
-        @SuppressWarnings("unchecked")
         private JSONObject getElementObject(Element e) {
+            return getElementObject(e, false);
+        }
+        
+        @SuppressWarnings("unchecked")
+        private JSONObject getElementObject(Element e, boolean added) {
             JSONObject elementOb = null;
             String elementID = ExportUtility.getElementID(e);
             if (elements.containsKey(elementID)) {
                 elementOb = elements.get(elementID);
-            }
-            else {
+            } else {
                 elementOb = new JSONObject();
                 elementOb.put("sysmlid", elementID);
                 elements.put(elementID, elementOb);
             }
+            if (deletedElements.containsKey(elementID))
+                deletedElements.remove(elementID);
+            if (added)
+                addedElements.put(elementID, e);
+            changedElements.put(elementID, e);
             return elementOb;
         }
 
@@ -266,20 +298,18 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (isDiagramCreated(sourceElement)) 
                     toRemove.add(ExportUtility.getElementID(sourceElement));
                 else {
-                    elementOb = getElementObject(sourceElement);
+                    elementOb = getElementObject(sourceElement, true);
                     ExportUtility.fillElement(sourceElement, elementOb);
                 }
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)
                     && ExportUtility.shouldAdd(sourceElement)) {
                 elementID = ExportUtility.getElementID(sourceElement);
-
-                // JJS TO DO: implement the actual delete when there is the
-                // call to make the a delete in the server.
-                //
-                if (elements.containsKey(elementID))
-                    elements.remove(elementID);
+                elements.remove(elementID);
+                changedElements.remove(elementID);
+                addedElements.remove(elementID);
                 deletes.add(elementID);
+                deletedElements.put(elementID, sourceElement);
             }
             else if (sourceElement instanceof DirectedRelationship && 
                     (propertyName.equals(PropertyNames.SUPPLIER) || propertyName.equals(PropertyNames.CLIENT))) {
