@@ -124,7 +124,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         if (e instanceof NamedElement) {
             if (e.getOwner() != null) {
                 for (Element c: e.getOwner().getOwnedElement()) {
-                    if (c instanceof NamedElement && c != e && c.getHumanName().equals(e.getHumanName()) && !((NamedElement)c).equals(""))
+                    if (c instanceof NamedElement && c != e && c.getHumanName().equals(e.getHumanName()) && !((NamedElement)c).getName().equals(""))
                         return true;
                 }
             }
