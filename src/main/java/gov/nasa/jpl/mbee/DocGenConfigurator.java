@@ -218,18 +218,18 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
             if (ViewEditUtils.isPasswordSet()) {
                 ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-                //NMAction action = manager.getActionFor(ValidateViewAction.actionid);
-                //if (action == null)
-                //    modelLoad2.addAction(new ValidateViewAction(e));
-                //action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
-                //if (action == null)
-                //    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
+                NMAction action = manager.getActionFor(ValidateViewAction.actionid);
+                if (action == null)
+                    modelLoad2.addAction(new ValidateViewAction(e));
+                action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
+                if (action == null)
+                    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
                 if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
-                    NMAction action = manager.getActionFor(ValidateHierarchyAction.actionid);
+                    action = manager.getActionFor(ValidateHierarchyAction.actionid);
                     if (action == null)
                         modelLoad2.addAction(new ValidateHierarchyAction(e));
                 }
-                NMAction action = manager.getActionFor("ExportView");
+                action = manager.getActionFor("ExportView");
                 if (action == null)
                     modelLoad2.addAction(new ExportViewAction(e, false));
                 action = manager.getActionFor("ExportViewRecursive");

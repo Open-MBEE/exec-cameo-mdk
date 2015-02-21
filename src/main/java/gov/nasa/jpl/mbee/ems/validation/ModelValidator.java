@@ -136,8 +136,9 @@ public class ModelValidator {
     private JSONObject result;       
 	private boolean checkExist;
     private Set<Element> elementSet;
+    private boolean crippled;
         
-    public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet) {
+    public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
         //result is from web, elementSet is from model
         this.start = start;
         suite.addValidationRule(nameDiff);
@@ -160,6 +161,7 @@ public class ModelValidator {
         this.result = result;
         prj = Application.getInstance().getProject();
         this.elementSet = elementSet;
+        this.crippled = crippled;
     }
     
     public boolean checkProject() {
@@ -273,8 +275,10 @@ public class ModelValidator {
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS or it may be moved");
-                v.addAction(new DeleteMagicDrawElement(e));
-                v.addAction(new ExportElement(e));
+                if (!crippled) {
+                    v.addAction(new DeleteMagicDrawElement(e));
+                    v.addAction(new ExportElement(e));
+                }
                 exist.addViolation(v);
                 continue;
             }
@@ -307,8 +311,10 @@ public class ModelValidator {
                     continue;
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " '" + elementsKeyedId + "' exists on MMS but not in Magicdraw");
                 v.addAction(new ElementDetail(jSONobject));
-                v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
-                v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
+                if (!crippled) {
+                    v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
+                    v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
+                }
                 exist.addViolation(v);
             }  
             else {
@@ -439,9 +445,11 @@ public class ModelValidator {
                 if (webOwnerID != null)
                     owner = (Element)prj.getElementByID(webOwnerID);
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? "null" : owner.getHumanName()));
-                v.addAction(new FixModelOwner(e, owner, result)); //disable owner import for now since nothing can change the owner on the web
-                if (editable)
-                    v.addAction(new ExportOwner(e));
+                if (!crippled) {
+                    v.addAction(new FixModelOwner(e, owner, result)); 
+                    if (editable)
+                        v.addAction(new ExportOwner(e));
+                }
                 return v;
             }
         }
