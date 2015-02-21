@@ -86,6 +86,8 @@ public class ViewValidator {
     private ValidationRule baselineTag = new ValidationRule("Baseline Tag Set", "Baseline Tag isn't set", ViolationSeverity.WARNING);
     private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
     
+    private Stereotype productS = Utils.getProductStereotype();
+    
     private ValidationSuite modelSuite;
     private ValidationSuite imageSuite;
     private DocumentValidator dv;
@@ -139,7 +141,7 @@ public class ViewValidator {
         }
         //first run a local generation of the view model to get the current model view structure
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
-        Document dge = dg.parseDocument(true, true, hierarchyOnly);
+        Document dge = dg.parseDocument(true, recurse, hierarchyOnly);
         (new PostProcessor()).process(dge);
         
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
@@ -153,7 +155,13 @@ public class ViewValidator {
         }
         
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
-        dge.accept(vhv);
+        if (StereotypesHelper.hasStereotypeOrDerived(view, productS) && !recurse) {
+            DocumentGenerator dg2 = new DocumentGenerator(view, null, null);
+            Document dge2 = dg2.parseDocument(true, true, true);
+            (new PostProcessor()).process(dge2);
+            dge2.accept(vhv);
+        } else
+            dge.accept(vhv);
 
         // this is going to house the elements gotten from web
         JSONObject results = new JSONObject();
@@ -193,9 +201,9 @@ public class ViewValidator {
                 //if the json doesn't contain the "contains" key, that means the view hasn't been exported yet
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                 v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
-                v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
+                //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
                 v.addAction(new ExportView(currentView, true, false, "Commit View Hierarchically to MMS"));
-                v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
+                //v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
                 exists.addViolation(v);
             } else {
                 //view has been on the web
@@ -204,60 +212,60 @@ public class ViewValidator {
                 if (containsObj == null) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                     v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
-                    v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
+                    //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
                     v.addAction(new ExportView(currentView, true, false, "Commit View Hierarchically to MMS"));
-                    v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
+                    //v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
                     exists.addViolation(v);
                 } else {
                     Boolean editable = (Boolean) webView.get("editable");
                     if (!hierarchyOnly) {
-                    String viewElementsUrl = url + "/views/" + viewid + "/elements";
-                    JSONArray localElements = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("displayedElements");
-                    // get the current elements referenced by the view in the current model
-                    JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
-                    // get the current model view structure
-
-                    
-                    // this is the json object for the view on the web
-
-                    // this is the web view structure
-                    JSONArray webContains = null;
-                    if (containsObj instanceof JSONArray) {
-                        webContains = (JSONArray) containsObj;
-                    } 
-                    if (ps != null && ps.isCancel())
-                        break;
-                    // quick way to get all element info referenced by view from the web
-                    String viewelements = ExportUtility.get(viewElementsUrl, false);
-                    if (viewelements == null)
-                        continue;
-                    JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
-                    // parse the view elements json from web into JSONObject
-                    JSONObject webViewSpec = (JSONObject)webView.get("specialization");
-                    boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
-                    if (!matches) {
-                        ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor content is outdated.");
-                        if (editable) {
-                            v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
-                            v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
-                            v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
-                            v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
-                        }
-                        // v.addAction(new ExportHierarchy(currentView));
-                        match.addViolation(v);
-                    }
-                    if (webViewSpec.get("type") instanceof String && ((String)webViewSpec.get("type")).equals("Product") && 
-                            !StereotypesHelper.hasStereotypeOrDerived(currentView, Utils.getProductStereotype())) {
-                        ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[METACLASS] This is no longer a product/document.");
-                        v.addAction(new Downgrade(currentView, webView));
-                        productView.addViolation(v);
-                    }
-                    for (Object reselement: (JSONArray)viewresults.get("elements")) {
-                        // add view referenced elements to a cache to later get validated by ModelValidator
-                        if (cachedResultElements.containsKey(((JSONObject) reselement).get("sysmlid")))
+                        String viewElementsUrl = url + "/views/" + viewid + "/elements";
+                        JSONArray localElements = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("displayedElements");
+                        // get the current elements referenced by the view in the current model
+                        JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
+                        // get the current model view structure
+    
+                        
+                        // this is the json object for the view on the web
+    
+                        // this is the web view structure
+                        JSONArray webContains = null;
+                        if (containsObj instanceof JSONArray) {
+                            webContains = (JSONArray) containsObj;
+                        } 
+                        if (ps != null && ps.isCancel())
+                            break;
+                        // quick way to get all element info referenced by view from the web
+                        String viewelements = ExportUtility.get(viewElementsUrl, false);
+                        if (viewelements == null)
                             continue;
-                        cachedResultElements.put((String)((JSONObject)reselement).get("sysmlid"), (JSONObject) reselement);
-                    }
+                        JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
+                        // parse the view elements json from web into JSONObject
+                        JSONObject webViewSpec = (JSONObject)webView.get("specialization");
+                        boolean matches = viewElementsMatch(localElements, viewresults) && viewContentsMatch(localContains, webContains);
+                        if (!matches) {
+                            ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[CONTENT] The view editor content is outdated.");
+                            if (editable) {
+                                v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
+                                //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
+                                v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
+                                //v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
+                            }
+                            // v.addAction(new ExportHierarchy(currentView));
+                            match.addViolation(v);
+                        }
+                        if (webViewSpec.get("type") instanceof String && ((String)webViewSpec.get("type")).equals("Product") && 
+                                !StereotypesHelper.hasStereotypeOrDerived(currentView, Utils.getProductStereotype())) {
+                            ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[METACLASS] This is no longer a product/document.");
+                            v.addAction(new Downgrade(currentView, webView));
+                            productView.addViolation(v);
+                        }
+                        for (Object reselement: (JSONArray)viewresults.get("elements")) {
+                            // add view referenced elements to a cache to later get validated by ModelValidator
+                            if (cachedResultElements.containsKey(((JSONObject) reselement).get("sysmlid")))
+                                continue;
+                            cachedResultElements.put((String)((JSONObject)reselement).get("sysmlid"), (JSONObject) reselement);
+                        }
                     }
                     // see if the list of view elements referenced matches and view structures match
                     boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
@@ -282,7 +290,7 @@ public class ViewValidator {
         //elements gotten from web
         if (!hierarchyOnly) {
             Application.getInstance().getGUILog().log("[INFO] Validating view elements");
-            ModelValidator mv = new ModelValidator(view, results, true, visitor2.getElementSet()); //visitor2.getElementSet() has the local model elements
+            ModelValidator mv = new ModelValidator(view, results, true, visitor2.getElementSet(), true); //visitor2.getElementSet() has the local model elements
             //do the actual element validations between model and web
             mv.validate(false, ps);
             modelSuite = mv.getSuite();
