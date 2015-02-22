@@ -97,7 +97,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             // simply return without processing
             // the events.
             //
-            if (disabled && auto) //take into account delayed sync?
+            if (disabled) //take into account delayed sync?
                 return;
 
             for (PropertyChangeEvent event : events) {
@@ -183,11 +183,12 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 elementOb.put("sysmlid", elementID);
                 elements.put(elementID, elementOb);
             }
-            if (deletedElements.containsKey(elementID))
+            if (deletedElements.containsKey(elementID) && !auto)
                 deletedElements.remove(elementID);
-            if (added)
+            if (added && !auto)
                 addedElements.put(elementID, e);
-            changedElements.put(elementID, e);
+            if (!auto)
+                changedElements.put(elementID, e);
             return elementOb;
         }
 
@@ -306,10 +307,12 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     && ExportUtility.shouldAdd(sourceElement)) {
                 elementID = ExportUtility.getElementID(sourceElement);
                 elements.remove(elementID);
+                deletes.add(elementID);
+                
                 changedElements.remove(elementID);
                 addedElements.remove(elementID);
-                deletes.add(elementID);
-                deletedElements.put(elementID, sourceElement);
+                if (!auto)
+                    deletedElements.put(elementID, sourceElement);
             }
             else if (sourceElement instanceof DirectedRelationship && 
                     (propertyName.equals(PropertyNames.SUPPLIER) || propertyName.equals(PropertyNames.CLIENT))) {

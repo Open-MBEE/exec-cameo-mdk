@@ -85,6 +85,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
+            Application.getInstance().getGUILog().log("[INFO] Autosync is currently on, you cannot do a manual update/commit while autosync is on.");
             return null; //autosync is on, should turn off first
         }
         String projectID = ExportUtility.getProjectId(project);
@@ -111,7 +112,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             String messageSelector = constructSelectorString(projectID, wsID);
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
-            Message m = consumer.receiveNoWait();
+            Message m = consumer.receive(1000);
             while (m != null) {
                 TextMessage message = (TextMessage)m;
                 log.info("From JMS (Manual receive): " + message.getText());
@@ -147,10 +148,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                     changedIds.remove(id);
                 }
                 m.acknowledge();
-                m = consumer.receiveNoWait();
+                m = consumer.receive(1000);
             }
             return changes;
         } catch (Exception e) {
+            log.error("JMS (Manual receive): ", e);
             Application.getInstance().getGUILog().log("[ERROR] getting changes from mms failed: " + e.getMessage());
             return null;
         } finally {
@@ -290,7 +292,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances == null)
             return;
-        AutoSyncCommitListener listener = (AutoSyncCommitListener) projectInstances.remove(LISTENER);
+        AutoSyncCommitListener listener = (AutoSyncCommitListener) projectInstances.get(LISTENER);
         if (listener != null) {
             if (keepDelayedSync)
                 listener.setAuto(false);

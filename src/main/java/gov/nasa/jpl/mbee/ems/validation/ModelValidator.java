@@ -131,6 +131,7 @@ public class ModelValidator {
     private ValidationRule siteDiff = new ValidationRule("Site", "site existence", ViolationSeverity.ERROR);
     private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
 
+    private Set<Element> differentElements = new HashSet<Element>();
     private Project prj;
     private Element start;
     private JSONObject result;       
@@ -138,6 +139,10 @@ public class ModelValidator {
     private Set<Element> elementSet;
     private boolean crippled;
         
+    public Set<Element> getDifferentElements() {
+        return differentElements;
+    }
+
     public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
         //result is from web, elementSet is from model
         this.start = start;
@@ -355,6 +360,7 @@ public class ModelValidator {
         if (elementName != null && !elementName.equals(webName)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[NAME] model: " + elementName + ", web: " + webName);
             v.addAction(new ImportName((NamedElement)e, webName, result));
+            differentElements.add(e);
             if (editable)
                 v.addAction(new ExportName((NamedElement)e));
             nameDiff.addViolation(v);
@@ -363,21 +369,28 @@ public class ModelValidator {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
             v.addAction(new CompareText(e, webDoc, elementDocClean, result));
             v.addAction(new ImportDoc(e, webDoc, result));
+            differentElements.add(e);
             if (editable)
                 v.addAction(new ExportDoc(e));
             docDiff.addViolation(v);
         }
         if (e instanceof Property) {
             ValidationRuleViolation v = valueDiff((Property)e, elementInfo);
-            if (v != null)
+            if (v != null) {
                 valueDiff.addViolation(v);
+                differentElements.add(e);
+            }
             ValidationRuleViolation v2 = propertyTypeDiff((Property)e, elementInfo);
-            if (v2 != null)
+            if (v2 != null) {
                 propertyTypeDiff.addViolation(v2);
+                differentElements.add(e);
+            }
         } else if (e instanceof Slot) {
             ValidationRuleViolation v = valueDiff((Slot)e, elementInfo);
-            if (v != null)
+            if (v != null) {
                 valueDiff.addViolation(v);
+                differentElements.add(e);
+            }
         } else if (e instanceof Comment) {
             //ValidationRuleViolation v = commentDiff((Comment)e, elementInfo);
             //if (v != null)
@@ -386,27 +399,36 @@ public class ModelValidator {
         	ValidationRuleViolation v = relationshipDiff((DirectedRelationship)e, elementInfo);
         	if (v != null) {
                 relDiff.addViolation(v);
+                differentElements.add(e);
             }
         } else if (e instanceof Connector) {
             ValidationRuleViolation v = connectorDiff((Connector)e, elementInfo);
-            if (v != null)
+            if (v != null) {
                 connectorDiff.addViolation(v);
+                differentElements.add(e);
+            }
         } else if (e instanceof Constraint) {
             ValidationRuleViolation v = constraintDiff((Constraint)e, elementInfo);
-            if (v != null)
+            if (v != null) {
                 constraintDiff.addViolation(v);
+                differentElements.add(e);
+            }
         } else if (e instanceof Association) {
             ValidationRuleViolation v = associationDiff((Association)e, elementInfo);
-            if (v != null)
+            if (v != null) {
                 associationDiff.addViolation(v);
+                differentElements.add(e);
+            }
         } else if (e instanceof Package) {
             ValidationRuleViolation v = siteDiff((Package)e, elementInfo);
             if (v != null)
                 siteDiff.addViolation(v);
         }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
-        if (v != null)
+        if (v != null) {
             ownership.addViolation(v);
+            differentElements.add(e);
+        }
         docDiff(e, elementInfo);
     }
     
@@ -880,7 +902,7 @@ public class ModelValidator {
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);
-        Application.getInstance().getGUILog().log("Showing validations...");
+        Application.getInstance().getGUILog().log("[INFO] Showing validations...");
         Utils.displayValidationWindow(vss, "Model Web Difference Validation");
     }
     

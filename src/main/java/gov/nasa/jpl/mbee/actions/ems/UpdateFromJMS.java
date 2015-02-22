@@ -6,6 +6,8 @@ import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -34,13 +36,14 @@ public class UpdateFromJMS extends MDAction {
     
     private boolean commit;
     public UpdateFromJMS(boolean commit) {
-        super(commit ? "CommitToMMS" : "UpdateFromJMS", commit ? "Commit" : "Update", null, null);
+        super(commit ? "CommitToMMS" : "UpdateFromJMS", commit ? "Check for Updates and Commit" : "Update", null, null);
         this.commit = commit;
     }
     
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
+        Application.getInstance().getGUILog().log("[INFO] Getting changes from MMS...");
         Project project = Application.getInstance().getProject();
         Map<String, Set<String>> jms = AutoSyncProjectListener.getJMSChanges(Application.getInstance().getProject());
         AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
@@ -57,7 +60,12 @@ public class UpdateFromJMS extends MDAction {
         Set<String> toGet = new HashSet<String>(webChanged);
         toGet.addAll(webAdded);
         
+        Map<String, JSONObject> cannotAdd = new HashMap<String, JSONObject>();
+        Map<String, JSONObject> cannotChange = new HashMap<String, JSONObject>();
+        Set<String> cannotDelete = new HashSet<String>();
+        
         if (!toGet.isEmpty()) {
+            TeamworkUtils.lockElement(project, project.getModel(), true);
             JSONObject getJson = new JSONObject();
             JSONArray getElements = new JSONArray();
             getJson.put("elements", getElements);
@@ -78,69 +86,113 @@ public class UpdateFromJMS extends MDAction {
                 String webId = (String)((JSONObject)o).get("sysmlid");
                 webElements.put(webId, (JSONObject)o);
             }
-        
+            //if (webElements.size() != toGet.size())
+            //    return; //??
+                
+            //calculate order to create web added elements
+            List<JSONObject> webAddedObjects = new ArrayList<JSONObject>();
+            for (String webAdd: webAdded) {
+                if (webElements.containsKey(webAdd))
+                    webAddedObjects.add(webElements.get(webAdd));
+            }
+            List<JSONObject> webAddedSorted = ImportUtility.getCreationOrder(webAddedObjects);
+            
+            //calculate potential conflicted set and clean web updated set
+            Set<String> localChangedIds = new HashSet<String>(localChanged.keySet());
+            localChangedIds.retainAll(webChanged);
+            JSONArray webConflictedObjects = new JSONArray();
+            Set<Element> localConflictedElements = new HashSet<Element>();
+            if (!localChangedIds.isEmpty()) {
+                for (String conflictId: localChangedIds) {
+                    if (webElements.containsKey(conflictId)) {
+                        webConflictedObjects.add(webElements.get(conflictId));
+                        localConflictedElements.add(localChanged.get(conflictId));
+                    }
+                }
+            }
+            //find web changed that are not conflicted
+            List<JSONObject> webChangedObjects = new ArrayList<JSONObject>();
+            for (String webUpdate: webChanged) {
+                if (localChangedIds.contains(webUpdate))
+                    continue;
+                if (webElements.containsKey(webUpdate))
+                    webChangedObjects.add(webElements.get(webUpdate));
+            }
+            
+            Application.getInstance().getGUILog().log("[INFO] Applying changes...");
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change");
             try {
                 //take care of web added
-                List<JSONObject> webAddedObjects = new ArrayList<JSONObject>();
-                for (String webAdd: webAdded) {
-                    webAddedObjects.add(webElements.get(webAdd));
-                }
-                List<JSONObject> webAddedSorted = ImportUtility.getCreationOrder(webAddedObjects);
                 if (webAddedSorted != null) {
                     for (Object element : webAddedSorted) {
                         ImportUtility.createElement((JSONObject) element, false);
                     }
                     for (Object element : webAddedSorted) { 
-                        ImportUtility.createElement((JSONObject) element, true);
+                        try {
+                            ImportUtility.createElement((JSONObject) element, true);
+                        } catch (Exception ex) {
+                            cannotAdd.put((String)((JSONObject)element).get("sysmlid"), (JSONObject)element);
+                        }
                     }
                 } else {
-                    //cannot create all added elements
-                }
-            
-                //take care of updated, find conflicts first
-                Set<String> localChangedIds = new HashSet<String>(localChanged.keySet());
-                localChangedIds.retainAll(webChanged);
-                List<JSONObject> webConflictedObjects = new ArrayList<JSONObject>();
-                if (!localChangedIds.isEmpty()) {
-                    for (String conflictId: localChangedIds) {
-                        webConflictedObjects.add(webElements.get(conflictId));
+                    for (Object element: webAddedObjects) {
+                        cannotAdd.put((String)((JSONObject)element).get("sysmlid"), (JSONObject)element);
                     }
                 }
-                List<JSONObject> webChangedObjects = new ArrayList<JSONObject>();
-                for (String webUpdate: webChanged) {
-                    if (localChangedIds.contains(webUpdate))
-                        continue;
-                    webChangedObjects.add(webElements.get(webUpdate));
-                }
+            
+                //take care of updated
                 for (JSONObject webUpdated: webChangedObjects) {
                     Element e = ExportUtility.getElementFromID((String)webUpdated.get("sysmlid"));
-                    ImportUtility.updateElement(e, webUpdated);
+                    if (e == null) {
+                        //bad? maybe it was supposed to have been added?
+                        continue;
+                    }
+                    try {
+                        ImportUtility.updateElement(e, webUpdated);
+                        ImportUtility.setOwner(e, webUpdated);
+                    } catch (Exception ex) {
+                        cannotChange.put(ExportUtility.getElementID(e), webUpdated);
+                    }
                 }
-                //conflicts???
-            
+                
                 //take care of deleted
                 for (String e: webDeleted) {
                     Element toBeDeleted = ExportUtility.getElementFromID(e);
                     if (toBeDeleted == null)
                         continue;
-                    if (!toBeDeleted.isEditable())
-                        TeamworkUtils.lockElement(project, toBeDeleted, false);
                     try {
                         ModelElementsManager.getInstance().removeElement(toBeDeleted);
-                        //guilog.log("[Autosync] " + changedElement.getHumanName() + " deleted");
-                    } catch (ReadOnlyElementException ex) {
-                    //guilog.log("[ERROR - Autosync] Sync: " + changedElement.getHumanName() + " cannot be deleted!");
+                    } catch (Exception ex) {
+                        cannotDelete.add(e);
                     }
                 }
+                Application.getInstance().getGUILog().log("[INFO] Finished applying changes.");
+                listener.disable();
                 sm.closeSession();
+                listener.enable();
+              //conflicts???
+                JSONObject mvResult = new JSONObject();
+                mvResult.put("elements", webConflictedObjects);
+                ModelValidator mv = new ModelValidator(null, mvResult, false, localConflictedElements, false);
+                mv.validate(false, null);
+                Set<Element> conflictedElements = mv.getDifferentElements();
+                if (!conflictedElements.isEmpty()) {
+                    Application.getInstance().getGUILog().log("[INFO] There are potential conflicts between changes from MMS and locally changed elements, please resolve first and rerun update/commit.");
+                //?? popups or validation window?
+                    mv.showWindow();
+                    return;
+                }
             } catch (Exception e) {
                 sm.cancelSession();
             }
+        } else {
+            Application.getInstance().getGUILog().log("[INFO] MMS has no updates.");
         }
         
+        //send local changes
         if (commit) {
+            Application.getInstance().getGUILog().log("[INFO] Committing local changes to MMS...");
             JSONArray toSendElements = new JSONArray();
             for (Element e: localAdded.values()) {
                 toSendElements.add(ExportUtility.fillElement(e, null));
@@ -151,8 +203,15 @@ public class UpdateFromJMS extends MDAction {
             JSONObject toSendUpdates = new JSONObject();
             toSendUpdates.put("elements", toSendElements);
             toSendUpdates.put("source", "magicdraw");
-            OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true));
-        
+            if (toSendElements.size() > 100) {
+                
+            }
+            //do foreground?
+            if (!toSendUpdates.isEmpty())
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true));
+            localAdded.clear();
+            localChanged.clear();
+            
             JSONArray toDeleteElements = new JSONArray();
             for (String e: localDeleted.keySet()) {
                 JSONObject toDelete = new JSONObject();
@@ -160,7 +219,14 @@ public class UpdateFromJMS extends MDAction {
                 toDeleteElements.add(toDelete);
             }
             toSendUpdates.put("elements", toDeleteElements);
-            OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true));
+            if (!toDeleteElements.isEmpty())
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true));
+            localDeleted.clear();
+            if (toDeleteElements.isEmpty() && toSendElements.isEmpty())
+                Application.getInstance().getGUILog().log("[INFO] No changes to commit.");
+            else
+                Application.getInstance().getGUILog().log("[INFO] Don't forget to commit to teamwork or save!");
+            //commit automatically and send project version?
         }
     }
 }
