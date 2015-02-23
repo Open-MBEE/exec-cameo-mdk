@@ -52,7 +52,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public static final String LISTENER = "AutoSyncCommitListener";
     private static final String SESSION = "Session";
     private static final String CONSUMER = "MessageConsumer";
-
+    public static final String CONFLICTS = "Conflicts";
+    public static final String FAILED = "Failed";
+    
     private static final String MSG_SELECTOR_PROJECT_ID = "projectId";
     private static final String MSG_SELECTOR_WS_ID = "workspace";
     public static Logger log = Logger.getLogger(AutoSyncProjectListener.class);
@@ -74,6 +76,30 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         return url;
     }
 
+    public static void setLooseEnds(Project project, JSONObject o) {
+        Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        projectInstances.put(CONFLICTS, o);
+        //should save it in model somewhere
+    }
+    
+    public static JSONObject getLooseEnds(Project project) {
+        Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        return (JSONObject)projectInstances.get(CONFLICTS);
+        //check model also
+    }
+    
+    public static void setFailed(Project project, JSONObject o) {
+        Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        projectInstances.put(FAILED, o);
+        //should save it in model somewhere
+    }
+    
+    public static JSONObject getFailed(Project project) {
+        Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        return (JSONObject)projectInstances.get(FAILED);
+        //check model also
+    }
+    
     public static Map<String, Set<String>> getJMSChanges(Project project) {
         Map<String, Set<String>> changes = new HashMap<String, Set<String>>();
         Set<String> changedIds = new HashSet<String>();
@@ -117,9 +143,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 TextMessage message = (TextMessage)m;
                 log.info("From JMS (Manual receive): " + message.getText());
                 JSONObject ob = (JSONObject) JSONValue.parse(message.getText());
+                boolean magicdraw = false;
                 if (ob.get("source") != null && ob.get("source").equals("magicdraw")) {
-                    m = consumer.receiveNoWait();
-                    continue;
+                    //m = consumer.receive(1000);
+                    magicdraw = true;
+                    //continue;
                 }
                 JSONObject ws2 = (JSONObject) ob.get("workspace2");
                 final JSONArray updated = (JSONArray) ws2.get("updatedElements");
@@ -128,22 +156,26 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 final JSONArray moved = (JSONArray) ws2.get("movedElements");
                 for (Object e: updated) {
                     String id = (String)((JSONObject)e).get("sysmlid");
-                    changedIds.add(id);
+                    if (!magicdraw) 
+                        changedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: added) {
                     String id = (String)((JSONObject)e).get("sysmlid");
-                    addedIds.add(id);
+                    if (!magicdraw) 
+                        addedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: moved) {
                     String id = (String)((JSONObject)e).get("sysmlid");
-                    changedIds.add(id);
+                    if (!magicdraw) 
+                        changedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: deleted) {
                     String id = (String)((JSONObject)e).get("sysmlid");
-                    deletedIds.add(id);
+                    if (!magicdraw)
+                        deletedIds.add(id);
                     addedIds.remove(id);
                     changedIds.remove(id);
                 }

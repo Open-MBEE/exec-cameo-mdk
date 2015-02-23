@@ -36,7 +36,7 @@ public class UpdateFromJMS extends MDAction {
     
     private boolean commit;
     public UpdateFromJMS(boolean commit) {
-        super(commit ? "CommitToMMS" : "UpdateFromJMS", commit ? "Check for Updates and Commit" : "Update", null, null);
+        super(commit ? "CommitToMMS" : "UpdateFromJMS", commit ? "Update and Commit" : "Update", null, null);
         this.commit = commit;
     }
     
@@ -60,8 +60,8 @@ public class UpdateFromJMS extends MDAction {
         Set<String> toGet = new HashSet<String>(webChanged);
         toGet.addAll(webAdded);
         
-        Map<String, JSONObject> cannotAdd = new HashMap<String, JSONObject>();
-        Map<String, JSONObject> cannotChange = new HashMap<String, JSONObject>();
+        Set<String> cannotAdd = new HashSet<String>();
+        Set<String> cannotChange = new HashSet<String>();
         Set<String> cannotDelete = new HashSet<String>();
         
         if (!toGet.isEmpty()) {
@@ -132,12 +132,12 @@ public class UpdateFromJMS extends MDAction {
                         try {
                             ImportUtility.createElement((JSONObject) element, true);
                         } catch (Exception ex) {
-                            cannotAdd.put((String)((JSONObject)element).get("sysmlid"), (JSONObject)element);
+                            cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
                         }
                     }
                 } else {
                     for (Object element: webAddedObjects) {
-                        cannotAdd.put((String)((JSONObject)element).get("sysmlid"), (JSONObject)element);
+                        cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
                     }
                 }
             
@@ -152,7 +152,7 @@ public class UpdateFromJMS extends MDAction {
                         ImportUtility.updateElement(e, webUpdated);
                         ImportUtility.setOwner(e, webUpdated);
                     } catch (Exception ex) {
-                        cannotChange.put(ExportUtility.getElementID(e), webUpdated);
+                        cannotChange.add(ExportUtility.getElementID(e));
                     }
                 }
                 
@@ -168,6 +168,20 @@ public class UpdateFromJMS extends MDAction {
                     }
                 }
                 Application.getInstance().getGUILog().log("[INFO] Finished applying changes.");
+                if (!cannotAdd.isEmpty() || !cannotChange.isEmpty() || !cannotDelete.isEmpty()) {
+                    JSONObject failed = new JSONObject();
+                    JSONArray failedAdd = new JSONArray();
+                    failedAdd.addAll(cannotAdd);
+                    JSONArray failedChange = new JSONArray();
+                    failedChange.addAll(cannotChange);
+                    JSONArray failedDelete = new JSONArray();
+                    failedDelete.addAll(cannotDelete);
+                    failed.put("changed", failedChange);
+                    failed.put("added", failedAdd);
+                    failed.put("deleted", failedDelete);
+                    AutoSyncProjectListener.setFailed(project, failed);
+                    Application.getInstance().getGUILog().log("[WARNING] There were changes that couldn't be applied.");
+                }
                 listener.disable();
                 sm.closeSession();
                 listener.enable();
@@ -178,8 +192,14 @@ public class UpdateFromJMS extends MDAction {
                 mv.validate(false, null);
                 Set<Element> conflictedElements = mv.getDifferentElements();
                 if (!conflictedElements.isEmpty()) {
+                    JSONObject conflictedToSave = new JSONObject();
+                    JSONArray conflictedElementIds = new JSONArray();
+                    for (Element ce: conflictedElements)
+                        conflictedElementIds.add(ExportUtility.getElementID(ce));
+                    conflictedToSave.put("elements", conflictedElementIds);
                     Application.getInstance().getGUILog().log("[INFO] There are potential conflicts between changes from MMS and locally changed elements, please resolve first and rerun update/commit.");
                 //?? popups or validation window?
+                    AutoSyncProjectListener.setLooseEnds(project, conflictedToSave);
                     mv.showWindow();
                     return;
                 }
@@ -225,7 +245,7 @@ public class UpdateFromJMS extends MDAction {
             if (toDeleteElements.isEmpty() && toSendElements.isEmpty())
                 Application.getInstance().getGUILog().log("[INFO] No changes to commit.");
             else
-                Application.getInstance().getGUILog().log("[INFO] Don't forget to commit to teamwork or save!");
+                Application.getInstance().getGUILog().log("[INFO] Don't forget to save or commit to teamwork with unlock!");
             //commit automatically and send project version?
         }
     }
