@@ -19,7 +19,7 @@ public class CloseAutoSyncAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Project project = Application.getInstance().getProject();
-        AutoSyncProjectListener.close(project);
+        AutoSyncProjectListener.close(project, true);
     }
 
 }

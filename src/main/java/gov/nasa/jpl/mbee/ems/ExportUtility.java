@@ -494,16 +494,23 @@ public class ExportUtility {
                         Object o = JSONValue.parse(response);
                         if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
                             Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
+                        else
+                            Application.getInstance().getGUILog().log("Server response: " + response);
                     } catch (Exception c) {
-                        
+                        Application.getInstance().getGUILog().log("Server response: " + response);
                     }
                 }
             } else if (code == 400) {
-                Object o = JSONValue.parse(response);
-                if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
-                    Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
-                //Application.getInstance().getGUILog().log(response);
-                //log.info(response);
+                Object o = null;
+                try {
+                    o = JSONValue.parse(response);
+                    if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                        Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
+                    else if (!(o instanceof JSONObject))
+                        Application.getInstance().getGUILog().log("Server response: " + response);
+                } catch(Exception c) {
+                    Application.getInstance().getGUILog().log("Server response: " + response);
+                }
                 return false;
             } else {
                 //Application.getInstance().getGUILog().log(response);
@@ -531,6 +538,8 @@ public class ExportUtility {
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             log.info("delete: " + url);
+            if (feedback)
+                Application.getInstance().getGUILog().log("[INFO] Deleting...");
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             log.info("delete response: " + json);
@@ -893,13 +902,14 @@ public class ExportUtility {
             fillAssociationSpecialization((Association)e, specialization);
         } else if (e.getClass().getSimpleName().equals("ClassImpl")) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
+            Stereotype view = Utils.getViewStereotype();
             //Stereotype view = Utils.getViewStereotype();
             if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
                 specialization.put("type", "Viewpoint");
+            else if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view))
+                specialization.put("type", "View");
             else
                 specialization.put("type", "Element");
-            //if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view))
-              //  specialization.put("type", "View");
         } else {
             specialization.put("type", "Untyped");
         }

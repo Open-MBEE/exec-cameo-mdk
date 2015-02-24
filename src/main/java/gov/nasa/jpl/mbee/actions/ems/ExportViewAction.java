@@ -20,7 +20,7 @@ public class ExportViewAction extends MDAction {
     public static final String actionid = "ExportView";
     
     public ExportViewAction(Element e, boolean recursive) {
-        super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Commit View Hierarchically" : "Commit View", null, null);
+        super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Commit Views Hierarchically" : "Commit View", null, null);
         this.recursive = recursive;
         start = e;
     }
