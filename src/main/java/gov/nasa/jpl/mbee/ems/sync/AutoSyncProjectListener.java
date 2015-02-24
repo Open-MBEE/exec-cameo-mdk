@@ -121,7 +121,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public static void setUpdates(Project project, JSONObject o) {
         Element e = getSyncElement(project, true, "update");
         ((NamedElement)e).setName("update_" + df.format(new Date()));
-        ModelHelper.setComment(e, (o == null) ? "{\"deleted\":[], \"changed\":[] \"added\":[]}" : o.toJSONString());
+        ModelHelper.setComment(e, (o == null) ? "{\"deleted\":[], \"changed\":[], \"added\":[]}" : o.toJSONString());
     }
     
     public static JSONObject getUpdates(Project project) {
