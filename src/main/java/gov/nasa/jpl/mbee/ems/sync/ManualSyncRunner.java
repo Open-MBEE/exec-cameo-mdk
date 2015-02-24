@@ -242,7 +242,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     listener.disable();
                     sm.createSession("failed changes");
                     try {
-                        AutoSyncProjectListener.setLooseEnds(project, conflictedToSave);
+                        AutoSyncProjectListener.setConflicts(project, conflictedToSave);
                         sm.closeSession();
                     } catch (Exception ex) {
                         sm.cancelSession();
@@ -294,7 +294,17 @@ public class ManualSyncRunner implements RunnableWithProgress {
             localDeleted.clear();
             if (toDeleteElements.isEmpty() && toSendElements.isEmpty())
                 gl.log("[INFO] No changes to commit.");
-            //commit automatically and send project version?
+            
+            listener.disable();
+            SessionManager sm = SessionManager.getInstance();
+            sm.createSession("failed changes");
+            try {
+                AutoSyncProjectListener.setUpdates(project, null);
+                sm.closeSession();
+            } catch (Exception ex) {
+                sm.cancelSession();
+            }
+            listener.enable();
         }
         gl.log("[INFO] Don't forget to save or commit to teamwork and unlock!");
     }
