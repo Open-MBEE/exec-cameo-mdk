@@ -488,6 +488,30 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         ProjectListenerMapping.getInstance().remove(project);
     }
     
+    @SuppressWarnings("unchecked")
+    @Override
+    public void projectPreSaved(Project project, boolean savedInServer) {
+        AutoSyncCommitListener listener = getCommitListener(project);
+        JSONObject notSaved = new JSONObject();
+        JSONArray added = new JSONArray();
+        JSONArray updated = new JSONArray();
+        JSONArray deleted = new JSONArray();
+        added.addAll(listener.getAddedElements().keySet());
+        updated.addAll(listener.getChangedElements().keySet());
+        deleted.addAll(listener.getDeletedElements().keySet());
+        notSaved.put("added", added);
+        notSaved.put("changed", updated);
+        notSaved.put("deleted", deleted);
+        SessionManager sm = SessionManager.getInstance();
+        sm.createSession("mms delayed sync change logs");
+        try {
+            setUpdates(project, notSaved);
+            sm.closeSession();
+        } catch (Exception e) {
+            sm.cancelSession();
+        }        
+    }
+    
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
