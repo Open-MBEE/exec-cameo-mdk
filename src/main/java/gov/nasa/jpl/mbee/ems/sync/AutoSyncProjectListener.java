@@ -1,9 +1,12 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -31,9 +34,14 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.transaction.TransactionManager;
 
 /*
@@ -76,28 +84,115 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         return url;
     }
 
+    private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
+    public static Element getConflictsElement(Project project, boolean create) {
+        String folderId = project.getPrimaryProject().getProjectID();
+        folderId += "_sync";
+        Element folder = ExportUtility.getElementFromID(folderId);
+        if (folder == null) {
+            if (!create)
+                return null;
+            project.getCounter().setCanResetIDForObject(true);
+            folder = project.getElementsFactory().createPackageInstance();
+            folder.setOwner(project.getModel());
+            ((Package)folder).setName("__ProjectSync__");
+            folder.setID(folderId);
+        } else {
+            TeamworkUtils.lockElement(project, folder, true);
+        }
+        Class failed = null;
+        String last = "";
+        for (Element e: folder.getOwnedElement()) {
+            if (e instanceof Class) {
+                String name = ((Class)e).getName();
+                if (name.startsWith("conflict") && name.compareTo(last) >= 0)
+                    failed = (Class)e;
+            }
+        }
+        if ((failed == null || !failed.isEditable()) && create) {
+            failed = project.getElementsFactory().createClassInstance();
+            failed.setOwner(folder);
+            failed.setName("conflict_" + df.format(new Date()));
+        }
+        return failed;
+    }
+    
+    public static Element getFailedElement(Project project, boolean create) {
+        String folderId = project.getPrimaryProject().getProjectID();
+        folderId += "_sync";
+        Element folder = ExportUtility.getElementFromID(folderId);
+        if (folder == null) {
+            if (!create)
+                return null;
+            project.getCounter().setCanResetIDForObject(true);
+            folder = project.getElementsFactory().createPackageInstance();
+            folder.setOwner(project.getModel());
+            ((Package)folder).setName("__ProjectSync__");
+            folder.setID(folderId);
+        } else {
+            TeamworkUtils.lockElement(project, folder, true);
+        }
+        Class failed = null;
+        String last = "";
+        for (Element e: folder.getOwnedElement()) {
+            if (e instanceof Class) {
+                String name = ((Class)e).getName();
+                if (name.startsWith("error") && name.compareTo(last) >= 0)
+                    failed = (Class)e;
+            }
+        }
+        if ((failed == null || !failed.isEditable()) && create) {
+            failed = project.getElementsFactory().createClassInstance();
+            failed.setOwner(folder);
+            failed.setName("error_" + df.format(new Date()));
+        }
+        return failed;
+    }
+    
     public static void setLooseEnds(Project project, JSONObject o) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        projectInstances.put(CONFLICTS, o);
-        //should save it in model somewhere
+        if (o == null)
+            projectInstances.remove(CONFLICTS);
+        else
+            projectInstances.put(CONFLICTS, o);
+        Element e = getConflictsElement(project, true);
+        ((NamedElement)e).setName("conflict_" + df.format(new Date()));
+        ModelHelper.setComment(e, (o == null) ? "{\"elements\":[]}" : o.toJSONString());
     }
     
     public static JSONObject getLooseEnds(Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        return (JSONObject)projectInstances.get(CONFLICTS);
-        //check model also
+        JSONObject toreturn = (JSONObject)projectInstances.get(CONFLICTS);
+        if (toreturn == null) {
+            Element e = getConflictsElement(project, false);
+            if (e == null)
+                return null;
+            return (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+        } else
+            return toreturn;
     }
     
     public static void setFailed(Project project, JSONObject o) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        projectInstances.put(FAILED, o);
-        //should save it in model somewhere
+        if (o == null)
+            projectInstances.remove(FAILED);
+        else
+            projectInstances.put(FAILED, o);
+        Element e = getFailedElement(project, true);
+        ((NamedElement)e).setName("error_" + df.format(new Date()));
+        ModelHelper.setComment(e, (o == null) ? "{\"added\":[], \"changed\":[], \"deleted\":[]}" : o.toJSONString());
     }
     
     public static JSONObject getFailed(Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        return (JSONObject)projectInstances.get(FAILED);
-        //check model also
+        JSONObject toreturn = (JSONObject)projectInstances.get(FAILED);
+        if (toreturn == null) {
+            Element e = getFailedElement(project, false);
+            if (e == null)
+                return null;
+            return (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+        } else
+            return toreturn;
     }
     
     public static Map<String, Set<String>> getJMSChanges(Project project) {
@@ -128,6 +223,17 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Connection connection = null;
         Session session = null;
         MessageConsumer consumer = null;
+        
+        JSONObject previousFailed = getFailed(project);
+        if (previousFailed != null) {
+            addedIds.addAll((List<String>)previousFailed.get("added"));
+            deletedIds.addAll((List<String>)previousFailed.get("deleted"));
+            changedIds.addAll((List<String>)previousFailed.get("changed"));
+        }
+        JSONObject previousConflicts = getLooseEnds(project);
+        if (previousConflicts != null) {
+            changedIds.addAll((List<String>)previousConflicts.get("elements"));
+        }
         try {
             ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
             String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
@@ -181,6 +287,15 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 }
                 m.acknowledge();
                 m = consumer.receive(1000);
+            }
+            SessionManager sm = SessionManager.getInstance();
+            sm.createSession("mms delayed sync change logs");
+            try {
+                setFailed(project, null);
+                setLooseEnds(project, null);
+                sm.closeSession();
+            } catch (Exception e) {
+                sm.cancelSession();
             }
             return changes;
         } catch (Exception e) {

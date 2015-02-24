@@ -494,8 +494,10 @@ public class ExportUtility {
                         Object o = JSONValue.parse(response);
                         if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
                             Application.getInstance().getGUILog().log("Server message: " + ((JSONObject)o).get("message"));
+                        else
+                            Application.getInstance().getGUILog().log("Server response: " + response);
                     } catch (Exception c) {
-                        
+                        Application.getInstance().getGUILog().log("Server response: " + response);
                     }
                 }
             } else if (code == 400) {
