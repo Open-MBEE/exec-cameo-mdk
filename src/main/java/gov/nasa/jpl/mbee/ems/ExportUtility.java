@@ -761,6 +761,7 @@ public class ExportUtility {
         JSONObject elementInfo = einfo;
         if (elementInfo == null)
             elementInfo = new JSONObject();
+        elementInfo.put("valueExpression", null);
         // ValueSpecification expr = vs.getExpression();
         // if ( expr != null ) {
         // elementInfo.put( "valueExpression", expr.getID() );

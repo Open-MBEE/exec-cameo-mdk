@@ -3,6 +3,11 @@ package gov.nasa.jpl.mbee.ems.sync;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
+import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,6 +129,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change");
             try {
+                List<Map<String, Object>> toChange = new ArrayList<Map<String, Object>>();
                 //take care of web added
                 if (webAddedSorted != null) {
                     for (Object element : webAddedSorted) {
@@ -154,6 +160,23 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         ImportUtility.updateElement(e, webUpdated);
                         ImportUtility.setOwner(e, webUpdated);
                         gl.log("[SYNC] " + e.getHumanName() + " updated.");
+                        if (webUpdated.containsKey("specialization")) {
+                            JSONArray view2view = (JSONArray)((JSONObject)webUpdated.get("specialization")).get("view2view");
+                            if (view2view != null) {
+                                JSONObject web = ExportUtility.keyView2View(view2view);
+                                DocumentGenerator dg = new DocumentGenerator(e, null, null);
+                                Document dge = dg.parseDocument(true, true, true);
+                                ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+                                dge.accept(vhv);
+                                JSONObject model = vhv.getView2View();
+                                if (!ViewValidator.viewHierarchyMatch(e, dge, vhv, (JSONObject)webUpdated.get("specialization"))) {
+                                    Map<String, Object> result = ImportHierarchy.importHierarchy(e, model, web);
+                                    gl.log("[SYNC] Document hierarchy updated for " + e.getHumanName());
+                                    if (result != null)
+                                        toChange.add(result);
+                                }
+                            }
+                        }
                     } catch (Exception ex) {
                         cannotChange.add(ExportUtility.getElementID(e));
                     }
@@ -175,6 +198,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 sm.closeSession();
                 listener.enable();
                 gl.log("[INFO] Finished applying changes.");
+                for (Map<String, Object> r: toChange) {
+                    ImportHierarchy.sendChanges(r); //what about if doc is involved in conflict?
+                }
                 
                 if (!cannotAdd.isEmpty() || !cannotChange.isEmpty() || !cannotDelete.isEmpty()) {
                     JSONObject failed = new JSONObject();
@@ -268,11 +294,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
             localDeleted.clear();
             if (toDeleteElements.isEmpty() && toSendElements.isEmpty())
                 gl.log("[INFO] No changes to commit.");
-            else
-                gl.log("[INFO] Don't forget to save or commit to teamwork and unlock!");
             //commit automatically and send project version?
         }
-        
+        gl.log("[INFO] Don't forget to save or commit to teamwork and unlock!");
     }
-
 }
