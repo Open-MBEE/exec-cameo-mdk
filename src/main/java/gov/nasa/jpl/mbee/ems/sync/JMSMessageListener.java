@@ -9,8 +9,10 @@ import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -36,6 +38,22 @@ public class JMSMessageListener implements MessageListener {
     private static Logger log = Logger.getLogger(JMSMessageListener.class);
     public JMSMessageListener(Project project) {
         this.project = project;
+    }
+
+    private Set<String> cannotAdd = new HashSet<String>();
+    private Set<String> cannotChange = new HashSet<String>();
+    private Set<String> cannotDelete = new HashSet<String>();
+    
+    public Set<String> getCannotAdd() {
+        return cannotAdd;
+    }
+
+    public Set<String> getCannotChange() {
+        return cannotChange;
+    }
+
+    public Set<String> getCannotDelete() {
+        return cannotDelete;
     }
 
     @Override
@@ -92,11 +110,14 @@ public class JMSMessageListener implements MessageListener {
                             }
                         } else {
                             log.error("jms message added can't be executed - " + added.toJSONString());
+                            for (JSONObject element: (List<JSONObject>)added) {
+                                cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                            }
                         }
                         for (Object element : moved) {
                             moveElement((JSONObject) element);
                         }
-                        for (Object element : updated) {
+                        for (Object element : updated) { 
                             Map<String, Object> results = makeChange((JSONObject) element);
                             if (results != null)
                                 toChange.add(results);
@@ -130,47 +151,65 @@ public class JMSMessageListener implements MessageListener {
                         listener.enable();
                 }
 
-                private Map<String, Object> makeChange(JSONObject ob) throws ReadOnlyElementException {
+                private Map<String, Object> makeChange(JSONObject ob) {
                     String sysmlid = (String) ob.get("sysmlid");
-                    Element changedElement = ExportUtility.getElementFromID(sysmlid);
-                    if (changedElement == null) {
-                        guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync change");
-                        return null;
-                    } else if (!changedElement.isEditable()) {
-                        if (!TeamworkUtils.lockElement(project, changedElement, false)) {
-                            guilog.log("[ERROR - Autosync] " + changedElement.getHumanName() + " is not editable!");
+                    try {
+                        Element changedElement = ExportUtility.getElementFromID(sysmlid);
+                        if (changedElement == null) {
+                            guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync change");
                             return null;
-                        }
-                    }
-                    ImportUtility.updateElement(changedElement, ob);
-                    guilog.log("[Autosync] " + changedElement.getHumanName() + " updated");
-                    if (ob.containsKey("specialization")) {
-                        JSONArray view2view = (JSONArray)((JSONObject)ob.get("specialization")).get("view2view");
-                        if (view2view != null) {
-                            JSONObject web = ExportUtility.keyView2View(view2view);
-                            DocumentGenerator dg = new DocumentGenerator(changedElement, null, null);
-                            Document dge = dg.parseDocument(true, true, true);
-                            ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
-                            dge.accept(vhv);
-                            JSONObject model = vhv.getView2View();
-                            if (!ViewValidator.viewHierarchyMatch(changedElement, dge, vhv, (JSONObject)ob.get("specialization"))) {
-                                Map<String, Object> result = ImportHierarchy.importHierarchy(changedElement, model, web);
-                                guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
-                                return result;
-                                //List<Request> requests = ImportHierarchy.sendChanges(result);
-                                //return requests;
+                        } else if (!changedElement.isEditable()) {
+                            if (!TeamworkUtils.lockElement(project, changedElement, false)) {
+                                guilog.log("[ERROR - Autosync] " + changedElement.getHumanName() + " is not editable!");
+                                cannotChange.add(sysmlid);
+                                return null;
                             }
                         }
+                        ImportUtility.updateElement(changedElement, ob);
+                        guilog.log("[Autosync] " + changedElement.getHumanName() + " updated");
+                        if (ob.containsKey("specialization")) {
+                            JSONArray view2view = (JSONArray)((JSONObject)ob.get("specialization")).get("view2view");
+                            if (view2view != null) {
+                                JSONObject web = ExportUtility.keyView2View(view2view);
+                                DocumentGenerator dg = new DocumentGenerator(changedElement, null, null);
+                                Document dge = dg.parseDocument(true, true, true);
+                                ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+                                dge.accept(vhv);
+                                JSONObject model = vhv.getView2View();
+                                if (!ViewValidator.viewHierarchyMatch(changedElement, dge, vhv, (JSONObject)ob.get("specialization"))) {
+                                    Map<String, Object> result = ImportHierarchy.importHierarchy(changedElement, model, web);
+                                    if (result != null && (Boolean)result.get("success")) {
+                                        guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
+                                        return result;
+                                    } else {
+                                        cannotChange.add(sysmlid);
+                                    }
+                                    //List<Request> requests = ImportHierarchy.sendChanges(result);
+                                    //return requests;
+                                }
+                            }
+                        }
+                        return null;
+                    } catch (Exception ex) {
+                        log.error("", ex);
+                        cannotChange.add(sysmlid);
+                        return null;
                     }
-                    return null;
                 }
 
                 private void addElement(JSONObject ob, boolean updateRelations) {
-                    Element e = ImportUtility.createElement(ob, updateRelations);
-                    if (e == null && updateRelations)
-                        guilog.log("[ERROR -- Autosync] create element failed, owner not found");
-                    else if (e != null && updateRelations)
-                        guilog.log("[Autosync] " + e.getHumanName() + " created");
+                    try {
+                        Element e = ImportUtility.createElement(ob, updateRelations);
+                        if (e == null && updateRelations) {
+                            guilog.log("[ERROR -- Autosync] create element failed, owner not found");
+                            cannotAdd.add((String)ob.get("sysmlid"));
+                        }
+                        else if (e != null && updateRelations)
+                            guilog.log("[Autosync] " + e.getHumanName() + " created");
+                    } catch (Exception ex) {
+                        log.error("", ex);
+                        cannotAdd.add((String)ob.get("sysmlid"));
+                    }
                 }
 
                 private void deleteElement(JSONObject ob) {
@@ -187,18 +226,25 @@ public class JMSMessageListener implements MessageListener {
                         guilog.log("[Autosync] " + changedElement.getHumanName() + " deleted");
                     } catch (ReadOnlyElementException e) {
                         guilog.log("[ERROR - Autosync] Sync: " + changedElement.getHumanName() + " cannot be deleted!");
+                        log.error("", e);
+                        cannotDelete.add((String)ob.get("sysmlid"));
                     }
                 }
 
                 private void moveElement(JSONObject ob) {
                     String sysmlid = (String) ob.get("sysmlid");
-                    Element changedElement = ExportUtility.getElementFromID(sysmlid);
-                    if (changedElement == null) {
-                        guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync move");
-                        return;
+                    try {
+                        Element changedElement = ExportUtility.getElementFromID(sysmlid);
+                        if (changedElement == null) {
+                            guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync move");
+                            return;
+                        }
+                        ImportUtility.setOwner(changedElement, ob);
+                        guilog.log("[Autosync] " + changedElement.getHumanName() + " moved");
+                    } catch (Exception ex) {
+                        log.error("", ex);
+                        cannotChange.add(sysmlid);
                     }
-                    ImportUtility.setOwner(changedElement, ob);
-                    guilog.log("[Autosync] " + changedElement.getHumanName() + " moved");
                 }
             };
             project.getRepository().invokeAfterTransaction(runnable);

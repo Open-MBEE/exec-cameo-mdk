@@ -201,9 +201,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
                                 JSONObject model = vhv.getView2View();
                                 if (!ViewValidator.viewHierarchyMatch(e, dge, vhv, (JSONObject)webUpdated.get("specialization"))) {
                                     Map<String, Object> result = ImportHierarchy.importHierarchy(e, model, web);
-                                    gl.log("[SYNC] Document hierarchy updated for " + e.getHumanName());
-                                    if (result != null)
+                                    if (result != null && (Boolean)result.get("success")) {
+                                        gl.log("[SYNC] Document hierarchy updated for " + e.getHumanName());
                                         toChange.add(result);
+                                    } else
+                                        cannotChange.add(ExportUtility.getElementID(e));
                                 }
                             }
                         }

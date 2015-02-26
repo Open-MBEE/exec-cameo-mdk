@@ -60,6 +60,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public static final String LISTENER = "AutoSyncCommitListener";
     private static final String SESSION = "Session";
     private static final String CONSUMER = "MessageConsumer";
+    public static final String JMSLISTENER = "JmsListener";
     public static final String CONFLICTS = "Conflicts";
     public static final String FAILED = "Failed";
     public static final String UPDATES = "Updates";
@@ -365,9 +366,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             //    Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
             //    return;
             //}
-            if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
-                Application.getInstance().getGUILog().log("[ERROR] cannot lock project recursively - autosync will not start");
-                return;
+            for (Element e: project.getModel().getOwnedElement()) {
+                if (ProjectUtilities.isElementInAttachedProject(e))
+                    continue;
+                if (!TeamworkUtils.lockElement(project, e, true)) {
+                    Application.getInstance().getGUILog().log("[ERROR] cannot lock project - autosync will not start");
+                    return;
+                }
             }
         }
         try {
@@ -404,8 +409,10 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             String messageSelector = constructSelectorString(projectID, wsID);
             
             MessageConsumer consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
-            consumer.setMessageListener(new JMSMessageListener(project));
+            JMSMessageListener jmslistener = new JMSMessageListener(project);
+            consumer.setMessageListener(jmslistener);
             connection.start();
+            projectInstances.put(JMSLISTENER, jmslistener);
             projectInstances.put(CONNECTION, connection);
             projectInstances.put(SESSION, session);
             projectInstances.put(CONSUMER, consumer);
@@ -451,9 +458,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             else
                 project.getRepository().getTransactionManager().removeTransactionCommitListener(listener);
         }
+        if (keepDelayedSync)
+            saveAutoSyncErrors(project);
         Connection connection = (Connection) projectInstances.remove(CONNECTION);
         Session session = (Session) projectInstances.remove(SESSION);
         MessageConsumer consumer = (MessageConsumer) projectInstances.remove(CONSUMER);
+        projectInstances.remove(JMSLISTENER);
         try {
             if (consumer != null)
                 consumer.close();
@@ -512,6 +522,51 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     }
     
     @SuppressWarnings("unchecked")
+    private static void saveAutoSyncErrors(Project project) {
+        Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
+                || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(JMSLISTENER)) {
+            //autosync is on
+            JMSMessageListener j = (JMSMessageListener)projectInstances.get(JMSLISTENER);
+            if (j != null) {
+                Set<String> cannotAdd = new HashSet<String>(j.getCannotAdd());
+                Set<String> cannotChange = new HashSet<String>(j.getCannotChange());
+                Set<String> cannotDelete = new HashSet<String>(j.getCannotDelete());
+                if (cannotAdd.isEmpty() && cannotChange.isEmpty() && cannotDelete.isEmpty())
+                    return;
+                JSONObject failed = getFailed(project);
+                if (failed == null) {
+                    failed = new JSONObject();
+                    failed.put("added", new JSONArray());
+                    failed.put("changed", new JSONArray());
+                    failed.put("deleted", new JSONArray());
+                }
+                    JSONArray failedAdd = (JSONArray)failed.get("added");
+                    JSONArray failedChange = (JSONArray)failed.get("changed");
+                    JSONArray failedDelete = (JSONArray)failed.get("deleted");
+                    cannotAdd.addAll(failedAdd);
+                    cannotChange.addAll(failedChange);
+                    cannotDelete.addAll(failedDelete);
+                    failedAdd.clear();
+                    failedChange.clear();
+                    failedDelete.clear();
+                    failedAdd.addAll(cannotAdd);
+                    failedChange.addAll(cannotChange);
+                    failedDelete.addAll(cannotDelete);
+                    SessionManager sm = SessionManager.getInstance();
+                    sm.createSession("save autosync error");
+                    try {
+                        setFailed(project, failed);
+                        sm.closeSession();
+                    } catch (Exception e) {
+                        log.error("", e);
+                        sm.cancelSession();
+                    }     
+            }
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
         AutoSyncCommitListener listener = getCommitListener(project);
@@ -525,6 +580,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         notSaved.put("added", added);
         notSaved.put("changed", updated);
         notSaved.put("deleted", deleted);
+        saveAutoSyncErrors(project);
         SessionManager sm = SessionManager.getInstance();
         sm.createSession("mms delayed sync change logs");
         try {
@@ -540,7 +596,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public void projectSaved(Project project, boolean savedInServer) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
-                || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
+                || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(JMSLISTENER)) {
             //autosync is on
             ExportUtility.sendProjectVersion();
         }
