@@ -1029,9 +1029,28 @@ public class ExportUtility {
             specialization = new JSONObject();
         specialization.put("type", "Package");
         Stereotype characterizes = Utils.getCharacterizesStereotype();
-        if (characterizes != null && Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1).size() > 0)
-            specialization.put("isSite", true);
-        else
+        if (characterizes != null) {
+            List<Element> sites =  Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1);
+            boolean found = false;
+            for (Element l: sites) {  
+                /*if (l instanceof NamedElement && ((NamedElement)l).getName().equals("Site Characterization")) {
+                    found = true;
+                    break;
+                }*/
+                if (l instanceof Classifier) {
+                    for (Classifier g: ((Classifier)l).getGeneral()) {
+                        if (g.getName().equals("Site Characterization")) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (found)
+                specialization.put("isSite", true);
+            else
+                specialization.put("isSite", false);
+        } else
             specialization.put("isSite", false);
         return specialization;
     }
