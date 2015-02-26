@@ -99,7 +99,10 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             ((Package)folder).setName("__ProjectSync__");
             folder.setID(folderId);
         } else {
-            TeamworkUtils.lockElement(project, folder, true);
+            if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+                if (TeamworkUtils.getLoggedUserName() != null)
+                    TeamworkUtils.lockElement(project, folder, true);
+            }
         }
         Class failed = null;
         String last = "";
@@ -128,7 +131,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Element e = getSyncElement(project, false, "update");
         if (e == null)
             return null;
-        return (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+        try {
+            JSONObject updates = (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+            return updates;
+        } catch (Exception ex) {
+            log.error("", ex);
+            return null;
+        }
     }
     
     public static void setConflicts(Project project, JSONObject o) {
@@ -149,7 +158,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Element e = getSyncElement(project, false, "conflict");
             if (e == null)
                 return null;
-            return (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+            try {
+                JSONObject ob = (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+                return ob;
+            } catch (Exception ex) {
+                log.error("", ex);
+                return null;
+            }
         } else
             return toreturn;
     }
@@ -172,11 +187,18 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Element e = getSyncElement(project, false, "error");
             if (e == null)
                 return null;
-            return (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+            try {
+                JSONObject ob = (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+                return ob;
+            } catch (Exception ex) {
+                log.error("", ex);
+                return null;
+            }
         } else
             return toreturn;
     }
     
+    @SuppressWarnings("unchecked")
     public static Map<String, Set<String>> getJMSChanges(Project project) {
         Map<String, Set<String>> changes = new HashMap<String, Set<String>>();
         Set<String> changedIds = new HashSet<String>();
@@ -391,6 +413,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Application.getInstance().getGUILog().log("[INFO] sync initiated");
         }
         catch (Exception e) {
+            log.error("", e);
             Application.getInstance().getGUILog().log("[ERROR] sync initialization failed: " + e.getMessage());
         }
     }
@@ -440,7 +463,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 connection.close();
         }
         catch (Exception e) {
-
+            log.error("", e);
         }
         Application.getInstance().getGUILog().log("[INFO] sync ended");
     }
@@ -508,6 +531,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             setUpdates(project, notSaved);
             sm.closeSession();
         } catch (Exception e) {
+            log.error("", e);
             sm.cancelSession();
         }        
     }
@@ -516,7 +540,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public void projectSaved(Project project, boolean savedInServer) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
-                || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(LISTENER)) {
+                || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
             //autosync is on
             ExportUtility.sendProjectVersion();
         }

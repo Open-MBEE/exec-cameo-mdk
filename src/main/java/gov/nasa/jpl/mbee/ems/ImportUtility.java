@@ -54,6 +54,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectableElement;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -527,6 +530,18 @@ public class ImportUtility {
                 if (op instanceof String)
                     oe.getBody().add((String)op);
             }
+            break;
+        case TimeExpression:
+            TimeExpression te = ef.createTimeExpressionInstance();
+            newval = te;
+            break;
+        case DurationInterval:
+            DurationInterval di = ef.createDurationIntervalInstance();
+            newval = di;
+            break;
+        case TimeInterval:
+            TimeInterval ti = ef.createTimeIntervalInstance();
+            newval = ti;
             break;
         default:
             log.error("Bad PropertyValueType: " + valueType);

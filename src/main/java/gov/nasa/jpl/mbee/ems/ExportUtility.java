@@ -293,8 +293,12 @@ public class ExportUtility {
             "_16_8beta_9020291_1265099984697_425850_1246",
             "_17_0_4beta_8850271_1363160735759_359423_3337",
             "_17_0_4beta_8850271_1363684316441_131742_3334",
-            "_17_0_5beta_8850271_1378111695683_872709_3379"
-            )); // propertyPath
+            "_17_0_5beta_8850271_1378111695683_872709_3379",
+            "_17_0_3_85f027d_1362349793876_101885_3031", //specification table
+            "_17_0_3_85f027d_1362349793876_376001_3032",
+            "_17_0_3_85f027d_1362349793876_780075_3033",
+            "_17_0_4beta_85f027d_1366953341699_324867_3761"
+            ));
 
     public static Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
             "_11_5EAPbeta_be00301_1147431307463_773225_1455", //nested connector end
@@ -304,7 +308,8 @@ public class ExportUtility {
             "_17_0_3beta_8e10289_1348753189236_873942_2915", //dependency matrix
             "_17_0_3beta_8e10289_1348753189306_38038_3061", //matrix filter
             "_16_8beta_9020291_1260453936960_387965_1187", //relation map
-            "_17_0_2_3_407019f_1383165357327_898985_29071" //mms
+            "_17_0_2_3_407019f_1383165357327_898985_29071", //mms
+            "_17_0_3_85f027d_1362349793845_681432_2986" //specification table
             ));
     
 
@@ -470,7 +475,7 @@ public class ExportUtility {
     public static boolean showErrors(int code, String response,
             boolean showPopupErrors) {
         if (code != 200) {
-            if (code == 500) {
+            if (code >= 500) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("Server Error, see message window for details");
                 Application.getInstance().getGUILog().log(response);
@@ -770,6 +775,8 @@ public class ExportUtility {
             elementInfo.put("type", "Duration");
         } else if (vs instanceof DurationInterval) {
             elementInfo.put("type", "DurationInterval");
+            elementInfo.put("min", null);
+            elementInfo.put("max", null);
             /*Duration maxD = ((DurationInterval) vs).getMax();
             if (maxD != null) {
                 elementInfo.put("max", maxD.getID());
@@ -836,6 +843,8 @@ public class ExportUtility {
             elementInfo.put("type", "TimeExpression");
         } else if (vs instanceof TimeInterval) {
             elementInfo.put("type", "TimeInterval");
+            elementInfo.put("min", null);
+            elementInfo.put("max", null);
             /*TimeExpression maxD = ((TimeInterval) vs).getMax();
             if (maxD != null)
                 elementInfo.put("timeIntervalMax", maxD.getID());
@@ -1562,6 +1571,8 @@ public class ExportUtility {
             return false;
         if (e instanceof Slot && (e.getOwner() == null || ((Slot)e).getDefiningFeature() == null)) //model is messed up
                 return false;
+        if (e.getID().endsWith("sync") || (e.getOwner() != null && e.getOwner().getID().endsWith("sync"))) //delayed sync stuff
+            return false;
         return true;
     }
 

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -23,6 +24,7 @@ import org.json.simple.JSONValue;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
@@ -35,9 +37,20 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private boolean commit;
     
     private GUILog gl = Application.getInstance().getGUILog();
+    private Logger log = Logger.getLogger(ManualSyncRunner.class);
     
     public ManualSyncRunner(boolean commit) {
         this.commit = commit;
+    }
+    
+    private void tryToLock(Project project) {
+        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) 
+            return;
+        for (Element e: project.getModel().getOwnedElement()) {
+            if (ProjectUtilities.isElementInAttachedProject(e))
+                continue;
+            TeamworkUtils.lockElement(project, e, true);
+        }
     }
     
     @SuppressWarnings("unchecked")
@@ -45,7 +58,13 @@ public class ManualSyncRunner implements RunnableWithProgress {
     public void run(ProgressStatus ps) {
         Application.getInstance().getGUILog().log("[INFO] Getting changes from MMS...");
         Project project = Application.getInstance().getProject();
-        
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            if (TeamworkUtils.getLoggedUserName() == null) {
+                gl.log("[ERROR] You need to be logged in to teamwork first.");
+                return;
+            }
+        }
+            
         AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
         if (listener == null)
             return; //some error here
@@ -70,7 +89,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Set<String> cannotDelete = new HashSet<String>();
         
         if (!toGet.isEmpty()) {
-            TeamworkUtils.lockElement(project, project.getModel(), true);
+            //TeamworkUtils.lockElement(project, project.getModel(), true);
+            tryToLock(project);
             JSONObject getJson = new JSONObject();
             JSONArray getElements = new JSONArray();
             getJson.put("elements", getElements);
@@ -133,13 +153,18 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 //take care of web added
                 if (webAddedSorted != null) {
                     for (Object element : webAddedSorted) {
-                        ImportUtility.createElement((JSONObject) element, false);
+                        try {
+                            ImportUtility.createElement((JSONObject) element, false);
+                        } catch (Exception ex) {
+                            
+                        }
                     }
                     for (Object element : webAddedSorted) { 
                         try {
                             Element newe = ImportUtility.createElement((JSONObject) element, true);
                             gl.log("[SYNC] " + newe.getHumanName() + " created.");
                         } catch (Exception ex) {
+                            log.error("", ex);
                             cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
                         }
                     }
@@ -154,6 +179,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     Element e = ExportUtility.getElementFromID((String)webUpdated.get("sysmlid"));
                     if (e == null) {
                         //bad? maybe it was supposed to have been added?
+                        continue;
+                    }
+                    if (!e.isEditable()) {
+                        cannotChange.add(ExportUtility.getElementID(e));
+                        gl.log("[ERROR - SYNC] " + e.getHumanName() + " not editable.");
                         continue;
                     }
                     try {
@@ -178,6 +208,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
                             }
                         }
                     } catch (Exception ex) {
+                        gl.log("[ERROR - SYNC] " + e.getHumanName() + " failed to update from MMS: " + ex.getMessage());
+                        log.error("", ex);
                         cannotChange.add(ExportUtility.getElementID(e));
                     }
                 }
@@ -191,6 +223,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         ModelElementsManager.getInstance().removeElement(toBeDeleted);
                         gl.log("[SYNC] " + toBeDeleted.getHumanName() + " deleted.");
                     } catch (Exception ex) {
+                        log.error("", ex);
                         cannotDelete.add(e);
                     }
                 }
@@ -219,13 +252,14 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         AutoSyncProjectListener.setFailed(project, failed);
                         sm.closeSession();
                     } catch (Exception ex) {
+                        log.error("", ex);
                         sm.cancelSession();
                     }
                     listener.enable();
                     gl.log("[WARNING] There were changes that couldn't be applied.");
                 }
                 
-              //conflicts???
+              //conflicts
                 JSONObject mvResult = new JSONObject();
                 mvResult.put("elements", webConflictedObjects);
                 ModelValidator mv = new ModelValidator(null, mvResult, false, localConflictedElements, false);
@@ -238,13 +272,13 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         conflictedElementIds.add(ExportUtility.getElementID(ce));
                     conflictedToSave.put("elements", conflictedElementIds);
                     gl.log("[INFO] There are potential conflicts between changes from MMS and locally changed elements, please resolve first and rerun update/commit.");
-                //?? popups or validation window?
                     listener.disable();
                     sm.createSession("failed changes");
                     try {
                         AutoSyncProjectListener.setConflicts(project, conflictedToSave);
                         sm.closeSession();
                     } catch (Exception ex) {
+                        log.error("", ex);
                         sm.cancelSession();
                     }
                     listener.enable();
@@ -252,6 +286,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     return;
                 } 
             } catch (Exception e) {
+                log.error("", e);
                 sm.cancelSession();
             }
         } else {
@@ -294,18 +329,22 @@ public class ManualSyncRunner implements RunnableWithProgress {
             localDeleted.clear();
             if (toDeleteElements.isEmpty() && toSendElements.isEmpty())
                 gl.log("[INFO] No changes to commit.");
+            if (!toDeleteElements.isEmpty() || !toSendElements.isEmpty() || !toGet.isEmpty())
+                gl.log("[INFO] Don't forget to save or commit to teamwork and unlock!");
             
             listener.disable();
             SessionManager sm = SessionManager.getInstance();
-            sm.createSession("failed changes");
+            sm.createSession("updates sent");
             try {
                 AutoSyncProjectListener.setUpdates(project, null);
                 sm.closeSession();
             } catch (Exception ex) {
+                log.error("", ex);
                 sm.cancelSession();
             }
             listener.enable();
         }
-        gl.log("[INFO] Don't forget to save or commit to teamwork and unlock!");
+        if (!toGet.isEmpty() && !commit)
+            gl.log("[INFO] Don't forget to save or commit to teamwork and unlock!");
     }
 }

@@ -274,12 +274,12 @@ public class ViewValidator {
                         // Update the hierarchy in MagicDraw based on MagicDraw
                         ValidationRuleViolation v = new ValidationRuleViolation( currentView, "[Hierarchy] Document Hierarchy is different");
                         JSONArray view2view = (JSONArray)((JSONObject)webView.get("specialization")).get("view2view");
+                        if (editable)
+                            v.addAction(new ExportHierarchy(currentView));
                         if (view2view != null) {
                             JSONObject keyed = ExportUtility.keyView2View(view2view);
                             v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
                         }
-                        if (editable)
-                            v.addAction(new ExportHierarchy(currentView));
                         hierarchy.addViolation(v);
                     }
                 }
