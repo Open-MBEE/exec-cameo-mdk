@@ -21,7 +21,7 @@
     <property name="plugin.resource" value="${plugin.resources}/data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
     <property name="plugin.archive" value="gov.nasa.jpl.mbee.docgen"/>
 
-    <target name="all" depends="all.error,all.ok"/>
+    <target name="all" depends="all.error,all.ok,install"/>
     
     <target name="all.error" unless="all.precondition.md">
         <echo message="Check the environment variables tested in the target 'all.precondition.md'"/>
