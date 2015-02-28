@@ -68,13 +68,18 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
     @SuppressWarnings("unchecked")
     @Override
     public void execute(Collection<Annotation> annos) {
+        Set<String> duplicatedNames = new HashSet<String>();
         JSONObject send = new JSONObject();
         JSONArray infos = new JSONArray();
         Set<Element> set = new HashSet<Element>();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             if (duplicateName(e)) {
-                Application.getInstance().getGUILog().log("[ERROR] " + ((NamedElement)e).getQualifiedName() + " has the same qualified name as another element.");
+                String qname = ((NamedElement)e).getQualifiedName();
+                if (!duplicatedNames.contains(qname)) {
+                    Application.getInstance().getGUILog().log("[WARNING] " + qname + " has the same qualified name as another element.");
+                    duplicatedNames.add(qname);
+                }
                 //return;
             }
             if (e instanceof NamedElement) {

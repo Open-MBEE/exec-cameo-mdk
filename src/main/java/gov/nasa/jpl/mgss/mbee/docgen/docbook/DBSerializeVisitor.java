@@ -136,7 +136,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                             + "</address></publisher>");
                 else
                     out.append("\n<publisher><publishername>" + book.getAbbreviatedProjectName()
-                            + "</publishername><address></address></publisher>");
+                            + "</publishername></publisher>");
             }
             out.append("\n<pubdate>" + new Date().toString() + "</pubdate>");
             if (book.getJPLProjectTitle() == null || book.getJPLProjectTitle().equals("")) {

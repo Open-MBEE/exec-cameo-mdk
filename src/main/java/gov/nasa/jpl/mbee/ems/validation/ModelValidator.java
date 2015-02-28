@@ -204,10 +204,10 @@ public class ModelValidator {
             if (start == Application.getInstance().getProject().getModel())
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             id = id.replace(".", "%2E");
-            url += "/elements/" + id + "?recurse=true&qualified=false";
+            String url2 = url + "/elements/" + id + "?recurse=true&qualified=false";
             GUILog log = Application.getInstance().getGUILog();
             log.log("[INFO] Getting elements from server...");
-            response = ExportUtility.get(url, false);
+            response = ExportUtility.get(url2, false);
             log.log("[INFO] Finished getting elements");
             if (response == null) {
                 response = "{\"elements\": []}";
