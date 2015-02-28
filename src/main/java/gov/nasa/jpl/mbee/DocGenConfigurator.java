@@ -61,6 +61,8 @@ import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -106,7 +108,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         Object o = no.getUserObject();
         if (!(o instanceof Element))
             return;
-        addElementActions(manager, (Element)o);
+        List<Element> elements = new ArrayList<Element>();
+        for (Node node: browser.getSelectedNodes()) {
+            if (node == null)
+                continue;;
+            Object ob = node.getUserObject();
+            if (!(ob instanceof Element))
+                continue;
+            elements.add((Element)ob);
+        }
+        addElementActions(manager, (Element)o, elements);
     }
 
     @Override
@@ -114,8 +125,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             PresentationElement[] selected, PresentationElement requestor) {
         if ( repainting() ) return;
         if (requestor != null) {
+            Collection<Element> es = new ArrayList<Element>();
+            for (PresentationElement pe: selected) {
+                if (pe.getElement() != null)
+                    es.add(pe.getElement());
+            }
             Element e = requestor.getElement();
-            addElementActions(manager, e);
+            if (e != null)
+                addElementActions(manager, e, es);
         } else {
             addDiagramActions(manager, diagram);
         }
@@ -141,7 +158,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         return false;
     }
 
-    private void addElementActions(ActionsManager manager, Element e) {
+    private void addElementActions(ActionsManager manager, Element e, Collection<Element> es) {
         Project prj = Project.getProject(e);
         if (prj == null)
             return;
@@ -172,7 +189,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     modelLoad.addAction(new InitializeProjectAction());
             }
             if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                modelLoad.addAction(new ValidateModelAction(e, (Application.getInstance().getProject().getModel() == e) ? "Validate Model": "Validate SubModel"));
+                modelLoad.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Model": "Validate SubModel"));
             if (e instanceof Package) {
                 if (manager.getActionFor(ExportAllDocuments.actionid) == null)
                     modelLoad.addAction(new ExportAllDocuments(e));

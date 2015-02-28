@@ -13,7 +13,7 @@ public class StartAutoSyncAction extends MDAction {
 	public static final String actionid = "StartAutoSync";
 
 	public StartAutoSyncAction() {
-		super(actionid, "Start EMS Session", null, null);
+		super(actionid, "Start Dynamic Sync", null, null);
 	}
 
 	@Override

@@ -290,7 +290,9 @@ public class ViewValidator {
         //elements gotten from web
         if (!hierarchyOnly) {
             Application.getInstance().getGUILog().log("[INFO] Validating view elements");
-            ModelValidator mv = new ModelValidator(view, results, true, visitor2.getElementSet(), true); //visitor2.getElementSet() has the local model elements
+            List<Element> starts = new ArrayList<Element>();
+            starts.add(view);
+            ModelValidator mv = new ModelValidator(starts, results, true, visitor2.getElementSet(), true); //visitor2.getElementSet() has the local model elements
             //do the actual element validations between model and web
             mv.validate(false, ps);
             modelSuite = mv.getSuite();
