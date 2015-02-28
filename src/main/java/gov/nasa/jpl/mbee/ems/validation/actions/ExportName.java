@@ -74,8 +74,8 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             if (duplicateName(e)) {
-                Application.getInstance().getGUILog().log("[ERROR] " + ((NamedElement)e).getQualifiedName() + " has the same qualified name as another element. Aborted.");
-                return;
+                Application.getInstance().getGUILog().log("[ERROR] " + ((NamedElement)e).getQualifiedName() + " has the same qualified name as another element.");
+                //return;
             }
             if (e instanceof NamedElement) {
                 set.add(e);
@@ -102,8 +102,8 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         if (!ExportUtility.okToExport(element))
             return;
         if (duplicateName(element)) {
-            Application.getInstance().getGUILog().log("[ERROR] " + ((NamedElement)element).getQualifiedName() + " has the same qualified name as another element. Aborted.");
-            return;
+            Application.getInstance().getGUILog().log("[WARNING] " + ((NamedElement)element).getQualifiedName() + " has the same qualified name as another element.");
+            //return;
         }
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
