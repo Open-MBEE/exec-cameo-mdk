@@ -291,7 +291,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 }
             }
         }
-
+        OutputQueue.getInstance().offer(new Request("", "[INFO] Export View Done", "LOG"));
         // clean up the local images
         //visitor2.removeImages();
         //gl.log("[INFO] Done");

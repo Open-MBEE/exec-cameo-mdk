@@ -49,12 +49,18 @@ public class ElementDetail extends RuleViolationAction implements AnnotationActi
                 spec = (JSONObject)result.get("specialization");
                 continue;
             }
-            detail += key + ": " + result.get(key).toString() + "\n\n";
+            if (result.get(key) != null)
+                detail += key + ": " + result.get(key).toString() + "\n\n";
+            else
+                detail += key + ": null\n\n";
         }
         if (spec != null) {
             for (Object o: spec.keySet()) {
                 String key = (String)o;
-                detail += key + ": " + spec.get(key).toString() + "\n\n";
+                if (spec.get(key) != null)
+                    detail += key + ": " + spec.get(key).toString() + "\n\n";
+                else
+                    detail += key + ": null\n\n";
             }
         }
         JTextArea web = new JTextArea(detail);

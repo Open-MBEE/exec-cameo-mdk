@@ -100,6 +100,7 @@ public class DocGenUtils {
                                                                         put("</li>", "</para></listitem>");
                                                                         put("<b>|<b [^>]*>|<em>|<em [^>]*>|<strong>|<strong [^>]*>",
                                                                                 "<emphasis role=\"bold\">");
+                                                                        put("<h[1-6]>|<h[1-6] [^>]*>", "<para><emphasis role=\"bold\">");
                                                                         put("<s>|<strike>|<s [^>]*>|<strike [^>]*>",
                                                                                 "<emphasis role=\"strikethrough\">");
                                                                         put("<i>|<i [^>]*>", "<emphasis>");
@@ -109,6 +110,7 @@ public class DocGenUtils {
                                                                                 "");
                                                                         put("</b>|</i>|</u>|</strong>|</em>|</s>|</strike>",
                                                                                 "</emphasis>");
+                                                                        put("</h[1-6]>", "</emphasis></para>");
                                                                         put("<font [^>]*>|</font>", "");
                                                                         put("<sup>|<sup [^>]*>",
                                                                                 "<superscript>");

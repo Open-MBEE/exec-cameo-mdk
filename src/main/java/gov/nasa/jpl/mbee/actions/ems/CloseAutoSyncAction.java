@@ -13,7 +13,7 @@ public class CloseAutoSyncAction extends MDAction {
     public static final String actionid = "CloseAutoSync";
 
     public CloseAutoSyncAction() {
-        super(actionid, "Close EMS Session", null, null);
+        super(actionid, "Stop Dynamic Sync", null, null);
     }
 
     @Override

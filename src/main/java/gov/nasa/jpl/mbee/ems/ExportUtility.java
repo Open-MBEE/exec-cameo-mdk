@@ -491,36 +491,19 @@ public class ExportUtility {
                     Utils.showPopupMessage("You do not have permission to do this");
                 else
                     Application.getInstance().getGUILog().log("You do not have permission to do this");
-            } else if (code == 404) {
-                if (showPopupErrors)
-                    Utils.showPopupMessage("The thing you're trying to validate or get wasn't found on the server, see validation window");
-                else {
-                    try {
-                        Object o = JSONValue.parse(response);
-                        if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
-                            Application.getInstance().getGUILog().log("Server message: 404 " + ((JSONObject)o).get("message"));
-                        else
-                            Application.getInstance().getGUILog().log("Server response: 404 " + response);
-                    } catch (Exception c) {
-                        Application.getInstance().getGUILog().log("Server response: 404 " + response);
-                    }
-                }
-            } else if (code == 400) {
-                Object o = null;
-                try {
-                    o = JSONValue.parse(response);
-                    if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
-                        Application.getInstance().getGUILog().log("Server message: 400 " + ((JSONObject)o).get("message"));
-                    else if (!(o instanceof JSONObject))
-                        Application.getInstance().getGUILog().log("Server response: 400 " + response);
-                } catch(Exception c) {
-                    Application.getInstance().getGUILog().log("Server response: 400 " + response);
-                }
-                return false;
             } else {
-                //Application.getInstance().getGUILog().log(response);
-            }
-            //log.info(response);
+                try {
+                    Object o = JSONValue.parse(response);
+                    if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                        Application.getInstance().getGUILog().log("Server message: " + code + " " + ((JSONObject)o).get("message"));
+                    else
+                        Application.getInstance().getGUILog().log("Server response: " + code + " "  + response);
+                } catch (Exception c) {
+                    Application.getInstance().getGUILog().log("Server response: " + code + " "  + response);
+                }
+                if (code == 400)
+                    return false;
+            } 
             return true;
         } 
         try {
@@ -1575,6 +1558,8 @@ public class ExportUtility {
                 return false;
             for (Classifier c: ((InstanceSpecification)e).getClassifier()) {
                 if (!IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
+                    return true;
+                if (!(c instanceof Stereotype))
                     return true;
             }
             return false;

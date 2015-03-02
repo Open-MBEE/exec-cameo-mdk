@@ -67,6 +67,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -133,7 +134,7 @@ public class ModelValidator {
 
     private Set<Element> differentElements = new HashSet<Element>();
     private Project prj;
-    private Element start;
+    private Collection<Element> starts;
     private JSONObject result;       
 	private boolean checkExist;
     private Set<Element> elementSet;
@@ -143,9 +144,9 @@ public class ModelValidator {
         return differentElements;
     }
 
-    public ModelValidator(Element start, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
+    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
         //result is from web, elementSet is from model
-        this.start = start;
+        this.starts = starts;
         suite.addValidationRule(nameDiff);
         suite.addValidationRule(docDiff);
         suite.addValidationRule(valueDiff);
@@ -170,8 +171,8 @@ public class ModelValidator {
     }
     
     public boolean checkProject() {
-        if (ExportUtility.baselineNotSet)
-            baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(start).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
+        //if (ExportUtility.baselineNotSet)
+        //    baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(start).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
         String projectUrl = ExportUtility.getUrlForProject();
         if (projectUrl == null)
             return false;
@@ -181,34 +182,42 @@ public class ModelValidator {
             if (url == null)
                 return false;
             if (url.contains("master")) {
-                ValidationRuleViolation v = new ValidationRuleViolation(Project.getProject(start).getModel(), "The project or site doesn't exist on the web.");
+                ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project or site doesn't exist on the web.");
                 v.addAction(new InitializeProjectModel(false));
                 projectExist.addViolation(v);
             } else {
-                ValidationRuleViolation v = new ValidationRuleViolation(Project.getProject(start).getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
+                ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
                 projectExist.addViolation(v);
             }
             return false;
         }
+        for (Element start: starts )
         if (ProjectUtilities.isElementInAttachedProject(start)){
             Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
             return false;
         }
         if (url == null)
             return false;
-        String id = start.getID();
-        if (start == Application.getInstance().getProject().getModel())
-            id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        id = id.replace(".", "%2E");
-        url += "/elements/" + id + "?recurse=true&qualified=false";
-        GUILog log = Application.getInstance().getGUILog();
-        log.log("[INFO] Getting elements from server...");
-        response = ExportUtility.get(url, false);
-        log.log("[INFO] Finished getting elements");
-        if (response == null) {
-            response = "{\"elements\": []}";
+        JSONArray elements = new JSONArray();
+        for (Element start: starts) {
+            String id = start.getID();
+            if (start == Application.getInstance().getProject().getModel())
+                id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+            id = id.replace(".", "%2E");
+            String url2 = url + "/elements/" + id + "?recurse=true&qualified=false";
+            GUILog log = Application.getInstance().getGUILog();
+            log.log("[INFO] Getting elements from server...");
+            response = ExportUtility.get(url2, false);
+            log.log("[INFO] Finished getting elements");
+            if (response == null) {
+                response = "{\"elements\": []}";
+            }
+            JSONObject partialResult = (JSONObject)JSONValue.parse(response);
+            if (partialResult != null && partialResult.containsKey("elements"))
+                elements.addAll((JSONArray)partialResult.get("elements"));
         }
-        result = (JSONObject)JSONValue.parse(response);
+        result = new JSONObject();
+        result.put("elements", elements);
         ResultHolder.lastResults = result;
         return true;
     }
@@ -221,7 +230,9 @@ public class ModelValidator {
         Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
         if (fillContainment) {
             elementSet = new HashSet<Element>();
-            getAllMissing(start, elementSet, elementsKeyed);
+            for (Element start: starts) {
+                getAllMissing(start, elementSet, elementsKeyed);
+            }
             validateModel(elementsKeyed, elementSet, ps);
         } else {
             validateModel(elementsKeyed, elementSet, ps);
