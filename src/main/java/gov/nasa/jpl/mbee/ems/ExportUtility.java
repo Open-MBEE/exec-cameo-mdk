@@ -1554,14 +1554,15 @@ public class ExportUtility {
                 && ExportUtility.isElementDocumentation((Comment) e))
             return false;
         if (e instanceof InstanceSpecification && !(e instanceof EnumerationLiteral)) {
-            if (e.getOwnedElement().isEmpty())
-                return false;
+            boolean haveIgnore = false;
             for (Classifier c: ((InstanceSpecification)e).getClassifier()) {
-                if (!IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
-                    return true;
                 if (!(c instanceof Stereotype))
                     return true;
+                if (IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
+                    haveIgnore = true;
             }
+            if (!haveIgnore && !e.getOwnedElement().isEmpty())
+                return true;
             return false;
             /*if (((InstanceSpecification)e).getClassifier().size() == 1 && 
                     IGNORE_INSTANCE_CLASSIFIERS.contains(((InstanceSpecification)e).getClassifier().get(0).getID()))
