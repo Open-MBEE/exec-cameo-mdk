@@ -1559,6 +1559,8 @@ public class ExportUtility {
             for (Classifier c: ((InstanceSpecification)e).getClassifier()) {
                 if (!IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
                     return true;
+                if (!(c instanceof Stereotype))
+                    return true;
             }
             return false;
             /*if (((InstanceSpecification)e).getClassifier().size() == 1 && 
