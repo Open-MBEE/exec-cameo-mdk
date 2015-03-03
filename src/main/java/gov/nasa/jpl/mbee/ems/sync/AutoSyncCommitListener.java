@@ -17,6 +17,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -53,6 +54,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
     private Map<String, Element> changedElements = new HashMap<String, Element>();
     private Map<String, Element> deletedElements = new HashMap<String, Element>();
     private Map<String, Element> addedElements = new HashMap<String, Element>();
+    
+    private Set<String> diagramElements = new HashSet<String>();
     
     public AutoSyncCommitListener(boolean auto) {
         this.auto = auto;
@@ -300,9 +303,12 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
                     && ExportUtility.shouldAdd(sourceElement)) {
-                if (isDiagramCreated(sourceElement)) 
-                    toRemove.add(ExportUtility.getElementID(sourceElement));
-                else {
+                if (isDiagramCreated(sourceElement)) {
+                    String id = ExportUtility.getElementID(sourceElement);
+                    toRemove.add(id);
+                    diagramElements.add(id);
+                    diagramElements.add(sourceElement.getID());
+                } else {
                     elementOb = getElementObject(sourceElement, true);
                     ExportUtility.fillElement(sourceElement, elementOb);
                 }
@@ -311,8 +317,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     && ExportUtility.shouldAdd(sourceElement)) {
                 elementID = ExportUtility.getElementID(sourceElement);
                 elements.remove(elementID);
-                deletes.add(elementID);
                 
+                if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()))
+                    return; //prevent unneeded deletes
+                
+                deletes.add(elementID);
                 changedElements.remove(elementID);
                 addedElements.remove(elementID);
                 if (!auto)
