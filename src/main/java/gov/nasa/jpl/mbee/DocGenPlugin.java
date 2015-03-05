@@ -107,10 +107,16 @@ public class DocGenPlugin extends Plugin {
                 e.printStackTrace();
             }
         }
-        QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
-        QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
+        
         loadExtensionJars(); // people can actaully just create a new plugin and
-                             // let magicdraw's classloader load it?
+        // let magicdraw's classloader load it?
+        try {
+            QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
+            QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
+        } catch (Exception ex) {
+            //?
+        }
+        
         // QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore",
         // "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
     }
