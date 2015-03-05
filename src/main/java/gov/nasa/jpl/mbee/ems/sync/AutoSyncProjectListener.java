@@ -130,7 +130,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
         if (elements.contains(failed))
             elements.remove(failed);
-        elements.add(0, failed);
+        if (failed != null)
+            elements.add(0, failed);
         return elements;
     }
     
@@ -201,7 +202,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     }
     
     public static JSONObject getConflicts(Project project) {
-        /*List<Element> es = getSyncElement(project, false, "conflict");
+        List<Element> es = getSyncElement(project, false, "conflict");
         if (es.isEmpty())
             return null;
         JSONObject update = new JSONObject();
@@ -216,9 +217,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             }
         }
         ((JSONArray)update.get("elements")).addAll(elements);
-        return update;*/
+        return update;
         
-        
+        /*
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         JSONObject toreturn = (JSONObject)projectInstances.get(CONFLICTS);
         if (toreturn == null) {
@@ -233,7 +234,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 return null;
             }
         } else
-            return toreturn;
+            return toreturn;*/
     }
     /*
     public static void setFailed(Project project, JSONObject o) {
@@ -598,8 +599,6 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 Set<String> cannotAdd = new HashSet<String>(j.getCannotAdd());
                 Set<String> cannotChange = new HashSet<String>(j.getCannotChange());
                 Set<String> cannotDelete = new HashSet<String>(j.getCannotDelete());
-                if (cannotAdd.isEmpty() && cannotChange.isEmpty() && cannotDelete.isEmpty())
-                    return;
                 JSONObject failed = getUpdatesOrFailed(project, "error");
                 if (failed == null) {
                     failed = new JSONObject();
@@ -632,21 +631,32 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
     }
     
+    
     @SuppressWarnings("unchecked")
-    @Override
-    public void projectPreSaved(Project project, boolean savedInServer) {
+    public void saveLocalUpdates(Project project) {
         AutoSyncCommitListener listener = getCommitListener(project);
-        JSONObject notSaved = new JSONObject();
-        JSONArray added = new JSONArray();
-        JSONArray updated = new JSONArray();
-        JSONArray deleted = new JSONArray();
+        JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
+        Set<String> added = new HashSet<String>();
+        Set<String> changed = new HashSet<String>();
+        Set<String> deleted = new HashSet<String>();
+        if (previousUpdates != null) {
+            added.addAll((JSONArray)previousUpdates.get("added"));
+            changed.addAll((JSONArray)previousUpdates.get("changed"));
+            deleted.addAll((JSONArray)previousUpdates.get("deleted"));
+        }
         added.addAll(listener.getAddedElements().keySet());
-        updated.addAll(listener.getChangedElements().keySet());
+        changed.addAll(listener.getChangedElements().keySet());
         deleted.addAll(listener.getDeletedElements().keySet());
-        notSaved.put("added", added);
-        notSaved.put("changed", updated);
-        notSaved.put("deleted", deleted);
-        saveAutoSyncErrors(project);
+        JSONObject notSaved = new JSONObject();
+        JSONArray addeda = new JSONArray();
+        JSONArray updateda = new JSONArray();
+        JSONArray deleteda = new JSONArray();
+        addeda.addAll(added);
+        updateda.addAll(changed);
+        deleteda.addAll(deleted);
+        notSaved.put("added", addeda);
+        notSaved.put("changed", updateda);
+        notSaved.put("deleted", deleteda);
         SessionManager sm = SessionManager.getInstance();
         sm.createSession("mms delayed sync change logs");
         try {
@@ -656,6 +666,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             log.error("", e);
             sm.cancelSession();
         }        
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public void projectPreSaved(Project project, boolean savedInServer) {
+        saveAutoSyncErrors(project);
+        saveLocalUpdates(project);
     }
     
     @Override
