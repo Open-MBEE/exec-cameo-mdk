@@ -683,5 +683,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             //autosync is on
             ExportUtility.sendProjectVersion();
         }
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && savedInServer) {
+            String folderId = project.getPrimaryProject().getProjectID();
+            folderId += "_sync";
+            Element folder = ExportUtility.getElementFromID(folderId);
+            if (folder != null)
+                TeamworkUtils.unlockElement(project, folder, true, true, true);
+        }
     }
 }

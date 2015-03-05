@@ -66,8 +66,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
             
         AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
-        if (listener == null)
+        if (listener == null) {
+            gl.log("[ERROR] Unexpected error happened.");
             return; //some error here
+        }
         listener.disable();
         Map<String, Set<String>> jms = AutoSyncProjectListener.getJMSChanges(Application.getInstance().getProject());
         listener.enable();
