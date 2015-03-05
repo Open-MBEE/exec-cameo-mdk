@@ -77,6 +77,33 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Map<String, Element> localDeleted = listener.getDeletedElements();
         Map<String, Element> localChanged = listener.getChangedElements();
         
+        //account for possible teamwork updates
+        JSONObject previousUpdates = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
+        if (previousUpdates != null) {
+            for (String added: (List<String>)previousUpdates.get("added")) {
+                if (localAdded.containsKey(added))
+                    continue;
+                Element e = ExportUtility.getElementFromID(added);
+                if (e != null)
+                    localAdded.put(added, e);
+            }
+            for (String updated: (List<String>)previousUpdates.get("changed")) {
+                if (!localChanged.containsKey(updated)) {
+                    Element e = ExportUtility.getElementFromID(updated);
+                    if (e != null) 
+                        localChanged.put(updated, e);
+                }
+                localAdded.remove(updated);
+            }
+            for (String deleted: (List<String>)previousUpdates.get("deleted")) {
+                if (!localDeleted.containsKey(deleted)) {
+                    localDeleted.put(deleted, null);
+                }
+                localAdded.remove(deleted);
+                localChanged.remove(deleted);
+            }
+        }
+        
         Set<String> webChanged = jms.get("changed");
         Set<String> webAdded = jms.get("added");
         Set<String> webDeleted = jms.get("deleted");
@@ -251,7 +278,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     listener.disable();
                     sm.createSession("failed changes");
                     try {
-                        AutoSyncProjectListener.setFailed(project, failed);
+                        AutoSyncProjectListener.setUpdatesOrFailed(project, failed, "error");
                         sm.closeSession();
                     } catch (Exception ex) {
                         log.error("", ex);
@@ -338,7 +365,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("updates sent");
             try {
-                AutoSyncProjectListener.setUpdates(project, null);
+                AutoSyncProjectListener.setUpdatesOrFailed(project, null, "update");
                 sm.closeSession();
             } catch (Exception ex) {
                 log.error("", ex);

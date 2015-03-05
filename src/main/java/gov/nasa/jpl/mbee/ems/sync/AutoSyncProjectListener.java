@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.ems.sync;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,6 +35,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
@@ -87,7 +90,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     }
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
-    public static Element getSyncElement(Project project, boolean create, String prefix) {
+    public static List<Element> getSyncElement(Project project, boolean create, String prefix) {
+        List<Element> elements = new ArrayList<Element>();
         String folderId = project.getPrimaryProject().getProjectID();
         folderId += "_sync";
         Element folder = ExportUtility.getElementFromID(folderId);
@@ -110,8 +114,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         for (Element e: folder.getOwnedElement()) {
             if (e instanceof Class) {
                 String name = ((Class)e).getName();
-                if (name.startsWith(prefix) && name.compareTo(last) >= 0)
-                    failed = (Class)e;
+                if (name.startsWith(prefix)) {
+                    if (name.compareTo(last) >= 0) {
+                        failed = (Class)e;
+                        last = name;
+                    }
+                    elements.add(e);
+                }
             }
         }
         if ((failed == null || !failed.isEditable()) && create) {
@@ -119,26 +128,54 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             failed.setOwner(folder);
             failed.setName(prefix + "_" + df.format(new Date()));
         }
-        return failed;
+        if (elements.contains(failed))
+            elements.remove(failed);
+        elements.add(0, failed);
+        return elements;
     }
     
-    public static void setUpdates(Project project, JSONObject o) {
-        Element e = getSyncElement(project, true, "update");
-        ((NamedElement)e).setName("update_" + df.format(new Date()));
-        ModelHelper.setComment(e, (o == null) ? "{\"deleted\":[], \"changed\":[], \"added\":[]}" : o.toJSONString());
-    }
-    
-    public static JSONObject getUpdates(Project project) {
-        Element e = getSyncElement(project, false, "update");
-        if (e == null)
-            return null;
-        try {
-            JSONObject updates = (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
-            return updates;
-        } catch (Exception ex) {
-            log.error("", ex);
-            return null;
+    public static void setUpdatesOrFailed(Project project, JSONObject o, String type) {
+        List<Element> es = getSyncElement(project, true, type);
+        ((NamedElement)es.get(0)).setName(type + "_" + df.format(new Date()));
+        ModelHelper.setComment(es.get(0), (o == null) ? "{\"deleted\":[], \"changed\":[], \"added\":[]}" : o.toJSONString());
+        for (int i = 1; i < es.size(); i++) {
+            Element toremove = es.get(i);
+            if (toremove.isEditable()) {
+                try {
+                    ModelElementsManager.getInstance().removeElement(toremove);
+                } catch (ReadOnlyElementException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
         }
+    }
+    
+    public static JSONObject getUpdatesOrFailed(Project project, String type) {
+        List<Element> es = getSyncElement(project, false, type);
+        if (es.isEmpty())
+            return null;
+        JSONObject update = new JSONObject();
+        update.put("deleted", new JSONArray());
+        update.put("changed", new JSONArray());
+        update.put("added", new JSONArray());
+        Set<String> deleted = new HashSet<String>();
+        Set<String> changed = new HashSet<String>();
+        Set<String> added = new HashSet<String>();
+        for (Element e: es) {
+            try {
+                JSONObject updates = (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+                deleted.addAll((JSONArray)updates.get("deleted"));
+                changed.addAll((JSONArray)updates.get("changed"));
+                added.addAll((JSONArray)updates.get("added"));
+            } catch (Exception ex) {
+                log.error("", ex);
+            }
+        }
+        ((JSONArray)update.get("deleted")).addAll(deleted);
+        ((JSONArray)update.get("changed")).addAll(changed);
+        ((JSONArray)update.get("added")).addAll(added);
+        return update;
     }
     
     public static void setConflicts(Project project, JSONObject o) {
@@ -147,20 +184,49 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             projectInstances.remove(CONFLICTS);
         else
             projectInstances.put(CONFLICTS, o);
-        Element e = getSyncElement(project, true, "conflict");
-        ((NamedElement)e).setName("conflict_" + df.format(new Date()));
-        ModelHelper.setComment(e, (o == null) ? "{\"elements\":[]}" : o.toJSONString());
+        List<Element> es = getSyncElement(project, true, "conflict");
+        ((NamedElement)es.get(0)).setName("conflict_" + df.format(new Date()));
+        ModelHelper.setComment(es.get(0), (o == null) ? "{\"elements\":[]}" : o.toJSONString());
+        for (int i = 1; i < es.size(); i++) {
+            Element toremove = es.get(i);
+            if (toremove.isEditable()) {
+                try {
+                    ModelElementsManager.getInstance().removeElement(toremove);
+                } catch (ReadOnlyElementException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
     }
     
     public static JSONObject getConflicts(Project project) {
+        /*List<Element> es = getSyncElement(project, false, "conflict");
+        if (es.isEmpty())
+            return null;
+        JSONObject update = new JSONObject();
+        update.put("elements", new JSONArray());
+        Set<String> elements = new HashSet<String>();
+        for (Element e: es) {
+            try {
+                JSONObject updates = (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+                elements.addAll((JSONArray)updates.get("elements"));
+            } catch (Exception ex) {
+                log.error("", ex);
+            }
+        }
+        ((JSONArray)update.get("elements")).addAll(elements);
+        return update;*/
+        
+        
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         JSONObject toreturn = (JSONObject)projectInstances.get(CONFLICTS);
         if (toreturn == null) {
-            Element e = getSyncElement(project, false, "conflict");
-            if (e == null)
+            List<Element> es = getSyncElement(project, false, "conflict");
+            if (es.isEmpty())
                 return null;
             try {
-                JSONObject ob = (JSONObject)JSONValue.parse(ModelHelper.getComment(e));
+                JSONObject ob = (JSONObject)JSONValue.parse(ModelHelper.getComment(es.get(0)));
                 return ob;
             } catch (Exception ex) {
                 log.error("", ex);
@@ -169,7 +235,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         } else
             return toreturn;
     }
-    
+    /*
     public static void setFailed(Project project, JSONObject o) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (o == null)
@@ -197,7 +263,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             }
         } else
             return toreturn;
-    }
+    }*/
     
     @SuppressWarnings("unchecked")
     public static Map<String, Set<String>> getJMSChanges(Project project) {
@@ -229,7 +295,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Session session = null;
         MessageConsumer consumer = null;
         
-        JSONObject previousFailed = getFailed(project);
+        JSONObject previousFailed = getUpdatesOrFailed(project, "error");
         if (previousFailed != null) {
             addedIds.addAll((List<String>)previousFailed.get("added"));
             deletedIds.addAll((List<String>)previousFailed.get("deleted"));
@@ -296,7 +362,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change logs");
             try {
-                setFailed(project, null);
+                setUpdatesOrFailed(project, null, "error");
                 setConflicts(project, null);
                 sm.closeSession();
             } catch (Exception e) {
@@ -497,7 +563,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         listener.setTm(transactionManager);
         transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
         projectInstances.put(LISTENER, listener);
-        JSONObject previousUpdates = getUpdates(project);
+        JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
         if (previousUpdates != null) {
             for (String added: (List<String>)previousUpdates.get("added")) {
                 Element e = ExportUtility.getElementFromID(added);
@@ -534,7 +600,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 Set<String> cannotDelete = new HashSet<String>(j.getCannotDelete());
                 if (cannotAdd.isEmpty() && cannotChange.isEmpty() && cannotDelete.isEmpty())
                     return;
-                JSONObject failed = getFailed(project);
+                JSONObject failed = getUpdatesOrFailed(project, "error");
                 if (failed == null) {
                     failed = new JSONObject();
                     failed.put("added", new JSONArray());
@@ -556,7 +622,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                     SessionManager sm = SessionManager.getInstance();
                     sm.createSession("save autosync error");
                     try {
-                        setFailed(project, failed);
+                        setUpdatesOrFailed(project, failed, "error");
                         sm.closeSession();
                     } catch (Exception e) {
                         log.error("", e);
@@ -584,7 +650,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         SessionManager sm = SessionManager.getInstance();
         sm.createSession("mms delayed sync change logs");
         try {
-            setUpdates(project, notSaved);
+            setUpdatesOrFailed(project, notSaved, "update");
             sm.closeSession();
         } catch (Exception e) {
             log.error("", e);
