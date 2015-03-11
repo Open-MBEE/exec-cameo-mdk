@@ -40,6 +40,8 @@ public class AssociationNumberingVisitor extends AbstractModelVisitor {
             Association a = findAssociation(v, parentView.peek());
             if (a != null && a.isEditable()) {
                 a.setName(getCurrentNumber());
+            } else {
+                Application.getInstance().getGUILog().log("[WARNING] Association doesn't exist or is not editable for view " + v.getQualifiedName());
             }
             parentView.push(v);
             numbers.add(1);

@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.actions.docgen;
 
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.ViewDependencyNumberer;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.AssociationNumberingVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.HierarchyMigrationVisitor;
@@ -74,9 +75,10 @@ public class NumberAssociationAction extends MDAction {
             AssociationNumberingVisitor hmv = new AssociationNumberingVisitor();
             dge.accept(hmv);
             SessionManager.getInstance().closeSession();
+            gl.log("[INFO] Done");
         } catch (Exception ex) {
             SessionManager.getInstance().cancelSession();
-            
+            Utils.printException(ex);
         }
     }
 }

@@ -28,7 +28,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
 public class HierarchyMigrationVisitor extends AbstractModelVisitor {
 
     private Stereotype ourExpose = Utils.getExposeStereotype();
-    private Stereotype docS = Utils.getProductStereotype();
+    private Stereotype docS = Utils.getDocumentStereotype();
     private Stereotype viewS = Utils.getViewClassStereotype();
     private Stereotype conformS = Utils.getConformsStereotype();
     
@@ -58,7 +58,7 @@ public class HierarchyMigrationVisitor extends AbstractModelVisitor {
     
     @Override
     public void visit(Section sec) {
-        if (sec.isView() && !sec.isNoSection()) {
+        if (sec.isView()) {// && !sec.isNoSection()) {
             Element v = sec.getDgElement();
             Class newView = ef.createClassInstance();
             newView.setName(((NamedElement)v).getName());

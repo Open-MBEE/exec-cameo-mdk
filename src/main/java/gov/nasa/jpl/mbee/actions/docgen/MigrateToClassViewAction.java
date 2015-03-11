@@ -78,8 +78,10 @@ public class MigrateToClassViewAction extends MDAction {
                 HierarchyMigrationVisitor hmv = new HierarchyMigrationVisitor(owner);
                 dge.accept(hmv);
                 SessionManager.getInstance().closeSession();
+                Application.getInstance().getGUILog().log("[INFO] Done (note previous 'nosection' views are now views under the parent view.");
             } catch (Exception ex) {
                 SessionManager.getInstance().cancelSession();
+                Utils.printException(ex);
             }
             
         }
