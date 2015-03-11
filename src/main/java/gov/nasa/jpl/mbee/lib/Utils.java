@@ -2043,6 +2043,7 @@ public class Utils {
         Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
         ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
         ElementSelectionDlgFactory.initMultiple(dlg, a, b, new ArrayList());
+        dlg.setTitle(title);
         dlg.show();
         if (dlg.isOkClicked()) {
             return dlg.getSelectedElements();
@@ -2079,6 +2080,7 @@ public class Utils {
         Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
         ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
         ElementSelectionDlgFactory.initSingle(dlg, a, b, null);
+        dlg.setTitle(title);
         dlg.show();
         if (dlg.isOkClicked()) {
             return dlg.getSelectedElement();
