@@ -97,7 +97,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Element folder = ExportUtility.getElementFromID(folderId);
         if (folder == null) {
             if (!create)
-                return null;
+                return elements;
             project.getCounter().setCanResetIDForObject(true);
             folder = project.getElementsFactory().createPackageInstance();
             folder.setOwner(project.getModel());
