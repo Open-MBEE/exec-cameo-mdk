@@ -175,9 +175,9 @@ public class ViewValidator {
         Element startView = getStartView();
         Map<String, JSONObject> cachedResultElements = new HashMap<String, JSONObject>();
         if (!hierarchyOnly)
-            Application.getInstance().getGUILog().log("[INFO] Validating view(s)");
+            Utils.guilog("[INFO] Validating view(s)");
         else
-            Application.getInstance().getGUILog().log("[INFO] Validating hierarchy");
+            Utils.guilog("[INFO] Validating hierarchy");
         Set<String> viewIds = new HashSet<String>();
         if (!hierarchyOnly)
             viewIds = visitor2.getViews().keySet();
@@ -289,7 +289,7 @@ public class ViewValidator {
         ResultHolder.lastResults = results;
         //elements gotten from web
         if (!hierarchyOnly) {
-            Application.getInstance().getGUILog().log("[INFO] Validating view elements");
+            Utils.guilog("[INFO] Validating view elements");
             List<Element> starts = new ArrayList<Element>();
             starts.add(view);
             ModelValidator mv = new ModelValidator(starts, results, true, visitor2.getElementSet(), true); //visitor2.getElementSet() has the local model elements
@@ -297,7 +297,7 @@ public class ViewValidator {
             mv.validate(false, ps);
             modelSuite = mv.getSuite();
 
-            Application.getInstance().getGUILog().log("[INFO] Validating images");
+            Utils.guilog("[INFO] Validating images");
             ImageValidator iv = new ImageValidator(visitor2.getImages());
             //this checks images generated from the local generation against what's on the web based on checksum
             iv.validate();
@@ -313,7 +313,7 @@ public class ViewValidator {
             vss.add(modelSuite);
         if (imageSuite != null)
             vss.add(imageSuite);
-        Application.getInstance().getGUILog().log("Showing validations...");
+        Utils.guilog("Showing validations...");
         Utils.displayValidationWindow(vss, "View Web Difference Validation");
     }
 

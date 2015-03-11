@@ -50,6 +50,7 @@ import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.Color;
+import java.awt.Frame;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -72,6 +73,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -84,6 +86,8 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementDlg;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementsDlg;
+import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
+import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
@@ -1960,6 +1964,10 @@ public class Utils {
         return StereotypesHelper.getStereotype(getProject(), stereotypeName);
     }
 
+    public static Stereotype getDocumentStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::Document");
+    }
+    
     public static Stereotype getCharacterizesStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::characterizes");
     }
@@ -2003,6 +2011,18 @@ public class Utils {
     /********************************************* User interaction ****************************************************/
 
     /**
+     * Log to GUILog in UI's event dispatcher
+     */
+    public static void guilog(final String s) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                Application.getInstance().getGUILog().log(s);
+            }
+        });
+    }
+    
+    /**
      * Displays a dialog box that allows users to select elements from the
      * containment tree<br/>
      * 17.0.2 seems to have a new nicer dialog box, gotta find it...
@@ -2018,6 +2038,18 @@ public class Utils {
     @SuppressWarnings("unchecked")
     public static List<BaseElement> getUserSelections(List<java.lang.Class<?>> types, String title) {
         SelectElementTypes a = new SelectElementTypes(null, types);
+        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
+                .getModel(), true);
+        Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
+        ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
+        ElementSelectionDlgFactory.initMultiple(dlg, a, b, new ArrayList());
+        dlg.show();
+        if (dlg.isOkClicked()) {
+            return dlg.getSelectedElements();
+        }
+        return null;
+        /*
+        SelectElementTypes a = new SelectElementTypes(null, types);
         // SelectElementType(display, select)
         SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
                 .getModel(), true);
@@ -2029,6 +2061,7 @@ public class Utils {
         if (z.isOk())
             return z.getSelected();
         return null;
+        */
     }
 
     /**
@@ -2041,16 +2074,27 @@ public class Utils {
      */
     public static BaseElement getUserSelection(List<java.lang.Class<?>> types, String title) {
         SelectElementTypes a = new SelectElementTypes(null, types);
-        // SelectElementType(display, select)
         SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
                 .getModel(), true);
+        Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
+        ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
+        ElementSelectionDlgFactory.initSingle(dlg, a, b, null);
+        dlg.show();
+        if (dlg.isOkClicked()) {
+            return dlg.getSelectedElement();
+        }
+        return null;
+        /*
+        
+        // SelectElementType(display, select)
+        
         SelectElementDlg z = null;
         z = new SelectElementDlg(MDDialogParentProvider.getProvider().getDialogParent(), null, a, b);
         z.setTitle(title);
         z.setVisible(true);
         if (z.isOk())
             return z.getSelected();
-        return null;
+        return null;*/
     }
 
     /**

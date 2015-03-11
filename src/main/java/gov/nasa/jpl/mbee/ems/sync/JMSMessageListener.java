@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 
@@ -156,17 +157,17 @@ public class JMSMessageListener implements MessageListener {
                     try {
                         Element changedElement = ExportUtility.getElementFromID(sysmlid);
                         if (changedElement == null) {
-                            guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync change");
+                            Utils.guilog("[ERROR - Autosync] element " + sysmlid + " not found for autosync change");
                             return null;
                         } else if (!changedElement.isEditable()) {
                             if (!TeamworkUtils.lockElement(project, changedElement, false)) {
-                                guilog.log("[ERROR - Autosync] " + changedElement.getHumanName() + " is not editable!");
+                                Utils.guilog("[ERROR - Autosync] " + changedElement.getHumanName() + " is not editable!");
                                 cannotChange.add(sysmlid);
                                 return null;
                             }
                         }
                         ImportUtility.updateElement(changedElement, ob);
-                        guilog.log("[Autosync] " + changedElement.getHumanName() + " updated");
+                        Utils.guilog("[Autosync] " + changedElement.getHumanName() + " updated");
                         if (ob.containsKey("specialization")) {
                             JSONArray view2view = (JSONArray)((JSONObject)ob.get("specialization")).get("view2view");
                             if (view2view != null) {
@@ -179,7 +180,7 @@ public class JMSMessageListener implements MessageListener {
                                 if (!ViewValidator.viewHierarchyMatch(changedElement, dge, vhv, (JSONObject)ob.get("specialization"))) {
                                     Map<String, Object> result = ImportHierarchy.importHierarchy(changedElement, model, web);
                                     if (result != null && (Boolean)result.get("success")) {
-                                        guilog.log("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
+                                        Utils.guilog("[Autosync] Document hierarchy updated for " + changedElement.getHumanName());
                                         return result;
                                     } else {
                                         cannotChange.add(sysmlid);
@@ -201,11 +202,11 @@ public class JMSMessageListener implements MessageListener {
                     try {
                         Element e = ImportUtility.createElement(ob, updateRelations);
                         if (e == null && updateRelations) {
-                            guilog.log("[ERROR -- Autosync] create element failed, owner not found");
+                            Utils.guilog("[ERROR -- Autosync] create element failed, owner not found");
                             cannotAdd.add((String)ob.get("sysmlid"));
                         }
                         else if (e != null && updateRelations)
-                            guilog.log("[Autosync] " + e.getHumanName() + " created");
+                            Utils.guilog("[Autosync] " + e.getHumanName() + " created");
                     } catch (Exception ex) {
                         log.error("", ex);
                         cannotAdd.add((String)ob.get("sysmlid"));
@@ -223,9 +224,9 @@ public class JMSMessageListener implements MessageListener {
                         TeamworkUtils.lockElement(project, changedElement, false);
                     try {
                         ModelElementsManager.getInstance().removeElement(changedElement);
-                        guilog.log("[Autosync] " + changedElement.getHumanName() + " deleted");
+                        Utils.guilog("[Autosync] " + changedElement.getHumanName() + " deleted");
                     } catch (ReadOnlyElementException e) {
-                        guilog.log("[ERROR - Autosync] Sync: " + changedElement.getHumanName() + " cannot be deleted!");
+                        Utils.guilog("[ERROR - Autosync] Sync: " + changedElement.getHumanName() + " cannot be deleted!");
                         log.error("", e);
                         cannotDelete.add((String)ob.get("sysmlid"));
                     }
@@ -236,11 +237,11 @@ public class JMSMessageListener implements MessageListener {
                     try {
                         Element changedElement = ExportUtility.getElementFromID(sysmlid);
                         if (changedElement == null) {
-                            guilog.log("[ERROR - Autosync] element " + sysmlid + " not found for autosync move");
+                            Utils.guilog("[ERROR - Autosync] element " + sysmlid + " not found for autosync move");
                             return;
                         }
                         ImportUtility.setOwner(changedElement, ob);
-                        guilog.log("[Autosync] " + changedElement.getHumanName() + " moved");
+                        Utils.guilog("[Autosync] " + changedElement.getHumanName() + " moved");
                     } catch (Exception ex) {
                         log.error("", ex);
                         cannotChange.add(sysmlid);

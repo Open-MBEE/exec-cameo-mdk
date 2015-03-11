@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.ems.sync;
 import com.nomagic.magicdraw.core.Application;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 public class OutputSyncRunner implements Runnable {
 
@@ -14,7 +15,7 @@ public class OutputSyncRunner implements Runnable {
             try {
                 r = q.take();
                 if (r.getMethod().equals("LOG"))
-                    Application.getInstance().getGUILog().log(r.getJson());
+                    Utils.guilog(r.getJson());
                 else if (r.getMethod().equals("DELETE"))
                     ExportUtility.delete(r.getUrl(), r.isFeedback());
                 else if (r.getMethod().equals("DELETEALL"))

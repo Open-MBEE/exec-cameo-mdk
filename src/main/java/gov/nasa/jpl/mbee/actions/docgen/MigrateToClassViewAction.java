@@ -26,98 +26,63 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.model;
+package gov.nasa.jpl.mbee.actions.docgen;
 
-import java.lang.reflect.Field;
+import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.model.HierarchyMigrationVisitor;
+
+import java.awt.event.ActionEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
 
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
 /**
- * this should really be called View now
+ * given a viewpoint composition hierarchy, makes the views, and have them
+ * conform to the respective viewpoints
  * 
  * @author dlam
  * 
  */
-public class Section extends Container {
-    private boolean isAppendix;
-    private boolean isChapter;
-    private String  id;
-    private boolean isView;
-    private boolean isNoSection;
+public class MigrateToClassViewAction extends MDAction {
 
-    private Element viewpoint;
-    private List<Element> exposes;
-    
-    public Section() {
-        isAppendix = false;
-        isChapter = false;
-    }
+    private static final long serialVersionUID = 1L;
+    private Element            doc;
 
-    public void isAppendix(boolean a) {
-        isAppendix = a;
-    }
+    public static final String actionid = "MigrateToClassViews";
 
-    public boolean isAppendix() {
-        return isAppendix;
-    }
-
-    public void isChapter(boolean c) {
-        isChapter = c;
-    }
-
-    public boolean isChapter() {
-        return isChapter;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setView(boolean b) {
-        this.isView = b;
-    }
-
-    public boolean isView() {
-        return this.isView;
-    }
-
-    public void setNoSection(boolean b) {
-        this.isNoSection = b;
-    }
-
-    public boolean isNoSection() {
-        return this.isNoSection;
-    }
-
-    public String getId() {
-        return this.id;
+    public MigrateToClassViewAction(Element e) {
+        super(actionid, "Migrate to Class Views", null, null);
+        doc = e;
     }
 
     @Override
-    public void accept(IModelVisitor v) {
-        v.visit(this);
+    public void actionPerformed(ActionEvent e) {
+        DocumentGenerator dg = new DocumentGenerator(doc, null, null);
+        Document dge = dg.parseDocument(false, true, true);
+        List packages = new ArrayList();
+        packages.add(Package.class);
+        Element owner = (Element)Utils.getUserSelection(packages , "Pick a package to create under");
+        if (owner != null) {
+            SessionManager.getInstance().createSession("docgen migration");
+            try {
+                HierarchyMigrationVisitor hmv = new HierarchyMigrationVisitor(owner);
+                dge.accept(hmv);
+                SessionManager.getInstance().closeSession();
+            } catch (Exception ex) {
+                SessionManager.getInstance().cancelSession();
+            }
+            
+        }
+        
     }
-    
-    @Override
-    public String toStringStart() {
-        return super.toStringStart() + ",id=" + id;
-    }
-
-    public Element getViewpoint() {
-        return viewpoint;
-    }
-
-    public void setViewpoint(Element viewpoint) {
-        this.viewpoint = viewpoint;
-    }
-
-    public List<Element> getExposes() {
-        return exposes;
-    }
-
-    public void setExposes(List<Element> exposes) {
-        this.exposes = exposes;
-    }
-
 }
