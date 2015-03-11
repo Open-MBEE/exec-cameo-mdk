@@ -478,28 +478,27 @@ public class ExportUtility {
             if (code >= 500) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("Server Error, see message window for details");
-                Application.getInstance().getGUILog().log(response);
+                Utils.guilog(response);
             } else if (code == 401) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("You are not authorized or don't have permission, (you can login and try again).");
                 else
-                    Application.getInstance().getGUILog()
-                            .log("You are not authorized or don't have permission, (you can login and try again).");
+                    Utils.guilog("You are not authorized or don't have permission, (you can login and try again).");
                 ViewEditUtils.clearCredentials();
             } else if (code == 403) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("You do not have permission to do this");
                 else
-                    Application.getInstance().getGUILog().log("You do not have permission to do this");
+                    Utils.guilog("You do not have permission to do this");
             } else {
                 try {
                     Object o = JSONValue.parse(response);
                     if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
-                        Application.getInstance().getGUILog().log("Server message: " + code + " " + ((JSONObject)o).get("message"));
+                        Utils.guilog("Server message: " + code + " " + ((JSONObject)o).get("message"));
                     else
-                        Application.getInstance().getGUILog().log("Server response: " + code + " "  + response);
+                        Utils.guilog("Server response: " + code + " "  + response);
                 } catch (Exception c) {
-                    Application.getInstance().getGUILog().log("Server response: " + code + " "  + response);
+                    Utils.guilog("Server response: " + code + " "  + response);
                 }
                 if (code == 400)
                     return false;
@@ -509,7 +508,7 @@ public class ExportUtility {
         try {
             Object o = JSONValue.parse(response);
             if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
-                Application.getInstance().getGUILog().log("Server message: 200 " + ((JSONObject)o).get("message"));
+                Utils.guilog("Server message: 200 " + ((JSONObject)o).get("message"));
         } catch (Exception c) {
                 
         }
@@ -527,7 +526,7 @@ public class ExportUtility {
             //Application.getInstance().getGUILog().log("url=" + url);
             log.info("delete: " + url);
             if (feedback)
-                Application.getInstance().getGUILog().log("[INFO] Deleting...");
+                Utils.guilog("[INFO] Deleting...");
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             log.info("delete response: " + json);
@@ -535,7 +534,7 @@ public class ExportUtility {
                 return null;
             }
             if (feedback)
-                Application.getInstance().getGUILog().log("[INFO] Delete Successful");
+                Utils.guilog("[INFO] Delete Successful");
             return json;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -555,7 +554,7 @@ public class ExportUtility {
             return null;
         try {
             GUILog gl = Application.getInstance().getGUILog();
-            gl.log("[INFO] Sending file...");
+            Utils.guilog("[INFO] Sending file...");
             log.info("send file: " + url);
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
@@ -565,7 +564,7 @@ public class ExportUtility {
             if (showErrors(code, response, false)) {
                 return null;
             }
-            gl.log("[INFO] Send File Successful.");
+            Utils.guilog("[INFO] Send File Successful.");
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -588,7 +587,7 @@ public class ExportUtility {
         GUILog gl = Application.getInstance().getGUILog();
         try {
             if (!suppressGuiLog)
-                gl.log("[INFO] Sending...");
+                Utils.guilog("[INFO] Sending...");
             if (json.length() > 3000) {
                 // System.out.println(json);
                 log.info("send: " + url + ": " + json);
@@ -607,7 +606,7 @@ public class ExportUtility {
                 return null;
             }
             if (!suppressGuiLog)
-                gl.log("[INFO] Send Successful.");
+                Utils.guilog("[INFO] Send Successful.");
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -638,7 +637,7 @@ public class ExportUtility {
                 return null;
             }
             if (feedback)
-                Application.getInstance().getGUILog().log("[INFO] Delete Successful");
+                Utils.guilog("[INFO] Delete Successful");
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);

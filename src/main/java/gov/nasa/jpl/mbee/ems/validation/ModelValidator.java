@@ -192,7 +192,7 @@ public class ModelValidator {
             return false;
         }
         String response = ExportUtility.get(projectUrl, false);
-        if (response == null) {
+        if (response == null || response.contains("Site node is null")) {
             if (url == null)
                 return false;
             if (url.contains("master")) {
@@ -217,9 +217,9 @@ public class ModelValidator {
             id = id.replace(".", "%2E");
             String url2 = url + "/elements/" + id + "?recurse=true&qualified=false";
             GUILog log = Application.getInstance().getGUILog();
-            log.log("[INFO] Getting elements from server...");
+            Utils.guilog("[INFO] Getting elements from server...");
             response = ExportUtility.get(url2, false);
-            log.log("[INFO] Finished getting elements");
+            Utils.guilog("[INFO] Finished getting elements");
             if (response == null) {
                 response = "{\"elements\": []}";
             }
@@ -924,7 +924,7 @@ public class ModelValidator {
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);
-        Application.getInstance().getGUILog().log("[INFO] Showing validations...");
+        Utils.guilog("[INFO] Showing validations...");
         Utils.displayValidationWindow(vss, "Model Web Difference Validation");
     }
     
@@ -980,9 +980,9 @@ public class ModelValidator {
         tosend.put("elements", elements);
         String url = ExportUtility.getUrlWithWorkspace();
         url += "/elements";
-        Application.getInstance().getGUILog().log("[INFO] Searching for " + es.size() + " elements from server...");
+        Utils.guilog("[INFO] Searching for " + es.size() + " elements from server...");
         String response = ExportUtility.getWithBody(url, tosend.toJSONString());
-        Application.getInstance().getGUILog().log("[INFO] Finished getting elements.");
+        Utils.guilog("[INFO] Finished getting elements.");
         if (response == null) {
             JSONObject res = new JSONObject();
             res.put("elements", new JSONArray());
