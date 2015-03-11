@@ -26,65 +26,43 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions.docgen;
+package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.model.Document;
-import gov.nasa.jpl.mbee.model.HierarchyMigrationVisitor;
+import gov.nasa.jpl.mbee.actions.docgen.MigrateToClassViewAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
-/**
- * given a viewpoint composition hierarchy, makes the views, and have them
- * conform to the respective viewpoints
- * 
- * @author dlam
- * 
- */
-public class MigrateToClassViewAction extends MDAction {
-
+public class MigrateOldDocgen extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
-    private Element            doc;
+    private Element element;
+    
+    public MigrateOldDocgen(Element e) {
+        //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+        //
+        super("MigrateOldDocgen", "Migrate", null, null);
+        this.element = e;
+    }
+    
+    @Override
+    public boolean canExecute(Collection<Annotation> arg0) {
+        return false;
+    }
 
-    public static final String actionid = "MigrateToClassViews";
-
-    public MigrateToClassViewAction(Element e) {
-        super(actionid, "Migrate to Class Views", null, null);
-        doc = e;
+    @Override
+    public void execute(Collection<Annotation> annos) {
+        
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        DocumentGenerator dg = new DocumentGenerator(doc, null, null);
-        Document dge = dg.parseDocument(false, true, true);
-        List packages = new ArrayList();
-        packages.add(Package.class);
-        Element owner = (Element)Utils.getUserSelection(packages , "Pick a package to create under");
-        if (owner != null) {
-            SessionManager.getInstance().createSession("docgen migration");
-            try {
-                HierarchyMigrationVisitor hmv = new HierarchyMigrationVisitor(owner);
-                dge.accept(hmv);
-                SessionManager.getInstance().closeSession();
-                Application.getInstance().getGUILog().log("[INFO] Done (note previous 'nosection' views are now views under the parent view).");
-            } catch (Exception ex) {
-                SessionManager.getInstance().cancelSession();
-                Utils.printException(ex);
-            }
-            
-        }
-        
+        MigrateToClassViewAction a = new MigrateToClassViewAction(element);
+        a.actionPerformed(null);
     }
 }

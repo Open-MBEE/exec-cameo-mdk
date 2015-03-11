@@ -28,10 +28,14 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.docgen;
 
-import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportView;
+import gov.nasa.jpl.mbee.ems.validation.actions.MigrateOldDocgen;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.model.Document;
-import gov.nasa.jpl.mbee.model.HierarchyMigrationVisitor;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.awt.event.ActionEvent;
 import java.io.PrintWriter;
@@ -42,49 +46,52 @@ import java.util.List;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
 /**
- * given a viewpoint composition hierarchy, makes the views, and have them
- * conform to the respective viewpoints
+ * validates docgen 3 doc - checks for loops, duplicate dependencies, etc
  * 
  * @author dlam
  * 
  */
-public class MigrateToClassViewAction extends MDAction {
+public class ValidateOldDocgen extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element            doc;
+    public static final String actionid = "ValidateOldDocuments";
 
-    public static final String actionid = "MigrateToClassViews";
-
-    public MigrateToClassViewAction(Element e) {
-        super(actionid, "Migrate to Class Views", null, null);
-        doc = e;
+    public ValidateOldDocgen() {
+        super(actionid, "Find Old DocGen Documents", null, null);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        DocumentGenerator dg = new DocumentGenerator(doc, null, null);
-        Document dge = dg.parseDocument(false, true, true);
-        List packages = new ArrayList();
-        packages.add(Package.class);
-        Element owner = (Element)Utils.getUserSelection(packages , "Pick a package to create under");
-        if (owner != null) {
-            SessionManager.getInstance().createSession("docgen migration");
-            try {
-                HierarchyMigrationVisitor hmv = new HierarchyMigrationVisitor(owner);
-                dge.accept(hmv);
-                SessionManager.getInstance().closeSession();
-                Application.getInstance().getGUILog().log("[INFO] Done (note previous 'nosection' views are now views under the parent view).");
-            } catch (Exception ex) {
-                SessionManager.getInstance().cancelSession();
-                Utils.printException(ex);
-            }
-            
+        ValidationSuite vs = new ValidationSuite("Old DocGen Documents");
+        ValidationRule vr = new ValidationRule("Old DocGen Document", "Old DocGen Document", ViolationSeverity.ERROR);
+        vs.addValidationRule(vr);
+        Stereotype ps = Utils.getProductStereotype();
+        if (ps == null)
+            return;
+        List<Element> elements = Utils.collectOwnedElements(Application.getInstance().getProject().getModel(), 0);
+        List<Element> docs = Utils.filterElementsByStereotype(elements, ps, true, true);
+        List<Element> projDocs = new ArrayList<Element>();
+        for (Element doc: docs) {
+            if (!ProjectUtilities.isElementInAttachedProject(doc) && doc instanceof Package)
+                projDocs.add(doc);
         }
-        
+        if (projDocs.isEmpty()) {
+            Application.getInstance().getGUILog().log("No Old Documents Found");
+            return;
+        }
+        for (Element doc: projDocs) {
+            ValidationRuleViolation v = new ValidationRuleViolation(doc, "[OLD] Document is old format");
+            v.addAction(new MigrateOldDocgen(doc));
+            vr.addViolation(v);
+        }
+        List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+        vss.add(vs);
+        Utils.displayValidationWindow(vss, "Old DocGen Documents");
     }
 }

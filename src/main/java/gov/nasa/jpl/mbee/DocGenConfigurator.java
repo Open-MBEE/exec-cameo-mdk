@@ -40,6 +40,7 @@ import gov.nasa.jpl.mbee.actions.docgen.NumberDependencyAction;
 import gov.nasa.jpl.mbee.actions.docgen.RunUserScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
+import gov.nasa.jpl.mbee.actions.docgen.ValidateOldDocgen;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
 import gov.nasa.jpl.mbee.actions.ems.ExportAllDocuments;
@@ -298,6 +299,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
         }*/
 
+        if (e == Application.getInstance().getProject().getModel()) {
+            NMAction act = null;
+            ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
+            // DefaultPropertyResourceProvider pp = new
+            // DefaultPropertyResourceProvider();
+            act = manager.getActionFor(ValidateOldDocgen.actionid);
+            if (act == null)
+                c.addAction(new ValidateOldDocgen());
+        }
+        
         // DocGen menu
         if ((e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e,
                 DocGen3Profile.documentStereotype)) || StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
