@@ -176,19 +176,30 @@ public class ModelValidator {
         String projectUrl = ExportUtility.getUrlForProject();
         if (projectUrl == null)
             return false;
-        String response = ExportUtility.get(projectUrl, false);
+        String globalUrl = ExportUtility.getUrl();
+        globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        String globalResponse = ExportUtility.get(globalUrl, false);
         String url = ExportUtility.getUrlWithWorkspace();
+        
+        if (globalResponse == null) {
+            ValidationRuleViolation v = null;
+            if (url.contains("master")) {
+                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
+                v.addAction(new InitializeProjectModel(false));
+            } else
+                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
+            projectExist.addViolation(v);
+            return false;
+        }
+        String response = ExportUtility.get(projectUrl, false);
         if (response == null) {
             if (url == null)
                 return false;
             if (url.contains("master")) {
-                ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project or site doesn't exist on the web.");
-                v.addAction(new InitializeProjectModel(false));
+                ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
+                //v.addAction(new InitializeProjectModel(false));
                 projectExist.addViolation(v);
-            } else {
-                ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
-                projectExist.addViolation(v);
-            }
+            } 
             return false;
         }
         for (Element start: starts )
