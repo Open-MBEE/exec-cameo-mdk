@@ -192,14 +192,14 @@ public class ModelValidator {
             return false;
         }
         String response = ExportUtility.get(projectUrl, false);
-        if (response == null || response.contains("Site node is null")) {
+        if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
             if (url == null)
                 return false;
-            if (url.contains("master")) {
-                ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
+            
+            ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
                 //v.addAction(new InitializeProjectModel(false));
-                projectExist.addViolation(v);
-            } 
+            projectExist.addViolation(v);
+            
             return false;
         }
         for (Element start: starts )

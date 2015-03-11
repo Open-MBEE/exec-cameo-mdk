@@ -112,17 +112,35 @@ public class ViewValidator {
     }
     
     public boolean checkProject() {
-        if (ExportUtility.baselineNotSet)
-            baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(view).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
+      //if (ExportUtility.baselineNotSet)
+        //    baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(start).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
         String projectUrl = ExportUtility.getUrlForProject();
         if (projectUrl == null)
             return false;
-        String response = ExportUtility.get(projectUrl, false);
-        if (response == null) {
-            ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "This project doesn't exist on the web yet, or the site has been moved");
-            v.addAction(new InitializeProjectModel(true));
-            v.addAction(new InitializeProjectModel(false));
+        String globalUrl = ExportUtility.getUrl();
+        globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        String globalResponse = ExportUtility.get(globalUrl, false);
+        String url = ExportUtility.getUrlWithWorkspace();
+        
+        if (globalResponse == null) {
+            ValidationRuleViolation v = null;
+            if (url.contains("master")) {
+                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
+                v.addAction(new InitializeProjectModel(false));
+            } else
+                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
             projectExist.addViolation(v);
+            return false;
+        }
+        String response = ExportUtility.get(projectUrl, false);
+        if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
+            if (url == null)
+                return false;
+            
+            ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
+                //v.addAction(new InitializeProjectModel(false));
+            projectExist.addViolation(v);
+            
             return false;
         }
         if (ProjectUtilities.isElementInAttachedProject(view)) {
