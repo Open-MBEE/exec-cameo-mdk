@@ -178,7 +178,40 @@ public class DocumentGenerator {
 
         if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))
             viewSection.isAppendix(true);
-
+        viewSection.setViewpoint(viewpoint);
+        
+        List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
+                view, ElementImport.class, 1, 1);
+        List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
+                view, PackageImport.class, 1, 1);
+        List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotype(
+                view, ourExpose, 1, false, 1);
+        if (md18expose != null)
+            expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, md18expose, 1, false, 1));
+        List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
+                view, DocGen3Profile.oldQueriesStereotype, 1, false, 1);
+        if (elementImports == null)
+            elementImports = new ArrayList<Element>();
+        if (packageImports != null)
+            elementImports.addAll(packageImports);
+        if (expose != null)
+            elementImports.addAll(expose); // all three import/queries
+                                           // relationships are
+                                           // interpreted the same
+        if (queries != null)
+            elementImports.addAll(queries); // all three import/queries
+                                            // relationships are
+                                            // interpreted the same
+        if (view instanceof Class) {
+            for (TypedElement te: ((Class)view).get_typedElementOfType()) {
+                if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
+                    elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(te, 
+                            ourExpose, 1, false, 1));
+                }
+            }
+        }
+        viewSection.setExposes(elementImports);
+        
         if (!hierarchyOnly) {
         if (viewpoint != null && viewpoint instanceof Class) { // view conforms
                                                                // to a viewpoint
@@ -221,37 +254,7 @@ public class DocumentGenerator {
                              // the imported/queried elements
                 Boolean addVPElements = (Boolean)GeneratorUtils.getObjectProperty(b,
                         DocGen3Profile.methodStereotype, "includeViewpointElements", false);;
-
-                List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
-                        view, ElementImport.class, 1, 1);
-                List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
-                        view, PackageImport.class, 1, 1);
-                List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotype(
-                        view, ourExpose, 1, false, 1);
-                if (md18expose != null)
-                    expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, md18expose, 1, false, 1));
-                List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
-                        view, DocGen3Profile.oldQueriesStereotype, 1, false, 1);
-                if (elementImports == null)
-                    elementImports = new ArrayList<Element>();
-                if (packageImports != null)
-                    elementImports.addAll(packageImports);
-                if (expose != null)
-                    elementImports.addAll(expose); // all three import/queries
-                                                   // relationships are
-                                                   // interpreted the same
-                if (queries != null)
-                    elementImports.addAll(queries); // all three import/queries
-                                                    // relationships are
-                                                    // interpreted the same
-                if (view instanceof Class) {
-                    for (TypedElement te: ((Class)view).get_typedElementOfType()) {
-                        if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
-                            elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(te, 
-                                    ourExpose, 1, false, 1));
-                        }
-                    }
-                }
+                
                 if (elementImports.isEmpty())
                     elementImports.add(view); // if view does not import/query
                                               // anything, give the view element
@@ -272,16 +275,6 @@ public class DocumentGenerator {
                 context.popTargets();
             }
         } else { // view does not conform to a viewpoint, apply default behavior
-            List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-                    DocGen3Profile.queriesStereotype, 1, false, 1);
-            if (view instanceof Class) {
-                for (TypedElement te: ((Class)view).get_typedElementOfType()) {
-                    if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
-                        expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(te, 
-                                DocGen3Profile.queriesStereotype, 1, false, 1));
-                    }
-                }
-            }
             if (view instanceof Diagram) { // if a diagram, show diagram and documentation
                 Image image = new Image();
                 List<Object> images = new ArrayList<Object>();
@@ -307,7 +300,7 @@ public class DocumentGenerator {
                     viewSection.addElement(para);
                 }
                 //if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
-                for (Element ex: expose) {
+                for (Element ex: elementImports) {
                     if (ex instanceof Diagram) {
                         Image image = new Image();
                         List<Object> images = new ArrayList<Object>();

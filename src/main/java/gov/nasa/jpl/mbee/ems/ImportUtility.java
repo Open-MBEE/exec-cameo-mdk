@@ -200,7 +200,7 @@ public class ImportUtility {
                 Class prod = ef.createClassInstance();
                 newE = prod;
             }
-            Stereotype product = Utils.getProductStereotype();
+            Stereotype product = Utils.getDocumentStereotype();
             StereotypesHelper.addStereotype(newE, product);
         } else if (elementType.equalsIgnoreCase("Association")) {
             if (newE == null) {

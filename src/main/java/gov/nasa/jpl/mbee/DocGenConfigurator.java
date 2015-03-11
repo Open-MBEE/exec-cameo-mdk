@@ -34,6 +34,8 @@ import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
+import gov.nasa.jpl.mbee.actions.docgen.MigrateToClassViewAction;
+import gov.nasa.jpl.mbee.actions.docgen.NumberAssociationAction;
 import gov.nasa.jpl.mbee.actions.docgen.NumberDependencyAction;
 import gov.nasa.jpl.mbee.actions.docgen.RunUserScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
@@ -323,9 +325,19 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 act = manager.getActionFor(PublishDocWebAction.actionid); 
                 if (act == null) 
                     c.addAction(new PublishDocWebAction((NamedElement)e));
-                act = manager.getActionFor(NumberDependencyAction.actionid);
-                if (act == null)
-                    c.addAction(new NumberDependencyAction(e));
+                if (e instanceof Package) {
+                    act = manager.getActionFor(NumberDependencyAction.actionid);
+                    if (act == null)
+                        c.addAction(new NumberDependencyAction(e));
+                    act = manager.getActionFor(MigrateToClassViewAction.actionid);
+                    if (act == null)
+                        c.addAction(new MigrateToClassViewAction(e));
+                }
+                if (e instanceof Class) {
+                    act = manager.getActionFor(NumberAssociationAction.actionid);
+                    if (act == null)
+                        c.addAction(new NumberAssociationAction((Class)e));
+                }
             }
             /*
              * if (e instanceof Activity &&
