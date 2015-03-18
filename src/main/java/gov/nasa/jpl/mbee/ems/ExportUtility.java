@@ -880,7 +880,7 @@ public class ExportUtility {
             fillConstraintSpecialization((Constraint)e, specialization);
         } else if (e instanceof InstanceSpecification) {
             specialization.put("type", "InstanceSpecification");
-
+            fillInstanceSpecificationSpecialization((InstanceSpecification)e, specialization);
             /*ValueSpecification spec = ((InstanceSpecification) e)
                     .getSpecification();
             if (spec != null)
@@ -976,6 +976,21 @@ public class ExportUtility {
                 }
             }
         }
+        return specialization;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillInstanceSpecificationSpecialization(InstanceSpecification e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        if (e.getSpecification() != null)
+            specialization.put("instanceSpecificationSpecification", fillValueSpecification(e.getSpecification(), null));
+        JSONArray classifiers = new JSONArray();
+        for (Classifier c: e.getClassifier()) {
+            classifiers.add(c.getID());
+        }
+        specialization.put("classifiers", classifiers);
         return specialization;
     }
     
