@@ -2014,12 +2014,12 @@ public class Utils {
      * Log to GUILog in UI's event dispatcher
      */
     public static void guilog(final String s) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
+        //SwingUtilities.invokeLater(new Runnable() {
+        //    @Override
+        //    public void run() {
                 Application.getInstance().getGUILog().log(s);
-            }
-        });
+        //    }
+        //});
     }
     
     /**
