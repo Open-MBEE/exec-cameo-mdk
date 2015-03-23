@@ -1793,6 +1793,30 @@ public class Utils {
     public static List<Package> getPackagesOfType(Element root, String typeName) {
         return getPackagesOfType(root, typeName, null);
     }
+    
+    public static boolean isSiteChar(Package e) {
+        Stereotype characterizes = Utils.getCharacterizesStereotype();
+        if (characterizes != null) {
+            List<Element> sites =  Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1);
+            boolean found = false;
+            for (Element l: sites) {  
+                /*if (l instanceof NamedElement && ((NamedElement)l).getName().equals("Site Characterization")) {
+                    found = true;
+                    break;
+                }*/
+                if (l instanceof Classifier) {
+                    for (Classifier g: ((Classifier)l).getGeneral()) {
+                        if (g.getName().equals("Site Characterization")) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            return found;
+        }
+        return false;
+    }
 
     /**
      * @param root

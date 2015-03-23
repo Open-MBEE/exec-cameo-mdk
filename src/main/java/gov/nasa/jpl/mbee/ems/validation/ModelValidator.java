@@ -251,7 +251,7 @@ public class ModelValidator {
         result.put("elementsKeyed", elementsKeyed);
     }
     
-    private void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
+    public static void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
         if (result == null)
             return;
         JSONArray elements = (JSONArray)result.get("elements");
@@ -523,7 +523,7 @@ public class ModelValidator {
         return null;
     }
     
-    private ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
+    public static ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
         JSONObject model = ExportUtility.fillPackage(e, null);
         Boolean serverSite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("isSite");
         boolean serversite = false;
@@ -531,7 +531,7 @@ public class ModelValidator {
             serversite = true;
         boolean modelsite = (Boolean)model.get("isSite");
         if (!serversite && modelsite || serversite && !modelsite) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE] model: " + modelsite + ", web: " + serversite);
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE CHAR] model: " + modelsite + ", web: " + serversite);
             v.addAction(new ExportSite(e));
             return v;
         }
@@ -967,7 +967,7 @@ public class ModelValidator {
         return (JSONObject)elements.get(0);
     }
     
-    private JSONObject getManyAlfrescoElements(Set<Element> es) {
+    public static JSONObject getManyAlfrescoElements(Set<Element> es) {
         if (es.isEmpty())
             return null;
         JSONArray elements = new JSONArray();
