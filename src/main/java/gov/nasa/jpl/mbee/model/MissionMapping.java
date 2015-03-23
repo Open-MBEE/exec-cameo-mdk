@@ -683,7 +683,7 @@ public class MissionMapping extends Query {
     @Override
     public List<MDAction> getActions() {
         List<MDAction> res = new ArrayList<MDAction>();
-        res.add(new MapMissionAction(this));
+        //res.add(new MapMissionAction(this));
         return res;
     }
 

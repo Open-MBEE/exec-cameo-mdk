@@ -455,7 +455,7 @@ public class LibraryMapping extends Query {
     @Override
     public List<MDAction> getActions() {
         List<MDAction> res = new ArrayList<MDAction>();
-        res.add(new MapLibraryAction(this));
+        //res.add(new MapLibraryAction(this));
         return res;
     }
 }
