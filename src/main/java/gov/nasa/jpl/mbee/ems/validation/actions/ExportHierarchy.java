@@ -30,6 +30,8 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
@@ -75,15 +77,15 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
                 toremove.add(anno);
             }
         }
-        if (!toremove.isEmpty()) {
-            this.removeViolationsAndUpdateWindow(toremove);
-        }
+        //if (!toremove.isEmpty()) {
+        //    this.removeViolationsAndUpdateWindow(toremove);
+        //}
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (exportHierarchy(view)) {
-            this.removeViolationAndUpdateWindow();
+            //this.removeViolationAndUpdateWindow();
         }
     }
     
@@ -110,6 +112,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
             JSONObject specialization = new JSONObject();
+            specialization.put("type", "Product");
             doc.put("specialization", specialization);
             specialization.put("view2view", ExportUtility.formatView2View(view2view));
             specialization.put("noSections", vhv.getNosections());
@@ -117,8 +120,9 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             documents.add(doc);
             send.put("elements", documents);
             send.put("source", "magicdraw");
-            if (ExportUtility.send(docurl, send.toJSONString()) == null)
-                return false;
+            //if (ExportUtility.send(docurl, send.toJSONString()) == null)
+            //    return false;
+            OutputQueue.getInstance().offer(new Request(docurl, send.toJSONString()));
         } else {
             JSONArray views = new JSONArray();
             for (Object viewid: view2view.keySet()) {
@@ -132,8 +136,9 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             JSONObject send  = new JSONObject();
             send.put("elements", views);
             send.put("source", "magicdraw");
-            if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
-                return false;
+            //if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
+            //    return false;
+            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString()));
         }
         return true;
         
