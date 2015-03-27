@@ -636,7 +636,7 @@ public class ModelValidator {
             return v;
         }
         PropertyValueType valueType = PropertyValueType.valueOf((String)firstObject.get("type"));
-        Map<String, Object> results = valueSpecDiff(vs, firstObject);
+        Map<String, Object> results = valueSpecDiff2(vs, firstObject);
         String message = (String)results.get("message");
         boolean stringMatch = (Boolean)results.get("stringMatch");
         String webString = (String)results.get("webString");
@@ -719,7 +719,7 @@ public class ModelValidator {
         boolean stringMatch = false;
         Map<String, Object> results = null;
         for (int i = 0; i < vss.size(); i++) {
-            results = valueSpecDiff(vss.get(i), (JSONObject)value.get(i));
+            results = valueSpecDiff2(vss.get(i), (JSONObject)value.get(i));
             message = (String)results.get("message");
             stringMatch = (Boolean)results.get("stringMatch");
             webString = (String)results.get("webString");
@@ -764,7 +764,8 @@ public class ModelValidator {
         JSONObject spec = (JSONObject)info.get("specialization");
         JSONObject value = (JSONObject)spec.get("specification");
         JSONObject modelspec = ExportUtility.fillConstraintSpecialization(e, null);
-        JSONObject modelvalue = (JSONObject)modelspec.get("specification");
+        //JSONObject modelvalue = (JSONObject)modelspec.get("specification");
+        JSONObject modelvalue = ExportUtility.fillValueSpecification(e.getSpecification(), null, true);
         //if (jsonObjectEquals(value, modelvalue))
         //    return null;
         if (modelvalue != null && modelvalue.equals(value))
@@ -807,6 +808,60 @@ public class ModelValidator {
         return null;
     }
     
+    private Map<String, Object> valueSpecDiff2(ValueSpecification vs, JSONObject firstObject) {
+        Map<String, Object> result = new HashMap<String, Object>();
+        String message = "";
+        String typeMismatchMessage = "[VALUE] value spec types don't match";
+        String modelString = null;
+        String webString = null;
+        boolean stringMatch = false;
+        JSONObject model = ExportUtility.fillValueSpecification(vs, null, true);
+        if (!model.equals(firstObject)) {
+            if (vs instanceof LiteralString && "LiteralString".equals(firstObject.get("type"))) {
+                modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
+                webString = ExportUtility.cleanHtml((String)firstObject.get("string"));
+                firstObject.put("string", webString);
+                if (!modelString.equals(webString)) {
+                    stringMatch = true;
+                    message = "[VALUE] model: " + truncate(modelString) + ", web: " + truncate(webString);
+                }
+            } else {
+                Object web = firstObject.get("double");
+                if (web == null)
+                    web = firstObject.get("integer");
+                if (web == null)
+                    web = firstObject.get("boolean");
+                if (web == null)
+                    web = firstObject.get("naturalValue");
+                if (web == null) {
+                    web = firstObject.get("instance");
+                    if (web != null) {
+                        Element el = ExportUtility.getElementFromID((String)web);
+                        if (el != null)
+                            web = RepresentationTextCreator.getRepresentedText(el);
+                    }
+                }
+                if (web == null) {
+                    web = firstObject.get("element");
+                    if (web != null) {
+                        Element el = ExportUtility.getElementFromID((String)web);
+                        if (el != null)
+                            web = RepresentationTextCreator.getRepresentedText(el);
+                    }
+                }
+                if (web == null)
+                    web = firstObject.toString();
+                message = "[VALUE] model: " + RepresentationTextCreator.getRepresentedText(vs) + ", web: " + web;
+            }
+        }
+        result.put("message", message);
+        result.put("webString", webString);
+        result.put("modelString", modelString);
+        result.put("stringMatch", stringMatch);
+        return result;
+    }
+    
+    @Deprecated
     private Map<String, Object> valueSpecDiff(ValueSpecification vs, JSONObject firstObject) {
         Map<String, Object> result = new HashMap<String, Object>();
         PropertyValueType valueType = PropertyValueType.valueOf((String)firstObject.get("type"));
