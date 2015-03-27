@@ -30,6 +30,8 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
@@ -266,7 +268,7 @@ public class ModelValidator {
                 if (e != null)
                     elementId = e.getID();
                 else
-                    continue; //??
+                    continue; //this is ignoring slots on the server that're not in magicdraw
             }
             elementsKeyed.put(elementId, elementInfo);
         }
@@ -297,11 +299,21 @@ public class ModelValidator {
         }
         JSONObject missingResult = getManyAlfrescoElements(missing);
         updateElementsKeyed(missingResult, elementsKeyed);
+        JSONObject failed = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
+        JSONArray deletedOnMMS = null;
+        if (failed == null)
+            deletedOnMMS = new JSONArray();
+        else 
+            deletedOnMMS = (JSONArray)failed.get("deleted");
         for (Element e: all) {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS or it may be moved");
+                ValidationRuleViolation v = null;
+                if (deletedOnMMS.contains(ExportUtility.getElementID(e)))
+                    v = new ValidationRuleViolation(e, "[EXIST] This have been deleted on MMS");
+                else
+                    v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS");
                 if (!crippled) {
                     v.addAction(new ExportElement(e));
                     v.addAction(new DeleteMagicDrawElement(e));
@@ -317,6 +329,7 @@ public class ModelValidator {
         Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
         
+        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
         // 2nd loop: unchecked Alfresco elements with sysml ID are now processed 
         for (String elementsKeyedId: elementsKeyedIds) {
             // MagicDraw element that has not been compared to Alfresco
@@ -336,7 +349,11 @@ public class ModelValidator {
                     type = "Element";
                 if (ImportUtility.VALUESPECS.contains(type))
                     continue;
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " '" + elementsKeyedId + "' exists on MMS but not in Magicdraw");
+                ValidationRuleViolation v = null;
+                if (listener == null || !listener.getDeletedElements().containsKey(elementsKeyedId))
+                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " '" + elementsKeyedId + "' exists on MMS but not in Magicdraw");
+                else
+                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " '" + elementsKeyedId + "' exists on MMS but was deleted from magicdraw");
                 v.addAction(new ElementDetail(jSONobject));
                 if (!crippled) {
                     v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
