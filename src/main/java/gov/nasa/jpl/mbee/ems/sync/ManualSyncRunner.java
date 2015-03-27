@@ -350,6 +350,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
             
             JSONArray toDeleteElements = new JSONArray();
             for (String e: localDeleted.keySet()) {
+                if (ExportUtility.getElementFromID(e) != null) //somehow the model has it, don't delete on server
+                    continue;
                 JSONObject toDelete = new JSONObject();
                 toDelete.put("sysmlid", e);
                 toDeleteElements.add(toDelete);

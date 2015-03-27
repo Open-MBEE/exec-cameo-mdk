@@ -739,10 +739,16 @@ public class ExportUtility {
         return false;
     }
 
+    public static JSONObject fillValueSpecification(ValueSpecification vs,
+            JSONObject einfo) {
+        return fillValueSpecification(vs, einfo, false);
+    }
+    
+    
     //given value spec and value object, fill in stuff
     @SuppressWarnings("unchecked")
     public static JSONObject fillValueSpecification(ValueSpecification vs,
-            JSONObject einfo) {
+            JSONObject einfo, boolean useLongForDouble) {
         if (vs == null)
             return null;
         JSONObject elementInfo = einfo;
@@ -781,7 +787,7 @@ public class ExportUtility {
                 JSONArray operand = new JSONArray();
                 for (ValueSpecification vs2 : vsl) {
                     JSONObject res = new JSONObject();
-                    fillValueSpecification(vs2, res);
+                    fillValueSpecification(vs2, res, useLongForDouble);
                     operand.add(res);
                 }
                 elementInfo.put("operand", operand);
@@ -804,7 +810,15 @@ public class ExportUtility {
                 elementInfo.put("type", "LiteralNull");
             } else if (vs instanceof LiteralReal) {
                 elementInfo.put("type", "LiteralReal");
-                elementInfo.put("double", ((LiteralReal) vs).getValue());
+                double real = ((LiteralReal) vs).getValue();
+                elementInfo.put("double", real);
+                if (real % 1 == 0 && useLongForDouble) {
+                    try {
+                        elementInfo.put("double", (long)real);
+                    } catch (Exception ex) {
+                        
+                    }
+                }
             } else if (vs instanceof LiteralString) {
                 elementInfo.put("type", "LiteralString");
                 elementInfo.put("string", Utils.stripHtmlWrapper(((LiteralString) vs).getValue()));
