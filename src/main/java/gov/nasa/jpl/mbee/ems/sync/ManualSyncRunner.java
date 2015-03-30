@@ -287,7 +287,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         sm.cancelSession();
                     }
                     listener.enable();
-                    gl.log("[WARNING] There were changes that couldn't be applied.");
+                    gl.log("[INFO] There were changes that couldn't be applied. These will be attempted on the next update.");
                 }
                 
               //conflicts

@@ -350,10 +350,14 @@ public class ModelValidator {
                 if (ImportUtility.VALUESPECS.contains(type))
                     continue;
                 ValidationRuleViolation v = null;
+                String existname = (String)jSONobject.get("name");
+                if (existname ==  null)
+                    existname = "(no name)";
+                existname.replace('`', '\'');
                 if (listener == null || !listener.getDeletedElements().containsKey(elementsKeyedId))
-                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " '" + elementsKeyedId + "' exists on MMS but not in Magicdraw");
+                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but not in Magicdraw");
                 else
-                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " '" + elementsKeyedId + "' exists on MMS but was deleted from magicdraw");
+                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted from magicdraw");
                 v.addAction(new ElementDetail(jSONobject));
                 if (!crippled) {
                     v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));

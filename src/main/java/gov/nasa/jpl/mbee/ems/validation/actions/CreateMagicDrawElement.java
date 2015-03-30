@@ -108,7 +108,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
             List<JSONObject> tocreate = new ArrayList<JSONObject>();
             for (Annotation ann: annos) {
                 String message = ann.getText();
-                String[] mes = message.split("'");
+                String[] mes = message.split("`");
                 String eid = null;
                 if (mes.length > 2)
                     eid = mes[1];
