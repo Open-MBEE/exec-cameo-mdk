@@ -184,7 +184,10 @@ AnnotationAction, IRuleViolationAction {
         if (!e.isEditable()) {
             if (!ProjectUtilities.isElementInAttachedProject(e)) {
                 if (isTeamwork) {
-                    if (!TeamworkUtils.lockElement(project, e, false)) {
+                    boolean recursive = false;
+                    if (e instanceof Association)
+                        recursive = true;
+                    if (!TeamworkUtils.lockElement(project, e, recursive)) {
                         return false;
                     }
                 } else {
