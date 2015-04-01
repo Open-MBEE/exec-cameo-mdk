@@ -126,6 +126,8 @@ public class DocGenUtils {
                                                                                 "<link xl:href=\"$1\">$2</link>");
                                                                         put("<a href=\"mdel://([^\"&^\\?]+)(\\?[^\"]*)?\">([^<]*)</a>",
                                                                                 "<link linkend=\"$1\">$3</link>");
+                                                                        put("<img [^>]*src=\"([^>]+)\"[^>]*></img>", "<imageobject><imagedata fileref=\"$1\" scalefit=\"1\"/></imageobject>");
+                                                                        put("<img [^>]*src=\"([^>]+)\"[^>]*/>", "<imageobject><imagedata fileref=\"$1\" scalefit=\"1\"/></imageobject>");
                                                                         put("<pre>|<pre [^>]*>", "<screen>");
                                                                         put("</pre>", "</screen>");
                                                                         put("<svg",

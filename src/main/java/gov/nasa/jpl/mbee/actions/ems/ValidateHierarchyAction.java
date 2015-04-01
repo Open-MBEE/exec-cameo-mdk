@@ -16,7 +16,7 @@ public class ValidateHierarchyAction extends MDAction {
     public static final String actionid = "ValidateHierarchy";
     
     public ValidateHierarchyAction(Element e) {
-        super(actionid, "Validate Hierarchy", null, null);
+        super(actionid, "Validate View Hierarchy", null, null);
         view = e;
     }
     
@@ -25,7 +25,7 @@ public class ValidateHierarchyAction extends MDAction {
         if (!ExportUtility.checkBaseline()) {    
             return;
         }
-        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false, true), "Validating Hierarchy", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false, true), "Validating View Hierarchy", true, 0);
     }
 }
 
