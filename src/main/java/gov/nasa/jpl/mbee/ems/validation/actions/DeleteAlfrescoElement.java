@@ -95,7 +95,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
         send.put("source", "magicdraw");
         for (Annotation anno: annos) {
             String message = anno.getText();
-            String[] mes = message.split("'");
+            String[] mes = message.split("`");
             String eid = null;
             if (mes.length > 2)
                 eid = mes[1];
