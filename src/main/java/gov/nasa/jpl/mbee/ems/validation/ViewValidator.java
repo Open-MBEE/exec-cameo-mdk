@@ -220,7 +220,7 @@ public class ViewValidator {
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                 v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
                 //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
-                v.addAction(new ExportView(currentView, true, false, "Commit View Hierarchically to MMS"));
+                //v.addAction(new ExportView(currentView, true, false, "Commit Views to MMS"));
                 //v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
                 exists.addViolation(v);
             } else {
@@ -231,7 +231,7 @@ public class ViewValidator {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                     v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
                     //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
-                    v.addAction(new ExportView(currentView, true, false, "Commit View Hierarchically to MMS"));
+                    //v.addAction(new ExportView(currentView, true, false, "Commit Views to MMS"));
                     //v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
                     exists.addViolation(v);
                 } else {
