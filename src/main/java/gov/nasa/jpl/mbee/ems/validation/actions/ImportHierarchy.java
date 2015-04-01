@@ -123,8 +123,10 @@ AnnotationAction, IRuleViolationAction {
                 //    OutputQueue.getInstance().offer(r);
                 //}
                 return true;
-            } else
+            } else {
+                Application.getInstance().getGUILog().log("[ERROR] Import hierarchy aborted because view hierarchy isn't editable or can't be locked.");
                 return false;
+            }
         }
         return true;
     }
@@ -176,8 +178,30 @@ AnnotationAction, IRuleViolationAction {
         return returns;
     }
     
+    private static boolean lock(Element e, boolean isTeamwork, Project project) {
+        if (e == null)
+            return true;
+        if (!e.isEditable()) {
+            if (!ProjectUtilities.isElementInAttachedProject(e)) {
+                if (isTeamwork) {
+                    if (!TeamworkUtils.lockElement(project, e, false)) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     public static Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {
         Project project = Application.getInstance().getProject();
+        boolean isTeamwork = false;
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()))
+            isTeamwork = true;
         Map<String, Object> retval = new HashMap<String, Object>();
         retval.put("success", true);
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
@@ -191,8 +215,10 @@ AnnotationAction, IRuleViolationAction {
             String viewid = (String)vid;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                if (!view.isEditable() && !ProjectUtilities.isElementInAttachedProject(view)) 
-                    TeamworkUtils.lockElement(project, view, false);
+                if (!lock(view, isTeamwork, project)) {
+                    retval.put("success", false);
+                    return retval;
+                }
                 for (Property p: ((Class)view).getOwnedAttribute()) {
                     Type t = p.getType();
                     if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, viewS)) {
@@ -200,6 +226,10 @@ AnnotationAction, IRuleViolationAction {
                         if (viewprops == null) {
                             viewprops = new ArrayList<Property>();
                             viewId2props.put(t.getID(), viewprops);
+                        }
+                        if (!lock(p, isTeamwork, project) || !lock(p.getAssociation(), isTeamwork, project) || !lock(t, isTeamwork, project)) {
+                            retval.put("success", false);
+                            return retval;
                         }
                         viewprops.add(p);
                     }
@@ -214,8 +244,10 @@ AnnotationAction, IRuleViolationAction {
                 continue;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                if (!view.isEditable() && !ProjectUtilities.isElementInAttachedProject(view)) 
-                    TeamworkUtils.lockElement(project, view, false);
+                if (!lock(view, isTeamwork, project)) {
+                    retval.put("success", false);
+                    return retval;
+                }
                 for (Property p: ((Class)view).getOwnedAttribute()) {
                     Type t = p.getType();
                     if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, viewS)) {
@@ -223,6 +255,10 @@ AnnotationAction, IRuleViolationAction {
                         if (viewprops == null) {
                             viewprops = new ArrayList<Property>();
                             viewId2props.put(t.getID(), viewprops);
+                        }
+                        if (!lock(p, isTeamwork, project) || !lock(p.getAssociation(), isTeamwork, project) || !lock(t, isTeamwork, project)) {
+                            retval.put("success", false);
+                            return retval;
                         }
                         viewprops.add(p);
                     }
