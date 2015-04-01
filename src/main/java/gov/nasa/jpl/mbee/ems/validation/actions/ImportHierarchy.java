@@ -87,7 +87,7 @@ AnnotationAction, IRuleViolationAction {
     private Map<String, Object> tosend;
     
     public ImportHierarchy(Element e, JSONObject md, JSONObject keyed) {
-        super("ImportHierarchy", "Import Hierarchy", null, null);
+        super("ImportHierarchy", "Import View Hierarchy", null, null);
         this.view = e;
         this.keyed = keyed;
         this.md = md;

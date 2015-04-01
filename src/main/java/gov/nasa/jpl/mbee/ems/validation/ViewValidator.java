@@ -266,7 +266,7 @@ public class ViewValidator {
                             if (editable) {
                                 v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
                                 //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
-                                v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
+                                //v.addAction(new ExportView(currentView, true, false, "Commit View recursively to MMS"));
                                 //v.addAction(new ExportView(currentView, true, true, "Commit View with Elements recursively to MMS"));
                             }
                             // v.addAction(new ExportHierarchy(currentView));
