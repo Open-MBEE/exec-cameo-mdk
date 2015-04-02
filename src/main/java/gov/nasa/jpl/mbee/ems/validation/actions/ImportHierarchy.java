@@ -124,7 +124,7 @@ AnnotationAction, IRuleViolationAction {
                 //}
                 return true;
             } else {
-                Application.getInstance().getGUILog().log("[ERROR] Import hierarchy aborted because view hierarchy isn't editable or can't be locked.");
+                Application.getInstance().getGUILog().log("[ERROR] Import hierarchy aborted because view hierarchy isn't editable. Lock it first.");
                 return false;
             }
         }
@@ -182,12 +182,16 @@ AnnotationAction, IRuleViolationAction {
         if (e == null)
             return true;
         if (!e.isEditable()) {
-            if (!ProjectUtilities.isElementInAttachedProject(e)) {
+            return false;
+            /*if (!ProjectUtilities.isElementInAttachedProject(e)) {
                 if (isTeamwork) {
+                    if (TeamworkUtils.getLoggedUserName() == null)
+                        return false;
                     boolean recursive = false;
                     if (e instanceof Association)
                         recursive = true;
-                    if (!TeamworkUtils.lockElement(project, e, recursive)) {
+                    boolean hmm = TeamworkUtils.lockElement(project, e, recursive);
+                    if (!hmm) {
                         return false;
                     }
                 } else {
@@ -195,7 +199,7 @@ AnnotationAction, IRuleViolationAction {
                 }
             } else {
                 return false;
-            }
+            }*/
         }
         return true;
     }
