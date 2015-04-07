@@ -30,6 +30,8 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
@@ -251,7 +253,7 @@ public class ModelValidator {
         result.put("elementsKeyed", elementsKeyed);
     }
     
-    private void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
+    public static void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
         if (result == null)
             return;
         JSONArray elements = (JSONArray)result.get("elements");
@@ -266,7 +268,7 @@ public class ModelValidator {
                 if (e != null)
                     elementId = e.getID();
                 else
-                    continue; //??
+                    continue; //this is ignoring slots on the server that're not in magicdraw
             }
             elementsKeyed.put(elementId, elementInfo);
         }
@@ -297,11 +299,21 @@ public class ModelValidator {
         }
         JSONObject missingResult = getManyAlfrescoElements(missing);
         updateElementsKeyed(missingResult, elementsKeyed);
+        JSONObject failed = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
+        JSONArray deletedOnMMS = null;
+        if (failed == null)
+            deletedOnMMS = new JSONArray();
+        else 
+            deletedOnMMS = (JSONArray)failed.get("deleted");
         for (Element e: all) {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS or it may be moved");
+                ValidationRuleViolation v = null;
+                if (deletedOnMMS.contains(ExportUtility.getElementID(e)))
+                    v = new ValidationRuleViolation(e, "[EXIST] This have been deleted on MMS");
+                else
+                    v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS");
                 if (!crippled) {
                     v.addAction(new ExportElement(e));
                     v.addAction(new DeleteMagicDrawElement(e));
@@ -317,6 +329,7 @@ public class ModelValidator {
         Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
         
+        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
         // 2nd loop: unchecked Alfresco elements with sysml ID are now processed 
         for (String elementsKeyedId: elementsKeyedIds) {
             // MagicDraw element that has not been compared to Alfresco
@@ -336,7 +349,15 @@ public class ModelValidator {
                     type = "Element";
                 if (ImportUtility.VALUESPECS.contains(type))
                     continue;
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " '" + elementsKeyedId + "' exists on MMS but not in Magicdraw");
+                ValidationRuleViolation v = null;
+                String existname = (String)jSONobject.get("name");
+                if (existname ==  null)
+                    existname = "(no name)";
+                existname.replace('`', '\'');
+                if (listener == null || !listener.getDeletedElements().containsKey(elementsKeyedId))
+                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but not in Magicdraw");
+                else
+                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted from magicdraw");
                 v.addAction(new ElementDetail(jSONobject));
                 if (!crippled) {
                     v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
@@ -523,7 +544,7 @@ public class ModelValidator {
         return null;
     }
     
-    private ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
+    public static ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
         JSONObject model = ExportUtility.fillPackage(e, null);
         Boolean serverSite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("isSite");
         boolean serversite = false;
@@ -531,7 +552,7 @@ public class ModelValidator {
             serversite = true;
         boolean modelsite = (Boolean)model.get("isSite");
         if (!serversite && modelsite || serversite && !modelsite) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE] model: " + modelsite + ", web: " + serversite);
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE CHAR] model: " + modelsite + ", web: " + serversite);
             v.addAction(new ExportSite(e));
             return v;
         }
@@ -619,7 +640,7 @@ public class ModelValidator {
             return v;
         }
         PropertyValueType valueType = PropertyValueType.valueOf((String)firstObject.get("type"));
-        Map<String, Object> results = valueSpecDiff(vs, firstObject);
+        Map<String, Object> results = valueSpecDiff2(vs, firstObject);
         String message = (String)results.get("message");
         boolean stringMatch = (Boolean)results.get("stringMatch");
         String webString = (String)results.get("webString");
@@ -702,7 +723,7 @@ public class ModelValidator {
         boolean stringMatch = false;
         Map<String, Object> results = null;
         for (int i = 0; i < vss.size(); i++) {
-            results = valueSpecDiff(vss.get(i), (JSONObject)value.get(i));
+            results = valueSpecDiff2(vss.get(i), (JSONObject)value.get(i));
             message = (String)results.get("message");
             stringMatch = (Boolean)results.get("stringMatch");
             webString = (String)results.get("webString");
@@ -747,7 +768,8 @@ public class ModelValidator {
         JSONObject spec = (JSONObject)info.get("specialization");
         JSONObject value = (JSONObject)spec.get("specification");
         JSONObject modelspec = ExportUtility.fillConstraintSpecialization(e, null);
-        JSONObject modelvalue = (JSONObject)modelspec.get("specification");
+        //JSONObject modelvalue = (JSONObject)modelspec.get("specification");
+        JSONObject modelvalue = ExportUtility.fillValueSpecification(e.getSpecification(), null, true);
         //if (jsonObjectEquals(value, modelvalue))
         //    return null;
         if (modelvalue != null && modelvalue.equals(value))
@@ -790,6 +812,60 @@ public class ModelValidator {
         return null;
     }
     
+    private Map<String, Object> valueSpecDiff2(ValueSpecification vs, JSONObject firstObject) {
+        Map<String, Object> result = new HashMap<String, Object>();
+        String message = "";
+        String typeMismatchMessage = "[VALUE] value spec types don't match";
+        String modelString = null;
+        String webString = null;
+        boolean stringMatch = false;
+        JSONObject model = ExportUtility.fillValueSpecification(vs, null, true);
+        if (!model.equals(firstObject)) {
+            if (vs instanceof LiteralString && "LiteralString".equals(firstObject.get("type"))) {
+                modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
+                webString = ExportUtility.cleanHtml((String)firstObject.get("string"));
+                firstObject.put("string", webString);
+                if (!modelString.equals(webString)) {
+                    stringMatch = true;
+                    message = "[VALUE] model: " + truncate(modelString) + ", web: " + truncate(webString);
+                }
+            } else {
+                Object web = firstObject.get("double");
+                if (web == null)
+                    web = firstObject.get("integer");
+                if (web == null)
+                    web = firstObject.get("boolean");
+                if (web == null)
+                    web = firstObject.get("naturalValue");
+                if (web == null) {
+                    web = firstObject.get("instance");
+                    if (web != null) {
+                        Element el = ExportUtility.getElementFromID((String)web);
+                        if (el != null)
+                            web = RepresentationTextCreator.getRepresentedText(el);
+                    }
+                }
+                if (web == null) {
+                    web = firstObject.get("element");
+                    if (web != null) {
+                        Element el = ExportUtility.getElementFromID((String)web);
+                        if (el != null)
+                            web = RepresentationTextCreator.getRepresentedText(el);
+                    }
+                }
+                if (web == null)
+                    web = firstObject.toString();
+                message = "[VALUE] model: " + RepresentationTextCreator.getRepresentedText(vs) + ", web: " + web;
+            }
+        }
+        result.put("message", message);
+        result.put("webString", webString);
+        result.put("modelString", modelString);
+        result.put("stringMatch", stringMatch);
+        return result;
+    }
+    
+    @Deprecated
     private Map<String, Object> valueSpecDiff(ValueSpecification vs, JSONObject firstObject) {
         Map<String, Object> result = new HashMap<String, Object>();
         PropertyValueType valueType = PropertyValueType.valueOf((String)firstObject.get("type"));
@@ -967,7 +1043,7 @@ public class ModelValidator {
         return (JSONObject)elements.get(0);
     }
     
-    private JSONObject getManyAlfrescoElements(Set<Element> es) {
+    public static JSONObject getManyAlfrescoElements(Set<Element> es) {
         if (es.isEmpty())
             return null;
         JSONArray elements = new JSONArray();

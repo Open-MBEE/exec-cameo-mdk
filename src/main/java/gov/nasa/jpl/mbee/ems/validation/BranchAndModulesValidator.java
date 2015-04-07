@@ -45,6 +45,7 @@ public class BranchAndModulesValidator {
     private ValidationRule siteExist = new ValidationRule("Site Existence", "Site Existence", ViolationSeverity.ERROR);
     private ValidationRule versionMatch = new ValidationRule("Version", "Version", ViolationSeverity.INFO);
     private ValidationRule projectSiteExist = new ValidationRule("Site", "Project Site", ViolationSeverity.ERROR);
+    private ValidationSuite siteSuite = null;
     
     public BranchAndModulesValidator() {
         suite.addValidationRule(alfrescoTask);
@@ -108,6 +109,7 @@ public class BranchAndModulesValidator {
         }
         Set<String> seenTasks = new HashSet<String>();
         Map<String, ProjectDescriptor> branchDescriptors = new HashMap<String, ProjectDescriptor>();
+        String currentBranch = ExportUtility.getTeamworkBranch(proj);
         try {
             ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(proj);
             ProjectDescriptor trunk = currentProj;
@@ -117,7 +119,7 @@ public class BranchAndModulesValidator {
                 trunk = TeamworkUtils.getRemoteProjectDescriptor(parent.getBranchedFromId());
                 trunkBranch = ProjectDescriptorsFactory.getProjectBranchPath(trunk.getURI());
             }
-            String currentBranch = ExportUtility.getTeamworkBranch(proj);
+            
             if (currentBranch == null)
                 currentBranch = "master";
             else
@@ -159,7 +161,12 @@ public class BranchAndModulesValidator {
         //get project branches
         //can only do project version inits on branches where the trunk project already exists
         
-        
+        if (currentBranch.equals("master")) {
+            Utils.guilog("[INFO] Validating Site Characterizations");
+            SiteCharValidator siteVal = new SiteCharValidator();
+            siteVal.validate();
+            siteSuite = siteVal.getSuite();
+        }
     }
     
     private void fillBranchData(ProjectDescriptor currentProj, Map<String, ProjectDescriptor> branchDescriptors) throws RemoteException {
@@ -175,6 +182,8 @@ public class BranchAndModulesValidator {
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);
+        if (siteSuite != null)
+            vss.add(siteSuite);
         Utils.displayValidationWindow(vss, "Module and Branch Differences");
     }
     

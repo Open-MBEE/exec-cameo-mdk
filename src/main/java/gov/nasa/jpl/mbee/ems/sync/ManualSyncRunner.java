@@ -287,7 +287,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         sm.cancelSession();
                     }
                     listener.enable();
-                    gl.log("[WARNING] There were changes that couldn't be applied.");
+                    gl.log("[INFO] There were changes that couldn't be applied. These will be attempted on the next update.");
                 }
                 
               //conflicts
@@ -350,6 +350,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
             
             JSONArray toDeleteElements = new JSONArray();
             for (String e: localDeleted.keySet()) {
+                if (ExportUtility.getElementFromID(e) != null) //somehow the model has it, don't delete on server
+                    continue;
                 JSONObject toDelete = new JSONObject();
                 toDelete.put("sysmlid", e);
                 toDeleteElements.add(toDelete);
