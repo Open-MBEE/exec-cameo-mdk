@@ -224,7 +224,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 spec.put("type", "Product");
             }
         }*/
-        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size()));
         //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
         //    return false;
         
@@ -288,7 +289,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 }
             }
         }
-        OutputQueue.getInstance().offer(new Request("", "[INFO] Export View Done", "LOG"));
+        //OutputQueue.getInstance().offer(new Request("", "[INFO] Export View Done", "LOG"));
         // clean up the local images
         //visitor2.removeImages();
         //gl.log("[INFO] Done");

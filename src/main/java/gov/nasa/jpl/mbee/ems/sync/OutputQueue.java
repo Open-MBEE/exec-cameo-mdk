@@ -7,6 +7,7 @@ public class OutputQueue extends LinkedBlockingQueue<Request> {
     private OutputQueue() {
         super();
     }
+    
     public static OutputQueue getInstance() {
         return instance;
     }

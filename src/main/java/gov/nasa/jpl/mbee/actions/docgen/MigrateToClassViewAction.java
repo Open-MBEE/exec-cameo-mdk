@@ -72,11 +72,20 @@ public class MigrateToClassViewAction extends MDAction {
         List packages = new ArrayList();
         packages.add(Package.class);
         Element owner = (Element)Utils.getUserSelection(packages , "Pick a package to create under");
+        
         if (owner != null) {
+            Boolean preserveId = Utils.getUserYesNoAnswer("Preserve Ids? (This will swap the ids of the existing views and new class views created.)");
+            boolean preserve = false;
+            if (preserveId != null && preserveId)
+                preserve = true;
             SessionManager.getInstance().createSession("docgen migration");
             try {
-                HierarchyMigrationVisitor hmv = new HierarchyMigrationVisitor(owner);
+                HierarchyMigrationVisitor hmv = new HierarchyMigrationVisitor(owner, preserve);
                 dge.accept(hmv);
+                if (preserve && hmv.changeIdFailed()) {
+                    Application.getInstance().getGUILog().log("[ERROR] Not all existing views are editable, cannot preserve ids, aborted.");
+                    throw new Exception("failed cannot preserve ids on old document migrations");
+                }
                 SessionManager.getInstance().closeSession();
                 Application.getInstance().getGUILog().log("[INFO] Done (note previous 'nosection' views are now views under the parent view).");
             } catch (Exception ex) {
