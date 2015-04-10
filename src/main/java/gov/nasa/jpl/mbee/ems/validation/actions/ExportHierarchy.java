@@ -122,6 +122,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             send.put("source", "magicdraw");
             //if (ExportUtility.send(docurl, send.toJSONString()) == null)
             //    return false;
+            Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
             OutputQueue.getInstance().offer(new Request(docurl, send.toJSONString()));
         } else {
             JSONArray views = new JSONArray();
@@ -138,6 +139,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             send.put("source", "magicdraw");
             //if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
             //    return false;
+            Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
             OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString()));
         }
         return true;

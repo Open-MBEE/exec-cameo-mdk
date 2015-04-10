@@ -343,8 +343,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 
             }
             //do foreground?
-            if (!toSendElements.isEmpty())
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true));
+            if (!toSendElements.isEmpty()) {
+                Application.getInstance().getGUILog().log("[INFO] Change requests are added to queue.");
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true, toSendElements.size()));
+            }
             localAdded.clear();
             localChanged.clear();
             
@@ -357,8 +359,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 toDeleteElements.add(toDelete);
             }
             toSendUpdates.put("elements", toDeleteElements);
-            if (!toDeleteElements.isEmpty())
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true));
+            if (!toDeleteElements.isEmpty()) {
+                Application.getInstance().getGUILog().log("[INFO] Delete requests are added to queue.");
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size()));
+            }
             localDeleted.clear();
             if (toDeleteElements.isEmpty() && toSendElements.isEmpty())
                 gl.log("[INFO] No changes to commit.");
