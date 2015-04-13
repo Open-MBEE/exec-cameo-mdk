@@ -185,17 +185,18 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 
         if (ViewEditUtils.isPasswordSet()) {
             ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
+            ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
-                    modelLoad.addAction(new ExportModelAction(e));
+                    models.addAction(new ExportModelAction(e));
                 if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
-                    modelLoad.addAction(new InitializeProjectAction());
+                    models.addAction(new InitializeProjectAction());
             }
             if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                modelLoad.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Model": "Validate SubModel"));
+                models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models": "Validate Models"));
             if (e instanceof Package) {
                 if (manager.getActionFor(ExportAllDocuments.actionid) == null)
-                    modelLoad.addAction(new ExportAllDocuments(e));
+                    models.addAction(new ExportAllDocuments(e));
             }
         }
         
@@ -238,23 +239,27 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
             if (ViewEditUtils.isPasswordSet()) {
                 ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
+                ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
+
                 NMAction action = manager.getActionFor(ValidateViewAction.actionid);
                 if (action == null)
-                    modelLoad2.addAction(new ValidateViewAction(e));
+                    views.addAction(new ValidateViewAction(e));
                 action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
                 if (action == null)
-                    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
+                    views.addAction(new ValidateViewRecursiveAction(e));
                 if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
                     action = manager.getActionFor(ValidateHierarchyAction.actionid);
                     if (action == null)
                         modelLoad2.addAction(new ValidateHierarchyAction(e));
                 }
+                ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
+
                 action = manager.getActionFor("ExportView");
                 if (action == null)
-                    modelLoad2.addAction(new ExportViewAction(e, false));
+                    viewsC.addAction(new ExportViewAction(e, false));
                 action = manager.getActionFor("ExportViewRecursive");
                 if (action == null)
-                    modelLoad2.addAction(new ExportViewAction(e, true));
+                    viewsC.addAction(new ExportViewAction(e, true));
             }
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             //action = manager.getActionFor(ExportViewAction.actionid);
@@ -441,7 +446,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         }
         return category;
     }
-
+    
+    private ActionsCategory getCategory(ActionsManager manager, String id, String name, ActionsCategory parent) {
+        ActionsCategory category = (ActionsCategory)manager.getActionFor(id);
+        if (category == null) {
+            category = new MDActionsCategory(id, name);
+            category.setNested(false);
+            parent.addAction(category);
+        }
+        return category;
+    }
     /**
      * this should be used to add actions that're possible when user right
      * clicks on a view<br/>

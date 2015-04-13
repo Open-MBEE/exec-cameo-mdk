@@ -83,7 +83,8 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         if (url == null) {
             return;
         }
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
         }*/
@@ -104,6 +105,7 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         if (url == null) {
             return;
         }
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);

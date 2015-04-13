@@ -1470,6 +1470,7 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
         //send(url, tosend.toJSONString(), null, false);
     }
@@ -1486,6 +1487,7 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
         //send(url, tosend.toJSONString(), null, false);
     }

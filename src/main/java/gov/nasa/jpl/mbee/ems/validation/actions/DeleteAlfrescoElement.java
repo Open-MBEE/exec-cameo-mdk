@@ -110,7 +110,8 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
                 //    toremove.add(anno);
             }
         }
-        OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", true));
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", true, annos.size()));
         //saySuccess();
         //this.removeViolationsAndUpdateWindow(toremove);
     }
@@ -122,6 +123,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
         String url = ExportUtility.getUrlWithWorkspace();
         url += "/elements/" + id;
         //String result = ExportUtility.delete(url);
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, "{}", "DELETE", true));
         /*if (result != null) {
             saySuccess();

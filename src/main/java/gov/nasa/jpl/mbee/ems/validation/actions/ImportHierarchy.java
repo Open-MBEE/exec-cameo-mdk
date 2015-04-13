@@ -87,7 +87,7 @@ AnnotationAction, IRuleViolationAction {
     private Map<String, Object> tosend;
     
     public ImportHierarchy(Element e, JSONObject md, JSONObject keyed) {
-        super("ImportHierarchy", "Import Hierarchy", null, null);
+        super("ImportHierarchy", "Import View Hierarchy", null, null);
         this.view = e;
         this.keyed = keyed;
         this.md = md;
@@ -123,8 +123,10 @@ AnnotationAction, IRuleViolationAction {
                 //    OutputQueue.getInstance().offer(r);
                 //}
                 return true;
-            } else
+            } else {
+                Application.getInstance().getGUILog().log("[ERROR] Import hierarchy aborted because view hierarchy isn't editable. Lock it first.");
                 return false;
+            }
         }
         return true;
     }
@@ -157,7 +159,7 @@ AnnotationAction, IRuleViolationAction {
         tosend.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (!changes.isEmpty()) {
-            Request r = new Request(url, tosend.toJSONString(), "POST", false);
+            Request r = new Request(url, tosend.toJSONString(), "POST", false, changes.size());
             OutputQueue.getInstance().offer(r);
         }
         if (!deletedIds.isEmpty()) {
@@ -171,13 +173,42 @@ AnnotationAction, IRuleViolationAction {
                 eo.put("sysmlid", e);
                 elements.add(eo);
             }
-            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", false));
+            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", false, elements.size()));
         }
         return returns;
     }
     
+    private static boolean lock(Element e, boolean isTeamwork, Project project) {
+        if (e == null)
+            return true;
+        if (!e.isEditable()) {
+            return false;
+            /*if (!ProjectUtilities.isElementInAttachedProject(e)) {
+                if (isTeamwork) {
+                    if (TeamworkUtils.getLoggedUserName() == null)
+                        return false;
+                    boolean recursive = false;
+                    if (e instanceof Association)
+                        recursive = true;
+                    boolean hmm = TeamworkUtils.lockElement(project, e, recursive);
+                    if (!hmm) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }*/
+        }
+        return true;
+    }
+    
     public static Map<String, Object> importHierarchy(Element document, JSONObject md, JSONObject keyed) throws ReadOnlyElementException {
         Project project = Application.getInstance().getProject();
+        boolean isTeamwork = false;
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()))
+            isTeamwork = true;
         Map<String, Object> retval = new HashMap<String, Object>();
         retval.put("success", true);
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
@@ -191,8 +222,10 @@ AnnotationAction, IRuleViolationAction {
             String viewid = (String)vid;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                if (!view.isEditable() && !ProjectUtilities.isElementInAttachedProject(view)) 
-                    TeamworkUtils.lockElement(project, view, false);
+                if (!lock(view, isTeamwork, project)) {
+                    retval.put("success", false);
+                    return retval;
+                }
                 for (Property p: ((Class)view).getOwnedAttribute()) {
                     Type t = p.getType();
                     if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, viewS)) {
@@ -200,6 +233,10 @@ AnnotationAction, IRuleViolationAction {
                         if (viewprops == null) {
                             viewprops = new ArrayList<Property>();
                             viewId2props.put(t.getID(), viewprops);
+                        }
+                        if (!lock(p, isTeamwork, project) || !lock(p.getAssociation(), isTeamwork, project) || !lock(t, isTeamwork, project)) {
+                            retval.put("success", false);
+                            return retval;
                         }
                         viewprops.add(p);
                     }
@@ -214,8 +251,10 @@ AnnotationAction, IRuleViolationAction {
                 continue;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                if (!view.isEditable() && !ProjectUtilities.isElementInAttachedProject(view)) 
-                    TeamworkUtils.lockElement(project, view, false);
+                if (!lock(view, isTeamwork, project)) {
+                    retval.put("success", false);
+                    return retval;
+                }
                 for (Property p: ((Class)view).getOwnedAttribute()) {
                     Type t = p.getType();
                     if (t != null && StereotypesHelper.hasStereotypeOrDerived(t, viewS)) {
@@ -223,6 +262,10 @@ AnnotationAction, IRuleViolationAction {
                         if (viewprops == null) {
                             viewprops = new ArrayList<Property>();
                             viewId2props.put(t.getID(), viewprops);
+                        }
+                        if (!lock(p, isTeamwork, project) || !lock(p.getAssociation(), isTeamwork, project) || !lock(t, isTeamwork, project)) {
+                            retval.put("success", false);
+                            return retval;
                         }
                         viewprops.add(p);
                     }

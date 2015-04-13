@@ -27,7 +27,7 @@ public class ExportAllDocuments extends MDAction {
     public static final String actionid = "ExportAllDocuments";
     
     public ExportAllDocuments(Element e) {
-        super(actionid, "Commit All Owned Documents", null, null);
+        super(actionid, "Commit All Documents", null, null);
         start = e;
     }
     

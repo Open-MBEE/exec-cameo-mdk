@@ -35,10 +35,19 @@ public class HierarchyMigrationVisitor extends AbstractModelVisitor {
     private Stack<Class> parentView;
     private ElementsFactory ef;
     private Element owner;
-    public HierarchyMigrationVisitor(Element owner) {
+    private boolean preserveId = false;
+    private boolean cannotChangeId = false;
+    
+    public HierarchyMigrationVisitor(Element owner, boolean id) {
         this.owner = owner;
         parentView = new Stack<Class>();
         ef = Application.getInstance().getProject().getElementsFactory();
+        Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+        preserveId = id;
+    }
+    
+    public boolean changeIdFailed() {
+        return cannotChangeId;
     }
     
     @Override
@@ -46,6 +55,8 @@ public class HierarchyMigrationVisitor extends AbstractModelVisitor {
         if (doc.getDgElement() != null) {
             Element d = doc.getDgElement();
             Class newDoc = ef.createClassInstance();
+            if (preserveId)
+                setId(d, newDoc);
             newDoc.setName(((NamedElement)d).getName());
             ModelHelper.setComment(newDoc, ModelHelper.getComment(d));
             newDoc.setOwner(owner);
@@ -61,6 +72,8 @@ public class HierarchyMigrationVisitor extends AbstractModelVisitor {
         if (sec.isView()) {// && !sec.isNoSection()) {
             Element v = sec.getDgElement();
             Class newView = ef.createClassInstance();
+            if (preserveId)
+                setId(v, newView);
             newView.setName(((NamedElement)v).getName());
             ModelHelper.setComment(newView, ModelHelper.getComment(v));
             newView.setOwner(parentView.peek());
@@ -77,6 +90,19 @@ public class HierarchyMigrationVisitor extends AbstractModelVisitor {
             parentView.push(newView);
             visitChildren(sec);
             parentView.pop();
+        }
+    }
+    
+    private void setId(Element old, Element neww) {
+        if (old.isEditable()) {
+            if (!(old instanceof Diagram)) {
+                String oldId = old.getID();
+                String newId = neww.getID();
+                neww.setID(oldId);
+                old.setID(newId);
+            }
+        } else {
+            cannotChangeId = true;
         }
     }
     

@@ -38,6 +38,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 
 public class InitializeProjectAction extends MDAction {
 
@@ -64,6 +65,7 @@ public class InitializeProjectAction extends MDAction {
             return;
         }
         url += "/projects";
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, json));
     }
 }
