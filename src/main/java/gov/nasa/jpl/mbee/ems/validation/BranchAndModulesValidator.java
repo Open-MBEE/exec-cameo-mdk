@@ -23,6 +23,7 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.teamwork.application.BranchData;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
@@ -56,7 +57,7 @@ public class BranchAndModulesValidator {
         suite.addValidationRule(projectSiteExist);
     }
     
-    public void validate() {
+    public void validate(ProgressStatus ps) {
         Project proj = Application.getInstance().getProject();
         IPrimaryProject prj = proj.getPrimaryProject();
         Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(prj);
@@ -164,7 +165,7 @@ public class BranchAndModulesValidator {
         if (currentBranch.equals("master")) {
             Utils.guilog("[INFO] Validating Site Characterizations");
             SiteCharValidator siteVal = new SiteCharValidator();
-            siteVal.validate();
+            siteVal.validate(ps);
             siteSuite = siteVal.getSuite();
         }
     }
