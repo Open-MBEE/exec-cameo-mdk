@@ -58,6 +58,9 @@ public class ExportAllDocuments extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        Boolean b = Utils.getUserYesNoAnswer("Are you sure you want to commit all documents and views found within? Only view structures will be commited and not model data.");
+        if (b == null || !b)
+            return;
         ProgressStatusRunner.runWithProgressStatus(new ExportDocumentsRunner(), "Exporting Documents", true, 0);
     }
 
