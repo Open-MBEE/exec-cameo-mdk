@@ -27,6 +27,9 @@ public class ExportViewAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        Boolean b = Utils.getUserYesNoAnswer("Are you sure you want to commit view(s)? This will only commit the view structure and not model data.");
+        if (b == null || !b)
+            return;
         ExportView action = new ExportView(start, recursive, false, "");
         action.actionPerformed(null);
     }
