@@ -103,7 +103,7 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
         info.put("specialization", ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)element, null));
-        info.put("sysmlid", e.getID());
+        info.put("sysmlid", element.getID());
         elements.add(info);
         send.put("elements", elements);
         send.put("source", "magicdraw");
