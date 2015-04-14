@@ -12,6 +12,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
@@ -28,13 +29,13 @@ public class SiteCharValidator {
     private ValidationSuite suite = new ValidationSuite("site char");
     private ValidationRule siteDiff = new ValidationRule("Site", "site existence", ViolationSeverity.ERROR);
     
-    public void validate() {
+    public void validate(ProgressStatus ps) {
         suite.addValidationRule(siteDiff);
         Set<Element> packages = new HashSet<Element>();
         Model m = Application.getInstance().getProject().getModel();
         getPackages(packages, m);
         packages.remove(m);
-        JSONObject web = ModelValidator.getManyAlfrescoElements(packages);
+        JSONObject web = ModelValidator.getManyAlfrescoElements(packages, ps);
         Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
         ModelValidator.updateElementsKeyed(web, elementsKeyed);
         for (Element e: packages) {

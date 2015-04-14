@@ -75,6 +75,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -172,7 +173,7 @@ public class ModelValidator {
         this.crippled = crippled;
     }
     
-    public boolean checkProject() {
+    public boolean checkProject(ProgressStatus ps) {
         //if (ExportUtility.baselineNotSet)
         //    baselineTag.addViolation(new ValidationRuleViolation(Project.getProject(start).getModel(), "The baseline tag isn't set, baseline check wasn't done."));
         String projectUrl = ExportUtility.getUrlForProject();
@@ -217,10 +218,35 @@ public class ModelValidator {
             if (start == Application.getInstance().getProject().getModel())
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             id = id.replace(".", "%2E");
-            String url2 = url + "/elements/" + id + "?recurse=true&qualified=false";
+            final String url2 = url + "/elements/" + id + "?recurse=true&qualified=false";
             GUILog log = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Getting elements from server...");
-            response = ExportUtility.get(url2, false);
+            
+            final AtomicReference<String> res = new AtomicReference<String>();
+            Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String tres = ExportUtility.get(url2, false);
+                    res.set(tres);
+                }
+            });
+            t.start();
+            try {
+                t.join(10000);
+                while(t.isAlive()) {
+                    if (ps.isCancel()) {
+                        Utils.guilog("[INFO] Model validation canceled.");
+                        //clean up thread?
+                        return false;
+                    }
+                    t.join(10000);
+                }
+            } catch (Exception e) {
+                
+            }
+            //response = ExportUtility.get(url2, false);
+            
+            response = res.get();
             Utils.guilog("[INFO] Finished getting elements");
             if (response == null) {
                 response = "{\"elements\": []}";
@@ -297,7 +323,7 @@ public class ModelValidator {
                     continue;
             }
         }
-        JSONObject missingResult = getManyAlfrescoElements(missing);
+        JSONObject missingResult = getManyAlfrescoElements(missing, ps);
         updateElementsKeyed(missingResult, elementsKeyed);
         JSONObject failed = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
         JSONArray deletedOnMMS = null;
@@ -1043,7 +1069,7 @@ public class ModelValidator {
         return (JSONObject)elements.get(0);
     }
     
-    public static JSONObject getManyAlfrescoElements(Set<Element> es) {
+    public static JSONObject getManyAlfrescoElements(Set<Element> es, ProgressStatus ps) {
         if (es.isEmpty())
             return null;
         JSONArray elements = new JSONArray();
@@ -1052,17 +1078,42 @@ public class ModelValidator {
             ob.put("sysmlid", ExportUtility.getElementID(e));
             elements.add(ob);
         }
-        JSONObject tosend = new JSONObject();
+        final JSONObject tosend = new JSONObject();
         tosend.put("elements", elements);
-        String url = ExportUtility.getUrlWithWorkspace();
-        url += "/elements";
+        final String url = ExportUtility.getUrlWithWorkspace() + "/elements";
+        //url += "/elements";
         Utils.guilog("[INFO] Searching for " + es.size() + " elements from server...");
-        String response = ExportUtility.getWithBody(url, tosend.toJSONString());
+        
+        final AtomicReference<String> res = new AtomicReference<String>();
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String tres = ExportUtility.getWithBody(url, tosend.toJSONString());
+                res.set(tres);
+            }
+        });
+        t.start();
+        try {
+            t.join(10000);
+            while(t.isAlive()) {
+                if (ps.isCancel()) {
+                    //clean up thread?
+                    Utils.guilog("[INFO] Search for elements canceled.");
+                    break;
+                }
+                t.join(10000);
+            }
+        } catch (Exception e) {
+            
+        }
+        
+        String response = res.get();
+        //String response = ExportUtility.getWithBody(url, tosend.toJSONString());
         Utils.guilog("[INFO] Finished getting elements.");
         if (response == null) {
-            JSONObject res = new JSONObject();
-            res.put("elements", new JSONArray());
-            return res;
+            JSONObject reso = new JSONObject();
+            reso.put("elements", new JSONArray());
+            return reso;
         }
         return (JSONObject)JSONValue.parse(response);
     }

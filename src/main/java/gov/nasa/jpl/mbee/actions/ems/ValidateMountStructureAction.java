@@ -31,7 +31,7 @@ public class ValidateMountStructureAction extends MDAction {
         @Override
         public void run(ProgressStatus arg0) {
             BranchAndModulesValidator v = new BranchAndModulesValidator();
-            v.validate();
+            v.validate(arg0);
             v.showWindow();
         }
     }
