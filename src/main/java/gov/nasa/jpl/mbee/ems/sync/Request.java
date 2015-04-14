@@ -26,7 +26,7 @@ public class Request {
         this.method = method;
         this.feedback = feedback;
         this.suppressGui = !feedback;
-        this.wait = wait*1000;
+        this.wait = wait*1000 + 10000;
         if (this.wait == 0)
             this.wait = 30000;
     }
@@ -45,7 +45,7 @@ public class Request {
     public Request(String url, String json, int wait) {
         this.url = url;
         this.json = json;
-        this.wait = wait*1000;
+        this.wait = wait*1000 + 10000;
         if (this.wait == 0)
             this.wait = 30000;
     }
