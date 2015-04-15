@@ -214,6 +214,12 @@ public class ImportUtility {
                 newE = conn;
             }
             setConnectorEnds((Connector)newE, specialization);
+        } else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
+            if (newE == null) {
+                InstanceSpecification is = ef.createInstanceSpecificationInstance();
+                newE = is;
+            }
+            setInstanceSpecification((InstanceSpecification)newE, specialization);
         } else if (newE == null) {
             Class newElement = ef.createClassInstance();
             newE = newElement;
@@ -247,6 +253,8 @@ public class ImportUtility {
                 setConnectorEnds((Connector)e, spec);
             if (type != null && e instanceof Association && type.equals("Association"))
                 setAssociation((Association)e, spec);
+            if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
+                setInstanceSpecification((InstanceSpecification)e, spec);
         }
     }
     
@@ -288,6 +296,23 @@ public class ImportUtility {
     public static void setDocumentation(Element e, String doc) {
         if (doc != null)
             ModelHelper.setComment(e, Utils.addHtmlWrapper(doc));
+    }
+    
+    public static void setInstanceSpecification(InstanceSpecification is, JSONObject specialization) {
+        JSONObject spec = (JSONObject)specialization.get("instanceSpecificationSpecification");
+        if (spec != null) {
+            is.setSpecification(createValueSpec(spec));
+        } else
+            is.setSpecification(null);
+        if (specialization.containsKey("classifiers")) {
+            is.getClassifier().clear();
+            for (Object id: (JSONArray)specialization.get("classifiers")) {
+                Element e = ExportUtility.getElementFromID((String)id);
+                if (e instanceof Classifier) {
+                    is.getClassifier().add((Classifier)e);
+                }
+            }
+        }
     }
     
     public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) {

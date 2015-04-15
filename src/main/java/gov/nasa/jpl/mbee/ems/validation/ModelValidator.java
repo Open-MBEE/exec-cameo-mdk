@@ -44,6 +44,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportConnector;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportInstanceSpec;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportPropertyType;
@@ -56,6 +57,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportComment;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportConnector;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportInstanceSpec;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportPropertyType;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
@@ -134,6 +136,7 @@ public class ModelValidator {
     private ValidationRule associationDiff = new ValidationRule("Association", "association roles are different", ViolationSeverity.ERROR);
     private ValidationRule siteDiff = new ValidationRule("Site", "site existence", ViolationSeverity.ERROR);
     private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
+    private ValidationRule instanceSpec = new ValidationRule("InstanceSpec", "InstanceSpec", ViolationSeverity.ERROR);
 
     private Set<Element> differentElements = new HashSet<Element>();
     private Project prj;
@@ -492,6 +495,9 @@ public class ModelValidator {
             ValidationRuleViolation v = siteDiff((Package)e, elementInfo);
             if (v != null)
                 siteDiff.addViolation(v);
+        } else if (e instanceof InstanceSpecification) {
+            ValidationRuleViolation v = instanceSpecificationDiff((InstanceSpecification)e, elementInfo);
+           
         }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null) {
@@ -833,6 +839,20 @@ public class ModelValidator {
             if (editable)
                 v.addAction(new ExportAssociation(e));
             v.addAction(new ImportAssociation(e, webspec, result));
+            return v;
+        }
+        return null;
+    }
+    
+    private ValidationRuleViolation instanceSpecificationDiff(InstanceSpecification e, JSONObject info) {
+        Boolean editable = (Boolean)info.get("editable");
+        JSONObject webspec = (JSONObject)info.get("specialization");
+        JSONObject modelspec = ExportUtility.fillInstanceSpecificationSpecialization(e, null);
+        if (!modelspec.equals(webspec)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[INSTANCE] Instance specification or classifiers are different");
+            if (editable)
+                v.addAction(new ExportInstanceSpec(e));
+            v.addAction(new ImportInstanceSpec(e, webspec, result));
             return v;
         }
         return null;
