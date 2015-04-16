@@ -10,7 +10,7 @@ public class Request {
     private boolean feedback = false;
     private PostMethod pm = null;
     private boolean suppressGui = false;
-    private int wait = 30000;
+    private int wait = 60000;
     
     public Request(String url, String json, String method, boolean feedback) {
         this.url = url;
@@ -26,9 +26,7 @@ public class Request {
         this.method = method;
         this.feedback = feedback;
         this.suppressGui = !feedback;
-        this.wait = wait*1000 + 10000;
-        if (this.wait == 0)
-            this.wait = 30000;
+        this.wait = wait*1000 + 120000;
     }
     
     public Request(String url, String json, String method) {
@@ -45,9 +43,7 @@ public class Request {
     public Request(String url, String json, int wait) {
         this.url = url;
         this.json = json;
-        this.wait = wait*1000 + 10000;
-        if (this.wait == 0)
-            this.wait = 30000;
+        this.wait = wait*1000 + 120000;
     }
     
     public Request(String url, PostMethod pm) {
