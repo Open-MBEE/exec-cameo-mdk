@@ -169,6 +169,7 @@ public class ModelValidator {
         suite.addValidationRule(associationDiff);
         suite.addValidationRule(siteDiff);
         suite.addValidationRule(productView);
+        suite.addValidationRule(instanceSpec);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -497,7 +498,8 @@ public class ModelValidator {
                 siteDiff.addViolation(v);
         } else if (e instanceof InstanceSpecification) {
             ValidationRuleViolation v = instanceSpecificationDiff((InstanceSpecification)e, elementInfo);
-           
+            if (v != null)
+                instanceSpec.addViolation(v);
         }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null) {

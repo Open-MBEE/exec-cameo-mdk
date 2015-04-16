@@ -1004,7 +1004,8 @@ public class ExportUtility {
         for (Classifier c: e.getClassifier()) {
             classifiers.add(c.getID());
         }
-        specialization.put("classifiers", classifiers);
+        specialization.put("classifier", classifiers);
+        specialization.put("type", "InstanceSpecification");
         return specialization;
     }
     

@@ -304,9 +304,9 @@ public class ImportUtility {
             is.setSpecification(createValueSpec(spec));
         } else
             is.setSpecification(null);
-        if (specialization.containsKey("classifiers")) {
+        if (specialization.containsKey("classifier")) {
             is.getClassifier().clear();
-            for (Object id: (JSONArray)specialization.get("classifiers")) {
+            for (Object id: (JSONArray)specialization.get("classifier")) {
                 Element e = ExportUtility.getElementFromID((String)id);
                 if (e instanceof Classifier) {
                     is.getClassifier().add((Classifier)e);
