@@ -305,8 +305,13 @@ public class ImportUtility {
         } else
             is.setSpecification(null);
         if (specialization.containsKey("classifier")) {
+            JSONArray classifier = (JSONArray)specialization.get("classifier");
+            if (classifier == null || classifier.isEmpty()) {
+                log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
+                return;
+            }
             is.getClassifier().clear();
-            for (Object id: (JSONArray)specialization.get("classifier")) {
+            for (Object id: classifier) {
                 Element e = ExportUtility.getElementFromID((String)id);
                 if (e instanceof Classifier) {
                     is.getClassifier().add((Classifier)e);

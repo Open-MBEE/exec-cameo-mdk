@@ -54,8 +54,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     protected JSONObject elements;
     private JSONObject   views;
     private Stack<JSONArray>          curContains;  //MDEV #674 -- change to a Stack of JSONArrays
-    private Stack<JSONArray>          sibviews; //sibling views
-    private Stack<Set<String>>        viewElements;
+    private Stack<JSONArray>          sibviews; //sibling views (array of view ids)
+    private Stack<Set<String>>        viewElements; //ids of view elements
     private Map<String, JSONObject>   images;        
     protected boolean                 recurse;
     private GUILog                    gl;
@@ -63,7 +63,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stereotype view = Utils.getViewStereotype();
     private Stereotype viewpoint = Utils.getViewpointStereotype();
     private Map<From, String> sourceMapping;
-    private JSONObject                view2view;
+    private JSONObject                view2view; //parent view id to array of children view ids (from sibviews)
     private JSONArray                 noSections = new JSONArray();
     private boolean doc;
     protected Set<Element> elementSet = new HashSet<Element>();
