@@ -50,6 +50,7 @@ import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.Color;
+import java.awt.Frame;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -72,6 +73,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -84,6 +86,8 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementDlg;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementsDlg;
+import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
+import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
@@ -1442,7 +1446,7 @@ public class Utils {
                 if (o2 == null)
                     return 1;
                 if (o1 instanceof NamedElement && o2 instanceof NamedElement) {
-                    return ((NamedElement)o1).getName().compareTo(((NamedElement)o2).getName());
+                    return ((NamedElement)o1).getName().toLowerCase().compareTo(((NamedElement)o2).getName().toLowerCase());
                 }
                 return CompareUtils.compare(o1, o2);
             }
@@ -1506,7 +1510,7 @@ public class Utils {
                     return 1;
                 switch (attribute) {
                     case Name:
-                        return CompareUtils.compare(a.toString(), b.toString(), true);
+                        return CompareUtils.compare(a.toString().toLowerCase(), b.toString().toLowerCase(), true);
                     case Documentation:
                         return CompareUtils.compare(a.toString().length(), b.toString().length(), true);
                     case Value:
@@ -1789,6 +1793,30 @@ public class Utils {
     public static List<Package> getPackagesOfType(Element root, String typeName) {
         return getPackagesOfType(root, typeName, null);
     }
+    
+    public static boolean isSiteChar(Package e) {
+        Stereotype characterizes = Utils.getCharacterizesStereotype();
+        if (characterizes != null) {
+            List<Element> sites =  Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1);
+            boolean found = false;
+            for (Element l: sites) {  
+                /*if (l instanceof NamedElement && ((NamedElement)l).getName().equals("Site Characterization")) {
+                    found = true;
+                    break;
+                }*/
+                if (l instanceof Classifier) {
+                    for (Classifier g: ((Classifier)l).getGeneral()) {
+                        if (g.getName().equals("Site Characterization")) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            return found;
+        }
+        return false;
+    }
 
     /**
      * @param root
@@ -1960,6 +1988,14 @@ public class Utils {
         return StereotypesHelper.getStereotype(getProject(), stereotypeName);
     }
 
+    public static Stereotype getDocumentStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::Document");
+    }
+    
+    public static Stereotype getCharacterizesStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::characterizes");
+    }
+    
     public static Stereotype getViewpointStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Viewpoint");
     }
@@ -1983,9 +2019,33 @@ public class Utils {
     public static Stereotype getSysML14ConformsStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Conforms");
     }
+    
+    public static Stereotype getProductStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::Product");
+    }
+    
+    public static Stereotype getExposeStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Expose");
+    }
 
+    public static Stereotype get18ExposeStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Expose");
+    }
+    
     /********************************************* User interaction ****************************************************/
 
+    /**
+     * Log to GUILog in UI's event dispatcher
+     */
+    public static void guilog(final String s) {
+        //SwingUtilities.invokeLater(new Runnable() {
+        //    @Override
+        //    public void run() {
+                Application.getInstance().getGUILog().log(s);
+        //    }
+        //});
+    }
+    
     /**
      * Displays a dialog box that allows users to select elements from the
      * containment tree<br/>
@@ -2002,6 +2062,19 @@ public class Utils {
     @SuppressWarnings("unchecked")
     public static List<BaseElement> getUserSelections(List<java.lang.Class<?>> types, String title) {
         SelectElementTypes a = new SelectElementTypes(null, types);
+        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
+                .getModel(), true);
+        Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
+        ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
+        ElementSelectionDlgFactory.initMultiple(dlg, a, b, new ArrayList());
+        dlg.setTitle(title);
+        dlg.show();
+        if (dlg.isOkClicked()) {
+            return dlg.getSelectedElements();
+        }
+        return null;
+        /*
+        SelectElementTypes a = new SelectElementTypes(null, types);
         // SelectElementType(display, select)
         SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
                 .getModel(), true);
@@ -2013,6 +2086,7 @@ public class Utils {
         if (z.isOk())
             return z.getSelected();
         return null;
+        */
     }
 
     /**
@@ -2025,16 +2099,28 @@ public class Utils {
      */
     public static BaseElement getUserSelection(List<java.lang.Class<?>> types, String title) {
         SelectElementTypes a = new SelectElementTypes(null, types);
-        // SelectElementType(display, select)
         SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
                 .getModel(), true);
+        Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
+        ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
+        ElementSelectionDlgFactory.initSingle(dlg, a, b, null);
+        dlg.setTitle(title);
+        dlg.show();
+        if (dlg.isOkClicked()) {
+            return dlg.getSelectedElement();
+        }
+        return null;
+        /*
+        
+        // SelectElementType(display, select)
+        
         SelectElementDlg z = null;
         z = new SelectElementDlg(MDDialogParentProvider.getProvider().getDialogParent(), null, a, b);
         z.setTitle(title);
         z.setVisible(true);
         if (z.isOk())
             return z.getSelected();
-        return null;
+        return null;*/
     }
 
     /**
@@ -2236,7 +2322,8 @@ public class Utils {
         Package dummyvs = (Package)project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         //Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
         if (dummyvs == null) {
-            Utils.showPopupMessage("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
+            //Utils.showPopupMessage("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
+            Application.getInstance().getGUILog().log("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
             return;
         }
         EnumerationLiteral severitylevel = Annotation.getSeverityLevel(project, Annotation.INFO);

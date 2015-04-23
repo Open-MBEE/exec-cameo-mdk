@@ -31,16 +31,23 @@ package gov.nasa.jpl.mbee.viewedit;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.GridLayout;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JRootPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
@@ -165,7 +172,7 @@ public class ViewEditUtils {
                 if (password != null) {
                     passwordFld.setText(password);
                 }
-
+                makeSureUserGetsFocus(usernameFld);
                 JOptionPane.showConfirmDialog(null, userPanel,
                         "Enter your username and password for ViewEditor:", JOptionPane.OK_CANCEL_OPTION,
                         JOptionPane.PLAIN_MESSAGE);
@@ -186,6 +193,40 @@ public class ViewEditUtils {
             e.printStackTrace();
         }
 
+    }
+    
+    private static void makeSureUserGetsFocus(final JTextField user) {
+        //from http://stackoverflow.com/questions/14096140/how-to-set-default-input-field-in-joptionpane
+        user.addHierarchyListener(new HierarchyListener()
+        {
+            HierarchyListener hierarchyListener = this;
+
+            @Override
+            public void hierarchyChanged(HierarchyEvent e)
+            {
+                JRootPane rootPane = SwingUtilities.getRootPane(user);
+                if (rootPane != null)
+                {
+                    final JButton okButton = rootPane.getDefaultButton();
+                    if (okButton != null)
+                    {
+                        okButton.addFocusListener(new FocusAdapter()
+                        {
+                            @Override
+                            public void focusGained(FocusEvent e)
+                            {
+                                if (!e.isTemporary())
+                                {
+                                    user.requestFocusInWindow();
+                                    user.removeHierarchyListener(hierarchyListener);
+                                    okButton.removeFocusListener(this);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
     }
 
     public static void clearCredentials() {

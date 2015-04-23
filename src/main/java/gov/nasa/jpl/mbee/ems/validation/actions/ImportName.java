@@ -29,6 +29,9 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -43,9 +46,11 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 public class ImportName extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -69,35 +74,23 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        SessionManager.getInstance().createSession("Change Names");
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        try {
-            boolean noneditable = false;
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
-                    noneditable = true;
-                    continue;
-                }
-                String resultName = ExportUtility.unescapeHtml((String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("name"));
-                if (resultName == null)
-                    continue;
-                ((NamedElement)e).setName(resultName);
-                //AnnotationManager.getInstance().remove(anno);
-                toremove.add(anno);
+        executeMany(annos, "Change Names");
+    }
+    
+    @Override
+    protected boolean doAction(Annotation anno) {
+        if (anno != null) {
+            Element e = (Element)anno.getTarget();
+            if (!e.isEditable()) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                return false;
             }
-            SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
+            JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            ImportUtility.setName(e, resultOb);
+        } else {
+            ImportUtility.setName(element, name);
         }
-        
+        return true;
     }
 
     @Override
@@ -106,17 +99,6 @@ public class ImportName extends RuleViolationAction implements AnnotationAction,
             Application.getInstance().getGUILog().log("[ERROR] " + element.getQualifiedName() + " is not editable!");
             return;
         }
-        SessionManager.getInstance().createSession("Change Name");
-        try {
-            element.setName(name);
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
+        execute("Change Name");
     }
 }

@@ -72,7 +72,7 @@ public class ExportViewHierarchyAction extends MDAction {
                 return;
             }
             DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
-            Document dge = dg.parseDocument(true, true);
+            Document dge = dg.parseDocument(true, true, false);
             dv.printErrors();
             ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
             dge.accept(vhv);

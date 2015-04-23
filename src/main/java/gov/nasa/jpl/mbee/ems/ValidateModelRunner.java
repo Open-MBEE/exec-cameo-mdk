@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
+import java.util.Collection;
+
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 
 import com.nomagic.task.ProgressStatus;
@@ -36,17 +38,18 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateModelRunner implements RunnableWithProgress {
 
-    private Element start;
+    private Collection<Element> start;
     
-    public ValidateModelRunner(Element start) {
+    public ValidateModelRunner(Collection<Element> start) {
         this.start = start;
     }
     
     @Override
     public void run(ProgressStatus arg0) {
-        ModelValidator validator = new ModelValidator(start, null, true, null);
-        if (validator.checkProject()) 
+        ModelValidator validator = new ModelValidator(start, null, true, null, false);
+        if (validator.checkProject(arg0)) 
             validator.validate(true, arg0);
-        validator.showWindow();
+        if (!arg0.isCancel())
+            validator.showWindow();
     }
 }

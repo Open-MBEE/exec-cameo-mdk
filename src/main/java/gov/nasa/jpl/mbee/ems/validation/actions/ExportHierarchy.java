@@ -30,6 +30,8 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
@@ -57,7 +59,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
     public ExportHierarchy(Element e) {
     	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
     	//
-        super("ExportHierarchy", "Commit Hierarchy", null, null);
+        super("ExportHierarchy", "Commit View Hierarchy", null, null);
         this.view = e;
     }
     
@@ -75,25 +77,27 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
                 toremove.add(anno);
             }
         }
-        if (!toremove.isEmpty()) {
-            this.removeViolationsAndUpdateWindow(toremove);
-        }
+        //if (!toremove.isEmpty()) {
+        //    this.removeViolationsAndUpdateWindow(toremove);
+        //}
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (exportHierarchy(view)) {
-            this.removeViolationAndUpdateWindow();
+            //this.removeViolationAndUpdateWindow();
         }
     }
     
     @SuppressWarnings("unchecked")
     private boolean exportHierarchy(Element view) {
         DocumentGenerator dg = new DocumentGenerator(view, null, null);
-        Document dge = dg.parseDocument(true, true);
+        Document dge = dg.parseDocument(true, true, true);
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
         dge.accept(vhv);
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrlWithWorkspace();
+        if (url == null)
+            return false;
         boolean document = false;
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
@@ -102,20 +106,24 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
         
         JSONObject view2view = vhv.getView2View();
         if (document) {
-            String docurl = url + "/javawebscripts/products";
+            String docurl = url + "/elements";
             
             JSONObject send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
             JSONObject specialization = new JSONObject();
+            specialization.put("type", "Product");
             doc.put("specialization", specialization);
             specialization.put("view2view", ExportUtility.formatView2View(view2view));
             specialization.put("noSections", vhv.getNosections());
-            doc.put("id", view.getID());
+            doc.put("sysmlid", view.getID());
             documents.add(doc);
-            send.put("products", documents);
-            if (!ExportUtility.send(docurl, send.toJSONString()))
-                return false;
+            send.put("elements", documents);
+            send.put("source", "magicdraw");
+            //if (ExportUtility.send(docurl, send.toJSONString()) == null)
+            //    return false;
+            Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+            OutputQueue.getInstance().offer(new Request(docurl, send.toJSONString()));
         } else {
             JSONArray views = new JSONArray();
             for (Object viewid: view2view.keySet()) {
@@ -127,9 +135,12 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
                 views.add(viewinfo);
             }
             JSONObject send  = new JSONObject();
-            send.put("views", views);
-            if (!ExportUtility.send(url + "/javawebscripts/views", send.toJSONString()))
-                return false;
+            send.put("elements", views);
+            send.put("source", "magicdraw");
+            //if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
+            //    return false;
+            Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString()));
         }
         return true;
         

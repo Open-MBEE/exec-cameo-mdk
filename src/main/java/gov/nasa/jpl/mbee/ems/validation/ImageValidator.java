@@ -57,13 +57,15 @@ public class ImageValidator {
     }
     
     public void validate() {
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrlWithWorkspace();
+        if (url == null)
+            return;
         for (String key: images.keySet()) {
             Element e = (Element)ExportUtility.getElementFromID(key);
             String cs = (String)images.get(key).get("cs");
             String extension = (String)images.get(key).get("extension");
             String id = key.replace(".", "%2E");
-            String baseurl = url + "/workspaces/master/artifacts/" + id + "?cs=" + cs + "&extension=" + extension;
+            String baseurl = url + "/artifacts/" + id + "?cs=" + cs + "&extension=" + extension;
            
             GetMethod get = new GetMethod(baseurl);
             int status = 0;

@@ -28,6 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -42,8 +45,10 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ImportRel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -66,68 +71,34 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        SessionManager.getInstance().createSession("Change Rels");
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        try {
-            boolean noneditable = false;
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
-                    noneditable = true;
-                    continue;
-                }
-                
-                JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-                JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-                String sourceId = (String)specialization.get("source");
-                String targetId = (String)specialization.get("target");
-                
-                Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);
-                Element target = (Element)Application.getInstance().getProject().getElementByID(targetId);
-                ModelHelper.setClientElement(e, source);
-                ModelHelper.setSupplierElement(e, target);
-                //AnnotationManager.getInstance().remove(anno);
-                toremove.add(anno);
-            }
-            SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-        }
-        
+        executeMany(annos, "Change Rels");
     }
-
+    
+    @Override
+    protected boolean doAction(Annotation anno) {
+        if (anno != null) {
+            Element e = (Element)anno.getTarget();
+            if (!e.isEditable()) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                return false;
+            }
+            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            JSONObject specialization = (JSONObject)tmpObj.get("specialization");
+            ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
+        } else {
+            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID());
+            JSONObject specialization = (JSONObject)tmpObj.get("specialization");
+            ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
+        }
+        return true;
+    }
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
             Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
             return;
         }
-        SessionManager.getInstance().createSession("Change Rel");
-        try {
-            JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-            JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-            String sourceId = (String)specialization.get("source");
-            String targetId = (String)specialization.get("target");
-
-            Element source = (Element)Application.getInstance().getProject().getElementByID(sourceId);
-            Element target = (Element)Application.getInstance().getProject().getElementByID(targetId);
-            ModelHelper.setClientElement(element, source);
-            ModelHelper.setSupplierElement(element, target);
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
+        execute("Change Rel");
     }
 }

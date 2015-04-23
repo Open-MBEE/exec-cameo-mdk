@@ -84,7 +84,7 @@ public class ExportViewCommentsAction extends MDAction {
                 return;
             }
             DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
-            Document dge = dg.parseDocument(true, recurse);
+            Document dge = dg.parseDocument(true, recurse, false);
             ViewCommentVisitor vcv = new ViewCommentVisitor();
             dge.accept(vcv);
             String json = vcv.getJSON();

@@ -37,6 +37,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -68,25 +69,26 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
-        JSONObject result = new JSONObject();
-        result.put("name", Application.getInstance().getProject().getName());
-        String json = result.toJSONString();
-        //gl.log(json);
-        String url = ExportUtility.getUrlWithSiteAndProject();
+        JSONObject tosend = new JSONObject();
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        JSONObject result = ExportUtility.getProjectJson();
+        array.add(result);
+        String url = ExportUtility.getUrlWithWorkspaceAndSite();
         if (url == null) {
             return;
         }
-        url += "?fix=true";
-        //url += "/javawebscripts/sites/europa/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        if (!ExportUtility.send(url, json))
+        url += "/projects";
+        String response = ExportUtility.send(url, tosend.toJSONString(), null, false, false);
+        if (response == null || response.startsWith("<html"))
             return;
-        ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
+        //ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
         if (!initOnly) {
             url = ExportUtility.getPostElementsUrl();
             if (url == null) {
                 return;
             }
-            boolean background = Utils.getUserYesNoAnswer("Use background export on server? You'll get an email when done.");
+            boolean background = Utils.getUserYesNoAnswer("Use background export on server? You'll get an email when done. \nChoose yes for background, no for foreground, cancel to cancel");
             if (background)
                 url = url + "?background=true";
             ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false, url), "Exporting Model", true, 0);

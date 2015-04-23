@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -43,6 +45,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -71,22 +74,21 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            JSONObject info = new JSONObject();
-            info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
-            info.put("sysmlid", ExportUtility.getElementID(e));
-            infos.add(info);
+            infos.add(ExportUtility.fillDoc(e, null));
         }
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
-            ExportUtility.sendProjectVersions();
-        }
+        }*/
     }
 
     @SuppressWarnings("unchecked")
@@ -94,22 +96,19 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport(element))
             return;
-        JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
-        info.put("sysmlid", ExportUtility.getElementID(element));
-        elements.add(info);
+        elements.add(ExportUtility.fillDoc(element, null));
         send.put("elements", elements);
-
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
-            ExportUtility.sendProjectVersion(element);
-            this.removeViolationAndUpdateWindow();
-        }
-
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
+            this.removeViolationsAndUpdateWindow(annos);
+        }*/
     }
 }

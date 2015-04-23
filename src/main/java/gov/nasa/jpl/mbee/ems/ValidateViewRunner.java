@@ -38,15 +38,17 @@ public class ValidateViewRunner implements RunnableWithProgress {
 
     private Element view;
     private boolean recurse; 
+    private boolean hierarchy;
     
-    public ValidateViewRunner(Element view, boolean recurse) {
+    public ValidateViewRunner(Element view, boolean recurse, boolean hierarchy) {
         this.view = view;
         this.recurse = recurse;
+        this.hierarchy = hierarchy;
     }
     
     @Override
     public void run(ProgressStatus arg0) {
-        ViewValidator vv = new ViewValidator(view, recurse);
+        ViewValidator vv = new ViewValidator(view, recurse, hierarchy);
         if (vv.checkProject()) {
             if (vv.validate(arg0))
                 vv.showWindow();

@@ -28,8 +28,15 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import gov.nasa.jpl.mbee.actions.ems.CloseAutoSyncAction;
 import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
+import gov.nasa.jpl.mbee.actions.ems.SendProjectVersionAction;
+import gov.nasa.jpl.mbee.actions.ems.StartAutoSyncAction;
+import gov.nasa.jpl.mbee.actions.ems.UpdateFromJMS;
+import gov.nasa.jpl.mbee.actions.ems.UpdateWorkspacesAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateMountStructureAction;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 
 import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
@@ -52,11 +59,21 @@ public class MMSConfigurator implements AMConfigurator {
             category = new MDActionsCategory("MMSMAIN", "MMS");
             ((ActionsCategory)category).setNested(true);
             manager.addCategory((ActionsCategory)category);
-            category.addAction(new EMSLogoutAction());
-            category.addAction(new EMSLoginAction());
+            EMSLogoutAction logout = new EMSLogoutAction();
+            EMSLoginAction login = new EMSLoginAction();
+            login.setLogoutAction(logout);
+            logout.setLoginAction(login);
+            category.addAction(logout);
+            category.addAction(login);
+            category.addAction(new ValidateMountStructureAction());
+            category.addAction(new StartAutoSyncAction());
+            category.addAction(new CloseAutoSyncAction());
+            category.addAction(new UpdateFromJMS(false));
+            category.addAction(new UpdateFromJMS(true));
+            category.addAction(new SendProjectVersionAction());
+            if (MDUtils.isDeveloperMode()) {
+                category.addAction(new UpdateWorkspacesAction());
+            }
         }
-        
     }
-    
-
 }

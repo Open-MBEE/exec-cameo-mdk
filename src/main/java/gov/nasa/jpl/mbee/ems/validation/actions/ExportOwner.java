@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -71,26 +73,21 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            JSONObject info = new JSONObject();
-            Element owner = e.getOwner();
-            String ownerId = owner.getID();
-            if (owner == Application.getInstance().getProject().getModel())
-                ownerId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-            info.put("owner", ownerId);
-            info.put("sysmlid", ExportUtility.getElementID(e));
-            infos.add(info);
+            infos.add(ExportUtility.fillOwner(e, null));
         }
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
-            ExportUtility.sendProjectVersions();
-        }
+        }*/
     }
 
     @SuppressWarnings("unchecked")
@@ -98,26 +95,21 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport(element))
             return;
-        JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        Element owner = element.getOwner();
-        String ownerId = owner.getID();
-        if (owner == Application.getInstance().getProject().getModel())
-            ownerId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        info.put("owner", ownerId);
-        info.put("sysmlid", ExportUtility.getElementID(element));
-        
-        elements.add(info);
+
+        elements.add(ExportUtility.fillOwner(element, null));
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
-            this.removeViolationAndUpdateWindow();
-            ExportUtility.sendProjectVersion(element);
-        }
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
+            this.removeViolationsAndUpdateWindow(annos);
+        }*/
 
     }
 }

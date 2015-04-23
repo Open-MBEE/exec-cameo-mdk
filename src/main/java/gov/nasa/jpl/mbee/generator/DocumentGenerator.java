@@ -103,11 +103,14 @@ public class DocumentGenerator {
     private Stereotype        sysmlview = Utils.getViewStereotype();
     private Stereotype        product;
     private Stereotype        conforms  = Utils.getConformsStereotype();
-    private Stereotype        sysml14conforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
-
+    private Stereotype        ourConforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
+    private Stereotype        md18expose = Utils.get18ExposeStereotype();
+    private Stereotype        ourExpose = Utils.getExposeStereotype();
+    private boolean hierarchyOnly;
+    
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
         start = e;
-        product = StereotypesHelper.getStereotype(Project.getProject(e), "Document", "SysML Extensions");
+        product = Utils.getProductStereotype();
         doc = new Document();
         context = new GenerationContext(new Stack<List<Object>>(), null, dv, Application.getInstance()
                 .getGUILog());
@@ -115,14 +118,14 @@ public class DocumentGenerator {
 
     public DocumentGenerator(Element e, PrintWriter wlog) {
         start = e;
-        product = StereotypesHelper.getStereotype(Project.getProject(e), "Document", "SysML Extensions");
+        product = Utils.getProductStereotype();
         doc = new Document();
         context = new GenerationContext(new Stack<List<Object>>(), null, Application.getInstance()
                 .getGUILog());
     }
 
     public Document parseDocument() {
-        return this.parseDocument(false, true);
+        return this.parseDocument(false, true, false);
     }
 
     public Document getDocument() {
@@ -135,7 +138,8 @@ public class DocumentGenerator {
      * are to accommodate normal docgen to docbook xml and view editor export
      * options
      */
-    public Document parseDocument(boolean singleView, boolean recurse) {
+    public Document parseDocument(boolean singleView, boolean recurse, boolean hierarchyOnly) {
+        this.hierarchyOnly = hierarchyOnly;
         if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
             if (start instanceof Package
                     || start instanceof Diagram
@@ -167,14 +171,48 @@ public class DocumentGenerator {
     public Section parseView(Element view) {
         Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
         if (viewpoint == null)
-            viewpoint = GeneratorUtils.findStereotypedRelationship(view, sysml14conforms);
+            viewpoint = GeneratorUtils.findStereotypedRelationship(view, ourConforms);
         Section viewSection = new Section(); // Section is a misnomer, should be
                                              // View
         viewSection.setView(true);
 
         if (StereotypesHelper.hasStereotype(view, DocGen3Profile.appendixViewStereotype))
             viewSection.isAppendix(true);
-
+        viewSection.setViewpoint(viewpoint);
+        
+        List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
+                view, ElementImport.class, 1, 1);
+        List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
+                view, PackageImport.class, 1, 1);
+        List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotype(
+                view, ourExpose, 1, false, 1);
+        if (md18expose != null)
+            expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, md18expose, 1, false, 1));
+        List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
+                view, DocGen3Profile.oldQueriesStereotype, 1, false, 1);
+        if (elementImports == null)
+            elementImports = new ArrayList<Element>();
+        if (packageImports != null)
+            elementImports.addAll(packageImports);
+        if (expose != null)
+            elementImports.addAll(expose); // all three import/queries
+                                           // relationships are
+                                           // interpreted the same
+        if (queries != null)
+            elementImports.addAll(queries); // all three import/queries
+                                            // relationships are
+                                            // interpreted the same
+        if (view instanceof Class) {
+            for (TypedElement te: ((Class)view).get_typedElementOfType()) {
+                if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
+                    elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(te, 
+                            ourExpose, 1, false, 1));
+                }
+            }
+        }
+        viewSection.setExposes(elementImports);
+        
+        if (!hierarchyOnly) {
         if (viewpoint != null && viewpoint instanceof Class) { // view conforms
                                                                // to a viewpoint
             if (!(view instanceof Diagram)) { // if it's a diagram, people most
@@ -216,35 +254,7 @@ public class DocumentGenerator {
                              // the imported/queried elements
                 Boolean addVPElements = (Boolean)GeneratorUtils.getObjectProperty(b,
                         DocGen3Profile.methodStereotype, "includeViewpointElements", false);;
-
-                List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
-                        view, ElementImport.class, 1, 1);
-                List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
-                        view, PackageImport.class, 1, 1);
-                List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
-                        view, DocGen3Profile.queriesStereotype, 1, false, 1);
-                List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
-                        view, DocGen3Profile.oldQueriesStereotype, 1, false, 1);
-                if (elementImports == null)
-                    elementImports = new ArrayList<Element>();
-                if (packageImports != null)
-                    elementImports.addAll(packageImports);
-                if (expose != null)
-                    elementImports.addAll(expose); // all three import/queries
-                                                   // relationships are
-                                                   // interpreted the same
-                if (queries != null)
-                    elementImports.addAll(queries); // all three import/queries
-                                                    // relationships are
-                                                    // interpreted the same
-                if (view instanceof Class) {
-                    for (TypedElement te: ((Class)view).get_typedElementOfType()) {
-                        if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
-                            elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(te, 
-                                    DocGen3Profile.queriesStereotype, 1, false, 1));
-                        }
-                    }
-                }
+                
                 if (elementImports.isEmpty())
                     elementImports.add(view); // if view does not import/query
                                               // anything, give the view element
@@ -265,22 +275,7 @@ public class DocumentGenerator {
                 context.popTargets();
             }
         } else { // view does not conform to a viewpoint, apply default behavior
-            List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-                    DocGen3Profile.queriesStereotype, 1, false, 1);
-            if (view instanceof Class) {
-                for (TypedElement te: ((Class)view).get_typedElementOfType()) {
-                    if (te instanceof Property && ((Property)te).getAggregation() == AggregationKindEnum.COMPOSITE) {
-                        expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(te, 
-                                DocGen3Profile.queriesStereotype, 1, false, 1));
-                    }
-                }
-            }
-            //MDEV-555 only do view replacement if using class views
-            if (view instanceof Class && expose.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(expose.get(0), sysmlview)) {
-                return parseView(expose.get(0)); // substitute another view
-            }
-            if (view instanceof Diagram) { // if a diagram, show diagram and
-                                           // documentation
+            if (view instanceof Diagram) { // if a diagram, show diagram and documentation
                 Image image = new Image();
                 List<Object> images = new ArrayList<Object>();
                 images.add(view);
@@ -300,13 +295,22 @@ public class DocumentGenerator {
                 String viewDoc = ModelHelper.getComment(view);
                 if (viewDoc != null) {
                     Paragraph para = new Paragraph(viewDoc);
-                    //if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
-                        para.setDgElement(view);
-                        para.setFrom(From.DOCUMENTATION);
-                    //}
+                    para.setDgElement(view);
+                    para.setFrom(From.DOCUMENTATION);
                     viewSection.addElement(para);
                 }
+                //if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
+                for (Element ex: elementImports) {
+                    if (ex instanceof Diagram) {
+                        Image image = new Image();
+                        List<Object> images = new ArrayList<Object>();
+                        images.add(ex);
+                        image.setTargets(images);
+                        viewSection.addElement(image);
+                    }
+                }
             }
+        }
         }
         viewSection.setDgElement(view);
         viewSection.setId(view.getID());

@@ -33,22 +33,30 @@ import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateModelAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element start;
+    private Collection<Element> start;
     public static final String actionid = "ValidateModel";
     
-    public ValidateModelAction(Element e) {
-        super(actionid, "Validate Model", null, null);
-        start = e;
+    public ValidateModelAction(Element e, String name) {
+        super(actionid, name, null, null);
+        start = new ArrayList<Element>();
+        start.add(e);
     }
     
+    public ValidateModelAction(Collection<Element> e, String name) {
+        super(actionid, name, null, null);
+        start = e;
+    }
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.checkBaseline()) {    

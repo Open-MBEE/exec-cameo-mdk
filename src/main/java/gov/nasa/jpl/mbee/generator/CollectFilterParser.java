@@ -53,6 +53,8 @@ import java.util.SortedSet;
 
 import javax.script.ScriptException;
 
+import org.apache.log4j.Logger;
+
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallOperationAction;
@@ -78,6 +80,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class CollectFilterParser {
 
     private static GenerationContext context;
+    private static Logger log = Logger.getLogger(CollectFilterParser.class);
 
     public static void setContext(GenerationContext gc) {
         context = gc;
@@ -347,7 +350,7 @@ public class CollectFilterParser {
         boolean isExpr = sortStereotype.equals(DocGen3Profile.sortByExpression);
         boolean isName = sortStereotype.equals(DocGen3Profile.sortByName);
         if (!isProp && !isAttr && !isName && !isExpr) {
-            Debug.error(true, false, "Error! Trying to sort by unknown sort type: " + sortStereotype);
+            log.error("Error! Trying to sort by unknown sort type: " + sortStereotype);
             return ordered;
         }
 
@@ -370,7 +373,7 @@ public class CollectFilterParser {
         } else if (isName) {
             ordered = Utils2.asList( Utils.sortByName(in), Element.class );
         } else {
-            Debug.error(true, false, "Error! Trying to sort as " + sortStereotype
+            log.error("Error! Trying to sort as " + sortStereotype
                     + ", but the property/attribute is the wrong type: " + o);
             return ordered;
         }

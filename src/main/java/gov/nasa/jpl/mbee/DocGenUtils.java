@@ -29,9 +29,14 @@
 package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.dgview.FromProperty;
+import gov.nasa.jpl.mbee.dgview.Table;
+import gov.nasa.jpl.mbee.dgview.TableEntry;
+import gov.nasa.jpl.mbee.dgview.TableRow;
 import gov.nasa.jpl.mbee.dgview.ViewElement;
 import gov.nasa.jpl.mbee.lib.HtmlManipulator;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 
@@ -95,6 +100,7 @@ public class DocGenUtils {
                                                                         put("</li>", "</para></listitem>");
                                                                         put("<b>|<b [^>]*>|<em>|<em [^>]*>|<strong>|<strong [^>]*>",
                                                                                 "<emphasis role=\"bold\">");
+                                                                        put("<h[1-6]>|<h[1-6] [^>]*>", "<para><emphasis role=\"bold\">");
                                                                         put("<s>|<strike>|<s [^>]*>|<strike [^>]*>",
                                                                                 "<emphasis role=\"strikethrough\">");
                                                                         put("<i>|<i [^>]*>", "<emphasis>");
@@ -104,6 +110,7 @@ public class DocGenUtils {
                                                                                 "");
                                                                         put("</b>|</i>|</u>|</strong>|</em>|</s>|</strike>",
                                                                                 "</emphasis>");
+                                                                        put("</h[1-6]>", "</emphasis></para>");
                                                                         put("<font [^>]*>|</font>", "");
                                                                         put("<sup>|<sup [^>]*>",
                                                                                 "<superscript>");
@@ -119,6 +126,8 @@ public class DocGenUtils {
                                                                                 "<link xl:href=\"$1\">$2</link>");
                                                                         put("<a href=\"mdel://([^\"&^\\?]+)(\\?[^\"]*)?\">([^<]*)</a>",
                                                                                 "<link linkend=\"$1\">$3</link>");
+                                                                        put("<img [^>]*src=\"([^>]+)\"[^>]*></img>", "<imageobject><imagedata fileref=\"$1\" scalefit=\"1\"/></imageobject>");
+                                                                        put("<img [^>]*src=\"([^>]+)\"[^>]*/>", "<imageobject><imagedata fileref=\"$1\" scalefit=\"1\"/></imageobject>");
                                                                         put("<pre>|<pre [^>]*>", "<screen>");
                                                                         put("</pre>", "</screen>");
                                                                         put("<svg",
@@ -460,20 +469,6 @@ public class DocGenUtils {
     public static DocumentElement ecoreTranslateView(ViewElement ve, boolean forViewEditor) {
         DocumentElement de = null;
         de = (new DgviewDBSwitch(forViewEditor)).doSwitch(ve);
-        if (ve.getFromElementId() != null && !ve.getFromElementId().equals("")) {
-            de.setFrom((Element)Application.getInstance().getProject().getElementByID(ve.getFromElementId()));
-            if (ve.getFromProperty() != null) {
-                if (ve.getFromProperty() == FromProperty.NAME)
-                    de.setFromProperty(From.NAME);
-                else if (ve.getFromProperty() == FromProperty.DOCUMENTATION)
-                    de.setFromProperty(From.DOCUMENTATION);
-                else
-                    de.setFromProperty(From.DVALUE);
-            }
-        }
-        de.setId(ve.getId());
-        de.setTitle(ve.getTitle());
         return de;
     }
-
 }

@@ -31,13 +31,17 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ViewExportRunner;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -48,6 +52,7 @@ import java.io.FileInputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,6 +92,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         this.recurse = recursive;
         this.exportElements = exportElements;
         this.view = e;
+        url = ExportUtility.getUrlWithWorkspace();
+        sendElementsUrl = ExportUtility.getPostElementsUrl();
     }
     
     @Override
@@ -98,10 +105,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     public void execute(Collection<Annotation> annos) {
         if (!ExportUtility.okToExport())
             return;
-        url = ExportUtility.getUrl();
         if (url == null)
             return;
-        sendElementsUrl = ExportUtility.getPostElementsUrl();
         if (sendElementsUrl == null)
             return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, annos), "Exporting Views", true, 0);
@@ -111,10 +116,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport())
             return;
-        url = ExportUtility.getUrl();
         if (url == null)
             return;
-        sendElementsUrl = ExportUtility.getPostElementsUrl();
         if (sendElementsUrl == null)
             return;
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, null), "Exporting View", true, 0);
@@ -124,7 +127,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         
         if (exportView(view)) {
             this.removeViolationAndUpdateWindow();
-            ExportUtility.sendProjectVersions();
+            //ExportUtility.sendProjectVersions();
         }
     }
     
@@ -138,14 +141,14 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             } else
                 break;
         }
-        ExportUtility.sendProjectVersions();
+        //ExportUtility.sendProjectVersions();
         if (!toremove.isEmpty()) {
             this.removeViolationsAndUpdateWindow(toremove);
         }
     }
     
     @SuppressWarnings("unchecked")
-    private boolean exportView(Element view) {
+    public boolean exportView(Element view) {
         DocumentValidator dv = new DocumentValidator(view);
         dv.validateDocument();
         if (dv.isFatal()) {
@@ -153,22 +156,25 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             return false;
         }
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
-        Document dge = dg.parseDocument(true, recurse);
-        (new PostProcessor()).process(dge);
+        Document dge = null;
         boolean document = false;
         
-        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGen3Profile.documentViewStereotype, "Document Profile");
-        if (StereotypesHelper.hasStereotypeOrDerived(view, documentView))
+        if (StereotypesHelper.hasStereotypeOrDerived(view, Utils.getProductStereotype()))
             document = true;
-
+        dge = dg.parseDocument(true, recurse, false);
+        (new PostProcessor()).process(dge);
+        
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
         dge.accept(visitor);
         DBBook book = visitor.getBook();
         if (book == null)
             return false;
 
-        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
+        DBAlfrescoVisitor visitor2 = null;
+        //if (document)
+        //    visitor2 = new DBAlfrescoVisitor(true);
+        //else
+        visitor2 = new DBAlfrescoVisitor(recurse);
         book.accept(visitor2);
         /*int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {
@@ -187,9 +193,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             JSONArray elementsArray = new JSONArray();
             elementsArray.addAll(elementsjson.values());
             send.put("elements", elementsArray);
+            send.put("source", "magicdraw");
             if (url == null)
                 return false;
-            if (!ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false))
+            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false, false) == null)
                 return false;
         }
         //send elements first, then view info
@@ -197,11 +204,30 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         JSONArray viewsArray = new JSONArray();
         viewsArray.addAll(viewjson.values());
         send = new JSONObject();
-        send.put("views", viewsArray);
-        //gl.log(send.toJSONString());
-        String sendViewsUrl = url +  "/javawebscripts/views";
-        if (!ExportUtility.send(sendViewsUrl, send.toJSONString(), null, false))
-            return false;
+        send.put("elements", viewsArray);
+        send.put("source", "magicdraw");
+        /*if (document) {
+            String docId = view.getID();
+            JSONObject doc = null;
+            for (JSONObject ele: (List<JSONObject>)viewsArray) {
+                if (ele.get("sysmlid").equals(docId)) {
+                    doc = ele;
+                    break;
+                }
+            }
+            if (doc != null) {
+                JSONObject spec = (JSONObject)doc.get("specialization");
+                ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+                dge.accept(vhv);
+                spec.put("view2view", ExportUtility.formatView2View(vhv.getView2View()));
+                //spec.put("noSections", visitor2.getNosections());
+                spec.put("type", "Product");
+            }
+        }*/
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size()));
+        //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
+        //    return false;
         
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
@@ -215,9 +241,9 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
             File imageFile = new File(filename);
             
-            String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             String site = ExportUtility.getSite();
-            String posturl = url + "/workspaces/master/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             // check whether the image already exists
             GetMethod get = new GetMethod(baseurl);
             int status = 0;
@@ -246,41 +272,45 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                         post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile),
                                 imageFile.length()));
                     }
-                    HttpClient client = new HttpClient();
-                    ViewEditUtils.setCredentials(client, baseurl);
+                    OutputQueue.getInstance().offer(new Request(posturl, post));
+                    //HttpClient client = new HttpClient();
+                    //ViewEditUtils.setCredentials(client, baseurl);
                     gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
-                    client.executeMethod(post);
+                    //client.executeMethod(post);
 
-                    status = post.getStatusCode();
-                    if (status != HttpURLConnection.HTTP_OK) {
-                        gl.log("[ERROR] Could not upload image file to view editor");
-                    }
+                    //status = post.getStatusCode();
+                    //if (status != HttpURLConnection.HTTP_OK) {
+                    //    gl.log("[ERROR] Could not upload image file to view editor");
+                    //}
                 } catch (Exception ex) {
                     //printStackTrace(ex, gl);
                 } finally {
-                    post.releaseConnection();
+                    //post.releaseConnection();
                 }
             }
         }
-
+        //OutputQueue.getInstance().offer(new Request("", "[INFO] Export View Done", "LOG"));
         // clean up the local images
-        visitor2.removeImages();
-        gl.log("[INFO] Done");
-        if (document && recurse) {
-            String docurl = url + "/javawebscripts/products";
-            send = new JSONObject();
+        //visitor2.removeImages();
+        //gl.log("[INFO] Done");
+        if (document) {//&& recurse) {
+            //String docurl = url + "/javawebscripts/products";
+            /*send = new JSONObject();
             JSONArray documents = new JSONArray();
             JSONObject doc = new JSONObject();
             JSONObject spec = new JSONObject();
-            spec.put("view2view", ExportUtility.formatView2View(visitor2.getHierarchy()));
-            spec.put("noSections", visitor2.getNosections());
+            ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
+            dge.accept(vhv);
+            spec.put("view2view", ExportUtility.formatView2View(vhv.getView2View()));
+            //spec.put("noSections", visitor2.getNosections());
             spec.put("type", "Product");
-            doc.put("id", view.getID());
+            doc.put("sysmlid", view.getID());
             doc.put("specialization", spec);
             documents.add(doc);
-            send.put("products", documents);
-            if (!ExportUtility.send(docurl, send.toJSONString(), null, false))
-                return false;
+            send.put("elements", documents);*/
+            //OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));
+            //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
+            //   return false;
         } /*else if (recurse) {
             JSONArray views = new JSONArray();
             JSONObject view2view = visitor2.getHierarchy();

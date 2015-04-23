@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -43,6 +45,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
@@ -76,15 +79,12 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            JSONObject info = new JSONObject();
-            ExportUtility.fillElement(e, info, view, viewpoint);
-            infos.add(info);
-            //if (e instanceof Property || e instanceof Slot)
-            //    infos.addAll(ExportUtility.getReferencedElements(e).values());
+            infos.add(ExportUtility.fillElement(e, null));
         }
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         //gl.log(send.toJSONString());
         
         String url = ExportUtility.getPostElementsUrl();
@@ -94,10 +94,14 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background? You'll get an email when done.");
         if (background != null && background)
             url += "?background=true";
-        if (ExportUtility.send(url, send.toJSONString(), null, false)) {
-            this.removeViolationsAndUpdateWindow(annos);
-            ExportUtility.sendProjectVersions();
+        if (background == null) {
+            return;
         }
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
+            this.removeViolationsAndUpdateWindow(annos);
+        }*/
     }
 
     @SuppressWarnings("unchecked")
@@ -105,22 +109,20 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
     public void actionPerformed(ActionEvent e) {
         if (!ExportUtility.okToExport(element))
             return;
-        JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        ExportUtility.fillElement(element, info, view, viewpoint);
-        elements.add(info);
-        //if (element instanceof Property || element instanceof Slot)
-        //    elements.addAll(ExportUtility.getReferencedElements(element).values());
+        elements.add(ExportUtility.fillElement(element, null));
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         //gl.log(send.toJSONString());
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
-            this.removeViolationAndUpdateWindow();
-            ExportUtility.sendProjectVersion(element);
-        }
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
+            this.removeViolationsAndUpdateWindow(annos);
+        }*/
     }
 }

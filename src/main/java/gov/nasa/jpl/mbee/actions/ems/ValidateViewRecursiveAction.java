@@ -44,7 +44,7 @@ public class ValidateViewRecursiveAction extends MDAction {
     public static final String actionid = "ValidateViewRecursiveAlfresco";
     
     public ValidateViewRecursiveAction(Element e) {
-        super(actionid, "Validate Views Hierarchically", null, null);
+        super(actionid, "Validate Views", null, null);
         view = e;
     }
     
@@ -53,6 +53,6 @@ public class ValidateViewRecursiveAction extends MDAction {
         if (!ExportUtility.checkBaseline()) {    
             return;
         }
-        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, true), "Validating Views", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, true, false), "Validating Views", true, 0);
     }
 }

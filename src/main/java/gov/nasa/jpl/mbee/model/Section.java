@@ -29,6 +29,9 @@
 package gov.nasa.jpl.mbee.model;
 
 import java.lang.reflect.Field;
+import java.util.List;
+
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  * this should really be called View now
@@ -43,6 +46,9 @@ public class Section extends Container {
     private boolean isView;
     private boolean isNoSection;
 
+    private Element viewpoint;
+    private List<Element> exposes;
+    
     public Section() {
         isAppendix = false;
         isChapter = false;
@@ -96,6 +102,22 @@ public class Section extends Container {
     @Override
     public String toStringStart() {
         return super.toStringStart() + ",id=" + id;
+    }
+
+    public Element getViewpoint() {
+        return viewpoint;
+    }
+
+    public void setViewpoint(Element viewpoint) {
+        this.viewpoint = viewpoint;
+    }
+
+    public List<Element> getExposes() {
+        return exposes;
+    }
+
+    public void setExposes(List<Element> exposes) {
+        this.exposes = exposes;
     }
 
 }

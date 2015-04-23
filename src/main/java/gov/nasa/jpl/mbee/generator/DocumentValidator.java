@@ -232,6 +232,8 @@ public class DocumentValidator {
     private Stereotype                                        sysmlview = Utils.getViewStereotype();
     private Stereotype                                        conforms = Utils.getConformsStereotype();
     private Stereotype conforms14 = Utils.getSysML14ConformsStereotype();
+    private Stereotype md18expose = Utils.get18ExposeStereotype();
+    private Stereotype ourExpose = Utils.getExposeStereotype();
 
     public DocumentValidator(Element e) {
         start = e;
@@ -364,8 +366,11 @@ public class DocumentValidator {
                     ElementImport.class, 1, 1);
             List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view,
                     PackageImport.class, 1, 1);
-            List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-                    DocGen3Profile.queriesStereotype, 1, false, 1);
+            List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view,
+                    ourExpose, 1, false, 1);
+            if (md18expose !=  null)
+                queries.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view,
+                    md18expose, 1, false, 1));
             elementImports.addAll(packageImports);
             elementImports.addAll(queries);
             if (elementImports.isEmpty()) {
@@ -480,8 +485,14 @@ public class DocumentValidator {
                 else if (napplied.size() > 1 || bapplied.size() > 1)
                     multipleStereotypes.addViolation(n, multipleStereotypes.getDescription());
                 else if (!napplied.isEmpty() && !bapplied.isEmpty()
-                        && napplied.iterator().next() != bapplied.iterator().next())
-                    mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
+                        && napplied.iterator().next() != bapplied.iterator().next()) {
+                    Stereotype ns = napplied.iterator().next();
+                    if (!ns.getName().equals(DocGen3Profile.tableAttributeColumnStereotype) &&
+                            !ns.getName().equals(DocGen3Profile.tableColumnStereotype) &&
+                            !ns.getName().equals(DocGen3Profile.tableExpressionColumnStereotype) &&
+                            !ns.getName().equals(DocGen3Profile.tablePropertyColumnStereotype))
+                        mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
+                }
                 /*
                  * if (StereotypesHelper.hasStereotype(b,
                  * DocGen3Profile.sectionStereotype) ||

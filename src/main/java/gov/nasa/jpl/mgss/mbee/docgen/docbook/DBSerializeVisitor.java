@@ -136,7 +136,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                             + "</address></publisher>");
                 else
                     out.append("\n<publisher><publishername>" + book.getAbbreviatedProjectName()
-                            + "</publishername><address></address></publisher>");
+                            + "</publishername></publisher>");
             }
             out.append("\n<pubdate>" + new Date().toString() + "</pubdate>");
             if (book.getJPLProjectTitle() == null || book.getJPLProjectTitle().equals("")) {
@@ -428,6 +428,8 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
 
     @Override
     public void visit(DBTable table) {
+        if (table.isTranspose())
+            table.transpose();
         int cols = table.getCols();
         if (table.getBody() == null || table.getBody().isEmpty())
             return;
@@ -457,9 +459,11 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         if (table.getColspecs() != null)
             for (DBColSpec colspec: table.getColspecs())
                 colspec.accept(this);
-        out.append("<thead>\n");
-        getTableRows(table.getHeaders());
-        out.append("</thead>\n");
+        if (table.getHeaders() != null) {
+            out.append("<thead>\n");
+            getTableRows(table.getHeaders());
+            out.append("</thead>\n");
+        }
         out.append("<tbody>\n");
         getTableRows(table.getBody());
         out.append("</tbody>\n");

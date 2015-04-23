@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee;
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
+import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
 import gov.nasa.jpl.mbee.web.sync.ApplicationSyncEventSubscriber;
@@ -55,6 +56,7 @@ public class DocGenPlugin extends Plugin {
     private boolean                     runEmbeddedServer     = false;
     protected OclEvaluatorPlugin        oclPlugin             = null;
     protected ValidateConstraintsPlugin vcPlugin              = null;
+    protected AutoSyncPlugin            autoSyncPlugin        = null;
     public static ClassLoader           extensionsClassloader = null;
 
     public DocGenPlugin() {
@@ -77,7 +79,7 @@ public class DocGenPlugin extends Plugin {
     @Override
     public void init() {
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
-
+        System.setProperty ("jsse.enableSNIExtension", "false");
         DocGenConfigurator dgc = new DocGenConfigurator();
         acm.addContainmentBrowserContextConfigurator(dgc);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, dgc);
@@ -92,7 +94,8 @@ public class DocGenPlugin extends Plugin {
 
         getOclPlugin().init();
         getVcPlugin().init();
-
+        getAutoSyncPlugin().init();
+        (new Thread(new OutputSyncRunner())).start();
         ApplicationSyncEventSubscriber.subscribe();
 
         getEmbeddedSystemProperty();
@@ -104,10 +107,16 @@ public class DocGenPlugin extends Plugin {
                 e.printStackTrace();
             }
         }
-        QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
-        QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
+        
         loadExtensionJars(); // people can actaully just create a new plugin and
-                             // let magicdraw's classloader load it?
+        // let magicdraw's classloader load it?
+        try {
+            QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
+            QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
+        } catch (Exception ex) {
+            //?
+        }
+        
         // QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore",
         // "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
     }
@@ -126,6 +135,13 @@ public class DocGenPlugin extends Plugin {
         return vcPlugin;
     }
 
+    public AutoSyncPlugin getAutoSyncPlugin() {
+        if (autoSyncPlugin == null) {
+            autoSyncPlugin = new AutoSyncPlugin();
+        }
+        return autoSyncPlugin;
+    }
+    
     @Override
     public boolean isSupported() {
         return true;

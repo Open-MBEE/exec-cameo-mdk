@@ -28,6 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -42,8 +45,8 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ImportDoc extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -68,36 +71,23 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        SessionManager.getInstance().createSession("Change Docs");
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        try {
-            boolean noneditable = false;
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
-                    noneditable = true;
-                    continue;
-                }
-                String resultDoc = (String)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID()).get("documentation");
-                if (resultDoc == null)
-                    continue;
-                ModelHelper.setComment(e, Utils.addHtmlWrapper(resultDoc));
-                //AnnotationManager.getInstance().remove(anno);
-                toremove.add(anno);
+        executeMany(annos, "Change Docs");
+    }
+    
+    @Override
+    protected boolean doAction(Annotation anno) {
+        if (anno != null) {
+            Element e = (Element)anno.getTarget();
+            if (!e.isEditable()) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                return false;
             }
-            SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-            
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
+            JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            ImportUtility.setDocumentation(e, resultOb);
+        } else {
+            ImportUtility.setDocumentation(element, doc);
         }
+        return true;
     }
     
     @Override
@@ -106,18 +96,7 @@ public class ImportDoc extends RuleViolationAction implements AnnotationAction, 
             Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
             return;
         }
-        SessionManager.getInstance().createSession("Change Doc");
-        try {
-            ModelHelper.setComment(element, Utils.addHtmlWrapper(doc));
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
+        execute("Change Doc");
     }
 
 }

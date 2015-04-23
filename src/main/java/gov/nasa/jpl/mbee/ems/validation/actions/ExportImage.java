@@ -77,11 +77,12 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             String filename = (String)images.get(key).get("abspath");
             String cs = (String)images.get(key).get("cs");
             String extension = (String)images.get(key).get("extension");
-            String url = ExportUtility.getUrl();
-            
-            String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String url = ExportUtility.getUrlWithWorkspace();
+            if (url == null)
+                return;
+            String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             String site = ExportUtility.getSite();
-            String posturl = url + "/workspaces/master/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+            String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
 
             //String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
             File imageFile = new File(filename);
@@ -111,11 +112,12 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         String filename = (String)images.get(key).get("abspath");
         String cs = (String)images.get(key).get("cs");
         String extension = (String)images.get(key).get("extension");
-        String url = ExportUtility.getUrl();
-        
-        String baseurl = url + "/workspaces/master/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+        String url = ExportUtility.getUrlWithWorkspace();
+        if (url == null)
+            return;
+        String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
         String site = ExportUtility.getSite();
-        String posturl = url + "/workspaces/master/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+        String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
 
         File imageFile = new File(filename);
         PostMethod post = new PostMethod(posturl);

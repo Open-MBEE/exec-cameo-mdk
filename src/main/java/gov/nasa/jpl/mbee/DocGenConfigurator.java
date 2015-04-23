@@ -28,31 +28,29 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
+import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
+import gov.nasa.jpl.mbee.actions.docgen.MigrateToClassViewAction;
+import gov.nasa.jpl.mbee.actions.docgen.NumberAssociationAction;
 import gov.nasa.jpl.mbee.actions.docgen.NumberDependencyAction;
 import gov.nasa.jpl.mbee.actions.docgen.RunUserScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
+import gov.nasa.jpl.mbee.actions.docgen.ValidateOldDocgen;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
+import gov.nasa.jpl.mbee.actions.ems.ExportAllDocuments;
 import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
+import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
-
-import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewCommentsAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewHierarchyAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.ExportViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewCommentsAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewDryAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewRecursiveAction;
-
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
 import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
@@ -66,6 +64,8 @@ import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.UserScript;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,6 +78,7 @@ import com.nomagic.magicdraw.actions.ConfiguratorWithPriority;
 import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
@@ -86,8 +87,10 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
@@ -108,7 +111,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         Object o = no.getUserObject();
         if (!(o instanceof Element))
             return;
-        addElementActions(manager, (Element)o);
+        List<Element> elements = new ArrayList<Element>();
+        for (Node node: browser.getSelectedNodes()) {
+            if (node == null)
+                continue;;
+            Object ob = node.getUserObject();
+            if (!(ob instanceof Element))
+                continue;
+            elements.add((Element)ob);
+        }
+        addElementActions(manager, (Element)o, elements);
     }
 
     @Override
@@ -116,8 +128,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             PresentationElement[] selected, PresentationElement requestor) {
         if ( repainting() ) return;
         if (requestor != null) {
+            Collection<Element> es = new ArrayList<Element>();
+            for (PresentationElement pe: selected) {
+                if (pe.getElement() != null)
+                    es.add(pe.getElement());
+            }
             Element e = requestor.getElement();
-            addElementActions(manager, e);
+            if (e != null)
+                addElementActions(manager, e, es);
         } else {
             addDiagramActions(manager, diagram);
         }
@@ -138,36 +156,48 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             //Debug.outln( "class name = " + traceElem.getClassName() + ", method name = " + traceElem.getMethodName() + ", last method name = " + lastMethod );
             lastMethod = traceElem.getMethodName();
         }
-        Debug.outln( "@@@ repainting() = false:" );
-        Debug.outln( MoreToString.Helper.toString( trace ) );
+        //Debug.outln( "@@@ repainting() = false:" );
+        //Debug.outln( MoreToString.Helper.toString( trace ) );
         return false;
     }
 
-    private void addElementActions(ActionsManager manager, Element e) {
+    private void addElementActions(ActionsManager manager, Element e, Collection<Element> es) {
         Project prj = Project.getProject(e);
         if (prj == null)
             return;
         Stereotype sysmlview = Utils.getViewStereotype();
         Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
-        Stereotype documentView = StereotypesHelper.getStereotype(prj, DocGen3Profile.documentViewStereotype,
-                "Document Profile");
+        Stereotype documentView = Utils.getProductStereotype();
         if (e == null)
             return;
-        
+
+        // top-level context menu: Refactor With ID
+        ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");       
+        if(e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)){
+            if (manager.getActionFor(ClassToComponentRefactorWithIDAction.actionid) == null)
+                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(e));   
+        }
+        if(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component){
+            if (manager.getActionFor(ComponentToClassRefactorWithIDAction.actionid) == null)
+                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(e));   
+        }
+        //manager.addCategory(refactorWithIDActionCat);
+
         if (ViewEditUtils.isPasswordSet()) {
+            ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
+            ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
-                ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
-                    modelLoad.addAction(new ExportModelAction(e));
+                    models.addAction(new ExportModelAction(e));
                 if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
-                    modelLoad.addAction(new InitializeProjectAction());
-                if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                    modelLoad.addAction(new ValidateModelAction(e));
-            } else {
-                ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-                if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                    modelLoad.addAction(new ValidateModelAction(e));
-            } 
+                    models.addAction(new InitializeProjectAction());
+            }
+            if (manager.getActionFor(ValidateModelAction.actionid) == null)
+                models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models": "Validate Models"));
+            if (e instanceof Package) {
+                if (manager.getActionFor(ExportAllDocuments.actionid) == null)
+                    models.addAction(new ExportAllDocuments(e));
+            }
         }
         
         // add menus in reverse order since they are inserted at top
@@ -209,12 +239,27 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
             if (ViewEditUtils.isPasswordSet()) {
                 ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
+                ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
+
                 NMAction action = manager.getActionFor(ValidateViewAction.actionid);
                 if (action == null)
-                    modelLoad2.addAction(new ValidateViewAction(e));
+                    views.addAction(new ValidateViewAction(e));
                 action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
                 if (action == null)
-                    modelLoad2.addAction(new ValidateViewRecursiveAction(e));
+                    views.addAction(new ValidateViewRecursiveAction(e));
+                if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
+                    action = manager.getActionFor(ValidateHierarchyAction.actionid);
+                    if (action == null)
+                        modelLoad2.addAction(new ValidateHierarchyAction(e));
+                }
+                ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
+
+                action = manager.getActionFor("ExportView");
+                if (action == null)
+                    viewsC.addAction(new ExportViewAction(e, false));
+                action = manager.getActionFor("ExportViewRecursive");
+                if (action == null)
+                    viewsC.addAction(new ExportViewAction(e, true));
             }
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             //action = manager.getActionFor(ExportViewAction.actionid);
@@ -259,6 +304,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
         }*/
 
+        if (e == Application.getInstance().getProject().getModel()) {
+            NMAction act = null;
+            ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
+            // DefaultPropertyResourceProvider pp = new
+            // DefaultPropertyResourceProvider();
+            act = manager.getActionFor(ValidateOldDocgen.actionid);
+            if (act == null)
+                c.addAction(new ValidateOldDocgen());
+        }
+        
         // DocGen menu
         if ((e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e,
                 DocGen3Profile.documentStereotype)) || StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
@@ -283,12 +338,22 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 c.addAction(new GenerateDocumentAction(e));
 
             if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
-                act = manager.getActionFor(PublishDocWebAction.actionid); 
-                if (act == null) 
-                    c.addAction(new PublishDocWebAction((NamedElement)e));
-                act = manager.getActionFor(NumberDependencyAction.actionid);
-                if (act == null)
-                    c.addAction(new NumberDependencyAction(e));
+                //act = manager.getActionFor(PublishDocWebAction.actionid); 
+                //if (act == null) 
+                 //   c.addAction(new PublishDocWebAction((NamedElement)e));
+                if (e instanceof Package) {
+                    act = manager.getActionFor(NumberDependencyAction.actionid);
+                    if (act == null)
+                        c.addAction(new NumberDependencyAction(e));
+                    act = manager.getActionFor(MigrateToClassViewAction.actionid);
+                    if (act == null)
+                        c.addAction(new MigrateToClassViewAction(e));
+                }
+                if (e instanceof Class) {
+                    act = manager.getActionFor(NumberAssociationAction.actionid);
+                    if (act == null)
+                        c.addAction(new NumberAssociationAction((Class)e));
+                }
             }
             /*
              * if (e instanceof Activity &&
@@ -340,7 +405,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
      * @param parent
      * @param e
      */
-    private void addEditableViewActions(ActionsCategory parent, NamedElement e) {
+ /*   private void addEditableViewActions(ActionsCategory parent, NamedElement e) {
         ActionsCategory c = parent; // new ActionsCategory("EditableView",
                                     // "Editable View");
         c.addAction(new ImportViewDryAction(e));
@@ -363,7 +428,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         // parent.getCategories().add(c);
         // }
     }
-
+*/
     /**
      * Gets the specified category, creates it if necessary.
      * 
@@ -381,7 +446,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         }
         return category;
     }
-
+    
+    private ActionsCategory getCategory(ActionsManager manager, String id, String name, ActionsCategory parent) {
+        ActionsCategory category = (ActionsCategory)manager.getActionFor(id);
+        if (category == null) {
+            category = new MDActionsCategory(id, name);
+            category.setNested(false);
+            parent.addAction(category);
+        }
+        return category;
+    }
     /**
      * this should be used to add actions that're possible when user right
      * clicks on a view<br/>
@@ -395,7 +469,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (viewQueryCalled.contains(manager))
             return false;
         DocumentGenerator dg = new DocumentGenerator(e, null, null);
-        Document dge = dg.parseDocument(true, false);
+        Document dge = dg.parseDocument(true, false, false);
         CollectActionsVisitor cav = new CollectActionsVisitor();
         dge.accept(cav);
 

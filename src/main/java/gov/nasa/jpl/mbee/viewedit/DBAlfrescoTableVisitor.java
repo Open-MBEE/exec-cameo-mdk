@@ -42,57 +42,69 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
-        JSONArray body = new JSONArray();
-        tablejson.put("body", body);
-        for (List<DocumentElement> row: table.getBody()) {
-            curRow = new JSONArray();
-            body.add(curRow);
-            for (DocumentElement de: row) {
-                rowspan = 1;
-                colspan = 1;
-                if (de != null) {
-                    if (de instanceof DBTableEntry)
-                        de.accept(this);
-                    else {
-                        curCell = new JSONArray();
-                        de.accept(this);
-                        JSONObject entry = new JSONObject();
-                        entry.put("content", curCell);
-                        addSpans(entry);
-                        curRow.add(entry);
+        if (tablejson.containsKey("body")) {
+            DBAlfrescoTableVisitor inner = new DBAlfrescoTableVisitor(recurse, this.elements);
+            table.accept(inner);
+            curCell.add(inner.getObject());
+            tableelements.addAll(inner.getTableElements());
+            elementSet.addAll(inner.getElementSet());
+        } else {
+            if (table.isTranspose())
+                table.transpose();
+            JSONArray body = new JSONArray();
+            tablejson.put("body", body);
+            for (List<DocumentElement> row: table.getBody()) {
+                curRow = new JSONArray();
+                body.add(curRow);
+                for (DocumentElement de: row) {
+                    rowspan = 1;
+                    colspan = 1;
+                    if (de != null) {
+                        if (de instanceof DBTableEntry)
+                            de.accept(this);
+                        else {
+                            curCell = new JSONArray();
+                            de.accept(this);
+                            JSONObject entry = new JSONObject();
+                            entry.put("content", curCell);
+                            addSpans(entry);
+                            curRow.add(entry);
+                        }
                     }
                 }
             }
-        }
-        JSONArray headers = new JSONArray();
-        tablejson.put("header", headers);
-        for (List<DocumentElement> row: table.getHeaders()) {
-            curRow = new JSONArray();
-            headers.add(curRow);
-            for (DocumentElement de: row) {
-                rowspan = 1;
-                colspan = 1;
-                if (de != null) {
-                    if (de instanceof DBTableEntry)
-                        de.accept(this);
-                    else {
-                        curCell = new JSONArray();
-                        de.accept(this);
-                        JSONObject entry = new JSONObject();
-                        entry.put("content", curCell);
-                        addSpans(entry);
-                        curRow.add(entry);
+            JSONArray headers = new JSONArray();
+            tablejson.put("header", headers);
+            if (table.getHeaders() != null) {
+                for (List<DocumentElement> row: table.getHeaders()) {
+                    curRow = new JSONArray();
+                    headers.add(curRow);
+                    for (DocumentElement de: row) {
+                        rowspan = 1;
+                        colspan = 1;
+                        if (de != null) {
+                            if (de instanceof DBTableEntry)
+                                de.accept(this);
+                            else {
+                                curCell = new JSONArray();
+                                de.accept(this);
+                                JSONObject entry = new JSONObject();
+                                entry.put("content", curCell);
+                                addSpans(entry);
+                                curRow.add(entry);
+                            }
+                        }
                     }
                 }
             }
+            if (table.getStyle() == null)
+                tablejson.put("style", "normal");
+            else
+                tablejson.put("style", table.getStyle());
+            tablejson.put("title", table.getTitle());
+            tablejson.put("type", "Table");
+            // gl.log( "tablejson =\n" + tablejson );
         }
-        if (table.getStyle() == null)
-            tablejson.put("style", "normal");
-        else
-            tablejson.put("style", table.getStyle());
-        tablejson.put("title", table.getTitle());
-        tablejson.put("type", "Table");
-        // gl.log( "tablejson =\n" + tablejson );
     }
 
     @SuppressWarnings("unchecked")

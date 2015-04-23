@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -45,6 +47,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -85,22 +88,22 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             set.add(e);
-            //if (e instanceof Property || e instanceof Slot)
-            //    infos.addAll(ExportUtility.getReferencedElements(e).values());
             JSONObject info = getInfo(e);
             infos.add(info);
         }
         if (!ExportUtility.okToExport(set))
             return;
         send.put("elements", infos);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
-            ExportUtility.sendProjectVersions();
-        }
+        }*/
     }
 
     @SuppressWarnings("unchecked")
@@ -115,80 +118,23 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
         //    elements.addAll(ExportUtility.getReferencedElements(element).values());
         elements.add(info);
         send.put("elements", elements);
+        send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {
             return;
         }
-        if (ExportUtility.send(url, send.toJSONString())) {
-            this.removeViolationAndUpdateWindow();
-            ExportUtility.sendProjectVersion(element);
-        }
-
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
+            this.removeViolationsAndUpdateWindow(annos);
+        }*/
     }
 
     @SuppressWarnings("unchecked")
     private JSONObject getInfo(Element e) {
         JSONObject elementInfo = new JSONObject();
-        JSONObject specialization = new JSONObject();
-        JSONArray value = new JSONArray();
-        specialization.put("value", value);
-        specialization.put("type", "Property");
-        
-        if (e instanceof Property) {
-            ValueSpecification vs = ((Property)e).getDefaultValue();
-            if (vs != null) {
-            	JSONObject jsonObj = new JSONObject();
-            	ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
-                value.add(jsonObj);
-            }
-        } else if (e instanceof Slot) {
-            List<ValueSpecification> vsl = ((Slot)e).getValue();
-            if (vsl != null && vsl.size() > 0) {
-                for (ValueSpecification vs: vsl) {
-                	JSONObject jsonObj = new JSONObject();
-                	ExportUtility.fillValueSpecification(vs, jsonObj, null, null);
-                    value.add(jsonObj);
-                }
-            }
-        }
-        elementInfo.put("specialization", specialization);
+        elementInfo.put("specialization", ExportUtility.fillPropertySpecialization(e, null, false));
         elementInfo.put("sysmlid", ExportUtility.getElementID(e));
         return elementInfo;
     }
-/*    
-    @SuppressWarnings("unchecked")
-    private void addValues(Element e, JSONArray value, JSONObject elementInfo, ValueSpecification vs) {
-        if (vs instanceof LiteralBoolean) {
-            elementInfo.put("valueType", PropertyValueType.LiteralBoolean.toString());
-            value.add(((LiteralBoolean)vs).isValue());
-        } else if (vs instanceof LiteralString) {
-            elementInfo.put("valueType", PropertyValueType.LiteralString.toString());
-            value.add(((LiteralString)vs).getValue());
-        } else if (vs instanceof LiteralInteger || vs instanceof LiteralUnlimitedNatural) {
-            elementInfo.put("valueType", PropertyValueType.LiteralInteger.toString());
-            if (vs instanceof LiteralInteger) {
-                value.add(((LiteralInteger)vs).getValue());
-            } else 
-                value.add(((LiteralUnlimitedNatural)vs).getValue());
-        } else if (vs instanceof LiteralReal) {
-            elementInfo.put("valueType", PropertyValueType.LiteralReal.toString());
-            value.add(((LiteralReal)vs).getValue());
-        } else if (vs instanceof Expression) {
-            elementInfo.put("valueType", PropertyValueType.Expression.toString());
-            value.add(RepresentationTextCreator.getRepresentedText(vs));
-        } else if (vs instanceof ElementValue) {
-            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
-            Element ev = ((ElementValue)vs).getElement();
-            if (ev != null) {
-                value.add(ExportUtility.getElementID(ev));
-            }
-        } else if (vs instanceof InstanceValue) {
-            elementInfo.put("valueType", PropertyValueType.ElementValue.toString());
-            Element ev = ((InstanceValue)vs).getInstance();
-            if (ev != null) {
-                value.add(ExportUtility.getElementID(ev));
-            }
-        }
-        elementInfo.put("value", value);
-    }*/
 }

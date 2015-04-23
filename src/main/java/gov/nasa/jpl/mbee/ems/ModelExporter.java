@@ -31,13 +31,16 @@ package gov.nasa.jpl.mbee.ems;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
@@ -58,29 +61,32 @@ public class ModelExporter {
     private JSONObject elements = new JSONObject();
     //private JSONArray roots = new JSONArray();
     
-    private List<Element> starts;
+    private Set<Element> starts;
     private int depth;
     private boolean packageOnly;
+    private IProject parentPrj;
     
     private Stereotype view = Utils.getViewStereotype();
     private Stereotype viewpoint = Utils.getViewpointStereotype();
     
     public ModelExporter(Project prj, int depth, boolean pkgOnly) {
         this.depth = depth;
-        starts = new ArrayList<Element>();
+        starts = new HashSet<Element>();
         for (Package pkg: prj.getModel().getNestedPackage()) {
             if (ProjectUtilities.isElementInAttachedProject(pkg))
                 continue;//check for module??
             starts.add(pkg);
         }
         packageOnly = pkgOnly;
+        parentPrj = prj.getPrimaryProject();
         
     }
     
-    public ModelExporter(List<Element> roots, int depth, boolean pkgOnly) {
+    public ModelExporter(Set<Element> roots, int depth, boolean pkgOnly, IProject prj) {
         this.depth = depth;
         this.starts = roots;
         packageOnly = pkgOnly;
+        parentPrj = prj;
     }
     
     public int getNumberOfElements() {
@@ -110,13 +116,18 @@ public class ModelExporter {
             (packageOnly && !(e instanceof Package)) || e instanceof Extension || e instanceof ProfileApplication)
         //if (!(e instanceof Package) && packageOnly)
             return false;
-        if (ProjectUtilities.isElementInAttachedProject(e))
+        if (ProjectUtilities.isAttachedProjectRoot(e) && !starts.contains(e))
+        //if (ProjectUtilities.isElementInAttachedProject(e))
             return false;
         if (!ExportUtility.shouldAdd(e))
             return false;
         JSONObject elementInfo = new JSONObject();
-        ExportUtility.fillElement(e, elementInfo, view, viewpoint);
+        ExportUtility.fillElement(e, elementInfo);
         elements.put(e.getID(), elementInfo);
+        
+        if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e))
+            elementInfo.put("owner", parentPrj.getProjectID());
+        
         //if (e instanceof Property || e instanceof Slot)
         //    elements.putAll(ExportUtility.getReferencedElements(e));
         if ((depth != 0 && curdepth > depth) || curdepth == 0)

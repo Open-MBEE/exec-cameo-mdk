@@ -29,6 +29,9 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -47,6 +50,7 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -67,16 +71,14 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     private static final long serialVersionUID = 1L;
     private Element element;
     private JSONArray values;
-    private PropertyValueType type;
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
     private JSONObject result;
-    public ImportValue(Element e, JSONArray values, PropertyValueType type, JSONObject result) {
+    public ImportValue(Element e, JSONArray values, JSONObject result) {
     	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
     	//
         super("ImportValue", "Accept value", null, null);
         this.element = e;
         this.values = values;
-        this.type = type;
         this.result = result;
     }
     
@@ -87,359 +89,40 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        SessionManager.getInstance().createSession("Change values");
-        Collection<Annotation> toremove = new HashSet<Annotation>();
-        ValueSpecification newVal = null;
-        try {
-            boolean noneditable = false;
-            for (Annotation anno: annos) {
-                Element e = (Element)anno.getTarget();
-                if (!e.isEditable()) {
-                    Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
-                    noneditable = true;
-                    continue;
-                }
-                Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
-                JSONArray vals = (JSONArray)((JSONObject)((JSONObject)map.get(e.getID())).get("specialization")).get("value");
-                if (e instanceof Property) {
-                    if (vals == null || vals.isEmpty()) {
-                        ((Property)e).setDefaultValue(null);
-                    } else {
-                    	newVal = update((JSONObject)vals.get(0));
-                        ((Property)e).setDefaultValue(newVal);
-                    }
-                } else if (e instanceof Slot) {
-                    if (values == null || values.isEmpty()) {
-                        ((Slot)e).getValue().clear();
-                    } else {
-                        ((Slot)e).getValue().clear();
-                        for (Object value: vals) {
-                        	newVal = update((JSONObject)value);
-                        	((Slot)e).getValue().add(newVal);
-                        }
-                    }
-                }
-                //AnnotationManager.getInstance().remove(annotation);
-                toremove.add(anno);
-            }
-            SessionManager.getInstance().closeSession();
-            if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
-            } else
-                saySuccess();
-            //AnnotationManager.getInstance().update();
-            this.removeViolationsAndUpdateWindow(toremove);
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
-        
+        executeMany(annos, "Change Values");
     }
 
+    @Override
+    protected boolean doAction(Annotation anno) {
+        if (anno != null) {
+            Element e = (Element)anno.getTarget();
+            if (!e.isEditable()) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                return false;
+            }
+            Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
+            JSONArray vals = (JSONArray)((JSONObject)((JSONObject)map.get(e.getID())).get("specialization")).get("value");
+            if (e instanceof Property) {
+                ImportUtility.setPropertyDefaultValue((Property)e, vals);
+            } else if (e instanceof Slot) {
+                ImportUtility.setSlotValues((Slot)e, vals);
+            }
+        } else {
+            if (element instanceof Property) {
+                ImportUtility.setPropertyDefaultValue((Property)element, values);
+            } else if (element instanceof Slot) {
+                ImportUtility.setSlotValues((Slot)element, values);
+            }
+        }
+        return true;
+    }
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
             Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
             return;
         }
-        SessionManager.getInstance().createSession("Change value");
-        ValueSpecification newVal = null;
-        try {
-            if (element instanceof Property) {
-                if (values == null || values.isEmpty()) {
-                    ((Property)element).setDefaultValue(null);
-                } else {
-                    newVal = update((JSONObject)values.get(0));
-                    ((Property)element).setDefaultValue(newVal);
-                }
-            } else if (element instanceof Slot) {
-                if (values == null || values.isEmpty()) {
-                    ((Slot)element).getValue().clear();
-                } else {
-                    ((Slot)element).getValue().clear();
-                    for (Object value: values) {
-                    	newVal = update((JSONObject)value);
-                    	((Slot)element).getValue().add(newVal);
-                    }
-                }
-            }
-            SessionManager.getInstance().closeSession();
-            saySuccess();
-            //AnnotationManager.getInstance().remove(annotation);
-            //AnnotationManager.getInstance().update();
-            this.removeViolationAndUpdateWindow();
-        } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
-            Utils.printException(ex);
-        }
-    }
-    
-    // TODO -- move to Utils and have setProperty() call this instead of always creating a new Property?
-    private ValueSpecification update(JSONObject o) {
-    	String valueType = (String)o.get("type");
-    	ValueSpecification newval = null;
-    	PropertyValueType propValueType = PropertyValueType.valueOf(valueType);
-    	
-    	switch ( propValueType ) {
-    	case LiteralString:
-    		newval = ef.createLiteralStringInstance();
-    		((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o.get("string")));
-    		break;
-    	case LiteralInteger:
-    		newval = ef.createLiteralIntegerInstance();
-    		((LiteralInteger)newval).setValue(((Long)o.get("integer")).intValue());
-    		break;
-    	case LiteralBoolean:
-    		newval = ef.createLiteralBooleanInstance();
-    		((LiteralBoolean)newval).setValue((Boolean)o.get("boolean"));
-    		break;
-    	case LiteralUnlimitedNatural:
-    		newval = ef.createLiteralUnlimitedNaturalInstance();
-    		((LiteralUnlimitedNatural)newval).setValue(((Long)o.get("naturalValue")).intValue());
-    		break;
-    	case LiteralReal:
-    		Double value;
-    		if (o.get("double") instanceof Long)
-    			value = Double.parseDouble(((Long)o.get("double")).toString());
-    		else
-    			value = (Double)o.get("double");
-
-    		newval = ef.createLiteralRealInstance();
-    		((LiteralReal)newval).setValue(value);
-    		break;
-    	case ElementValue:
-    		Element find = ExportUtility.getElementFromID((String)o.get("element"));
-    		if (find == null) {
-    			Application.getInstance().getGUILog().log("Element with id " + o.get("element") + " not found!");
-    			break;
-            }
-            newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement(find);
-            break;
-    	case InstanceValue:
-    		Element findInst = ExportUtility.getElementFromID((String)o.get("instance"));
-    		if (findInst == null) {
-    			Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " not found!");
-    			break;
-    		}
-    		if (!(findInst instanceof InstanceSpecification)) {
-    			Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
-    			break;
-    		}
-    		newval = ef.createInstanceValueInstance();
-    		((InstanceValue)newval).setInstance((InstanceSpecification)findInst);
-    	default:
-    		Debug.error("Bad PropertyValueType: " + valueType);
-    	};
-
-    	
-        return newval;
-    }
-    
-    private void update(Property e, PropertyValueType valueType, Object o) {
-        //use nondestructive update if possible
-        ValueSpecification newval = e.getDefaultValue();
-        switch ( valueType ) {
-        case LiteralString:
-            if (newval instanceof LiteralString) {
-                ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o));
-                return;
-            } 
-            newval = ef.createLiteralStringInstance();
-            ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o));
-            break;
-        case LiteralInteger:
-            if (newval instanceof LiteralInteger) {
-                ((LiteralInteger)newval).setValue(((Long)o).intValue());
-                return;
-            } else if (newval instanceof LiteralUnlimitedNatural) {
-                ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
-                return;
-            }
-            newval = ef.createLiteralIntegerInstance();
-            ((LiteralInteger)newval).setValue(((Long)o).intValue());
-            break;
-        case LiteralBoolean:
-            if (newval instanceof LiteralBoolean) {
-                ((LiteralBoolean)newval).setValue((Boolean)o);
-                return;
-            }
-            newval = ef.createLiteralBooleanInstance();
-            ((LiteralBoolean)newval).setValue((Boolean)o);
-            break;
-        case LiteralUnlimitedNatural:
-            if (newval instanceof LiteralUnlimitedNatural) {
-                ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
-                return;
-            }
-            newval = ef.createLiteralUnlimitedNaturalInstance();
-            ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
-            break;
-        case LiteralReal:
-            Double value;
-            if (o instanceof Long)
-                value = Double.parseDouble(((Long)o).toString());
-            else
-                value = (Double)o;
-            if (newval instanceof LiteralReal) {
-                ((LiteralReal)newval).setValue((Double)o);
-                return;
-            }
-            newval = ef.createLiteralRealInstance();
-            ((LiteralReal)newval).setValue(value);
-            break;
-        case ElementValue:
-            Element find = ExportUtility.getElementFromID((String)o);
-            if (find == null) {
-                Application.getInstance().getGUILog().log("Element with id " + o + " not found!");
-                return;
-            }
-            if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement(find);
-                return;
-            } else if (newval instanceof InstanceValue) {
-                if (!(find instanceof InstanceSpecification)) {
-                    Application.getInstance().getGUILog().log("Element with id " + o + " is not an instance spec, cannot be put into an InstanceValue.");
-                    return;
-                }
-                ((InstanceValue)newval).setInstance((InstanceSpecification)find);
-                return;
-            }
-            newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement(find);
-            break;
-        default:
-            Debug.error("Bad PropertyValueType: " + valueType);
-        };
-        e.setDefaultValue(newval);
-        return;
-    }
-    
-    // TODO -- move to Utils and have setSlot() call this instead of always creating a new Slot?
-    private void update(Slot e, PropertyValueType valueType, ValueSpecification vs, Object o, int i) {
-        ValueSpecification newval = vs; 
-        /*if ( !Utils2.isNullOrEmpty( e.getValue() ) ) {
-            for ( ValueSpecification v : e.getValue() ) {
-                PropertyValueType modelType = PropertyValueType.toPropertyValueType( v );
-                if ( valueType == modelType ||
-                     valueType == PropertyValueType.ElementValue && v instanceof InstanceValue ||
-                     valueType == PropertyValueType.LiteralInteger && v instanceof LiteralUnlimitedNatural) {
-                    newval = v;
-                    break;
-                }
-            }
-        }
-        if ( newval == null && !Utils2.isNullOrEmpty( e.getValue() ) ) {
-            e.getValue().clear();
-        }*/
-        switch ( valueType ) {
-        case LiteralString:
-            if (newval instanceof LiteralString) {
-                ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o));
-                return;
-            } 
-            newval = ef.createLiteralStringInstance();
-            ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o));
-            break;
-        case LiteralInteger:
-            if (newval instanceof LiteralInteger) {
-                ((LiteralInteger)newval).setValue(((Long)o).intValue());
-                return;
-            } else if (newval instanceof LiteralUnlimitedNatural) {
-                ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
-                return;
-            }
-            newval = ef.createLiteralIntegerInstance();
-            ((LiteralInteger)newval).setValue(((Long)o).intValue());
-            break;
-        case LiteralBoolean:
-            if (newval instanceof LiteralBoolean) {
-                ((LiteralBoolean)newval).setValue((Boolean)o);
-                return;
-            }
-            newval = ef.createLiteralBooleanInstance();
-            ((LiteralBoolean)newval).setValue((Boolean)o);
-            break;
-        case LiteralUnlimitedNatural:
-            if (newval instanceof LiteralUnlimitedNatural) {
-                ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
-                return;
-            }
-            newval = ef.createLiteralUnlimitedNaturalInstance();
-            ((LiteralUnlimitedNatural)newval).setValue(((Long)o).intValue());
-            break;
-        case LiteralReal:
-            Double value;
-            if (o instanceof Long)
-                value = Double.parseDouble(((Long)o).toString());
-            else
-                value = (Double)o;
-            if (newval instanceof LiteralReal) {
-                ((LiteralReal)newval).setValue(value);
-                return;
-            }
-            newval = ef.createLiteralRealInstance();
-            ((LiteralReal)newval).setValue(value);
-            break;
-        case ElementValue:
-            Element find = ExportUtility.getElementFromID((String)o);
-            if (find == null) {
-                Application.getInstance().getGUILog().log("Element with id " + o + " not found!");
-                return;
-            }
-            if (newval instanceof ElementValue) {
-                ((ElementValue)newval).setElement(find);
-                return;
-            } else if (newval instanceof InstanceValue) {
-                if (!(find instanceof InstanceSpecification)) {
-                    Application.getInstance().getGUILog().log("Element with id " + o + " is not an instance spec, cannot be put into an InstanceValue.");
-                    return;
-                }
-                ((InstanceValue)newval).setInstance((InstanceSpecification)find);
-                return;
-            }
-            newval = ef.createElementValueInstance();
-            ((ElementValue)newval).setElement(find);
-            break;
-        case InstanceValue:
-            if (newval instanceof InstanceValue) {
-                ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
-                return;
-            }
-            newval = ef.createInstanceValueInstance();
-            ((InstanceValue)newval).setInstance((InstanceSpecification)ExportUtility.getElementFromID((String)o));
-            break;
-        };
-        //if ( e.getValue() != null && e.getValue().isEmpty() ) {
-        if (e.getValue().size() > i)
-            e.getValue().set(i, newval );
-        else
-            e.getValue().add(newval);
-        //}
-        return;
-    }
-    
-    private void update(Slot e, PropertyValueType valueType, JSONArray values) {
-        if ( e == null ) {
-            Debug.error( "Trying to update a null slot!" );
-            return;
-        }
-        for (int i = 0; i < values.size(); i++) {
-            if (e.getValue().size() > i) {
-                update(e, valueType, e.getValue().get(i), values.get(i), i);
-            } else
-                update(e, valueType, null, values.get(i), i);
-        }
-        /*if ( values.size() != 1 ) {
-            Application.getInstance().getGUILog().log("[ERROR] " + e.getHumanName() + " must have exactly one value but is being updated with " + values.size() + "!");
-            return;
-        }
-        if ( e.getValue() != null && e.getValue().size() > 1 ) {
-            Application.getInstance().getGUILog().log("[ERROR] " + e.getHumanName() + " must have exactly one value to update, but there are " + e.getValue().size() + "!");
-            return;
-        }
-        Object v = values.get( 0 );
-        //Utils.setSlotValue((Slot)e, v);
-        update( e, valueType, v );*/
+        execute("Change Value");
     }
 }

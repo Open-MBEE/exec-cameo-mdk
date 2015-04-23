@@ -38,6 +38,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -155,9 +156,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //need to populate view elements with elements in image
         JSONObject entry = new JSONObject();
         JSONObject imageEntry = new JSONObject();
-        for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(false)) {
-            addToElements(e);
-        }
+        //for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(false)) {
+        //    addToElements(e);
+        //}
+        addToElements(image.getImage());
         // export image - also keep track of exported images
         DiagramPresentationElement diagram = Application.getInstance().getProject()
                 .getDiagram(image.getImage());
@@ -276,6 +278,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             
             for (DocumentElement de: section.getChildren()) {
                 // if (recurse || !(de instanceof DBSection))
+                if (!recurse && de instanceof DBSection && ((DBSection)de).isView())
+                    break;
                 de.accept(this);
             }
             //sibviews.pop();
@@ -343,7 +347,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //object and then insert appropriate
         //sub-elements in that specialization object.
         //
-        specialization.put("type", "View");
+        if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype()))
+            specialization.put("type", "Product");
+        else
+            specialization.put("type", "View");
         view.put("specialization", specialization);
         String id = e.getID();
         view.put("sysmlid", id);
@@ -392,18 +399,18 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             return;
         elementSet.add(e);
         JSONObject elementInfo = new JSONObject();
-        ExportUtility.fillElement(e, elementInfo, view, viewpoint);
+        ExportUtility.fillElement(e, elementInfo);
         elements.put(e.getID(), elementInfo);
-        if (e instanceof DirectedRelationship) {
+        /*if (e instanceof DirectedRelationship) {
             JSONObject sourceInfo = new JSONObject();
             JSONObject targetInfo = new JSONObject();
             Element source = ModelHelper.getClientElement(e);
             Element target = ModelHelper.getSupplierElement(e);
-            ExportUtility.fillElement(source, sourceInfo, view, viewpoint);
-            ExportUtility.fillElement(target, targetInfo, view, viewpoint);
+            ExportUtility.fillElement(source, sourceInfo);
+            ExportUtility.fillElement(target, targetInfo);
             elements.put(source.getID(), sourceInfo);
             elements.put(target.getID(), targetInfo);
-        }
+        }*/
         //if (e instanceof Property || e instanceof Slot)
         //   elements.putAll(ExportUtility.getReferencedElements(e));
     }

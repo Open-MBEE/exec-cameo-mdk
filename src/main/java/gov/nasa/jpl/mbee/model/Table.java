@@ -46,7 +46,8 @@ public abstract class Table extends Query {
     protected boolean        showCaptions;
     protected String         style;
     protected List<String>   colwidths;
-
+    protected boolean       transpose;
+    
     public void setIncludeDoc(boolean d) {
         includeDoc = d;
     }
@@ -95,6 +96,14 @@ public abstract class Table extends Query {
         return colwidths;
     }
 
+    public boolean isTranspose() {
+        return transpose;
+    }
+
+    public void setTranspose(boolean transpose) {
+        this.transpose = transpose;
+    }
+
     protected void setTableThings(DBTable dbTable) {
         String title = "";
         if (getTitles() != null && getTitles().size() > 0)
@@ -118,6 +127,7 @@ public abstract class Table extends Query {
             }
             dbTable.setColspecs(cslist);
         }
+        dbTable.setTranspose(transpose);
     }
 
     @SuppressWarnings("unchecked")
@@ -136,5 +146,7 @@ public abstract class Table extends Query {
                 null));
         setColwidths((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.tableStereotype,
                 "colwidths", new ArrayList<String>()));
+        setTranspose((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
+                "transpose", false));
     }
 }
