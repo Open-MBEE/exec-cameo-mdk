@@ -43,6 +43,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
@@ -67,6 +69,15 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private JSONArray                 noSections = new JSONArray();
     private boolean doc;
     protected Set<Element> elementSet = new HashSet<Element>();
+    
+    private Stack<Element> currentView;
+    private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<List<InstanceSpecification>>();
+    private Stack<List<InstanceSpecification>> currentTableInstances = new Stack<List<InstanceSpecification>>();
+    private Stack<List<InstanceSpecification>> currentListInstances = new Stack<List<InstanceSpecification>>();
+    private Stack<List<InstanceSpecification>> currentParaInstances = new Stack<List<InstanceSpecification>>();
+    private Stack<List<InstanceSpecification>> currentSectionInstances = new Stack<List<InstanceSpecification>>();
+    private Stack<List<InstanceSpecification>> currentNonViewInstances = new Stack<List<InstanceSpecification>>();
+    
     
     public DBAlfrescoVisitor(boolean recurse) {
         elements = new JSONObject();
