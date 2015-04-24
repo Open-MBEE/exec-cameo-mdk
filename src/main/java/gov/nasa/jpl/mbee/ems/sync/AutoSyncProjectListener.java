@@ -27,6 +27,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -323,7 +324,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             changedIds.addAll((List<String>)previousConflicts.get("elements"));
         }
         try {
-            ConnectionFactory connectionFactory = createConnectionFactory();
+            ConnectionFactory connectionFactory;
+            if (JMS_URI == null) {
+                connectionFactory = new ActiveMQConnectionFactory(url);
+            } else {
+                connectionFactory = createConnectionFactory();
+            }
             String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
             connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
