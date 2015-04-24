@@ -1644,4 +1644,16 @@ public class ExportUtility {
         return branch;
     }
 
+    /**
+     * Utility for getting the JMS JNDI connection details from the MMS server
+     * @return  JSONObject of the connection details
+     */
+    public static JSONObject getJmsConnectionDetails() {
+        String url = getUrl() + "/connection/jms";
+        String jsonString = get(url, false);
+        
+        if (jsonString == null) return null; 
+        
+        return (JSONObject)JSONValue.parse( jsonString );
+    }
 }

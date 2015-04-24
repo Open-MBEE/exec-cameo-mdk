@@ -7,16 +7,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -24,8 +23,10 @@ import javax.jms.MessageConsumer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -45,7 +46,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.transaction.TransactionManager;
 
 /*
  * This class is responsible for taking action when a project is opened.
@@ -72,7 +72,23 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     private static final String MSG_SELECTOR_WS_ID = "workspace";
     public static Logger log = Logger.getLogger(AutoSyncProjectListener.class);
 
+    // Members to look up JMS using JNDI
+    // TODO: If any other context factories are used, need to add those JARs into class path (e.g., for weblogic)
+    private static String JMS_CTX_FACTORY = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
+    private static String JMS_CONN_FACTORY = "ConnectionFactory";
+    private static String JMS_USERNAME = null;
+    private static String JMS_PASSWORD = null;
+    private static String JMS_TOPIC = "master";
+    private static String JMS_URI = null;    
+    
     public static String getJMSUrl() {
+        // grab JMS connection details from MMS and set JNDI details 
+        if (JMS_URI == null) {
+            JSONObject jmsJson = ExportUtility.getJmsConnectionDetails();
+            ingestJson(jmsJson);
+        }
+        if (JMS_URI != null) return JMS_URI;
+
         String url = ExportUtility.getUrl();
         if (url != null) {
             if (url.startsWith("https://"))
@@ -307,12 +323,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             changedIds.addAll((List<String>)previousConflicts.get("elements"));
         }
         try {
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
+            ConnectionFactory connectionFactory = createConnectionFactory();
             String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
             connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            Topic topic = session.createTopic("master");
+            Topic topic = session.createTopic(JMS_TOPIC);
             String messageSelector = constructSelectorString(projectID, wsID);
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
@@ -454,7 +470,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             }
             listener.setAuto(true);
 
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
+            ConnectionFactory connectionFactory = createConnectionFactory();
             String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
             Connection connection = connectionFactory.createConnection();
             connection.setExceptionListener(new ExceptionListener() {
@@ -471,7 +487,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             // connection.setExceptionListener(this);
             Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
-            Topic topic = session.createTopic("master");
+            Topic topic = session.createTopic(JMS_TOPIC);
 
             String messageSelector = constructSelectorString(projectID, wsID);
             
@@ -691,4 +707,61 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 TeamworkUtils.unlockElement(project, folder, true, true, true);
         }
     }
+    
+    /**
+     * Ingests JSON data generated from MMS server and populates JNDI members
+     */
+    protected static void ingestJson(JSONObject json) {
+        if (json == null) return;
+        if (json.containsKey( "uri" )) {
+            JMS_URI = (String)json.get( "uri" );
+        }
+        if (json.containsKey( "connFactory" )) {
+            JMS_CONN_FACTORY = (String)json.get( "connFactory" );
+        }
+        if (json.containsKey( "ctxFactory" )) {
+            JMS_CTX_FACTORY = (String)json.get( "ctxFactory" );
+        }
+        if (json.containsKey( "password" )) {
+            JMS_PASSWORD = (String)json.get( "password" );
+        }
+        if (json.containsKey( "username" )) {
+            JMS_USERNAME = (String)json.get( "username" );
+        }
+        if (json.containsKey( "topicName" )) {
+            JMS_TOPIC = (String)json.get( "topicName" );
+        }
+    }
+
+
+    /**
+     * Create a connection factory based on JNDI values
+     * @return
+     */
+    protected static ConnectionFactory createConnectionFactory() {
+        Hashtable<String, String> properties = new Hashtable<String, String>();
+        properties.put(Context.INITIAL_CONTEXT_FACTORY, JMS_CTX_FACTORY);
+        properties.put(Context.PROVIDER_URL, JMS_URI);
+        if (JMS_USERNAME != null && JMS_PASSWORD != null) {
+            properties.put(Context.SECURITY_PRINCIPAL, JMS_USERNAME);
+            properties.put(Context.SECURITY_CREDENTIALS, JMS_PASSWORD);
+        }
+
+        InitialContext ctx = null;
+        try {
+            ctx = new InitialContext(properties);
+        } catch (NamingException ne) {
+            ne.printStackTrace(System.err);
+            return null;
+        }
+
+        try {
+            return (ConnectionFactory) ctx.lookup(JMS_CONN_FACTORY);
+        }
+        catch (NamingException ne) {
+            ne.printStackTrace(System.err);
+            return null;
+        }
+    }
+    
 }
