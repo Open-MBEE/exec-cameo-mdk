@@ -80,30 +80,30 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     private static String JMS_USERNAME = null;
     private static String JMS_PASSWORD = null;
     private static String JMS_TOPIC = "master";
-    private static String JMS_URI = null;    
-    
-    public static String getJMSUrl() {
-        // grab JMS connection details from MMS and set JNDI details 
-        if (JMS_URI == null) {
-            JSONObject jmsJson = ExportUtility.getJmsConnectionDetails();
-            ingestJson(jmsJson);
+        
+    public static void getJMSUrl(Map<String, String> urlInfo) {
+        // urlInfo necessary for backwards compatibility with 2.1 MMS, which doesn't have service call
+        JSONObject jmsJson = ExportUtility.getJmsConnectionDetails();
+        String url = ingestJson(jmsJson);
+        if (url != null) { 
+            urlInfo.put( "isFromService", "true" );
+        } else {
+            urlInfo.put( "isFromService", "false" );
+            url = ExportUtility.getUrl();
+            if (url != null) {
+                if (url.startsWith("https://"))
+                    url = url.substring(8);
+                else if (url.startsWith("http://"))
+                    url = url.substring(7);
+                int index = url.indexOf(":");
+                if (index != -1)
+                    url = url.substring(0, index);
+                if (url.endsWith("/alfresco/service"))
+                    url = url.substring(0, url.length() - 17);
+                url = "tcp://" + url + ":61616";
+            }
         }
-        if (JMS_URI != null) return JMS_URI;
-
-        String url = ExportUtility.getUrl();
-        if (url != null) {
-            if (url.startsWith("https://"))
-                url = url.substring(8);
-            else if (url.startsWith("http://"))
-                url = url.substring(7);
-            int index = url.indexOf(":");
-            if (index != -1)
-                url = url.substring(0, index);
-            if (url.endsWith("/alfresco/service"))
-                url = url.substring(0, url.length() - 17);
-            url = "tcp://" + url + ":61616";
-        } 
-        return url;
+        urlInfo.put( "url", url );
     }
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
@@ -300,7 +300,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
         String projectID = ExportUtility.getProjectId(project);
         String wsID = ExportUtility.getWorkspace();
-        String url = getJMSUrl();
+        Map<String, String> urlInfo = new HashMap<String, String>();
+        getJMSUrl(urlInfo);
+        String url = urlInfo.get( "url" );
         if (url == null) {
             Application.getInstance().getGUILog().log("[ERROR] cannot get server url");
             return null;
@@ -324,12 +326,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             changedIds.addAll((List<String>)previousConflicts.get("elements"));
         }
         try {
-            ConnectionFactory connectionFactory;
-            if (JMS_URI == null) {
-                connectionFactory = new ActiveMQConnectionFactory(url);
-            } else {
-                connectionFactory = createConnectionFactory();
-            }
+            ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
             String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
             connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
@@ -421,7 +418,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
             return;
         }
-        String url = getJMSUrl();
+        Map<String, String> urlInfo = new HashMap<String, String>();
+        getJMSUrl(urlInfo);
+        String url = urlInfo.get( "url" );
         if (url == null) {
             Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server url");
             return;
@@ -476,7 +475,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             }
             listener.setAuto(true);
 
-            ConnectionFactory connectionFactory = createConnectionFactory();
+            ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
             String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
             Connection connection = connectionFactory.createConnection();
             connection.setExceptionListener(new ExceptionListener() {
@@ -716,11 +715,14 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     
     /**
      * Ingests JSON data generated from MMS server and populates JNDI members
+     * 
+     * @return URL string of connector
      */
-    protected static void ingestJson(JSONObject json) {
-        if (json == null) return;
+    protected static String ingestJson(JSONObject json) {
+        if (json == null) return null;
+        String result = null;
         if (json.containsKey( "uri" )) {
-            JMS_URI = (String)json.get( "uri" );
+            result = (String)json.get( "uri" );
         }
         if (json.containsKey( "connFactory" )) {
             JMS_CONN_FACTORY = (String)json.get( "connFactory" );
@@ -737,6 +739,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         if (json.containsKey( "topicName" )) {
             JMS_TOPIC = (String)json.get( "topicName" );
         }
+        return result;
     }
 
 
@@ -744,29 +747,35 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
      * Create a connection factory based on JNDI values
      * @return
      */
-    protected static ConnectionFactory createConnectionFactory() {
-        Hashtable<String, String> properties = new Hashtable<String, String>();
-        properties.put(Context.INITIAL_CONTEXT_FACTORY, JMS_CTX_FACTORY);
-        properties.put(Context.PROVIDER_URL, JMS_URI);
-        if (JMS_USERNAME != null && JMS_PASSWORD != null) {
-            properties.put(Context.SECURITY_PRINCIPAL, JMS_USERNAME);
-            properties.put(Context.SECURITY_CREDENTIALS, JMS_PASSWORD);
-        }
-
-        InitialContext ctx = null;
-        try {
-            ctx = new InitialContext(properties);
-        } catch (NamingException ne) {
-            ne.printStackTrace(System.err);
-            return null;
-        }
-
-        try {
-            return (ConnectionFactory) ctx.lookup(JMS_CONN_FACTORY);
-        }
-        catch (NamingException ne) {
-            ne.printStackTrace(System.err);
-            return null;
+    public static ConnectionFactory createConnectionFactory(Map<String, String> urlInfo) {
+        boolean isFromService = urlInfo.get( "isFromService" ).equals( "true" ) ? true : false;
+        String url = urlInfo.get("url");
+        if (isFromService == false) {
+            return new ActiveMQConnectionFactory(url);
+        } else {
+            Hashtable<String, String> properties = new Hashtable<String, String>();
+            properties.put(Context.INITIAL_CONTEXT_FACTORY, JMS_CTX_FACTORY);
+            properties.put(Context.PROVIDER_URL, url);
+            if (JMS_USERNAME != null && JMS_PASSWORD != null) {
+                properties.put(Context.SECURITY_PRINCIPAL, JMS_USERNAME);
+                properties.put(Context.SECURITY_CREDENTIALS, JMS_PASSWORD);
+            }
+    
+            InitialContext ctx = null;
+            try {
+                ctx = new InitialContext(properties);
+            } catch (NamingException ne) {
+                ne.printStackTrace(System.err);
+                return null;
+            }
+    
+            try {
+                return (ConnectionFactory) ctx.lookup(JMS_CONN_FACTORY);
+            }
+            catch (NamingException ne) {
+                ne.printStackTrace(System.err);
+                return null;
+            }
         }
     }
     

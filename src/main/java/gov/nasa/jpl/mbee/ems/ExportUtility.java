@@ -1512,11 +1512,13 @@ public class ExportUtility {
         Session session = null;
         MessageConsumer consumer = null;
         try {
-            String url = AutoSyncProjectListener.getJMSUrl();
+            Map<String, String> urlInfo = new HashMap<String, String>();
+            AutoSyncProjectListener.getJMSUrl(urlInfo);
+            String url = urlInfo.get( "url" );
             if (url == null) {
                 return;
             }
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
+            ConnectionFactory connectionFactory = AutoSyncProjectListener.createConnectionFactory( urlInfo );
             connection = connectionFactory.createConnection();
             String subscriberId = projectId + "/" + taskId;
             connection.setClientID(subscriberId);
@@ -1645,7 +1647,7 @@ public class ExportUtility {
     }
 
     /**
-     * Utility for getting the JMS JNDI connection details from the MMS server
+     * Gets JMS JNDI connection details from the MMS server
      * @return  JSONObject of the connection details
      */
     public static JSONObject getJmsConnectionDetails() {
