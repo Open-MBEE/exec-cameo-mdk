@@ -591,6 +591,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     private static void saveAutoSyncErrors(Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances == null)
+            return;
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(JMSLISTENER)) {
             //autosync is on
@@ -671,24 +673,30 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
-        saveAutoSyncErrors(project);
-        saveLocalUpdates(project);
+        try {
+            saveAutoSyncErrors(project);
+            saveLocalUpdates(project);
+        } catch (Exception e) {
+            log.error("", e); //potential session isn't created error if need to update from tw while commiting
+        }
     }
     
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances == null)
+            return; //investigate how this is possible
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(JMSLISTENER)) {
             //autosync is on
             ExportUtility.sendProjectVersion();
         }
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && savedInServer) {
+        /*if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && savedInServer) {
             String folderId = project.getPrimaryProject().getProjectID();
             folderId += "_sync";
             Element folder = ExportUtility.getElementFromID(folderId);
             if (folder != null)
                 TeamworkUtils.unlockElement(project, folder, true, true, true);
-        }
+        }*/ //unlock apparently can take a long time on big model
     }
 }
