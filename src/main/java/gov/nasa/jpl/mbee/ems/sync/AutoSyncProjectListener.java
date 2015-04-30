@@ -25,6 +25,7 @@ import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
@@ -80,6 +81,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     private static String JMS_USERNAME = null;
     private static String JMS_PASSWORD = null;
     private static String JMS_TOPIC = "master";
+    private static InitialContext ctx = null; 
         
     public static void getJMSUrl(Map<String, String> urlInfo) {
         // urlInfo necessary for backwards compatibility with 2.1 MMS, which doesn't have service call
@@ -327,11 +329,17 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
         try {
             ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
-            String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
+            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
             connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            Topic topic = session.createTopic(JMS_TOPIC);
+            // weblogic createTopic doesn't work if it already exists, unlike activemq
+            Topic topic;
+            try {
+                topic = (Topic) ctx.lookup( JMS_TOPIC );
+            } catch (NameNotFoundException nnfe) {
+                topic = session.createTopic(JMS_TOPIC);
+            }
             String messageSelector = constructSelectorString(projectID, wsID);
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
@@ -476,7 +484,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             listener.setAuto(true);
 
             ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
-            String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
+            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
             Connection connection = connectionFactory.createConnection();
             connection.setExceptionListener(new ExceptionListener() {
                 @Override
@@ -492,7 +500,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             // connection.setExceptionListener(this);
             Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
-            Topic topic = session.createTopic(JMS_TOPIC);
+            Topic topic;
+            try {
+                topic = (Topic) ctx.lookup( JMS_TOPIC );
+            } catch (NameNotFoundException nnfe) {
+                topic = session.createTopic(JMS_TOPIC);
+            }
 
             String messageSelector = constructSelectorString(projectID, wsID);
             
@@ -761,7 +774,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 properties.put(Context.SECURITY_CREDENTIALS, JMS_PASSWORD);
             }
     
-            InitialContext ctx = null;
+            ctx = null;
             try {
                 ctx = new InitialContext(properties);
             } catch (NamingException ne) {
