@@ -16,6 +16,7 @@ public class PresentationElement {
     private String name;
     private PresentationElement parent; //section if applicable, otherwise null, use view
     private List<PresentationElement> children;
+    private boolean manual = false;
     
     public PresentationElement(InstanceSpecification instance, JSONObject spec, PEType type, Element view, String name, PresentationElement parent, List<PresentationElement> children) {
         this.instance = instance;
@@ -68,5 +69,13 @@ public class PresentationElement {
     }
     public void setChildren(List<PresentationElement> children) {
         this.children = children;
+    }
+
+    public boolean isManual() {
+        return manual;
+    }
+
+    public void setManual(boolean manual) {
+        this.manual = manual;
     }
 }
