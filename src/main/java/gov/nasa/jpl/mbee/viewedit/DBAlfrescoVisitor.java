@@ -77,6 +77,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private boolean doc;
     protected Set<Element> elementSet = new HashSet<Element>();
     
+    private Map<Element, List<PresentationElement>> view2pe = new HashMap<Element, List<PresentationElement>>();
     private Stack<Element> currentView;
     private Stack<PresentationElement> currentSection; //if currently in section, sections cannot cross views
     private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<List<InstanceSpecification>>();
@@ -441,6 +442,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentView.push(e);
         List<PresentationElement> viewChildren = new ArrayList<PresentationElement>();
         newpe.push(viewChildren);
+        view2pe.put(e, viewChildren);
         Expression ex = null;
         Constraint c = findViewConstraint(e);
         if (c != null && c.getSpecification() instanceof Expression)
@@ -468,6 +470,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         this.curContains.pop();
         
         addManualInstances(true);
+        newpe.pop();
         currentView.pop();
         currentManualInstances.pop();
         currentImageInstances.pop();
@@ -519,6 +522,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         this.curContains.pop();
         
         addManualInstances(true);
+        newpe.pop();
         currentSection.pop();
         currentManualInstances.pop();
         currentImageInstances.pop();
@@ -573,6 +577,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     
     public Set<Element> getElementSet() {
         return elementSet;
+    }
+    
+    public Map<Element, List<PresentationElement>> getView2Pe() {
+        return view2pe;
     }
     
     private Constraint findViewConstraint(Element view) {
