@@ -163,7 +163,7 @@ public class ViewValidator {
         (new PostProcessor()).process(dge);
         
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
-        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
+        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse, true);
         if (!hierarchyOnly) {
             dge.accept(visitor);
             DBBook book = visitor.getBook();

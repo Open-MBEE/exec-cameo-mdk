@@ -174,7 +174,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         //if (document)
         //    visitor2 = new DBAlfrescoVisitor(true);
         //else
-        visitor2 = new DBAlfrescoVisitor(recurse);
+        visitor2 = new DBAlfrescoVisitor(recurse, true);
         book.accept(visitor2);
         /*int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {

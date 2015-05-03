@@ -2032,6 +2032,26 @@ public class Utils {
         return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Expose");
     }
     
+    public static Classifier getOpaqueParaClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueParagraph");
+    }
+    
+    public static Classifier getOpaqueTableClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueTable");
+    }
+
+    public static Classifier getOpaqueListClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueList");
+    }
+    
+    public static Classifier getOpaqueImageClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueImage");
+    }
+
+    public static Classifier getSectionClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section");
+    }
+
     /********************************************* User interaction ****************************************************/
 
     /**
