@@ -63,6 +63,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportPropertyType;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -534,9 +535,10 @@ public class ModelValidator {
             if (!modelContents.equals(webContents)) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint is different");
                 v.addAction(new ExportViewConstraint((NamedElement)e));
+                v.addAction(new ImportViewConstraint((NamedElement)e, webViewSpec, result));
                 return v;
             }
-        } else if (webContents != null) {
+        } else if (webContents != null && modelContents ==  null) {
             
         }
         return null;

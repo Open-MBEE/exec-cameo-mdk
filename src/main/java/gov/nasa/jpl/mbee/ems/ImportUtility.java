@@ -131,6 +131,7 @@ public class ImportUtility {
             }
             Stereotype sysmlView = Utils.getViewClassStereotype();
             StereotypesHelper.addStereotype(newE, sysmlView);
+            setViewConstraint(newE, specialization);
         } else if (elementType.equalsIgnoreCase("viewpoint")) {
             if (newE == null) {
                 Class view = ef.createClassInstance();
@@ -202,6 +203,7 @@ public class ImportUtility {
             }
             Stereotype product = Utils.getDocumentStereotype();
             StereotypesHelper.addStereotype(newE, product);
+            setViewConstraint(newE, specialization);
         } else if (elementType.equalsIgnoreCase("Association")) {
             if (newE == null) {
                 AssociationClass ac = ef.createAssociationClassInstance();
@@ -255,6 +257,23 @@ public class ImportUtility {
                 setAssociation((Association)e, spec);
             if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
                 setInstanceSpecification((InstanceSpecification)e, spec);
+            if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
+                setViewConstraint(e, spec);
+        }
+    }
+    
+    public static void setViewConstraint(Element e, JSONObject specialization) {
+        Constraint c = Utils.getViewConstraint(e);
+        if (c == null) {
+            c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
+            c.setOwner(e);
+            c.getConstrainedElement().add(e);
+        }
+        if (specialization.containsKey("contents")) {
+            if (specialization.get("contents") == null) {
+                c.setSpecification(null);
+            } else 
+                c.setSpecification(createValueSpec((JSONObject)specialization.get("contents")));
         }
     }
     
