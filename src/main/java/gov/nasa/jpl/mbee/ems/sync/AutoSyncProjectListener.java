@@ -7,16 +7,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -24,6 +23,10 @@ import javax.jms.MessageConsumer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.log4j.Logger;
@@ -45,7 +48,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.transaction.TransactionManager;
 
 /*
  * This class is responsible for taking action when a project is opened.
@@ -72,21 +74,38 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     private static final String MSG_SELECTOR_WS_ID = "workspace";
     public static Logger log = Logger.getLogger(AutoSyncProjectListener.class);
 
-    public static String getJMSUrl() {
-        String url = ExportUtility.getUrl();
-        if (url != null) {
-            if (url.startsWith("https://"))
-                url = url.substring(8);
-            else if (url.startsWith("http://"))
-                url = url.substring(7);
-            int index = url.indexOf(":");
-            if (index != -1)
-                url = url.substring(0, index);
-            if (url.endsWith("/alfresco/service"))
-                url = url.substring(0, url.length() - 17);
-            url = "tcp://" + url + ":61616";
-        } 
-        return url;
+    // Members to look up JMS using JNDI
+    // TODO: If any other context factories are used, need to add those JARs into class path (e.g., for weblogic)
+    private static String JMS_CTX_FACTORY = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
+    private static String JMS_CONN_FACTORY = "ConnectionFactory";
+    private static String JMS_USERNAME = null;
+    private static String JMS_PASSWORD = null;
+    private static String JMS_TOPIC = "master";
+    private static InitialContext ctx = null; 
+        
+    public static void getJMSUrl(Map<String, String> urlInfo) {
+        // urlInfo necessary for backwards compatibility with 2.1 MMS, which doesn't have service call
+        JSONObject jmsJson = ExportUtility.getJmsConnectionDetails();
+        String url = ingestJson(jmsJson);
+        if (url != null) { 
+            urlInfo.put( "isFromService", "true" );
+        } else {
+            urlInfo.put( "isFromService", "false" );
+            url = ExportUtility.getUrl();
+            if (url != null) {
+                if (url.startsWith("https://"))
+                    url = url.substring(8);
+                else if (url.startsWith("http://"))
+                    url = url.substring(7);
+                int index = url.indexOf(":");
+                if (index != -1)
+                    url = url.substring(0, index);
+                if (url.endsWith("/alfresco/service"))
+                    url = url.substring(0, url.length() - 17);
+                url = "tcp://" + url + ":61616";
+            }
+        }
+        urlInfo.put( "url", url );
     }
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
@@ -283,7 +302,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
         String projectID = ExportUtility.getProjectId(project);
         String wsID = ExportUtility.getWorkspace();
-        String url = getJMSUrl();
+        Map<String, String> urlInfo = new HashMap<String, String>();
+        getJMSUrl(urlInfo);
+        String url = urlInfo.get( "url" );
         if (url == null) {
             Application.getInstance().getGUILog().log("[ERROR] cannot get server url");
             return null;
@@ -307,12 +328,18 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             changedIds.addAll((List<String>)previousConflicts.get("elements"));
         }
         try {
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
-            String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
+            ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
+            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
             connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            Topic topic = session.createTopic("master");
+            // weblogic createTopic doesn't work if it already exists, unlike activemq
+            Topic topic;
+            try {
+                topic = (Topic) ctx.lookup( JMS_TOPIC );
+            } catch (NameNotFoundException nnfe) {
+                topic = session.createTopic(JMS_TOPIC);
+            }
             String messageSelector = constructSelectorString(projectID, wsID);
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
@@ -399,7 +426,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
             return;
         }
-        String url = getJMSUrl();
+        Map<String, String> urlInfo = new HashMap<String, String>();
+        getJMSUrl(urlInfo);
+        String url = urlInfo.get( "url" );
         if (url == null) {
             Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server url");
             return;
@@ -454,8 +483,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             }
             listener.setAuto(true);
 
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
-            String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
+            ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
+            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
             Connection connection = connectionFactory.createConnection();
             connection.setExceptionListener(new ExceptionListener() {
                 @Override
@@ -471,7 +500,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             // connection.setExceptionListener(this);
             Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
-            Topic topic = session.createTopic("master");
+            Topic topic;
+            try {
+                topic = (Topic) ctx.lookup( JMS_TOPIC );
+            } catch (NameNotFoundException nnfe) {
+                topic = session.createTopic(JMS_TOPIC);
+            }
 
             String messageSelector = constructSelectorString(projectID, wsID);
             
@@ -691,4 +725,71 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 TeamworkUtils.unlockElement(project, folder, true, true, true);
         }
     }
+    
+    /**
+     * Ingests JSON data generated from MMS server and populates JNDI members
+     * 
+     * @return URL string of connector
+     */
+    protected static String ingestJson(JSONObject json) {
+        if (json == null) return null;
+        String result = null;
+        if (json.containsKey( "uri" )) {
+            result = (String)json.get( "uri" );
+        }
+        if (json.containsKey( "connFactory" )) {
+            JMS_CONN_FACTORY = (String)json.get( "connFactory" );
+        }
+        if (json.containsKey( "ctxFactory" )) {
+            JMS_CTX_FACTORY = (String)json.get( "ctxFactory" );
+        }
+        if (json.containsKey( "password" )) {
+            JMS_PASSWORD = (String)json.get( "password" );
+        }
+        if (json.containsKey( "username" )) {
+            JMS_USERNAME = (String)json.get( "username" );
+        }
+        if (json.containsKey( "topicName" )) {
+            JMS_TOPIC = (String)json.get( "topicName" );
+        }
+        return result;
+    }
+
+
+    /**
+     * Create a connection factory based on JNDI values
+     * @return
+     */
+    public static ConnectionFactory createConnectionFactory(Map<String, String> urlInfo) {
+        boolean isFromService = urlInfo.get( "isFromService" ).equals( "true" ) ? true : false;
+        String url = urlInfo.get("url");
+        if (isFromService == false) {
+            return new ActiveMQConnectionFactory(url);
+        } else {
+            Hashtable<String, String> properties = new Hashtable<String, String>();
+            properties.put(Context.INITIAL_CONTEXT_FACTORY, JMS_CTX_FACTORY);
+            properties.put(Context.PROVIDER_URL, url);
+            if (JMS_USERNAME != null && JMS_PASSWORD != null) {
+                properties.put(Context.SECURITY_PRINCIPAL, JMS_USERNAME);
+                properties.put(Context.SECURITY_CREDENTIALS, JMS_PASSWORD);
+            }
+    
+            ctx = null;
+            try {
+                ctx = new InitialContext(properties);
+            } catch (NamingException ne) {
+                ne.printStackTrace(System.err);
+                return null;
+            }
+    
+            try {
+                return (ConnectionFactory) ctx.lookup(JMS_CONN_FACTORY);
+            }
+            catch (NamingException ne) {
+                ne.printStackTrace(System.err);
+                return null;
+            }
+        }
+    }
+    
 }
