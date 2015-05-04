@@ -51,6 +51,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportPropertyType;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportSite;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportViewConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportAssociation;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportComment;
@@ -116,6 +117,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ModelValidator {
 
@@ -137,6 +139,7 @@ public class ModelValidator {
     private ValidationRule siteDiff = new ValidationRule("Site", "site existence", ViolationSeverity.ERROR);
     private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
     private ValidationRule instanceSpec = new ValidationRule("InstanceSpec", "InstanceSpec", ViolationSeverity.ERROR);
+    private ValidationRule viewConstraint = new ValidationRule("view constraint", "View constraint", ViolationSeverity.ERROR);
 
     private Set<Element> differentElements = new HashSet<Element>();
     private Project prj;
@@ -170,6 +173,7 @@ public class ModelValidator {
         suite.addValidationRule(siteDiff);
         suite.addValidationRule(productView);
         suite.addValidationRule(instanceSpec);
+        suite.addValidationRule(viewConstraint);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -501,12 +505,41 @@ public class ModelValidator {
             if (v != null)
                 instanceSpec.addViolation(v);
         }
+        Stereotype view = Utils.getViewStereotype();
+        if (StereotypesHelper.hasStereotypeOrDerived(e, view)) {
+            ValidationRuleViolation v = viewContentDiff(e, elementInfo);
+            if (v != null)
+                viewConstraint.addViolation(v);
+        }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null) {
             ownership.addViolation(v);
             differentElements.add(e);
         }
         docDiff(e, elementInfo);
+    }
+    
+    private ValidationRuleViolation viewContentDiff(Element e, JSONObject elementInfo) {
+        JSONObject webViewSpec = (JSONObject)elementInfo.get("specialization");
+        if (webViewSpec == null)
+            return null;
+        JSONObject webContents = null;
+        JSONObject modelContents = null;
+        if (webViewSpec.containsKey("contents"))
+            webContents = (JSONObject)webViewSpec.get("contents");
+        JSONObject modelview = ExportUtility.fillViewContent(e, null);
+        if (modelview.containsKey("contents"))
+            modelContents = (JSONObject)modelview.get("contents");
+        if (modelContents != null) {
+            if (!modelContents.equals(webContents)) {
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint is different");
+                v.addAction(new ExportViewConstraint((NamedElement)e));
+                return v;
+            }
+        } else if (webContents != null) {
+            
+        }
+        return null;
     }
     
     private ValidationRuleViolation docDiff(Element e, JSONObject elementInfo) {

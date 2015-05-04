@@ -909,12 +909,17 @@ public class ExportUtility {
         } else if (e.getClass().getSimpleName().equals("ClassImpl")) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
             Stereotype view = Utils.getViewStereotype();
+            Stereotype doc = Utils.getProductStereotype();
             //Stereotype view = Utils.getViewStereotype();
             if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
                 specialization.put("type", "Viewpoint");
-            else if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view))
-                specialization.put("type", "View");
-            else
+            else if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view)) {
+                if (StereotypesHelper.hasStereotypeOrDerived(e, doc))
+                    specialization.put("type", "Product");
+                else
+                    specialization.put("type", "View");
+                fillViewContent(e, specialization);
+            } else
                 specialization.put("type", "Element");
         } else {
             specialization.put("type", "Untyped");
@@ -926,6 +931,19 @@ public class ExportUtility {
         return elementInfo;
     }
 
+    public static JSONObject fillViewContent(Element e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        Constraint c = Utils.getViewConstraint(e);
+        if (c != null) {
+            JSONObject cob = fillConstraintSpecialization(c, null);
+            if (cob.containsKey("specification"))
+                specialization.put("contents", (JSONObject)cob.get("specification"));
+        }
+        return specialization;
+    }
+    
     @SuppressWarnings("unchecked")
     public static JSONObject fillPropertySpecialization(Element e, JSONObject spec, boolean ptype) {
         JSONObject specialization = spec;

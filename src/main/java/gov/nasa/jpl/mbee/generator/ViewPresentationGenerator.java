@@ -131,6 +131,7 @@ public class ViewPresentationGenerator {
                 ls.setValue(pe.getNewspec().toJSONString());
                 is.setSpecification(ls);
             }
+            is.setName(pe.getName());
             InstanceValue iv = ef.createInstanceValueInstance();
             iv.setInstance(is);
             list.add(iv);
@@ -153,11 +154,10 @@ public class ViewPresentationGenerator {
     }
     
     private Constraint getViewConstraint(Element view) {
-        for (Element e: view.getOwnedElement()) {
-            if (e instanceof Constraint)
-                return (Constraint)e;
-        }
-        Constraint c = ef.createConstraintInstance();
+        Constraint c = Utils.getViewConstraint(view);
+        if (c != null)
+            return c;
+        c = ef.createConstraintInstance();
         c.setOwner(view);
         c.getConstrainedElement().add(view);
         return c;

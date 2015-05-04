@@ -78,8 +78,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     protected Set<Element> elementSet = new HashSet<Element>();
     
     private Map<Element, List<PresentationElement>> view2pe = new HashMap<Element, List<PresentationElement>>();
-    private Stack<Element> currentView;
-    private Stack<PresentationElement> currentSection; //if currently in section, sections cannot cross views
+    private Stack<Element> currentView = new Stack<Element>();
+    private Stack<PresentationElement> currentSection = new Stack<PresentationElement>(); //if currently in section, sections cannot cross views
     private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentTableInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentListInstances = new Stack<List<InstanceSpecification>>();
@@ -157,13 +157,17 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             doc = true; 
             Element docview = book.getFrom();
             startView(docview);
-            JSONObject entry = new JSONObject();
+            DBParagraph docpara = new DBParagraph();
+            docpara.setFrom(docview);
+            docpara.setFromProperty(From.DOCUMENTATION);
+            this.visit(docpara);
+            /*JSONObject entry = new JSONObject();
             entry.put("source", docview.getID());
             entry.put("sourceProperty", sourceMapping.get(From.DOCUMENTATION));
             entry.put("type", "Paragraph");
             entry.put("sourceType", "reference");
-            curContains.peek().add(entry);
-            //endView(docview);
+            curContains.peek().add(entry);*/
+            //endView(docview); //why was this commented out before
         }
         if (recurse || !doc) {
             for (DocumentElement de: book.getChildren()) {
@@ -587,11 +591,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     }
     
     private Constraint findViewConstraint(Element view) {
-        for (Element e: view.getOwnedElement()) {
-            if (e instanceof Constraint)
-                return (Constraint)e;
-        }
-        return null;
+        return Utils.getViewConstraint(view);
     }
     
     private void processCurrentInstances(Expression e, Element view) {
@@ -606,6 +606,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             for (ValueSpecification vs: e.getOperand()) {
                 if (vs instanceof InstanceValue) {
                     InstanceSpecification is = ((InstanceValue)vs).getInstance();
+                    if (is ==  null)
+                        continue;
                     if (!is.getClassifier().isEmpty()) {
                         List<Classifier> iscs = is.getClassifier();
                         boolean viewinstance = false;

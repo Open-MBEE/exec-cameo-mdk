@@ -2063,6 +2063,14 @@ public class Utils {
     public static Property getGeneratedFromElementProperty() {
         return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section::generatedFromElement");
     }
+    
+    public static Constraint getViewConstraint(Element view) {
+        for (Element e: view.getOwnedElement()) {
+            if (e instanceof Constraint)
+                return (Constraint)e;
+        }
+        return null;
+    }
     /********************************************* User interaction ****************************************************/
 
     /**

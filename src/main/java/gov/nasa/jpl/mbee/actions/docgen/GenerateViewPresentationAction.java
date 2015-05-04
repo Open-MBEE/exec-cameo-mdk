@@ -16,7 +16,7 @@ public class GenerateViewPresentationAction extends MDAction {
 
 
     public GenerateViewPresentationAction(Element e, boolean recurse) {
-        super(recurse ? recurseActionid : actionid, recurse ? "Generate View Presentation": "Genearte View Presentations", null, null);
+        super(recurse ? recurseActionid : actionid, recurse ? "Generate View Presentations": "Generate View Presentation", null, null);
         doc = e;
         this.recurse = recurse;
     }
