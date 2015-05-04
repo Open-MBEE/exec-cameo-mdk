@@ -494,10 +494,12 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         
         
         InstanceSpecification sec = null;
+        Element loopElement = null;
         if (section.getDgElement() instanceof Section) {
-            if (((Section)section.getDgElement()).getLoopElement() != null)
-                sec = findInstanceForSection(((Section)section.getDgElement()).getLoopElement());
-            else
+            if (((Section)section.getDgElement()).getLoopElement() != null) {
+                loopElement = ((Section)section.getDgElement()).getLoopElement();
+                sec = findInstanceForSection(loopElement);
+            } else
                 sec = findInstanceForSection(null);
         }
         if (sec != null) {
@@ -507,6 +509,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         List<PresentationElement> secChildren = new ArrayList<PresentationElement>();
         PresentationElement pe = new PresentationElement(sec, newSection, PEType.SECTION, currentView.peek(), section.getTitle(), parentSec, secChildren);
+        pe.setLoopElement(loopElement);
         newpe.peek().add(pe);
         currentSection.push(pe);
         newpe.push(secChildren);
@@ -584,6 +587,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     }
     
     private Constraint findViewConstraint(Element view) {
+        for (Element e: view.getOwnedElement()) {
+            if (e instanceof Constraint)
+                return (Constraint)e;
+        }
         return null;
     }
     

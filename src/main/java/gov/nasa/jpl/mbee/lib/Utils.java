@@ -2052,6 +2052,17 @@ public class Utils {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section");
     }
 
+    public static Stereotype getPresentsStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents");
+    }
+    
+    public static Property getGeneratedFromViewProperty() {
+        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView");
+    }
+    
+    public static Property getGeneratedFromElementProperty() {
+        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section::generatedFromElement");
+    }
     /********************************************* User interaction ****************************************************/
 
     /**

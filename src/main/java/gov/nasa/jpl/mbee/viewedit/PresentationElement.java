@@ -16,6 +16,7 @@ public class PresentationElement {
     private String name;
     private PresentationElement parent; //section if applicable, otherwise null, use view
     private List<PresentationElement> children;
+    private Element loopElement;
     private boolean manual = false;
     
     public PresentationElement(InstanceSpecification instance, JSONObject spec, PEType type, Element view, String name, PresentationElement parent, List<PresentationElement> children) {
@@ -77,5 +78,13 @@ public class PresentationElement {
 
     public void setManual(boolean manual) {
         this.manual = manual;
+    }
+
+    public Element getLoopElement() {
+        return loopElement;
+    }
+
+    public void setLoopElement(Element loopElement) {
+        this.loopElement = loopElement;
     }
 }

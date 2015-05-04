@@ -33,6 +33,7 @@ import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
 import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
+import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
 import gov.nasa.jpl.mbee.actions.docgen.MigrateToClassViewAction;
 import gov.nasa.jpl.mbee.actions.docgen.NumberAssociationAction;
@@ -337,6 +338,13 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             if (act == null)
                 c.addAction(new GenerateDocumentAction(e));
 
+            act = manager.getActionFor(GenerateViewPresentationAction.actionid);
+            if (act == null)
+                c.addAction(new GenerateViewPresentationAction(e, false));
+            act = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
+            if (act == null)
+                c.addAction(new GenerateViewPresentationAction(e, true));
+            
             if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
                 //act = manager.getActionFor(PublishDocWebAction.actionid); 
                 //if (act == null) 
