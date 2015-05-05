@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="lib" path="lib/jsoup-1.6.1.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://jsoup.org/apidocs/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/jgrapht-0.8.3-jdk1.6.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://jgrapht.org/javadoc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/json_simple-1.1.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://www.json.org/javadoc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/swingx-all-1.6.4.jar" sourcepath="lib/swingx-all-1.6.4-sources.jar"/>
+	<classpathentry kind="lib" path="lib/swingx-beaninfo-1.6.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/opencsv-2.3.jar"/>
+  <classpathentry kind="con" path="gov.nasa.jpl.magicdraw.CLASSPATH_LIB_CONTAINER/,lib/,lib/graphics/,lib/webservice/,plugins/com.nomagic.magicdraw.automaton/,plugins/com.nomagic.magicdraw.automaton/engines/,plugins/com.nomagic.magicdraw.automaton/engines/beanshell/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-1.7.10/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-1.7.10/embeddable/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-1.7.10/lib/,plugins/com.nomagic.magicdraw.automaton/help/,plugins/com.nomagic.magicdraw.automaton/lib/,plugins/com.nomagic.magicdraw.automaton/resources/,plugins/com.nomagic.magicdraw.codeengineering/,plugins/com.nomagic.magicdraw.codeengineering/lib/,plugins/com.nomagic.magicdraw.contentdiagram/,plugins/com.nomagic.magicdraw.dependencymatrix/,plugins/com.nomagic.magicdraw.dependencymatrix/resources/,plugins/com.nomagic.magicdraw.diagramtable/,plugins/com.nomagic.magicdraw.jpython/,plugins/com.nomagic.magicdraw.jpython/jython2.5.1/,plugins/com.nomagic.magicdraw.jpython/jython2.5.1/Lib/,plugins/com.nomagic.magicdraw.jpython/jython2.5.1/Lib/test/,plugins/com.nomagic.magicdraw.jpython/jython2.5.1/Lib/test/bug1126/,plugins/com.nomagic.magicdraw.qvt/,plugins/com.nomagic.magicdraw.qvt/lib/,plugins/gov.nasa.jpl.magicdraw.imce/,plugins/gov.nasa.jpl.magicdraw.imce/lib/,plugins/gov.nasa.jpl.magicdraw.imce/lib/jaxb2.2/,plugins/gov.nasa.jpl.magicdraw.qvto.library/,plugins/gov.nasa.jpl.magicdraw.qvto.library/lib"/>
+	<classpathentry kind="var" path="MD1701/lib/patch.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/activation.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/batik.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/cmof14.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.admin.lock_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.client.ac_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.client.licensing_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.client.mediastore_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.cts.admin_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.cts.cdo_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.cts.info_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.cts.security_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.metamodel.admin_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.metamodel.project_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.persistence_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.persistence.local_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.persistence.server_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.server.ac.core_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.server.common_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.services_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/commons-codec-1.3.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/commons-httpclient-3.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/commons-logging-1.0.4.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/concurrent.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/cvsclient.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/EccpressoAll.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/ehcache-core-2.2.0.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/flexlm.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/HTMLEditorLight.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/javassist.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/javax_jmi-1_0-fr.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jax-qname.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jaxb-api.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jaxb-impl.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jaxb-libs.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jhall.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-action.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-charts.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-common.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-components.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-dock.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-editor.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-gantt.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-grids.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-properties.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jide-shortcut.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jimi.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jmyspell-core-1.0.0-beta-2.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jna.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jnp-client.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jsr250-api-1.0.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/jsr305.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/junit.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/launcher.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/log4j-1.2.15.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/lpg.runtime.java_2.0.17.v201004271640.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/md_api.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="MD1701/openapi/docs/javadoc/MagicDraw/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="MD1701/lib/md_cdo_1.0.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/md_common_api.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="MD1701/openapi/docs/javadoc/MagicDraw/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="MD1701/lib/md_common.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/md_foundation_1.0.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/md.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/namespace.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.apache.commons.codec_1.3.0.v201101211617.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.apache.commons.collections_3.2.0.v201005080500.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.apache.commons.logging_1.1.1.v201101211721.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.core.contenttype_3.4.100.v20110423-0524.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.core.jobs_3.5.100.v20110404.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.core.runtime_3.7.0.v20110110.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.emf.cdo_4.0.1.custom.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.emf.cdo.common_4.0.1.custom.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.emf.cdo.net4j_4.0.0.custom.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.emf.common_2.7.0.v20110513-1719.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.emf.ecore_2.7.0.201210251512.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.emf.ecore.change_2.7.1.201210251512.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.emf.ecore.xmi_2.7.0.201210251512.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.emf.transaction_1.4.0.v20100331-1738.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.equinox.common_3.6.0.v20110506.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.equinox.registry_3.5.100.v20110502.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.net4j_4.0.0.custom.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.net4j.tcp_4.0.0.custom.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.net4j.util_3.1.1.custom.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.ocl_3.2.0.201210251512.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.ocl.doc_3.0.1.R30x_v201008311245.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.ocl.ecore_3.2.2.201210251512.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.ocl.ecore.edit_3.1.0.v20110526-1523.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.ocl.ecore.edit.source_3.0.0.R30x_v201008251030.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.ocl.ecore.source_3.0.1.R30x_v201008251030.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.ocl.source_3.0.1.R30x_v201008251030.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.osgi_3.7.0.v20110513.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/org.eclipse.uml2.common_1.5.0.v200905041045.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/relaxngDatatype.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/trove.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/tw_common_api.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/tw_common.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/tw_console_api.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/tw_console.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/uml2.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/xalan.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/xercesImpl.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/xml-apis.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/xsdlib.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/y.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.automaton/lib/asm-3.3.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.automaton/lib/commons-lang-2.4.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.automaton/automaton_api.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.automaton/automaton.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.dependencymatrix/dependencymatrix_api.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.diagramtable/diagramtable_api.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.diagramtable/diagramtable.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/avalon-logkit-2.1.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/commons-beanutils-1.7.0.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/commons-collections-3.2.1.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/commons-lang-2.4.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/commons-logging-1.1.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/commons-net-ftp-2.0.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/jsch-0.1.40.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/log4j-1.2.14.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/magicreport.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/oro-2.0.8.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/stax2-api-3.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/velocity-1.6.2.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/velocity-tools-generic-1.4.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/lib/woodstox-core-asl-4.0.7.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/reportwizard_api.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.reportwizard/reportwizard.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/graphics/clibwrapper_jiio.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/graphics/freehep-base.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/graphics/freehep-graphics2d.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/graphics/freehep-graphicsio-emf.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/graphics/freehep-graphicsio-ps.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/graphics/freehep-graphicsio.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/graphics/jai_imageio.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/webservice/axis-config.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/webservice/axis.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/webservice/commons-discovery-0.2.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/webservice/jaxrpc.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/webservice/mdserviceclient.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/webservice/rsclient.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/webservice/saaj.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/webservice/wsdl4j-1.5.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/com.nomagic.ci.metamodel.index_17.0.1.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/commons-compress-1.3.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/truezip-driver-zip-7.4.3.jar"/>
+	<classpathentry kind="var" path="MD1701/lib/truezip-kernel-7.4.3.jar"/>
+	<classpathentry kind="var" path="MD1701//plugins/com.nomagic.magicdraw.automaton/engines/groovy-1.7.10/lib/groovy-1.7.10.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.jpython/jpython_api.jar"/>
+	<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.jpython/jython2.5.1/jython.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/com.google.guava_11.0.1.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/com.ibm.icu_4.4.2.v20110823.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/lpg.runtime.java_2.0.17.v201004271640.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.antlr.runtime_3.2.0.v201101311130.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.apache.commons.cli_1.2.0.v201105210650.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.core.expressions_3.4.300.v20110228.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.core.filesystem_1.3.100.v20110423-0524.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.core.resources_3.7.101.v20120125-1505.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.core.runtime.compatibility.auth_3.2.200.v20110110.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.core.runtime_3.7.0.v20110110.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.debug.core_3.7.1.v20111129-2031.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.emf.codegen.ecore_2.7.0.v20120130-0943.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.emf.codegen_2.6.0.v20120130-0943.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.emf.mwe.core_1.1.1.v201108020506.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.emf.mwe.utils_1.1.1.v201108020506.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.emf.mwe2.lib_2.0.1.v201108020506.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.emf.mwe2.runtime_2.0.1.v201108020506.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.equinox.app_1.3.100.v20110321.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.equinox.preferences_3.4.2.v20120111-2020.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.gmt.modisco.xml_0.9.2.v201202151138.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.jdt.core_3.7.3.xx-20120301-1000-e37-RELEASE.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.jdt.debug_3.7.1.v20111006_r372.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.jdt.junitresult.model_1.0.0.jpl_sscae_level0_build_20120801_0348.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.jdt.launching_3.6.1.v20111006_r372.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml.common_3.3.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml.cst.parser_3.3.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml.debug.core_1.3.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml.ecore.imperativeocl_3.1.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml.emf.util_3.3.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml.ocl_3.3.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml.runtime_3.3.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml.trace.edit_3.3.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.m2m.qvt.oml_3.3.0.201210251512.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.team.core_3.6.0.I20110525-0800.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.text_3.5.101.v20110928-1504.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xsd_2.7.1.v20120130-0943.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtend.typesystem.emf_1.0.1.v201108020519.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtend_1.1.0.v201108020519.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.common.types_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.ecore_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.generator_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.junit4_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.junit_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.logging_1.2.15.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.util_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.xbase.junit_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.xbase.lib_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.xbase_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.xtend2.lib_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext.xtend2_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/org.eclipse.xtext_2.0.1.v201108020636.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/com.nomagic.magicdraw.qvt/lib/qvt_api.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.docbook.qvt_1.0.0.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.docbook_1.0.0.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.owl2.api_1.6.0.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.owl2_1.5.0.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.qvto.emf.blackbox_1.0.2.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/gov.nasa.jpl.imce.sparql_2.6.8.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.apache.xml.resolver_1.2.0.v201005080400.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.dadacoalition.yedit_0.0.11.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.eclipse.uml2.uml.resources_3.1.100.v201008191510.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.eclipse.uml2.uml_3.2.100.v201108110105.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/org.semanticweb.owlapi_3.4.2093.jpl_sscae_level1_build_20130523_2234.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/owlapi.jar"/>
+<classpathentry kind="var" path="MD1701/plugins/gov.nasa.jpl.magicdraw.qvto.library/lib/qvtoLib.jar"/>
+	<classpathentry kind="lib" path="lib/tomcat-embed-core-7.0.16.jar"/>
+	<classpathentry kind="lib" path="lib/tomcat-embed-logging-juli-7.0.37.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.7.2.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.7.2.jar"/>
+	<classpathentry kind="lib" path="lib/tomcat-embed-jasper.jar"/>
+	<classpathentry kind="lib" path="lib/ecj-3.7.2.jar"/>
+	<classpathentry kind="var" path="MD1701"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

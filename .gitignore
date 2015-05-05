@@ -1,0 +1,7 @@
+/build
+/dist
+/javadoc
+/bin
+*.jresult
+*.diff
+/build-nojenkins.xml
