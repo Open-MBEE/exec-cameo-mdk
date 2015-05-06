@@ -83,7 +83,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         JSONObject previousUpdates = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
         if (previousUpdates != null) {
             for (String added: (List<String>)previousUpdates.get("added")) {
-                if (localAdded.containsKey(added))
+                if (localAdded.containsKey(added) || localChanged.containsKey(added))
                     continue;
                 Element e = ExportUtility.getElementFromID(added);
                 if (e != null)
@@ -98,6 +98,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 localAdded.remove(updated);
             }
             for (String deleted: (List<String>)previousUpdates.get("deleted")) {
+                if (ExportUtility.getElementFromID(deleted) != null) {
+                    if (localDeleted.containsKey(deleted))
+                        localDeleted.remove(deleted);
+                    continue; //not deleted?
+                }
                 if (!localDeleted.containsKey(deleted)) {
                     localDeleted.put(deleted, null);
                 }

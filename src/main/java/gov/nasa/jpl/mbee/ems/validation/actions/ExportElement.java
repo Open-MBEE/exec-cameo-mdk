@@ -91,7 +91,8 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         if (url == null) {
             return;
         }
-        Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background? You'll get an email when done.");
+        String[] buttons = {"Background job on server", "Background job on magicdraw","Abort Export"};
+        Boolean background = Utils.getUserYesNoAnswerWithButton("Do you want to export " + infos.size() + " elements in the background? You'll get an email when done.", buttons);
         if (background != null && background)
             url += "?background=true";
         if (background == null) {

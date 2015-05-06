@@ -2192,6 +2192,14 @@ public class Utils {
         JOptionPane.showMessageDialog(null, message);
     }
 
+    public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons) {
+        int res = JOptionPane.showOptionDialog(null, question, "Choose", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
+        if (res == JOptionPane.YES_OPTION)
+            return true;
+        if (res == JOptionPane.NO_OPTION)
+            return false;
+        return null;
+    }
     /**
      * 
      * @param question
