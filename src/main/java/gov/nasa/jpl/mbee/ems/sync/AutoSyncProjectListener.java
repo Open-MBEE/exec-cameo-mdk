@@ -564,7 +564,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         listener.setTm(transactionManager);
         transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
         projectInstances.put(LISTENER, listener);
-        JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
+        /*JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
         if (previousUpdates != null) {
             for (String added: (List<String>)previousUpdates.get("added")) {
                 Element e = ExportUtility.getElementFromID(added);
@@ -579,7 +579,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             for (String deleted: (List<String>)previousUpdates.get("deleted")) {
                listener.getDeletedElements().put(deleted, null);
             }
-        }
+        }*/
     }
 
     @Override
