@@ -44,6 +44,7 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -120,7 +121,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             project.getCounter().setCanResetIDForObject(true);
             folder = project.getElementsFactory().createPackageInstance();
             folder.setOwner(project.getModel());
-            ((Package)folder).setName("__ProjectSync__");
+            ((Package)folder).setName("__MMSSync__");
             folder.setID(folderId);
         } else {
             if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
@@ -598,7 +599,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         listener.setTm(transactionManager);
         transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
         projectInstances.put(LISTENER, listener);
-        JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
+        /*JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
         if (previousUpdates != null) {
             for (String added: (List<String>)previousUpdates.get("added")) {
                 Element e = ExportUtility.getElementFromID(added);
@@ -613,7 +614,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             for (String deleted: (List<String>)previousUpdates.get("deleted")) {
                listener.getDeletedElements().put(deleted, null);
             }
-        }
+        }*/
     }
 
     @Override
@@ -625,6 +626,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     private static void saveAutoSyncErrors(Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances == null)
+            return;
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(JMSLISTENER)) {
             //autosync is on
@@ -705,25 +708,33 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
-        saveAutoSyncErrors(project);
-        saveLocalUpdates(project);
+        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"))
+            return;
+        try {
+            saveAutoSyncErrors(project);
+            saveLocalUpdates(project);
+        } catch (Exception e) {
+            log.error("", e); //potential session isn't created error if need to update from tw while commiting
+        }
     }
     
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances == null)
+            return; //investigate how this is possible
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(JMSLISTENER)) {
             //autosync is on
             ExportUtility.sendProjectVersion();
         }
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && savedInServer) {
+        /*if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && savedInServer) {
             String folderId = project.getPrimaryProject().getProjectID();
             folderId += "_sync";
             Element folder = ExportUtility.getElementFromID(folderId);
             if (folder != null)
                 TeamworkUtils.unlockElement(project, folder, true, true, true);
-        }
+        }*/ //unlock apparently can take a long time on big model
     }
     
     /**

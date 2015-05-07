@@ -91,7 +91,8 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         if (url == null) {
             return;
         }
-        Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background? You'll get an email when done.");
+        String[] buttons = {"Background job on server", "Background job on magicdraw","Abort Export"};
+        Boolean background = Utils.getUserYesNoAnswerWithButton("Do you want to export " + infos.size() + " elements in the background on server? You'll get an email when done.", buttons);
         if (background != null && background)
             url += "?background=true";
         if (background == null) {
@@ -99,6 +100,9 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         }
         Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
+        if (!url.contains("background"))
+            Application.getInstance().getGUILog().log("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
+        
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
         }*/
