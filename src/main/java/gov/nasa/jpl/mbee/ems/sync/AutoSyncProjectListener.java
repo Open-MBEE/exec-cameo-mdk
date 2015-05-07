@@ -41,6 +41,7 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -101,7 +102,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             project.getCounter().setCanResetIDForObject(true);
             folder = project.getElementsFactory().createPackageInstance();
             folder.setOwner(project.getModel());
-            ((Package)folder).setName("__ProjectSync__");
+            ((Package)folder).setName("__MMSSync__");
             folder.setID(folderId);
         } else {
             if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
@@ -673,6 +674,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
+        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"))
+            return;
         try {
             saveAutoSyncErrors(project);
             saveLocalUpdates(project);
