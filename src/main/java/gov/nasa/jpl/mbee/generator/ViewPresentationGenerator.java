@@ -72,7 +72,11 @@ public class ViewPresentationGenerator {
             return;
         book.accept(visitor2);
         Map<Element, List<PresentationElement>> view2pe = visitor2.getView2Pe();
-        
+        if (!visitor2.getNotEditable().isEmpty()) {
+            Application.getInstance().getGUILog().log("There are instances or view constraints/views that are not editable. Instance generation aborted.");
+            return;
+        }
+            
         SessionManager.getInstance().createSession("view instance gen");
         try {
             for (Element v: view2pe.keySet()) {

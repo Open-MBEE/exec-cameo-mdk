@@ -94,6 +94,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Classifier imageC = Utils.getOpaqueImageClassifier();
     private Classifier sectionC = Utils.getSectionClassifier();
     private boolean main = false;
+    private Set<Element> notEditable = new HashSet<Element>();
     
     public DBAlfrescoVisitor(boolean recurse) {
         this(recurse, false);
@@ -254,6 +255,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentImageInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
+        if (i != null && !i.isEditable())
+            notEditable.add(i);
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, entry, PEType.IMAGE, currentView.peek(), "image", parentSec, null);
         newpe.peek().add(ipe);
@@ -275,6 +278,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentListInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
+        if (i != null && !i.isEditable())
+            notEditable.add(i);
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, l.getObject(), PEType.LIST, currentView.peek(), "list", parentSec, null);
         newpe.peek().add(ipe);
@@ -293,6 +298,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentParaInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
+        if (i != null && !i.isEditable())
+            notEditable.add(i);
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, entry, PEType.PARA, currentView.peek(), "paragraph", parentSec, null);
         newpe.peek().add(ipe);
@@ -327,6 +334,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentParaInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
+        if (i != null && !i.isEditable())
+            notEditable.add(i);
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, entry, PEType.PARA, currentView.peek(), "paragraph", parentSec, null);
         newpe.peek().add(ipe);
@@ -405,6 +414,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentTableInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
+        if (i != null && !i.isEditable())
+            notEditable.add(i);
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, v.getObject(), PEType.TABLE, currentView.peek(), table.getTitle(), parentSec, null);
         newpe.peek().add(ipe);
@@ -452,7 +463,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (c != null && c.getSpecification() instanceof Expression)
             ex = (Expression)c.getSpecification();
         processCurrentInstances(ex, e);
-        
+        if (c != null && !c.isEditable())
+            notEditable.add(c);
+        if (c == null && !e.isEditable())
+            notEditable.add(e);
         addManualInstances(false);
     }
     
@@ -510,6 +524,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentInstanceList.remove(sec);
             currentSectionInstances.remove(sec);
         }
+        if (sec != null && !sec.isEditable())
+            notEditable.add(sec);
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         List<PresentationElement> secChildren = new ArrayList<PresentationElement>();
         PresentationElement pe = new PresentationElement(sec, newSection, PEType.SECTION, currentView.peek(), section.getTitle(), parentSec, secChildren);
@@ -592,6 +608,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     
     private Constraint findViewConstraint(Element view) {
         return Utils.getViewConstraint(view);
+    }
+    
+    public Set<Element> getNotEditable() {
+        return notEditable;
     }
     
     private void processCurrentInstances(Expression e, Element view) {
