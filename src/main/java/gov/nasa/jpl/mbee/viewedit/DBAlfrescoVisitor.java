@@ -521,8 +521,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                 sec = findInstanceForSection(null);
         }
         if (sec != null) {
-            currentInstanceList.remove(sec);
-            currentSectionInstances.remove(sec);
+            currentInstanceList.peek().remove(sec);
+            currentSectionInstances.peek().remove(sec);
         }
         if (sec != null && !sec.isEditable())
             notEditable.add(sec);

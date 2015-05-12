@@ -45,6 +45,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportInstanceSpec;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportPropertyType;
@@ -141,6 +142,7 @@ public class ModelValidator {
     private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
     private ValidationRule instanceSpec = new ValidationRule("InstanceSpec", "InstanceSpec", ViolationSeverity.ERROR);
     private ValidationRule viewConstraint = new ValidationRule("view constraint", "View constraint", ViolationSeverity.ERROR);
+    private ValidationRule metatypes = new ValidationRule("metatypes", "Metatypes", ViolationSeverity.ERROR);
 
     private Set<Element> differentElements = new HashSet<Element>();
     private Project prj;
@@ -175,6 +177,7 @@ public class ModelValidator {
         suite.addValidationRule(productView);
         suite.addValidationRule(instanceSpec);
         suite.addValidationRule(viewConstraint);
+        suite.addValidationRule(metatypes);
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -503,18 +506,27 @@ public class ModelValidator {
                 siteDiff.addViolation(v);
         } else if (e instanceof InstanceSpecification) {
             ValidationRuleViolation v = instanceSpecificationDiff((InstanceSpecification)e, elementInfo);
-            if (v != null)
+            if (v != null) {
                 instanceSpec.addViolation(v);
+                differentElements.add(e);
+            }
         }
         Stereotype view = Utils.getViewStereotype();
         if (StereotypesHelper.hasStereotypeOrDerived(e, view)) {
             ValidationRuleViolation v = viewContentDiff(e, elementInfo);
-            if (v != null)
+            if (v != null) {
                 viewConstraint.addViolation(v);
+                differentElements.add(e); //shoudl this be here
+            }
         }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null) {
             ownership.addViolation(v);
+            differentElements.add(e);
+        }
+        v = metatypeDiff(e, elementInfo);
+        if (v != null) {
+            metatypes.addViolation(v);
             differentElements.add(e);
         }
         docDiff(e, elementInfo);
@@ -550,7 +562,7 @@ public class ModelValidator {
             return null;
         if (webViewSpec.get("type") instanceof String && ((String)webViewSpec.get("type")).equals("Product") && 
                 !StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype())) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[METATYPE] This is no longer a product/document.");
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOCUMENT] This is no longer a product/document.");
             v.addAction(new Downgrade(e, elementInfo));
             productView.addViolation(v);
             return v;
@@ -876,6 +888,24 @@ public class ModelValidator {
             if (editable)
                 v.addAction(new ExportAssociation(e));
             v.addAction(new ImportAssociation(e, webspec, result));
+            return v;
+        }
+        return null;
+    }
+    
+    private ValidationRuleViolation metatypeDiff(Element e, JSONObject info) {
+        Boolean editable = (Boolean)info.get("editable");
+        Boolean webIsMetatype = (Boolean)info.get("isMetatype");
+        JSONArray webMetatypes = (JSONArray)info.get("metatypes");
+        JSONArray webAppliedMetatypes = (JSONArray)info.get("appliedMetatypes");
+        JSONObject model = ExportUtility.fillMetatype(e, null);
+        Boolean modelIsMetatype = (Boolean)model.get("isMetatype");
+        JSONArray modelMetatypes = (JSONArray)model.get("metatypes");
+        JSONArray modelAppliedMetatypes = (JSONArray)model.get("appliedMetatypes");
+        if (webIsMetatype != modelIsMetatype || !modelAppliedMetatypes.equals(webAppliedMetatypes) || (modelIsMetatype && !modelMetatypes.equals(webMetatypes))) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[METATYPE] Metatype/Stereotype application are different.");
+            if (editable)
+                v.addAction(new ExportMetatypes(e));
             return v;
         }
         return null;

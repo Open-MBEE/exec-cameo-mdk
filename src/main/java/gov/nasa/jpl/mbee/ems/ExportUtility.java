@@ -1225,6 +1225,47 @@ public class ExportUtility {
         return info;
     }
     
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillMetatype(Element e, JSONObject einfo) {
+        JSONObject info = einfo;
+        if (info == null) {
+            info = new JSONObject();
+            info.put("sysmlid", getElementID(e));
+        }
+        if (e instanceof Stereotype) {
+            info.put("isMetatype", true);
+            JSONArray metatypes = new JSONArray();
+            for (Class c: ((Stereotype)e).getSuperClass()) {
+                if (c instanceof Stereotype) {
+                    metatypes.add(c.getID());
+                }
+            }
+            for (Class c: StereotypesHelper.getBaseClasses((Stereotype)e)) {
+                metatypes.add(c.getID());
+            }
+            info.put("metatypes", metatypes);
+        }
+        if (e instanceof Class) {
+            try {
+                java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class)e);
+                if (c != null) {
+                    info.put("isMetatype", true);
+                    info.put("metatypes", new JSONArray());
+                }
+            } catch (Exception ex) {}
+        }
+        List<Stereotype> stereotypes = StereotypesHelper.getStereotypes(e);
+        JSONArray applied = new JSONArray();
+        for (Stereotype s: stereotypes) {
+            applied.add(s.getID());
+        }
+        Class baseClass = StereotypesHelper.getBaseClass(e);
+        if (baseClass != null)
+            applied.add(baseClass.getID());
+        info.put("appliedMetatype", applied);
+        return info;
+    }
+    
   //no one's using this, should consider removing it
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
