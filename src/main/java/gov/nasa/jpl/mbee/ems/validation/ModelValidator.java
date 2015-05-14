@@ -897,11 +897,11 @@ public class ModelValidator {
         Boolean editable = (Boolean)info.get("editable");
         Boolean webIsMetatype = (Boolean)info.get("isMetatype");
         JSONArray webMetatypes = (JSONArray)info.get("metatypes");
-        JSONArray webAppliedMetatypes = (JSONArray)info.get("appliedMetatypes");
+        JSONArray webAppliedMetatypes = (JSONArray)info.get("appliedMetatype");
         JSONObject model = ExportUtility.fillMetatype(e, null);
         Boolean modelIsMetatype = (Boolean)model.get("isMetatype");
         JSONArray modelMetatypes = (JSONArray)model.get("metatypes");
-        JSONArray modelAppliedMetatypes = (JSONArray)model.get("appliedMetatypes");
+        JSONArray modelAppliedMetatypes = (JSONArray)model.get("appliedMetatype");
         if (webIsMetatype != modelIsMetatype || !modelAppliedMetatypes.equals(webAppliedMetatypes) || (modelIsMetatype && !modelMetatypes.equals(webMetatypes))) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[METATYPE] Metatype/Stereotype application are different.");
             if (editable)
