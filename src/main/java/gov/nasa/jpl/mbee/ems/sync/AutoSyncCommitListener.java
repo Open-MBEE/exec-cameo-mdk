@@ -268,8 +268,16 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 //
                 while (actual instanceof ValueSpecification)
                     actual = actual.getOwner();
-                if (!ExportUtility.shouldAdd(actual))
+                if (!ExportUtility.shouldAdd(actual)) {
+                    if (actual instanceof Constraint && ExportUtility.isViewConstraint((Constraint)actual)) {
+                        Element viewOb = actual.getOwner();
+                        elementOb = getElementObject(viewOb);
+                        JSONObject specialization = ExportUtility.fillViewContent(viewOb, null);
+                        elementOb.put("specialization", specialization);
+                        ExportUtility.fillOwner(viewOb, elementOb);
+                    }
                     return;
+                }
                 elementOb = getElementObject(actual);
                 if (actual instanceof Slot || actual instanceof Property) {
                     JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true);
@@ -300,10 +308,18 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof Constraint) && propertyName.equals(PropertyNames.SPECIFICATION)) {
-                elementOb = getElementObject(sourceElement);
-                JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)sourceElement, null);
-                elementOb.put("specialization", specialization);
-                ExportUtility.fillOwner(sourceElement, elementOb);
+                if (ExportUtility.isViewConstraint((Constraint)sourceElement)) {
+                    Element viewOb = sourceElement.getOwner();
+                    elementOb = getElementObject(viewOb);
+                    JSONObject specialization = ExportUtility.fillViewContent(viewOb, null);
+                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillOwner(viewOb, elementOb);
+                } else {
+                    elementOb = getElementObject(sourceElement);
+                    JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)sourceElement, null);
+                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillOwner(sourceElement, elementOb);
+                }
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
                     && ExportUtility.shouldAdd(sourceElement)) {

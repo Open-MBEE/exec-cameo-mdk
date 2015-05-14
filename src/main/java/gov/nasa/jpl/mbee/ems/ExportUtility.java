@@ -932,9 +932,14 @@ public class ExportUtility {
     }
 
     public static JSONObject fillViewContent(Element e, JSONObject spec) {
+        Stereotype doc = Utils.getProductStereotype();
         JSONObject specialization = spec;
         if (specialization == null)
             specialization = new JSONObject();
+        if (StereotypesHelper.hasStereotypeOrDerived(e, doc))
+            specialization.put("type", "Product");
+        else
+            specialization.put("type", "View");
         Constraint c = Utils.getViewConstraint(e);
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
@@ -1647,9 +1652,22 @@ public class ExportUtility {
                 return false;
         if (e.getID().endsWith("sync") || (e.getOwner() != null && e.getOwner().getID().endsWith("sync"))) //delayed sync stuff
             return false;
+        if (e instanceof Constraint) {
+            if (isViewConstraint((Constraint)e))
+                return false;
+        }
         return true;
     }
 
+    public static boolean isViewConstraint(Constraint e) {
+        Element maybeView = e.getOwner();
+        Stereotype v = Utils.getViewStereotype();
+        List<Element> constrained = ((Constraint)e).getConstrainedElement();
+        if (maybeView != null && v != null && StereotypesHelper.hasStereotypeOrDerived(maybeView, v) && constrained.size() == 1 && constrained.get(0) == maybeView)
+            return true; //view constraint, get from view itself
+        return false;
+    }
+    
     public static final Pattern HTML_WHITESPACE_END = Pattern.compile(
             "\\s*</p>", Pattern.DOTALL);
     public static final Pattern HTML_WHITESPACE_START = Pattern.compile(
