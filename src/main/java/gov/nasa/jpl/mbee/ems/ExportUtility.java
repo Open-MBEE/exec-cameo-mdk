@@ -1237,6 +1237,7 @@ public class ExportUtility {
             info = new JSONObject();
             info.put("sysmlid", getElementID(e));
         }
+        info.put("isMetatype", false);
         if (e instanceof Stereotype) {
             info.put("isMetatype", true);
             JSONArray metatypes = new JSONArray();
