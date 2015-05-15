@@ -305,16 +305,16 @@ public class ImportUtility {
     
     public static void setPropertyDefaultValue(Property p, JSONArray values) {
         if (values != null && values.size() > 0)
-            p.setDefaultValue(createValueSpec((JSONObject)values.get(0)));
+            p.setDefaultValue(createValueSpec((JSONObject)values.get(0), p.getDefaultValue()));
         if (values != null && values.isEmpty())
             p.setDefaultValue(null);
     }
     
     public static void setPropertyType(Property p, JSONObject spec) {
         String ptype = (String)spec.get("propertyType");
-        if (ptype == null)
-            p.setType(null);
-        else {
+        //if (ptype == null)
+          //  p.setType(null);
+        if (ptype != null) {
             Type t = (Type)ExportUtility.getElementFromID(ptype);
             if (t != null)
                 p.setType(t);
@@ -331,9 +331,14 @@ public class ImportUtility {
     public static void setSlotValues(Slot s, JSONArray values) {
         if (values == null)
             return;
+        List<ValueSpecification> originals = new ArrayList<ValueSpecification>(s.getValue());
         s.getValue().clear();
         for (Object o: values) {
-            ValueSpecification vs = createValueSpec((JSONObject)o);
+            ValueSpecification vs = null;
+            if (originals.size() > 0)
+                vs = createValueSpec((JSONObject)o, originals.remove(0));
+            else
+                vs = createValueSpec((JSONObject)o, null);
             if (vs != null)
                 s.getValue().add(vs);
         }
@@ -344,7 +349,7 @@ public class ImportUtility {
             return;
         JSONObject sp = (JSONObject)spec.get("specification");
         if (sp != null) {
-            c.setSpecification(createValueSpec(sp));
+            c.setSpecification(createValueSpec(sp, c.getSpecification()));
         }
     }
     
@@ -455,7 +460,7 @@ public class ImportUtility {
         return result;
     }
     
-    public static ValueSpecification createValueSpec(JSONObject o) {
+    public static ValueSpecification createValueSpec(JSONObject o, ValueSpecification v) {
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         String valueType = (String)o.get("type");
         ValueSpecification newval = null;
@@ -463,19 +468,31 @@ public class ImportUtility {
         
         switch ( propValueType ) {
         case LiteralString:
-            newval = ef.createLiteralStringInstance();
+            if (v != null && v instanceof LiteralString)
+                newval = v;
+            else
+                newval = ef.createLiteralStringInstance();
             ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o.get("string")));
             break;
         case LiteralInteger:
-            newval = ef.createLiteralIntegerInstance();
+            if (v != null && v instanceof LiteralInteger)
+                newval = v;
+            else
+                newval = ef.createLiteralIntegerInstance();
             ((LiteralInteger)newval).setValue(((Long)o.get("integer")).intValue());
             break;
         case LiteralBoolean:
-            newval = ef.createLiteralBooleanInstance();
+            if (v != null && v instanceof LiteralBoolean)
+                newval = v;
+            else
+                newval = ef.createLiteralBooleanInstance();
             ((LiteralBoolean)newval).setValue((Boolean)o.get("boolean"));
             break;
         case LiteralUnlimitedNatural:
-            newval = ef.createLiteralUnlimitedNaturalInstance();
+            if (v != null && v instanceof LiteralUnlimitedNatural)
+                newval = v;
+            else
+                newval = ef.createLiteralUnlimitedNaturalInstance();
             ((LiteralUnlimitedNatural)newval).setValue(((Long)o.get("naturalValue")).intValue());
             break;
         case LiteralReal:
@@ -484,8 +501,10 @@ public class ImportUtility {
                 value = Double.parseDouble(((Long)o.get("double")).toString());
             else
                 value = (Double)o.get("double");
-
-            newval = ef.createLiteralRealInstance();
+            if (v != null && v instanceof LiteralReal)
+                newval = v;
+            else
+                newval = ef.createLiteralRealInstance();
             ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
@@ -494,7 +513,10 @@ public class ImportUtility {
                 Application.getInstance().getGUILog().log("Element with id " + o.get("element") + " not found!");
                 break;
             }
-            newval = ef.createElementValueInstance();
+            if (v != null && v instanceof ElementValue)
+                newval = v;
+            else
+                newval = ef.createElementValueInstance();
             ((ElementValue)newval).setElement(find);
             break;
         case InstanceValue:
@@ -507,41 +529,55 @@ public class ImportUtility {
                 Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                 break;
             }
-            newval = ef.createInstanceValueInstance();
+            if (v != null && v instanceof InstanceValue)
+                newval = v;
+            else
+                newval = ef.createInstanceValueInstance();
             ((InstanceValue)newval).setInstance((InstanceSpecification)findInst);
             break;
         case Expression:
-            Expression ex = ef.createExpressionInstance();
-            newval = ex;
+            if (v != null && v instanceof Expression)
+                newval = v;
+            else
+                newval = ef.createExpressionInstance();
             if (!o.containsKey("operand"))
                 break;
             for (Object op: (JSONArray)o.get("operand")) {
-                ValueSpecification operand = createValueSpec((JSONObject)op);
+                ValueSpecification operand = createValueSpec((JSONObject)op, null);
                 if (operand != null)
-                    ex.getOperand().add(operand);
+                    ((Expression)newval).getOperand().add(operand);
             }
             break;
         case OpaqueExpression:
-            OpaqueExpression oe = ef.createOpaqueExpressionInstance();
-            newval = oe;
+            if (v != null && v instanceof OpaqueExpression)
+                newval = v;
+            else
+                newval = ef.createOpaqueExpressionInstance();
             if (!o.containsKey("expressionBody"))
                 break;
+            ((OpaqueExpression)newval).getBody().clear();
             for (Object op: (JSONArray)o.get("expressionBody")) {
                 if (op instanceof String)
-                    oe.getBody().add((String)op);
+                    ((OpaqueExpression)newval).getBody().add((String)op);
             }
             break;
         case TimeExpression:
-            TimeExpression te = ef.createTimeExpressionInstance();
-            newval = te;
+            if (v != null && v instanceof TimeExpression)
+                newval = v;
+            else
+                newval = ef.createTimeExpressionInstance();
             break;
         case DurationInterval:
-            DurationInterval di = ef.createDurationIntervalInstance();
-            newval = di;
+            if (v != null && v instanceof DurationInterval)
+                newval = v;
+            else
+                newval = ef.createDurationIntervalInstance();
             break;
         case TimeInterval:
-            TimeInterval ti = ef.createTimeIntervalInstance();
-            newval = ti;
+            if (v != null && v instanceof TimeInterval)
+                newval = v;
+            else
+                newval = ef.createTimeIntervalInstance();
             break;
         default:
             log.error("Bad PropertyValueType: " + valueType);
