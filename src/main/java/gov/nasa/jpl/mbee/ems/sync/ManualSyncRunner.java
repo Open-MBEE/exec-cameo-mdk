@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
@@ -136,7 +137,12 @@ public class ManualSyncRunner implements RunnableWithProgress {
             String url = ExportUtility.getUrlWithWorkspace();
             url += "/elements";
             gl.log("[INFO] Getting " + getElements.size() + " elements from MMS.");
-            String response = ExportUtility.getWithBody(url, getJson.toJSONString());
+            String response = null;
+            try {
+                response = ExportUtility.getWithBody(url, getJson.toJSONString());
+            } catch (ServerException ex) {
+                
+            }
             if (response == null)
                 return; //bad
             Map<String, JSONObject> webElements = new HashMap<String, JSONObject>();

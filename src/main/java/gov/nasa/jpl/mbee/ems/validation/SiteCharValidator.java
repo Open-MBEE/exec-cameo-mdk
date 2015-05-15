@@ -19,6 +19,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
@@ -35,7 +36,12 @@ public class SiteCharValidator {
         Model m = Application.getInstance().getProject().getModel();
         getPackages(packages, m);
         packages.remove(m);
-        JSONObject web = ModelValidator.getManyAlfrescoElements(packages, ps);
+        JSONObject web = null;
+        try {
+            web = ModelValidator.getManyAlfrescoElements(packages, ps);
+        } catch (ServerException ex) {
+            return;
+        }
         Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
         ModelValidator.updateElementsKeyed(web, elementsKeyed);
         for (Element e: packages) {
