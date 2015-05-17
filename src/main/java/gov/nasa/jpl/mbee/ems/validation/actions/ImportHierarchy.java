@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
@@ -275,7 +276,12 @@ AnnotationAction, IRuleViolationAction {
                 //Element newview = null;
                 String url = ExportUtility.getUrlWithWorkspace();
                 url += "/elements/" + viewid;
-                String result = ExportUtility.get(url, false);
+                String result = null;
+                try {
+                    result = ExportUtility.get(url, false);
+                } catch (ServerException ex) {
+                    
+                }
                 if (result != null) {
                     JSONObject ob = (JSONObject)JSONValue.parse(result);
                     if (ob != null) {
@@ -285,6 +291,10 @@ AnnotationAction, IRuleViolationAction {
                             newviews.add(viewob);
                         }
                     }
+                } else {
+                    Application.getInstance().getGUILog().log("[ERROR] View " + viewid + " not found in model and cannot get from server, aborted.");
+                    retval.put("success", false);
+                    return retval;
                 }
             }
         }

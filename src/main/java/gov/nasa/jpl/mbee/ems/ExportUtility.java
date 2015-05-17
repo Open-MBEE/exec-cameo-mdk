@@ -153,7 +153,12 @@ public class ExportUtility {
         if (url == null)
             return;
         url += "/workspaces";
-        String result = get(url, false);
+        String result = null;
+        try {
+            result = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
         if (result != null) {
             idmapping.clear();
             JSONObject ob =  (JSONObject) JSONValue.parse(result);
@@ -181,7 +186,12 @@ public class ExportUtility {
         if (url == null)
             return;
         url += "/workspaces/master/sites";
-        String result = get(url, false);
+        String result = null;
+        try {
+            result = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
         if (result != null) {
             idmapping.clear();
             JSONObject ob =  (JSONObject) JSONValue.parse(result);
@@ -647,7 +657,7 @@ public class ExportUtility {
         }
     }
     
-    public static String getWithBody(String url, String json) {
+    public static String getWithBody(String url, String json) throws ServerException {
         EntityEnclosingMethod pm = null;
         pm = new GetMethodWithEntity(url);
         try {
@@ -660,9 +670,11 @@ public class ExportUtility {
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("getWithBody Response: " + code + " " + response);
-            if (showErrors(code, response, false)) {
-                return null;
+            if (showErrors(code, json, false)) {
+                throw new ServerException(json, code);
             }
+            if (code == 400)
+                throw new ServerException(json, code);
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -699,11 +711,11 @@ public class ExportUtility {
         return response;
     }
 
-    public static String get(String url) {
+    public static String get(String url) throws ServerException {
         return get(url, true);
     }
 
-    public static String get(String url, boolean showPopupErrors) {
+    public static String get(String url, boolean showPopupErrors) throws ServerException {
         if (url == null)
             return null;
         GetMethod gm = new GetMethod(url);
@@ -717,8 +729,10 @@ public class ExportUtility {
             String json = gm.getResponseBodyAsString();
             log.info("get response: " + code + " " + json);
             if (showErrors(code, json, showPopupErrors)) {
-                return null;
+                throw new ServerException(json, code);
             }
+            if (code == 400)
+                throw new ServerException(json, code); //?
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
         } catch (Exception ex) {
@@ -1358,7 +1372,12 @@ public class ExportUtility {
     }
     
     private static Integer getAlfrescoProjectVersionWithUrl(String url) {
-        String json = get(url, false);
+        String json = null;
+        try {
+            json = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
         if (json == null)
             return null; // ??
         JSONObject result = (JSONObject) JSONValue.parse(json);

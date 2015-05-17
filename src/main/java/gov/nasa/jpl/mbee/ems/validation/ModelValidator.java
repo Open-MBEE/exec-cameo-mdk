@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
@@ -193,9 +194,15 @@ public class ModelValidator {
             return false;
         String globalUrl = ExportUtility.getUrl();
         globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        String globalResponse = ExportUtility.get(globalUrl, false);
+        String globalResponse = null;
+        try {
+            globalResponse = ExportUtility.get(globalUrl, false);
+        } catch (ServerException ex) {
+            
+        }
         String url = ExportUtility.getUrlWithWorkspace();
-        
+        if (url == null)
+            return false;
         if (globalResponse == null) {
             ValidationRuleViolation v = null;
             if (url.contains("master")) {
@@ -206,10 +213,13 @@ public class ModelValidator {
             projectExist.addViolation(v);
             return false;
         }
-        String response = ExportUtility.get(projectUrl, false);
+        String response = null;
+        try {
+            response = ExportUtility.get(projectUrl, false);
+        } catch (ServerException ex) {
+            
+        }
         if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
-            if (url == null)
-                return false;
             
             ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
                 //v.addAction(new InitializeProjectModel(false));
@@ -217,13 +227,12 @@ public class ModelValidator {
             
             return false;
         }
-        for (Element start: starts )
-        if (ProjectUtilities.isElementInAttachedProject(start)){
-            Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
-            return false;
+        for (Element start: starts ) {
+            if (ProjectUtilities.isElementInAttachedProject(start)){
+                Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
+                return false;
+            }
         }
-        if (url == null)
-            return false;
         JSONArray elements = new JSONArray();
         for (Element start: starts) {
             String id = start.getID();
@@ -238,7 +247,10 @@ public class ModelValidator {
             Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    String tres = ExportUtility.get(url2, false);
+                    String tres = null;
+                    try {
+                        tres = ExportUtility.get(url2, false);
+                    } catch (ServerException ex) {}
                     res.set(tres);
                 }
             });
@@ -335,7 +347,12 @@ public class ModelValidator {
                     continue;
             }
         }
-        JSONObject missingResult = getManyAlfrescoElements(missing, ps);
+        JSONObject missingResult = null;
+        try {
+            missingResult = getManyAlfrescoElements(missing, ps);
+        } catch (ServerException ex) {
+            return;
+        }
         updateElementsKeyed(missingResult, elementsKeyed);
         JSONObject failed = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
         JSONArray deletedOnMMS = null;
@@ -1146,7 +1163,12 @@ public class ModelValidator {
         String id = ExportUtility.getElementID(e);
         id = id.replace(".", "%2E");
         url += "/elements/" + id;
-        String response = ExportUtility.get(url, false);
+        String response = null;
+        try {
+            response = ExportUtility.get(url, false);
+        } catch (ServerException ex) {
+            
+        }
         if (response == null)
             return null;
         JSONObject result = (JSONObject)JSONValue.parse(response);
@@ -1156,7 +1178,7 @@ public class ModelValidator {
         return (JSONObject)elements.get(0);
     }
     
-    public static JSONObject getManyAlfrescoElements(Set<Element> es, ProgressStatus ps) {
+    public static JSONObject getManyAlfrescoElements(Set<Element> es, ProgressStatus ps) throws ServerException {
         if (es.isEmpty())
             return null;
         JSONArray elements = new JSONArray();
@@ -1172,11 +1194,21 @@ public class ModelValidator {
         Utils.guilog("[INFO] Searching for " + es.size() + " elements from server...");
         
         final AtomicReference<String> res = new AtomicReference<String>();
+        final AtomicReference<Integer> code = new AtomicReference<Integer>();
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                String tres = ExportUtility.getWithBody(url, tosend.toJSONString());
-                res.set(tres);
+                String tres = null;
+                try {
+                    tres = ExportUtility.getWithBody(url, tosend.toJSONString());
+                    res.set(tres);
+                    code.set(200);
+                } catch(ServerException ex) {
+                    code.set(ex.getCode());
+                    if (ex.getCode() != 404)
+                        res.set(ex.getResponse());
+                }
+                
             }
         });
         t.start();
@@ -1186,6 +1218,7 @@ public class ModelValidator {
                 if (ps.isCancel()) {
                     //clean up thread?
                     Utils.guilog("[INFO] Search for elements canceled.");
+                    code.set(500);
                     break;
                 }
                 t.join(10000);
@@ -1195,7 +1228,9 @@ public class ModelValidator {
         }
         
         String response = res.get();
-        //String response = ExportUtility.getWithBody(url, tosend.toJSONString());
+        if (code.get() != 404 && code.get() != 200) {
+            throw new ServerException(response, code.get());
+        }
         Utils.guilog("[INFO] Finished getting elements.");
         if (response == null) {
             JSONObject reso = new JSONObject();
