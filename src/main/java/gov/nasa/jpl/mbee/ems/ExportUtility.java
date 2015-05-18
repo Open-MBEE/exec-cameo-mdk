@@ -38,6 +38,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -61,6 +62,7 @@ import javax.swing.JOptionPane;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -676,9 +678,12 @@ public class ExportUtility {
             if (code == 400)
                 throw new ServerException(json, code);
             return response;
-        } catch (Exception ex) {
+        } catch (HttpException ex) {
             Utils.printException(ex);
-            return null;
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
         } finally {
             pm.releaseConnection();
         }
@@ -735,12 +740,15 @@ public class ExportUtility {
                 throw new ServerException(json, code); //?
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
-        } catch (Exception ex) {
+        } catch (HttpException ex) {
             Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
         }
-        return null;
     }
 
     //check if comment is actually the documentation of its owner
