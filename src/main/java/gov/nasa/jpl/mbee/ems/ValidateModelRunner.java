@@ -32,6 +32,7 @@ import java.util.Collection;
 
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -47,9 +48,14 @@ public class ValidateModelRunner implements RunnableWithProgress {
     @Override
     public void run(ProgressStatus arg0) {
         ModelValidator validator = new ModelValidator(start, null, true, null, false);
-        if (validator.checkProject(arg0)) 
-            validator.validate(true, arg0);
-        if (!arg0.isCancel())
-            validator.showWindow();
+        if (validator.checkProject(arg0)) {
+            try {
+                validator.validate(true, arg0);
+                if (!arg0.isCancel())
+                    validator.showWindow();
+            } catch (ServerException ex) {
+                Application.getInstance().getGUILog().log("[ERROR] Validate model cannot be completed because of server error.");
+            }
+        }
     }
 }
