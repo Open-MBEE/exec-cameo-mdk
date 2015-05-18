@@ -273,7 +273,7 @@ public class ImportUtility {
             if (specialization.get("contents") == null) {
                 c.setSpecification(null);
             } else 
-                c.setSpecification(createValueSpec((JSONObject)specialization.get("contents")));
+                c.setSpecification(createValueSpec((JSONObject)specialization.get("contents"), c.getSpecification()));
         }
     }
     
@@ -320,7 +320,7 @@ public class ImportUtility {
     public static void setInstanceSpecification(InstanceSpecification is, JSONObject specialization) {
         JSONObject spec = (JSONObject)specialization.get("instanceSpecificationSpecification");
         if (spec != null) {
-            is.setSpecification(createValueSpec(spec));
+            is.setSpecification(createValueSpec(spec, is.getSpecification()));
         } else
             is.setSpecification(null);
         if (specialization.containsKey("classifier")) {

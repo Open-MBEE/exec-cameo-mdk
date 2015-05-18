@@ -1749,8 +1749,10 @@ public class ExportUtility {
      */
     public static JSONObject getJmsConnectionDetails() {
         String url = getUrl() + "/connection/jms";
-        String jsonString = get(url, false);
-        
+        String jsonString = null;
+        try {
+            jsonString = get(url, false);
+        } catch (ServerException ex) {}
         if (jsonString == null) return null; 
         
         return (JSONObject)JSONValue.parse( jsonString );
