@@ -325,7 +325,9 @@ public class ViewValidator {
             starts.add(view);
             ModelValidator mv = new ModelValidator(starts, results, true, visitor2.getElementSet(), true); //visitor2.getElementSet() has the local model elements
             //do the actual element validations between model and web
-            mv.validate(false, ps);
+            try {
+                mv.validate(false, ps);
+            } catch (ServerException ex) {}
             modelSuite = mv.getSuite();
 
             Utils.guilog("[INFO] Validating images");

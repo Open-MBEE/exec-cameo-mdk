@@ -141,10 +141,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
             try {
                 response = ExportUtility.getWithBody(url, getJson.toJSONString());
             } catch (ServerException ex) {
-                
+                gl.log("[ERROR] Get elements failed.");
             }
             if (response == null)
-                return; //bad
+                return; //should repopulate error block?
             Map<String, JSONObject> webElements = new HashMap<String, JSONObject>();
             JSONObject webObject = (JSONObject)JSONValue.parse(response);
             JSONArray webArray = (JSONArray)webObject.get("elements");
@@ -299,6 +299,17 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                     listener.enable();
                     gl.log("[INFO] There were changes that couldn't be applied. These will be attempted on the next update.");
+                } else {
+                    listener.disable();
+                    sm.createSession("failed changes");
+                    try {
+                        AutoSyncProjectListener.setUpdatesOrFailed(project, null, "error");
+                        sm.closeSession();
+                    } catch (Exception ex) {
+                        log.error("", ex);
+                        sm.cancelSession();
+                    }
+                    listener.enable();
                 }
                 
               //conflicts

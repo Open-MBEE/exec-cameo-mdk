@@ -286,7 +286,7 @@ public class ModelValidator {
     }
     
     @SuppressWarnings("unchecked")
-    public void validate(boolean fillContainment, ProgressStatus ps) {
+    public void validate(boolean fillContainment, ProgressStatus ps) throws ServerException {
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
@@ -325,7 +325,7 @@ public class ModelValidator {
     }
     
     @SuppressWarnings("unchecked")
-    private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all, ProgressStatus ps) {
+    private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all, ProgressStatus ps) throws ServerException {
         //Set<Element> all = new HashSet<Element>();
         Set<String> checked = new HashSet<String>();
 
@@ -347,12 +347,7 @@ public class ModelValidator {
                     continue;
             }
         }
-        JSONObject missingResult = null;
-        try {
-            missingResult = getManyAlfrescoElements(missing, ps);
-        } catch (ServerException ex) {
-            return;
-        }
+        JSONObject missingResult = getManyAlfrescoElements(missing, ps);
         updateElementsKeyed(missingResult, elementsKeyed);
         JSONObject failed = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
         JSONArray deletedOnMMS = null;
