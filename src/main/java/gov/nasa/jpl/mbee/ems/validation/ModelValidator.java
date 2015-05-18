@@ -368,6 +368,12 @@ public class ModelValidator {
         elementsKeyedIds.removeAll(checked);
         
         AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
+        JSONObject updated = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "update"); 
+        JSONArray deletedLocally = null;
+        if (updated == null)
+            deletedLocally = new JSONArray();
+        else
+            deletedLocally = (JSONArray)updated.get("deleted");
         // 2nd loop: unchecked Alfresco elements with sysml ID are now processed 
         for (String elementsKeyedId: elementsKeyedIds) {
             // MagicDraw element that has not been compared to Alfresco
@@ -392,7 +398,7 @@ public class ModelValidator {
                 if (existname ==  null)
                     existname = "(no name)";
                 existname.replace('`', '\'');
-                if (listener == null || !listener.getDeletedElements().containsKey(elementsKeyedId))
+                if (listener == null || (!listener.getDeletedElements().containsKey(elementsKeyedId) && !deletedLocally.contains(elementsKeyedId)))
                     v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but not in Magicdraw");
                 else
                     v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted from magicdraw");
