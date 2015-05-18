@@ -56,6 +56,7 @@ public class ValidateModelRunner implements RunnableWithProgress {
             } catch (ServerException ex) {
                 Application.getInstance().getGUILog().log("[ERROR] Validate model cannot be completed because of server error.");
             }
-        }
+        } else
+            validator.showWindow();
     }
 }
