@@ -364,7 +364,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change logs");
             try {
-                setUpdatesOrFailed(project, null, "error");
+                //setUpdatesOrFailed(project, null, "error");
                 setConflicts(project, null);
                 sm.closeSession();
             } catch (Exception e) {
