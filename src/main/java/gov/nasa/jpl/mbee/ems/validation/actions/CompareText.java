@@ -65,10 +65,10 @@ public class CompareText extends RuleViolationAction implements AnnotationAction
         modelp.setName("Model");
         modelpane.addTab("Model", modelp);
         JSplitPane top = new JSplitPane();
-        
+        top.setSize(1000, 700);
         JDialog show = new JDialog(MDDialogParentProvider.getProvider().getDialogParent());
         show.setTitle("Comparison");
-        show.setSize(600, 600);
+        show.setSize(1000, 700);
         show.getContentPane().add(top);
         top.setDividerLocation(.5);
         top.setLeftComponent(modelpane);
