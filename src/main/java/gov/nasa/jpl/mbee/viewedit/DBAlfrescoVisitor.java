@@ -125,19 +125,26 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             doc = true; 
             Element docview = book.getFrom();
             startView(docview);
-            JSONObject entry = new JSONObject();
+            /*JSONObject entry = new JSONObject();
             entry.put("source", docview.getID());
             entry.put("sourceProperty", sourceMapping.get(From.DOCUMENTATION));
             entry.put("type", "Paragraph");
             entry.put("sourceType", "reference");
-            curContains.peek().add(entry);
+            curContains.peek().add(entry);*/
             //endView(docview);
+            for (DocumentElement de: book.getChildren()) {
+                if (de instanceof DBSection && ((DBSection)de).isView())
+                    break;
+                de.accept(this);
+            }
         }
         if (recurse || !doc) {
             for (DocumentElement de: book.getChildren()) {
-                de.accept(this);
-                if (!recurse)
-                    break;
+                if (de instanceof DBSection && ((DBSection)de).isView()) {
+                    de.accept(this);
+                    if (!recurse)
+                        break;
+                }
             }
         }
         if (doc)
