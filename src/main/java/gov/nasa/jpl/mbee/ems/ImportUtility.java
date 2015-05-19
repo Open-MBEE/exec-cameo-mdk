@@ -472,28 +472,36 @@ public class ImportUtility {
                 newval = v;
             else
                 newval = ef.createLiteralStringInstance();
-            ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o.get("string")));
+            String s = (String)o.get("string");
+            if (s != null)
+                ((LiteralString)newval).setValue(Utils.addHtmlWrapper(s));
             break;
         case LiteralInteger:
             if (v != null && v instanceof LiteralInteger)
                 newval = v;
             else
                 newval = ef.createLiteralIntegerInstance();
-            ((LiteralInteger)newval).setValue(((Long)o.get("integer")).intValue());
+            Long l = (Long)o.get("integer");
+            if (l != null)
+                ((LiteralInteger)newval).setValue(l.intValue());
             break;
         case LiteralBoolean:
             if (v != null && v instanceof LiteralBoolean)
                 newval = v;
             else
                 newval = ef.createLiteralBooleanInstance();
-            ((LiteralBoolean)newval).setValue((Boolean)o.get("boolean"));
+            Boolean b = (Boolean)o.get("boolean");
+            if (b != null)
+                ((LiteralBoolean)newval).setValue(b);
             break;
         case LiteralUnlimitedNatural:
             if (v != null && v instanceof LiteralUnlimitedNatural)
                 newval = v;
             else
                 newval = ef.createLiteralUnlimitedNaturalInstance();
-            ((LiteralUnlimitedNatural)newval).setValue(((Long)o.get("naturalValue")).intValue());
+            Long ll = (Long)o.get("naturalValue");
+            if (ll != null)
+                ((LiteralUnlimitedNatural)newval).setValue(ll.intValue());
             break;
         case LiteralReal:
             Double value;
@@ -505,7 +513,8 @@ public class ImportUtility {
                 newval = v;
             else
                 newval = ef.createLiteralRealInstance();
-            ((LiteralReal)newval).setValue(value);
+            if (value != null)
+                ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
             Element find = ExportUtility.getElementFromID((String)o.get("element"));
@@ -540,7 +549,7 @@ public class ImportUtility {
                 newval = v;
             else
                 newval = ef.createExpressionInstance();
-            if (!o.containsKey("operand"))
+            if (!o.containsKey("operand") || !(o.get("operand") instanceof JSONArray))
                 break;
             for (Object op: (JSONArray)o.get("operand")) {
                 ValueSpecification operand = createValueSpec((JSONObject)op, null);
@@ -553,7 +562,7 @@ public class ImportUtility {
                 newval = v;
             else
                 newval = ef.createOpaqueExpressionInstance();
-            if (!o.containsKey("expressionBody"))
+            if (!o.containsKey("expressionBody") || !(o.get("expressionBody") instanceof JSONArray))
                 break;
             ((OpaqueExpression)newval).getBody().clear();
             for (Object op: (JSONArray)o.get("expressionBody")) {
