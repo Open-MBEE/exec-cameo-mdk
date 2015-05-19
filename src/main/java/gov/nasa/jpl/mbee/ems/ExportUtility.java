@@ -1290,7 +1290,7 @@ public class ExportUtility {
         Class baseClass = StereotypesHelper.getBaseClass(e);
         if (baseClass != null)
             applied.add(baseClass.getID());
-        info.put("appliedMetatype", applied);
+        info.put("appliedMetatypes", applied);
         return info;
     }
     
