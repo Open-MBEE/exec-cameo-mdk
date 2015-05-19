@@ -266,8 +266,10 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             out.append("<acknowledgement>"
                     + DocGenUtils.addDocbook(DocGenUtils.fixString(book.getAcknowledgement()))
                     + "</acknowledgement>\n");
-        for (DocumentElement e: book.getChildren())
-            e.accept(this);
+        for (DocumentElement e: book.getChildren()) {
+            if (e instanceof DBSection && ((DBSection)e).isView())
+                e.accept(this);
+        }
         if (book.getIndex())
             out.append("<index/>");
         out.append("</book>");
