@@ -92,7 +92,7 @@ public class ExportPropertyType extends RuleViolationAction implements Annotatio
     @SuppressWarnings("unchecked")
     private JSONObject getInfo(Element e) {
         JSONObject elementInfo = new JSONObject();
-        elementInfo.put("specialization", ExportUtility.fillPropertySpecialization(e, null, true));
+        elementInfo.put("specialization", ExportUtility.fillPropertySpecialization(e, null, false, true));
         elementInfo.put("sysmlid", ExportUtility.getElementID(e));
         return elementInfo;
     }

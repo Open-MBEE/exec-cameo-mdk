@@ -280,7 +280,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 }
                 elementOb = getElementObject(actual);
                 if (actual instanceof Slot || actual instanceof Property) {
-                    JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true);
+                    JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true, true);
                     elementOb.put("specialization", specialization);
                 } else if (actual instanceof Constraint) {
                     JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)actual, null);
@@ -296,14 +296,14 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             // to handle the case where a value is being deleted.
             //
             else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE))) {
-                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true);
+                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb = getElementObject(sourceElement);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof Slot) && propertyName.equals(PropertyNames.VALUE) && ExportUtility.shouldAdd(sourceElement)) {
                 elementOb = getElementObject(sourceElement);
-                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
+                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }

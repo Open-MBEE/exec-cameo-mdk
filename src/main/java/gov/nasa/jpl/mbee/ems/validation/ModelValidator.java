@@ -490,6 +490,11 @@ public class ModelValidator {
                 valueDiff.addViolation(v);
                 differentElements.add(e);
             }
+            ValidationRuleViolation v2 = slotTypeDiff((Slot)e, elementInfo);
+            if (v2 != null) {
+                propertyTypeDiff.addViolation(v2);
+                differentElements.add(e);
+            }
         } else if (e instanceof Comment) {
             //ValidationRuleViolation v = commentDiff((Comment)e, elementInfo);
             //if (v != null)
@@ -638,6 +643,29 @@ public class ModelValidator {
             if (editable)
                 v.addAction(new ExportPropertyType(e));
             v.addAction(new ImportPropertyType(e, (Type)webTypeElement, result));
+            return v;
+        }
+        return null;
+    }
+    
+    private ValidationRuleViolation slotTypeDiff(Slot e, JSONObject info) {
+        Boolean editable = (Boolean)info.get("editable");
+        JSONObject specialization = (JSONObject)info.get("specialization");
+        NamedElement modelType = e.getDefiningFeature();
+        String modelTypeId = null;
+        if (modelType != null)
+            modelTypeId = modelType.getID();
+        String webTypeId = null;
+        if (specialization != null)
+            webTypeId = (String)specialization.get("propertyType");
+        Element webTypeElement = null;
+        if (webTypeId != null)
+            webTypeElement = ExportUtility.getElementFromID(webTypeId);
+        if ((modelTypeId != null && !modelTypeId.equals(webTypeId)) || (webTypeId != null && !webTypeId.equals(modelTypeId))) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[FEATURE] model: " + (modelType == null ? "null" : modelType.getName()) + ", web: " + (webTypeElement == null ? "null" : webTypeElement.getHumanName()));
+            if (editable)
+                v.addAction(new ExportPropertyType(e));
+            //v.addAction(new ImportPropertyType(e, (Type)webTypeElement, result));
             return v;
         }
         return null;
