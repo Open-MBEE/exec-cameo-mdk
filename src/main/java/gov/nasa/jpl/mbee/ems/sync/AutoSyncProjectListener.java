@@ -742,9 +742,24 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
      * 
      * @return URL string of connector
      */
-    protected static String ingestJson(JSONObject json) {
-        if (json == null) return null;
+    protected static String ingestJson(JSONObject jsonInput) {
+        if (jsonInput == null) return null;
+        JSONObject json = null;
+        if (jsonInput.containsKey( "connections" )) {
+            // just grab first connection
+            JSONArray conns = (JSONArray)jsonInput.get( "connections" );
+            for (int ii = 0; ii < conns.size(); ii++) {
+                json = (JSONObject) conns.get( ii );
+                if (json.containsKey( "eventType" )) {
+                    if (json.get( "eventType" ).equals( "delta" )) 
+                        break;
+                }
+            }
+        } else {
+            json = jsonInput;
+        }
         String result = null;
+
         if (json.containsKey( "uri" )) {
             result = (String)json.get( "uri" );
         }
@@ -763,6 +778,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         if (json.containsKey( "topicName" )) {
             JMS_TOPIC = (String)json.get( "topicName" );
         }
+
         return result;
     }
 
@@ -774,25 +790,24 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public static ConnectionFactory createConnectionFactory(Map<String, String> urlInfo) {
         boolean isFromService = urlInfo.get( "isFromService" ).equals( "true" ) ? true : false;
         String url = urlInfo.get("url");
+        Hashtable<String, String> properties = new Hashtable<String, String>();
+        properties.put(Context.INITIAL_CONTEXT_FACTORY, JMS_CTX_FACTORY);
+        properties.put(Context.PROVIDER_URL, url);
+        if (JMS_USERNAME != null && JMS_PASSWORD != null) {
+            properties.put(Context.SECURITY_PRINCIPAL, JMS_USERNAME);
+            properties.put(Context.SECURITY_CREDENTIALS, JMS_PASSWORD);
+        }
+        ctx = null;
+        try {
+            ctx = new InitialContext(properties);
+        } catch (NamingException ne) {
+            ne.printStackTrace(System.err);
+            return null;
+        }
+
         if (isFromService == false) {
             return new ActiveMQConnectionFactory(url);
         } else {
-            Hashtable<String, String> properties = new Hashtable<String, String>();
-            properties.put(Context.INITIAL_CONTEXT_FACTORY, JMS_CTX_FACTORY);
-            properties.put(Context.PROVIDER_URL, url);
-            if (JMS_USERNAME != null && JMS_PASSWORD != null) {
-                properties.put(Context.SECURITY_PRINCIPAL, JMS_USERNAME);
-                properties.put(Context.SECURITY_CREDENTIALS, JMS_PASSWORD);
-            }
-    
-            ctx = null;
-            try {
-                ctx = new InitialContext(properties);
-            } catch (NamingException ne) {
-                ne.printStackTrace(System.err);
-                return null;
-            }
-    
             try {
                 return (ConnectionFactory) ctx.lookup(JMS_CONN_FACTORY);
             }
