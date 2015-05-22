@@ -322,8 +322,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     ExportUtility.fillElement(sourceElement, elementOb);
                 }
             }
-            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)
-                    && ExportUtility.shouldAdd(sourceElement)) {
+            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
                 elementID = ExportUtility.getElementID(sourceElement);
                 if (elementID == null)
                     return; //this happens when slot is deleted ARGHHHH
