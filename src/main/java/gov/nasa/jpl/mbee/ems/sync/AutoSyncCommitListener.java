@@ -1,15 +1,12 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,10 +14,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
@@ -105,11 +99,6 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 return;
 
             for (PropertyChangeEvent event : events) {
-
-                String strTmp = "NULL";
-                if (event != null) {
-                    strTmp = event.toString();
-                }
 
                 // Get the object (e.g. Element) that
                 // contains the change.
@@ -333,8 +322,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     ExportUtility.fillElement(sourceElement, elementOb);
                 }
             }
-            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)
-                    && ExportUtility.shouldAdd(sourceElement)) {
+            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
                 elementID = ExportUtility.getElementID(sourceElement);
                 if (elementID == null)
                     return; //this happens when slot is deleted ARGHHHH
@@ -413,6 +401,16 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONObject specialization = ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)sourceElement, null);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
+            } else if (propertyName.equals( "APPLIED_STEREOTYPES" )) {
+                // this triggers on creation or modification of an applied stereotype
+                // APPLIED_STEREOTYPE_INSTANCE and STEREOTYPED_ELEMENT occur on create
+                elementID = ExportUtility.getElementID(sourceElement);
+                if (elementID == null)
+                    return;
+                elementOb = getElementObject(sourceElement);
+                ExportUtility.fillMetatype( sourceElement, elementOb );
+                ExportUtility.fillOwner( sourceElement, elementOb );
+                changedElements.put(elementID, sourceElement);
             }
         }
     }
