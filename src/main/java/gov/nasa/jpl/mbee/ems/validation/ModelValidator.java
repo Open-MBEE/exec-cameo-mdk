@@ -67,6 +67,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
+import gov.nasa.jpl.mbee.ems.validation.actions.ValidateDiff;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
@@ -179,6 +180,7 @@ public class ModelValidator {
         suite.addValidationRule(instanceSpec);
         suite.addValidationRule(viewConstraint);
         suite.addValidationRule(metatypes);
+
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -441,13 +443,15 @@ public class ModelValidator {
         }
     }
     
-    
     private void checkElement(Element e, JSONObject elementInfo) {
         String elementDoc = ModelHelper.getComment(e);
         String elementDocClean = ExportUtility.cleanHtml(elementDoc);
         String elementName = null;
         Boolean editable = (Boolean)elementInfo.get("editable");
         String webDoc = (String)elementInfo.get("documentation");
+
+        ValidateDiff vdiff = new ValidateDiff(e, webDoc, elementDocClean, elementInfo, editable);
+
         if (webDoc != null) {
             webDoc = ExportUtility.cleanHtml(webDoc);
             elementInfo.put("documentation", webDoc);
@@ -456,37 +460,44 @@ public class ModelValidator {
             elementName = ((NamedElement)e).getName();
         }
         String webName = ExportUtility.unescapeHtml((String)elementInfo.get("name"));
+
         if (elementName != null && !elementName.equals(webName)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[NAME] model: " + elementName + ", web: " + webName);
             differentElements.add(e);
             if (editable)
                 v.addAction(new ExportName((NamedElement)e));
             v.addAction(new ImportName((NamedElement)e, webName, result));
+            v.addAction(vdiff);
             nameDiff.addViolation(v);
         }
         if (elementDoc != null && !(webDoc == null && elementDoc.equals("")) && !elementDocClean.equals(webDoc)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
             v.addAction(new CompareText(e, webDoc, elementDocClean, result));
+            v.addAction(vdiff);
             differentElements.add(e);
             if (editable)
                 v.addAction(new ExportDoc(e));
             v.addAction(new ImportDoc(e, webDoc, result));
             docDiff.addViolation(v);
         }
+
         if (e instanceof Property) {
             ValidationRuleViolation v = valueDiff((Property)e, elementInfo);
             if (v != null) {
+                v.addAction(vdiff);
                 valueDiff.addViolation(v);
                 differentElements.add(e);
             }
             ValidationRuleViolation v2 = propertyTypeDiff((Property)e, elementInfo);
             if (v2 != null) {
+                v.addAction(vdiff);
                 propertyTypeDiff.addViolation(v2);
                 differentElements.add(e);
             }
         } else if (e instanceof Slot) {
             ValidationRuleViolation v = valueDiff((Slot)e, elementInfo);
             if (v != null) {
+                v.addAction(vdiff);
                 valueDiff.addViolation(v);
                 differentElements.add(e);
             }
@@ -497,53 +508,66 @@ public class ModelValidator {
         } else if (e instanceof DirectedRelationship) {
         	ValidationRuleViolation v = relationshipDiff((DirectedRelationship)e, elementInfo);
         	if (v != null) {
+                v.addAction(vdiff);
                 relDiff.addViolation(v);
                 differentElements.add(e);
             }
         } else if (e instanceof Connector) {
             ValidationRuleViolation v = connectorDiff((Connector)e, elementInfo);
             if (v != null) {
+                v.addAction(vdiff);
                 connectorDiff.addViolation(v);
                 differentElements.add(e);
             }
         } else if (e instanceof Constraint) {
             ValidationRuleViolation v = constraintDiff((Constraint)e, elementInfo);
             if (v != null) {
+                v.addAction(vdiff);
                 constraintDiff.addViolation(v);
                 differentElements.add(e);
             }
         } else if (e instanceof Association) {
             ValidationRuleViolation v = associationDiff((Association)e, elementInfo);
             if (v != null) {
+                v.addAction(vdiff);
                 associationDiff.addViolation(v);
                 differentElements.add(e);
             }
         } else if (e instanceof Package) {
             ValidationRuleViolation v = siteDiff((Package)e, elementInfo);
-            if (v != null)
+            if (v != null){
+                v.addAction(vdiff);
                 siteDiff.addViolation(v);
+            }
         } else if (e instanceof InstanceSpecification) {
             ValidationRuleViolation v = instanceSpecificationDiff((InstanceSpecification)e, elementInfo);
             if (v != null) {
+                v.addAction(vdiff);
                 instanceSpec.addViolation(v);
                 differentElements.add(e);
             }
         }
+
+
         Stereotype view = Utils.getViewStereotype();
         if (StereotypesHelper.hasStereotypeOrDerived(e, view)) {
             ValidationRuleViolation v = viewContentDiff(e, elementInfo);
             if (v != null) {
+                v.addAction(vdiff);
                 viewConstraint.addViolation(v);
-                differentElements.add(e); //shoudl this be here
+                differentElements.add(e); //should this be here
             }
         }
+
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null) {
+            v.addAction(vdiff);
             ownership.addViolation(v);
             differentElements.add(e);
         }
         v = metatypeDiff(e, elementInfo);
         if (v != null) {
+            v.addAction(vdiff);
             metatypes.addViolation(v);
             differentElements.add(e);
         }
@@ -573,7 +597,7 @@ public class ModelValidator {
         }
         return null;
     }
-    
+
     private ValidationRuleViolation docDiff(Element e, JSONObject elementInfo) {
         JSONObject webViewSpec = (JSONObject)elementInfo.get("specialization");
         if (webViewSpec == null)
@@ -754,7 +778,6 @@ public class ModelValidator {
             return v;
         }
         return null;
-        
     }
     
     private ValidationRuleViolation valueDiff(Slot e, JSONObject info) {
@@ -837,8 +860,7 @@ public class ModelValidator {
                 return v;
             }
         }        
-        return null;
-       
+        return null;   
     }
     
     private ValidationRuleViolation connectorDiff(Connector e, JSONObject info) {
@@ -910,7 +932,7 @@ public class ModelValidator {
         }
         return null;
     }
-    
+
     private ValidationRuleViolation metatypeDiff(Element e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         Boolean webIsMetatype = (Boolean)info.get("isMetatype");
