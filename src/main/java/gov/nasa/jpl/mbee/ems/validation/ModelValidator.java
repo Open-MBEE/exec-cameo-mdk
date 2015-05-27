@@ -490,7 +490,7 @@ public class ModelValidator {
             }
             ValidationRuleViolation v2 = propertyTypeDiff((Property)e, elementInfo);
             if (v2 != null) {
-                v.addAction(vdiff);
+                v2.addAction(vdiff);
                 propertyTypeDiff.addViolation(v2);
                 differentElements.add(e);
             }
@@ -503,6 +503,7 @@ public class ModelValidator {
             }
             ValidationRuleViolation v2 = slotTypeDiff((Slot)e, elementInfo);
             if (v2 != null) {
+                v2.addAction(vdiff);
                 propertyTypeDiff.addViolation(v2);
                 differentElements.add(e);
             }

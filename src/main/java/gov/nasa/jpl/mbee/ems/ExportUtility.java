@@ -949,6 +949,7 @@ public class ExportUtility {
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
+        fillMetatype(e, elementInfo);
         elementInfo.put("sysmlid", getElementID(e));
         return elementInfo;
     }
