@@ -29,9 +29,8 @@
 package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
-import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
 import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
-import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
+import gov.nasa.jpl.mbee.actions.docgen.CreateRestrictedValueAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
@@ -52,12 +51,8 @@ import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MDUtils;
-import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
@@ -93,6 +88,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class DocGenConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
@@ -386,6 +382,13 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         // NMAction act = manager.getActionFor( "DocGenComments" );
         // if ( act == null ) addCommentActions( c, (NamedElement)e );
         // }
+        
+        if (e instanceof Property) {
+        	ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
+        	NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
+        	if (act == null)
+        		c.addAction(new CreateRestrictedValueAction((Property) e));
+        }
     }
 
     private void addDiagramActions(ActionsManager manager, DiagramPresentationElement diagram) {
