@@ -69,6 +69,7 @@ import java.util.Set;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
 import com.nomagic.magicdraw.actions.ConfiguratorWithPriority;
 import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
@@ -180,8 +181,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         }
         //manager.addCategory(refactorWithIDActionCat);
 
+        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
         if (ViewEditUtils.isPasswordSet()) {
-            ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
@@ -196,6 +197,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     models.addAction(new ExportAllDocuments(e));
             }
         }
+        else {
+        	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
+        	final MDAction mda = new MDAction(null, null, null, "null");
+        	mda.updateState();
+        	mda.setEnabled(false);
+    		modelLoad.addAction(mda);
+        }
+        ActionsStateUpdater.updateActionsState();
         
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
@@ -234,8 +243,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (added)
                     manager.addCategory(0, category);
             }
+            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
             if (ViewEditUtils.isPasswordSet()) {
-                ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
                 ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
                 NMAction action = manager.getActionFor(ValidateViewAction.actionid);
@@ -266,6 +275,15 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (action == null)
                     viewInstances.addAction(new GenerateViewPresentationAction(e, true));
             }
+            else {
+            	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
+            	final MDAction mda = new MDAction(null, null, null, "null");
+            	mda.updateState();
+            	mda.setEnabled(false);
+        		modelLoad2.addAction(mda);
+            }
+            ActionsStateUpdater.updateActionsState();
+            
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             //action = manager.getActionFor(ExportViewAction.actionid);
             //if (action == null)
@@ -454,6 +472,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (category == null) {
             category = new MDActionsCategory(id, name);
             category.setNested(true);
+            category.setUseActionForDisable(true);
             manager.addCategory(0, category);
         }
         return category;
@@ -462,8 +481,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
     private ActionsCategory getCategory(ActionsManager manager, String id, String name, ActionsCategory parent) {
         ActionsCategory category = (ActionsCategory)manager.getActionFor(id);
         if (category == null) {
-            category = new MDActionsCategory(id, name);
-            category.setNested(false);
+            category = myCategory(manager, id, name);
             parent.addAction(category);
         }
         return category;
