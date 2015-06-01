@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
@@ -11,6 +12,7 @@ import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.PresentationElement;
 import gov.nasa.jpl.mbee.viewedit.PresentationElement.PEType;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -72,6 +74,7 @@ public class ViewPresentationGenerator {
             return;
         book.accept(visitor2);
         Map<Element, List<PresentationElement>> view2pe = visitor2.getView2Pe();
+        
         if (!visitor2.getNotEditable().isEmpty()) {
             Application.getInstance().getGUILog().log("There are instances or view constraints/views that are not editable. Instance generation aborted.");
             return;
@@ -87,6 +90,14 @@ public class ViewPresentationGenerator {
             Utils.printException(e);
             SessionManager.getInstance().cancelSession();
         }
+        
+        ImageValidator iv = new ImageValidator(visitor2.getImages());
+        //this checks images generated from the local generation against what's on the web based on checksum
+        iv.validate();
+        ValidationSuite imageSuite = iv.getSuite();
+        List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+        vss.add(imageSuite);
+        Utils.displayValidationWindow(vss, "Images Validation");
     }
     
     private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {

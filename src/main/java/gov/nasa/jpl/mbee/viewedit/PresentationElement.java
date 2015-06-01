@@ -9,15 +9,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 
 public class PresentationElement {
     public enum PEType {PARA, IMAGE, TABLE, LIST, SECTION};
-    private InstanceSpecification instance;
-    private JSONObject newspec;
+    private InstanceSpecification instance; //existing instance, null if no existing instance to use
+    private JSONObject newspec; //the to be json
     private PEType type;
     private Element view; //view that generated this pe, can be null if not generated
     private String name;
     private PresentationElement parent; //section if applicable, otherwise null, use view
-    private List<PresentationElement> children;
-    private Element loopElement;
-    private boolean manual = false;
+    private List<PresentationElement> children; //if section
+    private Element loopElement; //if section is generated from model element from docgen
+    private boolean manual = false; //if manual is true, just use existing instance, not generated from docgen
     
     public PresentationElement(InstanceSpecification instance, JSONObject spec, PEType type, Element view, String name, PresentationElement parent, List<PresentationElement> children) {
         this.instance = instance;

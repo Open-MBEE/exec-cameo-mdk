@@ -71,7 +71,10 @@ public class ExportViewConstraint extends RuleViolationAction implements Annotat
         Set<Element> set = new HashSet<Element>();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
-            infos.add(ExportUtility.fillElement(e, null));
+            JSONObject spec = ExportUtility.fillViewContent(e, null);
+            JSONObject eo = ExportUtility.fillId(e, null);
+            eo.put("specialization", spec);
+            infos.add(eo);
         }
         if (!ExportUtility.okToExport(set))
             return;
@@ -93,7 +96,10 @@ public class ExportViewConstraint extends RuleViolationAction implements Annotat
        
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
-        elements.add(ExportUtility.fillElement(element, null));
+        JSONObject spec = ExportUtility.fillViewContent(element, null);
+        JSONObject eo = ExportUtility.fillId(element, null);
+        eo.put("specialization", spec);
+        elements.add(eo);
         send.put("elements", elements);
         send.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();

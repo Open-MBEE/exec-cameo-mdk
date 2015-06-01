@@ -77,7 +77,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private boolean doc;
     protected Set<Element> elementSet = new HashSet<Element>();
     
+    //for ems 2.2 reference tree
     private Map<Element, List<PresentationElement>> view2pe = new HashMap<Element, List<PresentationElement>>();
+    private Map<Element, List<PresentationElement>> view2peOld = new HashMap<Element, List<PresentationElement>>();
     private Stack<Element> currentView = new Stack<Element>();
     private Stack<PresentationElement> currentSection = new Stack<PresentationElement>(); //if currently in section, sections cannot cross views
     private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<List<InstanceSpecification>>();
@@ -93,7 +95,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Classifier listC = Utils.getOpaqueListClassifier();
     private Classifier imageC = Utils.getOpaqueImageClassifier();
     private Classifier sectionC = Utils.getSectionClassifier();
-    private boolean main = false;
+    private boolean main = false; //for ems 2.2 reference tree, only consider generated pe from main view and 
+                                    //not nested tables/lists since those are embedded in json blob, main is false for Table and List Visitor
     private Set<Element> notEditable = new HashSet<Element>();
     
     public DBAlfrescoVisitor(boolean recurse) {
@@ -244,6 +247,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         entry.put("sysmlid", image.getImage().getID());
         curContains.peek().add(entry);
         
+        //for ems 2.2 reference tree
         if (!main)
             return;
         InstanceSpecification i = null;
@@ -267,6 +271,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         viewElements.peek().addAll(l.getListElements());
         elementSet.addAll(l.getElementSet());
         
+        //for ems 2.2 reference tree
         if (!main)
             return;
         InstanceSpecification i = null;
@@ -287,6 +292,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject entry = getJSONForDBParagraph(para);
         curContains.peek().add(entry);
         
+      //for ems 2.2 reference tree
         if (!main)
             return;
         InstanceSpecification i = null;
@@ -323,6 +329,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject entry = getJSONForDBText(text);
         curContains.peek().add(entry);
         
+      //for ems 2.2 reference tree
         if (!main)
             return;
         InstanceSpecification i = null;
@@ -403,6 +410,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         viewElements.peek().addAll(v.getTableElements());
         elementSet.addAll(v.getElementSet());
         
+      //for ems 2.2 reference tree
         if (!main)
             return;
         InstanceSpecification i = null;
@@ -416,7 +424,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         PresentationElement ipe = new PresentationElement(i, v.getObject(), PEType.TABLE, currentView.peek(), table.getTitle(), parentSec, null);
         newpe.peek().add(ipe);
     }
-        
+      
     @SuppressWarnings("unchecked")
     protected void startView(Element e) {
         JSONObject view = new JSONObject();
@@ -450,10 +458,12 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONArray childViews = new JSONArray();
         sibviews.push(childViews);
         
+      //for ems 2.2 reference tree
         currentView.push(e);
         List<PresentationElement> viewChildren = new ArrayList<PresentationElement>();
         newpe.push(viewChildren);
         view2pe.put(e, viewChildren);
+        view2peOld.put(e, new ArrayList<PresentationElement>());
         Expression ex = null;
         Constraint c = findViewConstraint(e);
         if (c != null && c.getSpecification() instanceof Expression)
@@ -483,7 +493,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         view2view.put(e.getID(), sibviews.pop());
         this.curContains.pop();
         
+      //for ems 2.2 reference tree
         addManualInstances(true);
+        processUnusedInstances(e);
         newpe.pop();
         currentView.pop();
         currentManualInstances.pop();
@@ -506,7 +518,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         this.curContains.peek().add(newSection);
         this.curContains.push(secArray);
         
-        
+      //for ems 2.2 reference tree
         InstanceSpecification sec = null;
         Element loopElement = null;
         if (section.getDgElement() instanceof Section) {
@@ -539,8 +551,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     
     protected void endSection(DBSection section) {
         this.curContains.pop();
-        
+       
+      //for ems 2.2 reference tree
         addManualInstances(true);
+        processUnusedInstances(currentView.peek());
         newpe.pop();
         currentSection.pop();
         currentManualInstances.pop();
@@ -602,6 +616,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         return view2pe;
     }
     
+    public Map<Element, List<PresentationElement>> getView2Unused() {
+        return view2peOld;
+    }
+    
     private Constraint findViewConstraint(Element view) {
         return Utils.getViewConstraint(view);
     }
@@ -633,7 +651,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                                     ((ElementValue)((Slot)el).getValue().get(0)).getElement() == view)
                                 viewinstance = true;
                         }
-                        if (viewinstance) {//instance generated by view
+                        if (viewinstance) {//instance generated by current view
                             if (iscs.contains(paraC))
                                 paras.add(is);
                             else if (iscs.contains(tableC))
@@ -699,13 +717,31 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             instances.remove(is);
         }
         if (all) {
-            for (InstanceSpecification is: manuals) {
+            for (InstanceSpecification is: new ArrayList<InstanceSpecification>(manuals)) {
                 PresentationElement pe = new PresentationElement(is, null, null, null, null, null, null);
                 pe.setManual(true);
                 newpe.peek().add(pe);
                 manuals.remove(is);
                 instances.remove(is);
             }
+        }
+    }
+    
+    private void processUnusedInstances(Element v) {
+        for (InstanceSpecification is: currentTableInstances.peek()) {
+            view2peOld.get(v).add(new PresentationElement(is, null, PEType.TABLE, v, is.getName(), null, null));
+        }
+        for (InstanceSpecification is: currentListInstances.peek()) {
+            view2peOld.get(v).add(new PresentationElement(is, null, PEType.LIST, v, is.getName(), null, null));
+        }
+        for (InstanceSpecification is: currentParaInstances.peek()) {
+            view2peOld.get(v).add(new PresentationElement(is, null, PEType.PARA, v, is.getName(), null, null));
+        }
+        for (InstanceSpecification is: currentImageInstances.peek()) {
+            view2peOld.get(v).add(new PresentationElement(is, null, PEType.IMAGE, v, is.getName(), null, null));
+        }
+        for (InstanceSpecification is: currentSectionInstances.peek()) {
+            view2peOld.get(v).add(new PresentationElement(is, null, PEType.SECTION, v, is.getName(), null, null));
         }
     }
 }

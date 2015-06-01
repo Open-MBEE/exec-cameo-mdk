@@ -257,6 +257,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 action = manager.getActionFor("ExportViewRecursive");
                 if (action == null)
                     viewsC.addAction(new ExportViewAction(e, true));
+                
+                ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
+                action = manager.getActionFor(GenerateViewPresentationAction.actionid);
+                if (action == null)
+                    viewInstances.addAction(new GenerateViewPresentationAction(e, false));
+                action = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
+                if (action == null)
+                    viewInstances.addAction(new GenerateViewPresentationAction(e, true));
             }
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             //action = manager.getActionFor(ExportViewAction.actionid);
@@ -333,13 +341,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             act = manager.getActionFor(GenerateDocumentAction.actionid);
             if (act == null)
                 c.addAction(new GenerateDocumentAction(e));
-
-            act = manager.getActionFor(GenerateViewPresentationAction.actionid);
-            if (act == null)
-                c.addAction(new GenerateViewPresentationAction(e, false));
-            act = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
-            if (act == null)
-                c.addAction(new GenerateViewPresentationAction(e, true));
             
             if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
                 //act = manager.getActionFor(PublishDocWebAction.actionid); 

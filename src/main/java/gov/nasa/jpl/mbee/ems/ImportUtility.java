@@ -600,6 +600,7 @@ public class ImportUtility {
                 newval = ef.createExpressionInstance();
             if (!o.containsKey("operand") || !(o.get("operand") instanceof JSONArray))
                 break;
+            ((Expression)newval).getOperand().clear();
             for (Object op: (JSONArray)o.get("operand")) {
                 ValueSpecification operand = createValueSpec((JSONObject)op, null);
                 if (operand != null)
