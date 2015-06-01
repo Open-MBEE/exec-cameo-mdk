@@ -262,7 +262,7 @@ public class Paragraph extends Query {
         } else if (gotText && !gotTargets) { // tryOcl must be true
             Debug.outln( "case 7" );
             // case 7: return a paragraph of the evaluation of the text as OCL on dgElement 
-            addOclParagraph( res, getText(), dgElement );
+            addOclParagraph( res, getText(), new ArrayList<Object>() );
         } else if ( gotTargets ) {
             // In case 5, we get the OCL from the targets; if the targets are
             // Properties, then we look for the OCL in their values; otherwise,
@@ -346,7 +346,7 @@ public class Paragraph extends Query {
                             // cases 5 & 6: add a paragraph of the evaluation of
                             // the value of each target-property (6) or of each target's
                             // documentation (5) as OCL on dgElement
-                            addOclParagraph( res, r.getResult(), dgElement );
+                            addOclParagraph( res, r.getResult(), new ArrayList<Object>() );
                         }
                     }
                 }
