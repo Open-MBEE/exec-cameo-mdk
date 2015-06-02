@@ -66,7 +66,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
 
     private static OclEvaluatorDialog                            instance          = null;
     // members for tracking input history
-    protected static Object                                      lastInput         = null;
+    protected static Object                                      query         = null;
     protected static LinkedList<Object>                          inputHistory      = new LinkedList<Object>();
     protected static HashSet<Object>                             pastInputs        = new HashSet<Object>();
     protected static LinkedList<Object>                          choices           = new LinkedList<Object>();
@@ -123,8 +123,8 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         // checkboxes for which selected components to include: those in diagram, those in browser.   
         JPanel checkBoxPane = new JPanel();
         checkBoxPane.setLayout( new BorderLayout() );
-        diagramCB = new JCheckBox( "selection from diagram", true );
-        browserCB = new JCheckBox( "selection from browser", false );
+        diagramCB = new JCheckBox( "Selection from diagram", true );
+        browserCB = new JCheckBox( "Selection from browser", false );
         checkBoxPane.add( diagramCB, BorderLayout.CENTER );
         checkBoxPane.add( browserCB, BorderLayout.PAGE_END );
         
@@ -156,26 +156,26 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         }
         ProcessOclQuery oclQueryProcessor = new OclQueryAction.ProcessOclQuery(selectedElements);
         processor = oclQueryProcessor;
-        lastInput = RepeatInputComboBoxDialog.getSelectedItem( editableListPanel );
-        if (lastInput != null) {
-            Object result = processor.process(lastInput);
-            editableListPanel.setResultPanel(result);
+        query = editableListPanel.getQuery();
+        if (query != null) {
+            Object result = processor.process(query);
+            editableListPanel.setResult(result);
             editableListPanel.setCompletions( processor.getCompletionChoices(),
                                               ProcessOclQuery.toString( processor.getSourceOfCompletion() )
                                                       + " : "
                                                       + ProcessOclQuery.getTypeName( processor.getSourceOfCompletion() ) );
         }
-        inputHistory.push(lastInput);
-        if (pastInputs.contains(lastInput)) {
-            choices.remove(lastInput);
+        /*inputHistory.push(query);
+        if (pastInputs.contains(query)) {
+            choices.remove(query);
         } else {
-            pastInputs.add(lastInput);
+            pastInputs.add(query);
         }
-        choices.push(lastInput);
+        choices.push(query);
         while (choices.size() > maxChoices) {
             choices.pollLast();
         }
-        editableListPanel.setItems(choices.toArray());
+        editableListPanel.setItems(choices.toArray());*/
     }
     
     @Override
@@ -183,7 +183,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         if ("Evaluate".equals(e.getActionCommand())) {
             runQuery();
         } else if ("Close".equals(e.getActionCommand())) {
-            setVisible( false );
+            dispose();
         } else {
             // BAD
         }

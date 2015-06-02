@@ -444,7 +444,7 @@ public class OclQueryAction extends MDAction {
                 }
                 dialog.diagramCB.setSelected( selectionInDiagram );
                 dialog.browserCB.setSelected( selectionInBrowser );
-                dialog.getEditableListPanel().setResultPanel( "" );
+                dialog.getEditableListPanel().setResult( "" );
                 dialog.setVisible( true );
             } else {
                 RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog("Enter an OCL expression:",

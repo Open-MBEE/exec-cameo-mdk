@@ -38,6 +38,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.ItemSelectable;
 import java.awt.Point;
 import java.awt.Window;
@@ -49,6 +50,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
@@ -61,11 +64,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JWindow;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
@@ -227,7 +232,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
             if (lastInput != null) {
                 Object result = RepeatInputComboBoxDialog.this.processor.process(lastInput);
-                editableListPanel.setResultPanel(result);
+                editableListPanel.setResult(result);
             }
             Debug.outln("lastInput = " + lastInput);
 
@@ -286,9 +291,9 @@ public class RepeatInputComboBoxDialog implements Runnable {
     public static Object getSelectedItem(Object component) {
         Object selectedItem = null;
         if (component instanceof EditableListPanel) {
-            selectedItem = ((EditableListPanel)component).getValue();
+            selectedItem = ((EditableListPanel) component).getValue();
         } else if (component instanceof Component) {
-            Object[] selection = getSelectedObjects((Component)component);
+            Object[] selection = getSelectedObjects((Component) component);
             if (selection.length == 1) {
                 selectedItem = selection[0];
             } else {
@@ -309,9 +314,45 @@ public class RepeatInputComboBoxDialog implements Runnable {
         public JScrollPane        completionsScrollPane = null;
         JLabel label = null;
         JLabel resultLabel = null;
+        
+        public JPanel historyPane;
+        public JTextArea queryTextArea;
+        public JEditorPane resultEditorPane, completionEditorPane;
 //        JLabel completionsLabel = null;
+        
+        public EditableListPanel(String msg, Object[] items) {
+        	super();
+        	this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        	
+        	final JPanel historyPanel = new JPanel();
+        	historyPanel.setLayout(new BoxLayout(historyPanel, BoxLayout.Y_AXIS));
+        	final JLabel historyLabel = new JLabel("History");
+        	historyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        	historyPanel.add(historyLabel);
+        	historyPanel.add(createScrollPane(queryTextArea = new JTextArea(1, 50)));
+        	
+        	final JPanel resultPanel = new JPanel();
+        	resultPanel.setLayout(new BoxLayout(resultPanel, BoxLayout.Y_AXIS));
+        	final JLabel resultLabel = new JLabel(" Result");
+        	//resultLabel.setBackground(Color.RED);
+        	//resultLabel.setBorder(BorderFactory.createLineBorder(Color.black));
+        	resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        	resultPanel.add(resultLabel);
+        	resultPanel.add(createScrollPane(resultEditorPane = createEditorPane("")));
+        	
+        	final JPanel completionPanel = new JPanel();
+        	completionPanel.setLayout(new BoxLayout(completionPanel, BoxLayout.Y_AXIS));
+        	final JLabel completionLabel = new JLabel("Completion");
+        	completionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        	completionPanel.add(completionLabel);
+        	completionPanel.add(createScrollPane(completionEditorPane = createEditorPane("")));
+        	
+        	final JSplitPane firstSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultPanel, completionPanel);
+        	final JSplitPane secondSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, historyPanel, firstSplitPane);
+        	this.add(secondSplitPane);
+        }
 
-        public EditableListPanel(String msg, Object[] items) { // , String
+        /*public EditableListPanel(String msg, Object[] items, String ignored) { // , String
                                                                // processButtonLabel,
                                                                // Icon
                                                                // processButtonIcon
@@ -335,8 +376,11 @@ public class RepeatInputComboBoxDialog implements Runnable {
 //            completionsPane.add( completionsScrollPane );
             JSplitPane splitPane = new JSplitPane( JSplitPane.VERTICAL_SPLIT, resultScrollPane, completionsScrollPane );
             
+            final JTextArea textArea = new JTextArea();
+            
             add(label);
             add(jcb);
+            add(textArea);
             add(resultLabel);
             add(splitPane);
 //            add(resultScrollPane);
@@ -345,13 +389,17 @@ public class RepeatInputComboBoxDialog implements Runnable {
             layout.putConstraint(SpringLayout.NORTH, label, 5, SpringLayout.NORTH, this);
             layout.putConstraint(SpringLayout.WEST, label, 5, SpringLayout.WEST, this);
             
-            layout.putConstraint(SpringLayout.NORTH, jcb, 5, SpringLayout.SOUTH, label);
+            /*layout.putConstraint(SpringLayout.NORTH, jcb, 5, SpringLayout.SOUTH, label);
             layout.putConstraint(SpringLayout.WEST, jcb, 5, SpringLayout.WEST, this);
-            layout.putConstraint(SpringLayout.EAST, jcb, -5, SpringLayout.EAST, this);
+            layout.putConstraint(SpringLayout.EAST, jcb, -5, SpringLayout.EAST, this);*
+            
+            layout.putConstraint(SpringLayout.NORTH, textArea, 5, SpringLayout.SOUTH, label);
+            layout.putConstraint(SpringLayout.WEST, textArea, 5, SpringLayout.WEST, this);
+            layout.putConstraint(SpringLayout.EAST, textArea, -5, SpringLayout.EAST, this);
 
-            layout.putConstraint(SpringLayout.NORTH, resultLabel, 5, SpringLayout.SOUTH, jcb);
+            /*layout.putConstraint(SpringLayout.NORTH, resultLabel, 5, SpringLayout.SOUTH, jcb);
             layout.putConstraint(SpringLayout.WEST, resultLabel, 5, SpringLayout.WEST, this);
-            layout.putConstraint(SpringLayout.EAST, resultLabel, -5, SpringLayout.EAST, this);
+            layout.putConstraint(SpringLayout.EAST, resultLabel, -5, SpringLayout.EAST, this);*
             
 //            layout.putConstraint(SpringLayout.NORTH, resultScrollPane, 5, SpringLayout.SOUTH, jcb);
 //            layout.putConstraint(SpringLayout.WEST, resultScrollPane, 5, SpringLayout.WEST, this);
@@ -377,6 +425,11 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
             // add( resultScrollPane, BorderLayout.CENTER );
             addAncestorListener(new RequestFocusListener());
+        }*/
+        
+        public JScrollPane createScrollPane(final Component c) {
+        	return new JScrollPane(c, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         }
 
         private JEditorPane createEditorPane(String html) {
@@ -407,41 +460,13 @@ public class RepeatInputComboBoxDialog implements Runnable {
             return jcb;
         }
 
-        // public String toHtml( String s ) {
-        // if ( s.contains( "<html>" ) ) return s;
-        // return "<html>" + s.replaceAll( "\\n", "<br>\\n" ) + "</html>";
-        // }
-
-        // private Component makeComponent( Object result ) {
-        // if ( result instanceof Component ) {
-        // return (Component)result;
-        // }
-        // if ( result instanceof Icon ) {
-        // return new JLabel( (Icon)result );
-        // }
-        // return new JTextArea( toHtml(result.toString()) );
-        // }
-
-        public void setTextInPanel(JComponent targetPane, JScrollPane targetScrollPane, Object newText) {
+        public void setTextInPanel(JComponent targetPane, Object newText) {
             if (targetPane instanceof JEditorPane) {
                 if (newText == null)
                     newText = "null";
-                ((JEditorPane)targetPane).setText( // toHtml(
-                        newText.toString());
-            } else {
-                JComponent newResultPane = null;
-                if (newText instanceof JComponent) {
-                    newResultPane = (JComponent)newText;
-                } else if (newText instanceof Icon) {
-                    newResultPane = new JLabel((Icon)newText);
-                } else {
-                    newResultPane = createEditorPane(newText == null ? "null" : newText.toString());
-                }
-                if (newResultPane != null) {
-                    targetScrollPane.remove(targetPane);
-                    targetPane = newResultPane;
-                    targetScrollPane.add(targetPane);
-                }
+                ((JEditorPane)targetPane).setText(newText.toString());
+            } else if (targetPane instanceof JTextArea) {
+            	((JTextArea) targetPane).setText(newText.toString());
             }
             if (this.isVisible()) {
                 setVisible(false);
@@ -449,17 +474,14 @@ public class RepeatInputComboBoxDialog implements Runnable {
             }
         }
 
-        public void setResultPanel(Object result) {
+        public void setResult(Object result) {
             Debug.outln("setResultPanel(" + result + ")");
-            setTextInPanel( resultPane, resultScrollPane, result );
+            //System.out.println(resultEditorPane);
+            setTextInPanel( resultEditorPane, result );
         }
 
         public String getValue() {
-            return (String)jcb.getSelectedItem();
-        }
-
-        public ComboBoxEditor getEditor() {
-            return jcb.getEditor();
+            return queryTextArea.getText();
         }
 
         public void setCompletions( List< String > completionStrings, Object completionSource ) {
@@ -472,7 +494,11 @@ public class RepeatInputComboBoxDialog implements Runnable {
                                                             "<li>", "</ul>",
                                                             false ) );
             }
-            setTextInPanel( completionsPane, completionsScrollPane, newText );
+            setTextInPanel( completionEditorPane, newText );
+        }
+        
+        public String getQuery() {
+        	return queryTextArea.getText();
         }
 
     }
