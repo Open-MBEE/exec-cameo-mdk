@@ -1,29 +1,15 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
-import com.nomagic.magicdraw.actions.ActionsGroups;
-import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class CopyAction extends MDAction {
+public class CopyAction extends SRAction {
 	
 	public static final String actionid = "Copy";
 	public Element element; 
 	
 	public CopyAction(Element element) {
-        super(actionid, actionid, null, ActionsGroups.APPLICATION_RELATED);
+        super(actionid);
         this.element = element;
-	}
-	
-	@Override
-	/**
-	 * This override gives the SRConfigurator enable/disable control over each individual action
-	 * Otherwise, this action would not be able to be enabled or disabled once set
-	 */
-	public void updateState() {
-		if (this.isEnabled())
-			this.setEnabled(false);
-		else
-			this.setEnabled(true);
 	}
 
 }

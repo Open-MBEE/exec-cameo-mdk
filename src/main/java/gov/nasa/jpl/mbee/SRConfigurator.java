@@ -42,17 +42,18 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
             category.setNested(true);
             manager.addCategory(0, category);
         }
+        
         if (target instanceof Class) {
         	Class clazz = (Class) target;
-        	MDAction specAction = new SpecializeAction(clazz);
-        	MDAction despecAction = new DespecializeAction(clazz);
-        	MDAction valAction = new ValidateAction(clazz);
-        	MDAction copyAction = new CopyAction(clazz);
-        	MDAction instAction = new CreateInstanceAction(clazz);
+        	SpecializeAction specAction = new SpecializeAction(clazz);
+        	DespecializeAction despecAction = new DespecializeAction(clazz);
+        	ValidateAction valAction = new ValidateAction(clazz);
+        	CopyAction copyAction = new CopyAction(clazz);
+        	CreateInstanceAction instAction = new CreateInstanceAction(clazz);
         	
         	if (clazz.getGeneralization().isEmpty()) {
-        		specAction.updateState();
-        		despecAction.updateState();
+        		specAction.disable();
+        		despecAction.disable();
         	}
         	category.addAction(specAction);
         	category.addAction(despecAction);

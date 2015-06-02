@@ -9,17 +9,16 @@ import java.awt.event.ActionEvent;
 
 import com.nomagic.magicdraw.actions.ActionsGroups;
 import com.nomagic.magicdraw.actions.ActionsStateUpdater;
-import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class SpecializeAction extends MDAction {
+public class SpecializeAction extends SRAction {
 	
 	public static final String actionid = "Specialize";
 	public Class clazz;
 	
 	public SpecializeAction(Class clazz) {
-        super(actionid, actionid, null, null);
+        super(actionid);
         this.clazz = clazz;
     }
 
@@ -44,15 +43,4 @@ public class SpecializeAction extends MDAction {
         ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start), "Validating Model", true, 0);*/
     }
 	
-	@Override
-	/**
-	 * This override gives the SRConfigurator enable/disable control over each individual action
-	 * Otherwise, this action would not be able to be enabled or disabled once set
-	 */
-	public void updateState() {
-		if (this.isEnabled())
-			this.setEnabled(false);
-		else
-			this.setEnabled(true);
-	}
 }
