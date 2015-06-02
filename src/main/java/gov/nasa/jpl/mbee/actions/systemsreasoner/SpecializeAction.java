@@ -2,6 +2,8 @@ package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.SpecializeValidationSuite;
 
 import java.awt.event.ActionEvent;
 
@@ -21,6 +23,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Enumeration;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.ComponentRealization;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdports.Port;
 import com.nomagic.uml2.ext.magicdraw.classes.mdassociationclasses.AssociationClass;
 import com.nomagic.magicdraw.copypaste.CopyPasteManager;
@@ -35,21 +38,27 @@ import com.nomagic.uml2.ext.magicdraw.interactions.mdfragments.InteractionConstr
 public class SpecializeAction extends MDAction {
 	
 	public static final String actionid = "Specialize";
-	public Element element;
+	public Class clazz;
 	
-	public SpecializeAction(Element element) {
+	public SpecializeAction(Class clazz) {
         super(actionid, actionid, null, null);
-        this.element = element;
+        this.clazz = clazz;
     }
 
 	@Override
     public void actionPerformed(ActionEvent e) {
-		if (!(element instanceof Class)) {
-			return;
-		}
+		final SpecializeValidationSuite svs = new SpecializeValidationSuite(clazz);
+		svs.run();
+		Utils.displayValidationWindow(svs, "Systems Reasoner Validation");
+		/*for (final Generalization g : clazz.getGeneralization()) {
+			if (g.getGeneral() != null)
+				System.out.println(g.getGeneral());
+			if (g.getGeneral() instanceof Class) {
+				System.out.println(((Class) g.getGeneral()).getName());
+			}
+		}*/
 		
-		final Class clazz = (Class) element;
-		//clazz.
+		//ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start), "Validating Model", true, 0);
 		
         /*if (!ExportUtility.checkBaseline()) {    
             return;
