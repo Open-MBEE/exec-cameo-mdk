@@ -30,7 +30,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         NMAction category = (ActionsCategory)manager.getActionFor("SRMain");
         System.out.println("Configuring Systems Reasoner");
         if (category == null) {
-            category = new MDActionsCategory("SRMain", "ReasonsSystemer");
+            category = new MDActionsCategory("SRMain", "Reason Systemer");
             ((ActionsCategory)category).setNested(true);
             manager.addCategory((ActionsCategory)category);
 //            EMSLogoutAction logout = new EMSLogoutAction();
