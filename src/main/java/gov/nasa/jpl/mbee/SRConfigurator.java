@@ -66,8 +66,13 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         if (target instanceof Class) {
         	category.addAction(new SpecializeAction(target));
         }
+        category.setUseActionForDisable(true);
         if (category.isEmpty()) {
-        	System.out.println("Empty thing");
+        	// copy of a hacked thing from DocGenConfigurator line 183-ish
+        	final MDAction mda = new MDAction(null, null, null, "null");
+        	mda.updateState();
+        	mda.setEnabled(false);
+        	category.addAction(mda);
         }
     }
 }

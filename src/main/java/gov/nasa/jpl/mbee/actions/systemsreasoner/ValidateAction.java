@@ -1,5 +1,16 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
-public class ValidateAction {
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
+public class ValidateAction extends MDAction {
+	
+	public static final String actionid = "Validate";
+	public Element element; 
+	
+	public ValidateAction(Element element) {
+        super(actionid, actionid, null, null);
+        this.element = element;
+	}
 
 }
