@@ -28,7 +28,6 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     @Override
     public void configure(ActionsManager manager, Tree tree) {
         NMAction category = (ActionsCategory)manager.getActionFor("SRMain");
-        System.out.println("Configuring Systems Reasoner");
         if (category == null) {
             category = new MDActionsCategory("SRMain", "Reason Systemer");
             ((ActionsCategory)category).setNested(true);
