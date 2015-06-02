@@ -91,6 +91,9 @@ public class DocGenPlugin extends Plugin {
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, plc);
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
+        
+        SRConfigurator srconfig = new SRConfigurator();
+        acm.addContainmentBrowserContextConfigurator(srconfig);
 
         getOclPlugin().init();
         getVcPlugin().init();
