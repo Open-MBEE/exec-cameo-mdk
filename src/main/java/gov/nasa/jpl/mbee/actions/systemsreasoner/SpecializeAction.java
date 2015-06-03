@@ -18,9 +18,9 @@ public class SpecializeAction extends SRAction {
 	public Class clazz;
 	
 	public SpecializeAction(Class clazz) {
-        super(actionid);
-        this.clazz = clazz;
-    }
+        super(actionid, clazz);
+		this.clazz = clazz;
+	}
 
 	@Override
     public void actionPerformed(ActionEvent e) {

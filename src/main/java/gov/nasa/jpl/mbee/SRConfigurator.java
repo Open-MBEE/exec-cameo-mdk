@@ -1,5 +1,8 @@
 package gov.nasa.jpl.mbee;
 
+import java.util.ArrayList;
+
+import gov.nasa.jpl.mbee.actions.ems.UpdateWorkspacesAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CopyAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecializeAction;
@@ -11,6 +14,7 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsGroups;
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
@@ -63,12 +67,25 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     public ActionsCategory handleMultipleNodes(ActionsCategory category, Node[] nodes) {
     	
     	category.addAction(valAction);
+    	
+    	ArrayList<Element> elements = new ArrayList<Element>();
+    	
+    	for (Node node: nodes) {
+	    	if (node != null) {
+		    	Object o = node.getUserObject();
+		    	if(o instanceof Element) {
+		    		elements.add((Element) o);
+		    	}
+	    	}
+    	}
 
-		valAction = new ValidateAction(nodes);
+		valAction = new ValidateAction(elements);
     	return category;
     }
     
     public ActionsCategory handleSingleNode(ActionsCategory category, Node node) {
+    	
+//    	ActionsStateUpdater.updateActionsState();
     	
     	category.addAction(specAction);
     	category.addAction(despecAction);
