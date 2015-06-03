@@ -5,14 +5,21 @@ import com.nomagic.magicdraw.actions.MDAction;
 
 public class SRAction extends MDAction {
 	
+	private String actionid;
 	private boolean actuallyUseful = true;
 
 	public SRAction(String actionid) {
         super(actionid, actionid, null, ActionsGroups.APPLICATION_RELATED);
+        this.actionid = actionid;
     }
 	
 	public void disable() {
 		this.setEnabled(actuallyUseful = false);
+	}
+	
+	public void disable(String error) {
+		this.setName(actionid + " [" + error + "]");
+		this.disable();
 	}
 	
 	public void enable() {
