@@ -5,7 +5,13 @@ import com.nomagic.magicdraw.actions.MDAction;
 
 public class SRAction extends MDAction {
 	
+<<<<<<< HEAD
+=======
+	// actuallyUseful is just a class var that keeps track of whether the action is
+	// enabled or disable in an 'actually useful' way
+>>>>>>> 9733057... Systems Reasoner now supports multiple selected elements
 	private boolean actuallyUseful = true;
+	private String actionid;
 
 	public SRAction(String actionid) {
         super(actionid, actionid, null, ActionsGroups.APPLICATION_RELATED);
