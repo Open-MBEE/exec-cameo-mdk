@@ -1,15 +1,15 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 
 public class DespecializeAction extends SRAction {
 	
 	public static final String actionid = "Despecialize";
-	public Element element; 
+	public Class clazz;
 	
-	public DespecializeAction(Element element) {
-        super(actionid);
-        this.element = element;
+	public DespecializeAction(Class clazz) {
+        super(actionid, clazz);
+        this.clazz = clazz;
 	}
 	
 }

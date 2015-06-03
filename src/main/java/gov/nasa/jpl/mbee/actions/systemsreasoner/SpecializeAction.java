@@ -18,10 +18,16 @@ public class SpecializeAction extends SRAction {
         this.element = element;
 =======
 	public SpecializeAction(Class clazz) {
+<<<<<<< HEAD
         super(actionid);
         this.clazz = clazz;
 >>>>>>> 0f4609b... made a super class to handle the enabling and disabling
     }
+=======
+        super(actionid, clazz);
+		this.clazz = clazz;
+	}
+>>>>>>> e5c673c... Altered where element attached to Actions is stored, now in the superclass
 
 	@Override
     public void actionPerformed(ActionEvent e) {
