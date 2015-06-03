@@ -5,8 +5,10 @@ import com.nomagic.magicdraw.actions.MDAction;
 
 public class SRAction extends MDAction {
 	
-	private String actionid;
+	// actuallyUseful is just a class var that keeps track of whether the action is
+	// enabled or disable in an 'actually useful' way
 	private boolean actuallyUseful = true;
+	private String actionid;
 
 	public SRAction(String actionid) {
         super(actionid, actionid, null, ActionsGroups.APPLICATION_RELATED);
