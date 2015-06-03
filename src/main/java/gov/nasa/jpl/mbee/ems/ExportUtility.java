@@ -309,7 +309,8 @@ public class ExportUtility {
             "_17_0_3_85f027d_1362349793876_101885_3031", //specification table
             "_17_0_3_85f027d_1362349793876_376001_3032",
             "_17_0_3_85f027d_1362349793876_780075_3033",
-            "_17_0_4beta_85f027d_1366953341699_324867_3761"
+            "_17_0_4beta_85f027d_1366953341699_324867_3761",
+            "_18_0_2_407019f_1433361787467_278914_14410" //view elements dummy slot
             ));
 
     public static Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
@@ -968,6 +969,14 @@ public class ExportUtility {
             JSONObject cob = fillConstraintSpecialization(c, null);
             if (cob.containsKey("specification"))
                 specialization.put("contents", (JSONObject)cob.get("specification"));
+        }
+        Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
+        if (o != null && o instanceof String) {
+            try {
+                JSONArray a = (JSONArray)JSONValue.parse((String)o);
+                specialization.put("allowedElements", a);
+                specialization.put("displayedElements", a);
+            } catch (Exception ex) {}
         }
         return specialization;
     }

@@ -258,8 +258,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 while (actual instanceof ValueSpecification)
                     actual = actual.getOwner();
                 if (!ExportUtility.shouldAdd(actual)) {
-                    if (actual instanceof Constraint && ExportUtility.isViewConstraint((Constraint)actual)) {
+                    if (actual instanceof Constraint && ExportUtility.isViewConstraint((Constraint)actual) ||
+                            actual instanceof Slot && ((Slot)actual).getDefiningFeature() != null && ((Slot)actual).getDefiningFeature().getID().equals("_18_0_2_407019f_1433361787467_278914_14410")) {
                         Element viewOb = actual.getOwner();
+                        if (actual instanceof Slot)
+                            viewOb = viewOb.getOwner();
                         elementOb = getElementObject(viewOb);
                         JSONObject specialization = ExportUtility.fillViewContent(viewOb, null);
                         elementOb.put("specialization", specialization);

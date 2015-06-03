@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.json.simple.JSONArray;
+
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
@@ -74,7 +76,7 @@ public class ViewPresentationGenerator {
             return;
         book.accept(visitor2);
         Map<Element, List<PresentationElement>> view2pe = visitor2.getView2Pe();
-        
+        Map<Element, JSONArray> view2elements = visitor2.getView2Elements();
         if (!visitor2.getNotEditable().isEmpty()) {
             Application.getInstance().getGUILog().log("There are instances or view constraints/views that are not editable. Instance generation aborted.");
             return;
@@ -84,6 +86,10 @@ public class ViewPresentationGenerator {
         try {
             for (Element v: view2pe.keySet()) {
                 handleViewOrSection(v, null, view2pe.get(v));
+            }
+            for (Element v: view2elements.keySet()) {
+                JSONArray es = view2elements.get(v);
+                StereotypesHelper.setStereotypePropertyValue(v, Utils.getViewClassStereotype(), "elements", es.toJSONString());
             }
             SessionManager.getInstance().closeSession();
         } catch(Exception e) {
