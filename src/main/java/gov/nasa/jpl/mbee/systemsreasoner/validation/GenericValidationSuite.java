@@ -6,7 +6,6 @@ public abstract class GenericValidationSuite extends ValidationSuite implements 
 
 	public GenericValidationSuite(String name) {
 		super(name);
-		// TODO Auto-generated constructor stub
 	}
 
 }
