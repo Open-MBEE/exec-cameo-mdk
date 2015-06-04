@@ -134,8 +134,6 @@ public class CreateRestrictedValueAction extends MDAction {
 			}
 		}
 		
-		// get selections
-//		final ArrayList<Element> elemVals = new ArrayList<Element>();
 		Element selectedElement = null;
 		if (dlg2 != null) {
 			dlg2.setVisible(true);
@@ -158,12 +156,9 @@ public class CreateRestrictedValueAction extends MDAction {
 			
 			// add base elements to ex
 			for (final BaseElement be: baseElems) {
-				ElementValue subEv = null;
 				if (be instanceof Element) {
-					subEv = elementsFact.createElementValueInstance();
+					final ElementValue subEv = elementsFact.createElementValueInstance();
 					subEv.setElement((Element) be);
-				}				
-				if (subEv != null) {
 					ex.getOperand().add(subEv);
 				}
 			}
