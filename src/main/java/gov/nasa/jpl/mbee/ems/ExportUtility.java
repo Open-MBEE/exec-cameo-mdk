@@ -61,6 +61,7 @@ import javax.jms.Topic;
 import javax.swing.JOptionPane;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.DeleteMethod;
@@ -497,7 +498,7 @@ public class ExportUtility {
                     Utils.showPopupMessage("You are not authorized or don't have permission, (you can login and try again).");
                 else
                     Utils.guilog("You are not authorized or don't have permission, (you can login and try again).");
-                ViewEditUtils.clearCredentials();
+                ViewEditUtils.clearUsernameAndPassword();
             } else if (code == 403) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("You do not have permission to do this");
@@ -728,6 +729,8 @@ public class ExportUtility {
         try {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url);
+            // proxy cache needs Authorization header
+            gm.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             log.info("get: " + url);
