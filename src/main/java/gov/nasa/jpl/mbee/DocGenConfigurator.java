@@ -497,7 +497,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
     private ActionsCategory getCategory(ActionsManager manager, String id, String name, ActionsCategory parent) {
         ActionsCategory category = (ActionsCategory)manager.getActionFor(id);
         if (category == null) {
-            category = myCategory(manager, id, name);
+            //category = myCategory(manager, id, name); 
+            category = new MDActionsCategory(id, name);
+            category.setNested(false); //this is to just get separators, not actual nested category
             parent.addAction(category);
         }
         return category;
