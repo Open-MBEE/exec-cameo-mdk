@@ -52,7 +52,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 public class CreateRestrictedValueAction extends MDAction {
@@ -137,19 +136,14 @@ public class CreateRestrictedValueAction extends MDAction {
 		
 		// get selections
 //		final ArrayList<Element> elemVals = new ArrayList<Element>();
-		ElementValue selectedElemVal = null;
+		Element selectedElement = null;
 		if (dlg2 != null) {
 			dlg2.setVisible(true);
-			if (dlg2.isOkClicked()) {
-				if (dlg2.getSelectedElement() instanceof ElementValue) {
-					selectedElemVal = (ElementValue)dlg2.getSelectedElement();
-				}
+			if (dlg2.isOkClicked() && dlg2.getSelectedElement() instanceof Element) {
+				selectedElement = (Element) dlg2.getSelectedElement();
 			}
 		}
-		
-		System.out.println("BASEELEM: " + baseElems);
-		System.out.println("OTHER WHATEVER " + selectedElemVal);
-		
+
 		// loop me
     	for (Property prop: props) {
 		
@@ -174,17 +168,17 @@ public class CreateRestrictedValueAction extends MDAction {
 				}
 			}
 			
-			System.out.println(selectedElemVal);
+			//System.out.println(selectedElemVal);
 			
 			// if any default is selected, set ev to that element
-			if (selectedElemVal != null) {
-				ev.setElement(selectedElemVal.getElement());
+			if (selectedElement != null) {
+				ev.setElement(selectedElement);
 			}
 			
 			// add attribs to the main expression
 			expression.getOperand().add(ls);
-			expression.getOperand().add(ex);
 			expression.getOperand().add(ev);
+			expression.getOperand().add(ex);
 			
 			prop.setDefaultValue(expression);
     	}
