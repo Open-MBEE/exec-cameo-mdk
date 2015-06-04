@@ -384,11 +384,27 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         // if ( act == null ) addCommentActions( c, (NamedElement)e );
         // }
         
-        if (e instanceof Property) {
+//        if (e instanceof Property) {
+//        	ArrayList<Property> els = new ArrayList<Property>();
+//        	for (Element el: es) {
+//        		if (el instanceof Property)
+//        			els.add((Property)el);
+//        	}
+//        	ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
+//        	NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
+//        	if (act == null)
+//        		c.addAction(new CreateRestrictedValueAction((Property) e, els));
+//        }
+        ArrayList<Property> selectedProperties = new ArrayList<Property>();
+        for (Element el: es) {
+        	if (el instanceof Property)
+        		selectedProperties.add((Property) el);
+        }
+        if (!(selectedProperties.isEmpty())) {
         	ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
         	NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
         	if (act == null)
-        		c.addAction(new CreateRestrictedValueAction((Property) e));
+        		c.addAction(new CreateRestrictedValueAction(selectedProperties));
         }
     }
 
