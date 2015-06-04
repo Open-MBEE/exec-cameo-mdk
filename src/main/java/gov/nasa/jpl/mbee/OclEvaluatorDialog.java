@@ -66,10 +66,10 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
 
     private static OclEvaluatorDialog                            instance          = null;
     // members for tracking input history
-    protected static Object                                      query         = null;
-    protected static LinkedList<Object>                          inputHistory      = new LinkedList<Object>();
-    protected static HashSet<Object>                             pastInputs        = new HashSet<Object>();
-    protected static LinkedList<Object>                          choices           = new LinkedList<Object>();
+    protected static String                                      query         = null;
+    //protected static LinkedList<Object>                          inputHistory      = new LinkedList<Object>();
+    //protected static HashSet<Object>                             pastInputs        = new HashSet<Object>();
+    protected static LinkedList<String>                          choices           = new LinkedList<String>();
     protected static int                                         maxChoices        = 20;
 
     /**
@@ -77,7 +77,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
      */
     protected Processor                                          processor;
 
-    protected static RepeatInputComboBoxDialog.EditableListPanel editableListPanel = null;
+    protected RepeatInputComboBoxDialog.EditableListPanel editableListPanel = null;
 
     protected boolean                                            cancelSelected    = false;
 
@@ -164,6 +164,11 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
                                               ProcessOclQuery.toString( processor.getSourceOfCompletion() )
                                                       + " : "
                                                       + ProcessOclQuery.getTypeName( processor.getSourceOfCompletion() ) );
+            choices.push(query);
+            while (choices.size() > maxChoices) {
+                choices.pollLast();
+            }
+            editableListPanel.setItems(choices.toArray());
         }
         /*inputHistory.push(query);
         if (pastInputs.contains(query)) {
@@ -196,7 +201,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
     /**
      * @return the editableListPanel
      */
-    public static RepeatInputComboBoxDialog.EditableListPanel
+    public RepeatInputComboBoxDialog.EditableListPanel
             getEditableListPanel() {
         return editableListPanel;
     }

@@ -38,10 +38,13 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.ItemSelectable;
 import java.awt.Point;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowEvent;
@@ -50,9 +53,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
@@ -68,9 +69,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JWindow;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
@@ -307,15 +306,16 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
         private static final long serialVersionUID = 8166263196543269359L;
 
-        public JComboBox          jcb              = null;
+        /*public JComboBox          jcb              = null;
         public JComponent         resultPane       = null;
         public JComponent         completionsPane  = null;
         public JScrollPane        resultScrollPane = null;
         public JScrollPane        completionsScrollPane = null;
         JLabel label = null;
-        JLabel resultLabel = null;
+        JLabel resultLabel = null;*/
         
-        public JPanel historyPane;
+        public JComboBox<String> historyComboBox;
+        //public JPanel queryPanel;
         public JTextArea queryTextArea;
         public JEditorPane resultEditorPane, completionEditorPane;
 //        JLabel completionsLabel = null;
@@ -324,12 +324,49 @@ public class RepeatInputComboBoxDialog implements Runnable {
         	super();
         	this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         	
-        	final JPanel historyPanel = new JPanel();
-        	historyPanel.setLayout(new BoxLayout(historyPanel, BoxLayout.Y_AXIS));
+        	final JPanel queryContainer = new JPanel();
+        	queryContainer.setLayout(new BoxLayout(queryContainer, BoxLayout.Y_AXIS));
+        	
+        	final JLabel queryLabel = new JLabel("Query");
+        	queryLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        	queryContainer.add(queryLabel);
+        	
+        	final JPanel queryPanel = new JPanel();
+        	//queryPanel.setLayout(new BoxLayout(queryPanel, BoxLayout.Y_AXIS));
+        	queryPanel.setLayout(new GridBagLayout());
         	final JLabel historyLabel = new JLabel("History");
-        	historyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        	historyPanel.add(historyLabel);
-        	historyPanel.add(createScrollPane(queryTextArea = new JTextArea(1, 50)));
+        	final GridBagConstraints c = new GridBagConstraints();
+        	c.fill = GridBagConstraints.HORIZONTAL;
+        	c.gridx = 0;
+        	c.gridy = 1;
+        	c.weightx = 0d;
+        	c.weighty = 0d;
+        	//historyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        	queryPanel.add(historyLabel, c);
+        	c.gridx = 1;
+        	//c.gridy = 0;
+        	c.weightx = 1d;
+        	historyComboBox = new JComboBox<String>();
+        	historyComboBox.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (historyComboBox.getSelectedItem() != null)
+						queryTextArea.setText(historyComboBox.getSelectedItem().toString());
+					historyComboBox.setSelectedIndex(-1);
+				}
+        		
+        	});
+        	queryPanel.add(historyComboBox, c);
+        	c.gridx = 0;
+        	c.gridy = 0;
+        	c.gridwidth = 2;
+        	//c.gridheight = GridBagConstraints.REMAINDER;
+        	c.weighty = 1d;
+        	c.fill = GridBagConstraints.BOTH;
+        	queryPanel.add(createScrollPane(queryTextArea = new JTextArea(1, 50)), c);
+        	
+        	queryContainer.add(queryPanel);
         	
         	final JPanel resultPanel = new JPanel();
         	resultPanel.setLayout(new BoxLayout(resultPanel, BoxLayout.Y_AXIS));
@@ -348,7 +385,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
         	completionPanel.add(createScrollPane(completionEditorPane = createEditorPane("")));
         	
         	final JSplitPane firstSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultPanel, completionPanel);
-        	final JSplitPane secondSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, historyPanel, firstSplitPane);
+        	final JSplitPane secondSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, queryContainer, firstSplitPane);
         	this.add(secondSplitPane);
         }
 
@@ -442,13 +479,16 @@ public class RepeatInputComboBoxDialog implements Runnable {
         }
 
         public void setItems(Object[] items) {
-            getJcb().setModel(new DefaultComboBoxModel(items));
+            historyComboBox.setModel(new DefaultComboBoxModel(items));
+            if (items.length == 0) {
+            	historyComboBox.setEnabled(false);
+            }
         }
 
-        public JComboBox getJcb() {
-            if (jcb == null) {
-                jcb = new JComboBox();
-                jcb.setEditable(true);
+        /*public JComboBox getHistoryComboBox() {
+            if (historyComboBox == null) {
+            	historyComboBox = new JComboBox();
+                //jcb.setEditable(true);
                 ComboBoxEditor editor = jcb.getEditor();
                 Component cmp = editor.getEditorComponent();
                 if (cmp instanceof JTextField) {
@@ -457,8 +497,8 @@ public class RepeatInputComboBoxDialog implements Runnable {
                 }
                 jcb.addAncestorListener(new RequestFocusListener());
             }
-            return jcb;
-        }
+            return historyComboBox;
+        }*/
 
         public void setTextInPanel(JComponent targetPane, Object newText) {
             if (targetPane instanceof JEditorPane) {

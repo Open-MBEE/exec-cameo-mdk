@@ -406,7 +406,6 @@ public class OclQueryAction extends MDAction {
 
     }
 
-    @SuppressWarnings( "deprecation" )
     @Override
     public void actionPerformed(ActionEvent e) {
         Collection<Element> selectedElements = MDUtils.getSelection(e, isSelectionInDiagram());
@@ -446,6 +445,7 @@ public class OclQueryAction extends MDAction {
                 dialog.browserCB.setSelected( selectionInBrowser );
                 dialog.getEditableListPanel().setResult( "" );
                 dialog.setVisible( true );
+                
             } else {
                 RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog("Enter an OCL expression:",
                         "OCL Evaluation", new ProcessOclQuery(selectedElements));
