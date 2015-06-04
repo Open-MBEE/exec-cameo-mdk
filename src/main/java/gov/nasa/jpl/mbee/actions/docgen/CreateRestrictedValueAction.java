@@ -73,7 +73,6 @@ public class CreateRestrictedValueAction extends MDAction {
     	
     	// vars
     	
-    	SessionManager.getInstance().createSession("instance restricted value");
     	final Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
     	final ElementsFactory elementsFact = Application.getInstance().getProject().getElementsFactory();
     	
@@ -90,19 +89,18 @@ public class CreateRestrictedValueAction extends MDAction {
 		final ArrayList<BaseElement> baseElems = new ArrayList<BaseElement>();
 		if (dlg != null) {
 			dlg.setVisible(true);
-			if (dlg.isOkClicked() && dlg.getSelectedElements() != null && !dlg.getSelectedElements().isEmpty()) {
+			if (dlg.isOkClicked() && dlg.getSelectedElements() != null) {
 				for (final BaseElement be: dlg.getSelectedElements()) {
 					baseElems.add(be);
-					System.out.println("base element");
+					//System.out.println("base element");
 				}
 			} else {
-				SessionManager.getInstance().closeSession();
 				return;
 			}
 		}
 		
 		if (baseElems.isEmpty()) {
-			SessionManager.getInstance().closeSession();
+			Application.getInstance().getGUILog().log("No elements selected for restricted value.");
 			return;
 		}
 		
@@ -142,9 +140,12 @@ public class CreateRestrictedValueAction extends MDAction {
 			}
 		}
 
-		// loop me
+		SessionManager.getInstance().createSession("instance restricted value");
     	for (Property prop: props) {
-		
+    		if (!prop.isEditable()) {
+    			Application.getInstance().getGUILog().log(prop.getQualifiedName() + " is not editable. Skipped creating restricted value.");
+    			continue;
+    		}
     		// vars
 			final Expression expression = elementsFact.createExpressionInstance();
 			final LiteralString ls = elementsFact.createLiteralStringInstance();
