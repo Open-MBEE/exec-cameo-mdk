@@ -191,10 +191,10 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
             if (manager.getActionFor(ValidateModelAction.actionid) == null)
                 models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models": "Validate Models"));
-            if (e instanceof Package) {
+            /*if (e instanceof Package) {
                 if (manager.getActionFor(ExportAllDocuments.actionid) == null)
                     models.addAction(new ExportAllDocuments(e));
-            }
+            }*/
         }
         
         // add menus in reverse order since they are inserted at top
@@ -238,18 +238,18 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
                 ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
-                NMAction action = manager.getActionFor(ValidateViewAction.actionid);
+                /*NMAction action = manager.getActionFor(ValidateViewAction.actionid);
                 if (action == null)
                     views.addAction(new ValidateViewAction(e));
                 action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
                 if (action == null)
-                    views.addAction(new ValidateViewRecursiveAction(e));
+                    views.addAction(new ValidateViewRecursiveAction(e));*/
                 if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
-                    action = manager.getActionFor(ValidateHierarchyAction.actionid);
+                    NMAction action = manager.getActionFor(ValidateHierarchyAction.actionid);
                     if (action == null)
                         modelLoad2.addAction(new ValidateHierarchyAction(e));
                 }
-                ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
+                /*ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
 
                 action = manager.getActionFor("ExportView");
                 if (action == null)
@@ -257,9 +257,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 action = manager.getActionFor("ExportViewRecursive");
                 if (action == null)
                     viewsC.addAction(new ExportViewAction(e, true));
-                
+                */
                 ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
-                action = manager.getActionFor(GenerateViewPresentationAction.actionid);
+                NMAction action = manager.getActionFor(GenerateViewPresentationAction.actionid);
                 if (action == null)
                     viewInstances.addAction(new GenerateViewPresentationAction(e, false));
                 action = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
