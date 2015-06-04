@@ -54,7 +54,7 @@ public class EMSLoginAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewEditUtils.clearCredentials();
+        ViewEditUtils.clearUsernameAndPassword();
         if (Application.getInstance().getProject() == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return;
