@@ -217,7 +217,7 @@ public class ValidateDiff extends RuleViolationAction implements AnnotationActio
             String valString = (String) value;
             // try to get the element name from ID
             Element target = ExportUtility.getElementFromID(valString);
-            if (target instanceof NamedElement) {
+            if (target instanceof NamedElement && !key.equals("sysmlid")) {
                 NamedElement namedTarget = (NamedElement)target;
                 result += '"' + (namedTarget.getName()) + '"';
             } else {
