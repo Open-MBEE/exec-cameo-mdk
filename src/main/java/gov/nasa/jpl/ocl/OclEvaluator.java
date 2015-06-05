@@ -984,7 +984,7 @@ public class OclEvaluator {
     	
 		getHelper().setContext(helperContext != null ? helperContext : OCLStandardLibraryImpl.INSTANCE.getOclVoid());
         List<Choice> choices = getHelper().getSyntaxHelp(ConstraintKind.INVARIANT, oclInput);
-        System.out.println("Completion choices for OCL expression \"" + oclInput + "\" = " + choices);
+        Debug.outln("Completion choices for OCL expression \"" + oclInput + "\" = " + choices);
         return choices;
     }
 

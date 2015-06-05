@@ -358,7 +358,7 @@ public class OclQueryAction extends MDAction {
             	choiceStrings.add(errorMsg);
             	return null;
             }
-        	System.out.println("GETTING HERE");
+        	//System.out.println("GETTING HERE");
         	completionSource = result;
         	choiceStrings.clear();
             if (OclEvaluator.instance != null) {
@@ -373,7 +373,7 @@ public class OclQueryAction extends MDAction {
                         o2 = o2.replaceFirst( "[^A-Za-z0-9]*", "" );
                         return o1.compareTo( o2 );
                     }} );
-                System.out.println("CS: " + choiceStrings);
+                //System.out.println("CS: " + choiceStrings);
                 Debug.outln(choiceStrings.toString());
             }
         	return result;
