@@ -66,15 +66,12 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -82,10 +79,8 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
-import com.nomagic.magicdraw.ui.dialogs.SelectElementDlg;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
-import com.nomagic.magicdraw.ui.dialogs.SelectElementsDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.uml.BaseElement;
@@ -1782,8 +1777,9 @@ public class Utils {
      * @return the element at the top of the MagicDraw containment tree
      */
     public static Package getRootElement() {
-        Package root = Application.getInstance().getProject().getModel();
-        return root;
+    	return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
+        //Package root = Application.getInstance().getProject().getModel();
+        //return root;
     }
 
     public static List<Package> getPackagesOfType(String typeName) {

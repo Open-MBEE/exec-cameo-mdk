@@ -465,8 +465,10 @@ public class RepeatInputComboBoxDialog implements Runnable {
         }*/
         
         public JScrollPane createScrollPane(final Component c) {
-        	return new JScrollPane(c, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+        	final JScrollPane scrollPane = new JScrollPane(c, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        	scrollPane.setPreferredSize(new Dimension((int) c.getPreferredSize().getWidth() + 5, 50));
+        	return scrollPane;
         }
 
         private JEditorPane createEditorPane(String html) {
@@ -516,18 +518,25 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
         public void setResult(Object result) {
             Debug.outln("setResultPanel(" + result + ")");
-            //System.out.println(resultEditorPane);
             setTextInPanel( resultEditorPane, result );
         }
 
         public String getValue() {
             return queryTextArea.getText();
         }
+        
+        public String getCompletionHeader(Object completionSource) {
+        	return "Completion choices for " + completionSource + "<br>";
+        }
+        
+        public void setCompletions(List<String> completionStrings, Object completionSource) {
+        	setCompletions(completionStrings, completionSource, true);
+        }
 
-        public void setCompletions( List< String > completionStrings, Object completionSource ) {
+        public void setCompletions( List< String > completionStrings, Object completionSource, boolean addHeader ) {
             String newText = "<br>"; // empty text -- need something to avoid weird ghost bullet artifact
             if ( !Utils2.isNullOrEmpty( completionStrings ) ) {
-                newText = ( "completion choices for " + completionSource + ":<br>"
+                newText = ( (addHeader ? getCompletionHeader(completionSource) : "")
                             + MoreToString.Helper.toString( completionStrings,
                                                             false, true, null,
                                                             null, "<ul><li>",

@@ -31,29 +31,39 @@ package gov.nasa.jpl.mbee;
 import gov.nasa.jpl.mbee.RepeatInputComboBoxDialog.Processor;
 import gov.nasa.jpl.mbee.actions.OclQueryAction;
 import gov.nasa.jpl.mbee.actions.OclQueryAction.ProcessOclQuery;
-import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.MDUtils;
+import gov.nasa.jpl.mbee.lib.MoreToString;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.TreeSet;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+
+import org.eclipse.ocl.util.CollectionUtil;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -83,8 +93,9 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
 
     List<Component> lastClickedComponents = new ArrayList<Component>();
     
-    public JCheckBox diagramCB = null;
-    public JCheckBox browserCB = null;
+    public JCheckBox diagramCB, browserCB;
+    public JRadioButton objectRadioButton, eachRadioButton;
+    public JButton evalButton;
     
     /**
      * @param owner
@@ -106,9 +117,10 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         closeButton.setActionCommand("Close");
         closeButton.addActionListener(this);
         //
-        final JButton evalButton = new JButton("Evaluate");
+        evalButton = new JButton("Evaluate (Ctrl+Enter)");
         evalButton.setActionCommand("Evaluate");
         evalButton.addActionListener(this);
+        evalButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), "Evaluate");
         getRootPane().setDefaultButton(evalButton);
 
         //Lay out the buttons from left to right.
@@ -122,11 +134,43 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         
         // checkboxes for which selected components to include: those in diagram, those in browser.   
         JPanel checkBoxPane = new JPanel();
-        checkBoxPane.setLayout( new BorderLayout() );
+        //checkBoxPane.setLayout( new BorderLayout() );
+        checkBoxPane.setLayout(new GridBagLayout());
+        final GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+    	c.gridx = 1;
+    	c.gridy = 0;
+    	c.weightx = 0.5;
+    	//c.weighty = 0d;
+        
         diagramCB = new JCheckBox( "Selection from diagram", true );
+        checkBoxPane.add(diagramCB, c);
+        
+        c.gridy = 1;
         browserCB = new JCheckBox( "Selection from browser", false );
-        checkBoxPane.add( diagramCB, BorderLayout.CENTER );
-        checkBoxPane.add( browserCB, BorderLayout.PAGE_END );
+        checkBoxPane.add(browserCB, c);
+        
+        c.gridx = 0;
+        c.gridy = 0;
+        final JLabel queryLabel = new JLabel("Apply query to");
+        queryLabel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        checkBoxPane.add(queryLabel, c);
+        
+        final ButtonGroup buttonGroup = new ButtonGroup();
+        
+        c.gridy = 1;
+        objectRadioButton = new JRadioButton("Selection as a single object");
+        objectRadioButton.setSelected(true);
+        buttonGroup.add(objectRadioButton);
+        checkBoxPane.add(objectRadioButton, c);
+        
+        c.gridy = 2;
+        eachRadioButton = new JRadioButton("Each selected item");
+        buttonGroup.add(eachRadioButton);
+        checkBoxPane.add(eachRadioButton, c);
+        
+        //iterateCB = new JCheckBox( "Iterate", false );
+        //checkBoxPane.add( iterateCB, BorderLayout.PAGE_END );
         
         //Put everything together, using the content pane's BorderLayout.
         Container contentPane = getContentPane();
@@ -138,7 +182,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         jp.add( buttonPane );
         contentPane.add( jp, BorderLayout.PAGE_END );
  
-        setMinimumSize( new Dimension( 400, 300 ) );
+        setMinimumSize( new Dimension( 400, 500 ) );
         //setSize( new Dimension( 400, 600 ) );
         
         //Initialize values.
@@ -147,23 +191,59 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
     }
 
     protected void runQuery() {
-        Collection<Element> selectedElements = new TreeSet<Element>(CompareUtils.GenericComparator.instance());
+        Collection<Element> selectedElements = CollectionUtil.createNewSequence();
         if ( diagramCB.isSelected() )  {
             selectedElements.addAll( MDUtils.getSelectionInDiagram() );
         }
         if ( browserCB.isSelected() )  {
             selectedElements.addAll( MDUtils.getSelectionInContainmentBrowser() );
         }
-        ProcessOclQuery oclQueryProcessor = new OclQueryAction.ProcessOclQuery(selectedElements);
-        processor = oclQueryProcessor;
+        //selectedElements.add(null);
+        //selectedElements = CollectionUtil.asSequence(selectedElements);
+        //processor = new OclQueryAction.ProcessOclQuery(selectedElements);
+        //processor = oclQueryProcessor;
         query = editableListPanel.getQuery();
         if (query != null) {
-            Object result = processor.process(query);
-            editableListPanel.setResult(result);
-            editableListPanel.setCompletions( processor.getCompletionChoices(),
-                                              ProcessOclQuery.toString( processor.getSourceOfCompletion() )
-                                                      + " : "
-                                                      + ProcessOclQuery.getTypeName( processor.getSourceOfCompletion() ) );
+            Object result = null;
+            if (objectRadioButton.isSelected()) {
+            	Object context = selectedElements;
+            	if (selectedElements.isEmpty()) {
+            		context = null;
+            	}
+            	else if (selectedElements.size() == 1) {
+            		context = selectedElements.iterator().next();
+            	}
+            	processor = new OclQueryAction.ProcessOclQuery(context);
+            	result = processor.process(query);
+            	editableListPanel.setResult(result);
+                editableListPanel.setCompletions( processor.getCompletionChoices(),
+                      ProcessOclQuery.toString( processor.getSourceOfCompletion() )
+                      + " : "
+                      + ProcessOclQuery.getTypeName( processor.getSourceOfCompletion() ) );
+            }
+            else {
+            	final List<Object> resultList = new ArrayList<Object>();
+            	final List<String> completionList = new ArrayList<String>();
+            	final List<Class> classList = new ArrayList<Class>();
+            	//editableListPanel.clearCompletions();
+            	for (final Object context : selectedElements) {
+            		processor = new OclQueryAction.ProcessOclQuery(context);
+            		result = processor.process(query);
+            		resultList.add(result);
+            		
+            		if (result != null && !classList.contains(result.getClass())) {
+            			completionList.add(editableListPanel.getCompletionHeader(processor.getSourceOfCompletion()));
+	            		completionList.addAll(processor.getCompletionChoices());
+	            		classList.add(result.getClass());
+            		}
+            	}
+            	editableListPanel.setResult(MoreToString.Helper.toString( resultList, false, true, null, null, "<ol><li>", "<li>", "</ol>",false));
+            	editableListPanel.setCompletions(completionList,
+            			ProcessOclQuery.toString( processor.getSourceOfCompletion() )
+                        + " : "
+                        + ProcessOclQuery.getTypeName( processor.getSourceOfCompletion() ) );
+            	System.out.println("Completion List: " + completionList);
+            }
             choices.push(query);
             while (choices.size() > maxChoices) {
                 choices.pollLast();
@@ -186,9 +266,28 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
     @Override
     public void actionPerformed( ActionEvent e ) {
         if ("Evaluate".equals(e.getActionCommand())) {
+        	editableListPanel.queryTextArea.setEnabled(false);
             runQuery();
+            SwingUtilities.invokeLater(new Runnable() {
+
+				@Override
+				public void run() {
+					editableListPanel.queryTextArea.setEnabled(true);
+					editableListPanel.queryTextArea.requestFocusInWindow();
+				}
+            	
+            });
+            //evalButton.requestFocus();
         } else if ("Close".equals(e.getActionCommand())) {
-            dispose();
+        	SwingUtilities.invokeLater(new Runnable() {
+
+				@Override
+				public void run() {
+					evalButton.requestFocusInWindow();
+				}
+            	
+            });
+            setVisible(false);
         } else {
             // BAD
         }

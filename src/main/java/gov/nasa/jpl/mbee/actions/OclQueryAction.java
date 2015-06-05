@@ -52,7 +52,6 @@ import java.util.TreeSet;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.ocl.ParserException;
-import org.eclipse.ocl.helper.ConstraintKind;
 import org.junit.Assert;
 
 import com.nomagic.magicdraw.actions.MDAction;
@@ -65,7 +64,8 @@ public class OclQueryAction extends MDAction {
 
     private static final long    serialVersionUID = -4695340422718243709L;
 
-    private List<Element>        context          = new ArrayList<Element>();
+    //private List<Element>        context          = new ArrayList<Element>();
+    private Object				 context;
 
     public static final String   actionid         = "OclQuery";
 
@@ -84,8 +84,7 @@ public class OclQueryAction extends MDAction {
 
     public OclQueryAction(Element context) {
         super(actionid, actionText, null, null);
-        if (context != null)
-            getContext().add(context);
+        setContext(context);
     }
 
     public OclQueryAction() {
@@ -94,37 +93,37 @@ public class OclQueryAction extends MDAction {
 
     public static class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
 
-        private List<Element> context = null;
-        public List<String> choiceStrings = new LinkedList< String >();
-        protected EObject             completionSource = null;
+        private Object context;
+        public List<String> choiceStrings = new LinkedList<String >();
+        protected Object completionSource;
 
         public ProcessOclQuery() {
             super();
         }
 
-        public ProcessOclQuery(Collection<Element> selectedElements) {
+        public ProcessOclQuery(Object context) {
             super();
-            setContext(selectedElements);
+            setContext(context);
         }
 
-        public ArrayList<Object> parseAndProcess(Object input, List<Element> context) {
+        @Deprecated
+        public Object parseAndProcess(Object input, Object context) {
             setContext(context);
             return parseAndProcess(input);
         }
 
-        public List<Element> getContext() {
-            if (Utils2.isNullOrEmpty(context)) {
-                if (context == null)
-                    context = new ArrayList<Element>();
-
-            }
+        public Object getContext() {
             return context;
         }
+        
+        public void setContext(final Object context) {
+        	this.context = context;
+        }
 
-        public void setContext(Collection<Element> context) {
+        /*public void setContext(Collection<Element> context) {
             getContext().clear();
             getContext().addAll(context);
-        }
+        }*/
 
         /**
          * Parse and evaluate OCL and additional helper syntax:
@@ -144,12 +143,46 @@ public class OclQueryAction extends MDAction {
          * @param input
          * @return the result of the evaluation of the input expression
          */
-        @SuppressWarnings("rawtypes")
-        public ArrayList<Object> parseAndProcess(Object input) {
+        @Deprecated
+        public Object parseAndProcess(Object input) {
+        	final String oclString = input != null ? input.toString() : null;
+        	Object result = null;
+        	OclEvaluator evaluator = null;
+        	OCLSyntaxHelper syntaxHelper = null;
+        	try {
+                //result = OclEvaluator.evaluateQuery(contextEObject, oclString, true);
+            	result = OclEvaluator.evaluateQuery(input, oclString, true);
+                evaluator = OclEvaluator.instance;
+            } catch (ParserException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        	
+        	if (evaluator == null || !evaluator.isValid() || Utils2.isNullOrEmpty(result)) {
+        		result = null;
+        	}
+
+            // If the parse succeeds, return the result.
+            /*if (evaluator != null && ( evaluator.isValid() || !Utils2.isNullOrEmpty( result ) ) ) {
+                return result;
+            } else {
+                outputList.add(null);
+            }*/
+
+            // Get the evaluation result up to the point where parse
+            // failed.
+            //syntaxHelper = new OCLSyntaxHelper(evaluator.getOcl().getEnvironment());
+            //List completions = syntaxHelper.getSyntaxHelp(ConstraintKind.INVARIANT, oclString);
+            //Debug.outln("completions = " + completions);
+            return result;
+        }
+        
+        /*@SuppressWarnings("rawtypes")
+        public Object parseAndProcess(Object input) {
             String oclString = input == null ? null : input.toString();
-            ArrayList<Object> outputList = new ArrayList<Object>();
-            ArrayList<Object> localContext = new ArrayList<Object>();
-            localContext.addAll(getContext());
+            //ArrayList<Object> outputList = new ArrayList<Object>();
+            //ArrayList<Object> localContext = new ArrayList<Object>();
+            //localContext.addAll(getContext());
 
             OCLSyntaxHelper syntaxHelper = null;
 
@@ -164,9 +197,11 @@ public class OclQueryAction extends MDAction {
             // }
             // }
             // if ( contextEObject == null ) {
-            for (Object o: localContext) {
-                if (o instanceof EObject) {
-                    contextEObject = (EObject)o;
+            if (context instanceof Collection) {
+            	final List<Object> outputList = new ArrayList<Object>();
+	            for (Object o: (Collection) context) {
+                //if (o instanceof EObject) {
+                    //contextEObject = (EObject) o;
                     // break;
                     // }
                     // }
@@ -174,7 +209,8 @@ public class OclQueryAction extends MDAction {
                     Object result = null;
                     OclEvaluator evaluator = null;
                     try {
-                        result = OclEvaluator.evaluateQuery(contextEObject, oclString, true);
+                        //result = OclEvaluator.evaluateQuery(contextEObject, oclString, true);
+                    	result = OclEvaluator.evaluateQuery(o, oclString, true);
                         evaluator = OclEvaluator.instance;
                     } catch (ParserException e) {
                         // TODO Auto-generated catch block
@@ -211,12 +247,15 @@ public class OclQueryAction extends MDAction {
                     // try to parse as OCL
                     // TODO
 
-                }
-            }
+	                }
+	            	
+	            }
+	            return OclEvaluator.evaluateQuery(input, oclString, true);
+            }*/
 
             // ALTERNATIVE APPROACH
             // Try to parse in pieces using "." and "->" as delimiters.
-            if (syntaxHelper == null) {
+            /*if (syntaxHelper == null) {
                 int pos = 0;
                 boolean found = true;
                 while (!found) {
@@ -224,7 +263,7 @@ public class OclQueryAction extends MDAction {
                     int nextPos2 = oclString.indexOf("->", pos);
                     // TODO -- HERE!!
                 }
-            }
+            }*/
 
             // String[] split = oclString.split( "[.]|([-][>])" );
             // ArrayList<String> tokens = new ArrayList< String >();
@@ -235,8 +274,8 @@ public class OclQueryAction extends MDAction {
             // }
             // }
 
-            return outputList;
-        }
+            //return outputList;
+        //}
         
         public static String getTypeName( Object o ) {
             if (o == null)
@@ -282,8 +321,8 @@ public class OclQueryAction extends MDAction {
                 Debug.error(false, false, errorMsg);
             }
             choiceStrings.clear();
-            if (evaluator != null)
-                choiceStrings.addAll(evaluator.commandCompletionChoiceStrings(null, completionSource, oclString) );
+            if (evaluator != null) {
+                choiceStrings.addAll(evaluator.commandCompletionChoiceStrings(OclEvaluator.instance.getHelper(), completionSource, oclString) );
                 Collections.sort( choiceStrings, new Comparator< String >() {
                     @Override
                     public int compare( String o1, String o2 ) {
@@ -294,14 +333,53 @@ public class OclQueryAction extends MDAction {
                         o2 = o2.replaceFirst( "[^A-Za-z0-9]*", "" );
                         return o1.compareTo( o2 );
                     }} );
-                Debug.outln(choiceStrings.toString());
+                System.out.println("completionSource: " + completionSource);
+                Debug.outln("CS: " + choiceStrings.toString());
+            }
             return outputList;
         }
 
         @Override
         public Object process(Object input) {
-            String oclString = input == null ? null : input.toString();
-            ArrayList<Object> outputList = new ArrayList<Object>();
+        	final String oclString = input != null ? input.toString() : null;
+        	Object result = null;
+        	try {
+            	result = OclEvaluator.evaluateQuery(getContext(), oclString, true);
+        	} catch (Exception e) {
+            	String errorMsg = e.getLocalizedMessage();
+                //outputList.add("Error: " + errorMsg);
+                errorMsg = "Error: \"" + errorMsg + "\" for OCL query \""
+                        + OclEvaluator.queryObjectToStringExpression(oclString) + "\" on "
+                        + EmfUtils.toString(context);
+                Debug.error(false, false, errorMsg);
+                // TODO Auto-generated catch block
+                //e.printStackTrace();
+            	choiceStrings.clear();
+            	choiceStrings.add(errorMsg);
+            	return null;
+            }
+        	System.out.println("GETTING HERE");
+        	completionSource = result;
+        	choiceStrings.clear();
+            if (OclEvaluator.instance != null) {
+                choiceStrings.addAll(OclEvaluator.instance.commandCompletionChoiceStrings(OclEvaluator.instance.getHelper(), completionSource, oclString) );
+                Collections.sort( choiceStrings, new Comparator< String >() {
+                    @Override
+                    public int compare( String o1, String o2 ) {
+                        if ( o1 == o2 ) return 0;
+                        if ( o1 == null ) return -1;
+                        if ( o2 == null ) return 1;
+                        o1 = o1.replaceFirst( "[^A-Za-z0-9]*", "" );
+                        o2 = o2.replaceFirst( "[^A-Za-z0-9]*", "" );
+                        return o1.compareTo( o2 );
+                    }} );
+                System.out.println("CS: " + choiceStrings);
+                Debug.outln(choiceStrings.toString());
+            }
+        	return result;
+        	
+            /*final String oclString = input == null ? null : input.toString();
+            //ArrayList<Object> outputList = new ArrayList<Object>();
             // outputList = parseAndProcess( input );
             // if ( Utils2.isNullOrEmpty( outputList ) ) {
             // outputList = new ArrayList< Object >();
@@ -321,7 +399,7 @@ public class OclQueryAction extends MDAction {
                 }
             if (outputList != null && outputList.size() == 1)
                 return outputList.get(0);
-            return outputList;
+            return outputList;*/
         }
 
         public static String toString(Object result) {
@@ -458,27 +536,31 @@ public class OclQueryAction extends MDAction {
     /**
      * @return the context
      */
-    public List<Element> getContext() {
+    /*public List<Element> getContext() {
         if (context == null)
             context = new ArrayList<Element>();
         return context;
-    }
+    }*/
 
     /**
      * @param context
      *            the context to set
      */
-    public void setContext(List<Element> context) {
+    /*public void setContext(List<Element> context) {
         this.context = context;
-    }
+    }*/
 
     /**
      * @param context
      *            the context to set
      */
-    public void setContext(Collection<Element> context) {
+    /*public void setContext(Collection<Element> context) {
         getContext().clear();
         getContext().addAll(context);
+    }*/
+    
+    public void setContext(final Object context) {
+    	this.context = context;
     }
 
     /**
@@ -488,5 +570,4 @@ public class OclQueryAction extends MDAction {
         return Configurator.isLastContextDiagram();
         //return selectionInDiagram;
     }
-
 }
