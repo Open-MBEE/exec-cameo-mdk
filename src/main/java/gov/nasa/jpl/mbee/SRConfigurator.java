@@ -7,8 +7,8 @@ import gov.nasa.jpl.mbee.actions.systemsreasoner.CopyAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecializeAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecializeAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecializeAction;
 
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
@@ -27,9 +27,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class SRConfigurator implements BrowserContextAMConfigurator {
 	
-	private SRAction specAction;
+	private SRAction validateAction;
 	private SRAction despecAction;
-	private SRAction valAction;
+	private SRAction specAction;
 	private SRAction copyAction;
 	private SRAction instAction;
 	
@@ -65,21 +65,19 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     }
     
     public ActionsCategory handleMultipleNodes(ActionsCategory category, Node[] nodes) {
-    	
-    	category.addAction(valAction);
-    	
-    	ArrayList<Element> elements = new ArrayList<Element>();
+    	ArrayList<Classifier> classes = new ArrayList<Classifier>();
     	
     	for (Node node: nodes) {
 	    	if (node != null) {
 		    	Object o = node.getUserObject();
-		    	if(o instanceof Element) {
-		    		elements.add((Element) o);
+		    	if(o instanceof Classifier) {
+		    		classes.add((Classifier) o);
 		    	}
 	    	}
     	}
 
-		valAction = new ValidateAction(elements);
+		validateAction = new ValidateAction(classes);
+		category.addAction(validateAction);
     	return category;
     }
     
@@ -87,9 +85,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     	
 //    	ActionsStateUpdater.updateActionsState();
     	
-    	category.addAction(specAction);
+    	category.addAction(validateAction);
     	category.addAction(despecAction);
-    	category.addAction(valAction);
+    	category.addAction(specAction);
     	category.addAction(copyAction);
     	category.addAction(instAction);
     	
@@ -108,15 +106,15 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         }
         if (target instanceof Class) {
         	Class clazz = (Class) target;
-        	specAction = new SpecializeAction(clazz);
+        	validateAction = new ValidateAction(clazz);
         	despecAction = new DespecializeAction(clazz);
-        	valAction = new ValidateAction(clazz);
+        	specAction = new SpecializeAction(clazz);
         	copyAction = new CopyAction(clazz);
         	instAction = new CreateInstanceAction(clazz);
         	
         	if (clazz.getGeneralization().isEmpty()) {
         		String noGenError = "No Generalizations";
-        		specAction.disable(noGenError);
+        		//validateAction.disable(noGenError);
         		despecAction.disable(noGenError);
         	}
         }
