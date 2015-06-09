@@ -26,6 +26,7 @@ import com.nomagic.magicdraw.emf.impl.ValueHolderImpl;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
@@ -44,10 +45,10 @@ public class RedefineAttributeAction extends MDAction {
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	private Class clazz;
+	private Classifier clazz;
 	private RedefinableElement re;
 
-	public RedefineAttributeAction(final Class clazz, final RedefinableElement re) {
+	public RedefineAttributeAction(final Classifier clazz, final RedefinableElement re) {
 		super("RedefineAttribute", "Redefine Attribute", null, null);
 		this.clazz = clazz;
 		this.re = re;
