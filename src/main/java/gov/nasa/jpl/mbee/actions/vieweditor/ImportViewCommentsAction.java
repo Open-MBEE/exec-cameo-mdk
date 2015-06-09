@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -108,7 +109,7 @@ public class ImportViewCommentsAction extends MDAction {
             PostMethod pm = new PostMethod(url + "/rest/comments/committed");
             try {
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, geturl);
+                ViewEditUtils.setCredentials(client, geturl, pm);
                 int code = client.executeMethod(gm);
                 if (ViewEditUtils.showErrorMessage(code))
                     return;
