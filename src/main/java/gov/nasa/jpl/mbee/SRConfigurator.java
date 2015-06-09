@@ -27,11 +27,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class SRConfigurator implements BrowserContextAMConfigurator {
 	
-	private SRAction specAction;
-	private SRAction despecAction;
-	private SRAction valAction;
-	private SRAction copyAction;
-	private SRAction instAction;
+//	private SRAction specAction;
+//	private SRAction despecAction;
+//	private SRAction valAction;
+//	private SRAction copyAction;
+//	private SRAction instAction;
 	
 	
     @Override
@@ -42,6 +42,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
 
     @Override
     public void configure(ActionsManager manager, Tree tree) {
+    	    	
         ActionsCategory category = (ActionsCategory)manager.getActionFor("SRMain");
         if (category == null) {
             category = new MDActionsCategory("SRMain", "Reasons Systemer", null, ActionsGroups.APPLICATION_RELATED);
@@ -65,9 +66,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     }
     
     public ActionsCategory handleMultipleNodes(ActionsCategory category, Node[] nodes) {
-    	
-    	category.addAction(valAction);
-    	
+    	    	
     	ArrayList<Element> elements = new ArrayList<Element>();
     	
     	for (Node node: nodes) {
@@ -79,19 +78,12 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
 	    	}
     	}
 
-		valAction = new ValidateAction(elements);
+		ValidateAction valAction = new ValidateAction(elements);
+		category.addAction(valAction);
     	return category;
     }
     
     public ActionsCategory handleSingleNode(ActionsCategory category, Node node) {
-    	
-//    	ActionsStateUpdater.updateActionsState();
-    	
-    	category.addAction(specAction);
-    	category.addAction(despecAction);
-    	category.addAction(valAction);
-    	category.addAction(copyAction);
-    	category.addAction(instAction);
     	
     	if (node == null)
     		return category;
@@ -104,26 +96,34 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     	
         if (target instanceof Activity) {
         	Activity active = (Activity) target;
-        	copyAction = new CopyAction(active);
+        	CopyAction copyAction = new CopyAction(active);
+        	category.addAction(copyAction);
         }
         if (target instanceof Class) {
         	Class clazz = (Class) target;
-        	specAction = new SpecializeAction(clazz);
-        	despecAction = new DespecializeAction(clazz);
-        	valAction = new ValidateAction(clazz);
-        	copyAction = new CopyAction(clazz);
-        	instAction = new CreateInstanceAction(clazz);
+        	SpecializeAction specAction = new SpecializeAction(clazz);
+        	DespecializeAction despecAction = new DespecializeAction(clazz);
+        	ValidateAction valAction = new ValidateAction(clazz);
+        	CopyAction copyAction = new CopyAction(clazz);
+        	CreateInstanceAction instAction = new CreateInstanceAction(clazz);
         	
         	if (clazz.getGeneralization().isEmpty()) {
         		String noGenError = "No Generalizations";
         		specAction.disable(noGenError);
         		despecAction.disable(noGenError);
         	}
+        	
+        	category.addAction(specAction);
+        	category.addAction(despecAction);
+        	category.addAction(valAction);
+        	category.addAction(copyAction);
+        	category.addAction(instAction);
         }
         
         if (target instanceof Classifier) {
         	Classifier clazzifier = (Classifier) target;
-        	copyAction = new CopyAction(clazzifier);
+        	CopyAction copyAction = new CopyAction(clazzifier);
+        	category.addAction(copyAction);
         }
         
         // Clear out the category of unused actions
@@ -139,6 +139,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         		sra.disable("Not Editable");
         	}
         }
+        
         return category;
     }
 }
