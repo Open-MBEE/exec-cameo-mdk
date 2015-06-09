@@ -41,6 +41,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.simple.JSONArray;
@@ -121,7 +122,7 @@ public class ImportViewAction extends MDAction {
                 else
                     gl.log("*** Starting consistency check ***");
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, geturl);
+                ViewEditUtils.setCredentials(client, geturl, gm);
                 int code = client.executeMethod(gm);
                 if (ViewEditUtils.showErrorMessage(code))
                     return;

@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.List;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 
@@ -80,7 +81,7 @@ public class DeleteVolumeAction extends MDAction {
         PostMethod pm = new PostMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             if (ViewEditUtils.showErrorMessage(code))
                 return;

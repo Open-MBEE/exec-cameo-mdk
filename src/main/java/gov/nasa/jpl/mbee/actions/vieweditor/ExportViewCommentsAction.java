@@ -40,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 
@@ -106,7 +107,7 @@ public class ExportViewCommentsAction extends MDAction {
                 pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
                 pm.setRequestEntity(JsonRequestEntity.create(json));
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, url);
+                ViewEditUtils.setCredentials(client, url, pm);
                 int code = client.executeMethod(pm);
                 if (ViewEditUtils.showErrorMessage(code))
                     return;

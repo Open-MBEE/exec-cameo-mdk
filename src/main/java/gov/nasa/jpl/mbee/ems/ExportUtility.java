@@ -534,7 +534,7 @@ public class ExportUtility {
         DeleteMethod gm = new DeleteMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, gm);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             log.info("delete: " + url);
@@ -570,7 +570,7 @@ public class ExportUtility {
             Utils.guilog("[INFO] Sending file...");
             log.info("send file: " + url);
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("send file response: " + code + " " + response);
@@ -611,7 +611,7 @@ public class ExportUtility {
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("send response: " + code + " " + response);
@@ -642,7 +642,7 @@ public class ExportUtility {
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("deleteWithBody Response: " + code + " " + response);
@@ -669,7 +669,7 @@ public class ExportUtility {
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("getWithBody Response: " + code + " " + response);
@@ -727,9 +727,7 @@ public class ExportUtility {
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
-            // proxy cache needs Authorization header
-            gm.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
+            ViewEditUtils.setCredentials(client, url, gm);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             log.info("get: " + url);
