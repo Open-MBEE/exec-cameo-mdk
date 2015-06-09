@@ -35,7 +35,6 @@ public class SRAction extends MDAction {
 	
 	@Override
 	public void updateState() {
-		setEnabled(true);
 	}
 	
 }

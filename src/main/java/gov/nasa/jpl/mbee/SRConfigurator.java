@@ -85,6 +85,12 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     
     public ActionsCategory handleSingleNode(ActionsCategory category, Node node) {
     	
+    	SpecializeAction specAction = null;
+    	DespecializeAction despecAction = null;
+    	ValidateAction valAction = null;
+    	CopyAction copyAction = null;
+    	CreateInstanceAction instAction = null;
+    	
     	if (node == null)
     		return category;
     	Object o = node.getUserObject();
@@ -96,16 +102,16 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     	
         if (target instanceof Activity) {
         	Activity active = (Activity) target;
-        	CopyAction copyAction = new CopyAction(active);
-        	category.addAction(copyAction);
+        	copyAction = new CopyAction(active);
         }
         if (target instanceof Class) {
         	Class clazz = (Class) target;
-        	SpecializeAction specAction = new SpecializeAction(clazz);
-        	DespecializeAction despecAction = new DespecializeAction(clazz);
-        	ValidateAction valAction = new ValidateAction(clazz);
-        	CopyAction copyAction = new CopyAction(clazz);
-        	CreateInstanceAction instAction = new CreateInstanceAction(clazz);
+
+        	specAction = new SpecializeAction(clazz);
+        	despecAction = new DespecializeAction(clazz);
+        	valAction = new ValidateAction(clazz);
+        	copyAction = new CopyAction(clazz);
+        	instAction = new CreateInstanceAction(clazz);
         	
         	if (clazz.getGeneralization().isEmpty()) {
         		String noGenError = "No Generalizations";
@@ -113,18 +119,20 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         		despecAction.disable(noGenError);
         	}
         	
-        	category.addAction(specAction);
-        	category.addAction(despecAction);
-        	category.addAction(valAction);
-        	category.addAction(copyAction);
-        	category.addAction(instAction);
+
         }
         
         if (target instanceof Classifier) {
         	Classifier clazzifier = (Classifier) target;
-        	CopyAction copyAction = new CopyAction(clazzifier);
-        	category.addAction(copyAction);
+        	copyAction = new CopyAction(clazzifier);
         }
+        
+        
+    	category.addAction(specAction);
+    	category.addAction(despecAction);
+    	category.addAction(valAction);
+    	category.addAction(copyAction);
+    	category.addAction(instAction);
         
         // Clear out the category of unused actions
         for (NMAction s: category.getActions()) {
