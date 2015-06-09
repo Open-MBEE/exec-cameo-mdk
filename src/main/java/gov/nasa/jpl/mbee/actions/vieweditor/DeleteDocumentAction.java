@@ -35,6 +35,7 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 
@@ -74,7 +75,7 @@ public class DeleteDocumentAction extends MDAction {
             // EasySSLProtocolSocketFactory(), 443);
             // Protocol.registerProtocol("https", easyhttps);
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             if (ViewEditUtils.showErrorMessage(code))
                 return;

@@ -52,7 +52,9 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.params.HttpMethodParams;
@@ -147,7 +149,7 @@ public class ViewEditUtils {
      * @param client
      * @param urlstring
      */
-    public static void setCredentials(HttpClient client, String urlstring) {
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method) {
         try {
             URL url = new URL(urlstring);
 
@@ -193,6 +195,8 @@ public class ViewEditUtils {
             e.printStackTrace();
         }
 
+        // proxy cache needs Authorization header
+        method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
     }
     
     private static void makeSureUserGetsFocus(final JTextField user) {
