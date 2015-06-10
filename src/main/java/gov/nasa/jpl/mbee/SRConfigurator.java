@@ -25,11 +25,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class SRConfigurator implements BrowserContextAMConfigurator {
 	
-	private SRAction validateAction;
-	private SRAction despecAction;
-	private SRAction specAction;
-	private SRAction copyAction;
-	private SRAction instAction;
+	ValidateAction validateAction = null;
+	SpecializeAction specAction = null;
+	DespecializeAction despecAction = null;
+	CopyAction copyAction = null;
+	CreateInstanceAction instAction = null;
 
     @Override
     public int getPriority() {
@@ -39,7 +39,14 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
 
     @Override
     public void configure(ActionsManager manager, Tree tree) {
-    	    	
+    	
+    	// refresh the actions for every new click (or selection)
+    	validateAction = null;
+    	specAction = null;
+    	despecAction = null;
+    	copyAction = null;
+    	instAction = null;
+    	
         ActionsCategory category = (ActionsCategory)manager.getActionFor("SRMain");
         if (category == null) {
             category = new MDActionsCategory("SRMain", "Reasons Systemer", null, ActionsGroups.APPLICATION_RELATED);
@@ -53,7 +60,20 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     		category = handleSingleNode(category, tree.getSelectedNode());
     	}
     	
+    	category.addAction(validateAction);        
+    	category.addAction(specAction);
+    	category.addAction(despecAction);
+    	category.addAction(copyAction);
+    	category.addAction(instAction);
+        
+        // Clear out the category of unused actions
+        for (NMAction s: category.getActions()) {
+        	if (s == null)
+        		category.removeAction(s);
+        }
+    	
         category.setUseActionForDisable(true);
+        
         if (category.isEmpty()) {
         	final MDAction mda = new MDAction(null, null, null, "null");
         	mda.updateState();
@@ -63,8 +83,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     }
     
     public ActionsCategory handleMultipleNodes(ActionsCategory category, Node[] nodes) {
-    	ArrayList<Classifier> classes = new ArrayList<Classifier>();
     	
+    	ArrayList<Classifier> classes = new ArrayList<Classifier>();
     	for (Node node: nodes) {
 	    	if (node != null) {
 		    	Object o = node.getUserObject();
@@ -73,8 +93,24 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
 		    	}
 	    	}
     	}
-
+    	
+    	// if nothing in classes, disable category and return it
+    	if (classes.isEmpty()) {
+    		category = disableCategory(category);
+    		return category;
+    	}
+    	
+    	// otherwise, add the classes to the ValidateAction action
 		validateAction = new ValidateAction(classes);
+		
+		// if any of the classifiers are not editable, disable the validate
+		for (Classifier clf: classes) {
+			if (!(clf.isEditable())) {
+				validateAction.disable();
+			}
+		}
+		
+		// add the action to the actions category
 		category.addAction(validateAction);
 		
 		specAction = new SpecializeAction(classes);
@@ -88,21 +124,20 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     
     public ActionsCategory handleSingleNode(ActionsCategory category, Node node) {
     	
-    	SpecializeAction specAction = null;
-    	DespecializeAction despecAction = null;
-    	ValidateAction validateAction = null;
-    	CopyAction copyAction = null;
-    	CreateInstanceAction instAction = null;
-    	
     	if (node == null)
     		return category;
     	Object o = node.getUserObject();
     	if(!(o instanceof Element))
     		return category;
     	Element target = (Element) o;
-        
-    	// First check target instanceof
     	
+        // Disable all if not editable target, add error message
+        if (!(target.isEditable())) {
+        	category = disableCategory(category);
+        	return category;
+        }
+        
+    	// check target instanceof
         if (target instanceof Activity) {
         	Activity active = (Activity) target;
         	copyAction = new CopyAction(active);
@@ -116,40 +151,24 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         	instAction = new CreateInstanceAction(clazz);
         	
         	if (clazz.getGeneralization().isEmpty()) {
-        		String noGenError = "No Generalizations";
-        		//validateAction.disable(noGenError);
-        		despecAction.disable(noGenError);
+        		despecAction.disable("No Generalizations");
         	}
-        	
-
         }
-        
         if (target instanceof Classifier) {
         	Classifier clazzifier = (Classifier) target;
         	copyAction = new CopyAction(clazzifier);
         }
         
-        
-    	category.addAction(specAction);
-    	category.addAction(despecAction);
-    	category.addAction(validateAction);
-    	category.addAction(copyAction);
-    	category.addAction(instAction);
-        
-        // Clear out the category of unused actions
-        for (NMAction s: category.getActions()) {
-        	if (s == null)
-        		category.removeAction(s);
-        }
-        
-        // Disable all if not editable target, add error message
-        if (!(target.isEditable())) {
-        	for (NMAction s: category.getActions()) {
-        		SRAction sra = (SRAction) s;
-        		sra.disable("Not Editable");
-        	}
-        }
-        
         return category;
+    }
+    
+    public ActionsCategory disableCategory(ActionsCategory category) {
+    	// once all the categories are disabled, the action category will be disabled
+    	// this is defined in the configure method: category.setNested(true);
+    	for (NMAction s: category.getActions()) {
+    		SRAction sra = (SRAction) s;
+    		sra.disable("Not Editable");
+        }
+    	return category;
     }
 }
