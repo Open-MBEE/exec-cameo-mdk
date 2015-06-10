@@ -50,7 +50,6 @@ import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Frame;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -67,16 +66,12 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
-
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -84,10 +79,8 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
-import com.nomagic.magicdraw.ui.dialogs.SelectElementDlg;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
-import com.nomagic.magicdraw.ui.dialogs.SelectElementsDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.uml.BaseElement;
@@ -147,10 +140,6 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam 
  */
 public class Utils {
-	
-    public static final int[] TABBED_PANE_INDICES = { 1, 0, 0, 0, 1, 0, 0, 1, 1 };
-    // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);
-	
     private Utils() {
     }
 
@@ -1788,8 +1777,9 @@ public class Utils {
      * @return the element at the top of the MagicDraw containment tree
      */
     public static Package getRootElement() {
-        Package root = Application.getInstance().getProject().getModel();
-        return root;
+    	return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
+        //Package root = Application.getInstance().getProject().getModel();
+        //return root;
     }
 
     public static List<Package> getPackagesOfType(String typeName) {
@@ -2167,24 +2157,6 @@ public class Utils {
             return z.getSelected();
         return null;*/
     }
-    
-    public static ElementSelectionDlg disableSingleSelection(final ElementSelectionDlg dlg) {
-		Container c = dlg.getContentPane();
-		for (final int i : TABBED_PANE_INDICES) {
-			if (c.getComponents().length <= i || !(c.getComponents()[i] instanceof Container)) {
-				break;
-			}
-			c = (Container) c.getComponents()[i];
-		}
-		if (c instanceof JTabbedPane) {
-			final JTabbedPane jtp = (JTabbedPane) c;
-			if (jtp.getTabCount() >= 2) {
-				jtp.setSelectedIndex(1);
-				jtp.setEnabledAt(0, false);
-			}
-		}
-		return dlg;
-    }
 
     /**
      * Given a list of named elements, will prompt the user to choose one and
@@ -2376,12 +2348,6 @@ public class Utils {
         }
 
         return results;
-    }
-    
-    public static void displayValidationWindow(ValidationSuite vs, String title) {
-    	final List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
-    	vss.add(vs);
-    	displayValidationWindow(vss, title);
     }
 
     public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {

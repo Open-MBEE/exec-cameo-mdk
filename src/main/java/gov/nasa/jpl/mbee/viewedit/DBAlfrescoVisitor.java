@@ -78,6 +78,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     protected Set<Element> elementSet = new HashSet<Element>();
     
     //for ems 2.2 reference tree
+    private Map<Element, JSONArray> view2elements = new HashMap<Element, JSONArray>();
     private Map<Element, List<PresentationElement>> view2pe = new HashMap<Element, List<PresentationElement>>();
     private Map<Element, List<PresentationElement>> view2peOld = new HashMap<Element, List<PresentationElement>>();
     private Stack<Element> currentView = new Stack<Element>();
@@ -494,6 +495,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         this.curContains.pop();
         
       //for ems 2.2 reference tree
+        view2elements.put(e, viewEs);
         addManualInstances(true);
         processUnusedInstances(e);
         newpe.pop();
@@ -606,6 +608,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     
     public JSONArray getNosections() {
         return noSections;
+    }
+    
+    public Map<Element, JSONArray> getView2Elements() {
+        return view2elements;
     }
     
     public Set<Element> getElementSet() {

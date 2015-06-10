@@ -225,7 +225,7 @@ public class ViewValidator {
             //response is the string version of the view json gotten from the web
             if (!ViewEditUtils.isPasswordSet())
                 return false;
-            if (response == null || !response.contains("contains")) {
+            if (response == null || (!response.contains("contains") && !response.contains("contents"))) {
                 //if the json doesn't contain the "contains" key, that means the view hasn't been exported yet
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                 v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
@@ -237,7 +237,8 @@ public class ViewValidator {
                 //view has been on the web
                 JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("elements")).get(0);
                 Object containsObj = ((JSONObject)webView.get("specialization")).get("contains");
-                if (containsObj == null) {
+                Object contentsObj = ((JSONObject)webView.get("specialization")).get("contents");
+                if (containsObj == null && contentsObj == null) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                     v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
                     //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));

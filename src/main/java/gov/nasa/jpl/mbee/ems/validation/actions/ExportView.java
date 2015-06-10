@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
@@ -249,7 +250,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             int status = 0;
             try {
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, baseurl);
+                ViewEditUtils.setCredentials(client, baseurl, get);
                 gl.log("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
                 client.executeMethod(get);
 

@@ -39,6 +39,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
@@ -91,7 +92,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
                 Part[] parts = {new FilePart("content", imageFile)};
                 post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, baseurl);
+                ViewEditUtils.setCredentials(client, baseurl, post);
                 client.executeMethod(post);
                 int status = post.getStatusCode();
                 if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
@@ -125,7 +126,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             Part[] parts = {new FilePart("content", imageFile)};
             post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, baseurl);
+            ViewEditUtils.setCredentials(client, baseurl, post);
             client.executeMethod(post);
             int status = post.getStatusCode();
             if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {

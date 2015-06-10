@@ -54,7 +54,7 @@ public class ExportViewConstraint extends RuleViolationAction implements Annotat
     private NamedElement element;
     
     public ExportViewConstraint(NamedElement e) {
-        super("ExportViewConstraint", "Commit View Content", null, null);
+        super("ExportViewConstraint", "Commit View Constraint", null, null);
         this.element = e;
     }
     
