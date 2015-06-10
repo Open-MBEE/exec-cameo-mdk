@@ -105,10 +105,28 @@ public class SRValidateValidationSuite extends ValidationSuite implements Runnab
 			}
 			
 			for (final Property p : clazz.getAttribute()) {
-				if (p instanceof RedefinableElement && !((RedefinableElement) p).hasRedefinedElement() && !((RedefinableElement) p).has_redefinableElementOfRedefinedElement()) {
-					final ValidationRuleViolation v = new ValidationRuleViolation(p, orphanAttributeRule.getDescription() + ": " + p.getQualifiedName());
-					v.addAction(new DeleteElementAction(p, "Delete Attribute"));
-					orphanAttributeRule.addViolation(v);
+				System.out.println("asdf: " + p.getQualifiedName());
+				System.out.println("V1: " + Boolean.toString(p instanceof RedefinableElement));
+				System.out.println("V2: " + Boolean.toString(!((RedefinableElement) p).hasRedefinedElement()));
+				for (final RedefinableElement re : ((RedefinableElement) p).getRedefinedElement()) {
+					System.out.println("RE: " + re.getQualifiedName());
+				}
+				System.out.println("V3: " + Boolean.toString(!((RedefinableElement) p).has_redefinableElementOfRedefinedElement()));
+				if (p instanceof RedefinableElement && !((RedefinableElement) p).has_redefinableElementOfRedefinedElement()) {
+					// Cannot be replaced by hasRedefinedElement, which returns true even after generalization has been deleted.
+					boolean hasRedefinedElement = false;
+					for (final RedefinableElement re : ((RedefinableElement) p).getRedefinedElement()) {
+						System.out.println("CLASSES: " + ((Classifier) p.getOwner()).getGeneral());
+						if (re.getOwner() != null && p.getOwner() != null && p.getOwner() instanceof Classifier && ((Classifier) p.getOwner()).getGeneral().contains(re.getOwner())) {
+							hasRedefinedElement = true;
+							break;
+						}
+					}
+					if (!hasRedefinedElement) {
+						final ValidationRuleViolation v = new ValidationRuleViolation(p, orphanAttributeRule.getDescription() + ": " + p.getQualifiedName());
+						v.addAction(new DeleteElementAction(p, "Delete Attribute"));
+						orphanAttributeRule.addViolation(v);
+					}
 				}
 			}
 		}
