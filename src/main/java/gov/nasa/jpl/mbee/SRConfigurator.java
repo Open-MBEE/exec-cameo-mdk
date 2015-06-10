@@ -2,7 +2,6 @@ package gov.nasa.jpl.mbee;
 
 import java.util.ArrayList;
 
-import gov.nasa.jpl.mbee.actions.ems.UpdateWorkspacesAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CopyAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecializeAction;
@@ -17,7 +16,6 @@ import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecializeAction;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.magicdraw.actions.ActionsGroups;
-import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
@@ -97,6 +95,13 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
 
 		validateAction = new ValidateAction(classes);
 		category.addAction(validateAction);
+		
+		specAction = new SpecializeAction(classes);
+		category.addAction(specAction);
+		
+		despecAction = new DespecializeAction(classes);
+		category.addAction(despecAction);
+		
     	return category;
     }
     
