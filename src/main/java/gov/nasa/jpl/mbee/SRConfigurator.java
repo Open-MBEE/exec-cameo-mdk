@@ -49,7 +49,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         if (category == null) {
             category = new MDActionsCategory("SRMain", "Reasons Systemer", null, ActionsGroups.APPLICATION_RELATED);
             category.setNested(true);
-            manager.addCategory(0, category);
+            //manager.addCategory(0, category);
         }
 <<<<<<< HEAD
         
@@ -122,8 +122,15 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     		return category;
     	Element target = (Element) o;
         
+<<<<<<< HEAD
     	// First check target instanceof
     	
+=======
+        // remove later Ivan
+        copyAction = new CopyAction(target);
+        
+    	// check target instanceof
+>>>>>>> 0e3f721... Created copy action to test export/import utility
         if (target instanceof Activity) {
         	Activity active = (Activity) target;
         	copyAction = new CopyAction(active);
