@@ -51,7 +51,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         if (category == null) {
             category = new MDActionsCategory("SRMain", "Reasons Systemer", null, ActionsGroups.APPLICATION_RELATED);
             category.setNested(true);
-            manager.addCategory(0, category);
+            //manager.addCategory(0, category);
         }
     	
     	if (tree.getSelectedNodes().length > 1) {
@@ -136,6 +136,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         	category = disableCategory(category);
         	return category;
         }
+        
+        // remove later Ivan
+        copyAction = new CopyAction(target);
         
     	// check target instanceof
         if (target instanceof Activity) {
