@@ -501,11 +501,17 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             // connection.setExceptionListener(this);
             Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
-            Topic topic;
+            Topic topic = null;
             try {
-                topic = (Topic) ctx.lookup( JMS_TOPIC );
+                if (ctx != null) {
+                    topic = (Topic) ctx.lookup( JMS_TOPIC );
+                }                    
             } catch (NameNotFoundException nnfe) {
-                topic = session.createTopic(JMS_TOPIC);
+                // do nothing (just means topic hasnt been created yet
+            } finally {
+                if (topic == null) {
+                    topic = session.createTopic(JMS_TOPIC);
+                }
             }
 
             String messageSelector = constructSelectorString(projectID, wsID);
@@ -801,8 +807,10 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         try {
             ctx = new InitialContext(properties);
         } catch (NamingException ne) {
-            ne.printStackTrace(System.err);
-            return null;
+            // FIXME: getting java.lang.ClassNotFoundException: org.apache.activemq.jndi.ActiveMQInitialContextFactory
+            //        works in debugging from Eclipse - somehow classpath doesn't work
+            //        plugin has the activemq-all reference, as workaround set to false for now
+            isFromService = false;
         }
 
         if (isFromService == false) {
