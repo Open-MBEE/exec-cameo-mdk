@@ -1,10 +1,9 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 
-public class RetypeElementAction extends MDAction {
+public class RetypeElementAction extends GenericRuleViolationAction {
 	
 	/**
 	 * 
@@ -12,17 +11,27 @@ public class RetypeElementAction extends MDAction {
 	private static final long serialVersionUID = 1L;
 	
 	private TypedElement source, target;
+	private String name;
 
-	public RetypeElementAction(final TypedElement source, final TypedElement target, final String title) {
-		super(title, title, null, null);
+	public RetypeElementAction(final TypedElement source, final TypedElement target, final String name) {
+		super(name, name, null, null);
 		this.source = source;
 		this.target = target;
+		this.name = name;
 	}
-	
+
 	@Override
-	public void actionPerformed(java.awt.event.ActionEvent e) {
-		SessionManager.getInstance().createSession("retype element");
+	public void run() {
 		target.setType(source.getType());
-		SessionManager.getInstance().closeSession();
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public String getSessionName() {
+		return "retype element";
 	}
 }

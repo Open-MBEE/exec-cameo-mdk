@@ -75,7 +75,7 @@ public class SpecializeAction extends SRAction {
 		final ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
 >>>>>>> b748eb4... reasons systemer wip
 		
-		final SelectElementTypes set = new SelectElementTypes(null, types, null, null);
+		final SelectElementTypes set = new SelectElementTypes(types, types, null, null);
 		final SelectElementInfo sei = new SelectElementInfo(true, false, Application.getInstance().getProject().getModel().getOwner(), true);
 		ElementSelectionDlgFactory.initMultiple(dlg, set, sei, new ArrayList<Object>());
 		dlg.setSelectionMode(SelectionMode.MULTIPLE_MODE);

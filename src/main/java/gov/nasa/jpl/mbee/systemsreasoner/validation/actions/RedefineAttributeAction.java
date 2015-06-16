@@ -1,62 +1,41 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-
-import org.apache.commons.lang.SerializationException;
-import org.apache.commons.lang.SerializationUtils;
-import org.eclipse.jdt.core.dom.Modifier;
-
-import com.nomagic.magicdraw.actions.MDAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.emf.ValueHolder;
-import com.nomagic.magicdraw.emf.impl.BasicEStoreEList;
-import com.nomagic.magicdraw.emf.impl.MDEStoreEObjectImpl;
-import com.nomagic.magicdraw.emf.impl.ValueHolderImpl;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import com.nomagic.uml2.impl.ElementsFactory;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 
-import org.eclipse.emf.common.util.AbstractEnumerator;
-import org.eclipse.emf.common.util.BasicEList;
-import org.eclipse.emf.ecore.impl.BasicEObjectImpl;
-
-public class RedefineAttributeAction extends MDAction {
+public class RedefineAttributeAction extends GenericRuleViolationAction {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	private static final String DEFAULT_NAME = "Redefine Attribute";
 	
 	private Classifier clazz;
 	private RedefinableElement re;
+	private boolean createSpecializedType;
+	private String name;
 
 	public RedefineAttributeAction(final Classifier clazz, final RedefinableElement re) {
-		super("RedefineAttribute", "Redefine Attribute", null, null);
-		this.clazz = clazz;
-		this.re = re;
+		this(clazz, re, false, DEFAULT_NAME);
 	}
 	
-	@Override
-	public void actionPerformed(java.awt.event.ActionEvent e) {
-		if (((RedefinableElement) re).isLeaf()) {
+	public RedefineAttributeAction(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final String name) {
+		super(name, name, null, null);
+		this.clazz = clazz;
+		this.re = re;
+		this.createSpecializedType = createSpecializedType;
+		this.name = name;
+	}
+	
+	public static void redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final boolean doLog) {
+		if (re.isLeaf() && doLog) {
 			Application.getInstance().getGUILog().log(re.getQualifiedName() + " is a leaf. Cannot redefine further.");
 		}
 		
@@ -68,13 +47,32 @@ public class RedefineAttributeAction extends MDAction {
 			}
 		}
 		if (redefinedElement == null) {
-			SessionManager.getInstance().createSession("redefine attribute");
 			redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(re, clazz);
+			if (redefinedElement instanceof Namespace) {
+				((Namespace) redefinedElement).getOwnedMember().clear();
+			}
 			redefinedElement.getRedefinedElement().add((RedefinableElement) re);
-			SessionManager.getInstance().closeSession();
+			if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {
+				CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true);
+			}
 		}
-		else {
+		else if (doLog) {
 			Application.getInstance().getGUILog().log(re.getQualifiedName() + " has already been redefined in " + clazz.getQualifiedName() + ".");
 		}
+	}
+
+	@Override
+	public void run() {
+		redefineAttribute(clazz, re, createSpecializedType, true);
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public String getSessionName() {
+		return "redefine attribute";
 	}
 }

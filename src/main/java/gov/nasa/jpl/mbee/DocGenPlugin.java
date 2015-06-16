@@ -94,6 +94,7 @@ public class DocGenPlugin extends Plugin {
         
         SRConfigurator srconfig = new SRConfigurator();
         acm.addContainmentBrowserContextConfigurator(srconfig);
+        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srconfig);
 
         getOclPlugin().init();
         getVcPlugin().init();
