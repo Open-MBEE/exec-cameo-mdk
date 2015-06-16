@@ -14,7 +14,6 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
-import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
@@ -22,11 +21,14 @@ import com.nomagic.magicdraw.ui.dialogs.selection.TypeFilter;
 import com.nomagic.magicdraw.ui.dialogs.selection.TypeFilterImpl;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 
 public class DespecializeAction extends SRAction {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public static final String actionid = "Depecialize";
 	public List<Classifier> classifiers;
 	
@@ -43,7 +45,6 @@ public class DespecializeAction extends SRAction {
     public void actionPerformed(ActionEvent e) {
 		final List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
 		types.add(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class);
-		//types.add((java.lang.Class<?>) Application.getInstance().getProject().getElementsFactory().getClassClass().getClass());
 		
 		final Set<Classifier> elements = new HashSet<Classifier>();
 		for (final Classifier c : classifiers) {

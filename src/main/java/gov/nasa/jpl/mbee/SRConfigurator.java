@@ -55,7 +55,10 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 >>>>>>> b748eb4... reasons systemer wip
     @Override
     public int getPriority() {
+<<<<<<< HEAD
         // TODO Auto-generated method stub
+=======
+>>>>>>> 55457c7... Housekeeping
         return 0; //medium
     }
 

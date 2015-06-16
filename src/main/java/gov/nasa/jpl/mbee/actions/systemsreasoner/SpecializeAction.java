@@ -24,6 +24,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 
 public class SpecializeAction extends SRAction {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public static final String actionid = "Specialize";
 <<<<<<< HEAD
 	public Element element;
@@ -69,7 +73,6 @@ public class SpecializeAction extends SRAction {
     public void actionPerformed(ActionEvent e) {
 		final List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
 		types.add(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class);
-		//types.add((java.lang.Class<?>) Application.getInstance().getProject().getElementsFactory().getClassClass().getClass());
 		
 		final Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
 		final ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
