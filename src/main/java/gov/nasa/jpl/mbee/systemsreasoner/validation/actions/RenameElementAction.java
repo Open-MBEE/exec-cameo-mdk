@@ -1,10 +1,9 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
-public class RenameElementAction extends MDAction {
+public class RenameElementAction extends GenericRuleViolationAction {
 	
 	/**
 	 * 
@@ -12,17 +11,27 @@ public class RenameElementAction extends MDAction {
 	private static final long serialVersionUID = 1L;
 	
 	private NamedElement source, target;
+	private String name;
 
-	public RenameElementAction(final NamedElement source, final NamedElement target, final String title) {
-		super(title, title, null, null);
+	public RenameElementAction(final NamedElement source, final NamedElement target, final String name) {
+		super(name, name, null, null);
 		this.source = source;
 		this.target = target;
+		this.name = name;
 	}
-	
+
 	@Override
-	public void actionPerformed(java.awt.event.ActionEvent e) {
-		SessionManager.getInstance().createSession("rename element");
+	public void run() {
 		target.setName(source.getName());
-		SessionManager.getInstance().closeSession();
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public String getSessionName() {
+		return "rename element";
 	}
 }

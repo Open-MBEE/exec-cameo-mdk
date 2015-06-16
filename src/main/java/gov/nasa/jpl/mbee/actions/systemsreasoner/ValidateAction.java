@@ -2,7 +2,7 @@ package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.SRValidateValidationSuite;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.SRValidationSuite;
 
 import java.awt.event.ActionEvent;
 import java.util.List;
@@ -30,7 +30,7 @@ public class ValidateAction extends SRAction {
 
 	@Override
     public void actionPerformed(ActionEvent e) {
-		final SRValidateValidationSuite svs = new SRValidateValidationSuite(classes);
+		final SRValidationSuite svs = new SRValidationSuite(classes);
 		svs.run();
 		Utils.displayValidationWindow(svs, "Systems Reasoner Validation");
 		/*for (final Generalization g : clazz.getGeneralization()) {

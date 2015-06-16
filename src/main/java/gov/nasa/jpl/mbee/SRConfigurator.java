@@ -1,8 +1,8 @@
 package gov.nasa.jpl.mbee;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CopyAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecializeAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
@@ -14,21 +14,22 @@ import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsGroups;
 import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
+import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class SRConfigurator implements BrowserContextAMConfigurator {
+public class SRConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 	
 	ValidateAction validateAction = null;
 	SpecializeAction specAction = null;
 	DespecializeAction despecAction = null;
-	CopyAction copyAction = null;
+	//CopyAction copyAction = null;
 	CreateInstanceAction instAction = null;
 
     @Override
@@ -39,31 +40,62 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
 
     @Override
     public void configure(ActionsManager manager, Tree tree) {
-    	
+    	final List<Element> elements = new ArrayList<Element>();
+    	for (final Node n : tree.getSelectedNodes()) {
+    		if (n.getUserObject() instanceof Element) {
+    			elements.add((Element) n.getUserObject());
+    		}
+    	}
+    	configure(manager, elements);
+    }
+    
+	@Override
+	public void configure(ActionsManager manager, DiagramPresentationElement diagram,
+            PresentationElement[] selected, PresentationElement requestor) {
+		final List<Element> elements = new ArrayList<Element>();
+		for (final PresentationElement pe : selected) {
+			if (pe.getElement() != null) {
+				elements.add(pe.getElement());
+			}
+		}
+		configure(manager, elements);
+	}
+	
+	protected void configure(ActionsManager manager, List<Element> elements) {
     	// refresh the actions for every new click (or selection)
     	validateAction = null;
-    	specAction = null;
+    	specAction = null;                  
     	despecAction = null;
-    	copyAction = null;
+    	//copyAction = null;
     	instAction = null;
     	
         ActionsCategory category = (ActionsCategory)manager.getActionFor("SRMain");
         if (category == null) {
-            category = new MDActionsCategory("SRMain", "Reasons Systemer", null, ActionsGroups.APPLICATION_RELATED);
+            category = new MDActionsCategory("SRMain", "Systems Reasoner", null, ActionsGroups.APPLICATION_RELATED);
             category.setNested(true);
             //manager.addCategory(0, category);
         }
+        manager.removeCategory(category);
     	
-    	if (tree.getSelectedNodes().length > 1) {
-    		category = handleMultipleNodes(category, tree.getSelectedNodes());
-    	} else {
-    		category = handleSingleNode(category, tree.getSelectedNode());
+    	if (elements.size() > 1) {
+    		category = handleMultipleNodes(category, manager, elements);
+    	} 
+    	else if (elements.size() == 1) {
+    		category = handleSingleNode(category, manager, elements.get(0));
     	}
+    	else {
+    		return;
+    	}
+    	
+    	if (category == null) {
+    		return;
+    	}
+    	manager.addCategory(0, category);
     	
     	category.addAction(validateAction);        
     	category.addAction(specAction);
     	category.addAction(despecAction);
-    	category.addAction(copyAction);
+    	//category.addAction(copyAction);
     	category.addAction(instAction);
         
         // Clear out the category of unused actions
@@ -80,24 +112,22 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
         	mda.setEnabled(false);
         	category.addAction(mda);
         }
-    }
+	}
     
-    public ActionsCategory handleMultipleNodes(ActionsCategory category, Node[] nodes) {
-    	
+    public ActionsCategory handleMultipleNodes(ActionsCategory category, ActionsManager manager, List<Element> elements) {
     	ArrayList<Classifier> classes = new ArrayList<Classifier>();
-    	for (Node node: nodes) {
-	    	if (node != null) {
-		    	Object o = node.getUserObject();
-		    	if(o instanceof Classifier) {
-		    		classes.add((Classifier) o);
+    	for (Element element : elements) {
+	    	if (element != null) {
+		    	if (element instanceof Classifier) {
+		    		classes.add((Classifier) element);
 		    	}
 	    	}
     	}
     	
     	// if nothing in classes, disable category and return it
     	if (classes.isEmpty()) {
-    		category = disableCategory(category);
-    		return category;
+    		//category = disableCategory(category);
+    		return null;
     	}
     	
     	// otherwise, add the classes to the ValidateAction action
@@ -122,50 +152,48 @@ public class SRConfigurator implements BrowserContextAMConfigurator {
     	return category;
     }
     
-    public ActionsCategory handleSingleNode(ActionsCategory category, Node node) {
+    public ActionsCategory handleSingleNode(ActionsCategory category, ActionsManager manager, Element element) {
     	
-    	if (node == null)
-    		return category;
-    	Object o = node.getUserObject();
-    	if(!(o instanceof Element))
-    		return category;
-    	Element target = (Element) o;
+    	if (element == null)
+    		return null;
     	
         // Disable all if not editable target, add error message
-        if (!(target.isEditable())) {
+        if (!(element.isEditable())) {
         	category = disableCategory(category);
         	return category;
         }
         
-        // remove later Ivan
-        copyAction = new CopyAction(target);
+        //copyAction = new CopyAction(target);
         
     	// check target instanceof
-        if (target instanceof Activity) {
+        /*if (target instanceof Activity) {
         	Activity active = (Activity) target;
         	copyAction = new CopyAction(active);
-        }
-        if (target instanceof Class) {
-        	Class clazz = (Class) target;
-        	validateAction = new ValidateAction(clazz);
-        	specAction = new SpecializeAction(clazz);
-        	despecAction = new DespecializeAction(clazz);
-        	copyAction = new CopyAction(clazz);
-        	instAction = new CreateInstanceAction(clazz);
+        }*/
+        if (element instanceof Classifier) {
+        	Classifier classifier = (Classifier) element;
+        	validateAction = new ValidateAction(classifier);
+        	specAction = new SpecializeAction(classifier);
+        	despecAction = new DespecializeAction(classifier);
+        	//copyAction = new CopyAction(clazz);
+        	instAction = new CreateInstanceAction(classifier);
         	
-        	if (clazz.getGeneralization().isEmpty()) {
+        	if (classifier.getGeneralization().isEmpty()) {
         		despecAction.disable("No Generalizations");
         	}
         }
-        if (target instanceof Classifier) {
+        else {
+        	return null;
+        }
+        /*if (target instanceof Classifier) {
         	Classifier clazzifier = (Classifier) target;
         	copyAction = new CopyAction(clazzifier);
-        }
+        }*/
         
         return category;
     }
     
-    public ActionsCategory disableCategory(ActionsCategory category) {
+    public static ActionsCategory disableCategory(ActionsCategory category) {
     	// once all the categories are disabled, the action category will be disabled
     	// this is defined in the configure method: category.setNested(true);
     	for (NMAction s: category.getActions()) {
