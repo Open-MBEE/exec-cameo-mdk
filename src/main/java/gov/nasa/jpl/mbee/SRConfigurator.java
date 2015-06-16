@@ -34,7 +34,6 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
     @Override
     public int getPriority() {
-        // TODO Auto-generated method stuååb
         return 0; //medium
     }
 

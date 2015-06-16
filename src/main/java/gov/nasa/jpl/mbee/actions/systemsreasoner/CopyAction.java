@@ -12,6 +12,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class CopyAction extends SRAction {
 	
+	/**
+	 * Defunct. Was for testing purposes only.
+	 */
+	private static final long serialVersionUID = 1L;
 	public static final String actionid = "Copy";
 	
 	public CopyAction(Element element) {

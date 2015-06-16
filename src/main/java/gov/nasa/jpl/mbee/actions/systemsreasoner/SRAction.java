@@ -1,12 +1,15 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
 import com.nomagic.magicdraw.actions.ActionsGroups;
-import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class SRAction extends MDAction {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String actionid;
 	public Element element;
 
