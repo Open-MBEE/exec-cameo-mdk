@@ -1,17 +1,7 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
-import java.util.Collection;
-
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -44,13 +34,11 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 		if (property.getType() instanceof Classifier && !(property.getType() instanceof Property)) {
 			final Classifier special = (Classifier) CopyPasting.copyPasteElement(property.getType(), parent);
 			special.getOwnedMember().clear();
-			//System.out.println("GET TYPE: " + property.getType().getQualifiedName());
 			SpecializeClassifierAction.specialize(special, (Classifier) property.getType());
 			property.setType(special);
 			if (redefineAttributes) {
 				for (final NamedElement ne : special.getInheritedMember()) {
 					if (ne instanceof Property && ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
-						//System.out.println("NNE: " + ne.getQualifiedName());
 						RedefineAttributeAction.redefineAttribute(special, (RedefinableElement) ne, true, true);
 					}
 				}
