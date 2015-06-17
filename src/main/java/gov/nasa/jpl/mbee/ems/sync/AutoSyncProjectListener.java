@@ -335,11 +335,17 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             connection.setClientID(subscriberId);// + (new Date()).toString());
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
             // weblogic createTopic doesn't work if it already exists, unlike activemq
-            Topic topic;
+            Topic topic = null;
             try {
-                topic = (Topic) ctx.lookup( JMS_TOPIC );
+                if (ctx != null) {
+                    topic = (Topic) ctx.lookup( JMS_TOPIC );
+                }                    
             } catch (NameNotFoundException nnfe) {
-                topic = session.createTopic(JMS_TOPIC);
+                // do nothing (just means topic hasnt been created yet
+            } finally {
+                if (topic == null) {
+                    topic = session.createTopic(JMS_TOPIC);
+                }
             }
             String messageSelector = constructSelectorString(projectID, wsID);
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
