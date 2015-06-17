@@ -1,11 +1,14 @@
 package gov.nasa.jpl.mbee.generator;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Stack;
 
 import org.json.simple.JSONArray;
+import org.netbeans.lib.cvsclient.commandLine.command.add;
 
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -33,6 +36,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Relationship;
@@ -112,10 +116,10 @@ public class ViewPresentationGenerator {
         Utils.displayValidationWindow(vss, "Images Validation");
     }
     
-    private Stack<String> findRoot(Element elem, Stack<String> path) {
+    private LinkedList<Element> findRoot(Element elem, LinkedList<Element> path) {
     	// add the proper name of this element to the path, so we can use it later
     	// when we are building our package structure
-    	path.push(((NamedElement)elem).getName() + " Presentation Elements");
+    	path.add(((NamedElement)elem));
     	for (Relationship r: elem.get_relationshipOfRelatedElement()) {
     		if (r instanceof Association) {
     			// Associations have owned ends, which tell you which element owns which other element
@@ -141,20 +145,13 @@ public class ViewPresentationGenerator {
     private void viewInstanceBuilder(Map<Element, List<PresentationElement>> view2pe) {
     	// find the doc path
     	for (Element v: view2pe.keySet()) {
-    		Stack<String> docPath = findRoot(v, new Stack<String>());
-    		System.out.println("path:\t" + docPath);
+    		LinkedList<Element> docPath = findRoot(v, new LinkedList<Element>());
+    		handleViewOrSection(v, null, view2pe.get(v), docPath);
     	}
-        for (Element v: view2pe.keySet()) {
-            handleViewOrSection(v, null, view2pe.get(v));
-        }
     }
     
-    private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {
-    	Package owner = getFolder(view);
-    	handleViewOrSection(view, section, pes, owner);
-    }
-    
-    private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes, Package owner) {
+    private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes, LinkedList<Element> path) {
+    	Package owner = getFolder(view, path);
         List<InstanceValue> list = new ArrayList<InstanceValue>();
         for (PresentationElement pe: pes) {
             if (pe.isManual()) {
@@ -204,7 +201,7 @@ public class ViewPresentationGenerator {
             iv.setInstance(is);
             list.add(iv);
             if (pe.getType() == PEType.SECTION) {
-                handleViewOrSection(view, is, pe.getChildren());
+                handleViewOrSection(view, is, pe.getChildren(), path);
             }
         }
         if (section != null) {
@@ -231,24 +228,61 @@ public class ViewPresentationGenerator {
         return c;
     }
     
-    private Package getFolder(Element view) {
+    private Package getFolder(Element view, LinkedList<Element> path) {
+    	// find the rootDoc
+    	Element rootDoc = path.peekLast();
+    	Package viewInst = getViewInstancesPackage(rootDoc);
+    	Package folder = getFolderPath(path, viewInst);
+    	
+    	//build dependencies here
+    	Dependency d = ef.createDependencyInstance();
         List<Element> results = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, presentsS, 1, false, 1);
-        if (!results.isEmpty() && results.get(0) instanceof Package) {
-        	return (Package)results.get(0);
-        }
-        Element result = view.getOwner();
-        while(!(result instanceof Package)) {
-            result = result.getOwner();
-        }
-        Package p = ef.createPackageInstance();
-        p.setOwner(result);
-        p.setName(((NamedElement)view).getName() + " Presentation Elements");
-        Dependency d = ef.createDependencyInstance();
-        d.setOwner(result);
-        ModelHelper.setSupplierElement(d, p);
+        if (!results.isEmpty() && results.get(0) instanceof Package)
+            return (Package)results.get(0);
+        d.setOwner(folder);
+        ModelHelper.setSupplierElement(d, folder);
         ModelHelper.setClientElement(d, view);
         StereotypesHelper.addStereotype(d, presentsS);
-        return p;
-
+    	return folder;
     }
+    
+    private Package getFolderPath(LinkedList<Element> path, Package holder) {
+    	Element current = path.removeLast();
+    	String currentName = ((NamedElement)current).getName();
+    	ArrayList<Package> results = new ArrayList<Package>();
+    	for (NamedElement child: holder.getMember()) {
+    		if (child instanceof Package && child.getName().equals(currentName)) {
+    			results.add((Package)child);
+    		}
+    	}
+    	Package folder = ef.createPackageInstance();
+    	if (!results.isEmpty()) {
+    		folder = results.get(0);
+    	} else {
+        	folder.setName(currentName);
+        	folder.setOwner(holder);
+    	}
+    	if (path.isEmpty()) {
+    		return folder;
+    	} else {
+    		return getFolderPath(path, folder);
+    	}
+    }
+    
+    private Package getViewInstancesPackage(Element rootDoc) {
+		// check to see if there is an equivalent View Instance folder on rootDoc level
+		Package rootPackage = (Package)rootDoc.getOwner();
+		Package viewInst = ef.createPackageInstance();
+		for (NamedElement child: rootPackage.getMember()) {
+			if (child instanceof Package && child.getName().equals("View Instances")) {
+				return (Package)child;
+			}
+		}
+		viewInst = ef.createPackageInstance();
+		viewInst.setName("View Instances");
+		viewInst.setOwner(rootPackage);
+		return viewInst;
+    }
+
+    
 }
