@@ -51,6 +51,7 @@ import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
+import gov.nasa.jpl.mbee.generator.CleanViewHierarchyAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -269,11 +270,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 */
                 ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
                 NMAction action = manager.getActionFor(GenerateViewPresentationAction.actionid);
-                if (action == null)
+                if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(e, false));
+                }
                 action = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
-                if (action == null)
+                if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(e, true));
+                }
+                viewInstances.addAction(new CleanViewHierarchyAction(e));
             }
             else {
             	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable

@@ -422,7 +422,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (i != null && !i.isEditable())
             notEditable.add(i);
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElement ipe = new PresentationElement(i, v.getObject(), PEType.TABLE, currentView.peek(), table.getTitle(), parentSec, null);
+        PresentationElement ipe = new PresentationElement(i, v.getObject(), PEType.TABLE, currentView.peek(), table.getTitle() != null ? table.getTitle() : "table", parentSec, null);
         newpe.peek().add(ipe);
     }
       
@@ -538,7 +538,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             notEditable.add(sec);
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         List<PresentationElement> secChildren = new ArrayList<PresentationElement>();
-        PresentationElement pe = new PresentationElement(sec, newSection, PEType.SECTION, currentView.peek(), section.getTitle(), parentSec, secChildren);
+        PresentationElement pe = new PresentationElement(sec, newSection, PEType.SECTION, currentView.peek(), section.getTitle() != null ? section.getTitle() : "section", parentSec, secChildren);
         pe.setLoopElement(loopElement);
         newpe.peek().add(pe);
         currentSection.push(pe);

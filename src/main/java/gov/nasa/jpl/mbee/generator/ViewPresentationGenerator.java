@@ -116,7 +116,7 @@ public class ViewPresentationGenerator {
         Utils.displayValidationWindow(vss, "Images Validation");
     }
     
-    private LinkedList<Element> findRoot(Element elem, LinkedList<Element> path) {
+    private LinkedList<Element> findElementPath(Element elem, LinkedList<Element> path) {
     	// add the proper name of this element to the path, so we can use it later
     	// when we are building our package structure
     	path.add(((NamedElement)elem));
@@ -133,7 +133,7 @@ public class ViewPresentationGenerator {
     					// this is usually always true
     					if (prop.getType() instanceof Element) {
     						// go find the root of the root you just found
-    						path = findRoot(prop.getType(), path);
+    						path = findElementPath(prop.getType(), path);
     					}
     				}
     			}
@@ -143,14 +143,13 @@ public class ViewPresentationGenerator {
     }
     
     private void viewInstanceBuilder(Map<Element, List<PresentationElement>> view2pe) {
-    	// find the doc path
     	for (Element v: view2pe.keySet()) {
-    		LinkedList<Element> docPath = findRoot(v, new LinkedList<Element>());
-    		handleViewOrSection(v, null, view2pe.get(v), docPath);
+    		handleViewOrSection(v, null, view2pe.get(v));
     	}
     }
     
-    private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes, LinkedList<Element> path) {
+    private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {
+    	LinkedList<Element> path = findElementPath(view, new LinkedList<Element>());
     	Package owner = getFolder(view, path);
         List<InstanceValue> list = new ArrayList<InstanceValue>();
         for (PresentationElement pe: pes) {
@@ -197,11 +196,13 @@ public class ViewPresentationGenerator {
                 is.setSpecification(ls);
             }
             is.setName(pe.getName());
+            if (is.getName().equals(null))
+            	is.setName("<>");
             InstanceValue iv = ef.createInstanceValueInstance();
             iv.setInstance(is);
             list.add(iv);
             if (pe.getType() == PEType.SECTION) {
-                handleViewOrSection(view, is, pe.getChildren(), path);
+                handleViewOrSection(view, is, pe.getChildren());
             }
         }
         if (section != null) {
