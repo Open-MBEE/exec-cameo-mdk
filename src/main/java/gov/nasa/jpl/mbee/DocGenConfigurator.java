@@ -47,7 +47,6 @@ import gov.nasa.jpl.mbee.actions.ems.ExportAllDocuments;
 import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
-import gov.nasa.jpl.mbee.actions.ems.PurgeHistory;
 import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
@@ -199,7 +198,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (manager.getActionFor(ExportAllDocuments.actionid) == null)
                     models.addAction(new ExportAllDocuments(e));
             }
-            models.addAction(new PurgeHistory(e, "Print Documentation"));
         }
         
         // add menus in reverse order since they are inserted at top
