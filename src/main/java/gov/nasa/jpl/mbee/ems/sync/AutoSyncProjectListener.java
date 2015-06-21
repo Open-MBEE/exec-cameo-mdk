@@ -639,10 +639,46 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public void saveLocalUpdates(Project project) {
         AutoSyncCommitListener listener = getCommitListener(project);
         JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
-        Set<String> added = new HashSet<String>();
-        Set<String> changed = new HashSet<String>();
-        Set<String> deleted = new HashSet<String>();
+        
+        Set<String> added = new HashSet<String>(), changed = new HashSet<String>(), deleted = new HashSet<String>();
+        JSONArray previousAdded = new JSONArray(), previousChanged = new JSONArray(), previousDeleted = new JSONArray();
+        final Set<String> newAdded = listener.getAddedElements().keySet(), newChanged = listener.getChangedElements().keySet(), newDeleted = listener.getDeletedElements().keySet();
+        
         if (previousUpdates != null) {
+        	if (previousUpdates.containsKey("added"))
+        		previousAdded = (JSONArray) previousUpdates.get("added");
+        	if (previousUpdates.containsKey("changed"))
+        		previousChanged = (JSONArray) previousUpdates.get("changed");
+        	if (previousUpdates.containsKey("deleted"))
+        			previousDeleted = (JSONArray) previousUpdates.get("deleted");
+        }
+        
+        // fix to prevent the new update block from having all three (deleted, added, changed)
+        // this happens when the user creates, saves, deletes, and saves
+        // previously resulted in an ID existing in deleted, added, AND changed
+        for (final String s : newDeleted) {
+        	previousAdded.remove(s);
+        	previousChanged.remove(s);
+        }
+        
+        // fix for when a user deletes an element, saves, then undoes the deletion (resulting in an addition), then saves
+        // no modification on changed as we cannot conclusively deduce its accuracy based on the information available - taking conservative approach
+        // previously resulted in an ID existing in deleted, added, AND changed
+        for (final String s : newAdded) {
+        	previousDeleted.remove(s);
+        }
+        
+        added.addAll(previousAdded);
+        changed.addAll(previousChanged);
+        deleted.addAll(previousDeleted);
+        
+        added.addAll(newAdded);
+        changed.addAll(newChanged);
+        deleted.addAll(newDeleted);
+        
+        //Application.getInstance().getGUILog().log(newAdded.size() + " : " + newChanged.size() + " : " + newDeleted.size());
+        
+        /*if (previousUpdates != null) {
             added.addAll((JSONArray)previousUpdates.get("added"));
             changed.addAll((JSONArray)previousUpdates.get("changed"));
             deleted.addAll((JSONArray)previousUpdates.get("deleted"));
@@ -650,21 +686,39 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         added.addAll(listener.getAddedElements().keySet());
         changed.addAll(listener.getChangedElements().keySet());
         deleted.addAll(listener.getDeletedElements().keySet());
+        
+        for (final String s : deleted) {
+        	System.out.println("Removed changed: " + Boolean.toString(changed.remove(s)));
+        	System.out.println("Removed added: " + Boolean.toString(added.remove(s)));
+        }*/
+        
         JSONObject notSaved = new JSONObject();
+        
         JSONArray addeda = new JSONArray();
         JSONArray updateda = new JSONArray();
         JSONArray deleteda = new JSONArray();
+        
         addeda.addAll(added);
         updateda.addAll(changed);
         deleteda.addAll(deleted);
+        
         notSaved.put("added", addeda);
         notSaved.put("changed", updateda);
         notSaved.put("deleted", deleteda);
+        
         SessionManager sm = SessionManager.getInstance();
         sm.createSession("mms delayed sync change logs");
         try {
             setUpdatesOrFailed(project, notSaved, "update");
             sm.closeSession();
+            
+            // clear to prevent memory usage from going to infinity (and beyond); should solve "memory leak"
+            // never gets here upon exception
+            // prevents (or at least minimized) duplication of elements existing in memory and in the persistent history
+            // checked ManualSyncRunner to ensure that this should not cause an issue as it checks for both memory and historical changes
+            listener.getAddedElements().clear();
+            listener.getChangedElements().clear();
+            listener.getDeletedElements().clear();
         } catch (Exception e) {
             log.error("", e);
             sm.cancelSession();
