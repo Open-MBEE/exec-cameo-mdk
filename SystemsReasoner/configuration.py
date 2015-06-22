@@ -119,9 +119,9 @@ class BrowserContextConfigurator(BrowserContextAMConfigurator):
     def getPriority(self):
         return AMConfigurator.LOW_PRIORITY
 
-ActionsConfiguratorsManager.getInstance().addContainmentBrowserContextConfigurator(BrowserContextConfigurator())
-ActionsConfiguratorsManager.getInstance().addBaseDiagramContextConfigurator("SysML Block Definition Diagram", DiagramConfigurator())
-ActionsConfiguratorsManager.getInstance().addBaseDiagramContextConfigurator("SysML Internal Block Diagram", DiagramConfigurator())
+#ActionsConfiguratorsManager.getInstance().addContainmentBrowserContextConfigurator(BrowserContextConfigurator())
+#ActionsConfiguratorsManager.getInstance().addBaseDiagramContextConfigurator("SysML Block Definition Diagram", DiagramConfigurator())
+#ActionsConfiguratorsManager.getInstance().addBaseDiagramContextConfigurator("SysML Internal Block Diagram", DiagramConfigurator())
 
-ActionsConfiguratorsManager.getInstance().addBaseDiagramContextConfigurator("Class Diagram", DiagramConfigurator())
+#ActionsConfiguratorsManager.getInstance().addBaseDiagramContextConfigurator("Class Diagram", DiagramConfigurator())
 
