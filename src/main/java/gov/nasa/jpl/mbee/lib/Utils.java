@@ -2338,6 +2338,12 @@ public class Utils {
 
         return results;
     }
+    
+    public static void displayValidationWindow(ValidationSuite vs, String title) {
+    	final List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    	vss.add(vs);
+    	displayValidationWindow(vss, title);
+    }
 
     public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
         List<RuleViolationResult> results = getRuleViolations(vss);
