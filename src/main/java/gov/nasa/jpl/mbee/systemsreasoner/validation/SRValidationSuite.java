@@ -97,6 +97,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 						}
 			            v.addAction(new RedefineAttributeAction(classifier, redefinableElement));
 			            if (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null) {
+			            	// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
+			            	// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
 			            	v.addAction(new RedefineAttributeAction(classifier, redefinableElement, true, "Redefine Attribute & Specialize Types Recursively"));
 			            }
 			            attributeMissingRule.addViolation(v);

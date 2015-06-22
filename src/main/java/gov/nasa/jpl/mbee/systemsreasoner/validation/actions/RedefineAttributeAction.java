@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
+
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;

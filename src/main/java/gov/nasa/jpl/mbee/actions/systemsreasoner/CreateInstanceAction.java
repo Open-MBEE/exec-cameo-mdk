@@ -46,18 +46,31 @@ public class CreateInstanceAction extends SRAction {
 		
 		final SelectElementTypes set = new SelectElementTypes(null, types, null, null);
 		final SelectElementInfo sei = new SelectElementInfo(true, false, Application.getInstance().getProject().getModel().getOwner(), true);
-		ElementSelectionDlgFactory.initSingle(dlg, set, sei, new ArrayList<Object>());
+		ElementSelectionDlgFactory.initSingle(dlg, set, sei, classifier.getOwner());
 		dlg.setSelectionMode(SelectionMode.SINGLE_MODE);
 		if (dlg != null) {
 			dlg.setVisible(true);
 			if (dlg.isOkClicked() && dlg.getSelectedElement() != null && dlg.getSelectedElement() instanceof Namespace) {
 				SessionManager.getInstance().createSession("create instance");
 				final Classifier instance  = (Classifier) CopyPasting.copyPasteElement(classifier, (Namespace) dlg.getSelectedElement(), true);
-				if (instance instanceof Namespace) {
-					((Namespace) instance).getOwnedMember().clear();
-					Utils.createGeneralization(classifier, instance);
-				}
+				Utils.createGeneralization(classifier, instance);
 				SessionManager.getInstance().closeSession();
+				
+				// for some reason only half the members were showing up as members...
+				// however spec view is just fine
+				// that being said with the new name collision code there is no need to delete all members in case the user wants
+				// to keep some stuff in there (comments, notes, etc.) for all specialized blocks
+				// user can just use name collision to rejoin
+				
+				/*SessionManager.getInstance().createSession("deleting members");
+				if (instance instanceof Namespace) {
+					for (final NamedElement ne : ((Namespace) instance).getOwnedMember()) {
+						Application.getInstance().getGUILog().log(ne.getQualifiedName());
+						ne.refDelete();
+					}
+				}
+				SessionManager.getInstance().closeSession();*/
+				
 				new ValidateAction(instance).actionPerformed(null);
 			}
 		}
