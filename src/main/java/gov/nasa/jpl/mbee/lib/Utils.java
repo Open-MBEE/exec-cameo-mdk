@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee.lib;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.lib.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
@@ -45,9 +46,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationWindowRun;
-import gov.nasa.jpl.ocl.GetCallOperation;
-import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
-import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.Color;
 import java.awt.Frame;
@@ -292,13 +290,11 @@ public class Utils {
     public static List<Element> filterElementsByExpression(Collection<Element> elements, String query,
             boolean include, boolean iterate) {
         List<Element> res = new ArrayList<Element>();
-        OclEvaluator evaluator = null;
         if (!iterate) {
             Object o = null;
             DocumentValidator dv = CollectFilterParser.getValidator();
             o = DocumentValidator.evaluate(query, elements, dv, true);
-            evaluator = OclEvaluator.instance;
-            if (evaluator != null && ( evaluator.isValid() || !Utils2.isNullOrEmpty( o ) ) ) {
+            if (!Utils2.isNullOrEmpty( o )) {
                 // try {
                 // o = OclEvaluator.evaluateQuery(e, query);
                 Boolean istrue = isTrue(o, false);
@@ -313,8 +309,7 @@ public class Utils {
                 Object o = null;
                 DocumentValidator dv = CollectFilterParser.getValidator();
                 o = DocumentValidator.evaluate(query, e, dv, true);
-                evaluator = OclEvaluator.instance;
-                if (evaluator != null && ( evaluator.isValid() || !Utils2.isNullOrEmpty( o ) ) ) {
+                if (!Utils2.isNullOrEmpty( o )) {
                     // try {
                     // o = OclEvaluator.evaluateQuery(e, query);
                     Boolean istrue = isTrue(o, false);
@@ -646,10 +641,7 @@ public class Utils {
         Object o = null;
         DocumentValidator dv = CollectFilterParser.getValidator();
         o = DocumentValidator.evaluate(query, element, dv, true);
-        OclEvaluator evaluator = OclEvaluator.instance;
-        // try {
-        // o = OclEvaluator.evaluateQuery(element, query);
-        if ( evaluator.isValid() || !Utils2.isNullOrEmpty( o ) ) {
+        if ( !Utils2.isNullOrEmpty( o ) ) {
             res.addAll(getListOfType(o, Element.class));
         }
         // } catch ( ParserException e ) {

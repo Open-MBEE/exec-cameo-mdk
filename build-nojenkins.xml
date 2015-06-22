@@ -1,0 +1,212 @@
+<project name="MDK" default="dist" basedir=".">
+  <description>
+     build file for docgen plugin.
+  </description>
+
+  <property environment="env"/>
+  <loadproperties srcFile="build.properties"/>
+
+  <!-- set global properties for this build -->
+  <!-- <property name="md" location="${mdpath}"/> -->
+  <!-- Conditional properties to load based on whether or not this is being called from jenkins build -->
+  <condition property="md" value="${md.install.dir}" else="/Applications/MagicDraw UML 17.0.5">
+	<isset property="plugin.dir"/>
+  </condition>
+
+  <condition property="dist" value="artifacts" else="dist">
+    <isset property="plugin.dir"/>
+  </condition>
+	
+  <condition property="build.version.internal" value="${env.BUILD_NUMBER}" else="${release.version.internal}">
+    <isset property="env.BUILD_NUMBER"/>
+  </condition>
+	
+  <condition property="zip.file" value="MD${release.version}-${plugin.archive}-v${build.version.internal}.zip" 
+	    else="docgen-${release.version}.zip">
+	    <isset property="plugin.dir"/>
+  </condition>
+  <property name="src" location="src"/>
+  <property name="src.java" location="${src}/main/java"/>
+  <property name="src.test.java" location="${src}/test"/>
+  <property name="src.plugin.xml" location="${src}/main/resources/plugin.xml"/>
+  <property name="src.descriptor" location="data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
+  <property name="src.profiles" location="profiles"/>
+  <property name="src.diagrams" location="data/diagrams"/>
+  <property name="src.upload" location="upload.sh"/>
+  <property name="src.userscript" location="DocGenUserScripts"/>
+  <property name="build" location="build"/>
+  <property name="build.plugin.classes" location="${build}/plugin/classes"/>
+  <condition property="build.zipfile" value="root" else="${build}/zipfile">
+    <isset property="plugin.dir"/>
+  </condition>
+  <property name="build.plugin.jar" location="${build.zipfile}/plugins/gov.nasa.jpl.mbee.docgen/DocGen-plugin.jar"/>
+  <property name="build.test.classes" value="${build}/test/classes" />
+  <property name="build.test.junit.data" value="${build}/test/junit/data" />
+  <property name="build.test.junit.report" value="${build}/test/junit/report" />
+
+  <path id="mdclasspath">
+    <fileset dir="${md}/lib" includes="**/*.jar">
+      
+    </fileset>
+  
+    <fileset dir="${md}/plugins/com.nomagic.magicdraw.dependencymatrix" includes="**/*.jar">
+      
+    </fileset>
+    <fileset dir="${md}/plugins/com.nomagic.magicdraw.automaton" includes="**/*.jar">
+     
+    </fileset>
+    <fileset dir="${md}/plugins/com.nomagic.magicdraw.diagramtable" includes="**/*.jar">
+         
+        </fileset>
+  	<fileset dir="${md}/plugins/com.nomagic.magicdraw.qvt" includes="**/*.jar">
+  	  	          
+  	  	        </fileset>
+    <fileset dir="lib" includes="**/*.jar">
+       
+    </fileset>
+    <pathelement path="${build.plugin.classes}"/>
+  </path>
+
+  <path id="testclasspath">
+    <fileset dir="lib/test">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${md}/lib">
+      <include name="*.jar"/>
+      <exclude name="md_commontw*.jar"/>
+    </fileset>
+  </path>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp><format property="release.date" pattern="yyyy-MM-dd"/></tstamp>
+    <property file="build.properties"/>
+    <mkdir dir="${build.zipfile}"/>
+  </target>
+
+  <target name="compile" depends="init"
+    description="compile the java files">
+    
+    <mkdir dir="${build.plugin.classes}"/>
+        <javac
+            verbose="false"
+            debug="on"
+            deprecation="on"
+            srcdir="${src.java}"
+            destdir="${build.plugin.classes}"
+            includeantruntime="false">
+            <classpath refid="mdclasspath"/>
+        </javac>
+    
+  </target>
+
+  <target name="test.compile"
+          description="Compiles the java unit test code"
+          unless="skiptests">
+    <mkdir dir="${build.test.classes}"/>
+    <javac srcdir="${src.test.java}" destdir="${build.test.classes}"
+           debug="true" deprecation="true" includeantruntime="false">
+      <classpath>
+        <pathelement path="${build.plugin.classes}" />
+        <pathelement path="${build.extension.classes}" />
+        <path refid="mdclasspath"/>
+        <path refid="testclasspath" />
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="test.unit"
+          depends="test.compile"
+          description="Run the java unit tests"
+          unless="skiptests">
+    <mkdir dir="${build.test.junit.data}"/>
+    <mkdir dir="${build.test.junit.report}"/>
+    <junit printsummary="true"
+           showoutput="true"
+           haltonfailure="false"
+           errorProperty="test.failed"
+           failureProperty="test.failed"
+           fork="true"
+           dir="${basedir}">
+      <classpath>
+        <pathelement path="${build.plugin.classes}" />
+        <pathelement path="${build.test.classes}" />
+        <path refid="mdclasspath"/>
+        <path refid="testclasspath" />
+      </classpath>        
+      <formatter type="xml"/>
+      <formatter type="plain"/>
+      <batchtest todir="${build.test.junit.data}">
+        <fileset dir="${build.test.classes}" includes="gov/nasa/jpl/**/*Test.class"/>
+      </batchtest>
+    </junit>
+    <junitreport todir="${build.test.junit.report}">
+      <fileset dir="${build.test.junit.data}">
+        <include name="TEST-*.xml"/>
+      </fileset>
+      <report format="frames" todir="${build.test.junit.report}"/>
+    </junitreport>
+    <echo message="Test report: ${build.test.junit.report}/index.html"/>
+    <fail if="test.failed" message="Java unit tests failed."/>
+    <echo message="Java unit tests passed"/>
+  </target>
+
+  <target name="jar" depends="compile">
+    <jar destfile="${build.plugin.jar}" basedir="${build.plugin.classes}"/>
+  </target>
+
+  <target name="dist" depends="jar">
+         
+    <copy todir="${build.zipfile}/plugins/gov.nasa.jpl.mbee.docgen/lib">
+        <fileset dir="lib" excludes="test/**"/>
+    </copy>
+
+    <copy todir="${build.zipfile}/data/defaults/data/diagrams">
+        <fileset dir="${src.diagrams}"/>
+    </copy>
+  	
+    <copy todir="${build.zipfile}/DocGenUserScripts">
+        <fileset dir="${src.userscript}"/>
+    </copy>
+ 
+  	<copy todir="${build.zipfile}/profiles">
+  	        <fileset dir="${src.profiles}"/>
+  	</copy>
+    
+  	<copy todir="${build.zipfile}/plugins/com.nomagic.magicdraw.jpython/scripts/SystemsReasoner">
+  	      <fileset dir="SystemsReasoner"/>
+  	</copy>
+  	
+  	<filter token="release.date" value="${release.date}"/>
+  	<filter token="release.version" value="${release.version}"/>
+  	<filter token="release.version.internal" value="${build.version.internal}"/>
+  	
+  	<copy todir="${build.zipfile}/plugins/gov.nasa.jpl.mbee.docgen" file="${src.plugin.xml}" filtering="true" overwrite="true"/>
+  	<copy todir="${build.zipfile}/data/resourcemanager" file="${src.descriptor}" filtering="true"/>
+  	
+  	<exec executable="${python-exe}">
+  	      <arg value="resource_descriptor_generator.py"/>
+  	</exec>
+  	
+    <copy todir="${build.zipfile}" file="${src.upload}"/>
+    <!-- don't use a filtersfile, because we use the tstamp task to set release.date -->
+    
+    <copy todir="${build.zipfile}/data/resourcemanager" file="${src.descriptor}" filtering="true" overwrite="true"/>
+   
+    <zip destfile="${dist}/${zip.file}" basedir="${build.zipfile}"/>
+  </target>
+    
+    <target name="copyplugin" depends="jar">
+        <copy todir="${md}/plugins/gov.nasa.jpl.mbee.docgen" file="${build.plugin.jar}"/>
+  		<copy todir="${md}/plugins/gov.nasa.jpl.mbee.docgen" file="${src.plugin.xml}"/>
+    	<copy todir="${md}/plugins/gov.nasa.jpl.mbee.docgen/lib">
+    	  	      <fileset dir="lib"/>
+    	  	</copy>
+    </target>
+    
+  <target name="clean">
+    <delete dir="${dist}"/>
+    <delete dir="${build}"/>
+  </target>
+
+</project>

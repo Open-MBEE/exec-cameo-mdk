@@ -43,7 +43,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -240,8 +239,7 @@ public class TableStructure extends Table {
                     if (expr != null) {
                         Object result = DocumentValidator
                                 .evaluate(expr, resultElements, getValidator(), true);
-                        OclEvaluator evaluator = OclEvaluator.instance;
-                        if (evaluator.isValid() && result != null) {
+                        if (result != null) {
                             Debug.outln( "valid result = " + result
                                          + " for expression " + expr + " on "
                                          + MoreToString.Helper.toLongString( resultElements ) );
@@ -291,8 +289,7 @@ public class TableStructure extends Table {
                                 continue;
                             }
                             Object result = DocumentValidator.evaluate(expr, re, getValidator(), true);
-                            OclEvaluator evaluator = OclEvaluator.instance;
-                            if (evaluator.isValid() || result != null) {
+                            if (result != null) {
                                 Debug.outln( "valid result = " + result
                                              + " for expression " + expr + " on "
                                              + MoreToString.Helper.toLongString( re ) );

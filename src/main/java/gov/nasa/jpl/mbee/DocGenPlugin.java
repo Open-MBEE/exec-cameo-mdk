@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
 import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
@@ -54,7 +53,6 @@ public class DocGenPlugin extends Plugin {
     // Variables for running embedded web server for exposing services
     private DocGenEmbeddedServer        embeddedServer;
     private boolean                     runEmbeddedServer     = false;
-    protected OclEvaluatorPlugin        oclPlugin             = null;
     protected ValidateConstraintsPlugin vcPlugin              = null;
     protected AutoSyncPlugin            autoSyncPlugin        = null;
     public static ClassLoader           extensionsClassloader = null;
@@ -92,7 +90,6 @@ public class DocGenPlugin extends Plugin {
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
 
-        getOclPlugin().init();
         getVcPlugin().init();
         getAutoSyncPlugin().init();
         (new Thread(new OutputSyncRunner())).start();
@@ -109,23 +106,6 @@ public class DocGenPlugin extends Plugin {
         }
         
         loadExtensionJars(); // people can actaully just create a new plugin and
-        // let magicdraw's classloader load it?
-        try {
-            QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
-            QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
-        } catch (Exception ex) {
-            //?
-        }
-        
-        // QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore",
-        // "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
-    }
-
-    public OclEvaluatorPlugin getOclPlugin() {
-        if (oclPlugin == null) {
-            oclPlugin = new OclEvaluatorPlugin();
-        }
-        return oclPlugin;
     }
 
     public ValidateConstraintsPlugin getVcPlugin() {

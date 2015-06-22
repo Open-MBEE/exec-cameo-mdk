@@ -40,7 +40,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
-import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -245,9 +244,6 @@ public class DocumentValidator {
         done = new HashSet<Behavior>();
         aef = new ActivityEdgeFactory();
         dg = new DefaultDirectedGraph<NamedElement, Element>(Element.class);
-
-        // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
 
         // List of Validation Rules
         validationui.addValidationRule(multipleFirstErrors);
@@ -763,20 +759,6 @@ public class DocumentValidator {
         if (expression == null)
             return null;
         Object result = null;
-        try {
-            result = OclEvaluator.evaluateQuery(context, expression);
-        } catch (ParserException e) {
-            if (violationIfInconsistent) {
-                String id = context instanceof Element ? ((Element)context).getID() : context.toString();
-                String errorMessage = e.getLocalizedMessage() + " for OCL query \"" + expression + "\" on "
-                        + Utils.getName(context) + (showElementIds ? "[" + id + "]" : "");
-                if (rule != null && context instanceof Element) {
-                    // need fixes to allow context be a collection
-                    addViolationIfUnique(rule, (Element)context, errorMessage, false);
-                }
-                Debug.error(violationIfInconsistent, false, errorMessage);
-            }
-        }
         return result;
     }
 
