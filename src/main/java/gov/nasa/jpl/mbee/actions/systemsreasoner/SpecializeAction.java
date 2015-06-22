@@ -1,12 +1,9 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
-<<<<<<< HEAD
-=======
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 
 import java.awt.Frame;
->>>>>>> b748eb4... reasons systemer wip
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,35 +26,6 @@ public class SpecializeAction extends SRAction {
 	 */
 	private static final long serialVersionUID = 1L;
 	public static final String actionid = "Specialize";
-<<<<<<< HEAD
-	public Element element;
-	
-<<<<<<< HEAD
-	public SpecializeAction(Element element) {
-        super(actionid, actionid, null, ActionsGroups.APPLICATION_RELATED);
-        this.element = element;
-=======
-	public SpecializeAction(Class clazz) {
-<<<<<<< HEAD
-        super(actionid);
-        this.clazz = clazz;
->>>>>>> 0f4609b... made a super class to handle the enabling and disabling
-    }
-=======
-        super(actionid, clazz);
-		this.clazz = clazz;
-	}
->>>>>>> e5c673c... Altered where element attached to Actions is stored, now in the superclass
-
-	@Override
-    public void actionPerformed(ActionEvent e) {
-		if (!(element instanceof Class)) {
-			return;
-		}
-		
-		final Class clazz = (Class) element;
-		//clazz.
-=======
 	public List<Classifier> classifiers;
 	
 	public SpecializeAction(Classifier classifier) {
@@ -76,7 +44,6 @@ public class SpecializeAction extends SRAction {
 		
 		final Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
 		final ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
->>>>>>> b748eb4... reasons systemer wip
 		
 		final SelectElementTypes set = new SelectElementTypes(types, types, null, null);
 		final SelectElementInfo sei = new SelectElementInfo(true, false, Application.getInstance().getProject().getModel().getOwner(), true);
