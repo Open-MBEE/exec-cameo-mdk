@@ -34,7 +34,6 @@ import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ConstraintValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -91,9 +90,6 @@ public class ValidateConstraints extends MDAction {
         // }
         // }
         setContext(selectedElements);
-
-        // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
 
         // ConstraintValidationRule rule = new ConstraintValidationRule();
         constraintRule.constraintType = Type.STATIC;

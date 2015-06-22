@@ -37,7 +37,6 @@ import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MdDebug;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -148,10 +147,6 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         Debug.outln("init(Project=" + paramProject + ", Constraint=" + paramConstraint + ")");
         if (constraintElement == null)
             constraintElement = paramConstraint;
-
-        // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
-
     }
 
     protected void initConstraintMaps(Project paramProject, Collection<? extends Element> paramCollection) {
@@ -284,12 +279,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         // Debug.outln( "run(Project, " + paramConstraint + " , "
         // + paramCollection + ")" );
 
-        // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
-
         initConstraintMaps(paramProject, paramCollection);
-
-        OclEvaluator.resetEnvironment();
 
         // Set< BaseElement > elements = elementToConstraintMap.keySet();
 
@@ -334,9 +324,6 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     public static void logResults(Boolean satisfied, gov.nasa.jpl.mbee.constraint.Constraint constraint) {
         if (satisfied == null) {
             String errorMsg = "";
-            OclEvaluator e = OclEvaluator.instance;
-            if (e != null)
-                errorMsg = e.errorMessage;
             MdDebug.logForce("  Not OCL parsable: " + constraint + "; " + errorMsg);
         } else if (satisfied) {
             MdDebug.logForce("            Passed: " + constraint);

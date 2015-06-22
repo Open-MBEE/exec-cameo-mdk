@@ -28,8 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.servlet;
 
-import gov.nasa.jpl.ocl.TestOcl;
-
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashSet;
@@ -146,8 +144,6 @@ public class ModelServlet extends HttpServlet {
         sb.insert(0, "<html><body>\n");
         sb.append("</body></html>\n");
 
-        // lets play with OCL
-        TestOcl.testOcl(project, rootEObject);
     }
 
     /**

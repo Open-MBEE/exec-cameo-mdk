@@ -26,64 +26,35 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.ocl;
-
-import java.util.List;
-
-import org.eclipse.emf.ecore.EClassifier;
-import org.eclipse.emf.ecore.EParameter;
+package gov.nasa.jpl.mbee.lib;
 
 /**
- * Simple interface defining what needs to be specified for a DgOperation used
- * to populate the OCL environment and evaluation environment
+ * Function pointer interface to be used by custom OCL operations (basically
+ * make anonymous class overriding callOperation method when defining methods)
+ * 
+ * Example regex implementation is:
+ * 
+ * new CallOperation() {
+ * 
+ * @Override public Object callOperation(Object source, Object[] args) { Pattern
+ *           pattern = Pattern.compile((String) args[0]); Matcher matcher =
+ *           pattern.matcher((String) source);
+ * 
+ *           return matcher.matches() ? matcher.group() : null; } }
  * 
  * @author cinyoung
  * 
  */
-public interface DgOperation extends Comparable<DgOperation> {
+public interface CallOperation {
     /**
-     * Add a parameter argument to the custom operation
-     * 
-     * @param parameter
-     */
-    public void addParameter(EParameter parameter, EClassifier type);
-
-    public void addParameter(EParameter parameter);
-
-    /**
-     * Executes the operation
+     * The implementation of this method should specify the logic for the custom
+     * logic
      * 
      * @param source
+     *            Source object that is calling the operation
      * @param args
-     * @return
+     *            Arguments to the calling operation
+     * @return Result of the callOperation
      */
     public Object callOperation(Object source, Object[] args);
-
-    /**
-     * Checks if the internal operation name matches the external name
-     * 
-     * @param operationName
-     * @return
-     */
-    public boolean checkOperationName(String operationName);
-
-    public String getAnnotationName();
-
-    public String getName();
-
-    public void setName(String name);
-
-    public List<EParameter> getParameters();
-
-    public void setAnnotationName(String annotationName);
-
-    public void setOperation(CallOperation operation);
-
-    public EClassifier getReturnType();
-
-    public void setReturnType(EClassifier classifier);
-
-    public EClassifier getCallerType();
-
-    public void setCallerType(EClassifier classifier);
 }

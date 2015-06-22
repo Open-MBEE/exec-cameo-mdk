@@ -1,61 +1,58 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <project xmlns:qvto="http://www.eclipse.org/qvt/1.0.0/Operational" name="gov.nasa.jpl.mbee.docgen" basedir=".">
 
-    <property environment="env"/>
-    
-    <import file="${md.install.dir}/data/eclipse/zip.xml"/>
+  <property environment="env"/>
+  
+  <import file="data/eclipse/zip.xml"/>
 
-    <property name="md.build.tools.dir" location="${md.install.dir}/data/eclipse/resource/SMDP-PackageB"/>
+  <tstamp>
+    <format property="now" pattern="yyyyMMdd"/>
+    <format property="date" pattern="yyyy-MM-dd"/>
+  </tstamp>
 
-    <tstamp>
-        <format property="now" pattern="yyyyMMdd"/>
-        <format property="date" pattern="yyyy-MM-dd"/>
-    </tstamp>
+  <echoproperties prefix="md"/>
+  <property name="bundle.name"            value="${md.bundle.prefix}-build${env.BUILD_NUMBER}-${now}"/>
+  
+  <property name="plugin.dir" location="${basedir}"/>
+  <property name="plugin.project" value="${ant.project.name}"/>
+  <property name="plugin.resource" value="${plugin.resources}/data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
+  <property name="plugin.archive" value="gov.nasa.jpl.mbee.docgen"/>
 
-    <import file="${md.build.tools.dir}/build.md.plugin.xml"/>
-	<echoproperties prefix="md"/>
-    <property name="bundle.name"            value="${md.bundle.prefix}-build${env.BUILD_NUMBER}-${now}"/>
-        
-    <property name="plugin.dir" location="${basedir}"/>
-    <property name="plugin.project" value="${ant.project.name}"/>
-    <property name="plugin.resource" value="${plugin.resources}/data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
-    <property name="plugin.archive" value="gov.nasa.jpl.mbee.docgen"/>
+  <target name="all" depends="all.error,all.ok,install"/>
+  
+  <target name="all.error" unless="all.precondition.md">
+    <echo message="Check the environment variables tested in the target 'all.precondition.md'"/>
+    <fail/>
+  </target>
+  
+  <target name="all.ok" if="all.precondition.md" depends="zip">
+    <!-- <propertyfile file="${plugin.dir}/artifacts/${md.bundle.prefix}.properties">
+         <entry key="${md.bundle.prefix}.bundle.version"     value="${md.bundle.version}"/>
+         <entry key="${md.bundle.prefix}.bundle.prefix"      value="${md.bundle.prefix}"/>
+         <entry key="${md.bundle.prefix}.bundle.name"        value="${bundle.name}"/>
+         </propertyfile>-->
+    <save.job.properties/>
+  </target>
 
-    <target name="all" depends="all.error,all.ok,install"/>
-    
-    <target name="all.error" unless="all.precondition.md">
-        <echo message="Check the environment variables tested in the target 'all.precondition.md'"/>
-        <fail/>
-    </target>
-        
-    <target name="all.ok" if="all.precondition.md" depends="zip">
-       <!-- <propertyfile file="${plugin.dir}/artifacts/${md.bundle.prefix}.properties">
-            <entry key="${md.bundle.prefix}.bundle.version"     value="${md.bundle.version}"/>
-            <entry key="${md.bundle.prefix}.bundle.prefix"      value="${md.bundle.prefix}"/>
-            <entry key="${md.bundle.prefix}.bundle.name"        value="${bundle.name}"/>
-        </propertyfile>-->
-    	<save.job.properties/>
-    </target>
-
-    <!-- use the build from build-nojenkins, need to keep IMCE's zip target--> 
-	<import file="${plugin.dir}/build-nojenkins.xml"/>
-    <target name="zip" depends="dist"/>
-    		
-    <target name="install">
-        <md.install.zip
-            plugin.dir="${plugin.dir}" 
-            plugin.archive="${plugin.archive}"
-            plugin.version="${build.version.internal}"
-            install.dir="${md.install.dir}"/>
-        <md.zip.all
-            bundle.dest.dir="${plugin.dir}/artifacts"
-            bundle.name="${bundle.name}"
-            bundle.source.dir="${md.install.dir}"/>
-    </target>
-    
-    <target name="clean-jenkins" depends="clean">
-        <delete failonerror="false" quiet="true" dir="${plugin.dir}/root"/>
-        <delete failonerror="false" quiet="true" dir="${plugin.dir}/artifacts"/>
-    </target>
-    
+  <!-- use the build from build-nojenkins, need to keep IMCE's zip target--> 
+  <import file="${plugin.dir}/build-nojenkins.xml"/>
+  <target name="zip" depends="dist"/>
+  
+  <target name="install">
+    <md.install.zip
+        plugin.dir="${plugin.dir}" 
+        plugin.archive="${plugin.archive}"
+        plugin.version="${build.version.internal}"
+        install.dir="${md.install.dir}"/>
+    <md.zip.all
+        bundle.dest.dir="${plugin.dir}/artifacts"
+        bundle.name="${bundle.name}"
+        bundle.source.dir="${md.install.dir}"/>
+  </target>
+  
+  <target name="clean-jenkins" depends="clean">
+    <delete failonerror="false" quiet="true" dir="${plugin.dir}/root"/>
+    <delete failonerror="false" quiet="true" dir="${plugin.dir}/artifacts"/>
+  </target>
+  
 </project>

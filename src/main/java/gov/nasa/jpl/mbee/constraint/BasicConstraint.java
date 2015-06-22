@@ -36,7 +36,6 @@ import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -442,21 +441,6 @@ public class BasicConstraint implements Constraint {
         errorMessage = null;
         for (Element constraint: getConstrainingElements()) {
             Object res = null;
-            try {
-                res = OclEvaluator.evaluateQuery(constrainedObject, constraint);
-                OclEvaluator evaluator = OclEvaluator.instance;
-                if (isConsistent)
-                    isConsistent = evaluator.isValid();
-            } catch (Exception e) {
-                this.errorMessage = e.getLocalizedMessage() + " for OCL query \"" + getExpression(constraint)
-                        + "\" on " + Utils.toStringNameAndType(constrainedObject, true, true);
-                try {
-                    Debug.error(complainIfFails, false, this.errorMessage);
-                } catch (Exception ex) {
-                    System.err.println(this.errorMessage);
-                }
-                isConsistent = false;
-            }
             if (res == null) {
                 gotNull = true;
             } else if (!Utils.isTrue(res, false)) {
@@ -498,9 +482,6 @@ public class BasicConstraint implements Constraint {
                         "expression", null);
                 expr = v.toString();
             }
-        }
-        if (Utils2.isNullOrEmpty(expr)) {
-            expr = OclEvaluator.queryObjectToStringExpression(constraint);
         }
         return expr;
     }

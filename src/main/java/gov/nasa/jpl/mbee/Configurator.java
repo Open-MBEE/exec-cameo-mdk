@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.OclQueryAction;
 import gov.nasa.jpl.mbee.lib.ClassUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MoreToString;

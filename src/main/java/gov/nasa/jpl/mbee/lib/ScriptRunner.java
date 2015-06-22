@@ -206,39 +206,29 @@ public class ScriptRunner {
                     AutomatonPlugin.class.getClassLoader());
 
             Thread.currentThread().setContextClassLoader(automatonClassLoaderWithBinDir);
-            if (language.equals("qvt")) {
-                QVTScriptRunner qvt = new QVTScriptRunner(inputs, script, binDirs);
-                Object result = qvt.run();
-                if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
-                    SessionManager.getInstance().closeSession();
-                    sessionCreated = false;
-                }
-                return result;
-            } else {
-                ScriptEngineManager sem = new ScriptEngineManager();
-                ScriptEngine se = sem.getEngineByName(language);
-                if (null == se)
-                    throw new RuntimeException("Scripting language '" + language
-                            + "' not found for executing: " + script);
+            ScriptEngineManager sem = new ScriptEngineManager();
+            ScriptEngine se = sem.getEngineByName(language);
+            if (null == se)
+            	throw new RuntimeException("Scripting language '" + language
+            			+ "' not found for executing: " + script);
 
-                ScriptContext sc = se.getContext();
-                Bindings bindings = se.getBindings(ScriptContext.ENGINE_SCOPE);
-                bindings.put(ScriptEngine.FILENAME, scriptResolvedPath);
-                // bindings.put(ACTION_EVENT, event);
-                sc.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+            ScriptContext sc = se.getContext();
+            Bindings bindings = se.getBindings(ScriptContext.ENGINE_SCOPE);
+            bindings.put(ScriptEngine.FILENAME, scriptResolvedPath);
+            // bindings.put(ACTION_EVENT, event);
+            sc.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 
-                // sc.setAttribute(ACTION_EVENT, event,
-                // ScriptContext.ENGINE_SCOPE);
-                sc.setAttribute(ScriptEngine.FILENAME, scriptResolvedPath, ScriptContext.ENGINE_SCOPE);
-                sc.setAttribute(ScriptEngine.FILENAME, scriptResolvedPath, ScriptContext.GLOBAL_SCOPE);
-                se.put(ScriptEngine.FILENAME, scriptResolvedPath);
+            // sc.setAttribute(ACTION_EVENT, event,
+            // ScriptContext.ENGINE_SCOPE);
+            sc.setAttribute(ScriptEngine.FILENAME, scriptResolvedPath, ScriptContext.ENGINE_SCOPE);
+            sc.setAttribute(ScriptEngine.FILENAME, scriptResolvedPath, ScriptContext.GLOBAL_SCOPE);
+            se.put(ScriptEngine.FILENAME, scriptResolvedPath);
 
-                se.put("scriptInput", inputs);
-                FileReader fr = new FileReader(scriptResolvedPath);
-                // se.put("scriptEngine", se);
-                se.eval(fr, sc);
-                output = se.get("scriptOutput");
-            }
+            se.put("scriptInput", inputs);
+            FileReader fr = new FileReader(scriptResolvedPath);
+            // se.put("scriptEngine", se);
+            se.eval(fr, sc);
+            output = se.get("scriptOutput");
             if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().closeSession();
                 sessionCreated = false;

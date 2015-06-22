@@ -39,7 +39,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,10 +56,6 @@ public class CustomTable extends Table {
 
     public CustomTable() {
         setSortElementsByName(true);
-    }
-
-    public Object evaluateOcl(Object o, String expression) throws ParserException {
-        return OclEvaluator.evaluateQuery(o, expression, isOclEvaluationVerbose());
     }
 
     public void setHeaders(List<String> d) {
@@ -165,12 +160,6 @@ public class CustomTable extends Table {
                 Object result = null;
                 DocumentValidator dv = CollectFilterParser.getValidator();
                 DocumentValidator.evaluate(oclExpr, e, dv, true);
-                try {
-                    result = this.evaluateOcl(e, oclExpr);
-                } catch (ParserException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
                 row.add(Common.getTableEntryFromObject(result));
             }
             body.add(row);

@@ -31,7 +31,6 @@ package gov.nasa.jpl.mbee;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -214,8 +213,6 @@ public class RepeatInputComboBoxDialog implements Runnable {
     public void run() {
         Object selectedItem = "";
         editableListPanel = null;
-        boolean wasVerbose = OclEvaluator.isVerboseDefault;
-        OclEvaluator.setVerboseDefault(true);
 
         while (selectedItem != null) {
             if (editableListPanel == null) {
@@ -263,7 +260,6 @@ public class RepeatInputComboBoxDialog implements Runnable {
                 }
             }
         }
-        OclEvaluator.setVerboseDefault(wasVerbose);
     }
 
     public static Object[] getSelectedObjects(Component c) {
