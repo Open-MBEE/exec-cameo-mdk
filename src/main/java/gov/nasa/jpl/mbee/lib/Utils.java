@@ -2716,6 +2716,8 @@ public class Utils {
                     return ((Property)elem).getDefaultValue();
                 } else if (elem instanceof Slot) {
                     return ((Slot)elem).getValue();
+                } else if (elem instanceof Constraint) {
+                	return ((Constraint)elem).getSpecification();
                 }
             default:
                 return null;
