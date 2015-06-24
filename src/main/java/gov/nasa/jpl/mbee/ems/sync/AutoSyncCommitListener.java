@@ -323,6 +323,10 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 } else {
                     elementOb = getElementObject(sourceElement, true);
                     ExportUtility.fillElement(sourceElement, elementOb);
+                    if (sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement.getOwner())) { //catch instanceSpec if it wasn't caught before
+                    	elementOb = getElementObject(sourceElement.getOwner(), true);
+                    	ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
+                    }
                 }
             }
             else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
