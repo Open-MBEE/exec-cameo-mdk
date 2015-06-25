@@ -75,6 +75,8 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
+import org.json.simple.JSONArray;
+
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -3546,6 +3548,21 @@ public class Utils {
         ex.printStackTrace(pw);
         Application.getInstance().getGUILog().log(sw.toString()); // stack trace as a string
         ex.printStackTrace();
+    }
+    
+    public static boolean jsonArraySetDiff(JSONArray a, JSONArray b) {
+    	if (a != null && b != null) {
+    		Set as = new HashSet();
+    		Set bs = new HashSet();
+    		as.addAll(a);
+    		bs.addAll(b);
+    		if (as.equals(bs))
+    			return true;
+    		return false;
+    	}
+    	if (a == b)
+    		return true;
+    	return false;
     }
 
 }

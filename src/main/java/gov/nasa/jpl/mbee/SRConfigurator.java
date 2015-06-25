@@ -196,8 +196,10 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	// once all the categories are disabled, the action category will be disabled
     	// this is defined in the configure method: category.setNested(true);
     	for (NMAction s: category.getActions()) {
-    		SRAction sra = (SRAction) s;
-    		sra.disable("Not Editable");
+    		if (s instanceof SRAction) {
+    			SRAction sra = (SRAction) s;
+    			sra.disable("Not Editable");
+    		}
         }
     	return category;
     }

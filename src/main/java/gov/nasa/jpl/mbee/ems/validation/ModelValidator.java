@@ -971,7 +971,7 @@ public class ModelValidator {
         Boolean modelIsMetatype = (Boolean)model.get("isMetatype");
         JSONArray modelMetatypes = (JSONArray)model.get("metatypes");
         JSONArray modelAppliedMetatypes = (JSONArray)model.get("appliedMetatypes");
-        if (webIsMetatype != modelIsMetatype || !modelAppliedMetatypes.equals(webAppliedMetatypes) || (modelIsMetatype && !modelMetatypes.equals(webMetatypes))) {
+        if (webIsMetatype != modelIsMetatype || !Utils.jsonArraySetDiff(modelAppliedMetatypes, webAppliedMetatypes) || (modelIsMetatype && !Utils.jsonArraySetDiff(modelMetatypes, webMetatypes))) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[METATYPE] Metatype/Stereotype application are different.");
             if (editable)
                 v.addAction(new ExportMetatypes(e));
