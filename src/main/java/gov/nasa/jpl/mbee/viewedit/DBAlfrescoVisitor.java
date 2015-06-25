@@ -25,6 +25,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,9 +79,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     protected Set<Element> elementSet = new HashSet<Element>();
     
     //for ems 2.2 reference tree
-    private Map<Element, JSONArray> view2elements = new HashMap<Element, JSONArray>();
-    private Map<Element, List<PresentationElement>> view2pe = new HashMap<Element, List<PresentationElement>>();
-    private Map<Element, List<PresentationElement>> view2peOld = new HashMap<Element, List<PresentationElement>>();
+    // these are linked hash maps to make recursive sense in ViewPresentationGenerator
+    private Map<Element, JSONArray> view2elements = new LinkedHashMap<Element, JSONArray>();
+    private Map<Element, List<PresentationElement>> view2pe = new LinkedHashMap<Element, List<PresentationElement>>();
+    private Map<Element, List<PresentationElement>> view2peOld = new LinkedHashMap<Element, List<PresentationElement>>();
     private Stack<Element> currentView = new Stack<Element>();
     private Stack<PresentationElement> currentSection = new Stack<PresentationElement>(); //if currently in section, sections cannot cross views
     private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<List<InstanceSpecification>>();
