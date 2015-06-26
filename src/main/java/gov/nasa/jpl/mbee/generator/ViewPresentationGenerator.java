@@ -56,6 +56,9 @@ public class ViewPresentationGenerator {
 
 	private boolean recurse;
 	private Element view;
+	
+	private String viewInstSuffix = "_View_Instances";
+	private String unusedInstSuffix = "_Unused_View_Instances";
 
 	public ViewPresentationGenerator(Element view, boolean recursive) {
 		this.view = view;
@@ -85,8 +88,12 @@ public class ViewPresentationGenerator {
 		Map<Element, List<PresentationElement>> view2pe = visitor2.getView2Pe();
 		Map<Element, List<PresentationElement>> view2unused = visitor2.getView2Unused();
 		Map<Element, JSONArray> view2elements = visitor2.getView2Elements();
+		// this initializes and checks if both reserved packages are editable
+		if (!createViewInstancesPackage().isEditable() || !createUnusedInstancesPackage().isEditable()) {
+			Application.getInstance().getGUILog().log("View Instances Package or Unused View Instances Package is not editable. Instance generation aborted.");
+			return;
+		}
 		if (!visitor2.getNotEditable().isEmpty()) {
-			// also check for the View Instances editability
 			Application.getInstance().getGUILog().log("There are instances or view constraints/views that are not editable. Instance generation aborted.");
 			return;
 		}
@@ -130,7 +137,6 @@ public class ViewPresentationGenerator {
 	}
 
 	private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {
-		// first clear out any instancespec exp in the element already
 		Package owner = getFolder(view);
 		List<InstanceValue> list = new ArrayList<InstanceValue>();
 		for (PresentationElement pe : pes) {
@@ -141,7 +147,6 @@ public class ViewPresentationGenerator {
 				continue;
 			}
 			InstanceSpecification is = pe.getInstance();
-			// check here to make sure that the owner is correct
 			if (is == null) {
 				is = ef.createInstanceSpecificationInstance();
 				
@@ -267,43 +272,35 @@ public class ViewPresentationGenerator {
 	}
 
 	private Package createViewInstancesPackage() {
-		// this has to place this thing in the Data package of the model		
-		Package rootPackage = Utils.getRootElement();
-		// grab the rootPack id here too
-		for (NamedElement child : rootPackage.getMember()) {
-			// fix this to have better checking than just string
-			if (child instanceof Package && child.getName().equals("View Instances")) {
-				return (Package) child;
-			}
-		}
-		// projid_view_instances set that id to that one
-		Package viewInst = ef.createPackageInstance();
-		viewInst.setName("View Instances");
-		viewInst.setOwner(rootPackage);
-		return viewInst;
+		return createParticularPackage(Utils.getRootElement(), viewInstSuffix, "View Instances");
 	}
 	
 	private Package createUnusedInstancesPackage() {
-		Package rootPackage = createViewInstancesPackage();
-		for (NamedElement child : rootPackage.getMember()) {
-			// fix this to have better checking than just string
-			if (child instanceof Package && child.getName().equals("Unused Instances")) {
-				return (Package) child;
-			}
+		Package rootPackage = createParticularPackage(Utils.getRootElement(), viewInstSuffix, "View Instances");
+		return createParticularPackage(rootPackage, unusedInstSuffix, "Unused View Instances");
+	}
+	
+	private Package createParticularPackage(Package owner, String packIDSuffix, String name) {
+		String viewInstID = Utils.getRootElement().getID() + packIDSuffix;
+		Package viewInst = null;
+		if (Application.getInstance().getProject().getElementByID(viewInstID) != null) {
+			viewInst = (Package) Application.getInstance().getProject().getElementByID(viewInstID);
+		} else {
+			//create one
+			Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+			viewInst = ef.createPackageInstance();
+			viewInst.setID(viewInstID);
+			viewInst.setName(name);
 		}
-		Package viewInst = ef.createPackageInstance();
-		viewInst.setName("Unused Instances");
-		viewInst.setOwner(rootPackage);
+		viewInst.setOwner(owner);
 		return viewInst;
 	}
 	
 	private Package createViewTargetPackage(Element elem) {
-		// need to check the dependency things better than grabbing all of them
 		Package viewTarg = getViewTargetPackage(elem);
 		if (viewTarg == null) {
 			Package newPack = ef.createPackageInstance();
 			newPack.setName(((NamedElement)elem).getName());
-			// need to set the dependency as well probably
 			return newPack;
 		}
 		return viewTarg;
