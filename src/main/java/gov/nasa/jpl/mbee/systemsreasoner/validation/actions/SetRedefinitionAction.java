@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
+
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
 
 public class SetRedefinitionAction extends GenericRuleViolationAction {
@@ -22,6 +24,10 @@ public class SetRedefinitionAction extends GenericRuleViolationAction {
 
 	@Override
 	public void run() {
+		if (!redefiningElement.isEditable()) {
+			Application.getInstance().getGUILog().log(redefiningElement.getQualifiedName() + " is not editable. Skipping set redefinition.");
+			return;
+		}
 		redefiningElement.getRedefinedElement().add(redefinedElement);
 	}
 

@@ -5,10 +5,15 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
@@ -18,7 +23,9 @@ import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 public class CreateInstanceAction extends SRAction {
 	
@@ -54,22 +61,8 @@ public class CreateInstanceAction extends SRAction {
 				SessionManager.getInstance().createSession("create instance");
 				final Classifier instance  = (Classifier) CopyPasting.copyPasteElement(classifier, (Namespace) dlg.getSelectedElement(), true);
 				Utils.createGeneralization(classifier, instance);
+				instance.getOwnedMember().clear();
 				SessionManager.getInstance().closeSession();
-				
-				// for some reason only half the members were showing up as members...
-				// however spec view is just fine
-				// that being said with the new name collision code there is no need to delete all members in case the user wants
-				// to keep some stuff in there (comments, notes, etc.) for all specialized blocks
-				// user can just use name collision to rejoin
-				
-				/*SessionManager.getInstance().createSession("deleting members");
-				if (instance instanceof Namespace) {
-					for (final NamedElement ne : ((Namespace) instance).getOwnedMember()) {
-						Application.getInstance().getGUILog().log(ne.getQualifiedName());
-						ne.refDelete();
-					}
-				}
-				SessionManager.getInstance().closeSession();*/
 				
 				new ValidateAction(instance).actionPerformed(null);
 			}

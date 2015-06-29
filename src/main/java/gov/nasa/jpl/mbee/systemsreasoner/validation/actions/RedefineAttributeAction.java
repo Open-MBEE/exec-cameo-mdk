@@ -1,5 +1,8 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 
 import com.nomagic.magicdraw.copypaste.CopyPasting;
@@ -36,8 +39,17 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 	}
 	
 	public static void redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final boolean doLog) {
+		redefineAttribute(clazz, re, createSpecializedType, doLog, new ArrayList<Property>());
+	}
+	
+	public static void redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final boolean doLog, final List<Property> traveled) {
 		if (re.isLeaf() && doLog) {
 			Application.getInstance().getGUILog().log(re.getQualifiedName() + " is a leaf. Cannot redefine further.");
+		}
+		
+		if (!re.isEditable()) {
+			Application.getInstance().getGUILog().log(clazz.getQualifiedName() + " is not editable. Skipping redefinition.");
+			return;
 		}
 		
 		RedefinableElement redefinedElement = null;
@@ -54,7 +66,7 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 			}
 			redefinedElement.getRedefinedElement().add((RedefinableElement) re);
 			if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {
-				CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true);
+				CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true, traveled);
 			}
 		}
 		else if (doLog) {

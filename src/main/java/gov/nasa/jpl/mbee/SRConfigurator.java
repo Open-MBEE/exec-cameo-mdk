@@ -157,10 +157,10 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     		return null;
     	
         // Disable all if not editable target, add error message
-        if (!(element.isEditable())) {
+        /*if (!(element.isEditable())) {
         	category = disableCategory(category);
         	return category;
-        }
+        }*/
         
         //copyAction = new CopyAction(target);
         
@@ -174,10 +174,14 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         	validateAction = new ValidateAction(classifier);
         	specAction = new SpecializeAction(classifier);
         	despecAction = new DespecializeAction(classifier);
+        	if (!element.isEditable()) {
+        		specAction.disable("Locked");
+        		despecAction.disable("Locked");
+        	}
         	//copyAction = new CopyAction(clazz);
         	instAction = new CreateInstanceAction(classifier);
         	
-        	if (classifier.getGeneralization().isEmpty()) {
+        	if (despecAction != null && classifier.getGeneralization().isEmpty()) {
         		despecAction.disable("No Generalizations");
         	}
         }
@@ -197,8 +201,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	// this is defined in the configure method: category.setNested(true);
     	for (NMAction s: category.getActions()) {
     		if (s instanceof SRAction) {
-    			SRAction sra = (SRAction) s;
-    			sra.disable("Not Editable");
+	    		SRAction sra = (SRAction) s;
+	    		sra.disable("Not Editable");
     		}
         }
     	return category;

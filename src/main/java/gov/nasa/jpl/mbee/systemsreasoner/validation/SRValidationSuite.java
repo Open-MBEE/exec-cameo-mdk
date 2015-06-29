@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -63,7 +64,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 		while (iterator.hasNext()) {
 			final Classifier classifier = iterator.next();
 			
-			// traverse the heirarchy down
+			// traverse the hierarchy down
 			for (final Generalization generalization : classifier.get_generalizationOfGeneral()) {
 				iterator.add(generalization.getSpecific());
 				iterator.previous();
@@ -81,17 +82,17 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 			for (final NamedElement ne : classifier.getInheritedMember()) {
 				if (ne instanceof Property && ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
 					final RedefinableElement redefinableElement = (RedefinableElement) ne;
-					RedefinableElement redefiningElement = null;
+					final List<RedefinableElement> redefiningElements = new ArrayList<RedefinableElement>();
 					for (final Property p : classifier.getAttribute()) {
 						if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
-							redefiningElement = (RedefinableElement) p;
-							break;
+							redefiningElements.add((RedefinableElement) p);
+							//break;
 						}
 					}
-					if (redefiningElement == null) {
+					if (redefiningElements.isEmpty()) {
 						final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefinableElement.getQualifiedName());
 						for (final Property p : classifier.getAttribute()) {
-							if (p.getName().equals(redefinableElement.getName()) && !p.hasRedefinedElement()) {
+							if (p.getName().equals(redefinableElement.getName())) {
 								v.addAction(new SetRedefinitionAction(p, redefinableElement, "Redefine by Name Collision"));
 							}
 						}
@@ -104,26 +105,28 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 			            attributeMissingRule.addViolation(v);
 					}
 					else {
-						if ((redefiningElement.getName() == null && redefinableElement.getName() != null) || (redefiningElement.getName() != null && !redefiningElement.getName().equals(redefinableElement.getName()))) {
-							final ValidationRuleViolation v = new ValidationRuleViolation(redefiningElement, attributeNameRule.getDescription() + ": [GENERAL] " + redefinableElement.getName() + " - [SPECIFIC] " + redefiningElement.getName());
-							v.addAction(new RenameElementAction(redefinableElement, redefiningElement, "Update Specific"));
-							v.addAction(new RenameElementAction(redefiningElement, redefinableElement, "Update General"));
-							attributeNameRule.addViolation(v);
-						}
-						if (redefiningElement instanceof TypedElement && redefinableElement instanceof TypedElement) {
-							final TypedElement redefiningTypedElement = (TypedElement) redefiningElement;
-							final TypedElement redefinableTypedElement = (TypedElement) redefinableElement;
-							
-							if ((redefiningTypedElement.getType() == null && redefinableTypedElement.getType() != null) || (redefiningTypedElement.getType() != null && !redefiningTypedElement.getType().equals(redefinableTypedElement.getType()))) {
-								if (redefiningTypedElement.getType() instanceof Classifier && redefinableTypedElement.getType() instanceof Classifier && ((Classifier) redefiningTypedElement.getType()).getGeneral().contains(redefinableTypedElement.getType())) {
-									iterator.add(((Classifier) redefiningTypedElement.getType()));
-									iterator.previous();
-								}
-								else {
-									final ValidationRuleViolation v = new ValidationRuleViolation(redefiningTypedElement, attributeTypeRule.getDescription() + ": [GENERAL] " + (redefinableTypedElement.getType() != null ? redefinableTypedElement.getType().getQualifiedName() : "null") + " - [SPECIFIC] " + (redefiningTypedElement.getType() != null ? redefiningTypedElement.getType().getQualifiedName() : "null"));
-									v.addAction(new RetypeElementAction(redefinableTypedElement, redefiningTypedElement, "Update Specific"));
-									v.addAction(new RetypeElementAction(redefiningTypedElement, redefinableTypedElement, "Update General"));
-									attributeTypeRule.addViolation(v);
+						for (final RedefinableElement redefiningElement : redefiningElements) {
+							if ((redefiningElement.getName() == null && redefinableElement.getName() != null) || (redefiningElement.getName() != null && !redefiningElement.getName().startsWith(redefinableElement.getName()))) {
+								final ValidationRuleViolation v = new ValidationRuleViolation(redefiningElement, attributeNameRule.getDescription() + ": [GENERAL] " + redefinableElement.getName() + " - [SPECIFIC] " + redefiningElement.getName());
+								v.addAction(new RenameElementAction(redefinableElement, redefiningElement, "Update Specific"));
+								v.addAction(new RenameElementAction(redefiningElement, redefinableElement, "Update General"));
+								attributeNameRule.addViolation(v);
+							}
+							if (redefiningElements instanceof TypedElement && redefinableElement instanceof TypedElement) {
+								final TypedElement redefiningTypedElement = (TypedElement) redefiningElements;
+								final TypedElement redefinableTypedElement = (TypedElement) redefinableElement;
+								
+								if ((redefiningTypedElement.getType() == null && redefinableTypedElement.getType() != null) || (redefiningTypedElement.getType() != null && !redefiningTypedElement.getType().equals(redefinableTypedElement.getType()))) {
+									if (redefiningTypedElement.getType() instanceof Classifier && redefinableTypedElement.getType() instanceof Classifier && ((Classifier) redefiningTypedElement.getType()).getGeneral().contains(redefinableTypedElement.getType())) {
+										iterator.add(((Classifier) redefiningTypedElement.getType()));
+										iterator.previous();
+									}
+									else {
+										final ValidationRuleViolation v = new ValidationRuleViolation(redefiningTypedElement, attributeTypeRule.getDescription() + ": [GENERAL] " + (redefinableTypedElement.getType() != null ? redefinableTypedElement.getType().getQualifiedName() : "null") + " - [SPECIFIC] " + (redefiningTypedElement.getType() != null ? redefiningTypedElement.getType().getQualifiedName() : "null"));
+										v.addAction(new RetypeElementAction(redefinableTypedElement, redefiningTypedElement, "Update Specific"));
+										v.addAction(new RetypeElementAction(redefiningTypedElement, redefinableTypedElement, "Update General"));
+										attributeTypeRule.addViolation(v);
+									}
 								}
 							}
 						}

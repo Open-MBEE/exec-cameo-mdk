@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
+
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class RenameElementAction extends GenericRuleViolationAction {
@@ -22,6 +24,10 @@ public class RenameElementAction extends GenericRuleViolationAction {
 
 	@Override
 	public void run() {
+		if (!target.isEditable()) {
+			Application.getInstance().getGUILog().log(target.getQualifiedName() + " is not editable. Skipping rename.");
+			return;
+		}
 		target.setName(source.getName());
 	}
 
