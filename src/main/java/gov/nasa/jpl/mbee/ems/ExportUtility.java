@@ -748,6 +748,10 @@ public class ExportUtility {
         } catch (IOException ex) {
             Utils.printException(ex);
             throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+        		Utils.showPopupMessage("URL is malformed");
+        		Utils.printException(ex);
+        		throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
         }
