@@ -74,7 +74,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 			if (redefineAttributes) {
 				for (final NamedElement ne : special.getInheritedMember()) {
 					if (ne instanceof Property && ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
-						RedefineAttributeAction.redefineAttribute(special, (RedefinableElement) ne, true, true, traveled);
+						RedefineAttributeAction.redefineAttribute(special, (RedefinableElement) ne, true, traveled);
 					}
 				}
 			}

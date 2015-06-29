@@ -3,11 +3,15 @@ package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.MultiplicityElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
@@ -38,16 +42,16 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 		this.name = name;
 	}
 	
-	public static void redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final boolean doLog) {
-		redefineAttribute(clazz, re, createSpecializedType, doLog, new ArrayList<Property>());
+	public static void redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType) {
+		redefineAttribute(clazz, re, createSpecializedType, new ArrayList<Property>());
 	}
 	
-	public static void redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final boolean doLog, final List<Property> traveled) {
-		if (re.isLeaf() && doLog) {
+	public static void redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final List<Property> traveled) {
+		if (re.isLeaf()) {
 			Application.getInstance().getGUILog().log(re.getQualifiedName() + " is a leaf. Cannot redefine further.");
 		}
 		
-		if (!re.isEditable()) {
+		if (!clazz.isEditable()) {
 			Application.getInstance().getGUILog().log(clazz.getQualifiedName() + " is not editable. Skipping redefinition.");
 			return;
 		}
@@ -60,23 +64,45 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 			}
 		}
 		if (redefinedElement == null) {
-			redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(re, clazz);
-			if (redefinedElement instanceof Namespace) {
-				((Namespace) redefinedElement).getOwnedMember().clear();
+			int multiplicity = 1;
+			if (re instanceof MultiplicityElement) {
+				final int upper = ((MultiplicityElement) re).getUpper();
+				if (upper > 0) {
+					multiplicity = upper;
+				}
+				else {
+					final String multiplicityString = ModelHelper.getMultiplicity((MultiplicityElement) re);
+					if (multiplicityString != null && !multiplicityString.isEmpty()) {
+						final String response = JOptionPane.showInputDialog("Specify multiplicity for " + re.getName() + ".", 1);
+						try {
+							multiplicity = Integer.parseInt(response);
+						} catch (NumberFormatException nfe) {
+							Application.getInstance().getGUILog().log("Non-numeric multiplicity specified for " + re.getQualifiedName() + ". Skipping redefinition.");
+							return;
+						}
+					}
+				}
+				//System.out.println("UPPER: " + upper);
 			}
-			redefinedElement.getRedefinedElement().add((RedefinableElement) re);
-			if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {
-				CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true, traveled);
+			for (int i = 0; i < multiplicity; i++) {
+				redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(re, clazz, multiplicity > 1);
+				if (redefinedElement instanceof Namespace) {
+					((Namespace) redefinedElement).getOwnedMember().clear();
+				}
+				redefinedElement.getRedefinedElement().add((RedefinableElement) re);
+				if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {
+					CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true, traveled);
+				}
 			}
 		}
-		else if (doLog) {
+		else {
 			Application.getInstance().getGUILog().log(re.getQualifiedName() + " has already been redefined in " + clazz.getQualifiedName() + ".");
 		}
 	}
 
 	@Override
 	public void run() {
-		redefineAttribute(clazz, re, createSpecializedType, true);
+		redefineAttribute(clazz, re, createSpecializedType);
 	}
 
 	@Override
