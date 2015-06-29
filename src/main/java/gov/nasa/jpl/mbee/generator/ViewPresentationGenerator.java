@@ -57,6 +57,7 @@ public class ViewPresentationGenerator {
 	private boolean recurse;
 	private Element view;
 	
+	// these suffixes are added to the project_id to form the view instances id and unused view id respectively
 	private String viewInstSuffix = "_View_Instances";
 	private String unusedInstSuffix = "_Unused_View_Instances";
 
@@ -222,6 +223,7 @@ public class ViewPresentationGenerator {
 		// find the root document
 		Package viewInst = createViewInstancesPackage(); // this is the trunk (find/build package)
 
+		// if you can find the folder with this Utils, just go ahead and return it
 		List<Element> results = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, presentsS, 1, false, 1);
 		if (!results.isEmpty() && results.get(0) instanceof Package) {
 			setPackageHierarchy(view, viewInst, (Package) results.get(0));
@@ -233,11 +235,11 @@ public class ViewPresentationGenerator {
 
 		// build dependencies here
 		Dependency d = ef.createDependencyInstance();
-
 		d.setOwner(viewTarget);
 		ModelHelper.setSupplierElement(d, viewTarget);
 		ModelHelper.setClientElement(d, view);
 		StereotypesHelper.addStereotype(d, presentsS);
+		
 		return viewTarget;
 	}
 	
@@ -284,14 +286,16 @@ public class ViewPresentationGenerator {
 		String viewInstID = Utils.getRootElement().getID() + packIDSuffix;
 		Package viewInst = null;
 		if (Application.getInstance().getProject().getElementByID(viewInstID) != null) {
+			// found it
 			viewInst = (Package) Application.getInstance().getProject().getElementByID(viewInstID);
 		} else {
-			//create one
+			// or create it
 			Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
 			viewInst = ef.createPackageInstance();
 			viewInst.setID(viewInstID);
 			viewInst.setName(name);
 		}
+		// either way, set the owner to the owner we passed in
 		viewInst.setOwner(owner);
 		return viewInst;
 	}
@@ -311,7 +315,7 @@ public class ViewPresentationGenerator {
 			return null;
 		}
 		for (Relationship r: elem.get_relationshipOfRelatedElement()) {
-			if (r instanceof Dependency) {
+			if (r instanceof Dependency && StereotypesHelper.hasStereotype(r, presentsS)) {
 				Dependency dep = (Dependency) r;
 				for (Element target: dep.getTarget()) {
 					if (target instanceof Package)
