@@ -73,11 +73,11 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 				else {
 					final String multiplicityString = ModelHelper.getMultiplicity((MultiplicityElement) re);
 					if (multiplicityString != null && !multiplicityString.isEmpty()) {
-						final String response = JOptionPane.showInputDialog("Specify multiplicity for " + re.getName() + ".", 1);
+						final String response = JOptionPane.showInputDialog("Specify multiplicity for " + clazz.getQualifiedName() + "::" + re.getName() + ".", 1);
 						try {
 							multiplicity = Integer.parseInt(response);
 						} catch (NumberFormatException nfe) {
-							Application.getInstance().getGUILog().log("Non-numeric multiplicity specified for " + re.getQualifiedName() + ". Skipping redefinition.");
+							Application.getInstance().getGUILog().log("Non-numeric multiplicity specified for " + clazz.getQualifiedName() + "::" + re.getName() + ". Skipping redefinition.");
 							return;
 						}
 					}
