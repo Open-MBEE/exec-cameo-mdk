@@ -88,6 +88,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import com.nomagic.actions.NMAction;
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
@@ -119,8 +121,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ModelValidator {
@@ -466,17 +466,17 @@ public class ModelValidator {
             differentElements.add(e);
             if (editable)
                 v.addAction(new ExportName((NamedElement)e));
-            v.addAction(new ImportName((NamedElement)e, webName, result));
             v.addAction(vdiff);
+            v.addAction(new ImportName((NamedElement)e, webName, result));
             nameDiff.addViolation(v);
         }
         if (elementDoc != null && !(webDoc == null && elementDoc.equals("")) && !elementDocClean.equals(webDoc)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
-            v.addAction(new CompareText(e, webDoc, elementDocClean, result));
-            v.addAction(vdiff);
             differentElements.add(e);
             if (editable)
                 v.addAction(new ExportDoc(e));
+            v.addAction(new CompareText(e, webDoc, elementDocClean, result));
+            v.addAction(vdiff);
             v.addAction(new ImportDoc(e, webDoc, result));
             docDiff.addViolation(v);
         }
@@ -484,26 +484,31 @@ public class ModelValidator {
         if (e instanceof Property) {
             ValidationRuleViolation v = valueDiff((Property)e, elementInfo);
             if (v != null) {
-                v.addAction(vdiff);
+            	// Replacement to separate commit and accept that are added inside the valueDiff method
+                //v.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 valueDiff.addViolation(v);
                 differentElements.add(e);
             }
             ValidationRuleViolation v2 = propertyTypeDiff((Property)e, elementInfo);
             if (v2 != null) {
-                v2.addAction(vdiff);
+                //v2.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 propertyTypeDiff.addViolation(v2);
                 differentElements.add(e);
             }
         } else if (e instanceof Slot) {
             ValidationRuleViolation v = valueDiff((Slot)e, elementInfo);
             if (v != null) {
-                v.addAction(vdiff);
+                //v.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 valueDiff.addViolation(v);
                 differentElements.add(e);
             }
             ValidationRuleViolation v2 = slotTypeDiff((Slot)e, elementInfo);
             if (v2 != null) {
-                v2.addAction(vdiff);
+                //v2.addAction(vdiff);
+            	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, vdiff);
                 propertyTypeDiff.addViolation(v2);
                 differentElements.add(e);
             }
@@ -514,41 +519,47 @@ public class ModelValidator {
         } else if (e instanceof DirectedRelationship) {
         	ValidationRuleViolation v = relationshipDiff((DirectedRelationship)e, elementInfo);
         	if (v != null) {
-                v.addAction(vdiff);
+                //v.addAction(vdiff);
+        		v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 relDiff.addViolation(v);
                 differentElements.add(e);
             }
         } else if (e instanceof Connector) {
             ValidationRuleViolation v = connectorDiff((Connector)e, elementInfo);
             if (v != null) {
-                v.addAction(vdiff);
+                //v.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 connectorDiff.addViolation(v);
                 differentElements.add(e);
             }
         } else if (e instanceof Constraint) {
             ValidationRuleViolation v = constraintDiff((Constraint)e, elementInfo);
             if (v != null) {
-                v.addAction(vdiff);
+                //v.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 constraintDiff.addViolation(v);
                 differentElements.add(e);
             }
         } else if (e instanceof Association) {
             ValidationRuleViolation v = associationDiff((Association)e, elementInfo);
             if (v != null) {
-                v.addAction(vdiff);
+                //v.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 associationDiff.addViolation(v);
                 differentElements.add(e);
             }
         } else if (e instanceof Package) {
             ValidationRuleViolation v = siteDiff((Package)e, elementInfo);
             if (v != null){
-                v.addAction(vdiff);
+                //v.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 siteDiff.addViolation(v);
             }
         } else if (e instanceof InstanceSpecification) {
             ValidationRuleViolation v = instanceSpecificationDiff((InstanceSpecification)e, elementInfo);
             if (v != null) {
-                v.addAction(vdiff);
+                //v.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 instanceSpec.addViolation(v);
                 differentElements.add(e);
             }
@@ -559,7 +570,8 @@ public class ModelValidator {
         if (StereotypesHelper.hasStereotypeOrDerived(e, view)) {
             ValidationRuleViolation v = viewContentDiff(e, elementInfo);
             if (v != null) {
-                v.addAction(vdiff);
+                //v.addAction(vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
                 viewConstraint.addViolation(v);
                 differentElements.add(e); //should this be here
             }
@@ -567,13 +579,15 @@ public class ModelValidator {
 
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null) {
-            v.addAction(vdiff);
+            //v.addAction(vdiff);
+        	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
             ownership.addViolation(v);
             differentElements.add(e);
         }
         v = metatypeDiff(e, elementInfo);
         if (v != null) {
-            v.addAction(vdiff);
+            //v.addAction(vdiff);
+        	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
             metatypes.addViolation(v);
             differentElements.add(e);
         }
@@ -930,6 +944,7 @@ public class ModelValidator {
               //  v.addAction(new CompareText(e, webString, modelString, result));
             if (editable)
                 v.addAction(new ExportConstraint(e));
+            //v.addAction(getPaddingAction());
             v.addAction(new ImportConstraint(e, spec, result));
             return v;
         }
@@ -1290,5 +1305,15 @@ public class ModelValidator {
             return reso;
         }
         return (JSONObject)JSONValue.parse(response);
+    }
+    
+    @Deprecated
+    private static NMAction getPaddingAction() {
+    	return new MDAction(null, null, null, null) {
+        	@Override
+        	public boolean isEnabled() {
+        		return false;
+        	}
+        };
     }
 }
