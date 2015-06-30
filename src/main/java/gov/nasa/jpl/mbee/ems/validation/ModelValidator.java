@@ -493,7 +493,7 @@ public class ModelValidator {
             ValidationRuleViolation v2 = propertyTypeDiff((Property)e, elementInfo);
             if (v2 != null) {
                 //v2.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, vdiff);
                 propertyTypeDiff.addViolation(v2);
                 differentElements.add(e);
             }
