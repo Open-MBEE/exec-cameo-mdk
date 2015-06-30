@@ -20,6 +20,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -144,34 +145,43 @@ public class ViewPresentationGenerator {
 		// then, pass through all the unused PresentationElements and move their particular
 		// InstanceSpecification to the unused InstSpec package
 		for (List<PresentationElement> presElems : view2unused.values()) {
+			// only can worry about the presElems in the current project
 	        	for (PresentationElement presentationElement : presElems) {
+	        		// but we only really care about these instances, since that's all that we can ask about
 	        		InstanceSpecification is = presentationElement.getInstance();
-	        		is.setOwner(createUnusedInstancesPackage());
+	        		if (Utils.getProject().getProject(is).equals(project)) {
+	        			is.setOwner(createUnusedInstancesPackage());
+	        		} else {
+	        			Application.getInstance().getGUILog().log("Unused Presentation Element " + presentationElement.getName() + " not in current project.");
+	        		}
 	        	}
 	    }
 	}
+
 
 	private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {
 		// check for manual instances (thought that was in dependencies)
 		Package owner = getFolder(view);
 		List<InstanceValue> list = new ArrayList<InstanceValue>();
 		for (PresentationElement pe : pes) {
-			// only worry about the presElems in the current module, output to log if they aren't there
-			if (!Utils.getProject().getProject(pe.getView()).equals(project)) {
-				Application.getInstance().getGUILog().log("Presentation Element is owned by " + pe.getView().getID() + ", not in current project.");
-				continue;
-			}
 			if (pe.isManual()) {
 				InstanceValue iv = ef.createInstanceValueInstance();
 				InstanceSpecification inst = pe.getInstance();
 				iv.setInstance(pe.getInstance());
-				// this finds the owner of the instanceSpec (as long as it is in View Instances i think)
-				// if it can't find it, it resets the owner to the correct one
-				if (getViewTargetPackage(inst) == null) {
-					inst.setOwner(owner);
-				}
-				// doesnt work yet
 				list.add(iv);
+				// lets do some testing on the instance owner
+				Element instOwner = inst.getOwner();
+				boolean touchMe = true;
+				for (Relationship r: instOwner.get_relationshipOfRelatedElement()) {
+					if (r instanceof Dependency && StereotypesHelper.hasStereotype(r, presentsS)) {
+						// we ignore inst and leave the owner untouched if owner has a presents stereotype
+						touchMe = false;
+						break;
+					}
+				}
+				// if the owner doesn't have the presents stereotype, it resets the owner to the correct one
+				if (touchMe)
+					inst.setOwner(owner);
 				continue;
 			}
 			InstanceSpecification is = pe.getInstance();
