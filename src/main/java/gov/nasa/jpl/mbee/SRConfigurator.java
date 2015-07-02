@@ -3,10 +3,11 @@ package gov.nasa.jpl.mbee;
 import java.util.ArrayList;
 import java.util.List;
 
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecializeAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.CreateInstanceAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecializeAction;
 
 import com.nomagic.actions.ActionsCategory;
@@ -23,6 +24,7 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 
 public class SRConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 	
@@ -30,8 +32,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 	SpecializeAction specAction = null;
 	DespecializeAction despecAction = null;
 	//CopyAction copyAction = null;
-	CreateInstanceAction instAction = null;
-
+	CreateSpecificAction createSpecificAction = null;
+	CreateInstanceAction createInstanceAction = null;
+	
     @Override
     public int getPriority() {
         return 0; //medium
@@ -66,7 +69,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	specAction = null;                  
     	despecAction = null;
     	//copyAction = null;
-    	instAction = null;
+    	createSpecificAction = null;
+    	createInstanceAction = null;
     	
         ActionsCategory category = (ActionsCategory)manager.getActionFor("SRMain");
         if (category == null) {
@@ -95,7 +99,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	category.addAction(specAction);
     	category.addAction(despecAction);
     	//category.addAction(copyAction);
-    	category.addAction(instAction);
+    	category.addAction(createSpecificAction);
+    	category.addAction(createInstanceAction);
         
         // Clear out the category of unused actions
         for (NMAction s: category.getActions()) {
@@ -114,39 +119,68 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 	}
     
     public ActionsCategory handleMultipleNodes(ActionsCategory category, ActionsManager manager, List<Element> elements) {
-    	ArrayList<Classifier> classes = new ArrayList<Classifier>();
+    	//final List<Element> validatableElements = new ArrayList<Element>();
+    	//boolean hasClassifier = false, hasInstance = false;
+    	final List<Classifier> classifiers = new ArrayList<Classifier>();
+    	final List<InstanceSpecification> instances = new ArrayList<InstanceSpecification>();
+    	final List<Element> validatableElements = new ArrayList<Element>();
+    	boolean hasUneditable = false;
+    	
     	for (Element element : elements) {
 	    	if (element != null) {
 		    	if (element instanceof Classifier) {
-		    		classes.add((Classifier) element);
+		    		classifiers.add((Classifier) element);
+		    		validatableElements.add(element);
+		    	}
+		    	else if (element instanceof InstanceSpecification) {
+		    		instances.add((InstanceSpecification) element);
+		    		validatableElements.add(element);
+		    	}
+		    	
+		    	if (!hasUneditable && !element.isEditable()) {
+		    		hasUneditable = true;
 		    	}
 	    	}
-    	}
+    	}	
     	
     	// if nothing in classes, disable category and return it
-    	if (classes.isEmpty()) {
+    	if (validatableElements.isEmpty()) {
     		//category = disableCategory(category);
     		return null;
     	}
     	
     	// otherwise, add the classes to the ValidateAction action
-		validateAction = new ValidateAction(classes);
-		
-		// if any of the classifiers are not editable, disable the validate
-		for (Classifier clf: classes) {
-			if (!(clf.isEditable())) {
-				validateAction.disable();
-			}
-		}
+		validateAction = new ValidateAction(validatableElements);
 		
 		// add the action to the actions category
 		category.addAction(validateAction);
 		
-		specAction = new SpecializeAction(classes);
-		category.addAction(specAction);
+		if (!classifiers.isEmpty()) {
+			specAction = new SpecializeAction(classifiers);
+			if (hasUneditable) {
+				specAction.disable("Not Editable");
+			}
+			
+			despecAction = new DespecializeAction(classifiers);
+			if (hasUneditable) {
+				despecAction.disable("Not Editable");
+			}
+			
+			boolean hasGeneralization = false;
+			for (final Classifier classifier : classifiers) {
+				if (!classifier.getGeneralization().isEmpty()) {
+					hasGeneralization = true;
+					break;
+				}
+			}
+			if (!hasGeneralization) {
+				despecAction.disable("No Generalizations");
+			}
+		}
 		
-		despecAction = new DespecializeAction(classes);
-		category.addAction(despecAction);
+		if (!instances.isEmpty()) {
+			// TODO IMPL
+		}
 		
     	return category;
     }
@@ -155,12 +189,6 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	
     	if (element == null)
     		return null;
-    	
-        // Disable all if not editable target, add error message
-        if (!(element.isEditable())) {
-        	category = disableCategory(category);
-        	return category;
-        }
         
         //copyAction = new CopyAction(target);
         
@@ -170,16 +198,24 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         	copyAction = new CopyAction(active);
         }*/
         if (element instanceof Classifier) {
-        	Classifier classifier = (Classifier) element;
+        	final Classifier classifier = (Classifier) element;
         	validateAction = new ValidateAction(classifier);
         	specAction = new SpecializeAction(classifier);
         	despecAction = new DespecializeAction(classifier);
+        	if (!element.isEditable()) {
+        		specAction.disable("Locked");
+        		despecAction.disable("Locked");
+        	}
         	//copyAction = new CopyAction(clazz);
-        	instAction = new CreateInstanceAction(classifier);
+        	createSpecificAction = new CreateSpecificAction(classifier);
+        	createInstanceAction = new CreateInstanceAction(classifier, classifier.getOwner());
         	
-        	if (classifier.getGeneralization().isEmpty()) {
+        	if (despecAction != null && classifier.getGeneralization().isEmpty()) {
         		despecAction.disable("No Generalizations");
         	}
+        }
+        else if (element instanceof InstanceSpecification) {
+        	// TODO IMPL
         }
         else {
         	return null;
@@ -197,8 +233,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	// this is defined in the configure method: category.setNested(true);
     	for (NMAction s: category.getActions()) {
     		if (s instanceof SRAction) {
-    			SRAction sra = (SRAction) s;
-    			sra.disable("Not Editable");
+	    		SRAction sra = (SRAction) s;
+	    		sra.disable("Not Editable");
     		}
         }
     	return category;

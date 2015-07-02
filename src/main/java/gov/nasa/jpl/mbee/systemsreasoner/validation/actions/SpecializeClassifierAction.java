@@ -31,6 +31,10 @@ public class SpecializeClassifierAction extends GenericRuleViolationAction {
 
 	@Override
 	public void run() {
+		if (!specific.isEditable()) {
+			Application.getInstance().getGUILog().log(specific.getQualifiedName() + " is not editable. Skipping specialization.");
+			return;
+		}
 		SpecializeClassifierAction.specialize(specific, general);
 	}
 

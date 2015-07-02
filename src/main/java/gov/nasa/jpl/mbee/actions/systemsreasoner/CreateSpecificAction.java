@@ -20,16 +20,16 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 
-public class CreateInstanceAction extends SRAction {
+public class CreateSpecificAction extends SRAction {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String actionid = "Create Instance";
+	public static final String actionid = "Create Specific";
 	private Classifier classifier;
 	
-	public CreateInstanceAction(final Classifier classifier) {
+	public CreateSpecificAction(final Classifier classifier) {
         super(actionid, classifier);
         this.classifier = classifier;
 	}
@@ -51,8 +51,9 @@ public class CreateInstanceAction extends SRAction {
 		if (dlg != null) {
 			dlg.setVisible(true);
 			if (dlg.isOkClicked() && dlg.getSelectedElement() != null && dlg.getSelectedElement() instanceof Namespace) {
-				SessionManager.getInstance().createSession("create instance");
+				SessionManager.getInstance().createSession("create specific");
 				final Classifier instance  = (Classifier) CopyPasting.copyPasteElement(classifier, (Namespace) dlg.getSelectedElement(), true);
+				instance.getOwnedMember().clear();
 				Utils.createGeneralization(classifier, instance);
 				SessionManager.getInstance().closeSession();
 				

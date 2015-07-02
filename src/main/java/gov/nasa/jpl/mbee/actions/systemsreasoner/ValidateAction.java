@@ -5,9 +5,11 @@ import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.systemsreasoner.validation.SRValidationSuite;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ValidateAction extends SRAction {
 	
@@ -17,20 +19,22 @@ public class ValidateAction extends SRAction {
 	private static final long serialVersionUID = 1L;
 	
 	public static final String actionid = "Validate";
-	public List<Classifier> classes;
+	public List<? extends Element> elements;
 	
-	public ValidateAction(Classifier clazz) {
-		this(Utils2.newList(clazz));
+	public ValidateAction(Element element) {
+		this(Utils2.newList(element));
 	}
 	
-	public ValidateAction(List<Classifier> classes) {
+	public ValidateAction(List<? extends Element> elements) {
 		super(actionid);
-		this.classes = classes;
+		this.elements = elements;
 	}
 
 	@Override
     public void actionPerformed(ActionEvent e) {
-		final SRValidationSuite svs = new SRValidationSuite(classes);
+		final List<Element> elems = new ArrayList<Element>();
+		elems.addAll(elements);
+		final SRValidationSuite svs = new SRValidationSuite(elems);
 		svs.run();
 		Utils.displayValidationWindow(svs, "Systems Reasoner Validation");
 		/*for (final Generalization g : clazz.getGeneralization()) {

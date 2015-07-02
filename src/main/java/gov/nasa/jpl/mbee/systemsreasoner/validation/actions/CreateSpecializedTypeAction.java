@@ -44,21 +44,58 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 	}
 	
 	public static final void createSpecializedType(final Property property, final Classifier parent, final boolean redefineAttributes) {
+		createSpecializedType(property, parent, redefineAttributes, new ArrayList<Property>());
+	}
+	
+	// NEEDS BETTER CIRCULAR DETECTION
+	public static final void createSpecializedType(final Property property, final Classifier parent, final boolean redefineAttributes, final List<Property> traveled) {
+		if (!parent.isEditable()) {
+			Application.getInstance().getGUILog().log(parent.getQualifiedName() + " is not editable. Skipping creating specialization.");
+			return;
+		}
 		if (property.getType() instanceof Classifier && !(property.getType() instanceof Property)) {
+			boolean hasTraveled = false;
+			if (traveled.contains(property)) {
+				hasTraveled = true;
+			}
+			else {
+				for (final Property redefinedProperty : property.getRedefinedProperty()) {
+					//System.out.println("ASDF " + redefinedProperty.getQualifiedName());
+					if (traveled.contains(redefinedProperty)) {
+						hasTraveled = true;
+						break;
+					}
+				}
+			}
+			if (hasTraveled) {
+				Application.getInstance().getGUILog().log("Warning: Detected circular reference at " + property.getQualifiedName() + ". Stopping recursion.");
+				return;
+			}
+			traveled.add(property);
+			for (final RedefinableElement re : property.getRedefinedElement()) {
+				if (re instanceof Property) {
+					//System.out.println("RE: " + re.getQualifiedName());
+					traveled.add((Property) re);
+				}
+			}
+			//System.out.println(property.getQualifiedName() + " : " +  property.toString());
+			
 			for (final Class<? extends Classifier> c : UNSPECIALIZABLE_CLASSIFIERS) {
 				if (c.isAssignableFrom(property.getType().getClass())) {
 					Application.getInstance().getGUILog().log("Warning: " + property.getQualifiedName() + " is a " + c.getSimpleName() + ", which is not specializable.");
 					return;
 				}
 			}
-			final Classifier special = (Classifier) CopyPasting.copyPasteElement(property.getType(), parent);
-			special.getOwnedMember().clear();
-			SpecializeClassifierAction.specialize(special, (Classifier) property.getType());
+			final Classifier general = (Classifier) property.getType();
+			//System.out.println(general.getQualifiedName());
+			final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
+			//special.getOwnedMember().clear();
+			SpecializeClassifierAction.specialize(special, general);
 			property.setType(special);
 			if (redefineAttributes) {
 				for (final NamedElement ne : special.getInheritedMember()) {
 					if (ne instanceof Property && ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
-						RedefineAttributeAction.redefineAttribute(special, (RedefinableElement) ne, true, true);
+						RedefineAttributeAction.redefineAttribute(special, (RedefinableElement) ne, true, traveled);
 					}
 				}
 			}

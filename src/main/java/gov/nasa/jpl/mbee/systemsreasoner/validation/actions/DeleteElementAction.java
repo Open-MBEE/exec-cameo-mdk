@@ -1,7 +1,10 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
+
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class DeleteElementAction extends GenericRuleViolationAction {
 	
@@ -21,7 +24,11 @@ public class DeleteElementAction extends GenericRuleViolationAction {
 	
 	@Override
 	public void run() {
-		element.refDelete();
+		if (!element.isEditable()) {
+			Application.getInstance().getGUILog().log((element instanceof NamedElement ? ((NamedElement) element).getQualifiedName(): element.toString()) + " is not editable. Skipping deletion.");
+			return;
+		}
+		element.dispose();
 	}
 
 	@Override
