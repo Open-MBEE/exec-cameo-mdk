@@ -116,6 +116,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -2718,6 +2719,8 @@ public class Utils {
                     return ((Property)elem).getDefaultValue();
                 } else if (elem instanceof Slot) {
                     return ((Slot)elem).getValue();
+                } else if (elem instanceof Constraint) {
+                	return ((Constraint)elem).getSpecification();
                 }
             default:
                 return null;
@@ -3536,7 +3539,7 @@ public class Utils {
             if (o instanceof Integer || o instanceof String || o instanceof Double || o instanceof Float
                     || o instanceof Boolean || o instanceof LiteralInteger || o instanceof LiteralString
                     || o instanceof LiteralUnlimitedNatural || o instanceof LiteralReal
-                    || o instanceof LiteralBoolean)
+                    || o instanceof LiteralBoolean || o instanceof OpaqueExpression)
                 return true;
         }
         return false;
