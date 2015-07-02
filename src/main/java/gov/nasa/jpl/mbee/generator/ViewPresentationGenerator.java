@@ -1,11 +1,8 @@
 package gov.nasa.jpl.mbee.generator;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
-
 import org.json.simple.JSONArray;
 
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
@@ -19,13 +16,10 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdinformationflows.InformationFlow;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
@@ -41,8 +35,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Relationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
@@ -57,8 +49,6 @@ public class ViewPresentationGenerator {
 	private Stereotype presentsS = Utils.getPresentsStereotype();
 	private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
 	
-	private Project project = Application.getInstance().getProject();
-
 	private boolean recurse;
 	private Element view;
 	
@@ -136,7 +126,7 @@ public class ViewPresentationGenerator {
 		// first pass through all the views and presentation elements to handle them
 		for (Element v : view2pe.keySet()) {
 			// only worry about the views in the current module, output to log if they aren't there
-			if (Utils.getProject().getProject(v).equals(project)) {
+			if (!ProjectUtilities.isElementInAttachedProject(v)) {
 				handleViewOrSection(v, null, view2pe.get(v));
 			} else {
 				Application.getInstance().getGUILog().log("View " + view.getID() + " not in current project.");
@@ -149,7 +139,7 @@ public class ViewPresentationGenerator {
 	        	for (PresentationElement presentationElement : presElems) {
 	        		// but we only really care about these instances, since that's all that we can ask about
 	        		InstanceSpecification is = presentationElement.getInstance();
-	        		if (Utils.getProject().getProject(is).equals(project)) {
+	        		if (!ProjectUtilities.isElementInAttachedProject(is)) {
 	        			is.setOwner(createUnusedInstancesPackage());
 	        		} else {
 	        			Application.getInstance().getGUILog().log("Unused Presentation Element " + presentationElement.getName() + " not in current project.");
