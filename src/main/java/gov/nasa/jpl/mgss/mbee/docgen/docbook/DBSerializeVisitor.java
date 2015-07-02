@@ -169,7 +169,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                 out.append("\n<uri>" + book.getInstLogo() + "</uri>");
 
             } else {
-                out.append("\n<uri>http://sec274.jpl.nasa.gov/img/logos/jpl_logo(220x67).gif</uri>");
+                out.append("\n<uri>http://nomagic.com/images/no_magic_logo.png</uri>");
             }
             if (book.getInstLogoSize() != null) {
                 out.append("\n<address><alt>" + book.getInstLogoSize() + "</alt></address>\n</org></collab>");

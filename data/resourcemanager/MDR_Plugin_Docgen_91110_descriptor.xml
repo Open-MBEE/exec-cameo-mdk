@@ -4,7 +4,7 @@
 	description="DocGen and common profiles" 
 	id="91110" 
 	mdVersionMax="higher" 
-	mdVersionMin="17.0.5" 
+	mdVersionMin="17.0.2" 
 	name="Model Development Kit" 
 	product="JPL Model Development Kit" 
 	type="Plugin">
@@ -116,12 +116,16 @@
 	<file from="plugins/com.nomagic.magicdraw.jpython/scripts/SystemsReasoner/refactor/ValidateTimeline.py" to="plugins/com.nomagic.magicdraw.jpython/scripts/SystemsReasoner/refactor/ValidateTimeline.py"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/DocGen-plugin.jar" to="plugins/gov.nasa.jpl.mbee.docgen/DocGen-plugin.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/plugin.xml" to="plugins/gov.nasa.jpl.mbee.docgen/plugin.xml"/>
+	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/activemq-all-5.9.1.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/activemq-all-5.9.1.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/commons-lang-2.6.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/commons-lang-2.6.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/ecj-3.7.2.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/ecj-3.7.2.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/jgrapht-0.8.3-jdk1.6.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/jgrapht-0.8.3-jdk1.6.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/json_simple-1.1.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/json_simple-1.1.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/jsoup-1.6.1.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/jsoup-1.6.1.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/opencsv-2.3.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/opencsv-2.3.jar"/>
+	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/org.eclipse.ocl.ecore_3.5.0.v20150525-1635.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/org.eclipse.ocl.ecore_3.5.0.v20150525-1635.jar"/>
+	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/org.eclipse.ocl_3.5.0.v20150521-1211.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/org.eclipse.ocl_3.5.0.v20150521-1211.jar"/>
+	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/org.eclipse.uml2.uml_5.1.0.v20150601-0733.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/org.eclipse.uml2.uml_5.1.0.v20150601-0733.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/slf4j-api-1.7.2.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/slf4j-api-1.7.2.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/slf4j-log4j12-1.7.2.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/slf4j-log4j12-1.7.2.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/swingx-all-1.6.4-sources.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/swingx-all-1.6.4-sources.jar"/>
