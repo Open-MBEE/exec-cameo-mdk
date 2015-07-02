@@ -82,6 +82,7 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 						}
 					}
 				}
+				
 				//System.out.println("UPPER: " + upper);
 			}
 			for (int i = 0; i < multiplicity; i++) {

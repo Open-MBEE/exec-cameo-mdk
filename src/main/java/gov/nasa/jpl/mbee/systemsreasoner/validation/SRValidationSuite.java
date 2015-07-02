@@ -15,7 +15,9 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
@@ -24,7 +26,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 public class SRValidationSuite extends ValidationSuite implements Runnable {
 	
 	private static final String NAME = "Specialize";
-	private List<Classifier> classes;
+	private List<Element> elements;
 	
 	private static final ValidationRule
 		generalMissingRule = new ValidationRule("Missing General", "General is missing in generalization", ViolationSeverity.ERROR),
@@ -45,13 +47,13 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 		this.addValidationRule(generalSpecificNameRule);
 	}
 
-	public SRValidationSuite(final Classifier clazz) {
+	public SRValidationSuite(final Element clazz) {
 		this(Utils2.newList(clazz));
 	}
 	
-	public SRValidationSuite(final List<Classifier> classes) {
+	public SRValidationSuite(final List<Element> elements) {
 		super(NAME);
-		this.classes = classes;
+		this.elements = elements;
 	}
 
 	@Override
@@ -60,60 +62,62 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 			vr.getViolations().clear();
 		}
 		
-		final ListIterator<Classifier> iterator = classes.listIterator();
+		final ListIterator<Element> iterator = elements.listIterator();
 		while (iterator.hasNext()) {
-			final Classifier classifier = iterator.next();
+			final Element element = iterator.next();
 			
-			// traverse the hierarchy down
-			for (final Generalization generalization : classifier.get_generalizationOfGeneral()) {
-				iterator.add(generalization.getSpecific());
-				iterator.previous();
-			}
-			
-			for (final Classifier general : classifier.getGeneral()) {
-				if (!classifier.getName().equals(general.getName())) {
-					final ValidationRuleViolation v = new ValidationRuleViolation(classifier, generalSpecificNameRule.getDescription() + ": [GENERAL] " + general.getName() + " - [SPECIFIC] " + classifier.getName());
-					v.addAction(new RenameElementAction(general, classifier, "Update Specific"));
-					v.addAction(new RenameElementAction(classifier, general, "Update General"));
-					generalSpecificNameRule.addViolation(v);
+			if (element instanceof Classifier) {
+				final Classifier classifier = (Classifier) element;
+				
+				// traverse the heirarchy down
+				for (final Generalization generalization : classifier.get_generalizationOfGeneral()) {
+					iterator.add(generalization.getSpecific());
+					iterator.previous();
 				}
-			}
-			
-			for (final NamedElement ne : classifier.getInheritedMember()) {
-				if (ne instanceof Property && ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
-					final RedefinableElement redefinableElement = (RedefinableElement) ne;
-					final List<RedefinableElement> redefiningElements = new ArrayList<RedefinableElement>();
-					for (final Property p : classifier.getAttribute()) {
-						if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
-							redefiningElements.add((RedefinableElement) p);
-							//break;
-						}
+				
+				for (final Classifier general : classifier.getGeneral()) {
+					if (!classifier.getName().equals(general.getName())) {
+						final ValidationRuleViolation v = new ValidationRuleViolation(classifier, generalSpecificNameRule.getDescription() + ": [GENERAL] " + general.getName() + " - [SPECIFIC] " + classifier.getName());
+						v.addAction(new RenameElementAction(general, classifier, "Update Specific"));
+						v.addAction(new RenameElementAction(classifier, general, "Update General"));
+						generalSpecificNameRule.addViolation(v);
 					}
-					if (redefiningElements.isEmpty()) {
-						final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefinableElement.getQualifiedName());
+				}
+				
+				for (final NamedElement ne : classifier.getInheritedMember()) {
+					if (ne instanceof Property && ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
+						final RedefinableElement redefinableElement = (RedefinableElement) ne;
+						RedefinableElement redefiningElement = null;
 						for (final Property p : classifier.getAttribute()) {
-							if (p.getName().equals(redefinableElement.getName())) {
-								v.addAction(new SetRedefinitionAction(p, redefinableElement, "Redefine by Name Collision"));
+							if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
+								redefiningElement = (RedefinableElement) p;
+								break;
 							}
 						}
-			            v.addAction(new RedefineAttributeAction(classifier, redefinableElement));
-			            if (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null) {
-			            	// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
-			            	// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
-			            	v.addAction(new RedefineAttributeAction(classifier, redefinableElement, true, "Redefine Attribute & Specialize Types Recursively"));
-			            }
-			            attributeMissingRule.addViolation(v);
-					}
-					else {
-						for (final RedefinableElement redefiningElement : redefiningElements) {
-							if ((redefiningElement.getName() == null && redefinableElement.getName() != null) || (redefiningElement.getName() != null && !redefiningElement.getName().startsWith(redefinableElement.getName()))) {
+						if (redefiningElement == null) {
+							final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefinableElement.getQualifiedName());
+							for (final Property p : classifier.getAttribute()) {
+								if (p.getName().equals(redefinableElement.getName()) && !p.hasRedefinedElement()) {
+									v.addAction(new SetRedefinitionAction(p, redefinableElement, "Redefine by Name Collision"));
+								}
+							}
+				            v.addAction(new RedefineAttributeAction(classifier, redefinableElement));
+				            if (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null) {
+				            	// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
+				            	// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
+				            	v.addAction(new RedefineAttributeAction(classifier, redefinableElement, true, "Redefine Attribute & Specialize Types Recursively"));
+				            }
+				            attributeMissingRule.addViolation(v);
+						}
+						else {
+							if ((redefiningElement.getName() == null && redefinableElement.getName() != null) || (redefiningElement.getName() != null && !redefiningElement.getName().equals(redefinableElement.getName()))) {
 								final ValidationRuleViolation v = new ValidationRuleViolation(redefiningElement, attributeNameRule.getDescription() + ": [GENERAL] " + redefinableElement.getName() + " - [SPECIFIC] " + redefiningElement.getName());
 								v.addAction(new RenameElementAction(redefinableElement, redefiningElement, "Update Specific"));
 								v.addAction(new RenameElementAction(redefiningElement, redefinableElement, "Update General"));
 								attributeNameRule.addViolation(v);
 							}
-							if (redefiningElements instanceof TypedElement && redefinableElement instanceof TypedElement) {
-								final TypedElement redefiningTypedElement = (TypedElement) redefiningElements;
+							if (redefiningElement instanceof TypedElement && redefinableElement instanceof TypedElement) {
+								final TypedElement redefiningTypedElement = (TypedElement) redefiningElement;
 								final TypedElement redefinableTypedElement = (TypedElement) redefinableElement;
 								
 								if ((redefiningTypedElement.getType() == null && redefinableTypedElement.getType() != null) || (redefiningTypedElement.getType() != null && !redefiningTypedElement.getType().equals(redefinableTypedElement.getType()))) {
@@ -130,9 +134,12 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 								}
 							}
 						}
+						
 					}
-					
 				}
+			}
+			else if (element instanceof InstanceSpecification) {
+				
 			}
 		}
 			

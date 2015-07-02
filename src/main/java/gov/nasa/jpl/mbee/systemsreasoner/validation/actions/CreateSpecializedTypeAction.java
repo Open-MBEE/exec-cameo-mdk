@@ -47,17 +47,38 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 		createSpecializedType(property, parent, redefineAttributes, new ArrayList<Property>());
 	}
 	
+	// NEEDS BETTER CIRCULAR DETECTION
 	public static final void createSpecializedType(final Property property, final Classifier parent, final boolean redefineAttributes, final List<Property> traveled) {
 		if (!parent.isEditable()) {
 			Application.getInstance().getGUILog().log(parent.getQualifiedName() + " is not editable. Skipping creating specialization.");
 			return;
 		}
 		if (property.getType() instanceof Classifier && !(property.getType() instanceof Property)) {
+			boolean hasTraveled = false;
 			if (traveled.contains(property)) {
+				hasTraveled = true;
+			}
+			else {
+				for (final Property redefinedProperty : property.getRedefinedProperty()) {
+					//System.out.println("ASDF " + redefinedProperty.getQualifiedName());
+					if (traveled.contains(redefinedProperty)) {
+						hasTraveled = true;
+						break;
+					}
+				}
+			}
+			if (hasTraveled) {
 				Application.getInstance().getGUILog().log("Warning: Detected circular reference at " + property.getQualifiedName() + ". Stopping recursion.");
 				return;
 			}
 			traveled.add(property);
+			for (final RedefinableElement re : property.getRedefinedElement()) {
+				if (re instanceof Property) {
+					//System.out.println("RE: " + re.getQualifiedName());
+					traveled.add((Property) re);
+				}
+			}
+			//System.out.println(property.getQualifiedName() + " : " +  property.toString());
 			
 			for (final Class<? extends Classifier> c : UNSPECIALIZABLE_CLASSIFIERS) {
 				if (c.isAssignableFrom(property.getType().getClass())) {

@@ -189,6 +189,19 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	
     	if (element == null)
     		return null;
+    	
+        // Disable all if not editable target, add error message
+<<<<<<< Updated upstream
+        /*if (!(element.isEditable())) {
+        	category = disableCategory(category);
+        	return category;
+        }*/
+=======
+        //if (!(element.isEditable())) {
+        	//category = disableCategory(category);
+        	//return category;
+        //}
+>>>>>>> Stashed changes
         
         //copyAction = new CopyAction(target);
         
