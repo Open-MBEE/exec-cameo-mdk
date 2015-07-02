@@ -2,10 +2,14 @@
 <project xmlns:qvto="http://www.eclipse.org/qvt/1.0.0/Operational" name="gov.nasa.jpl.mbee.docgen" basedir=".">
 
     <property environment="env"/>
-    
-    <import file="${md.install.dir}/data/eclipse/zip.xml"/>
+	<loadproperties srcFile="build.properties"/>
+	
+	<condition property="md" value="${env.md.install.dir}" else="/Applications/MagicDraw/Development/MD18.0-PackageI.2">
+		<isset property="plugin.dir"/>
+	  </condition>
+    <import file="${md}/data/eclipse/zip.xml"/>
 
-    <property name="md.build.tools.dir" location="${md.install.dir}/data/eclipse/resource/SMDP-PackageB"/>
+    <property name="md.build.tools.dir" location="${md}/data/eclipse/resource/SMDP-PackageB"/>
 
     <tstamp>
         <format property="now" pattern="yyyyMMdd"/>
