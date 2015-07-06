@@ -130,7 +130,7 @@ public class CreateInstanceAction extends GenericRuleViolationAction {
 				final List<Property> subsettingProperties = new ArrayList<Property>();
 				if (property.has_propertyOfSubsettedProperty()) {
 					for (final Property subsettingProperty : property.get_propertyOfSubsettedProperty()) {
-						if (subsettingProperty.getClassifier().equals(classifier)) {
+						if (subsettingProperty.getClassifier() != null && subsettingProperty.getClassifier().equals(classifier)) {
 							subsettingProperties.add(subsettingProperty);
 						}
 					}
