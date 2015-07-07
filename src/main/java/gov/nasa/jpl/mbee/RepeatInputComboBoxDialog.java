@@ -47,6 +47,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.HashSet;
@@ -56,6 +58,7 @@ import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -106,6 +109,7 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
     // members for tracking input history
     protected static Object             lastInput         = null;
+    protected static Object				lastResult 		  = null;
     protected static LinkedList<Object> inputHistory      = new LinkedList<Object>();
     protected static HashSet<Object>    pastInputs        = new HashSet<Object>();
     protected static LinkedList<Object> choices           = new LinkedList<Object>();
@@ -371,11 +375,26 @@ public class RepeatInputComboBoxDialog implements Runnable {
         	final JPanel resultPanel = new JPanel();
         	resultPanel.setLayout(new BoxLayout(resultPanel, BoxLayout.Y_AXIS));
         	final JLabel resultLabel = new JLabel(" Result");
+        	final JCheckBox resultFormat = new JCheckBox("HTML", true);
         	//resultLabel.setBackground(Color.RED);
         	//resultLabel.setBorder(BorderFactory.createLineBorder(Color.black));
         	resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         	resultPanel.add(resultLabel);
+        	resultPanel.add(resultFormat);
         	resultPanel.add(createScrollPane(resultEditorPane = createEditorPane("")));
+        	resultFormat.addItemListener(new ItemListener() {
+
+				@Override
+				public void itemStateChanged(ItemEvent e) {					
+					if (e.getStateChange() == ItemEvent.SELECTED)
+						resultEditorPane.setContentType("text/html");
+					else
+						resultEditorPane.setContentType("text/plain");
+
+					setResult(lastResult);
+				}
+        		
+        	});
         	
         	final JPanel completionPanel = new JPanel();
         	completionPanel.setLayout(new BoxLayout(completionPanel, BoxLayout.Y_AXIS));
@@ -518,9 +537,10 @@ public class RepeatInputComboBoxDialog implements Runnable {
 
         public void setResult(Object result) {
             Debug.outln("setResultPanel(" + result + ")");
+            lastResult = result;
             setTextInPanel( resultEditorPane, result );
         }
-
+    
         public String getValue() {
             return queryTextArea.getText();
         }
