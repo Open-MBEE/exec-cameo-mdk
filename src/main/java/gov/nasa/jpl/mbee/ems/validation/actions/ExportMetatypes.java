@@ -65,6 +65,7 @@ public class ExportMetatypes extends RuleViolationAction implements AnnotationAc
 		return true;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void commit(JSONArray elements) {
 		
 		JSONObject send = new JSONObject();
@@ -78,7 +79,6 @@ public class ExportMetatypes extends RuleViolationAction implements AnnotationAc
 		
 		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
 		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size()));
-		
 		/*if (ExportUtility.send(url, send.toJSONString()) != null) {
 		    this.removeViolationsAndUpdateWindow(annos);
 		}*/
