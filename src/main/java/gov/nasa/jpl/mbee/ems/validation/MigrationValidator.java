@@ -33,36 +33,32 @@ public class MigrationValidator {
 	}
 	
 	public void migrate(ProgressStatus ps) {
-		// probably need to wrap this in a Session
-		// perhaps we wont even have to use these validation suites at all
-		// gotta actually get the real elements from the project first
-		// this is the thing that does good work
+		
+		// here's the code to get all the elements in the project (in focus)
+		// have to make sure that elements are editable?
 		
 		Set<Element> missing = new HashSet<Element>();
 		Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
 		for (Element elem : proj.getModel().getOwnedElement()) {
-			System.out.println(elem.getHumanName());
 			if (elem.isEditable()) {
 				getAllMissing(elem, missing, elementsKeyed);
 			}
 		}
 		
-		JSONArray elems = new JSONArray();
+		// we use the export utility fillmetatype function to build the elements
+		// that we actually want to send over (for metatype stuff)
+		
+		JSONArray exportElems = new JSONArray();
 		for (Element elem: missing) {
-			System.out.println(elem.getHumanName());
-			elems.add(ExportUtility.fillMetatype(elem, null));
+			exportElems.add(ExportUtility.fillMetatype(elem, null));
 		}
 		
+		// we put in null for ExportMetatypes because when we commit directly
+		// we don't have any element in focus
+		
 		ExportMetatypes exMeta = new ExportMetatypes(null);
-		exMeta.commit(elems);
-		
-		
-		// detect diffs: (Validate Model) but don't show it
-		
-		// metatype information
-		
-		// why detect diffs? just do it anyway
-		
+		exMeta.commit(exportElems);
+
 		// owned attribute
 		
 		// aggregation as part of property
@@ -72,6 +68,14 @@ public class MigrationValidator {
 		
 		
 		
+	}
+	
+	private JSONObject switchAggregationProperty(Element element, JSONObject einfo) {
+		JSONObject info = einfo;
+		// put stuff in the new agg category
+		info.put("aggregation", einfo.get("property"));
+		// remove the old property category
+		return einfo;
 	}
 	
     private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed) {
