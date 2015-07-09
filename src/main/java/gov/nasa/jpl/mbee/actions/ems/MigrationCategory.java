@@ -1,7 +1,5 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.migration.actions.MigrationAction;
-
 import com.nomagic.actions.ActionsCategory;
 
 public class MigrationCategory extends ActionsCategory {
