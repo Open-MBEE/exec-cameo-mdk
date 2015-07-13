@@ -16,7 +16,7 @@ public class RenameElementAction extends GenericRuleViolationAction {
 	private String name;
 
 	public RenameElementAction(final NamedElement source, final NamedElement target, final String name) {
-		super(name, name, null, null);
+		super(name);
 		this.source = source;
 		this.target = target;
 		this.name = name;

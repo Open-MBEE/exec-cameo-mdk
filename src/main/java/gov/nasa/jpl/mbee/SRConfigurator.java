@@ -3,13 +3,17 @@ package gov.nasa.jpl.mbee;
 import java.util.ArrayList;
 import java.util.List;
 
+import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecializeAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.IndeterminateProgressMonitorProxy;
 import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.CreateInstanceAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecializeAction;
 
+import com.google.common.collect.Lists;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
@@ -28,12 +32,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 
 public class SRConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 	
-	ValidateAction validateAction = null;
-	SpecializeAction specAction = null;
-	DespecializeAction despecAction = null;
-	//CopyAction copyAction = null;
-	CreateSpecificAction createSpecificAction = null;
-	CreateInstanceAction createInstanceAction = null;
+	public static final String NAME = "Systems Reasoner";
+	
+	private SRAction validateAction = null, specAction = null, despecAction = null, createSpecificAction = null, instance2BSTAction = null, createInstanceMenuAction = null;
 	
     @Override
     public int getPriority() {
@@ -70,7 +71,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	despecAction = null;
     	//copyAction = null;
     	createSpecificAction = null;
-    	createInstanceAction = null;
+    	createInstanceMenuAction = null;
+    	instance2BSTAction = null;
     	
         ActionsCategory category = (ActionsCategory)manager.getActionFor("SRMain");
         if (category == null) {
@@ -100,13 +102,21 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	category.addAction(despecAction);
     	//category.addAction(copyAction);
     	category.addAction(createSpecificAction);
-    	category.addAction(createInstanceAction);
+    	category.addAction(createInstanceMenuAction);
+    	category.addAction(instance2BSTAction);
+    	
+    	//System.out.println("Instance2BST: " + instance2BSTAction.getClass().getCanonicalName());
         
         // Clear out the category of unused actions
-        for (NMAction s: category.getActions()) {
-        	if (s == null)
-        		category.removeAction(s);
-        }
+    	final List<NMAction> clonedActions = Lists.newArrayList(category.getActions());
+    	category.getActions().clear();
+        /*for (NMAction action : clonedActions) {
+        	if (action != null) {
+        		category.getActions().add(IndeterminateProgressMonitorProxy.doubleWrap((MDAction) action, "Systems Reasoner"));
+        	}
+        }*/
+        
+        //System.out.println("Instance2BST2: " + category.getActions().get(category.getActions().size() - 1).getClass().getCanonicalName());
     	
         category.setUseActionForDisable(true);
         
@@ -179,14 +189,13 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		}
 		
 		if (!instances.isEmpty()) {
-			// TODO IMPL
+			instance2BSTAction = new Instance2BSTAction(instances);
 		}
 		
     	return category;
     }
     
     public ActionsCategory handleSingleNode(ActionsCategory category, ActionsManager manager, Element element) {
-    	
     	if (element == null)
     		return null;
         
@@ -208,14 +217,16 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         	}
         	//copyAction = new CopyAction(clazz);
         	createSpecificAction = new CreateSpecificAction(classifier);
-        	createInstanceAction = new CreateInstanceAction(classifier, classifier.getOwner());
+        	createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
         	
         	if (despecAction != null && classifier.getGeneralization().isEmpty()) {
         		despecAction.disable("No Generalizations");
         	}
         }
         else if (element instanceof InstanceSpecification) {
-        	// TODO IMPL
+        	final InstanceSpecification instance = (InstanceSpecification) element;
+        	validateAction = new ValidateAction(instance);
+        	instance2BSTAction = new Instance2BSTAction(instance);
         }
         else {
         	return null;

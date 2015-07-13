@@ -16,7 +16,7 @@ public class SpecializeClassifierAction extends GenericRuleViolationAction {
 	private Classifier specific, general;
 	
 	public SpecializeClassifierAction(final Classifier specific, final Classifier general) {
-		super(DEFAULT_NAME, DEFAULT_NAME, null, null);
+		super(DEFAULT_NAME);
 		this.specific = specific;
 		this.general = general;
 	}

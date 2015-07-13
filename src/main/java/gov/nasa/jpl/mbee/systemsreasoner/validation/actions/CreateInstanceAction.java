@@ -1,69 +1,60 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 
+import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
-import com.nomagic.magicdraw.copypaste.CopyPasting;
+import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 
 public class CreateInstanceAction extends GenericRuleViolationAction {
 	
-	/**
-	 *  ADD CIRCULAR REFERENCE DETECTION
-	 */
 	private static final long serialVersionUID = 1L;
 	private static final String DEFAULT_NAME = "Create Instance";
 	
 	private Classifier classifier;
 	private Element context;
-	private boolean createSpecializedType;
 	private String name;
+	private boolean createSlots;
+	private InstanceSpecification instance;
+	
+	private static int safetyNet;
 	
 	private static Map<Property, InstanceSpecification> createdInstances = new HashMap<Property, InstanceSpecification>();
 
-	public CreateInstanceAction(final Classifier classifier, final Element context) {
-		this(classifier, context, DEFAULT_NAME);
+	public CreateInstanceAction(final Classifier classifier, final Element context, final boolean createSlots) {
+		this(classifier, context, createSlots, DEFAULT_NAME);
 	}
 	
-	public CreateInstanceAction(final Classifier classifier, final Element context, String name) {
-		super(name, name, null, null);
+	public CreateInstanceAction(final Classifier classifier, final Element context, final boolean createSlots, String name) {
+		super(name);
 		this.classifier = classifier;
 		this.context = context;
+		this.createSlots = createSlots;
 	}
 	
-	public static InstanceSpecification createInstance(final Element instanceable, final Element context) {
-		return createInstance(instanceable, context, new ArrayList<Property>());
+	public static InstanceSpecification createInstance(final Element instanceable, final Element context, final boolean createSlots) {
+		safetyNet = 0;
+		return createInstance(instanceable, context, createSlots, new HashMap<Classifier, InstanceSpecification>());
 	}
 	
-	public static InstanceSpecification createInstance(final Element instanceable, final Element context, final List<Property> traveled) {
+	public static InstanceSpecification createInstance(final Element instanceable, final Element context, final boolean createSlots, final Map<Classifier, InstanceSpecification> traveled) {
 		final Classifier classifier;
 		if (instanceable instanceof Classifier) {
 			createdInstances.clear();
 			classifier = (Classifier) instanceable;
 		}
 		else if (instanceable instanceof Property && ((Property) instanceable).getType() instanceof Classifier) {
-			//System.out.println("Instancing " + ((Property) instanceable).getQualifiedName());
-			if (traveled.contains(instanceable)) {
-				Application.getInstance().getGUILog().log("Caught circular reference for " + ((Property) instanceable).getQualifiedName() + ". Skipping instantiation.");
-				return null;
-			}
-			traveled.add((Property) instanceable);
 			classifier = (Classifier) ((Property) instanceable).getType();
 		}
 		else {
@@ -71,8 +62,17 @@ public class CreateInstanceAction extends GenericRuleViolationAction {
 		}
 		
 		if (classifier.isAbstract()) {
-			//Application.getInstance().getGUILog().log(arg0);
+			Application.getInstance().getGUILog().log(classifier.getQualifiedName() + " is marked as abstract. Skipping instantiation.");
+			return null;
 		}
+		
+		//System.out.println("Instancing " + ((Property) instanceable).getQualifiedName() + " | Traveled: " + traveled.size());
+		if (traveled.containsKey(classifier)) {
+			Application.getInstance().getGUILog().log("Caught circular reference for " + ((Property) instanceable).getQualifiedName() + ". Skipping instantiation and applying circular reference.");
+			return traveled.get(classifier);
+			//return null;
+		}
+		System.out.println("Classifier: " + classifier.getQualifiedName());
 		
 		String prefix = "";
 		Element owner = context;
@@ -82,6 +82,12 @@ public class CreateInstanceAction extends GenericRuleViolationAction {
 		}
 		
 		final InstanceSpecification instance = Application.getInstance().getProject().getElementsFactory().createInstanceSpecificationInstance();
+		traveled.put(classifier, instance);
+		/*if (instanceable instanceof Property) {
+			traveled.put((Property) instanceable, instance);
+			System.out.println("Adding to traveled: " + ((Property) instanceable).getQualifiedName() + " [" + traveled.size() + "]");
+		}*/
+		
 		instance.setName(prefix + (instanceable instanceof Property ? ((Property) instanceable).getName() : classifier.getName()));
 		instance.getClassifier().add(classifier);
 		
@@ -94,139 +100,30 @@ public class CreateInstanceAction extends GenericRuleViolationAction {
 		final List<NamedElement> inheritedMembers = new ArrayList<NamedElement>();
 		inheritedMembers.addAll(classifier.getInheritedMember());
 		
-		createSlots(instance, classifier, new ArrayList<Property>(traveled));
+		/*if (safetyNet++ > 1000) {
+			Application.getInstance().getGUILog().log("Exceeded safety net max instantiations. Aborting...");
+			throw new RuntimeException("Show me stack");
+			//return instance;
+		}*/
+		if (createSlots) {
+			//final Map<Property, InstanceSpecification> clonedMap = new HashMap<Property, InstanceSpecification>(traveled);
+			//System.out.println("Clone size: " + clonedMap.size());
+			
+			CreateSlotsAction.createSlots(instance, createSlots, new HashMap<Classifier, InstanceSpecification>(traveled));
+		}
 		return instance;
-	}
-	
-	public static Map<Property, Slot> createSlots(final InstanceSpecification instance, final Classifier classifier, final List<Property> traveled) {
-		final Map<Property, Slot> propertySlotMapping = new HashMap<Property, Slot>();
-		final Map<Property, Slot> implicitCache = new HashMap<Property, Slot>();
-		final List<Property> properties = new ArrayList<Property>();
-		properties.addAll(classifier.getAttribute());
-		
-		for (final NamedElement inheritedMember : classifier.getInheritedMember()) {
-			boolean toAdd = true;
-			for (final Property property : properties) {
-				if (property.hasRedefinedElement() && property.getRedefinedElement().contains(inheritedMember)) {
-					toAdd = false;
-					break;
-				}
-			}
-			if (toAdd && inheritedMember instanceof Property) {
-				properties.add((Property) inheritedMember);
-			}
-		}
-		
-		int loop = 0;
-		while (!properties.isEmpty() && loop < 1000) {
-			//System.out.print("Loop: " + ++loop + " : " + properties.size() + " - ");
-			/*for (final Property property : properties) {
-				System.out.print(property.getQualifiedName() + ", ");
-			}
-			System.out.println();*/
-			final ListIterator<Property> propertyIterator = properties.listIterator();
-			while (propertyIterator.hasNext()) {
-				final Property property = propertyIterator.next();
-				final List<Property> subsettingProperties = new ArrayList<Property>();
-				if (property.has_propertyOfSubsettedProperty()) {
-					for (final Property subsettingProperty : property.get_propertyOfSubsettedProperty()) {
-						if (subsettingProperty.getClassifier() != null && subsettingProperty.getClassifier().equals(classifier)) {
-							subsettingProperties.add(subsettingProperty);
-						}
-					}
-				}
-				if (!subsettingProperties.isEmpty()) {
-					/*System.out.println("I AM SUBSETTED: " + property.getQualifiedName());
-					for (final Property subsettingProperty : property.get_propertyOfSubsettedProperty()) {
-						System.out.println(subsettingProperty.getQualifiedName());
-					}*/
-					boolean missingDependency = false;
-					for (final Property subsettingProperty : subsettingProperties) {
-						if (!implicitCache.containsKey(subsettingProperty)) {
-							//System.out.println("Missing property! " + subsettingProperty.getQualifiedName() + " : " + property.getQualifiedName());
-							missingDependency = true;
-							break;
-						}
-					}
-					if (missingDependency) {
-						/*System.out.println("Cache [" + implicitCache.size() + "]: ");
-						for (final Map.Entry<Property, Slot> entrySet : implicitCache.entrySet()) {
-							System.out.println("[" + entrySet.getKey().getQualifiedName() + "]=" + entrySet.getValue().getID());
-						}
-						if (traveled.contains(property)) {
-							System.out.println("REMOVING " + property.getQualifiedName());
-							propertyIterator.remove();
-						}
-						System.out.println("CONTINUING " + property.getQualifiedName());*/
-						continue;
-					}
-					final Slot slot = Application.getInstance().getProject().getElementsFactory().createSlotInstance();
-					slot.setDefiningFeature(property);
-					for (final Property subsettingProperty : subsettingProperties) {
-						for (final ValueSpecification vs : implicitCache.get(subsettingProperty).getValue()) {
-							final ValueSpecification clonedValueSpec = (ValueSpecification) CopyPasting.copyPasteElement(vs, slot, false);
-							slot.getValue().add(clonedValueSpec);
-						}
-					}
-					slot.setOwningInstance(instance);
-				}
-				//else if (classifier.getAttribute().contains(property)) {
-				else {
-					final Slot slot = createSlot(property, instance, traveled);
-					//System.out.println("Created " + slot.getDefiningFeature().getQualifiedName() + " [" + implicitCache.size() + "]");
-					propertySlotMapping.put(property, slot);
-					implicitCache.put(property, slot);
-					for (final Property redefinedProperty : flattenRedefinedProperties(property)) {
-						implicitCache.put(redefinedProperty, slot);
-					}
-					//System.out.println("New Cache Size: " + implicitCache.size());
-				}
-				propertyIterator.remove();
-				
-			}
-		}
-		return propertySlotMapping;
-	}
-	
-	public static List<Property> flattenRedefinedProperties(final Property property) {
-		final List<Property> redefinedProperties = new ArrayList<Property>();
-		for (final Property redefinedProperty : property.getRedefinedProperty()) {
-			redefinedProperties.addAll(flattenRedefinedProperties(redefinedProperty));
-		}
-		return redefinedProperties;
-	}
-	
-	public static Slot createSlot(final Property property, final InstanceSpecification instance, final List<Property> traveled) {
-		final Slot slot = Application.getInstance().getProject().getElementsFactory().createSlotInstance();
-		slot.setDefiningFeature(property);
-		createValueSpecification(property, instance, slot, traveled);
-		slot.setOwningInstance(instance);
-		return slot;
-	}
-	
-	public static ValueSpecification createValueSpecification(final Property property, final InstanceSpecification instance, final Slot slot, final List<Property> traveled) {
-		if (property.getDefaultValue() != null) {
-			final ValueSpecification clonedValue = (ValueSpecification) CopyPasting.copyPasteElement(property.getDefaultValue(), slot, false);
-			slot.getValue().add(clonedValue);
-			return clonedValue;
-		}
-		else if (property.getType() != null && property.getType() instanceof Classifier) {
-			final InstanceSpecification nestedInstance = createInstance(property, instance, traveled);
-			if (nestedInstance == null) {
-				return null;
-			}
-			final InstanceValue instanceValue = Application.getInstance().getProject().getElementsFactory().createInstanceValueInstance();
-			instanceValue.setInstance(nestedInstance);
-			instanceValue.setOwner(slot);
-			slot.getValue().add(instanceValue);
-			return instanceValue;
-		}
-		return null;
 	}
 
 	@Override
 	public void run() {
-		createInstance(classifier, context);
+		instance = createInstance(classifier, context, createSlots);
+	}
+	
+	@Override
+	public void execute(Collection<Annotation> annotations) {
+		
+		super.execute(annotations);
+		ValidateAction.validate(instance);
 	}
 
 	@Override
@@ -236,6 +133,6 @@ public class CreateInstanceAction extends GenericRuleViolationAction {
 
 	@Override
 	public String getSessionName() {
-		return "create instance";
+		return name;
 	}
 }

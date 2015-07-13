@@ -17,7 +17,7 @@ public class DeleteElementAction extends GenericRuleViolationAction {
 	private String name;
 
 	public DeleteElementAction(final Element element, final String name) {
-		super(name, name, null, null);
+		super(name);
 		this.element = element;
 		this.name = name;
 	}
