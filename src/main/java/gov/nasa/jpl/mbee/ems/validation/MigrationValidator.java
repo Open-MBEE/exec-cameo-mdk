@@ -18,8 +18,11 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportAssociation;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwnedAttribute;
@@ -35,6 +38,7 @@ public class MigrationValidator {
         iproj = proj.getPrimaryProject();
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void migrate(ProgressStatus ps) {
 		
 		// here's the code to get all the elements in the project (in focus)
@@ -49,72 +53,53 @@ public class MigrationValidator {
 		// we use the export utility fillmetatype function to build the elements
 		// that we actually want to send over (for metatype stuff)
 		
-		JSONArray metaElems = new JSONArray();
-		JSONArray attrElems = new JSONArray();
-		JSONArray assoElems = new JSONArray();
-		JSONArray propElems = new JSONArray();
-		
-		// for all these elements, we need to fill (separately)
-		
+		JSONArray exportElems = new JSONArray();
+				
 		for (Element elem: missing) {
-			JSONObject meta = ExportUtility.fillMetatype(elem, null);
-			// only add the useful outputs
-			if (meta != null) {
-				metaElems.add(meta);
-			}
-			JSONObject attr = ExportUtility.fillOwnedAttribute(elem, null);
-			if (attr != null) {
-				attrElems.add(attr);
-			}
+			// assign the id so we can update the correct element
+			JSONObject einfo = new JSONObject();
+			einfo.put("sysmlid", ExportUtility.getElementID(elem));
+			
+			// confirm all metatype is new
+			einfo = ExportUtility.fillMetatype(elem, einfo);
+			
+			// owned attrib is definitely new
+			einfo = ExportUtility.fillOwnedAttribute(elem, einfo);
+			
+			// switch the aggregation from Association spec to Property spec
 			if (elem instanceof Association) {
-				Association asso = (Association) elem;
-				// fix the association specialization
-				JSONObject assoSpec = ExportUtility.fillAssociationSpecialization(asso, null);
-				if (assoSpec != null) {
-					// update only the association specialization
-					JSONObject assoElem = ExportUtility.fillId(asso, null);
-					assoElem.put("specialization", assoSpec);
-					assoElems.add(assoElem);
-				}
-				// get the source and target properties and fill the aggregation types there
-				List<Property> props = asso.getMemberEnd();
-				for (Property prop: props) {
-					JSONObject propElem = ExportUtility.fillId(prop, null);
-//					propElem.put("aggregation", prop.getAggregation());
-					JSONObject propSpec = ExportUtility.fillPropertySpecialization(prop, null, true, true);
-					propElem.put("specialization", propSpec);
-					propElems.add(propElem);
-				}
+				JSONObject spec = new JSONObject();
+				einfo.put("specialization", spec);
+				// these will be created every time you do a migrate unfortunately
+				spec.put("sourceAggregation", "null");
+				spec.put("targetAggregation", "null");
+			} else if (elem instanceof Property) {
+				JSONObject spec = new JSONObject();
+				einfo.put("specialization", spec);
+				spec.put("aggregation", ((Property)elem).getAggregation());
 			}
-
+			exportElems.add(einfo);
 		}
 		
-		// we put in null for these exports because when we commit directly
-		// we don't have any element in focus
-		
-		// commit metatypes
-		
-		ExportMetatypes exMeta = new ExportMetatypes(null);
-		exMeta.commit(metaElems);
-
-		// commit owned attributes
-		
-		ExportOwnedAttribute exAttr = new ExportOwnedAttribute(null);
-		exAttr.commit(attrElems);
-		
-		// commit updated association
-		
-		ExportAssociation exAsso = new ExportAssociation(null);
-		exAsso.commit(assoElems);
-		
-		// commit updated properties
-		
-		ExportPropertyType exProp = new ExportPropertyType(null);
-		exProp.commit(propElems);
+		commit(exportElems);
 				
 		// if documents (products) clear out view2view property
 		
 		
+	}
+	
+	private void commit(JSONArray elements) {
+		JSONObject send = new JSONObject();
+		send.put("elements", elements);
+		send.put("source", "magicdraw");
+		
+		String url = ExportUtility.getPostElementsUrl();
+		if (url == null) {
+			return;
+		}
+		
+		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size()));
 	}
 	
     private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed) {

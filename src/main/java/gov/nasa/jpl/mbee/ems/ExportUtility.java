@@ -952,6 +952,7 @@ public class ExportUtility {
         } else {
             specialization.put("type", "Untyped");
         }
+        fillOwnedAttribute(e, elementInfo);
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
@@ -1256,22 +1257,22 @@ public class ExportUtility {
         return info;
     }
     
-    @SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	public static JSONObject fillOwnedAttribute(Element e, JSONObject einfo) {
 		JSONObject info = einfo;
 		if (info == null) {
 			info = new JSONObject();
-			info.put("sysmlid", getElementID(e));
 		}
-		JSONArray propIDs = new JSONArray();
-		for (Element owned: e.getOwnedElement()) {
-			if (owned instanceof Property) {
-				propIDs.add(getElementID(owned));
+		
+		JSONArray propIDs = new JSONArray(); // need to make sure this is how things are set in MMS
+		
+		if (e instanceof Class) {
+			for (Property prop: ((Class)e).getOwnedAttribute()) {
+				propIDs.add(getElementID(prop));
 			}
 		}
-		if (!propIDs.isEmpty())
-			info.put("ownedAttribute", propIDs);
-		System.out.println(info);
+		
+		info.put("ownedAttribute", propIDs);
 		return info;
 	}
     
