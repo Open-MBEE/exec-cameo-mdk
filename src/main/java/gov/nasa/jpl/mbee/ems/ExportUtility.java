@@ -1080,16 +1080,17 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         int i = 0;
-        for (Property p: e.getMemberEnd()) {
-            if (i == 0) {
-                specialization.put("source", p.getID());
-                specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
-            } else {
-                specialization.put("target", p.getID());
-                specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
-            }
-            i++;
-        }
+        // moved this section to fillAggregationSpecialization
+//        for (Property p: e.getMemberEnd()) {
+//            if (i == 0) {
+//                specialization.put("source", p.getID());
+//                specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
+//            } else {
+//                specialization.put("target", p.getID());
+//                specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
+//            }
+//            i++;
+//        }
         JSONArray owned = new JSONArray();
         for (Property p: e.getOwnedEnd()) {
             owned.add(p.getID());
@@ -1106,14 +1107,16 @@ public class ExportUtility {
 			specialization = new JSONObject();
 		}
 		int i = 0;
-		for (Property p: e.getMemberEnd()) {
+        for (Property p: e.getMemberEnd()) {
             if (i == 0) {
+                specialization.put("source", p.getID());
                 specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
             } else {
+                specialization.put("target", p.getID());
                 specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
-		}
+        }
 		// get the thing from the info if it already exists
 		// set the whatever you got it from to null
 		// put that info in the something or other

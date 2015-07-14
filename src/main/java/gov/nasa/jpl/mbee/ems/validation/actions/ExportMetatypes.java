@@ -79,12 +79,6 @@ public class ExportMetatypes extends RuleViolationAction implements AnnotationAc
 		
 		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
 		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size()));
-		/*if (ExportUtility.send(url, send.toJSONString()) != null) {
-		    this.removeViolationsAndUpdateWindow(annos);
-		}*/
-		
-		// currently this does not send you an email
-		// probably we have the validator do those things
 	}
 
 	@SuppressWarnings("unchecked")
