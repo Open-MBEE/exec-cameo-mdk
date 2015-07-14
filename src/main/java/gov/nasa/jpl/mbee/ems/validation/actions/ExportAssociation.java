@@ -22,70 +22,85 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 
 public class ExportAssociation extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
-    private static final long serialVersionUID = 1L;
-    private Association element;
-    
-    public ExportAssociation(Association e) {
-        //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-        //
-        super("ExportAssociation", "Commit association", null, null);
-        this.element = e;
-    }
-    
-    @Override
-    public boolean canExecute(Collection<Annotation> arg0) {
-        return true;
-    }
+	private static final long serialVersionUID = 1L;
+	private Association element;
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void execute(Collection<Annotation> annos) {
-        JSONObject send = new JSONObject();
-        JSONArray infos = new JSONArray();
-        Set<Element> set = new HashSet<Element>();
-        for (Annotation anno: annos) {
-            Element e = (Element)anno.getTarget();
-            set.add(e);
-            JSONObject elementOb = ExportUtility.fillId(e, null);
-            elementOb.put("specialization", ExportUtility.fillAssociationSpecialization((Association)e, null));
-            infos.add(elementOb);
-        }
-        if (!ExportUtility.okToExport(set))
-            return;
-        send.put("elements", infos);
-        send.put("source", "magicdraw");
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
-        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationsAndUpdateWindow(annos);
-        }*/
-    }
+	public ExportAssociation(Association e) {
+		//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+		//
+		super("ExportAssociation", "Commit association", null, null);
+		this.element = e;
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.okToExport(element))
-            return;
-        JSONArray elements = new JSONArray();
-        JSONObject send = new JSONObject();
-        JSONObject elementOb = ExportUtility.fillId(element, null);
-        elementOb.put("specialization", ExportUtility.fillAssociationSpecialization(element, null));
-        elements.add(elementOb);
-        send.put("elements", elements);
-        send.put("source", "magicdraw");
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
-        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationAndUpdateWindow();
-        }*/
+	@Override
+	public boolean canExecute(Collection<Annotation> arg0) {
+		return true;
+	}
 
-    }
+	@SuppressWarnings("unchecked")
+	public void commit(JSONArray elements) {
+		JSONObject send = new JSONObject();
+		send.put("elements", elements);
+		send.put("source", "magicdraw");
+		
+		String url = ExportUtility.getPostElementsUrl();
+		if (url == null) {
+			return;
+		}
+		
+		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size()));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void execute(Collection<Annotation> annos) {
+		JSONObject send = new JSONObject();
+		JSONArray infos = new JSONArray();
+		Set<Element> set = new HashSet<Element>();
+		for (Annotation anno : annos) {
+			Element e = (Element)anno.getTarget();
+			set.add(e);
+			JSONObject elementOb = ExportUtility.fillId(e, null);
+			elementOb.put("specialization", ExportUtility.fillAssociationSpecialization((Association)e, null));
+			infos.add(elementOb);
+		}
+		if (!ExportUtility.okToExport(set))
+			return;
+		send.put("elements", infos);
+		send.put("source", "magicdraw");
+		String url = ExportUtility.getPostElementsUrl();
+		if (url == null) {
+			return;
+		}
+		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
+		/*if (ExportUtility.send(url, send.toJSONString()) != null) {
+		    this.removeViolationsAndUpdateWindow(annos);
+		}*/
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (!ExportUtility.okToExport(element))
+			return;
+		JSONArray elements = new JSONArray();
+		JSONObject send = new JSONObject();
+		JSONObject elementOb = ExportUtility.fillId(element, null);
+		elementOb.put("specialization", ExportUtility.fillAssociationSpecialization(element, null));
+		elements.add(elementOb);
+		send.put("elements", elements);
+		send.put("source", "magicdraw");
+		String url = ExportUtility.getPostElementsUrl();
+		if (url == null) {
+			return;
+		}
+		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+		OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
+		/*if (ExportUtility.send(url, send.toJSONString()) != null) {
+		    this.removeViolationAndUpdateWindow();
+		}*/
+
+	}
 }

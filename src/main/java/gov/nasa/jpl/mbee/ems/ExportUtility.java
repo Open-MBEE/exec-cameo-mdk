@@ -911,7 +911,7 @@ public class ExportUtility {
         if (e instanceof Package) {
             fillPackage((Package)e, specialization);
         } else if (e instanceof Property || e instanceof Slot) {
-            fillPropertySpecialization(e, specialization, true, true);
+        		fillPropertySpecialization(e, specialization, true, true);
         } else if (e instanceof DirectedRelationship) {
             fillDirectedRelationshipSpecialization((DirectedRelationship)e, specialization);
         } else if (e instanceof Connector) {
@@ -960,7 +960,7 @@ public class ExportUtility {
         return elementInfo;
     }
 
-    public static JSONObject fillViewContent(Element e, JSONObject spec) {
+	public static JSONObject fillViewContent(Element e, JSONObject spec) {
         Stereotype doc = Utils.getProductStereotype();
         JSONObject specialization = spec;
         if (specialization == null)
@@ -992,6 +992,7 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         if (e instanceof Property) {
+        		specialization.put("aggregation", ((Property)e).getAggregation());
             specialization.put("type", "Property");
             specialization.put("isDerived", ((Property) e).isDerived());
             specialization.put("isSlot", false);
@@ -1026,6 +1027,7 @@ public class ExportUtility {
             specialization.put("type", "Property");
             specialization.put("isDerived", false);
             specialization.put("isSlot", true);
+            
 
             // Retrieve a list of ValueSpecification objects.
             // Loop through these objects, creating a new JSONObject
@@ -1080,7 +1082,6 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         int i = 0;
-        // moved this section to fillAggregationSpecialization
 //        for (Property p: e.getMemberEnd()) {
 //            if (i == 0) {
 //                specialization.put("source", p.getID());
@@ -1091,6 +1092,11 @@ public class ExportUtility {
 //            }
 //            i++;
 //        }
+        // rudimentary wipe of old data
+        specialization.put("source", "null");
+        specialization.put("sourceAggregation", "null");
+        specialization.put("target", "null");
+        specialization.put("targetAggregation", "null");
         JSONArray owned = new JSONArray();
         for (Property p: e.getOwnedEnd()) {
             owned.add(p.getID());
@@ -1099,29 +1105,6 @@ public class ExportUtility {
         specialization.put("type", "Association");
         return specialization;
     }
-    
-    @SuppressWarnings("unchecked")
-	public static JSONObject fillAggregationSpecialization(Association e, JSONObject spec) {
-		JSONObject specialization = spec;
-		if (specialization == null) {
-			specialization = new JSONObject();
-		}
-		int i = 0;
-        for (Property p: e.getMemberEnd()) {
-            if (i == 0) {
-                specialization.put("source", p.getID());
-                specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
-            } else {
-                specialization.put("target", p.getID());
-                specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
-            }
-            i++;
-        }
-		// get the thing from the info if it already exists
-		// set the whatever you got it from to null
-		// put that info in the something or other
-		return specialization;
-	}
     
     @SuppressWarnings("unchecked")
     public static JSONObject fillPackage(Package e, JSONObject spec) {

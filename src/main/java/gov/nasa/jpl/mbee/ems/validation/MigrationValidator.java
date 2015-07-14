@@ -1,9 +1,8 @@
 package gov.nasa.jpl.mbee.ems.validation;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,16 +13,17 @@ import com.nomagic.ci.persistence.IPrimaryProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportAggregation;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportAssociation;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwnedAttribute;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportPropertyType;
 
 public class MigrationValidator {
 	
@@ -51,7 +51,8 @@ public class MigrationValidator {
 		
 		JSONArray metaElems = new JSONArray();
 		JSONArray attrElems = new JSONArray();
-		JSONArray aggrElems = new JSONArray();
+		JSONArray assoElems = new JSONArray();
+		JSONArray propElems = new JSONArray();
 		
 		// for all these elements, we need to fill (separately)
 		
@@ -66,15 +67,29 @@ public class MigrationValidator {
 				attrElems.add(attr);
 			}
 			if (elem instanceof Association) {
-				JSONObject aggr = ExportUtility.fillAggregationSpecialization((Association)elem, null);
-				if (aggr != null) {
-					aggrElems.add(aggr);
+				Association asso = (Association) elem;
+				// fix the association specialization
+				JSONObject assoSpec = ExportUtility.fillAssociationSpecialization(asso, null);
+				if (assoSpec != null) {
+					// update only the association specialization
+					JSONObject assoElem = ExportUtility.fillId(asso, null);
+					assoElem.put("specialization", assoSpec);
+					assoElems.add(assoElem);
+				}
+				// get the source and target properties and fill the aggregation types there
+				List<Property> props = asso.getMemberEnd();
+				for (Property prop: props) {
+					JSONObject propElem = ExportUtility.fillId(prop, null);
+//					propElem.put("aggregation", prop.getAggregation());
+					JSONObject propSpec = ExportUtility.fillPropertySpecialization(prop, null, true, true);
+					propElem.put("specialization", propSpec);
+					propElems.add(propElem);
 				}
 			}
 
 		}
 		
-		// we put in null for ExportMetatypes because when we commit directly
+		// we put in null for these exports because when we commit directly
 		// we don't have any element in focus
 		
 		// commit metatypes
@@ -87,25 +102,19 @@ public class MigrationValidator {
 		ExportOwnedAttribute exAttr = new ExportOwnedAttribute(null);
 		exAttr.commit(attrElems);
 		
-		// aggregation as part of property
-		// for element that is of type property
-		ExportAggregation exAggr = new ExportAggregation(null);
-		exAttr.commit(aggrElems);
+		// commit updated association
 		
-		// push without asking user
-		// select the validation rules that we want (listed above) and only do those
+		ExportAssociation exAsso = new ExportAssociation(null);
+		exAsso.commit(assoElems);
 		
+		// commit updated properties
+		
+		ExportPropertyType exProp = new ExportPropertyType(null);
+		exProp.commit(propElems);
+				
 		// if documents (products) clear out view2view property
 		
-	}
-	
-	private JSONObject switchAggregationProperty(Element element, JSONObject einfo) {
-		JSONObject info = einfo;
-		// put stuff in the new agg category
-//		info.put("aggregation", einfo.get("property"));
-		// gotta delete it based on the propertyType thing
-		// remove the old property category
-		return einfo;
+		
 	}
 	
     private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed) {

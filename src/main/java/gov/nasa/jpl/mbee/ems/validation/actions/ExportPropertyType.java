@@ -18,6 +18,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 public class ExportPropertyType extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -36,6 +37,21 @@ public class ExportPropertyType extends RuleViolationAction implements Annotatio
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
     }
+    
+	@SuppressWarnings("unchecked")
+	public void commit(JSONArray elements) {
+		JSONObject send = new JSONObject();
+		send.put("elements", elements);
+		send.put("source", "magicdraw");
+		
+		String url = ExportUtility.getPostElementsUrl();
+		if (url == null) {
+			return;
+		}
+		
+		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size()));
+	}
 
     @SuppressWarnings("unchecked")
     @Override

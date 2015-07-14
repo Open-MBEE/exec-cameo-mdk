@@ -955,19 +955,19 @@ public class ModelValidator {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject webspec = (JSONObject)info.get("specialization");
         JSONObject modelspec = ExportUtility.fillAssociationSpecialization(e, null);
-        String modelSource = (String)modelspec.get("source");
-        String modelTarget = (String)modelspec.get("target");
-        String modelSourceAggr = (String)modelspec.get("sourceAggregation");
-        String modelTargetAggr = (String)modelspec.get("targetAggregation");
+//        String modelSource = (String)modelspec.get("source");
+//        String modelTarget = (String)modelspec.get("target");
+//        String modelSourceAggr = (String)modelspec.get("sourceAggregation");
+//        String modelTargetAggr = (String)modelspec.get("targetAggregation");
         JSONArray modelOwned = (JSONArray)modelspec.get("ownedEnd");
-        String webSource = (String)webspec.get("source");
-        String webTarget = (String)webspec.get("target");
-        String webSourceAggr = (String)webspec.get("sourceAggregation");
-        String webTargetAggr = (String)webspec.get("targetAggregation");
+//        String webSource = (String)webspec.get("source");
+//        String webTarget = (String)webspec.get("target");
+//        String webSourceAggr = (String)webspec.get("sourceAggregation");
+//        String webTargetAggr = (String)webspec.get("targetAggregation");
         JSONArray webOwned = (JSONArray)webspec.get("ownedEnd");
-        if (!modelSource.equals(webSource) || !modelTarget.equals(webTarget) || 
-                !modelSourceAggr.equals(webSourceAggr) || !modelTargetAggr.equals(webTargetAggr) ||
-                !modelOwned.equals(webOwned)) {
+//        if (!modelSource.equals(webSource) || !modelTarget.equals(webTarget) || 
+//                !modelSourceAggr.equals(webSourceAggr) || !modelTargetAggr.equals(webTargetAggr) ||
+        if (!modelOwned.equals(webOwned)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[ASSOC] Association roles/aggregation/navigability are different");
             if (editable)
                 v.addAction(new ExportAssociation(e));
