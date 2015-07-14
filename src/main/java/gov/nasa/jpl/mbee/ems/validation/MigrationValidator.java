@@ -17,10 +17,13 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportAggregation;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwnedAttribute;
 
 public class MigrationValidator {
 	
@@ -40,40 +43,67 @@ public class MigrationValidator {
 		Set<Element> missing = new HashSet<Element>();
 		Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
 		for (Element elem : proj.getModel().getOwnedElement()) {
-			if (elem.isEditable()) {
-				getAllMissing(elem, missing, elementsKeyed);
-			}
+			getAllMissing(elem, missing, elementsKeyed);
 		}
 		
 		// we use the export utility fillmetatype function to build the elements
 		// that we actually want to send over (for metatype stuff)
 		
-		JSONArray exportElems = new JSONArray();
+		JSONArray metaElems = new JSONArray();
+		JSONArray attrElems = new JSONArray();
+		JSONArray aggrElems = new JSONArray();
+		
+		// for all these elements, we need to fill (separately)
+		
 		for (Element elem: missing) {
-			exportElems.add(ExportUtility.fillMetatype(elem, null));
+			JSONObject meta = ExportUtility.fillMetatype(elem, null);
+			// only add the useful outputs
+			if (meta != null) {
+				metaElems.add(meta);
+			}
+			JSONObject attr = ExportUtility.fillOwnedAttribute(elem, null);
+			if (attr != null) {
+				attrElems.add(attr);
+			}
+			if (elem instanceof Association) {
+				JSONObject aggr = ExportUtility.fillAggregationSpecialization((Association)elem, null);
+				if (aggr != null) {
+					aggrElems.add(aggr);
+				}
+			}
+
 		}
 		
 		// we put in null for ExportMetatypes because when we commit directly
 		// we don't have any element in focus
 		
+		// commit metatypes
+		
 		ExportMetatypes exMeta = new ExportMetatypes(null);
-		exMeta.commit(exportElems);
+		exMeta.commit(metaElems);
 
-		// owned attribute
+		// commit owned attributes
+		
+		ExportOwnedAttribute exAttr = new ExportOwnedAttribute(null);
+		exAttr.commit(attrElems);
 		
 		// aggregation as part of property
+		// for element that is of type property
+		ExportAggregation exAggr = new ExportAggregation(null);
+		exAttr.commit(aggrElems);
 		
 		// push without asking user
 		// select the validation rules that we want (listed above) and only do those
 		
-		
+		// if documents (products) clear out view2view property
 		
 	}
 	
 	private JSONObject switchAggregationProperty(Element element, JSONObject einfo) {
 		JSONObject info = einfo;
 		// put stuff in the new agg category
-		info.put("aggregation", einfo.get("property"));
+//		info.put("aggregation", einfo.get("property"));
+		// gotta delete it based on the propertyType thing
 		// remove the old property category
 		return einfo;
 	}

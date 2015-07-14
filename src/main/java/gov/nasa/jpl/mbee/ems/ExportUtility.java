@@ -1073,6 +1073,7 @@ public class ExportUtility {
         return specialization;
     }
     
+    
     @SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1097,6 +1098,27 @@ public class ExportUtility {
         specialization.put("type", "Association");
         return specialization;
     }
+    
+    @SuppressWarnings("unchecked")
+	public static JSONObject fillAggregationSpecialization(Association e, JSONObject spec) {
+		JSONObject specialization = spec;
+		if (specialization == null) {
+			specialization = new JSONObject();
+		}
+		int i = 0;
+		for (Property p: e.getMemberEnd()) {
+            if (i == 0) {
+                specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
+            } else {
+                specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
+            }
+            i++;
+		}
+		// get the thing from the info if it already exists
+		// set the whatever you got it from to null
+		// put that info in the something or other
+		return specialization;
+	}
     
     @SuppressWarnings("unchecked")
     public static JSONObject fillPackage(Package e, JSONObject spec) {
@@ -1247,6 +1269,25 @@ public class ExportUtility {
         info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
         return info;
     }
+    
+    @SuppressWarnings("unchecked")
+	public static JSONObject fillOwnedAttribute(Element e, JSONObject einfo) {
+		JSONObject info = einfo;
+		if (info == null) {
+			info = new JSONObject();
+			info.put("sysmlid", getElementID(e));
+		}
+		JSONArray propIDs = new JSONArray();
+		for (Element owned: e.getOwnedElement()) {
+			if (owned instanceof Property) {
+				propIDs.add(getElementID(owned));
+			}
+		}
+		if (!propIDs.isEmpty())
+			info.put("ownedAttribute", propIDs);
+		System.out.println(info);
+		return info;
+	}
     
     @SuppressWarnings("unchecked")
     public static JSONObject fillOwner(Element e, JSONObject einfo) {
@@ -1784,4 +1825,7 @@ public class ExportUtility {
         
         return (JSONObject)JSONValue.parse( jsonString );
     }
+
+
+
 }
