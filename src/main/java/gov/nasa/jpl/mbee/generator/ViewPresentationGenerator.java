@@ -336,7 +336,7 @@ public class ViewPresentationGenerator {
 		Package viewTarg = getViewTargetPackage(elem);
 		if (viewTarg == null) {
 			Package newPack = ef.createPackageInstance();
-			newPack.setName(((NamedElement)elem).getName() + genericInstSuffix); //change back to suffix
+			newPack.setName(((NamedElement)elem).getName() + genericInstSuffix);
 			return newPack;
 		}
 		return viewTarg;
