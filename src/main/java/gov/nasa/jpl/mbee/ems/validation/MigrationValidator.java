@@ -76,7 +76,7 @@ public class MigrationValidator {
 			} else if (elem instanceof Property) {
 				JSONObject spec = new JSONObject();
 				einfo.put("specialization", spec);
-				spec.put("aggregation", ((Property)elem).getAggregation());
+				spec.put("aggregation", ((Property)elem).getAggregation().toString());
 			}
 			exportElems.add(einfo);
 		}

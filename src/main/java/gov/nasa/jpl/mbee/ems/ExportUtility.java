@@ -993,7 +993,7 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         if (e instanceof Property) {
-        		specialization.put("aggregation", ((Property)e).getAggregation());
+        		specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
             specialization.put("type", "Property");
             specialization.put("isDerived", ((Property) e).isDerived());
             specialization.put("isSlot", false);
@@ -1083,21 +1083,16 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         int i = 0;
-//        for (Property p: e.getMemberEnd()) {
-//            if (i == 0) {
-//                specialization.put("source", p.getID());
-//                specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
-//            } else {
-//                specialization.put("target", p.getID());
-//                specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
-//            }
-//            i++;
-//        }
-        // rudimentary wipe of old data
-        specialization.put("source", "null");
-        specialization.put("sourceAggregation", "null");
-        specialization.put("target", "null");
-        specialization.put("targetAggregation", "null");
+        for (Property p: e.getMemberEnd()) {
+            if (i == 0) {
+                specialization.put("source", p.getID());
+                // specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
+            } else {
+                specialization.put("target", p.getID());
+                // specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
+            }
+            i++;
+        }
         JSONArray owned = new JSONArray();
         for (Property p: e.getOwnedEnd()) {
             owned.add(p.getID());
@@ -1264,7 +1259,7 @@ public class ExportUtility {
 			info = new JSONObject();
 		}
 		
-		JSONArray propIDs = new JSONArray(); // need to make sure this is how things are set in MMS
+		JSONArray propIDs = new JSONArray(); // need to make sure this is how things are set in MMS, as in it's [] not null
 		
 		if (e instanceof Class) {
 			for (Property prop: ((Class)e).getOwnedAttribute()) {
