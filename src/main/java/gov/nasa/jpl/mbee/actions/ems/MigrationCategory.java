@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
+import gov.nasa.jpl.mbee.ems.migrate.MigrationKind;
+
 import com.nomagic.actions.ActionsCategory;
 
 public class MigrationCategory extends ActionsCategory {
@@ -9,7 +11,8 @@ public class MigrationCategory extends ActionsCategory {
 	public MigrationCategory() {
 	    super(actionid, "Migration", null, null);
 	    this.setNested(true);
-	    this.addAction(new MigrationAction());
+	    this.addAction(new MigrationAction(MigrationKind.BENDERTOCRUSHINATOR));
+	    this.addAction(new MigrationAction(MigrationKind.VIEW2VIEW));
 	    // add more actions here
 	}
 

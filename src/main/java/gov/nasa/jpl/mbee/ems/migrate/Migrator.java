@@ -4,6 +4,8 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,45 +20,44 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public abstract class Migrator {
-	
+
 	private Project project;
-	protected Set<Element> missing;
-	
+	protected Set<Element> missing = new HashSet<Element>();
+
 	public Migrator() {
 		project = Application.getInstance().getProject();
-		
 		for (Element elem : project.getModel().getOwnedElement()) {
 			getAllMissing(elem, missing);
 		}
 	}
-	
+
 	public void migrate(ProgressStatus ps) {}
-	
+
 	public static void commit(JSONArray elements) {
 		JSONObject send = new JSONObject();
 		send.put("elements", elements);
 		send.put("source", "magicdraw");
-		
+
 		String url = ExportUtility.getPostElementsUrl();
 		if (url == null) {
 			return;
 		}
-		
+
 		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
 		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size()));
 	}
-	
-	
+
+
 	/** here's the code to get all the elements in the project (in focus) */
-    private void getAllMissing(Element current, Set<Element> missing) {
-        if (ProjectUtilities.isElementInAttachedProject(current))
-            return;
-        if (!ExportUtility.shouldAdd(current))
-            return;
-        if (!(current instanceof Model && ((Model)current).getName().equals("Data")))
-            missing.add(current);
-        for (Element e: current.getOwnedElement()) {
-            getAllMissing(e, missing);            
-        }
-    }
+	private void getAllMissing(Element current, Set<Element> missing) {
+		if (ProjectUtilities.isElementInAttachedProject(current))
+			return;
+		if (!ExportUtility.shouldAdd(current))
+			return;
+		if (!(current instanceof Model && ((Model)current).getName().equals("Data")))
+			missing.add(current);
+		for (Element e : current.getOwnedElement()) {
+			getAllMissing(e, missing);
+		}
+	}
 }

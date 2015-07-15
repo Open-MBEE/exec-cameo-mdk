@@ -35,10 +35,6 @@ public class BenderToCrushinatorMigrator extends Migrator {
 	
 	private Project proj;
 	
-	public BenderToCrushinatorMigrator() {
-		super();
-	}
-	
 	@SuppressWarnings("unchecked")
 	public void migrate(ProgressStatus ps) {
 		

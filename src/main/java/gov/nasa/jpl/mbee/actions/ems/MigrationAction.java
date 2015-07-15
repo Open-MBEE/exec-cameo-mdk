@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.actions.ems;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.MigrationRunner;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
+import gov.nasa.jpl.mbee.ems.migrate.MigrationKind;
 
 import java.awt.event.ActionEvent;
 
@@ -12,18 +13,20 @@ import com.nomagic.ui.ProgressStatusRunner;
 public class MigrationAction extends NMAction {
 	
 	private static final String actionid = "Migrate";
+	private MigrationKind mk;
 	
-	public MigrationAction() {
-		super(actionid, "EMS 2.1 to 2.2", null, null);
+	public MigrationAction(MigrationKind mk) {
+		super(actionid, mk.title, null, null);
+		this.mk = mk;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		
-        if (!ExportUtility.checkBaseline()) {    
+        if (!ExportUtility.checkBaseline()) {
             return;
         }
-        ProgressStatusRunner.runWithProgressStatus(new MigrationRunner(), "Migrating", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new MigrationRunner(mk), "Migrating", true, 0);
 	}
 
 }
