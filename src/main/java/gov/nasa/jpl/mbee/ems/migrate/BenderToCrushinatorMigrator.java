@@ -31,6 +31,13 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwnedAttribute;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportPropertyType;
 import gov.nasa.jpl.mbee.lib.Utils;
 
+/**
+ * This class migrates a MagicDraw project from EMS 2.1 to EMS 2.2
+ * 
+ * @author brower
+ *
+ */
+
 public class BenderToCrushinatorMigrator extends Migrator {
 	
 	private Project proj;
