@@ -113,7 +113,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 						final RedefinableElement redefinableElement = (RedefinableElement) ne;
 						RedefinableElement redefiningElement = null;
 						for (final Property p : classifier.getAttribute()) {
-							if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
+							if (redefinableElement instanceof Property && doesEventuallyRedefine(p, (Property) redefinableElement)) {
+							//if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
 								redefiningElement = (RedefinableElement) p;
 								break;
 							}
@@ -144,7 +145,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 								final TypedElement redefiningTypedElement = (TypedElement) redefiningElement;
 								final TypedElement redefinableTypedElement = (TypedElement) redefinableElement;
 								
-								if ((redefiningTypedElement.getType() == null && redefinableTypedElement.getType() != null) || (redefiningTypedElement.getType() != null && !redefiningTypedElement.getType().equals(redefinableTypedElement.getType()))) {
+								if ((redefiningTypedElement.getType() == null && redefinableTypedElement.getType() != null) || (redefiningTypedElement.getType() != null && redefiningTypedElement.getType() instanceof Classifier && redefinableTypedElement.getType() instanceof Classifier && !doesEventuallyGeneralizeTo((Classifier) redefiningTypedElement.getType(), (Classifier) redefinableTypedElement.getType()))) {
 									if (redefiningTypedElement.getType() instanceof Classifier && redefinableTypedElement.getType() instanceof Classifier && ((Classifier) redefiningTypedElement.getType()).getGeneral().contains(redefinableTypedElement.getType())) {
 										iterator.add(((Classifier) redefiningTypedElement.getType()));
 										iterator.previous();
@@ -296,6 +297,31 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 				}
 			}
 		}*/
+		
+	}
+	
+	public static boolean doesEventuallyRedefine(final Property source, final Property target) {
+		if (source.getRedefinedProperty().contains(target)) {
+			return true;
+		}
+		for (final Property p : source.getRedefinedProperty()) {
+			if (doesEventuallyRedefine(p, target)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static boolean doesEventuallyGeneralizeTo(final Classifier source, final Classifier target) {
+		if (source.getGeneral().contains(target)) {
+			return true;
+		}
+		for (final Classifier classifier : source.getGeneral()) {
+			if (doesEventuallyGeneralizeTo(classifier, target)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
