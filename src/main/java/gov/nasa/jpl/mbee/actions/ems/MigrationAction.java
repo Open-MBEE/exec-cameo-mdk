@@ -16,7 +16,7 @@ public class MigrationAction extends NMAction {
 	private MigrationKind mk;
 	
 	public MigrationAction(MigrationKind mk) {
-		super(actionid, mk.title, null, null);
+		super(actionid + mk.actionid, mk.title, null, null);
 		this.mk = mk;
 	}
 

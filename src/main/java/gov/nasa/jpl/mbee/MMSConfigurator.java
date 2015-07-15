@@ -72,7 +72,7 @@ public class MMSConfigurator implements AMConfigurator {
             category.addAction(new UpdateFromJMS(false));
             category.addAction(new UpdateFromJMS(true));
             category.addAction(new SendProjectVersionAction());
-            category.addAction(new MigrationCategory()); 
+            category.addAction(new MigrationCategory());
             if (MDUtils.isDeveloperMode()) {
                 category.addAction(new UpdateWorkspacesAction());
             }
