@@ -52,9 +52,11 @@ public class ViewPresentationGenerator {
 	private boolean recurse;
 	private Element view;
 	
-	// these suffixes are added to the project_id to form the view instances id and unused view id respectively
-	private String viewInstSuffix = "_View_Instances";
-	private String unusedInstSuffix = "_Unused_View_Instances";
+	// use these prefixes then add project_id to form the view instances id and unused view id respectively
+	private String viewInstPrefix = "View_Instances_";
+	private String unusedInstPrefix = "Unused_View_Instances_";
+	
+	// this suffix is appended to the name of each particular package
 	private String genericInstSuffix = "_Instances";
 
 	public ViewPresentationGenerator(Element view, boolean recursive) {
@@ -303,17 +305,17 @@ public class ViewPresentationGenerator {
 
 	private Package createViewInstancesPackage() {
 		// fix root element, set it to project instead
-		return createParticularPackage(Utils.getRootElement(), viewInstSuffix, "View Instances");
+		return createParticularPackage(Utils.getRootElement(), viewInstPrefix, "View Instances");
 	}
 	
 	private Package createUnusedInstancesPackage() {
-		Package rootPackage = createParticularPackage(Utils.getRootElement(), viewInstSuffix, "View Instances");
-		return createParticularPackage(rootPackage, unusedInstSuffix, "Unused View Instances");
+		Package rootPackage = createParticularPackage(Utils.getRootElement(), viewInstPrefix, "View Instances");
+		return createParticularPackage(rootPackage, unusedInstPrefix, "Unused View Instances");
 	}
 	
-	private Package createParticularPackage(Package owner, String packIDSuffix, String name) {
+	private Package createParticularPackage(Package owner, String packIDPrefix, String name) {
 		// fix root element, set it to project
-		String viewInstID = Utils.getProject().getPrimaryProject().getProjectID() + packIDSuffix;
+		String viewInstID = packIDPrefix + Utils.getProject().getPrimaryProject().getProjectID();
 		Package viewInst = null;
 		if (Application.getInstance().getProject().getElementByID(viewInstID) != null) {
 			// found it
@@ -334,7 +336,7 @@ public class ViewPresentationGenerator {
 		Package viewTarg = getViewTargetPackage(elem);
 		if (viewTarg == null) {
 			Package newPack = ef.createPackageInstance();
-			newPack.setName(((NamedElement)elem).getName() + genericInstSuffix);
+			newPack.setName(((NamedElement)elem).getName() + genericInstSuffix); //change back to suffix
 			return newPack;
 		}
 		return viewTarg;
