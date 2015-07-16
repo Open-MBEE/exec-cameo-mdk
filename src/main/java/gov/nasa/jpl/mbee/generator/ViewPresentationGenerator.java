@@ -53,11 +53,11 @@ public class ViewPresentationGenerator {
 	private Element view;
 	
 	// use these prefixes then add project_id to form the view instances id and unused view id respectively
-	private String viewInstPrefix = "View_Instances_";
-	private String unusedInstPrefix = "Unused_View_Instances_";
+	private String viewInstPrefix = "View_Instances";
+	private String unusedInstPrefix = "Unused_View_Instances";
 	
 	// this suffix is appended to the name of each particular package
-	private String genericInstSuffix = "_Instances";
+	private String genericInstSuffix = " Instances";
 
 	public ViewPresentationGenerator(Element view, boolean recursive) {
 		this.view = view;
@@ -315,7 +315,8 @@ public class ViewPresentationGenerator {
 	
 	private Package createParticularPackage(Package owner, String packIDPrefix, String name) {
 		// fix root element, set it to project
-		String viewInstID = packIDPrefix + Utils.getProject().getPrimaryProject().getProjectID();
+		// replace PROJECT with the packIDPrefix
+		String viewInstID = Utils.getProject().getPrimaryProject().getProjectID().replace("PROJECT", packIDPrefix);
 		Package viewInst = null;
 		if (Application.getInstance().getProject().getElementByID(viewInstID) != null) {
 			// found it
