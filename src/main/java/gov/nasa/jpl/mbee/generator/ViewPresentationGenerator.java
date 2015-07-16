@@ -52,10 +52,12 @@ public class ViewPresentationGenerator {
 	private boolean recurse;
 	private Element view;
 	
-	// these suffixes are added to the project_id to form the view instances id and unused view id respectively
-	private String viewInstSuffix = "_View_Instances";
-	private String unusedInstSuffix = "_Unused_View_Instances";
-	private String genericInstSuffix = "_Instances";
+	// use these prefixes then add project_id to form the view instances id and unused view id respectively
+	private String viewInstPrefix = "View_Instances";
+	private String unusedInstPrefix = "Unused_View_Instances";
+	
+	// this suffix is appended to the name of each particular package
+	private String genericInstSuffix = " Instances";
 
 	public ViewPresentationGenerator(Element view, boolean recursive) {
 		this.view = view;
@@ -303,17 +305,18 @@ public class ViewPresentationGenerator {
 
 	private Package createViewInstancesPackage() {
 		// fix root element, set it to project instead
-		return createParticularPackage(Utils.getRootElement(), viewInstSuffix, "View Instances");
+		return createParticularPackage(Utils.getRootElement(), viewInstPrefix, "View Instances");
 	}
 	
 	private Package createUnusedInstancesPackage() {
-		Package rootPackage = createParticularPackage(Utils.getRootElement(), viewInstSuffix, "View Instances");
-		return createParticularPackage(rootPackage, unusedInstSuffix, "Unused View Instances");
+		Package rootPackage = createParticularPackage(Utils.getRootElement(), viewInstPrefix, "View Instances");
+		return createParticularPackage(rootPackage, unusedInstPrefix, "Unused View Instances");
 	}
 	
-	private Package createParticularPackage(Package owner, String packIDSuffix, String name) {
+	private Package createParticularPackage(Package owner, String packIDPrefix, String name) {
 		// fix root element, set it to project
-		String viewInstID = Utils.getProject().getPrimaryProject().getProjectID() + packIDSuffix;
+		// replace PROJECT with the packIDPrefix
+		String viewInstID = Utils.getProject().getPrimaryProject().getProjectID().replace("PROJECT", packIDPrefix);
 		Package viewInst = null;
 		if (Application.getInstance().getProject().getElementByID(viewInstID) != null) {
 			// found it
