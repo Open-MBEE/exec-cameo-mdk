@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.ems.migrate;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import com.nomagic.task.ProgressStatus;
@@ -22,6 +23,7 @@ public class View2ViewMigrator extends Migrator {
 					if (doc != null && StereotypesHelper.hasStereotypeOrDerived(elem, doc)) {
 						JSONObject einfo = new JSONObject();
 						JSONObject spec = new JSONObject();
+						einfo.put("sysmlid", ExportUtility.getElementID(elem));
 						einfo.put("specialization", spec);
 						spec.put("view2view", new JSONArray());
 						exportElems.add(einfo);
@@ -31,5 +33,4 @@ public class View2ViewMigrator extends Migrator {
 		}
 		commit(exportElems);
 	}
-
 }

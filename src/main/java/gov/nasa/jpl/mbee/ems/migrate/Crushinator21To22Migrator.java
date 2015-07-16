@@ -38,13 +38,13 @@ import gov.nasa.jpl.mbee.lib.Utils;
  *
  */
 
-public class BenderToCrushinatorMigrator extends Migrator {
+public class Crushinator21To22Migrator extends Migrator {
 	
 	private Project proj;
 	
 	@SuppressWarnings("unchecked")
 	public void migrate(ProgressStatus ps) {
-		
+				
 		JSONArray exportElems = new JSONArray();
 		for (Element elem: missing) {
 			// assign the id so we can update the correct element
@@ -58,24 +58,16 @@ public class BenderToCrushinatorMigrator extends Migrator {
 			einfo = ExportUtility.fillOwnedAttribute(elem, einfo);
 			
 			// switch the aggregation from Association spec to Property spec
-			if (elem instanceof Association) {
+			if (elem instanceof Property) {
 				JSONObject spec = new JSONObject();
 				einfo.put("specialization", spec);
-				// these will be created every time you do a migrate unfortunately
-				spec.put("sourceAggregation", "null");
-				spec.put("targetAggregation", "null");
-			} else if (elem instanceof Property) {
-				JSONObject spec = new JSONObject();
-				einfo.put("specialization", spec);
-				spec.put("aggregation", ((Property)elem).getAggregation().toString());
+				spec.put("aggregation", ((Property)elem).getAggregation().toString().toUpperCase());
 			}
 			
 			// now we have all the element updates to add to export
 			exportElems.add(einfo);
 		}
-		
-		// call the view2view migrate action (after some checks)
-		
+				
 		commit(exportElems);
 
 	}

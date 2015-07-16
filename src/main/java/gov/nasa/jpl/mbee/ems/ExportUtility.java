@@ -1073,11 +1073,25 @@ public class ExportUtility {
         }
         specialization.put("classifier", classifiers);
         specialization.put("type", "InstanceSpecification");
+        specialization = sanitizeJSON(specialization);
         return specialization;
     }
     
-    
-    @SuppressWarnings("unchecked")
+	public static JSONObject sanitizeJSON(JSONObject spec) {
+		List<Object> remKeys = new ArrayList<Object>();
+		for (Object key: spec.keySet()) {
+			// delete empty JSONArray
+			if (spec.get(key) instanceof JSONArray && ((JSONArray)spec.get(key)).isEmpty()) {
+				remKeys.add(key);
+			}
+		}
+		for (Object key: remKeys) {
+			spec.remove(key);
+		}
+		return spec;
+	}
+	
+	@SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
         JSONObject specialization = spec;
         if (specialization == null)
@@ -1259,15 +1273,14 @@ public class ExportUtility {
 			info = new JSONObject();
 		}
 		
-		JSONArray propIDs = new JSONArray(); // need to make sure this is how things are set in MMS, as in it's [] not null
-		
+		JSONArray propIDs = new JSONArray();
 		if (e instanceof Class) {
 			for (Property prop: ((Class)e).getOwnedAttribute()) {
 				propIDs.add(getElementID(prop));
 			}
 		}
-		
-		info.put("ownedAttribute", propIDs);
+		if (!propIDs.isEmpty())
+			info.put("ownedAttribute", propIDs);
 		return info;
 	}
     
