@@ -34,5 +34,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/activemq-all-5.9.1.jar"/>
 	<classpathentry kind="con" path="com.nomagic.magicdraw.CLASSPATH_LIB_CONTAINER/,lib/,lib/graphics/,lib/webservice/,plugins/com.nomagic.magicdraw.automaton/,plugins/com.nomagic.magicdraw.automaton/engines/,plugins/com.nomagic.magicdraw.automaton/engines/beanshell/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/embeddable/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/indy/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/lib/,plugins/com.nomagic.magicdraw.automaton/engines/js-rhino/,plugins/com.nomagic.magicdraw.automaton/help/,plugins/com.nomagic.magicdraw.automaton/lib/,plugins/com.nomagic.magicdraw.automaton/resources/,plugins/com.nomagic.magicdraw.dependencymatrix/,plugins/com.nomagic.magicdraw.dependencymatrix/resources/,plugins/com.nomagic.magicdraw.diagramtable"/>
+	<classpathentry kind="lib" path="lib/lpg-java-runtime-bin-2.0.23.jar"/>
+	<classpathentry kind="lib" path="lib/joda-time-2.8.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
