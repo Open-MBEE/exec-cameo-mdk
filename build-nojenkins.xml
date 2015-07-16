@@ -45,6 +45,9 @@
   <property name="build.test.junit.report" value="${build}/test/junit/report" />
 
   <path id="mdclasspath">
+    <fileset dir="lib" includes="**/*.jar">
+       
+    </fileset>
     <fileset dir="${md}/lib" includes="**/*.jar">
       
     </fileset>
@@ -64,9 +67,6 @@
   	<fileset dir="${md}/plugins/com.nomagic.magicdraw.qvt" includes="**/*.jar">
   	  	          
   	  	        </fileset>
-    <fileset dir="lib" includes="**/*.jar">
-       
-    </fileset>
     <pathelement path="${build.plugin.classes}"/>
   </path>
 
@@ -187,7 +187,7 @@
   	<copy todir="${build.zipfile}/plugins/gov.nasa.jpl.mbee.docgen" file="${src.plugin.xml}" filtering="true" overwrite="true"/>
   	<copy todir="${build.zipfile}/data/resourcemanager" file="${src.descriptor}" filtering="true"/>
   	
-  	<exec executable="python">
+  	<exec executable="${python-exe}">
   	      <arg value="resource_descriptor_generator.py"/>
   	</exec>
   	

@@ -32,5 +32,8 @@
 	<classpathentry kind="lib" path="lib/guava-18.0.jar"/>
 	<classpathentry kind="lib" path="lib/swingx-all-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/swingx-beaninfo-1.6.4.jar"/>
+	<classpathentry kind="lib" path="lib/lpg-java-runtime-bin-2.0.23.jar"/>
+	<classpathentry kind="lib" path="lib/joda-time-2.8.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
