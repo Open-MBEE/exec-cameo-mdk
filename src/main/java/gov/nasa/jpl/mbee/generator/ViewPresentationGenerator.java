@@ -131,7 +131,7 @@ public class ViewPresentationGenerator {
 			if (!ProjectUtilities.isElementInAttachedProject(v)) {
 				handleViewOrSection(v, null, view2pe.get(v));
 			} else {
-				Application.getInstance().getGUILog().log("View " + view.getID() + " not in current project.");
+				Application.getInstance().getGUILog().log("[INFO] View " + view.getID() + " not in current project.");
 			}
 		}
 		// then, pass through all the unused PresentationElements and move their particular
@@ -144,7 +144,7 @@ public class ViewPresentationGenerator {
 	        		if (!ProjectUtilities.isElementInAttachedProject(is)) {
 	        			is.setOwner(createUnusedInstancesPackage());
 	        		} else {
-	        			Application.getInstance().getGUILog().log("Unused Presentation Element " + presentationElement.getName() + " not in current project.");
+	        			Application.getInstance().getGUILog().log("[INFO] Unused Presentation Element " + presentationElement.getName() + " not in current project.");
 	        		}
 	        	}
 	    }
@@ -293,7 +293,7 @@ public class ViewPresentationGenerator {
 		// from parent, try to grab dependency to a package in View Instances
 		Package parentPack = getViewTargetPackage(parent);
 		if (!leaf.isEditable()) {
-			Application.getInstance().getGUILog().log("Package " + leaf.getID() + " is not editable");
+			Application.getInstance().getGUILog().log("[INFO] Package " + leaf.getID() + " is not editable");
 		} else {
 			if (parentPack != null) {
 				leaf.setOwner(parentPack);
@@ -337,7 +337,12 @@ public class ViewPresentationGenerator {
 		Package viewTarg = getViewTargetPackage(elem);
 		if (viewTarg == null) {
 			Package newPack = ef.createPackageInstance();
-			newPack.setName(((NamedElement)elem).getName() + genericInstSuffix);
+			String prefix = ((NamedElement)elem).getName();
+			// if the view has no name, we use the id instead to clarify to user
+			if (prefix.isEmpty()) {
+				prefix = elem.getID();
+			}
+			newPack.setName(prefix + genericInstSuffix);
 			return newPack;
 		}
 		return viewTarg;
