@@ -1076,6 +1076,19 @@ public class ExportUtility {
         return specialization;
     }
     
+	public static JSONObject sanitizeJSON(JSONObject spec) {
+		List<Object> remKeys = new ArrayList<Object>();
+		for (Object key: spec.keySet()) {
+			// delete empty JSONArray
+			if (spec.get(key) instanceof JSONArray && ((JSONArray)spec.get(key)).isEmpty()) {
+				remKeys.add(key);
+			}
+		}
+		for (Object key: remKeys) {
+			spec.remove(key);
+		}
+		return spec;
+	}
     
     @SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
