@@ -158,6 +158,8 @@ public class ImportUtility {
                     setPropertyDefaultValue((Property)newE, vals);
                 if (specialization.containsKey("propertyType"))
                     setPropertyType((Property)newE, specialization);
+                if (specialization.containsKey("aggregation"))
+                		setPropertyAggregation((Property)newE, specialization);
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
@@ -244,6 +246,8 @@ public class ImportUtility {
                     setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
                 if (spec.containsKey("propertyType"))
                     setPropertyType((Property)e, spec);
+                if (spec.containsKey("aggregation"))
+                		setPropertyAggregation((Property)e, spec);
             }
             if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
@@ -261,8 +265,8 @@ public class ImportUtility {
                 setViewConstraint(e, spec);
         }
     }
-    
-    public static void setViewConstraint(Element e, JSONObject specialization) {
+
+	public static void setViewConstraint(Element e, JSONObject specialization) {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {
             c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
@@ -377,6 +381,12 @@ public class ImportUtility {
         p.setType(type);
     }
     
+    private static void setPropertyAggregation(Property prop, JSONObject spec) {
+		String webSource = (String) spec.get("aggregation");
+		AggregationKindEnum agg = AggregationKindEnum.getByName(webSource.toLowerCase());
+		prop.setAggregation(agg);
+}
+    
     public static void setSlotValues(Slot s, JSONArray values) {
         if (values == null)
             return;
@@ -441,8 +451,8 @@ public class ImportUtility {
         Element webTarget = ExportUtility.getElementFromID(webTargetId);
         Property modelSource = null;
         Property modelTarget = null;
-        String webSourceA = (String)spec.get("sourceAggregation");
-        String webTargetA = (String)spec.get("targetAggregation");
+//        String webSourceA = (String)spec.get("sourceAggregation");
+//        String webTargetA = (String)spec.get("targetAggregation");
         List<Property> todelete = new ArrayList<Property>();
         int i = 0;
         if (webSource == null || webTarget == null) {
@@ -474,14 +484,14 @@ public class ImportUtility {
             a.getMemberEnd().add((Property)webTarget);
             modelTarget = (Property)webTarget;
         }
-        if (modelSource != null && webSourceA != null) {
-            AggregationKindEnum agg = AggregationKindEnum.getByName(webSourceA.toLowerCase());
-            modelSource.setAggregation(agg);
-        }
-        if (modelTarget != null && webTargetA != null) {
-            AggregationKindEnum agg = AggregationKindEnum.getByName(webTargetA.toLowerCase());
-            modelTarget.setAggregation(agg);
-        }
+//        if (modelSource != null && webSourceA != null) {
+//            AggregationKindEnum agg = AggregationKindEnum.getByName(webSourceA.toLowerCase());
+//            modelSource.setAggregation(agg);
+//        }
+//        if (modelTarget != null && webTargetA != null) {
+//            AggregationKindEnum agg = AggregationKindEnum.getByName(webTargetA.toLowerCase());
+//            modelTarget.setAggregation(agg);
+//        }
     }
     
     public static List<ValueSpecification> createElementValues(List<String> ids) {
