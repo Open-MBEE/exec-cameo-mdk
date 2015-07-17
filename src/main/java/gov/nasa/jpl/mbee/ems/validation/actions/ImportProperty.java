@@ -30,17 +30,17 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.impl.ElementsFactory;
 
-public class ImportPropertyType extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class ImportProperty extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private Element element;
     private Type type;
     private JSONObject result;
     
-    public ImportPropertyType(Element e, Type type, JSONObject result) {
+    public ImportProperty(Element e, Type type, JSONObject result) {
         //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
         //
-        super("ImportPropertyType", "Accept property type", null, null);
+        super("ImportProperty", "Accept property", null, null);
         this.element = e;
         this.type = type;
         this.result = result;
@@ -53,7 +53,7 @@ public class ImportPropertyType extends RuleViolationAction implements Annotatio
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        executeMany(annos, "Change Property Types");
+        executeMany(annos, "Change Properties");
     }
     
     @Override
@@ -67,12 +67,12 @@ public class ImportPropertyType extends RuleViolationAction implements Annotatio
             Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
             JSONObject ptype = (JSONObject)((JSONObject)map.get(e.getID())).get("specialization");
             if (e instanceof Property && ptype.containsKey("propertyType")) {
-                ImportUtility.setPropertyType((Property)e, ptype);
+                ImportUtility.setProperty((Property)e, ptype);
             } 
         } else {
             if (element instanceof Property) {
                 ImportUtility.setPropertyType((Property)element, type);
-            } 
+            }
         }
         return true;
     }
@@ -83,6 +83,6 @@ public class ImportPropertyType extends RuleViolationAction implements Annotatio
             Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
             return;
         }
-        execute("Change Property Type");
+        execute("Change Property");
     }
 }

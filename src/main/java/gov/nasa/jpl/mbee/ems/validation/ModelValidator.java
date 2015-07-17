@@ -49,7 +49,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportInstanceSpec;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportPropertyType;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportProperty;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportSite;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
@@ -62,7 +62,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportInstanceSpec;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportPropertyType;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportProperty;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
@@ -99,6 +99,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
@@ -490,7 +491,7 @@ public class ModelValidator {
                 valueDiff.addViolation(v);
                 differentElements.add(e);
             }
-            ValidationRuleViolation v2 = propertyTypeDiff((Property)e, elementInfo);
+            ValidationRuleViolation v2 = propertyDiff((Property)e, elementInfo);
             if (v2 != null) {
                 //v2.addAction(vdiff);
             	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, vdiff);
@@ -664,9 +665,17 @@ public class ModelValidator {
         return null;
     }
     
-    private ValidationRuleViolation propertyTypeDiff(Property e, JSONObject info) {
+    private ValidationRuleViolation propertyDiff(Property e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject specialization = (JSONObject)info.get("specialization");
+        
+        // diff the aggregation
+        String modelAggr = e.getAggregation().toString().toUpperCase();
+        String webAggr = null;
+        if (specialization != null)
+        		webAggr = ((String)specialization.get("aggregation")).toUpperCase();
+        
+        // diff the prop type
         Type modelType = e.getType();
         String modelTypeId = null;
         if (modelType != null)
@@ -676,17 +685,19 @@ public class ModelValidator {
             webTypeId = (String)specialization.get("propertyType");
         Element webTypeElement = null;
         if (webTypeId != null)
-            webTypeElement = ExportUtility.getElementFromID(webTypeId);
-        if ((modelTypeId != null && !modelTypeId.equals(webTypeId)) || (webTypeId != null && !webTypeId.equals(modelTypeId))) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PTYPE] model: " + (modelType == null ? "null" : modelType.getName()) + ", web: " + (webTypeElement == null ? "null" : webTypeElement.getHumanName()));
+            webTypeElement = ExportUtility.getElementFromID(webTypeId);   
+        
+        if ((modelTypeId != null && !modelTypeId.equals(webTypeId)) || (webTypeId != null && !webTypeId.equals(modelTypeId))
+        		|| (modelAggr != null && !modelAggr.equals(webAggr)) || (webAggr != null && !webAggr.equals(modelAggr))) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] model: " + (e.getName().isEmpty() ? e.getID() : e.getName()) + ", web: " + (((String)info.get("name")).isEmpty() ? info.get("sysmlid") : info.get("name")) + " are different");
             if (editable)
-                v.addAction(new ExportPropertyType(e));
-            v.addAction(new ImportPropertyType(e, (Type)webTypeElement, result));
+                v.addAction(new ExportProperty(e));
+            v.addAction(new ImportProperty(e, (Type)webTypeElement, result));
             return v;
         }
         return null;
     }
-    
+        
     private ValidationRuleViolation slotTypeDiff(Slot e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject specialization = (JSONObject)info.get("specialization");
@@ -703,7 +714,7 @@ public class ModelValidator {
         if ((modelTypeId != null && !modelTypeId.equals(webTypeId)) || (webTypeId != null && !webTypeId.equals(modelTypeId))) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[FEATURE] model: " + (modelType == null ? "null" : modelType.getName()) + ", web: " + (webTypeElement == null ? "null" : webTypeElement.getHumanName()));
             if (editable)
-                v.addAction(new ExportPropertyType(e));
+                v.addAction(new ExportProperty(e));
             //v.addAction(new ImportPropertyType(e, (Type)webTypeElement, result));
             return v;
         }

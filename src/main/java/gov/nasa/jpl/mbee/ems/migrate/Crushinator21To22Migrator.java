@@ -28,7 +28,7 @@ import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportAssociation;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwnedAttribute;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportPropertyType;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportProperty;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 /**

@@ -154,12 +154,7 @@ public class ImportUtility {
                     Property newProperty = ef.createPropertyInstance();
                     newE = newProperty;
                 }
-                if (specialization.containsKey("value"))
-                    setPropertyDefaultValue((Property)newE, vals);
-                if (specialization.containsKey("propertyType"))
-                    setPropertyType((Property)newE, specialization);
-                if (specialization.containsKey("aggregation"))
-                		setPropertyAggregation((Property)newE, specialization);
+                setProperty((Property)newE, specialization);
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
@@ -242,12 +237,11 @@ public class ImportUtility {
         if (spec != null) {
             String type = (String)spec.get("type");
             if (type != null && type.equals("Property") && e instanceof Property) {
+            		setProperty((Property)e, spec);
                 if (spec.containsKey("value"))
                     setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
-                if (spec.containsKey("propertyType"))
-                    setPropertyType((Property)e, spec);
-                if (spec.containsKey("aggregation"))
-                		setPropertyAggregation((Property)e, spec);
+//                if (spec.containsKey("propertyType"))
+//                    setProperty((Property)e, spec);
             }
             if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
@@ -363,10 +357,17 @@ public class ImportUtility {
             p.setDefaultValue(null);
     }
     
-    public static void setPropertyType(Property p, JSONObject spec) {
+    public static void setProperty(Property p, JSONObject spec) {
+    		
+    		// do the values here
+        JSONArray pvalues = (JSONArray)spec.get("value");
+        if (pvalues != null && pvalues.size() > 0)
+        		p.setDefaultValue(createValueSpec((JSONObject)pvalues.get(0), p.getDefaultValue()));
+        if (pvalues != null && pvalues.isEmpty())
+            p.setDefaultValue(null);
+    		
+        // fix the property type here
         String ptype = (String)spec.get("propertyType");
-        //if (ptype == null)
-          //  p.setType(null);
         if (ptype != null) {
             Type t = (Type)ExportUtility.getElementFromID(ptype);
             if (t != null)
@@ -375,17 +376,17 @@ public class ImportUtility {
                 log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
                 //something bad happened
         }
+        
+        // set aggregation here
+        AggregationKind aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
+        if (aggr != null) {
+        		p.setAggregation(aggr);
+        }
     }
     
     public static void setPropertyType(Property p, Type type) {
         p.setType(type);
     }
-    
-    private static void setPropertyAggregation(Property prop, JSONObject spec) {
-		String webSource = (String) spec.get("aggregation");
-		AggregationKindEnum agg = AggregationKindEnum.getByName(webSource.toLowerCase());
-		prop.setAggregation(agg);
-}
     
     public static void setSlotValues(Slot s, JSONArray values) {
         if (values == null)

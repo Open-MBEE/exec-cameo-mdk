@@ -20,16 +20,16 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
-public class ExportPropertyType extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class ExportProperty extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
 
     private static final long serialVersionUID = 1L;
     private Element element;
     
-    public ExportPropertyType(Element e) {
+    public ExportProperty(Element e) {
         //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
         //
-        super("ExportPropertyType", "Commit property type", null, null);
+        super("ExportProperty", "Commit property", null, null);
         this.element = e;
     }
     
