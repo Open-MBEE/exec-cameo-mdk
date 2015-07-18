@@ -672,8 +672,9 @@ public class ModelValidator {
         // diff the aggregation
         String modelAggr = e.getAggregation().toString().toUpperCase();
         String webAggr = null;
-        if (specialization != null)
-        		webAggr = ((String)specialization.get("aggregation")).toUpperCase();
+        if (specialization != null && specialization.containsKey("aggregation")) {
+        		webAggr = (specialization.get("aggregation")).toString().toUpperCase();
+        }
         
         // diff the prop type
         Type modelType = e.getType();
@@ -681,16 +682,17 @@ public class ModelValidator {
         if (modelType != null)
             modelTypeId = modelType.getID();
         String webTypeId = null;
-        if (specialization != null)
+        if (specialization != null && specialization.containsKey("propertyType"))
             webTypeId = (String)specialization.get("propertyType");
         Element webTypeElement = null;
         if (webTypeId != null)
             webTypeElement = ExportUtility.getElementFromID(webTypeId);   
         
+        // build that validation violation if it's necessary
         if ((modelTypeId != null && !modelTypeId.equals(webTypeId)) || (webTypeId != null && !webTypeId.equals(modelTypeId))
         		|| (modelAggr != null && !modelAggr.equals(webAggr)) || (webAggr != null && !webAggr.equals(modelAggr))) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] model: " + (e.getName().isEmpty() ? e.getID() : e.getName()) + ", web: " + (((String)info.get("name")).isEmpty() ? info.get("sysmlid") : info.get("name")) + " are different");
-            if (editable)
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property is different");
+        		if (editable)
                 v.addAction(new ExportProperty(e));
             v.addAction(new ImportProperty(e, (Type)webTypeElement, result));
             return v;
