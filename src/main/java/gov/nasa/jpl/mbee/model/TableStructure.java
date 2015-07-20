@@ -241,7 +241,7 @@ public class TableStructure extends Table {
             for (TableColumn tc: columns) {
                 List<Element> resultElements;
                 GenerationContext context = tc.makeContext();
-                if (context.getCurrentNode() != null) { // should check next
+                if (!(tc instanceof TableStructuredColumn) && context.getCurrentNode() != null) { // should check next
                                                         // node is
                                                         // collect/filter node
                     CollectFilterParser.setContext(context);
@@ -272,6 +272,10 @@ public class TableStructure extends Table {
                                 + MoreToString.Helper.toLongString( resultElements ) );
                     }
                 } else {
+                	/*for (final Element ee : resultElements) {
+                		Application.getInstance().getGUILog().log(e instanceof NamedElement ? ((NamedElement) ee).getQualifiedName() : ee.getHumanName());
+                	}
+                	Application.getInstance().getGUILog().log(resultElements.toString());*/
                     for (Element re: resultElements) {
                         if (tc instanceof TableAttributeColumn) {
                             Utils.AvailableAttribute at = ((TableAttributeColumn)tc).attribute;
@@ -322,7 +326,7 @@ public class TableStructure extends Table {
                         } else if (tc instanceof TableStructuredColumn) {
                         	//final Container container = new Section();
                         	//Application.getInstance().getGUILog().log("Activity Node: " + tc.activityNode);
-                        	DocumentValidator dv = new DocumentValidator(tc.activityNode);
+                        	/*DocumentValidator dv = new DocumentValidator(tc.activityNode);
                             DocumentGenerator dg = new DocumentGenerator(tc.activityNode, dv, null);
                             dg.getContext().pushTargets(Lists.newArrayList((Object) re));
                             Object result = dg.parseQuery(tc.activityNode, dg.getDocument());
@@ -355,7 +359,26 @@ public class TableStructure extends Table {
                         	generator.handleViewOrSection(tc.activityNode, placeholder, visitor.getView2Pe().get(tc.activityNode));
                         	
                         	for (final PresentationElement pe : visitor.getView2Pe().get(tc.activityNode)) {
-                        		cell.add(new Reference(pe.getInstance(), From.DVALUE, pe.getInstance().getSpecification() instanceof LiteralString ? ((LiteralString) pe.getInstance().getSpecification()).getValue() : pe.getInstance().getSpecification()));
+                        		//cell.add(new Reference(pe.getInstance(), From.DVALUE, pe.getInstance().getSpecification() instanceof LiteralString ? ((LiteralString) pe.getInstance().getSpecification()).getValue() : pe.getInstance().getSpecification()));
+                        		//cell.add(new Reference(pe.getInstance().getSpecification() instanceof LiteralString ? ((LiteralString) pe.getInstance().getSpecification()).getValue() : pe.getInstance().getSpecification()));
+                        		cell.add(new Reference(pe));
+                        		pe.getInstance().dispose();
+                        	}*/
+                        	
+                        	final Container con = new Section();
+                        	final DocumentGenerator dg = new DocumentGenerator(tc.activityNode, getValidator(), null);
+                        	final Element a = tc.bnode.getOwner();
+                        	
+                        	final GenerationContext nestedContext = new GenerationContext(new Stack<List<Object>>(), tc.activityNode, getValidator(), Application.getInstance().getGUILog());
+                        	//Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
+                        	nestedContext.pushTargets(Lists.newArrayList((Object) re));
+                        	//context.pushTargets(new ArrayList<Object>(startElements));
+                        	dg.setContext(nestedContext);
+                        	
+                        	dg.parseActivityOrStructuredNode(a, con);
+                        	//Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
+                        	for (DocGenElement dge: con.getChildren()) {
+                        	    cell.add(new Reference(dge));
                         	}
                         	
                             //Application.getInstance().getGUILog().log("RESULT: " + result);
@@ -414,7 +437,14 @@ public class TableStructure extends Table {
             for (List<Reference> cell: row) {
                 DBTableEntry entry = new DBTableEntry();
                 for (Reference cellPart: cell) {
-                    Common.addReferenceToDBHasContent(cellPart, entry);
+                    //Common.addReferenceToDBHasContent(cellPart, entry);
+                	if (cellPart.result instanceof DocGenElement) {
+                		DocBookOutputVisitor nested = new DocBookOutputVisitor(forViewEditor, outputDir);
+                		nested.getParent().push(entry);
+            			((DocGenElement)cellPart.result).accept(nested);
+            		} else {
+            			Common.addReferenceToDBHasContent(cellPart, entry);
+            		}
                 }
                 tableRow.add(entry);
             }

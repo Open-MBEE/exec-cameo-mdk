@@ -767,6 +767,11 @@ public class DocumentGenerator {
     public GenerationContext getContext() {
         return context;
     }
+    
+    public void setContext(final GenerationContext context) {
+    	this.context = context;
+    }
+    
 
     public Stereotype getProductStereotype() {
         return product;
