@@ -356,10 +356,11 @@ public class ViewPresentationGenerator {
 			if (r instanceof Dependency && StereotypesHelper.hasStereotype(r, presentsS)) {
 				Dependency dep = (Dependency) r;
 				for (Element target: dep.getTarget()) {
-					if (target instanceof Package)
+					if (target instanceof Package) {
 						final Package p = (Package) target;
 						p.setName(getViewTargetPackageName(elem));
 						return (Package) target;
+					}
 				}
 			}
 		}
