@@ -165,8 +165,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             Element docview = book.getFrom();
             startView(docview);
             for (DocumentElement de: book.getChildren()) {
-                if (de instanceof DBSection && ((DBSection)de).isView())
+                if (de instanceof DBSection && ((DBSection)de).isView()) {
                     break;
+                }
                 de.accept(this);
             }
         }
@@ -174,8 +175,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             for (DocumentElement de: book.getChildren()) {
                 if (de instanceof DBSection && ((DBSection)de).isView()) {
                     de.accept(this);
-                    if (!recurse)
+                    if (!recurse) {
                         break;
+                    }
                 }
             }
         }
@@ -429,7 +431,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     }
       
     @SuppressWarnings("unchecked")
-    protected void startView(Element e) {
+    public void startView(Element e) {
         JSONObject view = new JSONObject();
         JSONObject specialization = new JSONObject();
         
@@ -480,7 +482,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     }
     
     @SuppressWarnings("unchecked")
-    protected void endView(Element e) {
+    public void endView(Element e) {
         JSONArray viewEs = new JSONArray();
         viewEs.addAll(viewElements.pop());
         //MDEV #673: update code to use the

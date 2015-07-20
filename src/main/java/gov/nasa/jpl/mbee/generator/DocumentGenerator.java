@@ -603,7 +603,7 @@ public class DocumentGenerator {
     }
 
     @SuppressWarnings("unchecked")
-    private Object parseQuery(ActivityNode an, Container parent) {
+	public Object parseQuery(ActivityNode an, Container parent) {
         Object result = null;
         String titlePrefix = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype,
                 "titlePrefix", "");

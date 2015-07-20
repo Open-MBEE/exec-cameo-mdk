@@ -118,10 +118,12 @@ public class ViewPresentationGenerator {
 		// this checks images generated from the local generation against what's
 		// on the web based on checksum
 		iv.validate();
-		ValidationSuite imageSuite = iv.getSuite();
-		List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
-		vss.add(imageSuite);
-		Utils.displayValidationWindow(vss, "Images Validation");
+		if (!iv.getRule().getViolations().isEmpty()) {
+			ValidationSuite imageSuite = iv.getSuite();
+			List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+			vss.add(imageSuite);
+			Utils.displayValidationWindow(vss, "Images Validation");
+		}
 	}
 
 	private void viewInstanceBuilder(Map<Element, List<PresentationElement>> view2pe, Map<Element, List<PresentationElement>> view2unused) {
@@ -151,7 +153,7 @@ public class ViewPresentationGenerator {
 	}
 
 
-	private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {
+	public void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {
 		// check for manual instances (thought that was in dependencies)
 		Package owner = getFolder(view);
 		List<InstanceValue> list = new ArrayList<InstanceValue>();
@@ -214,7 +216,7 @@ public class ViewPresentationGenerator {
 				is.setSpecification(ls);
 			}
 			is.setName(pe.getName());
-			if (is.getName().equals(null)) {
+			if (is.getName() == null || is.getName().isEmpty()) {
 				is.setName("<>");
 			}
 			InstanceValue iv = ef.createInstanceValueInstance();
@@ -223,6 +225,7 @@ public class ViewPresentationGenerator {
 			if (pe.getType() == PEType.SECTION) {
 				handleViewOrSection(view, is, pe.getChildren());
 			}
+			pe.setInstance(is);
 		}
 		if (section != null) {
 			Expression ex = ef.createExpressionInstance();
