@@ -333,16 +333,16 @@ public class ViewPresentationGenerator {
 		return viewInst;
 	}
 	
+	private String getViewTargetPackageName(Element elem) {
+		final NamedElement ne;
+		return (elem instanceof NamedElement && (ne = (NamedElement) elem).getName() != null && !ne.getName().isEmpty() ? ne.getName() : elem.getID()) + genericInstSuffix;
+	}
+	
 	private Package createViewTargetPackage(Element elem) {
 		Package viewTarg = getViewTargetPackage(elem);
 		if (viewTarg == null) {
 			Package newPack = ef.createPackageInstance();
-			String prefix = ((NamedElement)elem).getName();
-			// if the view has no name, we use the id instead to clarify to user
-			if (prefix == null || prefix.isEmpty()) {
-				prefix = elem.getID();
-			}
-			newPack.setName(prefix + genericInstSuffix);
+			newPack.setName(getViewTargetPackageName(elem));
 			return newPack;
 		}
 		return viewTarg;
@@ -357,6 +357,8 @@ public class ViewPresentationGenerator {
 				Dependency dep = (Dependency) r;
 				for (Element target: dep.getTarget()) {
 					if (target instanceof Package)
+						final Package p = (Package) target;
+						p.setName(getViewTargetPackageName(elem));
 						return (Package) target;
 				}
 			}
