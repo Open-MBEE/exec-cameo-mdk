@@ -255,8 +255,10 @@ public class ViewPresentationGenerator {
 		// if you can find the folder with this Utils, just go ahead and return it
 		List<Element> results = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, presentsS, 1, false, 1);
 		if (!results.isEmpty() && results.get(0) instanceof Package) {
-			setPackageHierarchy(view, viewInst, (Package) results.get(0));
-			return (Package) results.get(0);
+			final Package p = (Package) results.get(0);
+			setPackageHierarchy(view, viewInst, p);
+			p.setName(getViewTargetPackageName(view));
+			return p;
 		}
 		
 		Package viewTarget = createViewTargetPackage(view); // this is the leaf (find/build package)
@@ -358,8 +360,9 @@ public class ViewPresentationGenerator {
 				for (Element target: dep.getTarget()) {
 					if (target instanceof Package) {
 						final Package p = (Package) target;
+						//Application.getInstance().getGUILog().log(getViewTargetPackageName(elem));
 						p.setName(getViewTargetPackageName(elem));
-						return (Package) target;
+						return p;
 					}
 				}
 			}
