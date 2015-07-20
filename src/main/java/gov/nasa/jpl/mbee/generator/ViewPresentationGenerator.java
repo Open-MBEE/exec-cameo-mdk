@@ -339,7 +339,7 @@ public class ViewPresentationGenerator {
 			Package newPack = ef.createPackageInstance();
 			String prefix = ((NamedElement)elem).getName();
 			// if the view has no name, we use the id instead to clarify to user
-			if (prefix.isEmpty()) {
+			if (prefix == null || prefix.isEmpty()) {
 				prefix = elem.getID();
 			}
 			newPack.setName(prefix + genericInstSuffix);
