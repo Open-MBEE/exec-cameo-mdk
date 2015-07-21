@@ -1,28 +1,24 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-
+import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import org.json.simple.JSONArray;
@@ -191,17 +187,31 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 		modelTree.setName(modelName);
 		final JTree webTree = new JTree(webNode);
 		webTree.setName(webName);
+		
+		// build the selection ButtonGroup
+		JRadioButton modelRadio = new JRadioButton("Commit Instance", false);
+		JRadioButton webRadio = new JRadioButton("Accept Instance", true);
+		final ButtonGroup selection = new ButtonGroup();
+		selection.add(modelRadio);
+		selection.add(webRadio);
 
 		// build each of the panes
 		JTabbedPane modelPane = buildPane(modelName, modelTree, webTree);
 		JTabbedPane webPane = buildPane(webName, webTree, modelTree);
 		
+		JPanel modelPanel = new JPanel(new BorderLayout());
+		modelPanel.add(modelPane);
+		modelPanel.add(modelRadio, BorderLayout.SOUTH);
+		JPanel webPanel = new JPanel(new BorderLayout());
+		webPanel.add(webPane);
+		webPanel.add(webRadio, BorderLayout.SOUTH);
+		
         // splitpane holds both JSON trees represented in JTree form
         JSplitPane split = new JSplitPane();
         split.setResizeWeight(0.5);
         split.setDividerLocation(0.5);
-        split.setLeftComponent(modelPane);
-        split.setRightComponent(webPane);
+        split.setLeftComponent(modelPanel);
+        split.setRightComponent(webPanel);
         
         // JPanel
         JPanel panel = new JPanel(new BorderLayout());
@@ -231,10 +241,15 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
         
         preview.addActionListener( new ActionListener() {
         		public void actionPerformed(ActionEvent e) {
-        			System.out.println("preview");
+        			System.out.println(selection.getSelection());
+        			previewChange(selection.getSelection());
         		}
         });
         
+	}
+	
+	private void previewChange(ButtonModel model) {
+		System.out.println(model);
 	}
 	
 }
