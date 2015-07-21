@@ -110,53 +110,11 @@ public class ValidateDiff extends RuleViolationAction implements AnnotationActio
         show.setVisible(true);
     }
 
-    // private void addListeners(final JList source, final JList other) {
-    //     source.addListSelectionListener(new ListSelectionListener() {
-    //         @Override
-    //         public void valueChanged(ListSelectionEvent listEvent) {
-    //             if (!listEvent.getValueIsAdjusting()) {
-    //                 // this does not handle things that well yet
-    //                 int selected = source.getSelectedIndex();
-    //                 other.setSelectedIndex(selected);
-    //             }
-    //         }
-    //     });
-    // }
-
-    // class AttribCellRenderer extends JPanel implements ListCellRenderer {
-
-    //     protected DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
-
-    //     @Override
-    //     public Component getListCellRendererComponent(final JList list, final Object value, final int index,
-    //             final boolean isSelected, final boolean hasFocus) {
-
-    //         // JTextArea renderer = (JTextArea) defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, hasFocus);
-    //         // return renderer;
-
-    //     }
-
-    // }
-
     private JList buildList(JSONObject data) {
         DefaultListModel<String> attribs = new DefaultListModel<String>();
-        // final JList dataList = new JList(attribs) {
-        //     @Override
-        //     public boolean getScrollableTracksViewportWidth() {
-        //         return true;
-        //     }
-        // };
+        
         final JList dataList= new JList(attribs);
-        // dataList.setCellRenderer(new AttribCellRenderer());
-        // ComponentListener compListener = new ComponentAdapter() {
-        //     @Override
-        //     public void componentResized(ComponentEvent e) {
-        //         dataList.setFixedCellHeight(10);
-        //         dataList.setFixedCellHeight(-1);
-        //     }
-        // };
-        System.out.println(data);
-        // dataList.addComponentListener(compListener);
+
         for (Object o: keys) {
             String key = (String) o;
             Object value = data.get(key);
@@ -187,31 +145,20 @@ public class ValidateDiff extends RuleViolationAction implements AnnotationActio
         String result = (String)key + " (" + datatype + ") : ";
         if (value instanceof JSONObject) {
             JSONObject jsonObj = (JSONObject) value;
-            // result += "{";
+
             attribs.addElement(level + key + " (JSONObject) ...");
             level += "-- ";
             for (Object objKey: jsonObj.keySet()) {
-                // attribs.addElement("arg");
-                // val could be null
+
                 String subKey = (String) objKey;
                 attribs = addAttributes(attribs, subKey, jsonObj.get(subKey), level);
-                // Object val = jsonObj.get(subKey);
-                // String subType = val.getClass().getSimpleName();
-                // String subResult = String.valueOf(subKey) + " (" + String.valueOf(subType) + ") : ";
-                // subResult += addAttributes(attribs, (String)subKey, jsonObj.get(subKey));
-                // attribs.addElement(subResult);
             }
-            // result = result.substring(0, result.length()-2) + "}";
         } else if (value instanceof JSONArray) {
             JSONArray array = (JSONArray) value;
             attribs.addElement(level + key + "(JSONArray) ...");
             level += "-- ";
             for (int i = 0; i < array.size(); i++) {
-                // String header = level + key;
                 attribs = addAttributes(attribs, key, array.get(i), level);
-                // String subResult = String.valueOf(array.get(i));
-                // subResult += "[" + addAttributes(attribs, "", array.get(i)) + "]";
-                // attribs.addElement(subResult);
             }
         } else if (value instanceof String) {
             String valString = (String) value;

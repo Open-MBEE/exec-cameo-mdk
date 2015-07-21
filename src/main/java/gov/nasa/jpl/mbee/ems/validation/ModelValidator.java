@@ -37,6 +37,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
 import gov.nasa.jpl.mbee.ems.validation.actions.ElementDetail;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportAssociation;
@@ -450,7 +451,8 @@ public class ModelValidator {
         Boolean editable = (Boolean)elementInfo.get("editable");
         String webDoc = (String)elementInfo.get("documentation");
 
-        ValidateDiff vdiff = new ValidateDiff(e, webDoc, elementDocClean, elementInfo, editable);
+//        ValidateDiff ddiff = new ValidateDiff(e, webDoc, elementDocClean, elementInfo, editable);
+        DetailDiff ddiff = new DetailDiff(e, elementInfo);
 
         if (webDoc != null) {
             webDoc = ExportUtility.cleanHtml(webDoc);
@@ -466,7 +468,7 @@ public class ModelValidator {
             differentElements.add(e);
             if (editable)
                 v.addAction(new ExportName((NamedElement)e));
-            v.addAction(vdiff);
+            v.addAction(ddiff);
             v.addAction(new ImportName((NamedElement)e, webName, result));
             nameDiff.addViolation(v);
         }
@@ -476,7 +478,7 @@ public class ModelValidator {
             if (editable)
                 v.addAction(new ExportDoc(e));
             v.addAction(new CompareText(e, webDoc, elementDocClean, result));
-            v.addAction(vdiff);
+            v.addAction(ddiff);
             v.addAction(new ImportDoc(e, webDoc, result));
             docDiff.addViolation(v);
         }
@@ -486,14 +488,14 @@ public class ModelValidator {
             if (v != null) {
             	// Replacement to separate commit and accept that are added inside the valueDiff method
                 //v.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 valueDiff.addViolation(v);
                 differentElements.add(e);
             }
             ValidationRuleViolation v2 = propertyTypeDiff((Property)e, elementInfo);
             if (v2 != null) {
                 //v2.addAction(vdiff);
-            	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, ddiff);
                 propertyTypeDiff.addViolation(v2);
                 differentElements.add(e);
             }
@@ -501,14 +503,14 @@ public class ModelValidator {
             ValidationRuleViolation v = valueDiff((Slot)e, elementInfo);
             if (v != null) {
                 //v.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 valueDiff.addViolation(v);
                 differentElements.add(e);
             }
             ValidationRuleViolation v2 = slotTypeDiff((Slot)e, elementInfo);
             if (v2 != null) {
                 //v2.addAction(vdiff);
-            	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, ddiff);
                 propertyTypeDiff.addViolation(v2);
                 differentElements.add(e);
             }
@@ -520,7 +522,7 @@ public class ModelValidator {
         	ValidationRuleViolation v = relationshipDiff((DirectedRelationship)e, elementInfo);
         	if (v != null) {
                 //v.addAction(vdiff);
-        		v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+        		v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 relDiff.addViolation(v);
                 differentElements.add(e);
             }
@@ -528,7 +530,7 @@ public class ModelValidator {
             ValidationRuleViolation v = connectorDiff((Connector)e, elementInfo);
             if (v != null) {
                 //v.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 connectorDiff.addViolation(v);
                 differentElements.add(e);
             }
@@ -536,7 +538,7 @@ public class ModelValidator {
             ValidationRuleViolation v = constraintDiff((Constraint)e, elementInfo);
             if (v != null) {
                 //v.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 constraintDiff.addViolation(v);
                 differentElements.add(e);
             }
@@ -544,7 +546,7 @@ public class ModelValidator {
             ValidationRuleViolation v = associationDiff((Association)e, elementInfo);
             if (v != null) {
                 //v.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 associationDiff.addViolation(v);
                 differentElements.add(e);
             }
@@ -552,14 +554,14 @@ public class ModelValidator {
             ValidationRuleViolation v = siteDiff((Package)e, elementInfo);
             if (v != null){
                 //v.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 siteDiff.addViolation(v);
             }
         } else if (e instanceof InstanceSpecification) {
             ValidationRuleViolation v = instanceSpecificationDiff((InstanceSpecification)e, elementInfo);
             if (v != null) {
                 //v.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 instanceSpec.addViolation(v);
                 differentElements.add(e);
             }
@@ -571,7 +573,7 @@ public class ModelValidator {
             ValidationRuleViolation v = viewContentDiff(e, elementInfo);
             if (v != null) {
                 //v.addAction(vdiff);
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 viewConstraint.addViolation(v);
                 differentElements.add(e); //should this be here
             }
@@ -580,14 +582,14 @@ public class ModelValidator {
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null) {
             //v.addAction(vdiff);
-        	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+        	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
             ownership.addViolation(v);
             differentElements.add(e);
         }
         v = metatypeDiff(e, elementInfo);
         if (v != null) {
             //v.addAction(vdiff);
-        	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+        	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
             metatypes.addViolation(v);
             differentElements.add(e);
         }
