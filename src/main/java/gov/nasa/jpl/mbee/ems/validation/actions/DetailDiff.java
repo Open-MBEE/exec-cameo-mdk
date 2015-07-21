@@ -17,8 +17,13 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTree;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -37,6 +42,9 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 	private JSONObject modelData;
     private JSONObject webData;
     private Map<String, ArrayList<JSONTreeNode>> keyMap = new HashMap<String, ArrayList<JSONTreeNode>>();
+    
+    private String modelName = "MD Model";
+    private String webName = "MMS Web";
 
 	public DetailDiff(Element element, JSONObject webData) {
 		super("DetailDiff", "Detail Diff", null, null);
@@ -48,7 +56,6 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 		
 		private String key;
 		private String title;
-		private boolean header = false;
 		
 		public JSONTreeNode() {
 			super();
@@ -93,7 +100,7 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 		}
 				
 	}
-
+	
 	@Override
 	public boolean canExecute(Collection<Annotation> arg0) {
 		return true;
@@ -133,13 +140,30 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 		}
 		return current;
 	}
+
 	
-	private JTabbedPane buildPane(String name, JSONObject elementData) {
+	private JTabbedPane buildPane(String name, final JTree tree, final JTree opposite) {
+				
+//		tree = new JTree(node);
+		for (int i = 0; i < tree.getRowCount(); i++) {
+			tree.expandRow(i);
+		}
 		
-		JSONTreeNode node = buildNode(new JSONTreeNode(name), elementData);
-		
-		JTree tree = new JTree(node);
-		tree.setName(name);
+		tree.addTreeSelectionListener( new TreeSelectionListener() {
+
+			@Override
+			public void valueChanged(TreeSelectionEvent e) {
+				JSONTreeNode currentNode = (JSONTreeNode) tree.getLastSelectedPathComponent();
+				String key = currentNode.getKey();
+				ArrayList<JSONTreeNode> nodes = keyMap.get(key);
+				for (JSONTreeNode node: nodes) {
+					if (!node.equals(currentNode)) {
+						opposite.setSelectionPath(new TreePath(node.getPath()));
+					}
+				}
+			}
+			
+		});
 		
 		JTabbedPane pane = new JTabbedPane();
 		pane.add(name, tree);
@@ -158,14 +182,20 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
         buttPanel.add(submit);
         buttPanel.add(cancel);
 
-		// each JTabbedPane holds the JTree with all the json data
-		// they are linked in a map
-		
-		JTabbedPane modelPane = buildPane("MD Model", modelData);
-		JTabbedPane webPane = buildPane("MMS Web", webData);
-		
-		System.out.println(keyMap);
+        // these trees have to know about each other
+        
+		JSONTreeNode modelNode = buildNode(new JSONTreeNode(modelName), modelData);
+		JSONTreeNode webNode = buildNode(new JSONTreeNode(webName), webData);
 
+		final JTree modelTree = new JTree(modelNode);
+		modelTree.setName(modelName);
+		final JTree webTree = new JTree(webNode);
+		webTree.setName(webName);
+
+		// build each of the panes
+		JTabbedPane modelPane = buildPane(modelName, modelTree, webTree);
+		JTabbedPane webPane = buildPane(webName, webTree, modelTree);
+		
         // splitpane holds both JSON trees represented in JTree form
         JSplitPane split = new JSplitPane();
         split.setResizeWeight(0.5);
@@ -190,6 +220,18 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
         cancel.addActionListener( new ActionListener() {
         		public void actionPerformed(ActionEvent e) {
         			show.dispose();
+        		}
+        });
+        
+        submit.addActionListener( new ActionListener() {
+        		public void actionPerformed(ActionEvent e) {
+        			System.out.println("submit");
+        		}
+        });
+        
+        preview.addActionListener( new ActionListener() {
+        		public void actionPerformed(ActionEvent e) {
+        			System.out.println("preview");
         		}
         });
         
