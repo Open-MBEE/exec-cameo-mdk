@@ -953,7 +953,6 @@ public class ExportUtility {
         } else {
             specialization.put("type", "Untyped");
         }
-        sanitizeJSON(specialization);
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
@@ -1786,50 +1785,5 @@ public class ExportUtility {
         
         return (JSONObject)JSONValue.parse( jsonString );
     }
-    
-    /**
-     * This compares two JSONObjects; sanitizes; recurses
-     * Only use this for comparing specialization
-     * 
-     * @param webObject a particular element json
-     * @param mod a particular element json
-     * @return
-     */
-    public static boolean compareJSON(JSONObject dweb, JSONObject dmod) {
-
-    		if (dweb == null || dmod == null) return false;
-    		if (dweb.equals(dmod)) return true;
-    		
-    		// sanitize json
-    		JSONObject web = sanitizeJSON(dweb);
-    		JSONObject mod = sanitizeJSON(dmod);
-    		
-    		return(mod.equals(web));
-    }
-    
-    /**
-     * 
-     * This function deletes empty arrays from json objects
-     * This will prevent false positives in the Validation Window, where implemented
-     * 
-     * @param json is an JSONObject that will be cleaned up
-     * @return ret a JSONObject without offending key value pairs
-     */
-	public static JSONObject sanitizeJSON(JSONObject json) {
-		JSONObject ret = new JSONObject();
-		
-		for (Map.Entry entry: (Set<Map.Entry>) json.entrySet()) {
-			Object key = entry.getKey();
-			Object val = entry.getValue();
-			if (val != null
-					&& !(val instanceof JSONArray && ((JSONArray)val).isEmpty())
-					&& !(val instanceof JSONObject && ((JSONObject)val).isEmpty())
-					&& !(val instanceof String && ((String)val).isEmpty())) {
-				ret.put(key, val);
-			}
-		}
-		
-		return ret;
-	}
 
 }

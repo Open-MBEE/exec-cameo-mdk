@@ -605,8 +605,10 @@ public class ModelValidator {
         JSONObject modelview = ExportUtility.fillViewContent(e, null);
         if (modelview.containsKey("contents"))
             modelContents = (JSONObject)modelview.get("contents");
+        // replaced this thing here v
+        //    if (!modelContents.equals(webContents)) {
         if (modelContents != null) {
-            if (!modelContents.equals(webContents)) {
+            if (!Utils.compareJSON(modelContents, webContents)) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint is different");
                 v.addAction(new ExportViewConstraint((NamedElement)e));
                 v.addAction(new ImportViewConstraint((NamedElement)e, webViewSpec, result));
@@ -936,9 +938,11 @@ public class ModelValidator {
         JSONObject modelvalue = ExportUtility.fillValueSpecification(e.getSpecification(), null, true);
         //if (jsonObjectEquals(value, modelvalue))
         //    return null;
-        if (modelvalue != null && modelvalue.equals(value))
+        // if (modelvalue != null && modelvalue.equals(value))
+        if (modelvalue != null && Utils.compareJSON(modelvalue, value))
             return null;
-        if (modelvalue != null && !modelvalue.equals(value) || value != null && !value.equals(modelvalue)) {
+        // if (modelvalue != null && !modelvalue.equals(value) || value != null && !value.equals(modelvalue)) {
+        if (!Utils.compareJSON(modelvalue, value)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONSTRAINT] specifications don't match");
             //if (stringMatch)
               //  v.addAction(new CompareText(e, webString, modelString, result));
@@ -986,7 +990,9 @@ public class ModelValidator {
         Boolean modelIsMetatype = (Boolean)model.get("isMetatype");
         JSONArray modelMetatypes = (JSONArray)model.get("metatypes");
         JSONArray modelAppliedMetatypes = (JSONArray)model.get("appliedMetatypes");
-        if (webIsMetatype != modelIsMetatype || !Utils.jsonArraySetDiff(modelAppliedMetatypes, webAppliedMetatypes) || (modelIsMetatype && !Utils.jsonArraySetDiff(modelMetatypes, webMetatypes))) {
+        if (webIsMetatype != modelIsMetatype 
+        		|| !Utils.jsonArraySetDiff(modelAppliedMetatypes, webAppliedMetatypes) 
+        		|| (modelIsMetatype && !Utils.jsonArraySetDiff(modelMetatypes, webMetatypes))) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[METATYPE] Metatype/Stereotype application are different.");
             if (editable)
                 v.addAction(new ExportMetatypes(e));
@@ -997,9 +1003,10 @@ public class ModelValidator {
     
     private ValidationRuleViolation instanceSpecificationDiff(InstanceSpecification e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
-        JSONObject webspec = ExportUtility.sanitizeJSON((JSONObject)info.get("specialization")); // check null
+        JSONObject webspec = (JSONObject)info.get("specialization");
         JSONObject modelspec = ExportUtility.fillInstanceSpecificationSpecialization(e, null);
-        if (!modelspec.equals(webspec)) {
+        // if (webspec.equals(modelspec)) {
+        if (!Utils.compareJSON(webspec, modelspec)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[INSTANCE] Instance specification or classifiers are different");
             if (editable)
                 v.addAction(new ExportInstanceSpec(e));
@@ -1017,7 +1024,8 @@ public class ModelValidator {
         String webString = null;
         boolean stringMatch = false;
         JSONObject model = ExportUtility.fillValueSpecification(vs, null, true);
-        if (!model.equals(firstObject)) {
+        // if (model.equals(firstObject)) {
+        if (!Utils.compareJSON(model, firstObject)) {
             if (vs instanceof LiteralString && "LiteralString".equals(firstObject.get("type"))) {
                 modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
                 webString = ExportUtility.cleanHtml((String)firstObject.get("string"));
