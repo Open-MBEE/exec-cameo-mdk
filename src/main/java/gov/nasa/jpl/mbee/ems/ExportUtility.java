@@ -1784,4 +1784,27 @@ public class ExportUtility {
         
         return (JSONObject)JSONValue.parse( jsonString );
     }
+    
+    /**
+     * 
+     * This function deletes empty arrays from element spec
+     * This will prevent false positives in the Validation Window, where implemented
+     * 
+     * @param spec is an element specialization
+     * @return
+     */
+	public static JSONObject sanitizeJSON(JSONObject spec) {
+		List<Object> remKeys = new ArrayList<Object>();
+		for (Object key: spec.keySet()) {
+			// delete empty JSONArray
+			if (spec.get(key) instanceof JSONArray && ((JSONArray)spec.get(key)).isEmpty()) {
+				remKeys.add(key);
+			}
+		}
+		for (Object key: remKeys) {
+			spec.remove(key);
+		}
+		return spec;
+	}
+
 }
