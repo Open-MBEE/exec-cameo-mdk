@@ -1,14 +1,12 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
-import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.CreateInstanceAction;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
@@ -19,20 +17,19 @@ import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 
-public class CreateSpecificAction extends SRAction {
+public class CreateInstanceMenuAction extends SRAction {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String actionid = "Create Specific";
+	public static final String actionid = "Create Instance";
 	private Classifier classifier;
 	
-	public CreateSpecificAction(final Classifier classifier) {
+	public CreateInstanceMenuAction(final Classifier classifier) {
         super(actionid, classifier);
         this.classifier = classifier;
 	}
@@ -40,7 +37,6 @@ public class CreateSpecificAction extends SRAction {
 	@Override
     public void actionPerformed(ActionEvent e) {
 		final List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
-		types.add(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class);
 		types.add(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package.class);
 		types.add(Model.class);
 
@@ -54,34 +50,10 @@ public class CreateSpecificAction extends SRAction {
 		if (dlg != null) {
 			dlg.setVisible(true);
 			if (dlg.isOkClicked() && dlg.getSelectedElement() != null && dlg.getSelectedElement() instanceof Namespace) {
-				SessionManager.getInstance().createSession("create specific");
-				final Classifier specific  = (Classifier) CopyPasting.copyPasteElement(classifier, (Namespace) dlg.getSelectedElement(), true);
-				for (final Generalization generalization : Lists.newArrayList(specific.getGeneralization())) {
-					generalization.dispose();
-				}
-				for (final NamedElement ne : Lists.newArrayList(specific.getOwnedMember())) {
-					ne.dispose();
-				}
-				//instance.getOwnedMember().clear();
-				Utils.createGeneralization(classifier, specific);
+				SessionManager.getInstance().createSession(actionid);
+				final InstanceSpecification instance = CreateInstanceAction.createInstance(classifier, (Namespace) dlg.getSelectedElement(), false);
 				SessionManager.getInstance().closeSession();
-				
-				// for some reason only half the members were showing up as members...
-				// however spec view is just fine
-				// that being said with the new name collision code there is no need to delete all members in case the user wants
-				// to keep some stuff in there (comments, notes, etc.) for all specialized blocks
-				// user can just use name collision to rejoin
-				
-				/*SessionManager.getInstance().createSession("deleting members");
-				if (instance instanceof Namespace) {
-					for (final NamedElement ne : ((Namespace) instance).getOwnedMember()) {
-						Application.getInstance().getGUILog().log(ne.getQualifiedName());
-						ne.refDelete();
-					}
-				}
-				SessionManager.getInstance().closeSession();*/
-				
-				ValidateAction.validate(specific);
+				ValidateAction.validate(instance);
 			}
 		}
 	}

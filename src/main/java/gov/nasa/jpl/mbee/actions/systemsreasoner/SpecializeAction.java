@@ -61,7 +61,7 @@ public class SpecializeAction extends SRAction {
 					}
 				}
 				SessionManager.getInstance().closeSession();
-				new ValidateAction(classifiers).actionPerformed(null);
+				ValidateAction.validate(classifiers);
 			}
 		}
 	}
