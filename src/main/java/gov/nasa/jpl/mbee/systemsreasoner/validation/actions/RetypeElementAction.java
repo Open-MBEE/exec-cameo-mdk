@@ -16,7 +16,7 @@ public class RetypeElementAction extends GenericRuleViolationAction {
 	private String name;
 
 	public RetypeElementAction(final TypedElement source, final TypedElement target, final String name) {
-		super(name, name, null, null);
+		super(name);
 		this.source = source;
 		this.target = target;
 		this.name = name;

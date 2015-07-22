@@ -92,4 +92,8 @@ public class ImageValidator {
     public ValidationSuite getSuite() {
         return suite;
     }
+    
+    public ValidationRule getRule() {
+    	return rule;
+    }
 }

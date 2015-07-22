@@ -96,7 +96,7 @@ public class DespecializeAction extends SRAction {
 						for (final Classifier specific : classifiers) {
 							for (final Generalization g : specific.getGeneralization()) {
 								if (g.getGeneral().equals(be)) {
-									g.refDelete();
+									g.dispose();
 									break;
 								}
 							}
@@ -106,7 +106,7 @@ public class DespecializeAction extends SRAction {
 					}
 				}
 				SessionManager.getInstance().closeSession();
-				new ValidateAction(classifiers).actionPerformed(null);
+				ValidateAction.validate(classifiers);
 			}
 		}
 	}

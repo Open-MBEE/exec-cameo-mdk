@@ -52,10 +52,12 @@ public class ViewPresentationGenerator {
 	private boolean recurse;
 	private Element view;
 	
-	// these suffixes are added to the project_id to form the view instances id and unused view id respectively
-	private String viewInstSuffix = "_View_Instances";
-	private String unusedInstSuffix = "_Unused_View_Instances";
-	private String genericInstSuffix = "_Instances";
+	// use these prefixes then add project_id to form the view instances id and unused view id respectively
+	private String viewInstPrefix = "View_Instances";
+	private String unusedInstPrefix = "Unused_View_Instances";
+	
+	// this suffix is appended to the name of each particular package
+	private String genericInstSuffix = " Instances";
 
 	public ViewPresentationGenerator(Element view, boolean recursive) {
 		this.view = view;
@@ -116,10 +118,12 @@ public class ViewPresentationGenerator {
 		// this checks images generated from the local generation against what's
 		// on the web based on checksum
 		iv.validate();
-		ValidationSuite imageSuite = iv.getSuite();
-		List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
-		vss.add(imageSuite);
-		Utils.displayValidationWindow(vss, "Images Validation");
+		if (!iv.getRule().getViolations().isEmpty()) {
+			ValidationSuite imageSuite = iv.getSuite();
+			List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+			vss.add(imageSuite);
+			Utils.displayValidationWindow(vss, "Images Validation");
+		}
 	}
 
 	private void viewInstanceBuilder(Map<Element, List<PresentationElement>> view2pe, Map<Element, List<PresentationElement>> view2unused) {
@@ -129,7 +133,7 @@ public class ViewPresentationGenerator {
 			if (!ProjectUtilities.isElementInAttachedProject(v)) {
 				handleViewOrSection(v, null, view2pe.get(v));
 			} else {
-				Application.getInstance().getGUILog().log("View " + view.getID() + " not in current project.");
+				Application.getInstance().getGUILog().log("[INFO] View " + view.getID() + " not in current project.");
 			}
 		}
 		// then, pass through all the unused PresentationElements and move their particular
@@ -142,14 +146,14 @@ public class ViewPresentationGenerator {
 	        		if (!ProjectUtilities.isElementInAttachedProject(is)) {
 	        			is.setOwner(createUnusedInstancesPackage());
 	        		} else {
-	        			Application.getInstance().getGUILog().log("Unused Presentation Element " + presentationElement.getName() + " not in current project.");
+	        			Application.getInstance().getGUILog().log("[INFO] Unused Presentation Element " + presentationElement.getName() + " not in current project.");
 	        		}
 	        	}
 	    }
 	}
 
 
-	private void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {
+	public void handleViewOrSection(Element view, InstanceSpecification section, List<PresentationElement> pes) {
 		// check for manual instances (thought that was in dependencies)
 		Package owner = getFolder(view);
 		List<InstanceValue> list = new ArrayList<InstanceValue>();
@@ -212,7 +216,7 @@ public class ViewPresentationGenerator {
 				is.setSpecification(ls);
 			}
 			is.setName(pe.getName());
-			if (is.getName().equals(null)) {
+			if (is.getName() == null || is.getName().isEmpty()) {
 				is.setName("<>");
 			}
 			InstanceValue iv = ef.createInstanceValueInstance();
@@ -221,6 +225,7 @@ public class ViewPresentationGenerator {
 			if (pe.getType() == PEType.SECTION) {
 				handleViewOrSection(view, is, pe.getChildren());
 			}
+			pe.setInstance(is);
 		}
 		if (section != null) {
 			Expression ex = ef.createExpressionInstance();
@@ -253,8 +258,10 @@ public class ViewPresentationGenerator {
 		// if you can find the folder with this Utils, just go ahead and return it
 		List<Element> results = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, presentsS, 1, false, 1);
 		if (!results.isEmpty() && results.get(0) instanceof Package) {
-			setPackageHierarchy(view, viewInst, (Package) results.get(0));
-			return (Package) results.get(0);
+			final Package p = (Package) results.get(0);
+			setPackageHierarchy(view, viewInst, p);
+			p.setName(getViewTargetPackageName(view));
+			return p;
 		}
 		
 		Package viewTarget = createViewTargetPackage(view); // this is the leaf (find/build package)
@@ -291,7 +298,7 @@ public class ViewPresentationGenerator {
 		// from parent, try to grab dependency to a package in View Instances
 		Package parentPack = getViewTargetPackage(parent);
 		if (!leaf.isEditable()) {
-			Application.getInstance().getGUILog().log("Package " + leaf.getID() + " is not editable");
+			Application.getInstance().getGUILog().log("[INFO] Package " + leaf.getID() + " is not editable");
 		} else {
 			if (parentPack != null) {
 				leaf.setOwner(parentPack);
@@ -303,17 +310,18 @@ public class ViewPresentationGenerator {
 
 	private Package createViewInstancesPackage() {
 		// fix root element, set it to project instead
-		return createParticularPackage(Utils.getRootElement(), viewInstSuffix, "View Instances");
+		return createParticularPackage(Utils.getRootElement(), viewInstPrefix, "View Instances");
 	}
 	
 	private Package createUnusedInstancesPackage() {
-		Package rootPackage = createParticularPackage(Utils.getRootElement(), viewInstSuffix, "View Instances");
-		return createParticularPackage(rootPackage, unusedInstSuffix, "Unused View Instances");
+		Package rootPackage = createParticularPackage(Utils.getRootElement(), viewInstPrefix, "View Instances");
+		return createParticularPackage(rootPackage, unusedInstPrefix, "Unused View Instances");
 	}
 	
-	private Package createParticularPackage(Package owner, String packIDSuffix, String name) {
+	private Package createParticularPackage(Package owner, String packIDPrefix, String name) {
 		// fix root element, set it to project
-		String viewInstID = Utils.getProject().getPrimaryProject().getProjectID() + packIDSuffix;
+		// replace PROJECT with the packIDPrefix
+		String viewInstID = Utils.getProject().getPrimaryProject().getProjectID().replace("PROJECT", packIDPrefix);
 		Package viewInst = null;
 		if (Application.getInstance().getProject().getElementByID(viewInstID) != null) {
 			// found it
@@ -330,11 +338,16 @@ public class ViewPresentationGenerator {
 		return viewInst;
 	}
 	
+	private String getViewTargetPackageName(Element elem) {
+		final NamedElement ne;
+		return (elem instanceof NamedElement && (ne = (NamedElement) elem).getName() != null && !ne.getName().isEmpty() ? ne.getName() : elem.getID()) + genericInstSuffix;
+	}
+	
 	private Package createViewTargetPackage(Element elem) {
 		Package viewTarg = getViewTargetPackage(elem);
 		if (viewTarg == null) {
 			Package newPack = ef.createPackageInstance();
-			newPack.setName(((NamedElement)elem).getName() + genericInstSuffix);
+			newPack.setName(getViewTargetPackageName(elem));
 			return newPack;
 		}
 		return viewTarg;
@@ -348,8 +361,12 @@ public class ViewPresentationGenerator {
 			if (r instanceof Dependency && StereotypesHelper.hasStereotype(r, presentsS)) {
 				Dependency dep = (Dependency) r;
 				for (Element target: dep.getTarget()) {
-					if (target instanceof Package)
-						return (Package) target;
+					if (target instanceof Package) {
+						final Package p = (Package) target;
+						//Application.getInstance().getGUILog().log(getViewTargetPackageName(elem));
+						p.setName(getViewTargetPackageName(elem));
+						return p;
+					}
 				}
 			}
 		}

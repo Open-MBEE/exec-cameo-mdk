@@ -6,10 +6,15 @@ import gov.nasa.jpl.mbee.systemsreasoner.validation.SRValidationSuite;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.Lists;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 public class ValidateAction extends SRAction {
 	
@@ -29,9 +34,12 @@ public class ValidateAction extends SRAction {
 		super(actionid);
 		this.elements = elements;
 	}
-
-	@Override
-    public void actionPerformed(ActionEvent e) {
+	
+	public static void validate(final Element element) {
+		validate(Lists.newArrayList(element));
+	}
+	
+	public static void validate(final List<? extends Element> elements) {
 		final List<Element> elems = new ArrayList<Element>();
 		elems.addAll(elements);
 		final SRValidationSuite svs = new SRValidationSuite(elems);
@@ -51,6 +59,11 @@ public class ValidateAction extends SRAction {
             return;
         }
         ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start), "Validating Model", true, 0);*/
+	}
+
+	@Override
+    public void actionPerformed(ActionEvent e) {
+		validate(elements);
     }
 	
 }
