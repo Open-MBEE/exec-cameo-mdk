@@ -73,29 +73,31 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
                     }
                 }
             }
-            JSONArray headers = new JSONArray();
-            tablejson.put("header", headers);
-            if (table.getHeaders() != null) {
-                for (List<DocumentElement> row: table.getHeaders()) {
-                    curRow = new JSONArray();
-                    headers.add(curRow);
-                    for (DocumentElement de: row) {
-                        rowspan = 1;
-                        colspan = 1;
-                        if (de != null) {
-                            if (de instanceof DBTableEntry)
-                                de.accept(this);
-                            else {
-                                curCell = new JSONArray();
-                                de.accept(this);
-                                JSONObject entry = new JSONObject();
-                                entry.put("content", curCell);
-                                addSpans(entry);
-                                curRow.add(entry);
-                            }
-                        }
-                    }
-                }
+            if (!table.isHideHeaders()) {
+	            JSONArray headers = new JSONArray();
+	            tablejson.put("header", headers);
+	            if (table.getHeaders() != null) {
+	                for (List<DocumentElement> row: table.getHeaders()) {
+	                    curRow = new JSONArray();
+	                    headers.add(curRow);
+	                    for (DocumentElement de: row) {
+	                        rowspan = 1;
+	                        colspan = 1;
+	                        if (de != null) {
+	                            if (de instanceof DBTableEntry)
+	                                de.accept(this);
+	                            else {
+	                                curCell = new JSONArray();
+	                                de.accept(this);
+	                                JSONObject entry = new JSONObject();
+	                                entry.put("content", curCell);
+	                                addSpans(entry);
+	                                curRow.add(entry);
+	                            }
+	                        }
+	                    }
+	                }
+	            }
             }
             if (table.getStyle() == null)
                 tablejson.put("style", "normal");

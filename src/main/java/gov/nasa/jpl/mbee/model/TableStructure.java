@@ -30,14 +30,20 @@ package gov.nasa.jpl.mbee.model;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.generator.CollectFilterParser;
+import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.GenerationContext;
+import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
+import gov.nasa.jpl.mbee.viewedit.PresentationElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSection;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
@@ -52,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
@@ -60,6 +67,8 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activit
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
@@ -113,6 +122,10 @@ public class TableStructure extends Table {
     private class TableExpressionColumn extends TableColumn {
         public String  expression;
         public Boolean iterate;
+    }
+    
+    private class TableStructuredColumn extends TableColumn {
+    	//public Generatable generatable;
     }
 
     //private List<String>                headers      = new ArrayList<String>();
@@ -188,6 +201,9 @@ public class TableStructure extends Table {
                         DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
             } else if (GeneratorUtils.hasStereotypeByString(curNode, "TableColumnGroup")) {
                 col = new TableColumnGroup();
+            } else if (GeneratorUtils.hasStereotypeByString(curNode, "StructuredQuery")) {
+            	 col = new TableStructuredColumn();
+        	 	//((TableStructuredColumn)col).structuredNode = curNode;
             } else {
                 outs = curNode.getOutgoing();
                 continue;
@@ -217,7 +233,7 @@ public class TableStructure extends Table {
         }
     }
     
-    private void buildTableReferences() {
+    private void buildTableReferences(boolean forViewEditor, String outputDir) {
         for (Object e: targets) {
             List<List<Reference>> row = new ArrayList<List<Reference>>();
             List<Object> startElements = new ArrayList<Object>();
@@ -225,7 +241,7 @@ public class TableStructure extends Table {
             for (TableColumn tc: columns) {
                 List<Element> resultElements;
                 GenerationContext context = tc.makeContext();
-                if (context.getCurrentNode() != null) { // should check next
+                if (!(tc instanceof TableStructuredColumn) && context.getCurrentNode() != null) { // should check next
                                                         // node is
                                                         // collect/filter node
                     CollectFilterParser.setContext(context);
@@ -235,7 +251,7 @@ public class TableStructure extends Table {
                     resultElements = Utils2.asList( startElements, Element.class);
                 }
                 List<Reference> cell = new ArrayList<Reference>();
-                if (tc instanceof TableExpressionColumn && !((TableExpressionColumn)tc).iterate) {
+                if (tc instanceof TableExpressionColumn && !((TableExpressionColumn)tc).iterate) {     
                     String expr = ((TableExpressionColumn)tc).expression;
                     if (expr != null) {
                         Object result = DocumentValidator
@@ -256,6 +272,10 @@ public class TableStructure extends Table {
                                 + MoreToString.Helper.toLongString( resultElements ) );
                     }
                 } else {
+                	/*for (final Element ee : resultElements) {
+                		Application.getInstance().getGUILog().log(e instanceof NamedElement ? ((NamedElement) ee).getQualifiedName() : ee.getHumanName());
+                	}
+                	Application.getInstance().getGUILog().log(resultElements.toString());*/
                     for (Element re: resultElements) {
                         if (tc instanceof TableAttributeColumn) {
                             Utils.AvailableAttribute at = ((TableAttributeColumn)tc).attribute;
@@ -282,7 +302,7 @@ public class TableStructure extends Table {
                                 cell.add(new Reference(slotOrProperty, From.DVALUE, values));
                             } else
                                 cell.add(new Reference(values));
-                        } else {
+                        } else if (tc instanceof TableExpressionColumn) {
                             String expr = ((TableExpressionColumn)tc).expression;
                             if (expr == null) {
                                 // cell.add(new Reference(empty));
@@ -303,6 +323,81 @@ public class TableStructure extends Table {
                                         + MoreToString.Helper.toLongString( re ) );
    
                             }
+                        } else if (tc instanceof TableStructuredColumn) {
+                        	//final Container container = new Section();
+                        	//Application.getInstance().getGUILog().log("Activity Node: " + tc.activityNode);
+                        	/*DocumentValidator dv = new DocumentValidator(tc.activityNode);
+                            DocumentGenerator dg = new DocumentGenerator(tc.activityNode, dv, null);
+                            dg.getContext().pushTargets(Lists.newArrayList((Object) re));
+                            Object result = dg.parseQuery(tc.activityNode, dg.getDocument());
+                            if (!(result instanceof Query)) {
+                            	return;
+                            }
+                            final Query query = (Query) result;
+                        	final List<DocumentElement> documentElements = query.visit(true, "");
+                        	
+                        	final DBBook book = new DBBook();
+                        	book.setFrom(tc.activityNode);
+                        	
+                        	final DBSection section = new DBSection();
+                        	section.setFrom(tc.activityNode);
+                        	section.setView(true);
+                        	
+                        	book.getChildren().add(section);
+                        	section.getChildren().addAll(documentElements);
+                        	
+                        	DBAlfrescoVisitor visitor = new DBAlfrescoVisitor(true, true);
+                        	book.accept(visitor);
+                        	if (!visitor.getView2Pe().containsKey(tc.activityNode)) {
+                        		Application.getInstance().getGUILog().log("Unexpected error during table nesting.");
+                        		return;
+                        	}
+                        	
+                        	final InstanceSpecification placeholder = Application.getInstance().getProject().getElementsFactory().createInstanceSpecificationInstance();
+                        	
+                        	final ViewPresentationGenerator generator = new ViewPresentationGenerator(tc.activityNode, true);
+                        	generator.handleViewOrSection(tc.activityNode, placeholder, visitor.getView2Pe().get(tc.activityNode));
+                        	
+                        	for (final PresentationElement pe : visitor.getView2Pe().get(tc.activityNode)) {
+                        		//cell.add(new Reference(pe.getInstance(), From.DVALUE, pe.getInstance().getSpecification() instanceof LiteralString ? ((LiteralString) pe.getInstance().getSpecification()).getValue() : pe.getInstance().getSpecification()));
+                        		//cell.add(new Reference(pe.getInstance().getSpecification() instanceof LiteralString ? ((LiteralString) pe.getInstance().getSpecification()).getValue() : pe.getInstance().getSpecification()));
+                        		cell.add(new Reference(pe));
+                        		pe.getInstance().dispose();
+                        	}*/
+                        	
+                        	final Container con = new Section();
+                        	final DocumentGenerator dg = new DocumentGenerator(tc.activityNode, getValidator(), null);
+                        	final Element a = tc.bnode.getOwner();
+                        	
+                        	final GenerationContext nestedContext = new GenerationContext(new Stack<List<Object>>(), tc.activityNode, getValidator(), Application.getInstance().getGUILog());
+                        	//Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
+                        	nestedContext.pushTargets(Lists.newArrayList((Object) re));
+                        	//context.pushTargets(new ArrayList<Object>(startElements));
+                        	dg.setContext(nestedContext);
+                        	
+                        	dg.parseActivityOrStructuredNode(a, con);
+                        	//Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
+                        	for (DocGenElement dge: con.getChildren()) {
+                        	    cell.add(new Reference(dge));
+                        	}
+                        	
+                            //Application.getInstance().getGUILog().log("RESULT: " + result);
+                            //Application.getInstance().getGUILog().log("THIS?: " + dg.getDocument().getChildren());
+                            //return result;
+                			//final Object node = DocumentGenerator.parseActivityOrStructuredNode(tc.activityNode, container);
+                        	//Application.getInstance().getGUILog().log("AT LEAST HERE");
+                        	
+                            //Application.getInstance().getGUILog().log("LOOK AT ME!!!");
+                            /*if (result instanceof Collection) {
+	                        	//final List<DocumentElement> documentElements = ((Generatable) tc.activityNode).visit(forViewEditor, outputDir);
+	                        	for (final Object r : (Collection<Object>) result) {
+	                        		//Application.getInstance().getGUILog().log("DE: " + de);
+	                        		cell.add(new Reference(r));
+	                        	}
+                            }
+                            else {
+                            	cell.add(new Reference(result));
+                            }*/
                         }
                     }
                 }
@@ -323,7 +418,7 @@ public class TableStructure extends Table {
         if (ignore)
             return res;
 
-        buildTableReferences();
+        buildTableReferences(forViewEditor, outputDir);
         DBTable table = new DBTable();
 
         List<List<DocumentElement>> tableheaders = makeTableHeaders();
@@ -342,7 +437,14 @@ public class TableStructure extends Table {
             for (List<Reference> cell: row) {
                 DBTableEntry entry = new DBTableEntry();
                 for (Reference cellPart: cell) {
-                    Common.addReferenceToDBHasContent(cellPart, entry);
+                    //Common.addReferenceToDBHasContent(cellPart, entry);
+                	if (cellPart.result instanceof DocGenElement) {
+                		DocBookOutputVisitor nested = new DocBookOutputVisitor(forViewEditor, outputDir);
+                		nested.getParent().push(entry);
+            			((DocGenElement)cellPart.result).accept(nested);
+            		} else {
+            			Common.addReferenceToDBHasContent(cellPart, entry);
+            		}
                 }
                 tableRow.add(entry);
             }
