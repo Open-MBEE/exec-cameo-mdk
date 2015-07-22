@@ -39,7 +39,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
@@ -49,7 +48,6 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportImage extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -96,7 +94,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
                 client.executeMethod(post);
                 int status = post.getStatusCode();
                 if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
-                    Application.getInstance().getGUILog().log("[INFO] Successful");
+                    Utils.guilog("[INFO] Successful");
                 }
             } catch (Exception ex) {
                 Utils.printException(ex);
@@ -130,7 +128,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             client.executeMethod(post);
             int status = post.getStatusCode();
             if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
-                Application.getInstance().getGUILog().log("[INFO] Successful");
+                Utils.guilog("[INFO] Successful");
             }
         } catch (Exception ex) {
             Utils.printException(ex);

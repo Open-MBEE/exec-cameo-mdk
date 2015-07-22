@@ -439,7 +439,7 @@ public class ExportUtility {
             if (id != null)
                 return id;
         }
-        Application.getInstance().getGUILog().log("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
+        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
         return null;
     }
     
@@ -568,7 +568,7 @@ public class ExportUtility {
         if (url == null)
             return null;
         try {
-            GUILog gl = Application.getInstance().getGUILog();
+            //GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
             log.info("send file: " + url);
             HttpClient client = new HttpClient();
@@ -599,7 +599,7 @@ public class ExportUtility {
             pm = new PostMethod(url);
         else
             pm = new PutMethod(url);
-        GUILog gl = Application.getInstance().getGUILog();
+        //GUILog gl = Application.getInstance().getGUILog();
         try {
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Sending...");
@@ -1384,10 +1384,7 @@ public class ExportUtility {
             List<String> tags = ProjectUtilities.getVersionTags(prj
                     .getPrimaryProject());
             if (!tags.contains(baselineTag)) {
-                Application
-                        .getInstance()
-                        .getGUILog()
-                        .log("The current project is not an approved baseline version!");
+                Utils.guilog("The current project is not an approved baseline version!");
                 return false;
             }
 
@@ -1396,11 +1393,7 @@ public class ExportUtility {
                 if (ProjectUtilities.isFromTeamworkServer(proj)) {
                     List<String> tags2 = ProjectUtilities.getVersionTags(proj);
                     if (!tags2.contains(baselineTag)) {
-                        Application
-                                .getInstance()
-                                .getGUILog()
-                                .log(proj.getName()
-                                        + " is not an approved baseline module version!");
+                        Utils.guilog(proj.getName() + " is not an approved baseline module version!");
                         return false;
                     }
                 }
@@ -1618,7 +1611,7 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
         //send(url, tosend.toJSONString(), null, false);
     }
@@ -1635,7 +1628,7 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
         //send(url, tosend.toJSONString(), null, false);
     }

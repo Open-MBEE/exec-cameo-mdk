@@ -126,10 +126,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 }
             }
             for (String id: toRemove) {
-                elements.remove(id);
+        		elements.remove(id);
             }
-            if ((!elements.isEmpty() || !deletes.isEmpty()) && auto)
+            if ((!elements.isEmpty() || !deletes.isEmpty()) && auto) {
                 sendChanges();
+            }
         }
 
         @SuppressWarnings("unchecked")
@@ -190,8 +191,9 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             while (cur.getOwner() != null) {
                 cur = cur.getOwner();
             }
-            if (cur != Application.getInstance().getProject().getModel())
+            if (cur != Application.getInstance().getProject().getModel()) {
                 return true;
+            }
             return false;
         }
         
@@ -313,8 +315,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     ExportUtility.fillOwner(sourceElement, elementOb);
                 }
             }
-            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
-                    && ExportUtility.shouldAdd(sourceElement)) {
+            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED) && ExportUtility.shouldAdd(sourceElement)) {
                 if (isDiagramCreated(sourceElement)) {
                     String id = ExportUtility.getElementID(sourceElement);
                     toRemove.add(id);
@@ -404,20 +405,36 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     ExportUtility.fillOwner(a, elementOb);
                 }
             } else if (sourceElement instanceof InstanceSpecification && (propertyName.equals(PropertyNames.SPECIFICATION) || propertyName.equals(PropertyNames.CLASSIFIER))) {
-                elementOb = getElementObject(sourceElement);
-                JSONObject specialization = ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)sourceElement, null);
-                elementOb.put("specialization", specialization);
-                ExportUtility.fillOwner(sourceElement, elementOb);
+            	if (isDiagramCreated(sourceElement)) {
+                    String id = ExportUtility.getElementID(sourceElement);
+                    toRemove.add(id);
+                    diagramElements.add(id);
+                    diagramElements.add(sourceElement.getID());
+                }
+            	else {
+	            	elementOb = getElementObject(sourceElement);
+	                JSONObject specialization = ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)sourceElement, null);
+	                elementOb.put("specialization", specialization);
+	                ExportUtility.fillOwner(sourceElement, elementOb);
+            	}
             } else if (propertyName.equals( "APPLIED_STEREOTYPES" )) {
-                // this triggers on creation or modification of an applied stereotype
-                // APPLIED_STEREOTYPE_INSTANCE and STEREOTYPED_ELEMENT occur on create
-                elementID = ExportUtility.getElementID(sourceElement);
-                if (elementID == null)
-                    return;
-                elementOb = getElementObject(sourceElement);
-                ExportUtility.fillMetatype( sourceElement, elementOb );
-                ExportUtility.fillOwner( sourceElement, elementOb );
-                changedElements.put(elementID, sourceElement);
+            	if (isDiagramCreated(sourceElement)) {
+                    String id = ExportUtility.getElementID(sourceElement);
+                    toRemove.add(id);
+                    diagramElements.add(id);
+                    diagramElements.add(sourceElement.getID());
+                }
+            	else {
+	            	// this triggers on creation or modification of an applied stereotype
+		                // APPLIED_STEREOTYPE_INSTANCE and STEREOTYPED_ELEMENT occur on create
+	                elementID = ExportUtility.getElementID(sourceElement);
+	                if (elementID == null)
+	                    return;
+	                elementOb = getElementObject(sourceElement);
+	                ExportUtility.fillMetatype( sourceElement, elementOb );
+	                ExportUtility.fillOwner( sourceElement, elementOb );
+	                changedElements.put(elementID, sourceElement);
+            	}
             }
         }
     }

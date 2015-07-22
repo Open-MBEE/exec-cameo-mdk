@@ -30,42 +30,18 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
-import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
-import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
-import gov.nasa.jpl.mbee.ems.validation.ResultHolder;
 
 public class DeleteAlfrescoElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -88,7 +64,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
     @Override
     public void execute(Collection<Annotation> annos) {
         String url = ExportUtility.getUrlWithWorkspace();
-        Collection<Annotation> toremove = new HashSet<Annotation>();
+        //Collection<Annotation> toremove = new HashSet<Annotation>();
         JSONObject send = new JSONObject();
         JSONArray elements = new JSONArray();
         send.put("elements", elements);
@@ -110,7 +86,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
                 //    toremove.add(anno);
             }
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", true, annos.size()));
         //saySuccess();
         //this.removeViolationsAndUpdateWindow(toremove);
@@ -123,7 +99,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
         String url = ExportUtility.getUrlWithWorkspace();
         url += "/elements/" + id;
         //String result = ExportUtility.delete(url);
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, "{}", "DELETE", true));
         /*if (result != null) {
             saySuccess();

@@ -45,18 +45,15 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private Element element;
-    private Stereotype view = Utils.getViewStereotype();
-    private Stereotype viewpoint = Utils.getViewpointStereotype();
+    //private Stereotype view = Utils.getViewStereotype();
+    //private Stereotype viewpoint = Utils.getViewpointStereotype();
     
     public ExportElement(Element e) {
     	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
@@ -98,10 +95,10 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         if (background == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
         if (!url.contains("background"))
-            Application.getInstance().getGUILog().log("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
+            Utils.guilog("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
         
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
@@ -123,7 +120,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         if (url == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);

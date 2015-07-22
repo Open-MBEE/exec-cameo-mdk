@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -44,7 +45,6 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
@@ -77,7 +77,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
             if (duplicateName(e)) {
                 String qname = ((NamedElement)e).getQualifiedName();
                 if (!duplicatedNames.contains(qname)) {
-                    Application.getInstance().getGUILog().log("[WARNING] " + qname + " has the same qualified name as another element.");
+                    Utils.guilog("[WARNING] " + qname + " has the same qualified name as another element.");
                     duplicatedNames.add(qname);
                 }
                 //return;
@@ -95,7 +95,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         if (url == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
@@ -108,7 +108,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         if (!ExportUtility.okToExport(element))
             return;
         if (duplicateName(element)) {
-            Application.getInstance().getGUILog().log("[WARNING] " + ((NamedElement)element).getQualifiedName() + " has the same qualified name as another element.");
+            Utils.guilog("[WARNING] " + ((NamedElement)element).getQualifiedName() + " has the same qualified name as another element.");
             //return;
         }
         JSONArray elements = new JSONArray();
@@ -120,7 +120,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         if (url == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);

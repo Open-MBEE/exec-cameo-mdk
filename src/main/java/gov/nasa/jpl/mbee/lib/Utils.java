@@ -2086,7 +2086,8 @@ public class Utils {
         //SwingUtilities.invokeLater(new Runnable() {
         //    @Override
         //    public void run() {
-                Application.getInstance().getGUILog().log(s);
+    	// second parameter used as a quickfix to prevent log from stealing focus during auto-sync
+                Application.getInstance().getGUILog().log(s, !s.startsWith("[INFO]"));
         //    }
         //});
     }

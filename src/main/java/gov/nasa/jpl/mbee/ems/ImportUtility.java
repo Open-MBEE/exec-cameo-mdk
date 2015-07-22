@@ -292,12 +292,12 @@ public class ImportUtility {
             return;
         String ownerId = (String) o.get("owner");
         if ((ownerId == null) || (ownerId.isEmpty())) {
-            Application.getInstance().getGUILog().log("[ERROR] Owner not specified for mms sync add");
+            Utils.guilog("[ERROR] Owner not specified for mms sync add");
             return;
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Owner not found for mms sync add");
+            Utils.guilog("[ERROR] Owner not found for mms sync add");
             return;
         }
         e.setOwner(owner);
@@ -579,7 +579,7 @@ public class ImportUtility {
         case ElementValue:
             Element find = ExportUtility.getElementFromID((String)o.get("element"));
             if (find == null) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("element") + " not found!");
+                Utils.guilog("Element with id " + o.get("element") + " not found!");
                 break;
             }
             if (v != null && v instanceof ElementValue)
@@ -591,11 +591,11 @@ public class ImportUtility {
         case InstanceValue:
             Element findInst = ExportUtility.getElementFromID((String)o.get("instance"));
             if (findInst == null) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " not found!");
+            	Utils.guilog("Element with id " + o.get("instance") + " not found!");
                 break;
             }
             if (!(findInst instanceof InstanceSpecification)) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
+            	Utils.guilog("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                 break;
             }
             if (v != null && v instanceof InstanceValue)

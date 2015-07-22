@@ -1,7 +1,9 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import java.awt.GraphicsEnvironment;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apache.log4j.Logger;
@@ -48,25 +50,40 @@ public class OutputSyncRunner implements Runnable {
                     st.setName("SendThread");
                     st.start();
                     st.join(r.getWait());
-                    while (st.isAlive()) {
-                        Application.getInstance().getGUILog().log("[INFO] A send request did not finish within expected time.");
-                        log.warn("A queued send request didn't complete within wait time: " + r.toString());
-                        final AtomicReference<Boolean> userwait = new AtomicReference<Boolean>();
-                        SwingUtilities.invokeAndWait(new Runnable() {
-                               @Override
-                                public void run() {
-                                     Boolean wait = Utils.getUserYesNoAnswer("The current send request did not finish within the timeout: " + r.getWait()/60000 + " min, do you want to wait longer?");
-                                     if (wait == null)
-                                         userwait.set(false);
-                                     else
-                                         userwait.set(wait);
-                                }
-                           });
-                        Boolean result = userwait.get();
-                        if (result != null && result)
-                            st.join(r.getWait());
-                        else
-                            break;
+                    //st.join(1);
+
+                    if (st.isAlive()) {
+	                	Utils.guilog("[INFO] A send request did not finish within expected time.");
+	                    log.warn("A queued send request didn't complete within wait time: " + r.toString());
+	                    final AtomicReference<Boolean> userwait = new AtomicReference<Boolean>();
+	                    SwingUtilities.invokeLater(new Runnable() {
+                           @Override
+                            public void run() {
+                                 Boolean wait = Utils.getUserYesNoAnswer("The current send request did not finish within the timeout: " + r.getWait()/60000 + " min, do you want to wait longer?");
+                                 if (wait == null)
+                                     userwait.set(false);
+                                 else
+                                     userwait.set(wait);
+                            }
+                       });
+						while (st.isAlive()) {
+							Thread.sleep(100);
+						    final Boolean result = userwait.get();
+						    if (result != null && result) {
+						        st.join(r.getWait());
+						    }
+						    else {
+						        break;
+						    }
+						}
+						if (!st.isAlive() && !GraphicsEnvironment.isHeadless() && JOptionPane.getRootFrame() != null) {
+							SwingUtilities.invokeLater(new Runnable() {
+	                            @Override
+	                            public void run() {
+	                        	    JOptionPane.getRootFrame().dispose();
+	                            }
+							});
+						}
                     }
                 }
                 /*else if (r.getMethod().equals("DELETE"))
@@ -81,7 +98,7 @@ public class OutputSyncRunner implements Runnable {
                 log.error("", e);
             }
             if (q.isEmpty()) {
-                Application.getInstance().getGUILog().log("[INFO] Finished processing queued requests.");
+                Utils.guilog("[INFO] Finished processing queued requests.");
             }
         }
         

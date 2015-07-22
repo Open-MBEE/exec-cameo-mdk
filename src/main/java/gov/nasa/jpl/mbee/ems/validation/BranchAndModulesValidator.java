@@ -105,7 +105,7 @@ public class BranchAndModulesValidator {
         if (!ProjectUtilities.isFromTeamworkServer(prj))
             return;
         if (TeamworkUtils.getLoggedUserName() == null) {
-            Application.getInstance().getGUILog().log("You need to log in to teamwork first to do branches validation.");
+        	Utils.guilog("You need to log in to teamwork first to do branches validation.");
             return;
         }
         ExportUtility.updateWorkspaceIdMapping();

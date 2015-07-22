@@ -63,7 +63,7 @@ public class ModelExportRunner implements RunnableWithProgress {
     @Override
     public void run(ProgressStatus arg0) {
         ModelExporter me;
-        GUILog gl = Application.getInstance().getGUILog();
+        //GUILog gl = Application.getInstance().getGUILog();
         
         if (start == Application.getInstance().getProject().getModel()) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
@@ -76,12 +76,12 @@ public class ModelExportRunner implements RunnableWithProgress {
         String json = result.toJSONString();
 
         //gl.log(json);
-        gl.log("Number of Elements: " + me.getNumberOfElements());
+        Utils.guilog("Number of Elements: " + me.getNumberOfElements());
        // gl.log("*** Starting export view comments ***");
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, json, me.getNumberOfElements()));
         if (!url.contains("background"))
-            Application.getInstance().getGUILog().log("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
+        	Utils.guilog("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
         //ExportUtility.send(url, json, null, false);
     }
 }
