@@ -133,7 +133,7 @@ public class ViewPresentationGenerator {
 			if (!ProjectUtilities.isElementInAttachedProject(v)) {
 				handleViewOrSection(v, null, view2pe.get(v));
 			} else {
-				Application.getInstance().getGUILog().log("View " + view.getID() + " not in current project.");
+				Application.getInstance().getGUILog().log("[INFO] View " + view.getID() + " not in current project.");
 			}
 		}
 		// then, pass through all the unused PresentationElements and move their particular
@@ -146,7 +146,7 @@ public class ViewPresentationGenerator {
 	        		if (!ProjectUtilities.isElementInAttachedProject(is)) {
 	        			is.setOwner(createUnusedInstancesPackage());
 	        		} else {
-	        			Application.getInstance().getGUILog().log("Unused Presentation Element " + presentationElement.getName() + " not in current project.");
+	        			Application.getInstance().getGUILog().log("[INFO] Unused Presentation Element " + presentationElement.getName() + " not in current project.");
 	        		}
 	        	}
 	    }
@@ -258,8 +258,10 @@ public class ViewPresentationGenerator {
 		// if you can find the folder with this Utils, just go ahead and return it
 		List<Element> results = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, presentsS, 1, false, 1);
 		if (!results.isEmpty() && results.get(0) instanceof Package) {
-			setPackageHierarchy(view, viewInst, (Package) results.get(0));
-			return (Package) results.get(0);
+			final Package p = (Package) results.get(0);
+			setPackageHierarchy(view, viewInst, p);
+			p.setName(getViewTargetPackageName(view));
+			return p;
 		}
 		
 		Package viewTarget = createViewTargetPackage(view); // this is the leaf (find/build package)
@@ -296,7 +298,7 @@ public class ViewPresentationGenerator {
 		// from parent, try to grab dependency to a package in View Instances
 		Package parentPack = getViewTargetPackage(parent);
 		if (!leaf.isEditable()) {
-			Application.getInstance().getGUILog().log("Package " + leaf.getID() + " is not editable");
+			Application.getInstance().getGUILog().log("[INFO] Package " + leaf.getID() + " is not editable");
 		} else {
 			if (parentPack != null) {
 				leaf.setOwner(parentPack);
@@ -336,11 +338,16 @@ public class ViewPresentationGenerator {
 		return viewInst;
 	}
 	
+	private String getViewTargetPackageName(Element elem) {
+		final NamedElement ne;
+		return (elem instanceof NamedElement && (ne = (NamedElement) elem).getName() != null && !ne.getName().isEmpty() ? ne.getName() : elem.getID()) + genericInstSuffix;
+	}
+	
 	private Package createViewTargetPackage(Element elem) {
 		Package viewTarg = getViewTargetPackage(elem);
 		if (viewTarg == null) {
 			Package newPack = ef.createPackageInstance();
-			newPack.setName(((NamedElement)elem).getName() + genericInstSuffix);
+			newPack.setName(getViewTargetPackageName(elem));
 			return newPack;
 		}
 		return viewTarg;
@@ -354,8 +361,12 @@ public class ViewPresentationGenerator {
 			if (r instanceof Dependency && StereotypesHelper.hasStereotype(r, presentsS)) {
 				Dependency dep = (Dependency) r;
 				for (Element target: dep.getTarget()) {
-					if (target instanceof Package)
-						return (Package) target;
+					if (target instanceof Package) {
+						final Package p = (Package) target;
+						//Application.getInstance().getGUILog().log(getViewTargetPackageName(elem));
+						p.setName(getViewTargetPackageName(elem));
+						return p;
+					}
 				}
 			}
 		}
