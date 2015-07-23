@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
@@ -189,22 +191,24 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 		webTree.setName(webName);
 		
 		// build the selection ButtonGroup
-		JRadioButton modelRadio = new JRadioButton("Commit Instance", false);
-		JRadioButton webRadio = new JRadioButton("Accept Instance", true);
+		JRadioButton modelToggle = new JRadioButton("Commit Instance", false);
+		JRadioButton webToggle = new JRadioButton("Accept Instance", true);
 		final ButtonGroup selection = new ButtonGroup();
-		selection.add(modelRadio);
-		selection.add(webRadio);
-
+		selection.add(modelToggle);
+		selection.add(webToggle);
+		
 		// build each of the panes
 		JTabbedPane modelPane = buildPane(modelName, modelTree, webTree);
 		JTabbedPane webPane = buildPane(webName, webTree, modelTree);
 		
-		JPanel modelPanel = new JPanel(new BorderLayout());
+		JPanel modelPanel = new JPanel();
+		modelPanel.setLayout(new BoxLayout(modelPanel, BoxLayout.Y_AXIS));
 		modelPanel.add(modelPane);
-		modelPanel.add(modelRadio, BorderLayout.SOUTH);
-		JPanel webPanel = new JPanel(new BorderLayout());
+		modelPanel.add(modelToggle, BorderLayout.SOUTH);
+		JPanel webPanel = new JPanel();
+		webPanel.setLayout(new BoxLayout(webPanel, BoxLayout.Y_AXIS));
 		webPanel.add(webPane);
-		webPanel.add(webRadio, BorderLayout.SOUTH);
+		webPanel.add(webToggle, BorderLayout.SOUTH);
 		
         // splitpane holds both JSON trees represented in JTree form
         JSplitPane split = new JSplitPane();
