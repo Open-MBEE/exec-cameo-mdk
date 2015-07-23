@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.lib;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,7 +18,7 @@ public class JSONUtils {
 	 * @param recurse whether to recursively compare or not
 	 * @return a boolean true if model and web are effectively equal else false
 	 */
-	public static boolean compare(Object dirtyMod, Object dirtyWeb) {
+	public static boolean compare(Object dirtyMod, Object dirtyWeb) {		
 		if (dirtyMod == dirtyWeb) return true;
 		if (dirtyMod == null || dirtyWeb == null) return false;
 
@@ -33,27 +32,13 @@ public class JSONUtils {
 	}
 
 	/**
-	 * This method will return the differences between two JSON items as a JSONObject
-	 * It will sanitize the items, and log the sanitizations in the diff if necessary
-	 * If there are absolutely no differences (including no sanitization changes) this returns null
-	 *
-	 * @param dirtyMod a "dirty" object that we assume is some sort of JSON from the model
-	 * @param dirtyWeb a "dirty" object that we assume is some sort of JSON from the web
-	 * @param recurse whether to recursively diff or not
-	 * @return a JSONObject representing the differences between model and web
-	 */
-	private static JSONObject diff(Object dirtyMod, Object dirtyWeb, boolean recurse) {
-		return null;
-	}
-
-	/**
 	 * This method compares two JSONObjects; sanitizes at this level; recurses
 	 *
 	 * @param dirtyMod a particular element json (not sanitized)
 	 * @param dirtyWeb a particular element json (not sanitized)
 	 * @return boolean if web and model are equivalent
 	 */
-	private static boolean compareJSONObject(JSONObject dirtyMod, JSONObject dirtyWeb) {
+	private static boolean compareJSONObject(JSONObject dirtyMod, JSONObject dirtyWeb) {		
 		JSONObject mod = sanitizeJSONObject(dirtyMod);
 		JSONObject web = sanitizeJSONObject(dirtyWeb);
 
@@ -82,31 +67,28 @@ public class JSONUtils {
 	/**
 	 *
 	 * This method compares two JSONArrays; sanitizes at this level; recurses
-	 * It does not care about the order of the elements; will only check if elements exist in both
+	 * This relies on the JSONArray equals method
 	 *
 	 * @param dirtyMod a particular element json (not sanitized)
 	 * @param dirtyWeb a particular element json (not sanitized)
 	 * @return boolean if web and model are equivalent
 	 */
-	private static boolean compareJSONArray(JSONArray dirtyMod, JSONArray dirtyWeb) {
+	private static boolean compareJSONArray(JSONArray dirtyMod, JSONArray dirtyWeb) {		
 		JSONArray mod = sanitizeJSONArray(dirtyMod);
 		JSONArray web = sanitizeJSONArray(dirtyWeb);
 		
 		if (mod.size() != web.size()) return false;
-		
+		if (!(mod.equals(web))) return false;
+
 		for (Object modItem: mod) {
-			if (web.contains(modItem)) {
-				int ind = web.indexOf(modItem);
-				Object webItem = web.get(ind);
-				if (modItem instanceof JSONArray && webItem instanceof JSONArray) {
-					if (!(compareJSONArray((JSONArray) modItem, (JSONArray) webItem))) return false;
-				} else if (modItem instanceof JSONObject && webItem instanceof JSONObject) {
-					if (!(compareJSONObject((JSONObject) modItem, (JSONObject) webItem))) return false;
-				} else {
-					if (!modItem.equals(webItem)) return false;
-				}
+			int ind = web.indexOf(modItem);
+			Object webItem = web.get(ind);
+			if (modItem instanceof JSONArray && webItem instanceof JSONArray) {
+				if (!(compareJSONArray((JSONArray) modItem, (JSONArray) webItem))) return false;
+			} else if (modItem instanceof JSONObject && webItem instanceof JSONObject) {
+				if (!(compareJSONObject((JSONObject) modItem, (JSONObject) webItem))) return false;
 			} else {
-				return false;
+				if (!modItem.equals(webItem)) return false;
 			}
 		}
 		
