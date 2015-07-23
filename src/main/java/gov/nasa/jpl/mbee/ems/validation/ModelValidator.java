@@ -69,6 +69,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ValidateDiff;
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.JSONUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
@@ -609,7 +610,7 @@ public class ModelValidator {
         // replaced this thing here v
         //    if (!modelContents.equals(webContents)) {
         if (modelContents != null) {
-            if (!Utils.compareJSON(modelContents, webContents)) {
+            if (!JSONUtils.compareJSON(modelContents, webContents, true)) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint is different");
                 v.addAction(new ExportViewConstraint((NamedElement)e));
                 v.addAction(new ImportViewConstraint((NamedElement)e, webViewSpec, result));
@@ -952,10 +953,10 @@ public class ModelValidator {
         //if (jsonObjectEquals(value, modelvalue))
         //    return null;
         // if (modelvalue != null && modelvalue.equals(value))
-        if (modelvalue != null && Utils.compareJSON(modelvalue, value))
+        if (modelvalue != null && JSONUtils.compareJSON(modelvalue, value, true))
             return null;
         // if (modelvalue != null && !modelvalue.equals(value) || value != null && !value.equals(modelvalue)) {
-        if (!Utils.compareJSON(modelvalue, value)) {
+        if (!JSONUtils.compareJSON(modelvalue, value, true)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONSTRAINT] specifications don't match");
             //if (stringMatch)
               //  v.addAction(new CompareText(e, webString, modelString, result));
@@ -1020,7 +1021,7 @@ public class ModelValidator {
         webspec = ExportUtility.sanitizeJSON(webspec);
         JSONObject modelspec = ExportUtility.fillInstanceSpecificationSpecialization(e, null);
         // if (webspec.equals(modelspec)) {
-        if (!Utils.compareJSON(webspec, modelspec)) {
+        if (!JSONUtils.compareJSON(webspec, modelspec, true)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[INSTANCE] Instance specification or classifiers are different");
             if (editable)
                 v.addAction(new ExportInstanceSpec(e));
@@ -1039,7 +1040,7 @@ public class ModelValidator {
         boolean stringMatch = false;
         JSONObject model = ExportUtility.fillValueSpecification(vs, null, true);
         // if (model.equals(firstObject)) {
-        if (!Utils.compareJSON(model, firstObject)) {
+        if (!JSONUtils.compareJSON(model, firstObject, true)) {
             if (vs instanceof LiteralString && "LiteralString".equals(firstObject.get("type"))) {
                 modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
                 webString = ExportUtility.cleanHtml((String)firstObject.get("string"));

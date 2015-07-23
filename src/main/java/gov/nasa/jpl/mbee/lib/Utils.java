@@ -3555,74 +3555,6 @@ public class Utils {
         ex.printStackTrace();
     }
     
-    /**
-     * This compares two JSONObjects; sanitizes; recurses
-     * Only use this for comparing specialization
-     * 
-     * @param dweb a particular element json (not sanitized)
-     * @param dmod a particular element json (not sanitized)
-     * @return boolean if web and model are equivalent
-     */
-    public static boolean compareJSON(JSONObject dmod, JSONObject dweb) {
-
-    		if (dmod == null || dweb == null) return false;
-    		if (dmod.equals(dweb)) return true;
-    		
-    		// sanitize json
-    		JSONObject mod = sanitizeJSON(dmod);
-    		JSONObject web = sanitizeJSON(dweb);
-    		
-    		// checking the keys is easy
-    		if (!(mod.keySet().equals(web.keySet()))) return false;
-    		
-    		Set<Object> keys = mod.keySet(); 
-    		
-    		// checking the values is more involved
-    		for (Object key: keys) {
-    			Object modVal = mod.get(key);
-    			Object webVal = web.get(key);
-    			if (!(modVal.getClass().equals(webVal.getClass()))) return false;
-    			if (modVal instanceof JSONObject) {
-    				JSONObject mObject = (JSONObject) modVal;
-    				JSONObject wObject = (JSONObject) webVal;
-    				// go ahead and recurse, break out if the recursion is false
-    				if (!compareJSON(mObject, wObject)) return false;
-    			} else if (modVal instanceof JSONArray) {
-    				JSONArray mArray = (JSONArray) modVal;
-    				JSONArray wArray = (JSONArray) webVal;
-    				if (!jsonArraySetDiff(mArray, wArray)) return false;
-    			}
-    		}
-    		
-    		// this return seems a little redundant
-    		return (mod.equals(web));
-    }
-    
-    /**
-     * 
-     * This function deletes empty arrays from json objects
-     * This will prevent false positives in the Validation Window, where implemented
-     * 
-     * @param json is an JSONObject that will be cleaned up
-     * @return ret a JSONObject without offending key value pairs
-     */
-	public static JSONObject sanitizeJSON(JSONObject json) {
-		JSONObject ret = new JSONObject();
-		
-		for (Map.Entry entry: (Set<Map.Entry>) json.entrySet()) {
-			Object key = entry.getKey();
-			Object val = entry.getValue();
-			if (val != null
-					&& !(val instanceof JSONArray && ((JSONArray)val).isEmpty())
-					&& !(val instanceof JSONObject && ((JSONObject)val).isEmpty())
-					&& !(val instanceof String && ((String)val).isEmpty())) {
-				ret.put(key, val);
-			}
-		}
-		
-		return ret;
-	}
-    
     public static boolean jsonArraySetDiff(JSONArray a, JSONArray b) {
     	if (a != null && b != null) {
     		Set as = new HashSet();
@@ -3636,6 +3568,6 @@ public class Utils {
     	if (a == b)
     		return true;
     	return false;
-    }
+    	}
 
 }
