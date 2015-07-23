@@ -610,7 +610,7 @@ public class ModelValidator {
         // replaced this thing here v
         //    if (!modelContents.equals(webContents)) {
         if (modelContents != null) {
-            if (!JSONUtils.compareJSON(modelContents, webContents, true)) {
+            if (!JSONUtils.compare(modelContents, webContents)) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint is different");
                 v.addAction(new ExportViewConstraint((NamedElement)e));
                 v.addAction(new ImportViewConstraint((NamedElement)e, webViewSpec, result));
@@ -953,10 +953,10 @@ public class ModelValidator {
         //if (jsonObjectEquals(value, modelvalue))
         //    return null;
         // if (modelvalue != null && modelvalue.equals(value))
-        if (modelvalue != null && JSONUtils.compareJSON(modelvalue, value, true))
+        if (modelvalue != null && JSONUtils.compare(modelvalue, value))
             return null;
         // if (modelvalue != null && !modelvalue.equals(value) || value != null && !value.equals(modelvalue)) {
-        if (!JSONUtils.compareJSON(modelvalue, value, true)) {
+        if (!JSONUtils.compare(modelvalue, value)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONSTRAINT] specifications don't match");
             //if (stringMatch)
               //  v.addAction(new CompareText(e, webString, modelString, result));
@@ -1021,7 +1021,7 @@ public class ModelValidator {
         webspec = ExportUtility.sanitizeJSON(webspec);
         JSONObject modelspec = ExportUtility.fillInstanceSpecificationSpecialization(e, null);
         // if (webspec.equals(modelspec)) {
-        if (!JSONUtils.compareJSON(webspec, modelspec, true)) {
+        if (!JSONUtils.compare(webspec, modelspec)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[INSTANCE] Instance specification or classifiers are different");
             if (editable)
                 v.addAction(new ExportInstanceSpec(e));
@@ -1040,7 +1040,7 @@ public class ModelValidator {
         boolean stringMatch = false;
         JSONObject model = ExportUtility.fillValueSpecification(vs, null, true);
         // if (model.equals(firstObject)) {
-        if (!JSONUtils.compareJSON(model, firstObject, true)) {
+        if (!JSONUtils.compare(model, firstObject)) {
             if (vs instanceof LiteralString && "LiteralString".equals(firstObject.get("type"))) {
                 modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());
                 webString = ExportUtility.cleanHtml((String)firstObject.get("string"));
