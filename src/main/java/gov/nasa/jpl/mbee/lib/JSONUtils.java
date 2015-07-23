@@ -78,7 +78,7 @@ public class JSONUtils {
 		JSONArray web = sanitizeJSONArray(dirtyWeb);
 		
 		if (mod.size() != web.size()) return false;
-		if (!(mod.equals(web))) return false;
+		if (mod.equals(web)) return true;
 
 		for (Object modItem: mod) {
 			int ind = web.indexOf(modItem);
