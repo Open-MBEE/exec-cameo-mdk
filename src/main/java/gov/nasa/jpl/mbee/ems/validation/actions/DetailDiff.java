@@ -106,7 +106,6 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 
 	@Override
 	public void execute(Collection<Annotation> arg0) {
-		// select the top element and diff that one
 	}
 	
 	@Override
@@ -142,7 +141,6 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 	
 	private JTabbedPane buildPane(String name, final JTree tree, final JTree opposite) {
 				
-//		tree = new JTree(node);
 		for (int i = 0; i < tree.getRowCount(); i++) {
 			tree.expandRow(i);
 		}
@@ -170,15 +168,6 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 	
 	private void construct() {
 		keyMap.clear();
-		
-//		JButton preview = new JButton("Preview");
-//		JButton submit = new JButton("Submit");
-//		JButton cancel = new JButton("Cancel");
-//		
-//		JPanel buttPanel = new JPanel();
-//        buttPanel.add(preview);
-//        buttPanel.add(submit);
-//        buttPanel.add(cancel);
 
         // these trees have to know about each other
         
@@ -190,13 +179,6 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 		final JTree webTree = new JTree(webNode);
 		webTree.setName(webName);
 		
-		// build the selection ButtonGroup
-//		JRadioButton modelToggle = new JRadioButton("Commit Instance", false);
-//		JRadioButton webToggle = new JRadioButton("Accept Instance", true);
-//		final ButtonGroup selection = new ButtonGroup();
-//		selection.add(modelToggle);
-//		selection.add(webToggle);
-		
 		// build each of the panes
 		JTabbedPane modelPane = buildPane(modelName, modelTree, webTree);
 		JTabbedPane webPane = buildPane(webName, webTree, modelTree);
@@ -204,11 +186,9 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 		JPanel modelPanel = new JPanel();
 		modelPanel.setLayout(new BoxLayout(modelPanel, BoxLayout.Y_AXIS));
 		modelPanel.add(modelPane);
-//		modelPanel.add(modelToggle, BorderLayout.SOUTH);
 		JPanel webPanel = new JPanel();
 		webPanel.setLayout(new BoxLayout(webPanel, BoxLayout.Y_AXIS));
 		webPanel.add(webPane);
-//		webPanel.add(webToggle, BorderLayout.SOUTH);
 		
         // splitpane holds both JSON trees represented in JTree form
         JSplitPane split = new JSplitPane();
@@ -220,7 +200,6 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
         // JPanel
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(split);
-//        panel.add(buttPanel, BorderLayout.SOUTH);
         
         // show is the JDialog that holds everything (in its ContentPane)
         final JDialog show = new JDialog();
@@ -228,28 +207,6 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
         show.setSize(1200, 600);
         show.getContentPane().add(panel);
         show.setVisible(true);
-        
-        // add listeners
-        
-//        cancel.addActionListener( new ActionListener() {
-//        		public void actionPerformed(ActionEvent e) {
-//        			show.dispose();
-//        		}
-//        });
-//        
-//        submit.addActionListener( new ActionListener() {
-//        		public void actionPerformed(ActionEvent e) {
-//        			System.out.println("submit");
-//        		}
-//        });
-//        
-//        preview.addActionListener( new ActionListener() {
-//        		public void actionPerformed(ActionEvent e) {
-//        			System.out.println(selection.getSelection());
-//        			previewChange(selection.getSelection());
-//        		}
-//        });
-        
 	}
 	
 	private void previewChange(ButtonModel model) {
