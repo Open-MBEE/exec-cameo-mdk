@@ -23,20 +23,20 @@ import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 
-public class DespecializeAction extends SRAction {
+public class DespecifyAction extends SRAction {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String actionid = "Depecialize";
+	public static final String actionid = "Despecify";
 	public List<Classifier> classifiers;
 	
-	public DespecializeAction(Classifier classifier) {
+	public DespecifyAction(Classifier classifier) {
         this(Utils2.newList(classifier));
 	}
 	
-	public DespecializeAction(List<Classifier> classifiers) {
+	public DespecifyAction(List<Classifier> classifiers) {
 		super(actionid);
 		this.classifiers = classifiers;
 	}
