@@ -107,8 +107,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 url = "tcp://" + url + ":61616";
             }
         }
-        //urlInfo.put( "url", url );
-        urlInfo.put( "url", "tcp://ems-int-origin.jpl.nasa.gov:61616" );
+        urlInfo.put( "url", url );
     }
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");

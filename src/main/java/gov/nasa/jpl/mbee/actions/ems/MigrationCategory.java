@@ -12,7 +12,7 @@ public class MigrationCategory extends ActionsCategory {
 	    super(actionid, "Migration", null, null);
 	    this.setNested(true);
 	    this.addAction(new MigrationAction(MigrationKind.CRUSHINATOR21TO22));
-	    this.addAction(new MigrationAction(MigrationKind.VIEW2VIEW));
+//	    this.addAction(new MigrationAction(MigrationKind.VIEW2VIEW));
 	    // add more actions here
 	}
 

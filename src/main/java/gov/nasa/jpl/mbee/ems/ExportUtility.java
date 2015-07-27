@@ -1274,6 +1274,7 @@ public class ExportUtility {
 		JSONObject info = einfo;
 		if (info == null) {
 			info = new JSONObject();
+			info.put("sysmlid", getElementID(e));
 		}
 		
 		JSONArray propIDs = new JSONArray();

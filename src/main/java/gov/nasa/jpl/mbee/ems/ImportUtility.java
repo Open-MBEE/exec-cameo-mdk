@@ -154,7 +154,10 @@ public class ImportUtility {
                     Property newProperty = ef.createPropertyInstance();
                     newE = newProperty;
                 }
-                setProperty((Property)newE, specialization);
+                if (specialization.containsKey("value"))
+                		setPropertyDefaultValue((Property)newE, vals);
+                if (specialization.containsKey("propertyType"))
+                		setProperty((Property)newE, specialization);
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
@@ -358,13 +361,6 @@ public class ImportUtility {
     }
     
     public static void setProperty(Property p, JSONObject spec) {
-    		
-    		// do the values here
-        JSONArray pvalues = (JSONArray)spec.get("value");
-        if (pvalues != null && pvalues.size() > 0)
-        		p.setDefaultValue(createValueSpec((JSONObject)pvalues.get(0), p.getDefaultValue()));
-        if (pvalues != null && pvalues.isEmpty())
-            p.setDefaultValue(null);
     		
         // fix the property type here
         String ptype = (String)spec.get("propertyType");

@@ -22,10 +22,6 @@ public class MigrationAction extends NMAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		
-        if (!ExportUtility.checkBaseline()) {
-            return;
-        }
         ProgressStatusRunner.runWithProgressStatus(new MigrationRunner(mk), "Migrating", true, 0);
 	}
 

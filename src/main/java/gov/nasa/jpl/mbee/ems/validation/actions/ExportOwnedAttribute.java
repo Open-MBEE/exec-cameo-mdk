@@ -62,6 +62,8 @@ public class ExportOwnedAttribute extends RuleViolationAction implements Annotat
 			set.add(e);
 			elements.add(ExportUtility.fillOwnedAttribute(e, null));
 		}
+		
+		commit(elements);
 	}
 	
 	@SuppressWarnings("unchecked")

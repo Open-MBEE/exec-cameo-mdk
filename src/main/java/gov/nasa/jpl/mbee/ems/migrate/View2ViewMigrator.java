@@ -25,7 +25,8 @@ public class View2ViewMigrator extends Migrator {
 						JSONObject spec = new JSONObject();
 						einfo.put("sysmlid", ExportUtility.getElementID(elem));
 						einfo.put("specialization", spec);
-						spec.put("view2view", new JSONArray());
+						spec.put("view2view", null);
+						spec.put("type", "Product");
 						exportElems.add(einfo);
 					}
 				}

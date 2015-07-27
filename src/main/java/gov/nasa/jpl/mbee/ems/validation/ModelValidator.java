@@ -1018,7 +1018,6 @@ public class ModelValidator {
     private ValidationRuleViolation instanceSpecificationDiff(InstanceSpecification e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject webspec = (JSONObject)info.get("specialization");
-        webspec = ExportUtility.sanitizeJSON(webspec);
         JSONObject modelspec = ExportUtility.fillInstanceSpecificationSpecialization(e, null);
         // if (webspec.equals(modelspec)) {
         if (!JSONUtils.compare(webspec, modelspec)) {
