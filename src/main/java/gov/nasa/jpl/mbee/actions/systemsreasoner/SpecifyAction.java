@@ -19,20 +19,20 @@ import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 
-public class SpecializeAction extends SRAction {
+public class SpecifyAction extends SRAction {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String actionid = "Specialize";
+	public static final String actionid = "Specify";
 	public List<Classifier> classifiers;
 	
-	public SpecializeAction(Classifier classifier) {
+	public SpecifyAction(Classifier classifier) {
         this(Utils2.newList(classifier));
 	}
 	
-	public SpecializeAction(List<Classifier> classifiers) {
+	public SpecifyAction(List<Classifier> classifiers) {
 		super(actionid);
 		this.classifiers = classifiers;
 	}

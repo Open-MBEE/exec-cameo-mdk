@@ -5,13 +5,13 @@ import java.util.List;
 
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecializeAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecifyAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
 import gov.nasa.jpl.mbee.systemsreasoner.validation.IndeterminateProgressMonitorProxy;
 import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.CreateInstanceAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecializeAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecifyAction;
 
 import com.google.common.collect.Lists;
 import com.nomagic.actions.ActionsCategory;
@@ -166,12 +166,12 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		category.addAction(validateAction);
 		
 		if (!classifiers.isEmpty()) {
-			specAction = new SpecializeAction(classifiers);
+			specAction = new SpecifyAction(classifiers);
 			if (hasUneditable) {
 				specAction.disable("Not Editable");
 			}
 			
-			despecAction = new DespecializeAction(classifiers);
+			despecAction = new DespecifyAction(classifiers);
 			if (hasUneditable) {
 				despecAction.disable("Not Editable");
 			}
@@ -209,8 +209,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         if (element instanceof Classifier) {
         	final Classifier classifier = (Classifier) element;
         	validateAction = new ValidateAction(classifier);
-        	specAction = new SpecializeAction(classifier);
-        	despecAction = new DespecializeAction(classifier);
+        	specAction = new SpecifyAction(classifier);
+        	despecAction = new DespecifyAction(classifier);
         	if (!element.isEditable()) {
         		specAction.disable("Locked");
         		despecAction.disable("Locked");
