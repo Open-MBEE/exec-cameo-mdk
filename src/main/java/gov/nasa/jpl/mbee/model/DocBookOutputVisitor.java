@@ -54,6 +54,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         this.parent = new Stack<DBHasContent>();
         this.outputDir = outputDir;
     }
+    
+    public Stack<DBHasContent> getParent() {
+    	return parent;
+    }
 
     public DBBook getBook() {
         if (!parent.isEmpty() && parent.get(0) instanceof DBBook)

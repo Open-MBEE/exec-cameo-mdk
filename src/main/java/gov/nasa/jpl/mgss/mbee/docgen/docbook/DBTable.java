@@ -65,6 +65,7 @@ public class DBTable extends DocumentElement {
     private List<DBColSpec>             colspecs;
     private int                         cols;
     private boolean                     transpose;
+    private boolean 					hideHeaders;
 
     public List<List<DocumentElement>> getBody() {
         return body;
@@ -135,6 +136,14 @@ public class DBTable extends DocumentElement {
 
     public void setTranspose(boolean transpose) {
         this.transpose = transpose;
+    }
+    
+    public boolean isHideHeaders() {
+    	return hideHeaders;
+    }
+    
+    public void setHideHeaders(final boolean hideHeaders) {
+    	this.hideHeaders = hideHeaders;
     }
 
     @Override

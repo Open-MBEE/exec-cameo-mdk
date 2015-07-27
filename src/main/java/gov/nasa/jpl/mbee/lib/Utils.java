@@ -76,6 +76,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -3567,6 +3568,6 @@ public class Utils {
     	if (a == b)
     		return true;
     	return false;
-    }
+    	}
 
 }

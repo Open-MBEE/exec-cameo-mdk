@@ -329,6 +329,9 @@ public class ExportUtility {
     
 
     public static String getElementID(Element e) {
+    	if (e == null) {
+    		return null;
+    	}
         if (e instanceof Slot) {
             if (e.getOwner() == null || ((Slot)e).getDefiningFeature() == null)
                 return null;

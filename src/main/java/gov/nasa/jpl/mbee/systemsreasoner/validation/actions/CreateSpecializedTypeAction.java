@@ -36,7 +36,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 	}
 	
 	public CreateSpecializedTypeAction(final Property property, final Classifier parent, final boolean redefineAttributes, final String name) {
-		super(name, name, null, null);
+		super(name);
 		this.property = property;
 		this.parent = parent;
 		this.redefineAttributes = redefineAttributes;

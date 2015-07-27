@@ -16,7 +16,7 @@ public class SetRedefinitionAction extends GenericRuleViolationAction {
 	private String name;
 
 	public SetRedefinitionAction(final RedefinableElement redefiningElement, final RedefinableElement redefinedElement, String name) {
-		super(name, name, null, null);
+		super(name);
 		this.redefiningElement = redefiningElement;
 		this.redefinedElement = redefinedElement;
 		this.name = name;
