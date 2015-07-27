@@ -42,7 +42,10 @@ public abstract class Migrator {
 		if (url == null) {
 			return;
 		}
-
+		
+		// try to do a server background commit
+		url += "?background=true";
+		
 		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
 		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size()));
 	}
