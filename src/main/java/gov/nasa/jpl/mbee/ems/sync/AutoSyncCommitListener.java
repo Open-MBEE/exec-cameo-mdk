@@ -397,13 +397,13 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             } else if (sourceElement instanceof Property && propertyName.equals(PropertyNames.AGGREGATION)) {
-                Association a = ((Property)sourceElement).getAssociation();
-                if (a != null) {
-                    elementOb = getElementObject(a);
-                    JSONObject specialization = ExportUtility.fillAssociationSpecialization(a, null);
+                //Association a = ((Property)sourceElement).getAssociation();
+                //if (a != null) {
+                    elementOb = getElementObject(sourceElement);
+                    JSONObject specialization = ExportUtility.fillPropertySpecialization((Property)sourceElement, null, false, false);
                     elementOb.put("specialization", specialization);
-                    ExportUtility.fillOwner(a, elementOb);
-                }
+                    ExportUtility.fillOwner(sourceElement, elementOb);
+                //}
             } else if (sourceElement instanceof InstanceSpecification && (propertyName.equals(PropertyNames.SPECIFICATION) || propertyName.equals(PropertyNames.CLASSIFIER))) {
             	if (isDiagramCreated(sourceElement)) {
                     String id = ExportUtility.getElementID(sourceElement);

@@ -694,7 +694,7 @@ public class ModelValidator {
         // build that validation violation if it's necessary
         if ((modelTypeId != null && !modelTypeId.equals(webTypeId)) || (webTypeId != null && !webTypeId.equals(modelTypeId))
         		|| (modelAggr != null && !modelAggr.equals(webAggr)) || (webAggr != null && !webAggr.equals(modelAggr))) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property is different");
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property type/aggregation is different");
         		if (editable)
                 v.addAction(new ExportProperty(e));
             v.addAction(new ImportProperty(e, (Type)webTypeElement, result));

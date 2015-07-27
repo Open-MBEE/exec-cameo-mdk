@@ -38,15 +38,30 @@ public class OutputSyncRunner implements Runnable {
     public void run() {
         log.info("sync runner started");
         OutputQueue q = OutputQueue.getInstance();
-        OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+        SwingUtilities.invokeLater(new Runnable() {
+        	@Override
+            public void run() {
+        		OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+            }
+        });
         while(true) {
             //Request r;
             try {
             	if (q.isEmpty()) {
-            		OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+            		SwingUtilities.invokeLater(new Runnable() {
+                    	@Override
+                        public void run() {
+                    		OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+                        }
+                    });
             	}
                 final Request r = q.take();
-                OutputQueueStatusConfigurator.getOutputQueueStatusAction().update(true);
+                SwingUtilities.invokeLater(new Runnable() {
+                	@Override
+                    public void run() {
+                		OutputQueueStatusConfigurator.getOutputQueueStatusAction().update(true);
+                    }
+                });
                 log.info("got a request");
                 if (r.getMethod().equals("LOG"))
                     Utils.guilog(r.getJson());

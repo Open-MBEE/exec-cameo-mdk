@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import java.awt.event.ActionEvent;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class GenerateViewPresentationAction extends MDAction {
@@ -24,6 +25,6 @@ public class GenerateViewPresentationAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse);
-        vg.generate();
+        ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
     }
 }

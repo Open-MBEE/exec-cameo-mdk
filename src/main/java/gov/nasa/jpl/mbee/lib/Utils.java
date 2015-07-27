@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.lib;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
@@ -2056,7 +2058,7 @@ public class Utils {
     }
 
     public static Classifier getSectionClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section");
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection");
     }
 
     public static Stereotype getPresentsStereotype() {
@@ -2088,7 +2090,11 @@ public class Utils {
         //    @Override
         //    public void run() {
     	// second parameter used as a quickfix to prevent log from stealing focus during auto-sync
-                Application.getInstance().getGUILog().log(s, !s.startsWith("[INFO]"));
+    	AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
+    	boolean auto = false;
+    	if (listener != null && listener.isAuto())
+    		auto = true;
+        Application.getInstance().getGUILog().log(s, !auto || !s.startsWith("[INFO]"));
         //    }
         //});
     }

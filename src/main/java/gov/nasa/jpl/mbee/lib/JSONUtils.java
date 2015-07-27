@@ -81,7 +81,7 @@ public class JSONUtils {
 		if (mod.equals(web)) return true;
 
 		for (Object modItem: mod) {
-			int ind = web.indexOf(modItem);
+			int ind = mod.indexOf(modItem);
 			Object webItem = web.get(ind);
 			if (modItem instanceof JSONArray && webItem instanceof JSONArray) {
 				if (!(compareJSONArray((JSONArray) modItem, (JSONArray) webItem))) return false;
@@ -117,7 +117,7 @@ public class JSONUtils {
 				ret.put(key, (JSONObject)val);
 			} else if (val instanceof String && !((String)val).isEmpty()) {
 				ret.put(key, (String)val);
-			} else if (val != null) {
+			} else if (val != null && !(val instanceof JSONArray) && !(val instanceof JSONObject) && !(val instanceof String)) {
 				ret.put(key, val);
 			}
 		}
@@ -145,7 +145,7 @@ public class JSONUtils {
 				ret.add((JSONObject)item);
 			} else if (item instanceof String && !((String)item).isEmpty()) {
 				ret.add((String)item);
-			} else if (item != null) {
+			} else if (item != null && !(item instanceof JSONArray) && !(item instanceof JSONObject) && !(item instanceof String)) {
 				ret.add(item);
 			}
 		}

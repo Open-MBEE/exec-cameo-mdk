@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.generator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.json.simple.JSONArray;
 
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
@@ -37,8 +38,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Relationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
 
-public class ViewPresentationGenerator {
+public class ViewPresentationGenerator implements RunnableWithProgress {
 	private Classifier paraC = Utils.getOpaqueParaClassifier();
 	private Classifier tableC = Utils.getOpaqueTableClassifier();
 	private Classifier listC = Utils.getOpaqueListClassifier();
@@ -64,7 +67,8 @@ public class ViewPresentationGenerator {
 		this.recurse = recursive;
 	}
 
-	public void generate() {
+	@Override
+	public void run(ProgressStatus ps) {
 		DocumentValidator dv = new DocumentValidator(view);
 		dv.validateDocument();
 		if (dv.isFatal()) {
