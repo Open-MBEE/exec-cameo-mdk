@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee;
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
@@ -95,6 +96,8 @@ public class DocGenPlugin extends Plugin {
         SRConfigurator srconfig = new SRConfigurator();
         acm.addContainmentBrowserContextConfigurator(srconfig);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srconfig);
+        
+        acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
 
         getOclPlugin().init();
         getVcPlugin().init();

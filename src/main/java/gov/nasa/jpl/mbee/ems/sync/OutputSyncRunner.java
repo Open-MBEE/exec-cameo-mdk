@@ -38,10 +38,15 @@ public class OutputSyncRunner implements Runnable {
     public void run() {
         log.info("sync runner started");
         OutputQueue q = OutputQueue.getInstance();
+        OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
         while(true) {
             //Request r;
             try {
+            	if (q.isEmpty()) {
+            		OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+            	}
                 final Request r = q.take();
+                OutputQueueStatusConfigurator.getOutputQueueStatusAction().update(true);
                 log.info("got a request");
                 if (r.getMethod().equals("LOG"))
                     Utils.guilog(r.getJson());
@@ -76,6 +81,7 @@ public class OutputSyncRunner implements Runnable {
 						        break;
 						    }
 						}
+						
 						if (!st.isAlive() && !GraphicsEnvironment.isHeadless() && JOptionPane.getRootFrame() != null) {
 							SwingUtilities.invokeLater(new Runnable() {
 	                            @Override
@@ -101,7 +107,6 @@ public class OutputSyncRunner implements Runnable {
                 Utils.guilog("[INFO] Finished processing queued requests.");
             }
         }
-        
     }
 
 }
