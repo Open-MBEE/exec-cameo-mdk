@@ -1306,8 +1306,8 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
         }
+        info.put("sysmlid", getElementID(e));
         return info;
     }
     

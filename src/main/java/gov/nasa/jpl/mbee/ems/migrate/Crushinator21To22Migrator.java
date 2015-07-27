@@ -77,6 +77,7 @@ public class Crushinator21To22Migrator extends Migrator {
 			if (elem instanceof Property) {
 				JSONObject spec = new JSONObject();
 				einfo.put("specialization", spec);
+				spec.put("type", "Property");
 				spec.put("aggregation", ((Property)elem).getAggregation().toString().toUpperCase());
 			}
 

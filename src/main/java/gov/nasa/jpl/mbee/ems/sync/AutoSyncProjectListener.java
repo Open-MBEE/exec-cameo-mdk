@@ -594,6 +594,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     }
 
     public static AutoSyncCommitListener getCommitListener(Project project) {
+    	if (project == null)
+    		return null;
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances == null)
             return null;
