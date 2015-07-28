@@ -91,9 +91,23 @@ public class OutputSyncRunner implements Runnable {
 						    final Boolean result = userwait.get();
 						    if (result != null && result) {
 						        st.join(r.getWait());
-						    }
+						        if (st.isAlive()) {
+						        	userwait.set(null);
+						        	SwingUtilities.invokeLater(new Runnable() {
+			                           @Override
+			                            public void run() {
+			                                 Boolean wait = Utils.getUserYesNoAnswer("The current send request did not finish within the timeout: " + r.getWait()/60000 + " min, do you want to wait longer?");
+			                                 if (wait == null)
+			                                     userwait.set(false);
+			                                 else
+			                                     userwait.set(wait);
+			                            }
+			                       });
+						        }
+						    } else if (result != null && !result)
+						    	break;
 						    else {
-						        break;
+						        continue;
 						    }
 						}
 						
