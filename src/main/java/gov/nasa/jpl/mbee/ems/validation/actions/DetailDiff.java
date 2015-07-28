@@ -37,8 +37,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 public class DetailDiff extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 	
 	private static final long serialVersionUID = 1L;
-	private JSONObject modelData;
-    private JSONObject webData;
+	private JSONObject modelData = new JSONObject();
+    private JSONObject webData = new JSONObject();
     private Map<String, ArrayList<JSONTreeNode>> keyMap = new HashMap<String, ArrayList<JSONTreeNode>>();
     
     private String modelName = "MD Model";
@@ -129,6 +129,9 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 				current.add(entryVal);
 			}
 		} else {
+			if (value == null) {
+				value = "null";
+			}
 			if (current.hasTitle()) {
 				current.setUserObject(current.getTitle() + " : " + value.toString());
 			} else {
