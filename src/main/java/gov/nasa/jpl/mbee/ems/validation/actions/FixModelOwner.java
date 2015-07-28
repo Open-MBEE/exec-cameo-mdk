@@ -52,7 +52,7 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
     public FixModelOwner(Element e, Element owner, JSONObject result) {
     	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
     	//
-        super("FixModelOwner", "Accept owner", null, null);
+        super("FixModelOwner", "2 Accept owner", null, null);
         this.element = e;
         this.owner = owner;
         this.result = result;

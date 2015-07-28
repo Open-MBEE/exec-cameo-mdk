@@ -58,7 +58,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
     public ExportElement(Element e) {
     	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
     	//
-        super("ExportElement", "Commit element", null, null);
+        super("ExportElement", "1 Commit element", null, null);
         this.element = e;
     }
     
