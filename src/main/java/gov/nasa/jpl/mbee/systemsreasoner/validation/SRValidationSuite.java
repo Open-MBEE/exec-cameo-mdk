@@ -120,19 +120,28 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 							}
 						}
 						if (redefiningElement == null) {
-							final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefinableElement.getQualifiedName());
-							for (final Property p : classifier.getAttribute()) {
-								if (p.getName().equals(redefinableElement.getName()) && !p.hasRedefinedElement()) {
-									v.addAction(new SetRedefinitionAction(p, redefinableElement, "Redefine by Name Collision"));
+							boolean redefinedInContext = false;
+							for (final NamedElement ne2 : classifier.getInheritedMember()) {
+								if (ne2 instanceof Property && ne2 instanceof RedefinableElement && doesEventuallyRedefine((Property) ne2, (Property) redefinableElement)) {
+									redefinedInContext = true;
+									break;
 								}
 							}
-				            v.addAction(new RedefineAttributeAction(classifier, redefinableElement));
-				            if (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null) {
-				            	// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
-				            	// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
-				            	v.addAction(new RedefineAttributeAction(classifier, redefinableElement, true, "Redefine Attribute & Specialize Types Recursively"));
-				            }
-				            attributeMissingRule.addViolation(v);
+							if (!redefinedInContext) {
+								final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefinableElement.getQualifiedName());
+								for (final Property p : classifier.getAttribute()) {
+									if (p.getName().equals(redefinableElement.getName()) && !p.hasRedefinedElement()) {
+										v.addAction(new SetRedefinitionAction(p, redefinableElement, "Redefine by Name Collision"));
+									}
+								}
+					            v.addAction(new RedefineAttributeAction(classifier, redefinableElement));
+					            if (redefinableElement instanceof TypedElement && ((TypedElement) redefinableElement).getType() != null) {
+					            	// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
+					            	// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
+					            	v.addAction(new RedefineAttributeAction(classifier, redefinableElement, true, "Redefine Attribute & Specialize Types Recursively"));
+					            }
+					            attributeMissingRule.addViolation(v);
+							}
 						}
 						else {
 							if ((redefiningElement.getName() == null && redefinableElement.getName() != null) || (redefiningElement.getName() != null && !redefiningElement.getName().equals(redefinableElement.getName()))) {
