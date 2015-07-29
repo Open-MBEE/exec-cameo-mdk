@@ -33,6 +33,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class DetailDiff extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 	
@@ -89,6 +90,10 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 			}
 		}
 		
+		public boolean hasKey() {
+			return (this.getKey() != null);
+		}
+		
 		public boolean hasTitle() {
 			return (this.getTitle() != null);
 		}
@@ -129,14 +134,24 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 				current.add(entryVal);
 			}
 		} else {
+			String userObj = "";
 			if (value == null) {
 				value = "null";
 			}
-			if (current.hasTitle()) {
-				current.setUserObject(current.getTitle() + " : " + value.toString());
-			} else {
-				current.setUserObject(value.toString());
+			
+			if (current.hasKey() && !current.getKey().equals("sysmlid")) {
+				Element target = ExportUtility.getElementFromID(value.toString());
+				if (target instanceof NamedElement) {
+					value = ((NamedElement) target).getQualifiedName();
+				}
 			}
+			
+			if (current.hasTitle()) {
+				userObj = current.getTitle() + " : " + value.toString();
+			} else {
+				userObj = value.toString();
+			}
+			current.setUserObject(userObj);
 		}
 		return current;
 	}
