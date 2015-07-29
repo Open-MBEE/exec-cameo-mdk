@@ -423,7 +423,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 	                elementOb.put("specialization", specialization);
 	                ExportUtility.fillOwner(sourceElement, elementOb);
             	}
-            } else if (propertyName.equals( "APPLIED_STEREOTYPES" )) {
+            } else if (propertyName.equals( "APPLIED_STEREOTYPES" ) && ExportUtility.shouldAdd(sourceElement)) {
             	if (isDiagramCreated(sourceElement)) {
                     String id = ExportUtility.getElementID(sourceElement);
                     toRemove.add(id);
