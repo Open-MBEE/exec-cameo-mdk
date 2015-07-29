@@ -25,7 +25,7 @@ public class SpecifyAction extends SRAction {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String actionid = "Specify";
+	public static final String actionid = "Specialize";
 	public List<Classifier> classifiers;
 	
 	public SpecifyAction(Classifier classifier) {

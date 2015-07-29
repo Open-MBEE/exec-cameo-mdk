@@ -29,7 +29,7 @@ public class CreateSpecificAction extends SRAction {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String actionid = "Create Specific";
+	public static final String actionid = "Create Specialized";
 	private Classifier classifier;
 	
 	public CreateSpecificAction(final Classifier classifier) {

@@ -29,7 +29,7 @@ public class DespecifyAction extends SRAction {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String actionid = "Despecify";
+	public static final String actionid = "Despecialize";
 	public List<Classifier> classifiers;
 	
 	public DespecifyAction(Classifier classifier) {
