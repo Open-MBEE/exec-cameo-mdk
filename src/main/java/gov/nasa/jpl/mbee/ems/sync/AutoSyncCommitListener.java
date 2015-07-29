@@ -16,6 +16,7 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
@@ -299,6 +300,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 elementOb = getElementObject(sourceElement);
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb.put("specialization", specialization);
+                ExportUtility.fillOwner(sourceElement, elementOb);
+            }
+            else if ((sourceElement instanceof Class) && propertyName.equals(PropertyNames.OWNED_ATTRIBUTE)) {
+            	elementOb = getElementObject(sourceElement);
+                ExportUtility.fillOwnedAttribute(sourceElement, elementOb);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof Constraint) && propertyName.equals(PropertyNames.SPECIFICATION)) {

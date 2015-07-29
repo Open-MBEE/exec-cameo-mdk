@@ -48,6 +48,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportInstanceSpec;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwnedAttribute;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportProperty;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
@@ -62,6 +63,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportInstanceSpec;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportOwnedAttribute;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportProperty;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
@@ -102,6 +104,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
@@ -147,7 +150,8 @@ public class ModelValidator {
     private ValidationRule instanceSpec = new ValidationRule("InstanceSpec", "InstanceSpec", ViolationSeverity.ERROR);
     private ValidationRule viewConstraint = new ValidationRule("view constraint", "View constraint", ViolationSeverity.ERROR);
     private ValidationRule metatypes = new ValidationRule("metatypes", "Metatypes", ViolationSeverity.ERROR);
-
+    private ValidationRule ownedAttribute = new ValidationRule("ownedAttribute", "Owned Attribute", ViolationSeverity.ERROR);
+    
     private Set<Element> differentElements = new HashSet<Element>();
     private Project prj;
     private Collection<Element> starts;
@@ -182,6 +186,7 @@ public class ModelValidator {
         suite.addValidationRule(instanceSpec);
         suite.addValidationRule(viewConstraint);
         suite.addValidationRule(metatypes);
+        suite.addValidationRule(ownedAttribute);
 
         this.checkExist = checkExist;
         this.result = result;
@@ -580,7 +585,14 @@ public class ModelValidator {
                 differentElements.add(e); //should this be here
             }
         }
-
+        if (e instanceof Class) {
+        	ValidationRuleViolation v = ownedAttributeDiff((Class)e, elementInfo);
+            if (v != null) {
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+                ownedAttribute.addViolation(v);
+                differentElements.add(e); //should this be here
+            }
+        }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
         if (v != null) {
             //v.addAction(vdiff);
@@ -636,6 +648,21 @@ public class ModelValidator {
             return v;
         }
         return null;
+    }
+    
+    private ValidationRuleViolation ownedAttributeDiff(Class e, JSONObject elementInfo) {
+    	Boolean editable = (Boolean)elementInfo.get("editable");
+    	JSONObject model = ExportUtility.fillOwnedAttribute(e, null);
+    	JSONArray modelArray = (JSONArray)model.get("ownedAttribute");
+    	JSONArray webArray = (JSONArray)elementInfo.get("ownedAttribute");
+    	if (JSONUtils.compare(modelArray, webArray))	
+    		return null;
+    	ValidationRuleViolation v = new ValidationRuleViolation(e, "[ATTRIBUTE] Owned attribute ordering is different.");
+        if (editable)
+            v.addAction(new ExportOwnedAttribute(e));
+        v.addAction(new ImportOwnedAttribute(e, elementInfo, result)); 
+        return v;
+        
     }
     
     private ValidationRuleViolation ownerDiff(Element e, JSONObject elementInfo) {
