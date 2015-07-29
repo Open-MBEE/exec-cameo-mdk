@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -118,7 +117,7 @@ public class ImportComment extends RuleViolationAction implements AnnotationActi
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
+            Utils.guilog("[ERROR] Element is not editable!");
             return;
         }
         SessionManager.getInstance().createSession("Change comment");

@@ -155,9 +155,9 @@ public class ImportUtility {
                     newE = newProperty;
                 }
                 if (specialization.containsKey("value"))
-                    setPropertyDefaultValue((Property)newE, vals);
+                		setPropertyDefaultValue((Property)newE, vals);
                 if (specialization.containsKey("propertyType"))
-                    setPropertyType((Property)newE, specialization);
+                		setProperty((Property)newE, specialization);
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
@@ -229,6 +229,7 @@ public class ImportUtility {
         setName(newE, ob);
         setOwner(newE, ob);
         setDocumentation(newE, ob);
+        setOwnedAttribute(newE, ob);
         newE.setID(sysmlID);
         return newE;
     }
@@ -236,14 +237,16 @@ public class ImportUtility {
     public static void updateElement(Element e, JSONObject o) {
         setName(e, o);
         setDocumentation(e, o);
+        setOwnedAttribute(e, o);
         JSONObject spec = (JSONObject)o.get("specialization");
         if (spec != null) {
             String type = (String)spec.get("type");
             if (type != null && type.equals("Property") && e instanceof Property) {
+            		setProperty((Property)e, spec);
                 if (spec.containsKey("value"))
                     setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
-                if (spec.containsKey("propertyType"))
-                    setPropertyType((Property)e, spec);
+//                if (spec.containsKey("propertyType"))
+//                    setProperty((Property)e, spec);
             }
             if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
@@ -261,8 +264,8 @@ public class ImportUtility {
                 setViewConstraint(e, spec);
         }
     }
-    
-    public static void setViewConstraint(Element e, JSONObject specialization) {
+
+	public static void setViewConstraint(Element e, JSONObject specialization) {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {
             c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
@@ -294,12 +297,12 @@ public class ImportUtility {
             return;
         String ownerId = (String) o.get("owner");
         if ((ownerId == null) || (ownerId.isEmpty())) {
-            Application.getInstance().getGUILog().log("[ERROR] Owner not specified for mms sync add");
+            Utils.guilog("[ERROR] Owner not specified for mms sync add");
             return;
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Owner not found for mms sync add");
+            Utils.guilog("[ERROR] Owner not found for mms sync add");
             return;
         }
         e.setOwner(owner);
@@ -315,6 +318,23 @@ public class ImportUtility {
     public static void setDocumentation(Element e, String doc) {
         if (doc != null)
             ModelHelper.setComment(e, Utils.addHtmlWrapper(doc));
+    }
+    
+    public static void setOwnedAttribute(Element e, JSONObject o) {
+    	if (e instanceof Class && o.containsKey("ownedAttribute")) {
+    		Class c = (Class)e;
+    		JSONArray attr = (JSONArray)o.get("ownedAttribute");
+    		List<Property> ordered = new ArrayList<Property>();
+    		for (Object a: attr) {
+    			if (a instanceof String) {
+    				Element prop = ExportUtility.getElementFromID((String)a);
+    				if (prop instanceof Property)
+    					ordered.add((Property)prop);
+    			}
+    		}
+    		c.getOwnedAttribute().clear();
+    		c.getOwnedAttribute().addAll(ordered);
+    	}
     }
     
     public static void setInstanceSpecification(InstanceSpecification is, JSONObject specialization) {
@@ -359,10 +379,10 @@ public class ImportUtility {
             p.setDefaultValue(null);
     }
     
-    public static void setPropertyType(Property p, JSONObject spec) {
+    public static void setProperty(Property p, JSONObject spec) {
+    		
+        // fix the property type here
         String ptype = (String)spec.get("propertyType");
-        //if (ptype == null)
-          //  p.setType(null);
         if (ptype != null) {
             Type t = (Type)ExportUtility.getElementFromID(ptype);
             if (t != null)
@@ -370,6 +390,12 @@ public class ImportUtility {
             else
                 log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
                 //something bad happened
+        }
+        
+        // set aggregation here
+        AggregationKind aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
+        if (aggr != null) {
+        		p.setAggregation(aggr);
         }
     }
     
@@ -441,8 +467,8 @@ public class ImportUtility {
         Element webTarget = ExportUtility.getElementFromID(webTargetId);
         Property modelSource = null;
         Property modelTarget = null;
-        String webSourceA = (String)spec.get("sourceAggregation");
-        String webTargetA = (String)spec.get("targetAggregation");
+//        String webSourceA = (String)spec.get("sourceAggregation");
+//        String webTargetA = (String)spec.get("targetAggregation");
         List<Property> todelete = new ArrayList<Property>();
         int i = 0;
         if (webSource == null || webTarget == null) {
@@ -474,14 +500,14 @@ public class ImportUtility {
             a.getMemberEnd().add((Property)webTarget);
             modelTarget = (Property)webTarget;
         }
-        if (modelSource != null && webSourceA != null) {
-            AggregationKindEnum agg = AggregationKindEnum.getByName(webSourceA.toLowerCase());
-            modelSource.setAggregation(agg);
-        }
-        if (modelTarget != null && webTargetA != null) {
-            AggregationKindEnum agg = AggregationKindEnum.getByName(webTargetA.toLowerCase());
-            modelTarget.setAggregation(agg);
-        }
+//        if (modelSource != null && webSourceA != null) {
+//            AggregationKindEnum agg = AggregationKindEnum.getByName(webSourceA.toLowerCase());
+//            modelSource.setAggregation(agg);
+//        }
+//        if (modelTarget != null && webTargetA != null) {
+//            AggregationKindEnum agg = AggregationKindEnum.getByName(webTargetA.toLowerCase());
+//            modelTarget.setAggregation(agg);
+//        }
     }
     
     public static List<ValueSpecification> createElementValues(List<String> ids) {
@@ -568,7 +594,7 @@ public class ImportUtility {
         case ElementValue:
             Element find = ExportUtility.getElementFromID((String)o.get("element"));
             if (find == null) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("element") + " not found!");
+                Utils.guilog("Element with id " + o.get("element") + " not found!");
                 break;
             }
             if (v != null && v instanceof ElementValue)
@@ -580,11 +606,11 @@ public class ImportUtility {
         case InstanceValue:
             Element findInst = ExportUtility.getElementFromID((String)o.get("instance"));
             if (findInst == null) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " not found!");
+            	Utils.guilog("Element with id " + o.get("instance") + " not found!");
                 break;
             }
             if (!(findInst instanceof InstanceSpecification)) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
+            	Utils.guilog("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                 break;
             }
             if (v != null && v instanceof InstanceValue)

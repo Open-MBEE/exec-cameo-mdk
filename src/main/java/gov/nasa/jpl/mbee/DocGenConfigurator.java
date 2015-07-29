@@ -112,7 +112,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         List<Element> elements = new ArrayList<Element>();
         for (Node node: browser.getSelectedNodes()) {
             if (node == null)
-                continue;;
+                continue;
             Object ob = node.getUserObject();
             if (!(ob instanceof Element))
                 continue;

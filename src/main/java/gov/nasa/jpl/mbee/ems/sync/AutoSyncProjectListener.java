@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -298,7 +299,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
-            Application.getInstance().getGUILog().log("[INFO] Autosync is currently on, you cannot do a manual update/commit while autosync is on.");
+        	Utils.guilog("[INFO] Autosync is currently on, you cannot do a manual update/commit while autosync is on.");
             return null; //autosync is on, should turn off first
         }
         String projectID = ExportUtility.getProjectId(project);
@@ -307,11 +308,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         getJMSUrl(urlInfo);
         String url = urlInfo.get( "url" );
         if (url == null) {
-            Application.getInstance().getGUILog().log("[ERROR] cannot get server url");
+            Utils.guilog("[ERROR] cannot get server url");
             return null;
         }
         if (wsID == null) {
-            Application.getInstance().getGUILog().log("[ERROR] cannot get server workspace that corresponds to this project branch");
+            Utils.guilog("[ERROR] cannot get server workspace that corresponds to this project branch");
             return null;
         }
         Connection connection = null;
@@ -406,7 +407,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             return changes;
         } catch (Exception e) {
             log.error("JMS (Manual receive): ", e);
-            Application.getInstance().getGUILog().log("[ERROR] getting changes from mms failed: " + e.getMessage());
+            Utils.guilog("[ERROR] getting changes from mms failed: " + e.getMessage());
             return null;
         } finally {
             try {
@@ -437,23 +438,23 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         getJMSUrl(urlInfo);
         String url = urlInfo.get( "url" );
         if (url == null) {
-            Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server url");
+            Utils.guilog("[ERROR] sync initialization failed - cannot get server url");
             return;
         }
         if (wsID == null) {
-            Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server workspace that corresponds to this project branch");
+            Utils.guilog("[ERROR] sync initialization failed - cannot get server workspace that corresponds to this project branch");
             return;
         }
         Integer webVersion = ExportUtility.getAlfrescoProjectVersion(ExportUtility.getProjectId(project));
         Integer localVersion = ExportUtility.getProjectVersion(project);
         if (localVersion != null && !localVersion.equals(webVersion)) {
-            Application.getInstance().getGUILog().log("[ERROR] autosync not allowed - project versions currently don't match - project may be out of date");
+            Utils.guilog("[ERROR] autosync not allowed - project versions currently don't match - project may be out of date");
             return;
         }
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             String user = TeamworkUtils.getLoggedUserName();
             if (user == null) {
-                Application.getInstance().getGUILog().log("[ERROR] You must be logged into teamwork - autosync will not start");
+                Utils.guilog("[ERROR] You must be logged into teamwork - autosync will not start");
                 return;
             }
             Collection<Element> lockedByUser = TeamworkUtils.getLockedElement(project, user);
@@ -461,19 +462,19 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             lockedByAll.removeAll(lockedByUser);
             for (Element locked: lockedByAll) {
                 if (!ProjectUtilities.isElementInAttachedProject(locked)) {
-                    Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
+                    Utils.guilog("[ERROR] Another user has locked part of the project - autosync will not start");
                     return;
                 }
             }
             //if (!lockedByUser.equals(lockedByAll)) {
-            //    Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
+            //    Utils.guilog("[ERROR] Another user has locked part of the project - autosync will not start");
             //    return;
             //}
             for (Element e: project.getModel().getOwnedElement()) {
                 if (ProjectUtilities.isElementInAttachedProject(e))
                     continue;
                 if (!TeamworkUtils.lockElement(project, e, true)) {
-                    Application.getInstance().getGUILog().log("[ERROR] cannot lock project - autosync will not start");
+                    Utils.guilog("[ERROR] cannot lock project - autosync will not start");
                     return;
                 }
             }
@@ -496,7 +497,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             connection.setExceptionListener(new ExceptionListener() {
                 @Override
                 public void onException(JMSException e) {
-                    Application.getInstance().getGUILog().log(e.getMessage());
+                    Utils.guilog(e.getMessage());
                     log.error(e.getMessage(), e);
                     //if (e instanceof LostServerConnection) {
                         
@@ -531,11 +532,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             projectInstances.put(SESSION, session);
             projectInstances.put(CONSUMER, consumer);
 
-            Application.getInstance().getGUILog().log("[INFO] sync initiated");
+            Utils.guilog("[INFO] sync initiated");
         }
         catch (Exception e) {
             log.error("", e);
-            Application.getInstance().getGUILog().log("[ERROR] sync initialization failed: " + e.getMessage());
+            Utils.guilog("[ERROR] sync initialization failed: " + e.getMessage());
         }
     }
 
@@ -589,10 +590,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         catch (Exception e) {
             log.error("", e);
         }
-        Application.getInstance().getGUILog().log("[INFO] sync ended");
+        Utils.guilog("[INFO] sync ended");
     }
 
     public static AutoSyncCommitListener getCommitListener(Project project) {
+    	if (project == null)
+    		return null;
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances == null)
             return null;
@@ -722,7 +725,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         changed.addAll(newChanged);
         deleted.addAll(newDeleted);
         
-        //Application.getInstance().getGUILog().log(newAdded.size() + " : " + newChanged.size() + " : " + newDeleted.size());
+        //Utils.guilog(newAdded.size() + " : " + newChanged.size() + " : " + newDeleted.size());
         
         /*if (previousUpdates != null) {
             added.addAll((JSONArray)previousUpdates.get("added"));

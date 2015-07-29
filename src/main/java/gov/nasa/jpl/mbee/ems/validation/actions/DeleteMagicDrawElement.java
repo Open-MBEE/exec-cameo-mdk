@@ -57,7 +57,7 @@ public class DeleteMagicDrawElement extends RuleViolationAction implements Annot
     private Element element;
 
     public DeleteMagicDrawElement(Element e) {
-        super("DeleteElement", "Delete MagicDraw element", null, null);
+        super("DeleteElement", "3 Delete MagicDraw element", null, null);
         this.element = e;
     }
 

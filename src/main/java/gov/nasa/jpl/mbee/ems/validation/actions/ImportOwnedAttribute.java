@@ -34,100 +34,63 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 
-public class CreateMagicDrawElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+
+public class ImportOwnedAttribute extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
-    private JSONObject ob;
-    private Map<String, JSONObject> elementsKeyed;
-    private Collection<Annotation> annos;
-    private boolean multiple = false;
-    private boolean multipleSuccess = true;
-    
-    public CreateMagicDrawElement(JSONObject ob, Map<String, JSONObject> elementsKeyed) {
-        super("CreateMagicDrawElement", "1 Create MagicDraw element", null, null);
-        this.ob = ob;
-        this.elementsKeyed = elementsKeyed;
+    private Class element;
+    private JSONObject web;
+    private JSONObject result;
+    public ImportOwnedAttribute(Class e, JSONObject web, JSONObject result) {
+        super("ImportOwnedAttribute", "Accept owned attribute", null, null);
+        this.element = e;
+        this.web = web;
+        this.result = result;
     }
-
+    
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void execute(Collection<Annotation> annos) {
-        multiple = false;
-        multipleSuccess = true;
-        this.annos = annos;
-        executeMany(annos, "Create Elements");
-    }
-    
-    @SuppressWarnings("unchecked")
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        execute("Create Element");
+        executeMany(annos, "Change owned attribute");
     }
     
     @Override
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
-            if (multiple) {
-                if (multipleSuccess)
-                    return true;
-                else
-                    return false;
-            }
-            multiple = true;
-            List<JSONObject> tocreate = new ArrayList<JSONObject>();
-            for (Annotation ann: annos) {
-                String message = ann.getText();
-                String[] mes = message.split("`");
-                String eid = null;
-                if (mes.length > 2)
-                    eid = mes[1];
-                if (eid != null) {
-                    JSONObject newe = elementsKeyed.get(eid);
-                    if (newe != null) {
-                        tocreate.add(newe);
-                    }
-                }
-            }
-            tocreate = ImportUtility.getCreationOrder(tocreate);
-            if (tocreate == null) {
-                Utils.guilog("[ERROR] Cannot create elements (owner(s) not found)");
-                multipleSuccess = false;
+            Element e = (Element)anno.getTarget();
+            if (!e.isEditable()) {
+                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
                 return false;
-            } else {
-                for (JSONObject newe: tocreate) {
-                    Element newElement = ImportUtility.createElement(newe, false);
-                    if (newElement == null) {
-                        Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
-                        multipleSuccess = false;
-                        return false;
-                    }
-                }
-                for (JSONObject newe: tocreate) {
-                    ImportUtility.createElement(newe, true);
-                }
             }
+            JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            ImportUtility.setOwnedAttribute(e, resultOb);
         } else {
-            Element magicDrawElement = ImportUtility.createElement(ob, true); 
-            if (magicDrawElement == null) {
-                Utils.guilog("[ERROR] Element not created (id already exists or owner not found)");
-                return false;
-            }
+            ImportUtility.setOwnedAttribute(element, web);
         }
         return true;
     }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (!element.isEditable()) {
+            Utils.guilog("[ERROR] " + element.getQualifiedName() + " is not editable!");
+            return;
+        }
+        execute("Change owed attribute");
+    }
 }
+

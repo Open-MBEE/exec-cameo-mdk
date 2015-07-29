@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.lib;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
@@ -76,6 +78,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -2055,7 +2058,7 @@ public class Utils {
     }
 
     public static Classifier getSectionClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section");
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection");
     }
 
     public static Stereotype getPresentsStereotype() {
@@ -2086,7 +2089,12 @@ public class Utils {
         //SwingUtilities.invokeLater(new Runnable() {
         //    @Override
         //    public void run() {
-                Application.getInstance().getGUILog().log(s);
+    	// second parameter used as a quickfix to prevent log from stealing focus during auto-sync
+    	AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
+    	boolean auto = false;
+    	if (listener != null && listener.isAuto())
+    		auto = true;
+        Application.getInstance().getGUILog().log(s, !auto || !s.startsWith("[INFO]"));
         //    }
         //});
     }
@@ -3566,6 +3574,6 @@ public class Utils {
     	if (a == b)
     		return true;
     	return false;
-    }
+    	}
 
 }

@@ -92,6 +92,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
@@ -441,7 +442,7 @@ public class ExportUtility {
             if (id != null)
                 return id;
         }
-        Application.getInstance().getGUILog().log("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
+        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
         return null;
     }
     
@@ -570,7 +571,7 @@ public class ExportUtility {
         if (url == null)
             return null;
         try {
-            GUILog gl = Application.getInstance().getGUILog();
+            //GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
             log.info("send file: " + url);
             HttpClient client = new HttpClient();
@@ -601,7 +602,7 @@ public class ExportUtility {
             pm = new PostMethod(url);
         else
             pm = new PutMethod(url);
-        GUILog gl = Application.getInstance().getGUILog();
+        //GUILog gl = Application.getInstance().getGUILog();
         try {
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Sending...");
@@ -914,7 +915,7 @@ public class ExportUtility {
         if (e instanceof Package) {
             fillPackage((Package)e, specialization);
         } else if (e instanceof Property || e instanceof Slot) {
-            fillPropertySpecialization(e, specialization, true, true);
+        		fillPropertySpecialization(e, specialization, true, true);
         } else if (e instanceof DirectedRelationship) {
             fillDirectedRelationshipSpecialization((DirectedRelationship)e, specialization);
         } else if (e instanceof Connector) {
@@ -955,6 +956,7 @@ public class ExportUtility {
         } else {
             specialization.put("type", "Untyped");
         }
+        fillOwnedAttribute(e, elementInfo);
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
@@ -963,7 +965,7 @@ public class ExportUtility {
         return elementInfo;
     }
 
-    public static JSONObject fillViewContent(Element e, JSONObject spec) {
+	public static JSONObject fillViewContent(Element e, JSONObject spec) {
         Stereotype doc = Utils.getProductStereotype();
         JSONObject specialization = spec;
         if (specialization == null)
@@ -995,6 +997,7 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         if (e instanceof Property) {
+        		specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
             specialization.put("type", "Property");
             specialization.put("isDerived", ((Property) e).isDerived());
             specialization.put("isSlot", false);
@@ -1029,6 +1032,7 @@ public class ExportUtility {
             specialization.put("type", "Property");
             specialization.put("isDerived", false);
             specialization.put("isSlot", true);
+            
 
             // Retrieve a list of ValueSpecification objects.
             // Loop through these objects, creating a new JSONObject
@@ -1076,6 +1080,20 @@ public class ExportUtility {
         return specialization;
     }
     
+	public static JSONObject sanitizeJSON(JSONObject spec) {
+		List<Object> remKeys = new ArrayList<Object>();
+		for (Object key: spec.keySet()) {
+			// delete empty JSONArray
+			if (spec.get(key) instanceof JSONArray && ((JSONArray)spec.get(key)).isEmpty()) {
+				remKeys.add(key);
+			}
+		}
+		for (Object key: remKeys) {
+			spec.remove(key);
+		}
+		return spec;
+	}
+    
     @SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1085,10 +1103,10 @@ public class ExportUtility {
         for (Property p: e.getMemberEnd()) {
             if (i == 0) {
                 specialization.put("source", p.getID());
-                specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
+                // specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
             } else {
                 specialization.put("target", p.getID());
-                specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
+                // specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
         }
@@ -1251,6 +1269,25 @@ public class ExportUtility {
         return info;
     }
     
+	@SuppressWarnings("unchecked")
+	public static JSONObject fillOwnedAttribute(Element e, JSONObject einfo) {
+		JSONObject info = einfo;
+		if (info == null) {
+			info = new JSONObject();
+			info.put("sysmlid", getElementID(e));
+		}
+		
+		JSONArray propIDs = new JSONArray();
+		if (e instanceof Class) {
+			for (Property prop: ((Class)e).getOwnedAttribute()) {
+				propIDs.add(getElementID(prop));
+			}
+		}
+		if (!propIDs.isEmpty())
+			info.put("ownedAttribute", propIDs);
+		return info;
+	}
+    
     @SuppressWarnings("unchecked")
     public static JSONObject fillOwner(Element e, JSONObject einfo) {
         JSONObject info = einfo;
@@ -1269,8 +1306,8 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
         }
+        info.put("sysmlid", getElementID(e));
         return info;
     }
     
@@ -1351,10 +1388,7 @@ public class ExportUtility {
             List<String> tags = ProjectUtilities.getVersionTags(prj
                     .getPrimaryProject());
             if (!tags.contains(baselineTag)) {
-                Application
-                        .getInstance()
-                        .getGUILog()
-                        .log("The current project is not an approved baseline version!");
+                Utils.guilog("The current project is not an approved baseline version!");
                 return false;
             }
 
@@ -1363,11 +1397,7 @@ public class ExportUtility {
                 if (ProjectUtilities.isFromTeamworkServer(proj)) {
                     List<String> tags2 = ProjectUtilities.getVersionTags(proj);
                     if (!tags2.contains(baselineTag)) {
-                        Application
-                                .getInstance()
-                                .getGUILog()
-                                .log(proj.getName()
-                                        + " is not an approved baseline module version!");
+                        Utils.guilog(proj.getName() + " is not an approved baseline module version!");
                         return false;
                     }
                 }
@@ -1585,7 +1615,7 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
         //send(url, tosend.toJSONString(), null, false);
     }
@@ -1602,7 +1632,7 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
         //send(url, tosend.toJSONString(), null, false);
     }
@@ -1787,4 +1817,7 @@ public class ExportUtility {
         
         return (JSONObject)JSONValue.parse( jsonString );
     }
+
+
+
 }

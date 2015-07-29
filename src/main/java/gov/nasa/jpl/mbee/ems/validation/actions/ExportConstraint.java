@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -16,10 +17,8 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 
 public class ExportConstraint extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
@@ -58,7 +57,7 @@ public class ExportConstraint extends RuleViolationAction implements AnnotationA
         if (url == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
@@ -81,7 +80,7 @@ public class ExportConstraint extends RuleViolationAction implements AnnotationA
         if (url == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);

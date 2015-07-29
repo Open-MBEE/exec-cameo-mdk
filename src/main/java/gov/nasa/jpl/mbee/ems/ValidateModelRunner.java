@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee.ems;
 import java.util.Collection;
 
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.task.ProgressStatus;
@@ -54,7 +55,7 @@ public class ValidateModelRunner implements RunnableWithProgress {
                 if (!arg0.isCancel())
                     validator.showWindow();
             } catch (ServerException ex) {
-                Application.getInstance().getGUILog().log("[ERROR] Validate model cannot be completed because of server error.");
+            	Utils.guilog("[ERROR] Validate model cannot be completed because of server error.");
             }
         } else
             validator.showWindow();

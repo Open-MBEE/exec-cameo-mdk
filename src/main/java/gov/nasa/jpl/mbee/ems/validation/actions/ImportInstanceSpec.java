@@ -28,30 +28,21 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 public class ImportInstanceSpec extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -82,7 +73,7 @@ public class ImportInstanceSpec extends RuleViolationAction implements Annotatio
         if (anno != null) {
             Element e = (Element)anno.getTarget();
             if (!e.isEditable()) {
-                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
@@ -96,7 +87,7 @@ public class ImportInstanceSpec extends RuleViolationAction implements Annotatio
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] " + element.getQualifiedName() + " is not editable!");
+            Utils.guilog("[ERROR] " + element.getQualifiedName() + " is not editable!");
             return;
         }
         execute("Change instance");

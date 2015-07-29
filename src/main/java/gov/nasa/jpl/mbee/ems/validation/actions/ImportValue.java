@@ -28,20 +28,13 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
-import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
-import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 
 import org.json.simple.JSONArray;
@@ -50,20 +43,9 @@ import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.impl.ElementsFactory;
 
 public class ImportValue extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -97,7 +79,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
         if (anno != null) {
             Element e = (Element)anno.getTarget();
             if (!e.isEditable()) {
-                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
                 return false;
             }
             Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
@@ -120,7 +102,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] " + element.getHumanName() + " is not editable!");
+            Utils.guilog("[ERROR] " + element.getHumanName() + " is not editable!");
             return;
         }
         execute("Change Value");

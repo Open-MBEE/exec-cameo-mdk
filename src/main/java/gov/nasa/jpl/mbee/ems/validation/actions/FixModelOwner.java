@@ -29,24 +29,18 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class FixModelOwner extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -58,7 +52,7 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
     public FixModelOwner(Element e, Element owner, JSONObject result) {
     	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
     	//
-        super("FixModelOwner", "Accept owner", null, null);
+        super("FixModelOwner", "2 Accept owner", null, null);
         this.element = e;
         this.owner = owner;
         this.result = result;
@@ -74,7 +68,7 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
         if (anno != null) {
             Element e = (Element)anno.getTarget();
             if (!e.isEditable()) {
-                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
                 return false;
             }
             JSONObject ob = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
@@ -93,7 +87,7 @@ public class FixModelOwner extends RuleViolationAction implements AnnotationActi
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
+            Utils.guilog("[ERROR] Element is not editable!");
             return;
         }
         execute("Change Owner");
