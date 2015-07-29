@@ -49,6 +49,8 @@ public class OutputQueueStatusAction extends SRAction {
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		outputQueueDetailWindow.setVisible(!outputQueueDetailWindow.isVisible());
+		if (outputQueueDetailWindow.isVisible())
+			outputQueueDetailWindow.update();
 	}
 	
 	protected class OutputQueueDetailWindow extends JFrame {
