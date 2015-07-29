@@ -229,6 +229,7 @@ public class ImportUtility {
         setName(newE, ob);
         setOwner(newE, ob);
         setDocumentation(newE, ob);
+        setOwnedAttribute(newE, ob);
         newE.setID(sysmlID);
         return newE;
     }
@@ -236,6 +237,7 @@ public class ImportUtility {
     public static void updateElement(Element e, JSONObject o) {
         setName(e, o);
         setDocumentation(e, o);
+        setOwnedAttribute(e, o);
         JSONObject spec = (JSONObject)o.get("specialization");
         if (spec != null) {
             String type = (String)spec.get("type");
@@ -316,6 +318,23 @@ public class ImportUtility {
     public static void setDocumentation(Element e, String doc) {
         if (doc != null)
             ModelHelper.setComment(e, Utils.addHtmlWrapper(doc));
+    }
+    
+    public static void setOwnedAttribute(Element e, JSONObject o) {
+    	if (e instanceof Class && o.containsKey("ownedAttribute")) {
+    		Class c = (Class)e;
+    		JSONArray attr = (JSONArray)o.get("ownedAttribute");
+    		List<Property> ordered = new ArrayList<Property>();
+    		for (Object a: attr) {
+    			if (a instanceof String) {
+    				Element prop = ExportUtility.getElementFromID((String)a);
+    				if (prop instanceof Property)
+    					ordered.add((Property)prop);
+    			}
+    		}
+    		c.getOwnedAttribute().clear();
+    		c.getOwnedAttribute().addAll(ordered);
+    	}
     }
     
     public static void setInstanceSpecification(InstanceSpecification is, JSONObject specialization) {

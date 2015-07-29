@@ -84,6 +84,17 @@ public class Crushinator21To22Migrator extends Migrator {
 			// now we have all the element updates to add to export
 			exportElems.add(einfo);
 		}
+		//just make the view instance package on mms:
+		JSONObject vi = new JSONObject();
+		String projectId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+		vi.put("owner", projectId);
+		vi.put("sysmlid", projectId.replace("PROJECT", "View_Instances"));
+		vi.put("name", "View Instances");
+		vi.put("documentation", "");
+		JSONObject spec = new JSONObject();
+		spec.put("type", "Package");
+		vi.put("specialization", spec);
+		exportElems.add(vi);
 
 		commit(exportElems);
 

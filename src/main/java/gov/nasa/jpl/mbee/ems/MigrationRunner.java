@@ -21,7 +21,7 @@ public class MigrationRunner implements RunnableWithProgress {
 			case CRUSHINATOR21TO22:
 				Crushinator21To22Migrator migrationVal = new Crushinator21To22Migrator();
 				migrationVal.migrate(arg0);
-				// this will keep rolling into the next migrator
+				break;
 			case VIEW2VIEW:
 				View2ViewMigrator view2view = new View2ViewMigrator();
 				view2view.migrate(arg0);
