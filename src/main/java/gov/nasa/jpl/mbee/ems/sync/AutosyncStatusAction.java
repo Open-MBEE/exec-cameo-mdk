@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
 
@@ -25,6 +26,11 @@ public class AutosyncStatusAction extends SRAction {
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		Project project = Application.getInstance().getProject();
+		if (project == null) {
+			Utils.guilog("[ERROR] Dynamic sync can only be started when a project is open.");
+			return;
+		}
+			
 		if (!current)
 			AutoSyncProjectListener.initDurable(project);
 		else
