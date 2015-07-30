@@ -28,6 +28,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
+import javax.swing.SwingUtilities;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.log4j.Logger;
@@ -299,7 +300,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
-        	Utils.guilog("[INFO] Autosync is currently on, you cannot do a manual update/commit while autosync is on.");
+        	Utils.guilog("[INFO] Dynamic sync is currently on, you cannot do a manual update/commit while dynamic sync is on.");
             return null; //autosync is on, should turn off first
         }
         String projectID = ExportUtility.getProjectId(project);
@@ -308,11 +309,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         getJMSUrl(urlInfo);
         String url = urlInfo.get( "url" );
         if (url == null) {
-            Utils.guilog("[ERROR] cannot get server url");
+            Utils.guilog("[ERROR] Cannot get server url");
             return null;
         }
         if (wsID == null) {
-            Utils.guilog("[ERROR] cannot get server workspace that corresponds to this project branch");
+            Utils.guilog("[ERROR] Cannot get server workspace that corresponds to this project branch");
             return null;
         }
         Connection connection = null;
@@ -407,7 +408,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             return changes;
         } catch (Exception e) {
             log.error("JMS (Manual receive): ", e);
-            Utils.guilog("[ERROR] getting changes from mms failed: " + e.getMessage());
+            Utils.guilog("[ERROR] Getting changes from mms failed: " + e.getMessage());
             return null;
         } finally {
             try {
@@ -422,7 +423,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
     }
     
-    public static void initDurable(Project project) {
+    public static void initDurable(final Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         String projectID = ExportUtility.getProjectId(project);
         String wsID = ExportUtility.getWorkspace();
@@ -432,29 +433,31 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         //
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
+        	Utils.guilog("Dynamic sync was already started.");
+        	AutosyncStatusConfigurator.getAutosyncStatusAction().update(true);
             return;
         }
         Map<String, String> urlInfo = new HashMap<String, String>();
         getJMSUrl(urlInfo);
         String url = urlInfo.get( "url" );
         if (url == null) {
-            Utils.guilog("[ERROR] sync initialization failed - cannot get server url");
+            Utils.guilog("[ERROR] Sync initialization failed - cannot get server url");
             return;
         }
         if (wsID == null) {
-            Utils.guilog("[ERROR] sync initialization failed - cannot get server workspace that corresponds to this project branch");
+            Utils.guilog("[ERROR] Sync initialization failed - cannot get server workspace that corresponds to this project branch");
             return;
         }
         Integer webVersion = ExportUtility.getAlfrescoProjectVersion(ExportUtility.getProjectId(project));
         Integer localVersion = ExportUtility.getProjectVersion(project);
         if (localVersion != null && !localVersion.equals(webVersion)) {
-            Utils.guilog("[ERROR] autosync not allowed - project versions currently don't match - project may be out of date");
+            Utils.guilog("[ERROR] Dynamic sync not allowed - project versions currently don't match - project may be out of date");
             return;
         }
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             String user = TeamworkUtils.getLoggedUserName();
             if (user == null) {
-                Utils.guilog("[ERROR] You must be logged into teamwork - autosync will not start");
+                Utils.guilog("[ERROR] You must be logged into teamwork - dynamic sync will not start");
                 return;
             }
             Collection<Element> lockedByUser = TeamworkUtils.getLockedElement(project, user);
@@ -462,7 +465,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             lockedByAll.removeAll(lockedByUser);
             for (Element locked: lockedByAll) {
                 if (!ProjectUtilities.isElementInAttachedProject(locked)) {
-                    Utils.guilog("[ERROR] Another user has locked part of the project - autosync will not start");
+                    Utils.guilog("[ERROR] Another user has locked part of the project - dynamic sync will not start");
                     return;
                 }
             }
@@ -474,7 +477,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 if (ProjectUtilities.isElementInAttachedProject(e))
                     continue;
                 if (!TeamworkUtils.lockElement(project, e, true)) {
-                    Utils.guilog("[ERROR] cannot lock project - autosync will not start");
+                    Utils.guilog("[ERROR] Cannot lock project - dynamic sync will not start");
                     return;
                 }
             }
@@ -502,6 +505,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                     //if (e instanceof LostServerConnection) {
                         
                     //}
+                    SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							Utils.guilog("[WARNING] Dynamic sync interruppted.");
+							AutoSyncProjectListener.close(project, true);
+						}
+                    });
                 }
             });
             connection.setClientID(subscriberId);// + (new Date()).toString());
@@ -533,10 +543,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             projectInstances.put(CONSUMER, consumer);
 
             Utils.guilog("[INFO] sync initiated");
+            AutosyncStatusConfigurator.getAutosyncStatusAction().update(true);
+            
         }
         catch (Exception e) {
             log.error("", e);
-            Utils.guilog("[ERROR] sync initialization failed: " + e.getMessage());
+            Utils.guilog("[ERROR] Sync initialization failed: " + e.getMessage());
         }
     }
 
@@ -590,7 +602,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         catch (Exception e) {
             log.error("", e);
         }
-        Utils.guilog("[INFO] sync ended");
+        Utils.guilog("[INFO] Sync ended");
+        AutosyncStatusConfigurator.getAutosyncStatusAction().update(false);
     }
 
     public static AutoSyncCommitListener getCommitListener(Project project) {
