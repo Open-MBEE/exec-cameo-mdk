@@ -1,5 +1,8 @@
 package gov.nasa.jpl.mbee.lib;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -153,4 +156,45 @@ public class JSONUtils {
 		return ret;
 	}
 
+	public static JSONObject converge(JSONObject json) {
+		JSONObject ret = new JSONObject();
+		System.out.println(json.toJSONString());
+		Map<Object, Map.Entry> entries = new HashMap<Object, Map.Entry>();
+		for (Map.Entry entry: ((Set<Map.Entry>) json.entrySet())) {
+			entries.put(entry.getKey(), entry);
+		}
+		for (Map.Entry entry: ((Set<Map.Entry>) json.entrySet())) {
+			if (!entries.containsValue(entry)) {
+				continue;
+			}
+			Object key = entry.getKey();
+			Object val = entry.getValue();
+			if (val instanceof JSONArray) {
+				JSONArray array = (JSONArray) val;
+				JSONArray retArray = new JSONArray();
+				for (Object item: array) {
+					if (entries.containsKey(item)) {
+						JSONObject jsonEntry = new JSONObject();
+						jsonEntry.put(entries.get(item).getKey(), entries.get(item).getValue());
+						retArray.add(jsonEntry);
+						entries.remove(item);
+					}
+				}
+				ret.put(key, retArray);
+			} else if (val instanceof JSONObject) {
+				JSONObject object = (JSONObject) val;
+				JSONObject retObject = new JSONObject();
+				for (Map.Entry objEntry: ((Set<Map.Entry>) object.entrySet())) {
+					if (entries.containsKey(objEntry.getKey())) {
+						JSONObject jsonEntry = new JSONObject();
+						retObject.put(objEntry.getKey(), entries.get(objEntry.getKey()).getValue());
+						entries.remove(objEntry.getKey());
+					}
+				}
+			}
+		}
+		System.out.println(ret.toJSONString());
+		return ret;
+	}
+	
 }
