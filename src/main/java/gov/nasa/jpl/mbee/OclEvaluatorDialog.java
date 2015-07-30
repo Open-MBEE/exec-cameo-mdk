@@ -38,17 +38,21 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Event;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -120,7 +124,25 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         evalButton = new JButton("Evaluate (Ctrl+Enter)");
         evalButton.setActionCommand("Evaluate");
         evalButton.addActionListener(this);
-        evalButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), "Evaluate");
+        evalButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Evaluate");
+        // MDEV 1221
+        evalButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), "Evaluate");
+        editableListPanel.queryTextArea.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), 
+    		new AbstractAction() {
+
+				/**
+				 * 
+				 */
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					evalButton.doClick();
+				}
+        	
+        	}
+        );
+        
         getRootPane().setDefaultButton(evalButton);
 
         //Lay out the buttons from left to right.
@@ -224,7 +246,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
             else {
             	final List<Object> resultList = new ArrayList<Object>();
             	final List<String> completionList = new ArrayList<String>();
-            	final List<Class> classList = new ArrayList<Class>();
+            	final List<Class<?>> classList = new ArrayList<Class<?>>();
             	//editableListPanel.clearCompletions();
             	for (final Object context : selectedElements) {
             		processor = new OclQueryAction.ProcessOclQuery(context);
@@ -242,7 +264,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
             			ProcessOclQuery.toString( processor.getSourceOfCompletion() )
                         + " : "
                         + ProcessOclQuery.getTypeName( processor.getSourceOfCompletion() ) );
-            	System.out.println("Completion List: " + completionList);
+            	//System.out.println("Completion List: " + completionList);
             }
             choices.push(query);
             while (choices.size() > maxChoices) {

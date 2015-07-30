@@ -374,11 +374,13 @@ public class RepeatInputComboBoxDialog implements Runnable {
         	
         	final JPanel resultPanel = new JPanel();
         	resultPanel.setLayout(new BoxLayout(resultPanel, BoxLayout.Y_AXIS));
-        	final JLabel resultLabel = new JLabel(" Result");
-        	final JCheckBox resultFormat = new JCheckBox("HTML", true);
+        	final JLabel resultLabel = new JLabel("Result");
+        	// MDEV 1221
+        	final JCheckBox resultFormat = new JCheckBox("Render HTML", true);
         	//resultLabel.setBackground(Color.RED);
         	//resultLabel.setBorder(BorderFactory.createLineBorder(Color.black));
         	resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        	resultFormat.setAlignmentX(Component.CENTER_ALIGNMENT);
         	resultPanel.add(resultLabel);
         	resultPanel.add(resultFormat);
         	resultPanel.add(createScrollPane(resultEditorPane = createEditorPane("")));
