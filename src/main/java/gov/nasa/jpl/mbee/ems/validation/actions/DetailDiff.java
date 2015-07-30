@@ -46,11 +46,15 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
     private String webName = "MMS Web";
 
 	public DetailDiff(Element element, JSONObject webData) {
-		super("DetailDiff", "Detail Diff", null, null);
-		this.modelData = ExportUtility.fillElement(element, null);
-		this.webData = webData;
+		this(ExportUtility.fillElement(element, null), webData);
 	}
 	
+	public DetailDiff(JSONObject modelData, JSONObject webData) {
+		super("DetailDiff", "Detail Diff", null, null);
+		this.modelData = modelData;
+		this.webData = webData;
+	}
+
 	private class JSONTreeNode extends DefaultMutableTreeNode {
 		
 		private String key;
@@ -78,6 +82,7 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 			this.key = key;
 			// if this thing doesn't have a title, that means we can't
 			// be sure that there is an equivalent on the opposite tree
+			// this needs to be about 1000x better
 			if (this.hasTitle()) {
 				if (keyMap.containsKey(key)) {
 					ArrayList<JSONTreeNode> nodes = keyMap.get(key);
@@ -111,6 +116,7 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 
 	@Override
 	public void execute(Collection<Annotation> arg0) {
+		construct();
 	}
 	
 	@Override
@@ -124,36 +130,52 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 		if (value instanceof JSONArray) {
 			for (Object val: ((JSONArray)value)) {
 				JSONTreeNode arrayVal = buildNode(new JSONTreeNode(), val);
-				arrayVal.setKey(current.getKey());
+				arrayVal.setKey(switchID(current.getKey()));
 				current.add(arrayVal);
 			}
 		} else if (value instanceof JSONObject) {
 			for (Object item: ((JSONObject)value).entrySet()) {
 				Map.Entry entry = (Map.Entry) item;
-				JSONTreeNode entryVal = buildNode(new JSONTreeNode(entry.getKey().toString()), entry.getValue());
+				JSONTreeNode entryVal = buildNode(new JSONTreeNode(switchID(entry.getKey())), entry.getValue());
 				current.add(entryVal);
 			}
 		} else {
-			String userObj = "";
-			if (value == null) {
-				value = "null";
-			}
-			
-			if (current.hasKey() && !current.getKey().equals("sysmlid")) {
-				Element target = ExportUtility.getElementFromID(value.toString());
-				if (target instanceof NamedElement) {
-					value = ((NamedElement) target).getQualifiedName();
-				}
-			}
-			
-			if (current.hasTitle()) {
-				userObj = current.getTitle() + " : " + value.toString();
-			} else {
-				userObj = value.toString();
-			}
-			current.setUserObject(userObj);
+			current.setUserObject(process(current, value));;
 		}
 		return current;
+	}
+	
+	private String switchID(Object value) {
+		if (value == null) return "null";
+		String ret = value.toString();
+		Element target = ExportUtility.getElementFromID(value.toString());
+		if (target instanceof NamedElement) {
+			ret = ((NamedElement) target).getQualifiedName();
+		}
+		if (ret == null || ret.isEmpty())
+			ret = value.toString();
+		return ret;
+	}
+	
+	private String process(JSONTreeNode current, Object value) {
+		// reassign value if value is null
+		if (value == null)
+			value = "null";
+		
+		// reassign value if it is an id (but not value for sysmlid)
+		if (!current.hasKey() || (current.hasKey() && !current.getKey().equals("sysmlid"))) {
+			Element target = ExportUtility.getElementFromID(value.toString());
+			if (target instanceof NamedElement) {
+				value = ((NamedElement) target).getQualifiedName();
+			}
+		}
+		
+		// different userobject if the current node has a title or not
+		if (current.hasTitle()) {
+			return current.getTitle() + " : " + value.toString();
+		} else {
+			return value.toString();
+		}
 	}
 
 	
@@ -163,21 +185,21 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 			tree.expandRow(i);
 		}
 		
-		tree.addTreeSelectionListener( new TreeSelectionListener() {
-
-			@Override
-			public void valueChanged(TreeSelectionEvent e) {
-				JSONTreeNode currentNode = (JSONTreeNode) tree.getLastSelectedPathComponent();
-				String key = currentNode.getKey();
-				ArrayList<JSONTreeNode> nodes = keyMap.get(key);
-				for (JSONTreeNode node: nodes) {
-					if (!node.equals(currentNode)) {
-						opposite.setSelectionPath(new TreePath(node.getPath()));
-					}
-				}
-			}
-			
-		});
+//		tree.addTreeSelectionListener( new TreeSelectionListener() {
+//
+//			@Override
+//			public void valueChanged(TreeSelectionEvent e) {
+//				JSONTreeNode currentNode = (JSONTreeNode) tree.getLastSelectedPathComponent();
+//				String key = currentNode.getKey();
+//				ArrayList<JSONTreeNode> nodes = keyMap.get(key);
+//				for (JSONTreeNode node: nodes) {
+//					if (!node.equals(currentNode)) {
+//						opposite.setSelectionPath(new TreePath(node.getPath()));
+//						break;
+//					}
+//				}
+//			}
+//		});
 		
 		JTabbedPane pane = new JTabbedPane();
 		pane.add(name, tree);
@@ -225,10 +247,6 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
         show.setSize(1200, 600);
         show.getContentPane().add(panel);
         show.setVisible(true);
-	}
-	
-	private void previewChange(ButtonModel model) {
-		System.out.println(model);
 	}
 	
 }
