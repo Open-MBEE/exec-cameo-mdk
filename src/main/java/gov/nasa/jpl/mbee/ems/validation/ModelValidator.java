@@ -589,7 +589,7 @@ public class ModelValidator {
         if (e instanceof Class) {
         	ValidationRuleViolation v = ownedAttributeDiff((Class)e, elementInfo);
             if (v != null) {
-            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, vdiff);
+            	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 ownedAttribute.addViolation(v);
                 differentElements.add(e); //should this be here
             }
