@@ -201,7 +201,7 @@ public class TableStructure extends Table {
                         DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
             } else if (GeneratorUtils.hasStereotypeByString(curNode, "TableColumnGroup")) {
                 col = new TableColumnGroup();
-            } else if (GeneratorUtils.hasStereotypeByString(curNode, "StructuredQuery")) {
+            } else if (GeneratorUtils.hasStereotypeByString(curNode, "StructuredQuery") || curNode instanceof CallBehaviorAction) {
             	 col = new TableStructuredColumn();
         	 	//((TableStructuredColumn)col).structuredNode = curNode;
             } else {
