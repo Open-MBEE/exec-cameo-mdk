@@ -82,23 +82,12 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 			}
 			//System.out.println(property.getQualifiedName() + " : " +  property.toString());
 			
-			for (final Class<? extends Classifier> c : UNSPECIALIZABLE_CLASSIFIERS) {
-				if (c.isAssignableFrom(property.getType().getClass())) {
-					Application.getInstance().getGUILog().log("Warning: " + property.getQualifiedName() + " is a " + c.getSimpleName() + ", which is not specializable.");
-					return;
-				}
-			}
 			final Classifier general = (Classifier) property.getType();
-			//System.out.println(general.getQualifiedName());
-			final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
-			for (final NamedElement ne : Lists.newArrayList(special.getOwnedMember())) {
-				ne.dispose();
+			final Classifier special = createSpecializedClassifier(general, parent, property);
+			if (special == null) {
+				return;
 			}
-			for (final Generalization g : Lists.newArrayList(special.getGeneralization())) {
-				g.dispose();
-			}
-			//special.getOwnedMember().clear();
-			SpecializeClassifierAction.specialize(special, general);
+			
 			property.setType(special);
 			if (redefineAttributes) {
 				for (final NamedElement ne : special.getInheritedMember()) {
@@ -108,6 +97,26 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 				}
 			}
 		}
+	}
+	
+	public static final Classifier createSpecializedClassifier(final Classifier general, final Classifier parent, final Property property) {
+		for (final Class<? extends Classifier> c : UNSPECIALIZABLE_CLASSIFIERS) {
+			if (c.isAssignableFrom(general.getClass())) {
+				Application.getInstance().getGUILog().log("Warning: " + (property != null ? property.getQualifiedName() : "< >") + " is a " + c.getSimpleName() + ", which is not specializable.");
+				return null;
+			}
+		}
+		//System.out.println(general.getQualifiedName());
+		final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
+		for (final NamedElement ne : Lists.newArrayList(special.getOwnedMember())) {
+			ne.dispose();
+		}
+		for (final Generalization g : Lists.newArrayList(special.getGeneralization())) {
+			g.dispose();
+		}
+		//special.getOwnedMember().clear();
+		SpecializeClassifierAction.specialize(special, general);
+		return special;
 	}
 
 	@Override
