@@ -315,8 +315,8 @@ public class ViewValidator {
                             keyed = ExportUtility.keyView2View(view2view);
                             v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
                         }
-                        JSONObject modelData = JSONUtils.converge(vhv.getView2View());
-                        JSONObject webData = JSONUtils.converge(keyed);
+                        JSONObject modelData = JSONUtils.nest(vhv.getView2View());
+                        JSONObject webData = JSONUtils.nest(keyed);
                         v.addAction(new DetailDiff(modelData, webData));
                         hierarchy.addViolation(v);
                     }
