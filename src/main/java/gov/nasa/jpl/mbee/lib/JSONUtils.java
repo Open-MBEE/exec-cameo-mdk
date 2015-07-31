@@ -168,36 +168,54 @@ public class JSONUtils {
 			entries.put(entry.getKey(), entry);
 		}
 		for (Map.Entry entry: ((Set<Map.Entry>) json.entrySet())) {
-			if (!entries.containsValue(entry)) {
-				continue;
-			}
 			Object key = entry.getKey();
 			Object val = entry.getValue();
 			if (val instanceof JSONArray) {
+				// val is an array of sysml ids: ["18", "18_01", "18_02"]
+				// "array" is the array we will replace
 				JSONArray array = (JSONArray) val;
+				// the retArray will replace the existing array, but we have to build it
 				JSONArray retArray = new JSONArray();
 				for (Object item: array) {
 					if (entries.containsKey(item)) {
+						// build JSONObject placeholder
 						JSONObject jsonEntry = new JSONObject();
 						jsonEntry.put(entries.get(item).getKey(), entries.get(item).getValue());
-						retArray.add(jsonEntry);
+						// log the key that you found
 						badKeys.add(item);
+						// add the JSONObject to the array (this array used to be singular values,
+						// but now it holds JSONObjects with values pointing to the subvalues)
+						retArray.add(jsonEntry);
 					}
 				}
-				ret.put(key, retArray);
+				// if there is anything added to the new array, add the array to the return object
+				if (!retArray.isEmpty())
+					ret.put(key, retArray);
 			} else if (val instanceof JSONObject) {
+				// val is a map of sysml ids: {"18":{}, "18_01":{}}
 				JSONObject object = (JSONObject) val;
 				JSONObject retObject = new JSONObject();
 				for (Map.Entry objEntry: ((Set<Map.Entry>) object.entrySet())) {
 					if (entries.containsKey(objEntry.getKey())) {
-						JSONObject jsonEntry = new JSONObject();
 						retObject.put(objEntry.getKey(), entries.get(objEntry.getKey()).getValue());
+						// log the key that you found
 						badKeys.add(objEntry.getKey());
 					}
+				}
+				// if you added anything to the new JSONObject, add it to the ret object
+				if (!retObject.isEmpty())
+					ret.put(key, retObject);
+			} else {
+				// this value is just the id itself, simple stuff
+				if (entries.containsKey(val)) {
+					JSONObject jsonEntry = new JSONObject();
+					ret.put(key, entries.get(val));
+					badKeys.add(val);
 				}
 			}
 		}
 		
+		// we know for sure that the badKeys are on the top level only
 		for (Object thing: badKeys) {
 			ret.remove(thing);
 		}
