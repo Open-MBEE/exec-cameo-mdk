@@ -2,16 +2,13 @@ package gov.nasa.jpl.mbee.lib;
 
 import java.util.ArrayList;
 import java.util.Collection;
-<<<<<<< HEAD
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
-=======
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
->>>>>>> bc58372fe5ec61ce14e3ef70687b7551e4548862
 import java.util.Map;
 import java.util.Set;
 
