@@ -1,8 +1,10 @@
 package gov.nasa.jpl.mbee.lib;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -158,7 +160,9 @@ public class JSONUtils {
 
 	public static JSONObject converge(JSONObject json) {
 		JSONObject ret = new JSONObject();
-		System.out.println(json.toJSONString());
+//		System.out.println(json.toJSONString());
+		ArrayList<Object> badKeys = new ArrayList<Object>();
+		
 		Map<Object, Map.Entry> entries = new HashMap<Object, Map.Entry>();
 		for (Map.Entry entry: ((Set<Map.Entry>) json.entrySet())) {
 			entries.put(entry.getKey(), entry);
@@ -177,7 +181,7 @@ public class JSONUtils {
 						JSONObject jsonEntry = new JSONObject();
 						jsonEntry.put(entries.get(item).getKey(), entries.get(item).getValue());
 						retArray.add(jsonEntry);
-						entries.remove(item);
+						badKeys.add(item);
 					}
 				}
 				ret.put(key, retArray);
@@ -188,12 +192,18 @@ public class JSONUtils {
 					if (entries.containsKey(objEntry.getKey())) {
 						JSONObject jsonEntry = new JSONObject();
 						retObject.put(objEntry.getKey(), entries.get(objEntry.getKey()).getValue());
-						entries.remove(objEntry.getKey());
+						badKeys.add(objEntry.getKey());
 					}
 				}
 			}
 		}
-		System.out.println(ret.toJSONString());
+		
+		for (Object thing: badKeys) {
+			ret.remove(thing);
+		}
+		
+//		System.out.println(badKeys);
+//		System.out.println(ret.toJSONString());
 		return ret;
 	}
 	
