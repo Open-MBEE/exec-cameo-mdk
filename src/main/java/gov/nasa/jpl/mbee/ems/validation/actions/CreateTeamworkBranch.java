@@ -1,38 +1,19 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.rmi.RemoteException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.MessageConsumer;
-import javax.jms.Session;
-import javax.jms.Topic;
-
-import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.commons.lang.StringUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class CreateTeamworkBranch extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -57,13 +38,11 @@ public class CreateTeamworkBranch extends RuleViolationAction implements Annotat
         return false;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void execute(Collection<Annotation> annos) {
         
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
         String[] branches = branchName.split("/");
@@ -73,22 +52,22 @@ public class CreateTeamworkBranch extends RuleViolationAction implements Annotat
         }
         ProjectDescriptor parentBranchPd = branchDescriptors.get(parentBranch);
         if (parentBranchPd == null) {
-            Application.getInstance().getGUILog().log("The parent teamwork branch doesn't exist, create the parent branch first.");
+            Utils.guilog("The parent teamwork branch doesn't exist, create the parent branch first.");
             return;
         }
         ProjectDescriptor child = createBranch(branches[branches.length-1], parentBranchPd);
         if (child == null) {
-            Application.getInstance().getGUILog().log("Creat branch failed");
+            Utils.guilog("Creat branch failed");
             return;
         }
         branchDescriptors.put(branchName, child);
-        Application.getInstance().getGUILog().log("Created Branch");
+        Utils.guilog("Created Branch");
         //initialize jms queue
         
-        Application.getInstance().getGUILog().log("Initializing Branch Sync");
+        Utils.guilog("Initializing Branch Sync");
         ExportUtility.initializeBranchVersion(taskId);
         ExportUtility.initializeDurableQueue(taskId);
-        //Application.getInstance().getGUILog().log("Initialized");
+        //Utils.guilog("Initialized");
     }
     
     private ProjectDescriptor createBranch(String name, ProjectDescriptor parentBranch) {

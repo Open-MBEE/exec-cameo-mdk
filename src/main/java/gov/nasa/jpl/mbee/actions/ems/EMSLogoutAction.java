@@ -51,7 +51,7 @@ public class EMSLogoutAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewEditUtils.clearCredentials();
+        ViewEditUtils.clearUsernameAndPassword();
         Application.getInstance().getGUILog().log("Logged out");
         this.setEnabled(false);
         this.updateState();

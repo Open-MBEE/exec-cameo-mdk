@@ -45,8 +45,6 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportDoc extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -84,7 +82,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         if (url == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);
@@ -105,7 +103,7 @@ public class ExportDoc extends RuleViolationAction implements AnnotationAction, 
         if (url == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
         /*if (ExportUtility.send(url, send.toJSONString()) != null) {
             this.removeViolationsAndUpdateWindow(annos);

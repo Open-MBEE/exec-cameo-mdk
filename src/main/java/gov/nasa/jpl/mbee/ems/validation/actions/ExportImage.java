@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -90,19 +92,24 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             try { 
                 Part[] parts = {new FilePart("content", imageFile)};
                 post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
+                
+                OutputQueue.getInstance().offer(new Request(posturl, post));
+                /*
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, baseurl);
+                ViewEditUtils.setCredentials(client, baseurl, post);
                 client.executeMethod(post);
                 int status = post.getStatusCode();
                 if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
-                    Application.getInstance().getGUILog().log("[INFO] Successful");
+                    Utils.guilog("[INFO] Successful");
                 }
+                */
             } catch (Exception ex) {
                 Utils.printException(ex);
             } finally {
-                post.releaseConnection();
+                //post.releaseConnection();
             }
         }
+        Utils.guilog("[INFO] Requests are added to queue.");
        
     }
 
@@ -124,17 +131,22 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         try { 
             Part[] parts = {new FilePart("content", imageFile)};
             post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
+            
+            Utils.guilog("[INFO] Request is added to queue.");
+            OutputQueue.getInstance().offer(new Request(posturl, post));
+            /*
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, baseurl);
+            ViewEditUtils.setCredentials(client, baseurl, post);
             client.executeMethod(post);
             int status = post.getStatusCode();
             if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
-                Application.getInstance().getGUILog().log("[INFO] Successful");
+                Utils.guilog("[INFO] Successful");
             }
+            */
         } catch (Exception ex) {
             Utils.printException(ex);
         } finally {
-            post.releaseConnection();
+            //post.releaseConnection();
         }
 
     }

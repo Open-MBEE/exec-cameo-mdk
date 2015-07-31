@@ -7,16 +7,16 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -24,6 +24,11 @@ import javax.jms.MessageConsumer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
+import javax.swing.SwingUtilities;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.log4j.Logger;
@@ -41,11 +46,11 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.transaction.TransactionManager;
 
 /*
  * This class is responsible for taking action when a project is opened.
@@ -72,21 +77,38 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     private static final String MSG_SELECTOR_WS_ID = "workspace";
     public static Logger log = Logger.getLogger(AutoSyncProjectListener.class);
 
-    public static String getJMSUrl() {
-        String url = ExportUtility.getUrl();
-        if (url != null) {
-            if (url.startsWith("https://"))
-                url = url.substring(8);
-            else if (url.startsWith("http://"))
-                url = url.substring(7);
-            int index = url.indexOf(":");
-            if (index != -1)
-                url = url.substring(0, index);
-            if (url.endsWith("/alfresco/service"))
-                url = url.substring(0, url.length() - 17);
-            url = "tcp://" + url + ":61616";
-        } 
-        return url;
+    // Members to look up JMS using JNDI
+    // TODO: If any other context factories are used, need to add those JARs into class path (e.g., for weblogic)
+    private static String JMS_CTX_FACTORY = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
+    private static String JMS_CONN_FACTORY = "ConnectionFactory";
+    private static String JMS_USERNAME = null;
+    private static String JMS_PASSWORD = null;
+    private static String JMS_TOPIC = "master";
+    private static InitialContext ctx = null; 
+        
+    public static void getJMSUrl(Map<String, String> urlInfo) {
+        // urlInfo necessary for backwards compatibility with 2.1 MMS, which doesn't have service call
+        JSONObject jmsJson = ExportUtility.getJmsConnectionDetails();
+        String url = ingestJson(jmsJson);
+        if (url != null) { 
+            urlInfo.put( "isFromService", "true" );
+        } else {
+            urlInfo.put( "isFromService", "false" );
+            url = ExportUtility.getUrl();
+            if (url != null) {
+                if (url.startsWith("https://"))
+                    url = url.substring(8);
+                else if (url.startsWith("http://"))
+                    url = url.substring(7);
+                int index = url.indexOf(":");
+                if (index != -1)
+                    url = url.substring(0, index);
+                if (url.endsWith("/alfresco/service"))
+                    url = url.substring(0, url.length() - 17);
+                url = "tcp://" + url + ":61616";
+            }
+        }
+        urlInfo.put( "url", url );
     }
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
@@ -101,7 +123,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             project.getCounter().setCanResetIDForObject(true);
             folder = project.getElementsFactory().createPackageInstance();
             folder.setOwner(project.getModel());
-            ((Package)folder).setName("__ProjectSync__");
+            ((Package)folder).setName("__MMSSync__");
             folder.setID(folderId);
         } else {
             if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
@@ -278,18 +300,20 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
-            Application.getInstance().getGUILog().log("[INFO] Autosync is currently on, you cannot do a manual update/commit while autosync is on.");
+        	Utils.guilog("[INFO] Dynamic sync is currently on, you cannot do a manual update/commit while dynamic sync is on.");
             return null; //autosync is on, should turn off first
         }
         String projectID = ExportUtility.getProjectId(project);
         String wsID = ExportUtility.getWorkspace();
-        String url = getJMSUrl();
+        Map<String, String> urlInfo = new HashMap<String, String>();
+        getJMSUrl(urlInfo);
+        String url = urlInfo.get( "url" );
         if (url == null) {
-            Application.getInstance().getGUILog().log("[ERROR] cannot get server url");
+            Utils.guilog("[ERROR] Cannot get server url");
             return null;
         }
         if (wsID == null) {
-            Application.getInstance().getGUILog().log("[ERROR] cannot get server workspace that corresponds to this project branch");
+            Utils.guilog("[ERROR] Cannot get server workspace that corresponds to this project branch");
             return null;
         }
         Connection connection = null;
@@ -307,12 +331,24 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             changedIds.addAll((List<String>)previousConflicts.get("elements"));
         }
         try {
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
-            String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
+            ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
+            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
             connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            Topic topic = session.createTopic("master");
+            // weblogic createTopic doesn't work if it already exists, unlike activemq
+            Topic topic = null;
+            try {
+                if (ctx != null) {
+                    topic = (Topic) ctx.lookup( JMS_TOPIC );
+                }                    
+            } catch (NameNotFoundException nnfe) {
+                // do nothing (just means topic hasnt been created yet
+            } finally {
+                if (topic == null) {
+                    topic = session.createTopic(JMS_TOPIC);
+                }
+            }
             String messageSelector = constructSelectorString(projectID, wsID);
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
@@ -363,7 +399,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change logs");
             try {
-                setUpdatesOrFailed(project, null, "error");
+                //setUpdatesOrFailed(project, null, "error");
                 setConflicts(project, null);
                 sm.closeSession();
             } catch (Exception e) {
@@ -372,7 +408,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             return changes;
         } catch (Exception e) {
             log.error("JMS (Manual receive): ", e);
-            Application.getInstance().getGUILog().log("[ERROR] getting changes from mms failed: " + e.getMessage());
+            Utils.guilog("[ERROR] Getting changes from mms failed: " + e.getMessage());
             return null;
         } finally {
             try {
@@ -387,7 +423,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
     }
     
-    public static void initDurable(Project project) {
+    public static void initDurable(final Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         String projectID = ExportUtility.getProjectId(project);
         String wsID = ExportUtility.getWorkspace();
@@ -397,27 +433,31 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         //
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER)) {// || projectInstances.containsKey(LISTENER)) {
+        	Utils.guilog("Dynamic sync was already started.");
+        	AutosyncStatusConfigurator.getAutosyncStatusAction().update(true);
             return;
         }
-        String url = getJMSUrl();
+        Map<String, String> urlInfo = new HashMap<String, String>();
+        getJMSUrl(urlInfo);
+        String url = urlInfo.get( "url" );
         if (url == null) {
-            Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server url");
+            Utils.guilog("[ERROR] Sync initialization failed - cannot get server url");
             return;
         }
         if (wsID == null) {
-            Application.getInstance().getGUILog().log("[ERROR] sync initialization failed - cannot get server workspace that corresponds to this project branch");
+            Utils.guilog("[ERROR] Sync initialization failed - cannot get server workspace that corresponds to this project branch");
             return;
         }
         Integer webVersion = ExportUtility.getAlfrescoProjectVersion(ExportUtility.getProjectId(project));
         Integer localVersion = ExportUtility.getProjectVersion(project);
         if (localVersion != null && !localVersion.equals(webVersion)) {
-            Application.getInstance().getGUILog().log("[ERROR] autosync not allowed - project versions currently don't match - project may be out of date");
+            Utils.guilog("[ERROR] Dynamic sync not allowed - project versions currently don't match - project may be out of date");
             return;
         }
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             String user = TeamworkUtils.getLoggedUserName();
             if (user == null) {
-                Application.getInstance().getGUILog().log("[ERROR] You must be logged into teamwork - autosync will not start");
+                Utils.guilog("[ERROR] You must be logged into teamwork - dynamic sync will not start");
                 return;
             }
             Collection<Element> lockedByUser = TeamworkUtils.getLockedElement(project, user);
@@ -425,19 +465,19 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             lockedByAll.removeAll(lockedByUser);
             for (Element locked: lockedByAll) {
                 if (!ProjectUtilities.isElementInAttachedProject(locked)) {
-                    Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
+                    Utils.guilog("[ERROR] Another user has locked part of the project - dynamic sync will not start");
                     return;
                 }
             }
             //if (!lockedByUser.equals(lockedByAll)) {
-            //    Application.getInstance().getGUILog().log("[ERROR] Another user has locked part of the project - autosync will not start");
+            //    Utils.guilog("[ERROR] Another user has locked part of the project - autosync will not start");
             //    return;
             //}
             for (Element e: project.getModel().getOwnedElement()) {
                 if (ProjectUtilities.isElementInAttachedProject(e))
                     continue;
                 if (!TeamworkUtils.lockElement(project, e, true)) {
-                    Application.getInstance().getGUILog().log("[ERROR] cannot lock project - autosync will not start");
+                    Utils.guilog("[ERROR] Cannot lock project - dynamic sync will not start");
                     return;
                 }
             }
@@ -454,24 +494,42 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             }
             listener.setAuto(true);
 
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
-            String subscriberId = projectID + "/" + wsID; //getSubscriberId(project);
+            ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
+            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
             Connection connection = connectionFactory.createConnection();
             connection.setExceptionListener(new ExceptionListener() {
                 @Override
                 public void onException(JMSException e) {
-                    Application.getInstance().getGUILog().log(e.getMessage());
+                    Utils.guilog(e.getMessage());
                     log.error(e.getMessage(), e);
                     //if (e instanceof LostServerConnection) {
                         
                     //}
+                    SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							Utils.guilog("[WARNING] Dynamic sync interruppted.");
+							AutoSyncProjectListener.close(project, true);
+						}
+                    });
                 }
             });
             connection.setClientID(subscriberId);// + (new Date()).toString());
             // connection.setExceptionListener(this);
             Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
-            Topic topic = session.createTopic("master");
+            Topic topic = null;
+            try {
+                if (ctx != null) {
+                    topic = (Topic) ctx.lookup( JMS_TOPIC );
+                }                    
+            } catch (NameNotFoundException nnfe) {
+                // do nothing (just means topic hasnt been created yet
+            } finally {
+                if (topic == null) {
+                    topic = session.createTopic(JMS_TOPIC);
+                }
+            }
 
             String messageSelector = constructSelectorString(projectID, wsID);
             
@@ -484,11 +542,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             projectInstances.put(SESSION, session);
             projectInstances.put(CONSUMER, consumer);
 
-            Application.getInstance().getGUILog().log("[INFO] sync initiated");
+            Utils.guilog("[INFO] sync initiated");
+            AutosyncStatusConfigurator.getAutosyncStatusAction().update(true);
+            
         }
         catch (Exception e) {
             log.error("", e);
-            Application.getInstance().getGUILog().log("[ERROR] sync initialization failed: " + e.getMessage());
+            Utils.guilog("[ERROR] Sync initialization failed: " + e.getMessage());
         }
     }
 
@@ -542,10 +602,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         catch (Exception e) {
             log.error("", e);
         }
-        Application.getInstance().getGUILog().log("[INFO] sync ended");
+        Utils.guilog("[INFO] Sync ended");
+        AutosyncStatusConfigurator.getAutosyncStatusAction().update(false);
     }
 
     public static AutoSyncCommitListener getCommitListener(Project project) {
+    	if (project == null)
+    		return null;
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances == null)
             return null;
@@ -564,7 +627,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         listener.setTm(transactionManager);
         transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
         projectInstances.put(LISTENER, listener);
-        JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
+        /*JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
         if (previousUpdates != null) {
             for (String added: (List<String>)previousUpdates.get("added")) {
                 Element e = ExportUtility.getElementFromID(added);
@@ -579,7 +642,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             for (String deleted: (List<String>)previousUpdates.get("deleted")) {
                listener.getDeletedElements().put(deleted, null);
             }
-        }
+        }*/
     }
 
     @Override
@@ -591,6 +654,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     private static void saveAutoSyncErrors(Project project) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances == null)
+            return;
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(JMSLISTENER)) {
             //autosync is on
@@ -636,10 +701,46 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public void saveLocalUpdates(Project project) {
         AutoSyncCommitListener listener = getCommitListener(project);
         JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
-        Set<String> added = new HashSet<String>();
-        Set<String> changed = new HashSet<String>();
-        Set<String> deleted = new HashSet<String>();
+        
+        Set<String> added = new HashSet<String>(), changed = new HashSet<String>(), deleted = new HashSet<String>();
+        JSONArray previousAdded = new JSONArray(), previousChanged = new JSONArray(), previousDeleted = new JSONArray();
+        final Set<String> newAdded = listener.getAddedElements().keySet(), newChanged = listener.getChangedElements().keySet(), newDeleted = listener.getDeletedElements().keySet();
+        
         if (previousUpdates != null) {
+        	if (previousUpdates.containsKey("added"))
+        		previousAdded = (JSONArray) previousUpdates.get("added");
+        	if (previousUpdates.containsKey("changed"))
+        		previousChanged = (JSONArray) previousUpdates.get("changed");
+        	if (previousUpdates.containsKey("deleted"))
+        			previousDeleted = (JSONArray) previousUpdates.get("deleted");
+        }
+        
+        // fix to prevent the new update block from having all three (deleted, added, changed)
+        // this happens when the user creates, saves, deletes, and saves
+        // previously resulted in an ID existing in deleted, added, AND changed
+        for (final String s : newDeleted) {
+        	previousAdded.remove(s);
+        	previousChanged.remove(s);
+        }
+        
+        // fix for when a user deletes an element, saves, then undoes the deletion (resulting in an addition), then saves
+        // no modification on changed as we cannot conclusively deduce its accuracy based on the information available - taking conservative approach
+        // previously resulted in an ID existing in deleted, added, AND changed
+        for (final String s : newAdded) {
+        	previousDeleted.remove(s);
+        }
+        
+        added.addAll(previousAdded);
+        changed.addAll(previousChanged);
+        deleted.addAll(previousDeleted);
+        
+        added.addAll(newAdded);
+        changed.addAll(newChanged);
+        deleted.addAll(newDeleted);
+        
+        //Utils.guilog(newAdded.size() + " : " + newChanged.size() + " : " + newDeleted.size());
+        
+        /*if (previousUpdates != null) {
             added.addAll((JSONArray)previousUpdates.get("added"));
             changed.addAll((JSONArray)previousUpdates.get("changed"));
             deleted.addAll((JSONArray)previousUpdates.get("deleted"));
@@ -647,21 +748,39 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         added.addAll(listener.getAddedElements().keySet());
         changed.addAll(listener.getChangedElements().keySet());
         deleted.addAll(listener.getDeletedElements().keySet());
+        
+        for (final String s : deleted) {
+        	System.out.println("Removed changed: " + Boolean.toString(changed.remove(s)));
+        	System.out.println("Removed added: " + Boolean.toString(added.remove(s)));
+        }*/
+        
         JSONObject notSaved = new JSONObject();
+        
         JSONArray addeda = new JSONArray();
         JSONArray updateda = new JSONArray();
         JSONArray deleteda = new JSONArray();
+        
         addeda.addAll(added);
         updateda.addAll(changed);
         deleteda.addAll(deleted);
+        
         notSaved.put("added", addeda);
         notSaved.put("changed", updateda);
         notSaved.put("deleted", deleteda);
+        
         SessionManager sm = SessionManager.getInstance();
         sm.createSession("mms delayed sync change logs");
         try {
             setUpdatesOrFailed(project, notSaved, "update");
             sm.closeSession();
+            
+            // clear to prevent memory usage from going to infinity (and beyond); should solve "memory leak"
+            // never gets here upon exception
+            // prevents (or at least minimized) duplication of elements existing in memory and in the persistent history
+            // checked ManualSyncRunner to ensure that this should not cause an issue as it checks for both memory and historical changes
+            listener.getAddedElements().clear();
+            listener.getChangedElements().clear();
+            listener.getDeletedElements().clear();
         } catch (Exception e) {
             log.error("", e);
             sm.cancelSession();
@@ -671,24 +790,116 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
-        saveAutoSyncErrors(project);
-        saveLocalUpdates(project);
+        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"))
+            return;
+        try {
+            saveAutoSyncErrors(project);
+            saveLocalUpdates(project);
+        } catch (Exception e) {
+            log.error("", e); //potential session isn't created error if need to update from tw while commiting
+        }
     }
     
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
+        if (projectInstances == null)
+            return; //investigate how this is possible
         if (projectInstances.containsKey(CONNECTION) || projectInstances.containsKey(SESSION)
                 || projectInstances.containsKey(CONSUMER) || projectInstances.containsKey(JMSLISTENER)) {
             //autosync is on
             ExportUtility.sendProjectVersion();
         }
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && savedInServer) {
+        /*if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && savedInServer) {
             String folderId = project.getPrimaryProject().getProjectID();
             folderId += "_sync";
             Element folder = ExportUtility.getElementFromID(folderId);
             if (folder != null)
                 TeamworkUtils.unlockElement(project, folder, true, true, true);
+        }*/ //unlock apparently can take a long time on big model
+    }
+    
+    /**
+     * Ingests JSON data generated from MMS server and populates JNDI members
+     * 
+     * @return URL string of connector
+     */
+    protected static String ingestJson(JSONObject jsonInput) {
+        if (jsonInput == null) return null;
+        JSONObject json = null;
+        if (jsonInput.containsKey( "connections" )) {
+            // just grab first connection
+            JSONArray conns = (JSONArray)jsonInput.get( "connections" );
+            for (int ii = 0; ii < conns.size(); ii++) {
+                json = (JSONObject) conns.get( ii );
+                if (json.containsKey( "eventType" )) {
+                    if (json.get( "eventType" ).equals( "delta" )) 
+                        break;
+                }
+            }
+        } else {
+            json = jsonInput;
+        }
+        String result = null;
+
+        if (json.containsKey( "uri" )) {
+            result = (String)json.get( "uri" );
+        }
+        if (json.containsKey( "connFactory" )) {
+            JMS_CONN_FACTORY = (String)json.get( "connFactory" );
+        }
+        if (json.containsKey( "ctxFactory" )) {
+            JMS_CTX_FACTORY = (String)json.get( "ctxFactory" );
+        }
+        if (json.containsKey( "password" )) {
+            JMS_PASSWORD = (String)json.get( "password" );
+        }
+        if (json.containsKey( "username" )) {
+            JMS_USERNAME = (String)json.get( "username" );
+        }
+        if (json.containsKey( "topicName" )) {
+            JMS_TOPIC = (String)json.get( "topicName" );
+        }
+
+        return result;
+    }
+
+
+    /**
+     * Create a connection factory based on JNDI values
+     * @return
+     */
+    public static ConnectionFactory createConnectionFactory(Map<String, String> urlInfo) {
+        boolean isFromService = urlInfo.get( "isFromService" ).equals( "true" ) ? true : false;
+        String url = urlInfo.get("url");
+        Hashtable<String, String> properties = new Hashtable<String, String>();
+        properties.put(Context.INITIAL_CONTEXT_FACTORY, JMS_CTX_FACTORY);
+        properties.put(Context.PROVIDER_URL, url);
+        if (JMS_USERNAME != null && JMS_PASSWORD != null) {
+            properties.put(Context.SECURITY_PRINCIPAL, JMS_USERNAME);
+            properties.put(Context.SECURITY_CREDENTIALS, JMS_PASSWORD);
+        }
+        ctx = null;
+        try {
+            ctx = new InitialContext(properties);
+        } catch (NamingException ne) {
+            // FIXME: getting java.lang.ClassNotFoundException: org.apache.activemq.jndi.ActiveMQInitialContextFactory
+            //        works in debugging from Eclipse - somehow classpath doesn't work
+            //        plugin has the activemq-all reference, as workaround set to false for now
+            isFromService = false;
+        }
+
+        if (isFromService == false) {
+            return new ActiveMQConnectionFactory(url);
+        } else {
+            try {
+                return (ConnectionFactory) ctx.lookup(JMS_CONN_FACTORY);
+            }
+            catch (NamingException ne) {
+                ne.printStackTrace(System.err);
+                return null;
+            }
         }
     }
+    
 }

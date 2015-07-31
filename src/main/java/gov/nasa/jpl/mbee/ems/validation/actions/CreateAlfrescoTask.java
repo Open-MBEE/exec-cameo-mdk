@@ -1,17 +1,14 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.rmi.RemoteException;
-import java.sql.Date;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-
 import org.joda.time.DateTime;
 
 import org.json.simple.JSONArray;
@@ -20,12 +17,8 @@ import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
-import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class CreateAlfrescoTask extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -64,7 +57,7 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
         }
         String parentId = wsMapping.get(parentBranch);
         if (parentId == null) {
-            Application.getInstance().getGUILog().log("The parent branch doesn't have a corresponding alfresco task yet, cannot create this task");
+            Utils.guilog("The parent branch doesn't have a corresponding alfresco task yet, cannot create this task");
             return;
         }
         String url = ExportUtility.getUrl();

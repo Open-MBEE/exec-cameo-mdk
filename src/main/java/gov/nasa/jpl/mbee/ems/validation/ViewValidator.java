@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
@@ -119,7 +120,10 @@ public class ViewValidator {
             return false;
         String globalUrl = ExportUtility.getUrl();
         globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        String globalResponse = ExportUtility.get(globalUrl, false);
+        String globalResponse = null;
+        try {
+            globalResponse = ExportUtility.get(globalUrl, false);
+        } catch (ServerException ex) {}
         String url = ExportUtility.getUrlWithWorkspace();
         
         if (globalResponse == null) {
@@ -132,7 +136,10 @@ public class ViewValidator {
             projectExist.addViolation(v);
             return false;
         }
-        String response = ExportUtility.get(projectUrl, false);
+        String response = null;
+        try {
+            response = ExportUtility.get(projectUrl, false);
+        } catch (ServerException ex) {}
         if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
             if (url == null)
                 return false;
@@ -163,7 +170,7 @@ public class ViewValidator {
         (new PostProcessor()).process(dge);
         
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
-        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
+        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse, true);
         if (!hierarchyOnly) {
             dge.accept(visitor);
             DBBook book = visitor.getBook();
@@ -211,11 +218,14 @@ public class ViewValidator {
 
             //check to see if view exists on alfresco
             String existurl = url + "/elements/" + viewid;
-            String response = ExportUtility.get(existurl, false);
+            String response = null;
+            try {
+                response = ExportUtility.get(existurl, false);
+            } catch(ServerException ex) {}
             //response is the string version of the view json gotten from the web
             if (!ViewEditUtils.isPasswordSet())
                 return false;
-            if (response == null || !response.contains("contains")) {
+            if (response == null || (!response.contains("contains") && !response.contains("contents"))) {
                 //if the json doesn't contain the "contains" key, that means the view hasn't been exported yet
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                 v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
@@ -227,7 +237,8 @@ public class ViewValidator {
                 //view has been on the web
                 JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("elements")).get(0);
                 Object containsObj = ((JSONObject)webView.get("specialization")).get("contains");
-                if (containsObj == null) {
+                Object contentsObj = ((JSONObject)webView.get("specialization")).get("contents");
+                if (containsObj == null && contentsObj == null) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                     v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
                     //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
@@ -254,7 +265,10 @@ public class ViewValidator {
                         if (ps != null && ps.isCancel())
                             break;
                         // quick way to get all element info referenced by view from the web
-                        String viewelements = ExportUtility.get(viewElementsUrl, false);
+                        String viewelements = null;
+                        try {
+                            viewelements = ExportUtility.get(viewElementsUrl, false);
+                        } catch (ServerException ex) {}
                         if (viewelements == null)
                             continue;
                         JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
@@ -312,7 +326,9 @@ public class ViewValidator {
             starts.add(view);
             ModelValidator mv = new ModelValidator(starts, results, true, visitor2.getElementSet(), true); //visitor2.getElementSet() has the local model elements
             //do the actual element validations between model and web
-            mv.validate(false, ps);
+            try {
+                mv.validate(false, ps);
+            } catch (ServerException ex) {}
             modelSuite = mv.getSuite();
 
             Utils.guilog("[INFO] Validating images");

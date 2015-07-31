@@ -29,10 +29,10 @@
 package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
-import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
 import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
-import gov.nasa.jpl.mbee.actions.ViewViewCommentsAction;
+import gov.nasa.jpl.mbee.actions.docgen.CreateRestrictedValueAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
+import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
 import gov.nasa.jpl.mbee.actions.docgen.MigrateToClassViewAction;
 import gov.nasa.jpl.mbee.actions.docgen.NumberAssociationAction;
@@ -51,12 +51,8 @@ import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewAction;
-import gov.nasa.jpl.mbee.actions.vieweditor.SynchronizeViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MDUtils;
-import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
@@ -73,6 +69,7 @@ import java.util.Set;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
 import com.nomagic.magicdraw.actions.ConfiguratorWithPriority;
 import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
@@ -92,6 +89,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class DocGenConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
@@ -114,7 +112,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         List<Element> elements = new ArrayList<Element>();
         for (Node node: browser.getSelectedNodes()) {
             if (node == null)
-                continue;;
+                continue;
             Object ob = node.getUserObject();
             if (!(ob instanceof Element))
                 continue;
@@ -183,8 +181,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         }
         //manager.addCategory(refactorWithIDActionCat);
 
+        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
         if (ViewEditUtils.isPasswordSet()) {
-            ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
@@ -194,11 +192,19 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
             if (manager.getActionFor(ValidateModelAction.actionid) == null)
                 models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models": "Validate Models"));
-            if (e instanceof Package) {
+            /*if (e instanceof Package) {
                 if (manager.getActionFor(ExportAllDocuments.actionid) == null)
                     models.addAction(new ExportAllDocuments(e));
-            }
+            }*/
         }
+        else {
+        	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
+        	final MDAction mda = new MDAction(null, null, null, "null");
+        	mda.updateState();
+        	mda.setEnabled(false);
+    		modelLoad.addAction(mda);
+        }
+        ActionsStateUpdater.updateActionsState();
         
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
@@ -237,22 +243,22 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (added)
                     manager.addCategory(0, category);
             }
+            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
             if (ViewEditUtils.isPasswordSet()) {
-                ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
                 ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
-                NMAction action = manager.getActionFor(ValidateViewAction.actionid);
+                /*NMAction action = manager.getActionFor(ValidateViewAction.actionid);
                 if (action == null)
                     views.addAction(new ValidateViewAction(e));
                 action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
                 if (action == null)
-                    views.addAction(new ValidateViewRecursiveAction(e));
+                    views.addAction(new ValidateViewRecursiveAction(e));*/
                 if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
-                    action = manager.getActionFor(ValidateHierarchyAction.actionid);
+                    NMAction action = manager.getActionFor(ValidateHierarchyAction.actionid);
                     if (action == null)
                         modelLoad2.addAction(new ValidateHierarchyAction(e));
                 }
-                ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
+                /*ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
 
                 action = manager.getActionFor("ExportView");
                 if (action == null)
@@ -260,7 +266,26 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 action = manager.getActionFor("ExportViewRecursive");
                 if (action == null)
                     viewsC.addAction(new ExportViewAction(e, true));
+                */
+                ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
+                NMAction action = manager.getActionFor(GenerateViewPresentationAction.actionid);
+                if (action == null) {
+                    viewInstances.addAction(new GenerateViewPresentationAction(e, false));
+                }
+                action = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
+                if (action == null) {
+                    viewInstances.addAction(new GenerateViewPresentationAction(e, true));
+                }
             }
+            else {
+            	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
+            	final MDAction mda = new MDAction(null, null, null, "null");
+            	mda.updateState();
+            	mda.setEnabled(false);
+        		modelLoad2.addAction(mda);
+            }
+            ActionsStateUpdater.updateActionsState();
+            
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             //action = manager.getActionFor(ExportViewAction.actionid);
             //if (action == null)
@@ -336,7 +361,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             act = manager.getActionFor(GenerateDocumentAction.actionid);
             if (act == null)
                 c.addAction(new GenerateDocumentAction(e));
-
+            
             if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
                 //act = manager.getActionFor(PublishDocWebAction.actionid); 
                 //if (act == null) 
@@ -378,6 +403,29 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         // NMAction act = manager.getActionFor( "DocGenComments" );
         // if ( act == null ) addCommentActions( c, (NamedElement)e );
         // }
+        
+//        if (e instanceof Property) {
+//        	ArrayList<Property> els = new ArrayList<Property>();
+//        	for (Element el: es) {
+//        		if (el instanceof Property)
+//        			els.add((Property)el);
+//        	}
+//        	ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
+//        	NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
+//        	if (act == null)
+//        		c.addAction(new CreateRestrictedValueAction((Property) e, els));
+//        }
+        ArrayList<Property> selectedProperties = new ArrayList<Property>();
+        for (Element el: es) {
+        	if (el instanceof Property)
+        		selectedProperties.add((Property) el);
+        }
+        if (!(selectedProperties.isEmpty())) {
+        	ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
+        	NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
+        	if (act == null)
+        		c.addAction(new CreateRestrictedValueAction(selectedProperties));
+        }
     }
 
     private void addDiagramActions(ActionsManager manager, DiagramPresentationElement diagram) {
@@ -442,6 +490,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (category == null) {
             category = new MDActionsCategory(id, name);
             category.setNested(true);
+            category.setUseActionForDisable(true);
             manager.addCategory(0, category);
         }
         return category;
@@ -450,8 +499,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
     private ActionsCategory getCategory(ActionsManager manager, String id, String name, ActionsCategory parent) {
         ActionsCategory category = (ActionsCategory)manager.getActionFor(id);
         if (category == null) {
+            //category = myCategory(manager, id, name); 
             category = new MDActionsCategory(id, name);
-            category.setNested(false);
+            category.setNested(false); //this is to just get separators, not actual nested category
             parent.addAction(category);
         }
         return category;

@@ -131,6 +131,7 @@ public class ImportUtility {
             }
             Stereotype sysmlView = Utils.getViewClassStereotype();
             StereotypesHelper.addStereotype(newE, sysmlView);
+            setViewConstraint(newE, specialization);
         } else if (elementType.equalsIgnoreCase("viewpoint")) {
             if (newE == null) {
                 Class view = ef.createClassInstance();
@@ -154,9 +155,9 @@ public class ImportUtility {
                     newE = newProperty;
                 }
                 if (specialization.containsKey("value"))
-                    setPropertyDefaultValue((Property)newE, vals);
+                		setPropertyDefaultValue((Property)newE, vals);
                 if (specialization.containsKey("propertyType"))
-                    setPropertyType((Property)newE, specialization);
+                		setProperty((Property)newE, specialization);
             }
         } else if (elementType.equalsIgnoreCase("Dependency")
                 || elementType.equalsIgnoreCase("Expose")
@@ -202,6 +203,7 @@ public class ImportUtility {
             }
             Stereotype product = Utils.getDocumentStereotype();
             StereotypesHelper.addStereotype(newE, product);
+            setViewConstraint(newE, specialization);
         } else if (elementType.equalsIgnoreCase("Association")) {
             if (newE == null) {
                 AssociationClass ac = ef.createAssociationClassInstance();
@@ -214,6 +216,12 @@ public class ImportUtility {
                 newE = conn;
             }
             setConnectorEnds((Connector)newE, specialization);
+        } else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
+            if (newE == null) {
+                InstanceSpecification is = ef.createInstanceSpecificationInstance();
+                newE = is;
+            }
+            setInstanceSpecification((InstanceSpecification)newE, specialization);
         } else if (newE == null) {
             Class newElement = ef.createClassInstance();
             newE = newElement;
@@ -221,6 +229,7 @@ public class ImportUtility {
         setName(newE, ob);
         setOwner(newE, ob);
         setDocumentation(newE, ob);
+        setOwnedAttribute(newE, ob);
         newE.setID(sysmlID);
         return newE;
     }
@@ -228,14 +237,16 @@ public class ImportUtility {
     public static void updateElement(Element e, JSONObject o) {
         setName(e, o);
         setDocumentation(e, o);
+        setOwnedAttribute(e, o);
         JSONObject spec = (JSONObject)o.get("specialization");
         if (spec != null) {
             String type = (String)spec.get("type");
             if (type != null && type.equals("Property") && e instanceof Property) {
+            		setProperty((Property)e, spec);
                 if (spec.containsKey("value"))
                     setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
-                if (spec.containsKey("propertyType"))
-                    setPropertyType((Property)e, spec);
+//                if (spec.containsKey("propertyType"))
+//                    setProperty((Property)e, spec);
             }
             if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
                 setSlotValues((Slot)e, (JSONArray)spec.get("value"));
@@ -247,6 +258,25 @@ public class ImportUtility {
                 setConnectorEnds((Connector)e, spec);
             if (type != null && e instanceof Association && type.equals("Association"))
                 setAssociation((Association)e, spec);
+            if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
+                setInstanceSpecification((InstanceSpecification)e, spec);
+            if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
+                setViewConstraint(e, spec);
+        }
+    }
+
+	public static void setViewConstraint(Element e, JSONObject specialization) {
+        Constraint c = Utils.getViewConstraint(e);
+        if (c == null) {
+            c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
+            c.setOwner(e);
+            c.getConstrainedElement().add(e);
+        }
+        if (specialization.containsKey("contents")) {
+            if (specialization.get("contents") == null) {
+                c.setSpecification(null);
+            } else 
+                c.setSpecification(createValueSpec((JSONObject)specialization.get("contents"), c.getSpecification()));
         }
     }
     
@@ -267,12 +297,12 @@ public class ImportUtility {
             return;
         String ownerId = (String) o.get("owner");
         if ((ownerId == null) || (ownerId.isEmpty())) {
-            Application.getInstance().getGUILog().log("[ERROR] Owner not specified for mms sync add");
+            Utils.guilog("[ERROR] Owner not specified for mms sync add");
             return;
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Owner not found for mms sync add");
+            Utils.guilog("[ERROR] Owner not found for mms sync add");
             return;
         }
         e.setOwner(owner);
@@ -290,6 +320,45 @@ public class ImportUtility {
             ModelHelper.setComment(e, Utils.addHtmlWrapper(doc));
     }
     
+    public static void setOwnedAttribute(Element e, JSONObject o) {
+    	if (e instanceof Class && o.containsKey("ownedAttribute")) {
+    		Class c = (Class)e;
+    		JSONArray attr = (JSONArray)o.get("ownedAttribute");
+    		List<Property> ordered = new ArrayList<Property>();
+    		for (Object a: attr) {
+    			if (a instanceof String) {
+    				Element prop = ExportUtility.getElementFromID((String)a);
+    				if (prop instanceof Property)
+    					ordered.add((Property)prop);
+    			}
+    		}
+    		c.getOwnedAttribute().clear();
+    		c.getOwnedAttribute().addAll(ordered);
+    	}
+    }
+    
+    public static void setInstanceSpecification(InstanceSpecification is, JSONObject specialization) {
+        JSONObject spec = (JSONObject)specialization.get("instanceSpecificationSpecification");
+        if (spec != null) {
+            is.setSpecification(createValueSpec(spec, is.getSpecification()));
+        } else
+            is.setSpecification(null);
+        if (specialization.containsKey("classifier")) {
+            JSONArray classifier = (JSONArray)specialization.get("classifier");
+            if (classifier == null || classifier.isEmpty()) {
+                log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
+                return;
+            }
+            is.getClassifier().clear();
+            for (Object id: classifier) {
+                Element e = ExportUtility.getElementFromID((String)id);
+                if (e instanceof Classifier) {
+                    is.getClassifier().add((Classifier)e);
+                }
+            }
+        }
+    }
+    
     public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) {
         String sourceId = (String) specialization.get("source");
         String targetId = (String) specialization.get("target");
@@ -305,22 +374,28 @@ public class ImportUtility {
     
     public static void setPropertyDefaultValue(Property p, JSONArray values) {
         if (values != null && values.size() > 0)
-            p.setDefaultValue(createValueSpec((JSONObject)values.get(0)));
+            p.setDefaultValue(createValueSpec((JSONObject)values.get(0), p.getDefaultValue()));
         if (values != null && values.isEmpty())
             p.setDefaultValue(null);
     }
     
-    public static void setPropertyType(Property p, JSONObject spec) {
+    public static void setProperty(Property p, JSONObject spec) {
+    		
+        // fix the property type here
         String ptype = (String)spec.get("propertyType");
-        if (ptype == null)
-            p.setType(null);
-        else {
+        if (ptype != null) {
             Type t = (Type)ExportUtility.getElementFromID(ptype);
             if (t != null)
                 p.setType(t);
             else
                 log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
                 //something bad happened
+        }
+        
+        // set aggregation here
+        AggregationKind aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
+        if (aggr != null) {
+        		p.setAggregation(aggr);
         }
     }
     
@@ -331,9 +406,14 @@ public class ImportUtility {
     public static void setSlotValues(Slot s, JSONArray values) {
         if (values == null)
             return;
+        List<ValueSpecification> originals = new ArrayList<ValueSpecification>(s.getValue());
         s.getValue().clear();
         for (Object o: values) {
-            ValueSpecification vs = createValueSpec((JSONObject)o);
+            ValueSpecification vs = null;
+            if (originals.size() > 0)
+                vs = createValueSpec((JSONObject)o, originals.remove(0));
+            else
+                vs = createValueSpec((JSONObject)o, null);
             if (vs != null)
                 s.getValue().add(vs);
         }
@@ -344,7 +424,7 @@ public class ImportUtility {
             return;
         JSONObject sp = (JSONObject)spec.get("specification");
         if (sp != null) {
-            c.setSpecification(createValueSpec(sp));
+            c.setSpecification(createValueSpec(sp, c.getSpecification()));
         }
     }
     
@@ -387,8 +467,8 @@ public class ImportUtility {
         Element webTarget = ExportUtility.getElementFromID(webTargetId);
         Property modelSource = null;
         Property modelTarget = null;
-        String webSourceA = (String)spec.get("sourceAggregation");
-        String webTargetA = (String)spec.get("targetAggregation");
+//        String webSourceA = (String)spec.get("sourceAggregation");
+//        String webTargetA = (String)spec.get("targetAggregation");
         List<Property> todelete = new ArrayList<Property>();
         int i = 0;
         if (webSource == null || webTarget == null) {
@@ -420,14 +500,14 @@ public class ImportUtility {
             a.getMemberEnd().add((Property)webTarget);
             modelTarget = (Property)webTarget;
         }
-        if (modelSource != null && webSourceA != null) {
-            AggregationKindEnum agg = AggregationKindEnum.getByName(webSourceA.toLowerCase());
-            modelSource.setAggregation(agg);
-        }
-        if (modelTarget != null && webTargetA != null) {
-            AggregationKindEnum agg = AggregationKindEnum.getByName(webTargetA.toLowerCase());
-            modelTarget.setAggregation(agg);
-        }
+//        if (modelSource != null && webSourceA != null) {
+//            AggregationKindEnum agg = AggregationKindEnum.getByName(webSourceA.toLowerCase());
+//            modelSource.setAggregation(agg);
+//        }
+//        if (modelTarget != null && webTargetA != null) {
+//            AggregationKindEnum agg = AggregationKindEnum.getByName(webTargetA.toLowerCase());
+//            modelTarget.setAggregation(agg);
+//        }
     }
     
     public static List<ValueSpecification> createElementValues(List<String> ids) {
@@ -455,7 +535,7 @@ public class ImportUtility {
         return result;
     }
     
-    public static ValueSpecification createValueSpec(JSONObject o) {
+    public static ValueSpecification createValueSpec(JSONObject o, ValueSpecification v) {
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         String valueType = (String)o.get("type");
         ValueSpecification newval = null;
@@ -463,20 +543,40 @@ public class ImportUtility {
         
         switch ( propValueType ) {
         case LiteralString:
-            newval = ef.createLiteralStringInstance();
-            ((LiteralString)newval).setValue(Utils.addHtmlWrapper((String)o.get("string")));
+            if (v != null && v instanceof LiteralString)
+                newval = v;
+            else
+                newval = ef.createLiteralStringInstance();
+            String s = (String)o.get("string");
+            if (s != null)
+                ((LiteralString)newval).setValue(Utils.addHtmlWrapper(s));
             break;
         case LiteralInteger:
-            newval = ef.createLiteralIntegerInstance();
-            ((LiteralInteger)newval).setValue(((Long)o.get("integer")).intValue());
+            if (v != null && v instanceof LiteralInteger)
+                newval = v;
+            else
+                newval = ef.createLiteralIntegerInstance();
+            Long l = (Long)o.get("integer");
+            if (l != null)
+                ((LiteralInteger)newval).setValue(l.intValue());
             break;
         case LiteralBoolean:
-            newval = ef.createLiteralBooleanInstance();
-            ((LiteralBoolean)newval).setValue((Boolean)o.get("boolean"));
+            if (v != null && v instanceof LiteralBoolean)
+                newval = v;
+            else
+                newval = ef.createLiteralBooleanInstance();
+            Boolean b = (Boolean)o.get("boolean");
+            if (b != null)
+                ((LiteralBoolean)newval).setValue(b);
             break;
         case LiteralUnlimitedNatural:
-            newval = ef.createLiteralUnlimitedNaturalInstance();
-            ((LiteralUnlimitedNatural)newval).setValue(((Long)o.get("naturalValue")).intValue());
+            if (v != null && v instanceof LiteralUnlimitedNatural)
+                newval = v;
+            else
+                newval = ef.createLiteralUnlimitedNaturalInstance();
+            Long ll = (Long)o.get("naturalValue");
+            if (ll != null)
+                ((LiteralUnlimitedNatural)newval).setValue(ll.intValue());
             break;
         case LiteralReal:
             Double value;
@@ -484,64 +584,85 @@ public class ImportUtility {
                 value = Double.parseDouble(((Long)o.get("double")).toString());
             else
                 value = (Double)o.get("double");
-
-            newval = ef.createLiteralRealInstance();
-            ((LiteralReal)newval).setValue(value);
+            if (v != null && v instanceof LiteralReal)
+                newval = v;
+            else
+                newval = ef.createLiteralRealInstance();
+            if (value != null)
+                ((LiteralReal)newval).setValue(value);
             break;
         case ElementValue:
             Element find = ExportUtility.getElementFromID((String)o.get("element"));
             if (find == null) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("element") + " not found!");
+                Utils.guilog("Element with id " + o.get("element") + " not found!");
                 break;
             }
-            newval = ef.createElementValueInstance();
+            if (v != null && v instanceof ElementValue)
+                newval = v;
+            else
+                newval = ef.createElementValueInstance();
             ((ElementValue)newval).setElement(find);
             break;
         case InstanceValue:
             Element findInst = ExportUtility.getElementFromID((String)o.get("instance"));
             if (findInst == null) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " not found!");
+            	Utils.guilog("Element with id " + o.get("instance") + " not found!");
                 break;
             }
             if (!(findInst instanceof InstanceSpecification)) {
-                Application.getInstance().getGUILog().log("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
+            	Utils.guilog("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                 break;
             }
-            newval = ef.createInstanceValueInstance();
+            if (v != null && v instanceof InstanceValue)
+                newval = v;
+            else
+                newval = ef.createInstanceValueInstance();
             ((InstanceValue)newval).setInstance((InstanceSpecification)findInst);
             break;
         case Expression:
-            Expression ex = ef.createExpressionInstance();
-            newval = ex;
-            if (!o.containsKey("operand"))
+            if (v != null && v instanceof Expression)
+                newval = v;
+            else
+                newval = ef.createExpressionInstance();
+            if (!o.containsKey("operand") || !(o.get("operand") instanceof JSONArray))
                 break;
+            ((Expression)newval).getOperand().clear();
             for (Object op: (JSONArray)o.get("operand")) {
-                ValueSpecification operand = createValueSpec((JSONObject)op);
+                ValueSpecification operand = createValueSpec((JSONObject)op, null);
                 if (operand != null)
-                    ex.getOperand().add(operand);
+                    ((Expression)newval).getOperand().add(operand);
             }
             break;
         case OpaqueExpression:
-            OpaqueExpression oe = ef.createOpaqueExpressionInstance();
-            newval = oe;
-            if (!o.containsKey("expressionBody"))
+            if (v != null && v instanceof OpaqueExpression)
+                newval = v;
+            else
+                newval = ef.createOpaqueExpressionInstance();
+            if (!o.containsKey("expressionBody") || !(o.get("expressionBody") instanceof JSONArray))
                 break;
+            ((OpaqueExpression)newval).getBody().clear();
             for (Object op: (JSONArray)o.get("expressionBody")) {
                 if (op instanceof String)
-                    oe.getBody().add((String)op);
+                    ((OpaqueExpression)newval).getBody().add((String)op);
             }
             break;
         case TimeExpression:
-            TimeExpression te = ef.createTimeExpressionInstance();
-            newval = te;
+            if (v != null && v instanceof TimeExpression)
+                newval = v;
+            else
+                newval = ef.createTimeExpressionInstance();
             break;
         case DurationInterval:
-            DurationInterval di = ef.createDurationIntervalInstance();
-            newval = di;
+            if (v != null && v instanceof DurationInterval)
+                newval = v;
+            else
+                newval = ef.createDurationIntervalInstance();
             break;
         case TimeInterval:
-            TimeInterval ti = ef.createTimeIntervalInstance();
-            newval = ti;
+            if (v != null && v instanceof TimeInterval)
+                newval = v;
+            else
+                newval = ef.createTimeIntervalInstance();
             break;
         default:
             log.error("Bad PropertyValueType: " + valueType);

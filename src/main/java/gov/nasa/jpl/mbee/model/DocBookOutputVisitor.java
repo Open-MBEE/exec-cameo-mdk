@@ -35,6 +35,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSection;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 
+import java.util.List;
 import java.util.Stack;
 
 public class DocBookOutputVisitor extends AbstractModelVisitor {
@@ -53,6 +54,10 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         this.parent = new Stack<DBHasContent>();
         this.outputDir = outputDir;
     }
+    
+    public Stack<DBHasContent> getParent() {
+    	return parent;
+    }
 
     public DBBook getBook() {
         if (!parent.isEmpty() && parent.get(0) instanceof DBBook)
@@ -62,12 +67,17 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 
     @Override
     public void visit(Query q) {
-        parent.peek().addElements(q.visit(forViewEditor, outputDir));
+        List<DocumentElement> results = q.visit(forViewEditor, outputDir);
+        for (DocumentElement result: results) {
+            result.setDgElement(q);
+        }
+        parent.peek().addElements(results);
     }
 
     @Override
     public void visit(Document doc) {
         DBBook book = new DBBook();
+        book.setDgElement(doc);
         book.setTitle(doc.getTitle());
         if (doc.getTitle() == null || doc.getTitle().equals(""))
             book.setTitle("Default Title");
@@ -104,6 +114,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         if (section.getIgnore())
             return;
         DBSection sec = new DBSection();
+        sec.setDgElement(section);
         sec.setFrom(section.getDgElement());
         sec.isAppendix(section.isAppendix());
         sec.isChapter(section.isChapter());

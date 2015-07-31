@@ -28,17 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.ems.sync.Request;
-import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.model.Document;
-import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -51,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.uml2.uml.AggregationKind;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -63,13 +57,10 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -124,7 +115,7 @@ AnnotationAction, IRuleViolationAction {
                 //}
                 return true;
             } else {
-                Application.getInstance().getGUILog().log("[ERROR] Import hierarchy aborted because view hierarchy isn't editable. Lock it first.");
+                Utils.guilog("[ERROR] Import hierarchy aborted because view hierarchy isn't editable. Lock it first.");
                 return false;
             }
         }
@@ -275,7 +266,12 @@ AnnotationAction, IRuleViolationAction {
                 //Element newview = null;
                 String url = ExportUtility.getUrlWithWorkspace();
                 url += "/elements/" + viewid;
-                String result = ExportUtility.get(url, false);
+                String result = null;
+                try {
+                    result = ExportUtility.get(url, false);
+                } catch (ServerException ex) {
+                    
+                }
                 if (result != null) {
                     JSONObject ob = (JSONObject)JSONValue.parse(result);
                     if (ob != null) {
@@ -285,12 +281,16 @@ AnnotationAction, IRuleViolationAction {
                             newviews.add(viewob);
                         }
                     }
+                } else {
+                    Utils.guilog("[ERROR] View " + viewid + " not found in model and cannot get from server, aborted.");
+                    retval.put("success", false);
+                    return retval;
                 }
             }
         }
         List<JSONObject> sortedNewviews = ImportUtility.getCreationOrder(newviews);
         if (sortedNewviews == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Creating new view(s) failed.");
+            Utils.guilog("[ERROR] Creating new view(s) failed.");
             retval.put("success", false);
             return retval;
         }
@@ -300,7 +300,7 @@ AnnotationAction, IRuleViolationAction {
                 List<Property> viewprops = new ArrayList<Property>();
                 viewId2props.put(newview.getID(), viewprops);
             } else {
-                Application.getInstance().getGUILog().log("[ERROR] Creating new view(s) failed.");
+                Utils.guilog("[ERROR] Creating new view(s) failed.");
                 retval.put("success", false);
                 return retval;
             }

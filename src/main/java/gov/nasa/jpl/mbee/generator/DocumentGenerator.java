@@ -415,6 +415,8 @@ public class DocumentGenerator {
                                 sec.setTitlePrefix(titlePrefix);
                                 sec.setTitleSuffix(titleSuffix);
                                 sec.setDgElement(next);
+                                if (e instanceof Element)
+                                    sec.setLoopElement((Element)e);
                                 parent.addElement(sec);
                                 con = sec;
                             }
@@ -574,6 +576,8 @@ public class DocumentGenerator {
                     sec.setIgnore(ignore);
                     sec.setUseContextNameAsTitle(useContextNameAsTitle);
                     parent.addElement(sec);
+                    if (e instanceof Element)
+                        sec.setLoopElement((Element)e);
                     sections.add(sec);
                     parseActivityOrStructuredNode(cba.getBehavior(), sec);
 
@@ -589,6 +593,7 @@ public class DocumentGenerator {
             sec.setStringIfEmpty(stringIfEmpty);
             sec.setSkipIfEmpty(skipIfEmpty);
             sec.setIgnore(ignore);
+            sec.setDgElement(cba);
             sec.setUseContextNameAsTitle(useContextNameAsTitle);
             parent.addElement(sec);
             sections.add(sec);
@@ -598,7 +603,7 @@ public class DocumentGenerator {
     }
 
     @SuppressWarnings("unchecked")
-    private Object parseQuery(ActivityNode an, Container parent) {
+	public Object parseQuery(ActivityNode an, Container parent) {
         Object result = null;
         String titlePrefix = (String)GeneratorUtils.getObjectProperty(an, DocGen3Profile.templateStereotype,
                 "titlePrefix", "");
@@ -762,6 +767,11 @@ public class DocumentGenerator {
     public GenerationContext getContext() {
         return context;
     }
+    
+    public void setContext(final GenerationContext context) {
+    	this.context = context;
+    }
+    
 
     public Stereotype getProductStereotype() {
         return product;

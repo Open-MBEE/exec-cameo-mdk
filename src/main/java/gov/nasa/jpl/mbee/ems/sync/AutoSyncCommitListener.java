@@ -1,15 +1,12 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,17 +14,16 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
@@ -105,11 +101,6 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 
             for (PropertyChangeEvent event : events) {
 
-                String strTmp = "NULL";
-                if (event != null) {
-                    strTmp = event.toString();
-                }
-
                 // Get the object (e.g. Element) that
                 // contains the change.
                 //
@@ -136,10 +127,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 }
             }
             for (String id: toRemove) {
-                elements.remove(id);
+        		elements.remove(id);
             }
-            if ((!elements.isEmpty() || !deletes.isEmpty()) && auto)
+            if ((!elements.isEmpty() || !deletes.isEmpty()) && auto) {
                 sendChanges();
+            }
         }
 
         @SuppressWarnings("unchecked")
@@ -200,8 +192,9 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             while (cur.getOwner() != null) {
                 cur = cur.getOwner();
             }
-            if (cur != Application.getInstance().getProject().getModel())
+            if (cur != Application.getInstance().getProject().getModel()) {
                 return true;
+            }
             return false;
         }
         
@@ -267,14 +260,28 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 //
                 while (actual instanceof ValueSpecification)
                     actual = actual.getOwner();
-                if (!ExportUtility.shouldAdd(actual))
+                if (!ExportUtility.shouldAdd(actual)) {
+                    if (actual instanceof Constraint && ExportUtility.isViewConstraint((Constraint)actual) ||
+                            actual instanceof Slot && ((Slot)actual).getDefiningFeature() != null && ((Slot)actual).getDefiningFeature().getID().equals("_18_0_2_407019f_1433361787467_278914_14410")) {
+                        Element viewOb = actual.getOwner();
+                        if (actual instanceof Slot)
+                            viewOb = viewOb.getOwner();
+                        elementOb = getElementObject(viewOb);
+                        JSONObject specialization = ExportUtility.fillViewContent(viewOb, null);
+                        elementOb.put("specialization", specialization);
+                        ExportUtility.fillOwner(viewOb, elementOb);
+                    }
                     return;
+                }
                 elementOb = getElementObject(actual);
                 if (actual instanceof Slot || actual instanceof Property) {
-                    JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true);
+                    JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true, true);
                     elementOb.put("specialization", specialization);
-                } if (actual instanceof Constraint) {
+                } else if (actual instanceof Constraint) {
                     JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)actual, null);
+                    elementOb.put("specialization", specialization);
+                } else if (actual instanceof InstanceSpecification) {
+                    JSONObject specialization = ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)actual, null);
                     elementOb.put("specialization", specialization);
                 }
                 ExportUtility.fillOwner(actual, elementOb);
@@ -284,25 +291,37 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             // to handle the case where a value is being deleted.
             //
             else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE))) {
-                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true);
+                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb = getElementObject(sourceElement);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof Slot) && propertyName.equals(PropertyNames.VALUE) && ExportUtility.shouldAdd(sourceElement)) {
                 elementOb = getElementObject(sourceElement);
-                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, false);
+                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb.put("specialization", specialization);
+                ExportUtility.fillOwner(sourceElement, elementOb);
+            }
+            else if ((sourceElement instanceof Class) && propertyName.equals(PropertyNames.OWNED_ATTRIBUTE)) {
+            	elementOb = getElementObject(sourceElement);
+                ExportUtility.fillOwnedAttribute(sourceElement, elementOb);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof Constraint) && propertyName.equals(PropertyNames.SPECIFICATION)) {
-                elementOb = getElementObject(sourceElement);
-                JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)sourceElement, null);
-                elementOb.put("specialization", specialization);
-                ExportUtility.fillOwner(sourceElement, elementOb);
+                if (ExportUtility.isViewConstraint((Constraint)sourceElement)) {
+                    Element viewOb = sourceElement.getOwner();
+                    elementOb = getElementObject(viewOb);
+                    JSONObject specialization = ExportUtility.fillViewContent(viewOb, null);
+                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillOwner(viewOb, elementOb);
+                } else {
+                    elementOb = getElementObject(sourceElement);
+                    JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)sourceElement, null);
+                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillOwner(sourceElement, elementOb);
+                }
             }
-            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)
-                    && ExportUtility.shouldAdd(sourceElement)) {
+            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED) && ExportUtility.shouldAdd(sourceElement)) {
                 if (isDiagramCreated(sourceElement)) {
                     String id = ExportUtility.getElementID(sourceElement);
                     toRemove.add(id);
@@ -311,10 +330,13 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 } else {
                     elementOb = getElementObject(sourceElement, true);
                     ExportUtility.fillElement(sourceElement, elementOb);
+                    if (sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement.getOwner())) { //catch instanceSpec if it wasn't caught before
+                    	elementOb = getElementObject(sourceElement.getOwner(), true);
+                    	ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
+                    }
                 }
             }
-            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)
-                    && ExportUtility.shouldAdd(sourceElement)) {
+            else if (propertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
                 elementID = ExportUtility.getElementID(sourceElement);
                 if (elementID == null)
                     return; //this happens when slot is deleted ARGHHHH
@@ -323,6 +345,19 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()))
                     return; //prevent unneeded deletes
                 
+                deletes.add(elementID);
+                changedElements.remove(elementID);
+                addedElements.remove(elementID);
+                if (!auto)
+                    deletedElements.put(elementID, sourceElement);
+            } 
+            else if (propertyName.equals(UML2MetamodelConstants.BEFORE_DELETE) && sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement)) {
+                elementID = ExportUtility.getElementID(sourceElement);
+                if (elementID == null)
+                    return;
+                elements.remove(elementID);
+                if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()))
+                    return; //prevent unneeded deletes
                 deletes.add(elementID);
                 changedElements.remove(elementID);
                 addedElements.remove(elementID);
@@ -368,13 +403,44 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             } else if (sourceElement instanceof Property && propertyName.equals(PropertyNames.AGGREGATION)) {
-                Association a = ((Property)sourceElement).getAssociation();
-                if (a != null) {
-                    elementOb = getElementObject(a);
-                    JSONObject specialization = ExportUtility.fillAssociationSpecialization(a, null);
+                //Association a = ((Property)sourceElement).getAssociation();
+                //if (a != null) {
+                    elementOb = getElementObject(sourceElement);
+                    JSONObject specialization = ExportUtility.fillPropertySpecialization((Property)sourceElement, null, false, false);
                     elementOb.put("specialization", specialization);
-                    ExportUtility.fillOwner(a, elementOb);
+                    ExportUtility.fillOwner(sourceElement, elementOb);
+                //}
+            } else if (sourceElement instanceof InstanceSpecification && (propertyName.equals(PropertyNames.SPECIFICATION) || propertyName.equals(PropertyNames.CLASSIFIER))) {
+            	if (isDiagramCreated(sourceElement)) {
+                    String id = ExportUtility.getElementID(sourceElement);
+                    toRemove.add(id);
+                    diagramElements.add(id);
+                    diagramElements.add(sourceElement.getID());
                 }
+            	else {
+	            	elementOb = getElementObject(sourceElement);
+	                JSONObject specialization = ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)sourceElement, null);
+	                elementOb.put("specialization", specialization);
+	                ExportUtility.fillOwner(sourceElement, elementOb);
+            	}
+            } else if (propertyName.equals( "APPLIED_STEREOTYPES" ) && ExportUtility.shouldAdd(sourceElement)) {
+            	if (isDiagramCreated(sourceElement)) {
+                    String id = ExportUtility.getElementID(sourceElement);
+                    toRemove.add(id);
+                    diagramElements.add(id);
+                    diagramElements.add(sourceElement.getID());
+                }
+            	else {
+	            	// this triggers on creation or modification of an applied stereotype
+		                // APPLIED_STEREOTYPE_INSTANCE and STEREOTYPED_ELEMENT occur on create
+	                elementID = ExportUtility.getElementID(sourceElement);
+	                if (elementID == null)
+	                    return;
+	                elementOb = getElementObject(sourceElement);
+	                ExportUtility.fillMetatype( sourceElement, elementOb );
+	                ExportUtility.fillOwner( sourceElement, elementOb );
+	                changedElements.put(elementID, sourceElement);
+            	}
             }
         }
     }

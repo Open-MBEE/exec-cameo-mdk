@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ViewExportRunner;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
@@ -41,7 +40,6 @@ import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -52,10 +50,7 @@ import java.io.FileInputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
@@ -68,18 +63,15 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportView extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element view;
     private boolean recurse;
-    private GUILog gl = Application.getInstance().getGUILog();
+    //private GUILog gl = Application.getInstance().getGUILog();
     private String url;
     private String sendElementsUrl;
     private boolean exportElements;
@@ -174,7 +166,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         //if (document)
         //    visitor2 = new DBAlfrescoVisitor(true);
         //else
-        visitor2 = new DBAlfrescoVisitor(recurse);
+        visitor2 = new DBAlfrescoVisitor(recurse, true);
         book.accept(visitor2);
         /*int numElements = visitor2.getNumberOfElements();
         if (numElements > 10000) {
@@ -224,14 +216,14 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 spec.put("type", "Product");
             }
         }*/
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size()));
         //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
         //    return false;
         
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
-        gl.log("[INFO] Updating Images...");
+        Utils.guilog("[INFO] Updating Images...");
         Map<String, JSONObject> images = visitor2.getImages();
         boolean isAlfresco = true;
         for (String key: images.keySet()) {
@@ -249,8 +241,8 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             int status = 0;
             try {
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, baseurl);
-                gl.log("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
+                ViewEditUtils.setCredentials(client, baseurl, get);
+                Utils.guilog("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
                 client.executeMethod(get);
 
                 status = get.getStatusCode();
@@ -261,7 +253,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             }
 
             if (status == HttpURLConnection.HTTP_OK) {
-                gl.log("[INFO] Image file already exists, not uploading");
+                Utils.guilog("[INFO] Image file already exists, not uploading");
             } else {
                 PostMethod post = new PostMethod(posturl);
                 try {
@@ -275,12 +267,12 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                     OutputQueue.getInstance().offer(new Request(posturl, post));
                     //HttpClient client = new HttpClient();
                     //ViewEditUtils.setCredentials(client, baseurl);
-                    gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
+                    Utils.guilog("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
                     //client.executeMethod(post);
 
                     //status = post.getStatusCode();
                     //if (status != HttpURLConnection.HTTP_OK) {
-                    //    gl.log("[ERROR] Could not upload image file to view editor");
+                    //    Utils.guilog("[ERROR] Could not upload image file to view editor");
                     //}
                 } catch (Exception ex) {
                     //printStackTrace(ex, gl);
@@ -292,7 +284,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         //OutputQueue.getInstance().offer(new Request("", "[INFO] Export View Done", "LOG"));
         // clean up the local images
         //visitor2.removeImages();
-        //gl.log("[INFO] Done");
+        //Utils.guilog("[INFO] Done");
         if (document) {//&& recurse) {
             //String docurl = url + "/javawebscripts/products";
             /*send = new JSONObject();

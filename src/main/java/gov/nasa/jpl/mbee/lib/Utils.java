@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.lib;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
@@ -50,6 +52,7 @@ import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Frame;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -66,14 +69,16 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+import javax.swing.JTabbedPane;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -82,10 +87,8 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
-import com.nomagic.magicdraw.ui.dialogs.SelectElementDlg;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
-import com.nomagic.magicdraw.ui.dialogs.SelectElementsDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.uml.BaseElement;
@@ -116,6 +119,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -145,6 +149,10 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam 
  */
 public class Utils {
+	
+    public static final int[] TABBED_PANE_INDICES = { 1, 0, 0, 0, 1, 0, 0, 1, 1 };
+    // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);
+	
     private Utils() {
     }
 
@@ -1782,8 +1790,9 @@ public class Utils {
      * @return the element at the top of the MagicDraw containment tree
      */
     public static Package getRootElement() {
-        Package root = Application.getInstance().getProject().getModel();
-        return root;
+    	return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
+        //Package root = Application.getInstance().getProject().getModel();
+        //return root;
     }
 
     public static List<Package> getPackagesOfType(String typeName) {
@@ -2032,6 +2041,45 @@ public class Utils {
         return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Expose");
     }
     
+    public static Classifier getOpaqueParaClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueParagraph");
+    }
+    
+    public static Classifier getOpaqueTableClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueTable");
+    }
+
+    public static Classifier getOpaqueListClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueList");
+    }
+    
+    public static Classifier getOpaqueImageClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueImage");
+    }
+
+    public static Classifier getSectionClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection");
+    }
+
+    public static Stereotype getPresentsStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents");
+    }
+    
+    public static Property getGeneratedFromViewProperty() {
+        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView");
+    }
+    
+    public static Property getGeneratedFromElementProperty() {
+        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section::generatedFromElement");
+    }
+    
+    public static Constraint getViewConstraint(Element view) {
+        for (Element e: view.getOwnedElement()) {
+            if (e instanceof Constraint)
+                return (Constraint)e;
+        }
+        return null;
+    }
     /********************************************* User interaction ****************************************************/
 
     /**
@@ -2041,7 +2089,12 @@ public class Utils {
         //SwingUtilities.invokeLater(new Runnable() {
         //    @Override
         //    public void run() {
-                Application.getInstance().getGUILog().log(s);
+    	// second parameter used as a quickfix to prevent log from stealing focus during auto-sync
+    	AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
+    	boolean auto = false;
+    	if (listener != null && listener.isAuto())
+    		auto = true;
+        Application.getInstance().getGUILog().log(s, !auto || !s.startsWith("[INFO]"));
         //    }
         //});
     }
@@ -2087,6 +2140,24 @@ public class Utils {
             return z.getSelected();
         return null;
         */
+    }
+    
+    public static ElementSelectionDlg disableSingleSelection(final ElementSelectionDlg dlg) {
+		Container c = dlg.getContentPane();
+		for (final int i : TABBED_PANE_INDICES) {
+			if (c.getComponents().length <= i || !(c.getComponents()[i] instanceof Container)) {
+				break;
+			}
+			c = (Container) c.getComponents()[i];
+		}
+		if (c instanceof JTabbedPane) {
+			final JTabbedPane jtp = (JTabbedPane) c;
+			if (jtp.getTabCount() >= 2) {
+				jtp.setSelectedIndex(1);
+				jtp.setEnabledAt(0, false);
+			}
+		}
+		return dlg;
     }
 
     /**
@@ -2192,6 +2263,14 @@ public class Utils {
         JOptionPane.showMessageDialog(null, message);
     }
 
+    public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons) {
+        int res = JOptionPane.showOptionDialog(null, question, "Choose", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
+        if (res == JOptionPane.YES_OPTION)
+            return true;
+        if (res == JOptionPane.NO_OPTION)
+            return false;
+        return null;
+    }
     /**
      * 
      * @param question
@@ -2305,6 +2384,12 @@ public class Utils {
         }
 
         return results;
+    }
+    
+    public static void displayValidationWindow(ValidationSuite vs, String title) {
+    	final List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    	vss.add(vs);
+    	displayValidationWindow(vss, title);
     }
 
     public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
@@ -2642,6 +2727,8 @@ public class Utils {
                     return ((Property)elem).getDefaultValue();
                 } else if (elem instanceof Slot) {
                     return ((Slot)elem).getValue();
+                } else if (elem instanceof Constraint) {
+                	return ((Constraint)elem).getSpecification();
                 }
             default:
                 return null;
@@ -3460,7 +3547,7 @@ public class Utils {
             if (o instanceof Integer || o instanceof String || o instanceof Double || o instanceof Float
                     || o instanceof Boolean || o instanceof LiteralInteger || o instanceof LiteralString
                     || o instanceof LiteralUnlimitedNatural || o instanceof LiteralReal
-                    || o instanceof LiteralBoolean)
+                    || o instanceof LiteralBoolean || o instanceof OpaqueExpression)
                 return true;
         }
         return false;
@@ -3473,5 +3560,20 @@ public class Utils {
         Application.getInstance().getGUILog().log(sw.toString()); // stack trace as a string
         ex.printStackTrace();
     }
+    
+    public static boolean jsonArraySetDiff(JSONArray a, JSONArray b) {
+    	if (a != null && b != null) {
+    		Set as = new HashSet();
+    		Set bs = new HashSet();
+    		as.addAll(a);
+    		bs.addAll(b);
+    		if (as.equals(bs))
+    			return true;
+    		return false;
+    	}
+    	if (a == b)
+    		return true;
+    	return false;
+    	}
 
 }

@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.generator;
 
 import gov.nasa.jpl.mbee.model.Container;
+import gov.nasa.jpl.mbee.model.DocGenElement;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.Section;
 
@@ -96,6 +97,10 @@ public class ProductViewParser {
             Section chapter1 = dg.parseView(start);
             top = chapter1;
             doc.addElement(chapter1);
+        } else {
+            Section s = dg.parseView(start);
+            for (DocGenElement e: s.getChildren())
+                top.addElement(e);
         }
         if (!singleView || recurse)
             handleViewChildren(start, top);
