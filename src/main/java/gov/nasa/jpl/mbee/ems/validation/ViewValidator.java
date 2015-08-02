@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee.ems.validation;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
+import gov.nasa.jpl.mbee.ems.validation.actions.CompareHierarchy;
 import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
@@ -313,11 +314,14 @@ public class ViewValidator {
                         JSONObject keyed = new JSONObject();
                         if (view2view != null) {
                             keyed = ExportUtility.keyView2View(view2view);
+                            v.addAction(new CompareHierarchy(currentView, keyed, vhv.getView2View()));
                             v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
                         }
-                        JSONObject modelData = JSONUtils.nest(vhv.getView2View());
-                        JSONObject webData = JSONUtils.nest(keyed);
-                        v.addAction(new DetailDiff(modelData, webData));
+                        //JSONObject modelData = JSONUtils.nest(vhv.getView2View());
+                        //JSONObject webData = JSONUtils.nest(keyed);
+                        //v.addAction(new DetailDiff(modelData, webData));
+                        //cann't use detail diff since it randomizes order of children
+                        
                         hierarchy.addViolation(v);
                     }
                 }
