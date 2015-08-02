@@ -50,7 +50,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
     private String id;
 
     public DeleteAlfrescoElement(String id, Map<String, JSONObject> elementsKeyed) {
-        super("DeleteElement", "3 Delete Alfresco element", null, null);
+        super("DeleteElement", "3 Delete MMS element", null, null);
         this.elementsKeyed = elementsKeyed;
         this.id = id;
     }
@@ -87,7 +87,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
             }
         }
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", true, annos.size()));
+        OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", true, annos.size(), "Element"));
         //saySuccess();
         //this.removeViolationsAndUpdateWindow(toremove);
     }
@@ -101,11 +101,5 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
         //String result = ExportUtility.delete(url);
         Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, "{}", "DELETE", true));
-        /*if (result != null) {
-            saySuccess();
-            this.removeViolationAndUpdateWindow();
-        } else {
-            //error
-        }*/
     }
 }

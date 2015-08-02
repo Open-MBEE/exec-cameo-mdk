@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee;
 import java.util.ArrayList;
 import java.util.List;
 
+import gov.nasa.jpl.mbee.actions.systemsreasoner.AspectAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecifyAction;
@@ -22,6 +23,7 @@ import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
 import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
@@ -34,7 +36,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 	
 	public static final String NAME = "Systems Reasoner";
 	
-	private SRAction validateAction = null, specAction = null, despecAction = null, createSpecificAction = null, instance2BSTAction = null, createInstanceMenuAction = null;
+	private SRAction validateAction = null, specAction = null, despecAction = null, createSpecificAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction;
 	
     @Override
     public int getPriority() {
@@ -73,6 +75,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	createSpecificAction = null;
     	createInstanceMenuAction = null;
     	instance2BSTAction = null;
+    	aspectAction = null;
     	
         ActionsCategory category = (ActionsCategory)manager.getActionFor("SRMain");
         if (category == null) {
@@ -104,6 +107,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	category.addAction(createSpecificAction);
     	category.addAction(createInstanceMenuAction);
     	category.addAction(instance2BSTAction);
+    	category.addAction(aspectAction);
     	
     	//System.out.println("Instance2BST: " + instance2BSTAction.getClass().getCanonicalName());
         
@@ -186,6 +190,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 			if (!hasGeneralization) {
 				despecAction.disable("No Generalizations");
 			}
+			aspectAction = new AspectAction(classifiers);
 		}
 		
 		if (!instances.isEmpty()) {
@@ -218,6 +223,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         	//copyAction = new CopyAction(clazz);
         	createSpecificAction = new CreateSpecificAction(classifier);
         	createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
+        	aspectAction = new AspectAction(classifier);
         	
         	if (despecAction != null && classifier.getGeneralization().isEmpty()) {
         		despecAction.disable("No Generalizations");

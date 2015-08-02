@@ -31,6 +31,8 @@ package gov.nasa.jpl.mbee.ems.validation;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
+import gov.nasa.jpl.mbee.ems.validation.actions.CompareHierarchy;
+import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
@@ -42,6 +44,7 @@ import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.JSONUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
@@ -308,10 +311,17 @@ public class ViewValidator {
                         JSONArray view2view = (JSONArray)((JSONObject)webView.get("specialization")).get("view2view");
                         if (editable)
                             v.addAction(new ExportHierarchy(currentView));
+                        JSONObject keyed = new JSONObject();
                         if (view2view != null) {
-                            JSONObject keyed = ExportUtility.keyView2View(view2view);
+                            keyed = ExportUtility.keyView2View(view2view);
+                            v.addAction(new CompareHierarchy(currentView, keyed, vhv.getView2View()));
                             v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
                         }
+                        //JSONObject modelData = JSONUtils.nest(vhv.getView2View());
+                        //JSONObject webData = JSONUtils.nest(keyed);
+                        //v.addAction(new DetailDiff(modelData, webData));
+                        //cann't use detail diff since it randomizes order of children
+                        
                         hierarchy.addViolation(v);
                     }
                 }

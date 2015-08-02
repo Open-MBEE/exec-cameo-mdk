@@ -11,6 +11,8 @@ public class Request {
     private PostMethod pm = null;
     private boolean suppressGui = false;
     private int wait = 60000;
+    private String type = "Element";
+    private int numElements = 1;
     
     public Request(String url, String json, String method, boolean feedback) {
         this.url = url;
@@ -20,35 +22,35 @@ public class Request {
         this.suppressGui = !feedback;
     }
     
-    public Request(String url, String json, String method, boolean feedback, int wait) {
+    public Request(String url, String json, String method, boolean feedback, int wait, String type) {
         this.url = url;
         this.json = json;
         this.method = method;
         this.feedback = feedback;
         this.suppressGui = !feedback;
         this.wait = wait*1000 + 120000;
+        this.type = type;
+        this.numElements = wait;
     }
     
-    public Request(String url, String json, String method) {
+    public Request(String url, String json, String type) {
         this.url = url;
         this.json = json;
-        this.method = method;
+        this.type = type;
     }
     
-    public Request(String url, String json) {
-        this.url = url;
-        this.json = json;
-    }
-    
-    public Request(String url, String json, int wait) {
+    public Request(String url, String json, int wait, String type) {
         this.url = url;
         this.json = json;
         this.wait = wait*1000 + 120000;
+        this.type = type;
+        this.numElements = wait;
     }
     
-    public Request(String url, PostMethod pm) {
+    public Request(String url, PostMethod pm, String type) {
         this.pm = pm;
         this.url = url;
+        this.type = type;
     }
     
     public Request() {}
@@ -104,6 +106,22 @@ public class Request {
         this.wait = wait;
     }
     
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public int getNumElements() {
+        return numElements;
+    }
+
+    public void setNumElements(int numElements) {
+        this.numElements = numElements;
+    }
+
     @Override
     public String toString() {
         String s = "";

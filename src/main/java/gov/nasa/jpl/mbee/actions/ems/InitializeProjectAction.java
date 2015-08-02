@@ -66,6 +66,6 @@ public class InitializeProjectAction extends MDAction {
         }
         url += "/projects";
         Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, json));
+        OutputQueue.getInstance().offer(new Request(url, json, "Init Project"));
     }
 }

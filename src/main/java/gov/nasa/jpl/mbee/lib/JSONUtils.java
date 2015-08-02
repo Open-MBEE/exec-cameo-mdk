@@ -1,10 +1,22 @@
 package gov.nasa.jpl.mbee.lib;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.collections.iterators.ReverseListIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import com.nomagic.magicdraw.core.Application;
 
 public class JSONUtils {
 
@@ -151,6 +163,76 @@ public class JSONUtils {
 		}
 
 		return ret;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static JSONObject nest(final JSONObject json) {
+		System.out.println(json.toJSONString());
+		if (json == null) {
+			return null;
+		}
+		if (json.isEmpty()) {
+			return new JSONObject();
+		}
+		
+		final JSONObject result = new JSONObject();
+		
+		final Map<Object, JSONObject> cache = new LinkedHashMap<Object, JSONObject>();
+		final Set<Map.Entry<Object, Object>> s = ((Set<Map.Entry<Object, Object>>) json.entrySet());
+		final List<Map.Entry<Object, Object>> entries = new ArrayList<Map.Entry<Object, Object>>(s);
+		while (!entries.isEmpty()) {
+			final ListIterator<Map.Entry<Object, Object>> li = entries.listIterator();
+			while (li.hasNext()) {
+				final Map.Entry<Object, Object> entry = li.next();
+				final JSONObject children = new JSONObject();
+				if (entry.getValue() instanceof JSONArray) {
+					final JSONArray array = (JSONArray) entry.getValue();
+					boolean success = true;
+					for (final Object o : array) {
+						if (!cache.containsKey(o)) {
+							success = false;
+							break;
+						}
+						children.put(o, cache.get(o));
+					}
+					if (!success) {
+						continue;
+					}
+					result.clear();
+					result.put(entry.getKey(), children);
+					cache.putAll(result);
+					li.remove();
+				}
+			}
+		}
+		System.out.println(result.toJSONString());
+		return result;
+		
+		// Cool algorithm to efficiently build the tree structure. Unfortunately cannot use because it is not safe to assume sorting.
+		
+		/*
+		JSONObject result = new JSONObject();
+		
+		final Map<Object, JSONObject> cache = new LinkedHashMap<Object, JSONObject>();
+		final Set<Map.Entry<Object, Object>> s = ((Set<Map.Entry<Object, Object>>) json.entrySet());
+		final List<Map.Entry<Object, Object>> entries = new ArrayList<Map.Entry<Object, Object>>(s);
+		final ListIterator<Map.Entry<Object, Object>> li = new ReverseListIterator(entries);
+		while (li.hasNext()) {
+			//Application.getInstance().getGUILog().log("GOT HERE DOE");
+			final Map.Entry<Object, Object> entry = li.next();
+			final JSONObject children = new JSONObject();
+			if (entry.getValue() instanceof JSONArray) {
+				final JSONArray array = (JSONArray) entry.getValue();
+				for (final Object o : array) {
+					children.put(o, cache.get(o));
+				}
+			}
+			result.clear();
+			result.put(entry.getKey(), children);
+			cache.putAll(result);
+		}
+		return result;
+		*/
 	}
 
 }

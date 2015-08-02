@@ -368,7 +368,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             //do foreground?
             if (!toSendElements.isEmpty()) {
             	Utils.guilog("[INFO] Change requests are added to queue.");
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true, toSendElements.size()));
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true, toSendElements.size(), "Sync Changes"));
             }
             localAdded.clear();
             localChanged.clear();
@@ -384,7 +384,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             toSendUpdates.put("elements", toDeleteElements);
             if (!toDeleteElements.isEmpty()) {
             	Utils.guilog("[INFO] Delete requests are added to queue.");
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size()));
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));
             }
             localDeleted.clear();
             if (toDeleteElements.isEmpty() && toSendElements.isEmpty())

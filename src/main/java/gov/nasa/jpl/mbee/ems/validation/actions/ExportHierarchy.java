@@ -124,7 +124,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             //if (ExportUtility.send(docurl, send.toJSONString()) == null)
             //    return false;
             Utils.guilog("[INFO] Request is added to queue.");
-            OutputQueue.getInstance().offer(new Request(docurl, send.toJSONString()));
+            OutputQueue.getInstance().offer(new Request(docurl, send.toJSONString(), "Hierarchy"));
         } else {
             JSONArray views = new JSONArray();
             for (Object viewid: view2view.keySet()) {
@@ -141,7 +141,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             //if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
             //    return false;
             Utils.guilog("[INFO] Request is added to queue.");
-            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString()));
+            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "Hierarchy"));
         }
         return true;
         

@@ -28,9 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.Collection;
@@ -39,8 +42,8 @@ import java.util.Map;
 
 import javax.swing.KeyStroke;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -163,5 +166,20 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
         }
         if (listener != null)
             listener.enable();
+    }
+    
+    @SuppressWarnings("unchecked")
+    public void commit(JSONArray elements, String type) {
+        JSONObject send = new JSONObject();
+        send.put("elements", elements);
+        send.put("source", "magicdraw");
+        
+        String url = ExportUtility.getPostElementsUrl();
+        if (url == null) {
+            return;
+        }
+        
+        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), type));
     }
 }
