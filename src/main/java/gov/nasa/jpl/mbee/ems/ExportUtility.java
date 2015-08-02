@@ -1616,7 +1616,7 @@ public class ExportUtility {
         if (!url.contains("master"))
             url += "?createSite=true";
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
     }
     
@@ -1633,7 +1633,7 @@ public class ExportUtility {
         if (!url.contains("master"))
             url += "?createSite=true";
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
     }
 

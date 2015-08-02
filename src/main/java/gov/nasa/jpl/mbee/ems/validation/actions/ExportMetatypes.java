@@ -29,19 +29,13 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
-import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -53,8 +47,6 @@ public class ExportMetatypes extends RuleViolationAction implements AnnotationAc
 	private Element element;
 
 	public ExportMetatypes(Element e) {
-		//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-		//
 		super("ExportMetatype", "Commit metatypes", null, null);
 		this.element = e;
 	}
@@ -63,51 +55,23 @@ public class ExportMetatypes extends RuleViolationAction implements AnnotationAc
 	public boolean canExecute(Collection<Annotation> arg0) {
 		return true;
 	}
-	
-	@SuppressWarnings("unchecked")
-	public void commit(JSONArray elements) {
-		
-		JSONObject send = new JSONObject();
-		send.put("elements", elements);
-		send.put("source", "magicdraw");
-		
-		String url = ExportUtility.getPostElementsUrl();
-		if (url == null) {
-			return;
-		}
-		
-		Utils.guilog("[INFO] Request is added to queue.");
-		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size()));
-	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void execute(Collection<Annotation> annos) {
-		Set<Element> set = new HashSet<Element>();
-		
 		JSONArray elements = new JSONArray();
 		for (Annotation anno : annos) {
 			Element e = (Element)anno.getTarget();
-			set.add(e);
 			elements.add(ExportUtility.fillMetatype(e, null));
 		}
-		
-		if (!ExportUtility.okToExport(set))
-			return;
-		
-		commit(elements);
-
+		commit(elements, "Metatype");
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (!ExportUtility.okToExport(element))
-			return;
-		
 		JSONArray elements = new JSONArray();
 		elements.add(ExportUtility.fillMetatype(element, null));
-	
-		commit(elements);
+		commit(elements, "Metatype");
 	}
 }

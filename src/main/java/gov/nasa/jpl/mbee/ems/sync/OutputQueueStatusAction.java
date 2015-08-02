@@ -38,7 +38,8 @@ public class OutputQueueStatusAction extends SRAction {
 	}
 	
 	public void update(final boolean plusOne) {
-		setName(OutputQueueStatusAction.NAME + ": " + (OutputQueue.getInstance().size() + (plusOne ? 1 : 0)));
+	    boolean haveCurrent = OutputQueue.getInstance().getCurrent() != null;
+		setName(OutputQueueStatusAction.NAME + ": " + (OutputQueue.getInstance().size() + (haveCurrent ? 1 : 0)));
 		if (outputQueueDetailWindow.isVisible()) {
 			outputQueueDetailWindow.update();
 		}
@@ -62,6 +63,8 @@ public class OutputQueueStatusAction extends SRAction {
 		{
 			columns.addElement("#");
 			columns.addElement("Method");
+			columns.addElement("# Elements");
+			columns.addElement("Type");
 			columns.addElement("URL");
 		}
 		
@@ -79,7 +82,9 @@ public class OutputQueueStatusAction extends SRAction {
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 			table.getColumnModel().getColumn(0).setPreferredWidth(20);
 			table.getColumnModel().getColumn(1).setPreferredWidth(100);
-			table.getColumnModel().getColumn(2).setPreferredWidth(370);
+			table.getColumnModel().getColumn(2).setPreferredWidth(100);
+			table.getColumnModel().getColumn(3).setPreferredWidth(200);
+			table.getColumnModel().getColumn(4).setPreferredWidth(370);
 			
 			final JScrollPane tableScrollPane = new JScrollPane(table);
 			tableScrollPane.setPreferredSize(new Dimension(500, 200));
@@ -95,7 +100,17 @@ public class OutputQueueStatusAction extends SRAction {
 			//final Vector<Vector<Object>> data = new Vector<Vector<Object>>();
 			data.clear();
 			final Iterator<Request> it = OutputQueue.getInstance().iterator();
+			Request current = OutputQueue.getInstance().getCurrent();
 			int counter = 1;
+			if (current != null) {
+			    final Vector<Object> row = new Vector<Object>();
+                row.addElement(0);
+                row.addElement(current.getMethod());
+                row.addElement(current.getNumElements());
+                row.addElement(current.getType());
+                row.addElement(current.getUrl());
+                data.addElement(row);
+			}
 			while (it.hasNext()) {
 				final Request r = it.next();
 				if (r == null) {
@@ -105,6 +120,8 @@ public class OutputQueueStatusAction extends SRAction {
 				final Vector<Object> row = new Vector<Object>();
 				row.addElement(counter);
 				row.addElement(r.getMethod());
+				row.addElement(r.getNumElements());
+				row.addElement(r.getType());
 				row.addElement(r.getUrl());
 				
 				data.addElement(row);
@@ -116,6 +133,7 @@ public class OutputQueueStatusAction extends SRAction {
 				((AbstractTableModel) table.getModel()).fireTableStructureChanged();
 			}*/
 			table.repaint();
+			this.setAlwaysOnTop(true);
 			//tableModel.fireTableDataChanged();
 		}
 		

@@ -6,6 +6,7 @@ import javax.swing.SwingUtilities;
 
 public class OutputQueue extends LinkedBlockingQueue<Request> {
     private final static OutputQueue instance = new OutputQueue();
+    private Request current = null;
     private OutputQueue() {
         super();
     }
@@ -24,5 +25,13 @@ public class OutputQueue extends LinkedBlockingQueue<Request> {
     
     public static OutputQueue getInstance() {
         return instance;
+    }
+    
+    public void setCurrent(Request r) {
+        this.current = r;
+    }
+    
+    public Request getCurrent() {
+        return current;
     }
 }
