@@ -106,9 +106,11 @@ public class CompareHierarchy extends RuleViolationAction implements
         }
 
         JTabbedPane webPane = new JTabbedPane();
-        webPane.add("Web", web);
+        JScrollPane swebPane = new JScrollPane(web);
+        webPane.add("Web", swebPane);
         JTabbedPane modelPane = new JTabbedPane();
-        modelPane.add("Model", model);
+        JScrollPane smodelPane = new JScrollPane(model);
+        modelPane.add("Model", smodelPane);
 
         JPanel modelPanel = new JPanel();
         modelPanel.setLayout(new BoxLayout(modelPanel, BoxLayout.Y_AXIS));
