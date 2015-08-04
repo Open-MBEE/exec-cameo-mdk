@@ -84,6 +84,7 @@ public class DocGenPlugin extends Plugin {
         System.setProperty ("jsse.enableSNIExtension", "false");
         DocGenConfigurator dgc = new DocGenConfigurator();
         acm.addContainmentBrowserContextConfigurator(dgc);
+        acm.addSearchBrowserContextConfigurator(dgc);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, dgc);
         //acm.addBaseDiagramContextConfigurator("Class Diagram", dgc);
         //acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
@@ -95,6 +96,7 @@ public class DocGenPlugin extends Plugin {
         EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
         
         SRConfigurator srconfig = new SRConfigurator();
+        acm.addSearchBrowserContextConfigurator(srconfig);
         acm.addContainmentBrowserContextConfigurator(srconfig);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srconfig);
         
