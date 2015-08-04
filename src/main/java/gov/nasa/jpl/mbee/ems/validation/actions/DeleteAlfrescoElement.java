@@ -50,7 +50,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
     private String id;
 
     public DeleteAlfrescoElement(String id, Map<String, JSONObject> elementsKeyed) {
-        super("DeleteElement", "3 Delete MMS element", null, null);
+        super("DeleteElement", "Delete MMS element", null, null);
         this.elementsKeyed = elementsKeyed;
         this.id = id;
     }

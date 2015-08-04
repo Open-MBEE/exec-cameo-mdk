@@ -370,9 +370,9 @@ public class ModelValidator {
             if (!elementsKeyed.containsKey(e.getID())) {
                 ValidationRuleViolation v = null;
                 if (deletedOnMMS.contains(ExportUtility.getElementID(e)))
-                    v = new ValidationRuleViolation(e, "[1 EXIST] This have been deleted on MMS");
+                    v = new ValidationRuleViolation(e, "[EXIST] This have been deleted on MMS");
                 else
-                    v = new ValidationRuleViolation(e, "[1 EXIST] This doesn't exist on MMS");
+                    v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS");
                 if (!crippled) {
                     v.addAction(new ExportElement(e));
                     v.addAction(new DeleteMagicDrawElement(e));
@@ -420,9 +420,9 @@ public class ModelValidator {
                     existname = "(no name)";
                 existname.replace('`', '\'');
                 if (listener == null || (!listener.getDeletedElements().containsKey(elementsKeyedId) && !deletedLocally.contains(elementsKeyedId)))
-                    v = new ValidationRuleViolation(e, "[1 EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but not in Magicdraw");
+                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but not in Magicdraw");
                 else
-                    v = new ValidationRuleViolation(e, "[1 EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted from magicdraw");
+                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted from magicdraw");
                 if (!crippled) {
                     v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
                     v.addAction(new ElementDetail(jSONobject));
@@ -686,7 +686,7 @@ public class ModelValidator {
                 Element owner = null;
                 if (webOwnerID != null)
                     owner = (Element)prj.getElementByID(webOwnerID);
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[2 OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? "null" : owner.getHumanName()));
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? "null" : owner.getHumanName()));
                 if (!crippled) {
                     if (editable)
                         v.addAction(new ExportOwner(e));
@@ -1249,7 +1249,7 @@ public class ModelValidator {
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);
-        Utils.guilog("[INFO] Showing validations...Please resolve errors marked 1, 2, or 3 in the validation messages and actions first.");
+        Utils.guilog("[INFO] Showing validations...");
         Utils.displayValidationWindow(vss, "Model Web Difference Validation");
     }
     

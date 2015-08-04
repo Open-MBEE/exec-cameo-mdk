@@ -54,7 +54,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
     private boolean multipleSuccess = true;
     
     public CreateMagicDrawElement(JSONObject ob, Map<String, JSONObject> elementsKeyed) {
-        super("CreateMagicDrawElement", "1 Create MagicDraw element", null, null);
+        super("CreateMagicDrawElement", "Create MagicDraw element", null, null);
         this.ob = ob;
         this.elementsKeyed = elementsKeyed;
     }

@@ -53,7 +53,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
     private Element element;
 
     public ExportElement(Element e) {
-        super("ExportElement", "1 Commit element", null, null);
+        super("ExportElement", "Commit element", null, null);
         this.element = e;
     }
     

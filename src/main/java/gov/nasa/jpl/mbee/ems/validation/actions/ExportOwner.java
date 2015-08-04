@@ -47,7 +47,7 @@ public class ExportOwner extends RuleViolationAction implements AnnotationAction
     private Element element;
     
     public ExportOwner(Element e) {
-        super("ExportOwner", "2 Commit owner", null, null);
+        super("ExportOwner", "Commit owner", null, null);
         this.element = e;
     }
     
