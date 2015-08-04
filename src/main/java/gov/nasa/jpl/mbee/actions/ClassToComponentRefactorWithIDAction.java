@@ -43,6 +43,8 @@ public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
         SessionManager sessionManager = SessionManager.getInstance();
         sessionManager.createSession("Convert Class To Component");
         for (Element element: elements) {
+            if (!(element instanceof Class))
+                continue;
             String elementID = element.getID();
 
             

@@ -43,6 +43,8 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
         sessionManager.createSession("Convert Component To Class");
         
         for (Element element: elements) {
+            if (!(element instanceof Component))
+                continue;
             String elementID = element.getID();
             // Converts the element to an interface.
             ConvertElementInfo info = new ConvertElementInfo(
