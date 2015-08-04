@@ -173,11 +173,11 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");       
         if(e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)){
             if (manager.getActionFor(ClassToComponentRefactorWithIDAction.actionid) == null)
-                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(e));   
+                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(es));   
         }
         if(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component){
             if (manager.getActionFor(ComponentToClassRefactorWithIDAction.actionid) == null)
-                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(e));   
+                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(es));   
         }
         //manager.addCategory(refactorWithIDActionCat);
 
