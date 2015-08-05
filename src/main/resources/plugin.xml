@@ -13,7 +13,7 @@
 	<runtime>
 	   <library name="DocGen-plugin.jar"/>
 	   <library name="lib/jsoup-1.6.1.jar"/>
-	<!--   <library name="lib/jgrapht-0.8.3-jdk1.6.jar"/> -->
+	   <library name="lib/jgrapht-0.8.3-jdk1.6.jar"/>
 	   <library name="lib/json_simple-1.1.jar"/>
 	   <library name="lib/opencsv-2.3.jar"/>
 	   <library name="lib/swingx-all-1.6.4.jar"/>
