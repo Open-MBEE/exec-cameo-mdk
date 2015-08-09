@@ -137,7 +137,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             if (cancelSession) {
                 SessionManager.getInstance().cancelSession();
-                Utils.guilog("[ERROR] View Generation canceled because some updated elements are not editable. See validation window.");
+                Utils.guilog("[ERROR] View Generation canceled because some elements that require updates are not editable. See validation window.");
             } else {
                 SessionManager.getInstance().closeSession();
                 Utils.guilog("[INFO] View Generation completed.");
@@ -272,7 +272,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 //check if this really needs to be edited
                 boolean needEdit = false;
                 ValueSpecification oldvs = is.getSpecification();
-                if (pe.getNewspec() != null) {
+                if (pe.getNewspec() != null && !pe.getNewspec().get("type").equals("Section")) {
                     if (oldvs instanceof LiteralString && ((LiteralString)oldvs).getValue() != null) {
                         JSONObject oldob = (JSONObject)JSONValue.parse(((LiteralString)oldvs).getValue());
                         if (!oldob.equals(pe.getNewspec()))
@@ -283,6 +283,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (needEdit) {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[NOT EDITABLE (CONTENT)] This presentation element instance can't be updated.");
                     uneditableContent.addViolation(vrv);
+                    cancelSession = true;
                 }
             }
             InstanceValue iv = ef.createInstanceValueInstance();
