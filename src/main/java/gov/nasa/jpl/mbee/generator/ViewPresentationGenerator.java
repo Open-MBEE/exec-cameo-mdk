@@ -280,6 +280,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     } else
                         needEdit = true;
                 }
+                if (is.getOwner() != owner) {
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[NOT EDITABLE (OWNER)] This presentation element instance's owning view instance package can't be updated.");
+                    uneditableOwner.addViolation(vrv);
+                }
                 if (needEdit) {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[NOT EDITABLE (CONTENT)] This presentation element instance can't be updated.");
                     uneditableContent.addViolation(vrv);
