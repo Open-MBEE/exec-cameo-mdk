@@ -441,6 +441,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             parentPack = viewInstancesPackage;
                     }
                 } else {
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(view, "[CANONICAL PARENT] This view has no parent view found that composes it.");
+                    viewParent.addViolation(vrv);
                     parentPack = viewInstancesPackage;
                 }
             }
