@@ -434,7 +434,8 @@ public class ModelValidator {
                 exist.addViolation(v);
             }  
             else {
-            	checkElement(e, elementsKeyed.get(elementsKeyedId));
+                if (!(e instanceof ValueSpecification))
+                    checkElement(e, elementsKeyed.get(elementsKeyedId));
             }
             
         }
