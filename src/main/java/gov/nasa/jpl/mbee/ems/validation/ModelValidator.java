@@ -425,7 +425,8 @@ public class ModelValidator {
                     v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted from magicdraw");
                 if (!crippled) {
                     v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
-                    v.addAction(new ElementDetail(jSONobject));
+                    v.addAction(new DetailDiff(new JSONObject(), jSONobject));
+                    //v.addAction(new ElementDetail(jSONobject));
                     v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
                 } else {
                 	v.addAction(new ElementDetail(jSONobject));
