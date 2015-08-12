@@ -209,7 +209,14 @@ public class ImportUtility {
                 AssociationClass ac = ef.createAssociationClassInstance();
                 newE = ac;
             }
-            setAssociation((Association)newE, specialization);
+            try {
+                setAssociation((Association)newE, specialization);
+            } catch (Exception ex) {
+                if (newE instanceof AssociationClass && updateRelations) {
+                    newE.dispose();
+                    return null;
+                }
+            }
         } else if (elementType.equalsIgnoreCase("Connector")) { 
             if (newE == null) {
                 Connector conn = ef.createConnectorInstance();
@@ -256,8 +263,13 @@ public class ImportUtility {
                 setConstraintSpecification((Constraint)e, spec);
             if (type != null && e instanceof Connector && type.equals("Connector"))
                 setConnectorEnds((Connector)e, spec);
-            if (type != null && e instanceof Association && type.equals("Association"))
-                setAssociation((Association)e, spec);
+            if (type != null && e instanceof Association && type.equals("Association")) {
+                try {
+                    setAssociation((Association)e, spec);
+                } catch (Exception ex) {
+                    
+                }
+            }
             if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
                 setInstanceSpecification((InstanceSpecification)e, spec);
             if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
@@ -460,7 +472,7 @@ public class ImportUtility {
             c.setType((Association)asso);
     }
     
-    public static void setAssociation(Association a, JSONObject spec) {
+    public static void setAssociation(Association a, JSONObject spec) throws Exception {
         String webSourceId = (String)spec.get("source");
         String webTargetId = (String)spec.get("target");
         Element webSource = ExportUtility.getElementFromID(webSourceId);
@@ -473,7 +485,7 @@ public class ImportUtility {
         int i = 0;
         if (webSource == null || webTarget == null) {
             log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
-            return;
+            throw new Exception("Association creation failed");
         }
         for (Property end: a.getMemberEnd()) {
             if (end != webSource && end != webTarget)
@@ -485,21 +497,24 @@ public class ImportUtility {
             }
             i++;
         }
-        for (Property p: todelete) {
+        /*for (Property p: todelete) { //this used to be needed to prevent model corruption in 2.1? not needed in 18.0 (2.2)? corruption changes if asso is new or existing
             try {
                 ModelElementsManager.getInstance().removeElement(p); //TODO propagate to alfresco?
             } catch (ReadOnlyElementException e) {
                 e.printStackTrace();
             }
-        }
-        if (modelSource == null && webSource instanceof Property) {
+        }*/
+        if (modelSource == webSource && modelTarget == webTarget)
+            return; //don't need to mess with it
+        a.getMemberEnd().clear();
+        //if (modelSource == null && webSource instanceof Property) {
             a.getMemberEnd().add(0, (Property)webSource);
             modelSource = (Property)webSource;
-        }
-        if (modelTarget == null && webTarget instanceof Property) {
+        //}
+        //if (modelTarget == null && webTarget instanceof Property) {
             a.getMemberEnd().add((Property)webTarget);
             modelTarget = (Property)webTarget;
-        }
+        //}
 //        if (modelSource != null && webSourceA != null) {
 //            AggregationKindEnum agg = AggregationKindEnum.getByName(webSourceA.toLowerCase());
 //            modelSource.setAggregation(agg);
