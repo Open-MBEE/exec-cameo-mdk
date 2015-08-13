@@ -110,14 +110,14 @@ public class DocGenPlugin extends Plugin {
         ApplicationSyncEventSubscriber.subscribe();
 
         getEmbeddedSystemProperty();
-        if (runEmbeddedServer) {
+        /*if (runEmbeddedServer) {
             try {
                 embeddedServer = new DocGenEmbeddedTomcatServer();
                 embeddedServer.setup();
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        }
+        }*/
         
         loadExtensionJars(); // people can actaully just create a new plugin and
         // let magicdraw's classloader load it?
