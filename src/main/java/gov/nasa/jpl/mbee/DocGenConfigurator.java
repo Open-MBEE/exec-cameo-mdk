@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
+import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
 import gov.nasa.jpl.mbee.actions.docgen.CreateRestrictedValueAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
@@ -173,11 +174,11 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");       
         if(e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)){
             if (manager.getActionFor(ClassToComponentRefactorWithIDAction.actionid) == null)
-                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(e));   
+                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(es));   
         }
         if(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component){
             if (manager.getActionFor(ComponentToClassRefactorWithIDAction.actionid) == null)
-                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(e));   
+                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(es));   
         }
         //manager.addCategory(refactorWithIDActionCat);
 
@@ -363,9 +364,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 c.addAction(new GenerateDocumentAction(e));
             
             if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
-                //act = manager.getActionFor(PublishDocWebAction.actionid); 
-                //if (act == null) 
-                 //   c.addAction(new PublishDocWebAction((NamedElement)e));
                 if (e instanceof Package) {
                     act = manager.getActionFor(NumberDependencyAction.actionid);
                     if (act == null)
@@ -379,6 +377,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     if (act == null)
                         c.addAction(new NumberAssociationAction((Class)e));
                 }
+                act = manager.getActionFor(PublishDocWebAction.actionid); 
+                if (act == null) 
+                    c.addAction(new PublishDocWebAction((NamedElement)e));
             }
             /*
              * if (e instanceof Activity &&

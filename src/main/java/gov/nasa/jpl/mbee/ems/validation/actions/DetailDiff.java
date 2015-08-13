@@ -15,6 +15,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTree;
@@ -202,7 +203,8 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 //		});
 		
 		JTabbedPane pane = new JTabbedPane();
-		pane.add(name, tree);
+		JScrollPane spane = new JScrollPane(tree);
+		pane.add(name, spane);
 		return pane;
 	}
 	

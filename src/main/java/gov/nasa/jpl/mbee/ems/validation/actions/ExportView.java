@@ -217,7 +217,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             }
         }*/
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size()));
+        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size(), "View"));
         //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
         //    return false;
         
@@ -264,7 +264,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                         post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile),
                                 imageFile.length()));
                     }
-                    OutputQueue.getInstance().offer(new Request(posturl, post));
+                    OutputQueue.getInstance().offer(new Request(posturl, post, "Image"));
                     //HttpClient client = new HttpClient();
                     //ViewEditUtils.setCredentials(client, baseurl);
                     Utils.guilog("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);

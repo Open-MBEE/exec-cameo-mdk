@@ -4,6 +4,7 @@ import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 
 import java.awt.event.ActionEvent;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.swing.KeyStroke;
@@ -21,13 +22,13 @@ import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 
 public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
 
-    Element element;
+    Collection<Element> elements;
     public static final String actionid = "ConvertClass";
     private static final long serialVersionUID = 1L;
 
-    public ClassToComponentRefactorWithIDAction(Element e) {
+    public ClassToComponentRefactorWithIDAction(Collection<Element> e) {
         super(actionid, "Convert Class To Component", null, null);
-        this.element = e;
+        this.elements = e;
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -38,27 +39,32 @@ public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
                 .get("AutoSyncCommitListener");
         if (listener != null)
             listener.disable();
-
-        String elementID = element.getID();
-
+        
         SessionManager sessionManager = SessionManager.getInstance();
         sessionManager.createSession("Convert Class To Component");
-        // Converts the element to an interface.
-        ConvertElementInfo info = new ConvertElementInfo(Component.class);
-        // Preserves the old element ID for the new element.
-        info.setPreserveElementID(false);
-        try {
-            Element conversionTarget = Refactoring.Converting.convert(element, info);
-            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-            // element.setID(elementID);
-            conversionTarget.setID(elementID);
-            // String newElementID = conversionTarget.getID();
-        } catch (ReadOnlyElementException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+        for (Element element: elements) {
+            if (!(element instanceof Class))
+                continue;
+            String elementID = element.getID();
+
+            
+            // Converts the element to an interface.
+            ConvertElementInfo info = new ConvertElementInfo(Component.class);
+            // Preserves the old element ID for the new element.
+            info.setPreserveElementID(false);
+            try {
+                Element conversionTarget = Refactoring.Converting.convert(element, info);
+                Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+                // element.setID(elementID);
+                conversionTarget.setID(elementID);
+                // String newElementID = conversionTarget.getID();
+            } catch (ReadOnlyElementException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            
         }
         sessionManager.closeSession();
-
         if (listener != null)
             listener.enable();
     }

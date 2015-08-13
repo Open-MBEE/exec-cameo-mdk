@@ -144,7 +144,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             if (!eles.isEmpty()) {
                 String url = ExportUtility.getPostElementsUrl();
                 if (url != null) {
-                    Request r = new Request(url, toSend.toJSONString(), "POST", false, eles.size());
+                    Request r = new Request(url, toSend.toJSONString(), "POST", false, eles.size(), "Autosync Changes");
                     OutputQueue.getInstance().offer(r);
                 }
             }
@@ -159,7 +159,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     eo.put("sysmlid", id);
                     elements.add(eo);
                 }
-                OutputQueue.getInstance().offer(new Request(deleteUrl + "/elements", send.toJSONString(), "DELETEALL", false, elements.size()));
+                OutputQueue.getInstance().offer(new Request(deleteUrl + "/elements", send.toJSONString(), "DELETEALL", false, elements.size(), "Autosync Deletes"));
             }
         }
 

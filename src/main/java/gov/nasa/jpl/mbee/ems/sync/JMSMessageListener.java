@@ -202,7 +202,7 @@ public class JMSMessageListener implements MessageListener {
                     try {
                         Element e = ImportUtility.createElement(ob, updateRelations);
                         if (e == null && updateRelations) {
-                            Utils.guilog("[ERROR -- Autosync] create element failed, owner not found");
+                            Utils.guilog("[ERROR -- Autosync] create element failed (most likely owner not found");
                             cannotAdd.add((String)ob.get("sysmlid"));
                         }
                         else if (e != null && updateRelations)

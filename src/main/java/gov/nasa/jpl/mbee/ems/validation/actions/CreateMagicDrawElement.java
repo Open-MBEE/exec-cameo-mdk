@@ -54,7 +54,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
     private boolean multipleSuccess = true;
     
     public CreateMagicDrawElement(JSONObject ob, Map<String, JSONObject> elementsKeyed) {
-        super("CreateMagicDrawElement", "1 Create MagicDraw element", null, null);
+        super("CreateMagicDrawElement", "Create MagicDraw element", null, null);
         this.ob = ob;
         this.elementsKeyed = elementsKeyed;
     }
@@ -118,13 +118,18 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                     }
                 }
                 for (JSONObject newe: tocreate) {
-                    ImportUtility.createElement(newe, true);
+                    Element newElement = ImportUtility.createElement(newe, true);
+                    if (newElement == null) {
+                        Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (references not found)");
+                        multipleSuccess = false;
+                        return false;
+                    }
                 }
             }
         } else {
             Element magicDrawElement = ImportUtility.createElement(ob, true); 
             if (magicDrawElement == null) {
-                Utils.guilog("[ERROR] Element not created (id already exists or owner not found)");
+                Utils.guilog("[ERROR] Cannot create element (references or owner not found)");
                 return false;
             }
         }

@@ -29,8 +29,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -54,8 +52,6 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
     private NamedElement element;
     
     public ExportName(NamedElement e) {
-    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-    	//
         super("ExportName", "Commit name", null, null);
         this.element = e;
     }
@@ -69,7 +65,6 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
     @Override
     public void execute(Collection<Annotation> annos) {
         Set<String> duplicatedNames = new HashSet<String>();
-        JSONObject send = new JSONObject();
         JSONArray infos = new JSONArray();
         Set<Element> set = new HashSet<Element>();
         for (Annotation anno: annos) {
@@ -87,26 +82,12 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
                 infos.add(ExportUtility.fillName(e, null));
             }
         }
-        if (!ExportUtility.okToExport(set))
-            return;
-        send.put("elements", infos);
-        send.put("source", "magicdraw");
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
-        Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
-        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationsAndUpdateWindow(annos);
-        }*/
+        commit(infos, "Name");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.okToExport(element))
-            return;
         if (duplicateName(element)) {
             Utils.guilog("[WARNING] " + ((NamedElement)element).getQualifiedName() + " has the same qualified name as another element.");
             //return;
@@ -114,17 +95,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         JSONArray elements = new JSONArray();
         JSONObject send = new JSONObject();
         elements.add(ExportUtility.fillName(element, null));
-        send.put("elements", elements);
-        send.put("source", "magicdraw");
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
-        Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
-        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationsAndUpdateWindow(annos);
-        }*/
+        commit(elements, "Name");
     }
     
     private boolean duplicateName(Element e) {

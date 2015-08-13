@@ -2070,7 +2070,7 @@ public class Utils {
     }
     
     public static Property getGeneratedFromElementProperty() {
-        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section::generatedFromElement");
+        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement");
     }
     
     public static Constraint getViewConstraint(Element view) {

@@ -1616,7 +1616,7 @@ public class ExportUtility {
         if (!url.contains("master"))
             url += "?createSite=true";
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
     }
     
@@ -1633,7 +1633,7 @@ public class ExportUtility {
         if (!url.contains("master"))
             url += "?createSite=true";
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
     }
 
@@ -1708,14 +1708,14 @@ public class ExportUtility {
                 && ExportUtility.isElementDocumentation((Comment) e))
             return false;
         if (e instanceof InstanceSpecification && !(e instanceof EnumerationLiteral)) {
-            boolean haveIgnore = false;
+            boolean shouldIgnore = true;
             for (Classifier c: ((InstanceSpecification)e).getClassifier()) {
                 if (!(c instanceof Stereotype))
                     return true;
-                if (IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
-                    haveIgnore = true;
+                if (!IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
+                    shouldIgnore = false;
             }
-            if (!haveIgnore && !e.getOwnedElement().isEmpty())
+            if (!shouldIgnore && !e.getOwnedElement().isEmpty())
                 return true;
             return false;
             /*if (((InstanceSpecification)e).getClassifier().size() == 1 && 
