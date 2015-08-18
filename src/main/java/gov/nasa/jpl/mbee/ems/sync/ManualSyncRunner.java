@@ -50,11 +50,17 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private boolean isFromTeamwork = false;
     private boolean loggedIn = true;
     private boolean failure = false;
+    private boolean skipUpdate = false;
     
     private ValidationSuite suite = new ValidationSuite("Updated Elements/Failed Updates");
     private ValidationRule updated = new ValidationRule("updated", "updated", ViolationSeverity.INFO);
     private ValidationRule cannotUpdate = new ValidationRule("cannotUpdate", "cannotUpdate", ViolationSeverity.ERROR);
     private ValidationRule cannotRemove = new ValidationRule("cannotDelete", "cannotDelete", ViolationSeverity.WARNING);
+    
+    public ManualSyncRunner(boolean commit, boolean skipUpdate) {
+        this.commit = commit;
+        this.skipUpdate = skipUpdate;
+    }
     
     public ManualSyncRunner(boolean commit) {
         this.commit = commit;
@@ -78,7 +84,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
     @SuppressWarnings("unchecked")
     @Override
     public void run(ProgressStatus ps) {
-    	Utils.guilog("[INFO] Getting changes from MMS...");
+        if (!skipUpdate)
+            Utils.guilog("[INFO] Getting changes from MMS...");
     	suite.addValidationRule(updated);
     	suite.addValidationRule(cannotUpdate);
     	suite.addValidationRule(cannotRemove);
@@ -326,7 +333,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 listener.disable();
                 sm.closeSession();
                 listener.enable();
-                Utils.guilog("[INFO] Finished applying changes.");
+                if (!skipUpdate)
+                    Utils.guilog("[INFO] Finished applying changes.");
                 for (Map<String, Object> r: toChange) {
                     ImportHierarchy.sendChanges(r); //what about if doc is involved in conflict?
                 }
@@ -407,7 +415,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 sm.cancelSession();
             }
         } else {
-            Utils.guilog("[INFO] MMS has no updates.");
+            if (!skipUpdate)
+                Utils.guilog("[INFO] MMS has no updates.");
             //AutoSyncProjectListener.setLooseEnds(project, null);
             //AutoSyncProjectListener.setFailed(project, null);
         }
