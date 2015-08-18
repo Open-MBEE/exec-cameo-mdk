@@ -833,7 +833,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             for (int ii = 0; ii < conns.size(); ii++) {
                 json = (JSONObject) conns.get( ii );
                 if (json.containsKey( "eventType" )) {
-                    if (json.get( "eventType" ).equals( "delta" )) 
+                    if (json.get( "eventType" ).equals( "DELTA" )) 
                         break;
                 }
             }
