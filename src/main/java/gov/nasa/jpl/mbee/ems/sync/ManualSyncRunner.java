@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
+import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -56,6 +57,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private ValidationRule updated = new ValidationRule("updated", "updated", ViolationSeverity.INFO);
     private ValidationRule cannotUpdate = new ValidationRule("cannotUpdate", "cannotUpdate", ViolationSeverity.ERROR);
     private ValidationRule cannotRemove = new ValidationRule("cannotDelete", "cannotDelete", ViolationSeverity.WARNING);
+    private ValidationRule cannotCreate = new ValidationRule("cannotCreate", "cannotCreate", ViolationSeverity.ERROR);
     
     public ManualSyncRunner(boolean commit, boolean skipUpdate) {
         this.commit = commit;
@@ -89,6 +91,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     	suite.addValidationRule(updated);
     	suite.addValidationRule(cannotUpdate);
     	suite.addValidationRule(cannotRemove);
+    	suite.addValidationRule(cannotCreate);
     	
         Project project = Application.getInstance().getProject();
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
@@ -230,6 +233,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 List<Map<String, Object>> toChange = new ArrayList<Map<String, Object>>();
                 //take care of web added
                 if (webAddedSorted != null) {
+                    ImportUtility.outputError = false;
                     for (Object element : webAddedSorted) {
                         try {
                             ImportUtility.createElement((JSONObject) element, false);
@@ -237,6 +241,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                             
                         }
                     }
+                    ImportUtility.outputError = true;
                     for (Object element : webAddedSorted) { 
                         try {
                             Element newe = ImportUtility.createElement((JSONObject) element, true);
@@ -245,11 +250,17 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         } catch (Exception ex) {
                             log.error("", ex);
                             cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                            ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED]");
+                            vrv.addAction(new DetailDiff(new JSONObject(), (JSONObject)element));
+                            cannotCreate.addViolation(vrv);
                         }
                     }
                 } else {
                     for (Object element: webAddedObjects) {
                         cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                        ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED]");
+                        vrv.addAction(new DetailDiff(new JSONObject(), (JSONObject)element));
+                        cannotCreate.addViolation(vrv);
                     }
                 }
             

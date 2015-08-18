@@ -109,6 +109,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                 multipleSuccess = false;
                 return false;
             } else {
+                ImportUtility.outputError = false;
                 for (JSONObject newe: tocreate) {
                     Element newElement = ImportUtility.createElement(newe, false);
                     if (newElement == null) {
@@ -117,6 +118,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                         return false;
                     }
                 }
+                ImportUtility.outputError = true;
                 for (JSONObject newe: tocreate) {
                     Element newElement = ImportUtility.createElement(newe, true);
                     if (newElement == null) {
