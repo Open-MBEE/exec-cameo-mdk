@@ -13,6 +13,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
@@ -45,8 +46,9 @@ public class ImportViewConstraint extends RuleViolationAction implements Annotat
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
             Element e = (Element)anno.getTarget();
-            if (!e.isEditable()) {
-                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
+            Constraint c = Utils.getViewConstraint(e);
+            if (c != null && !c.isEditable()) {
+                Utils.guilog("[ERROR] " + c.get_representationText() + " isn't editable");
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
@@ -59,8 +61,9 @@ public class ImportViewConstraint extends RuleViolationAction implements Annotat
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!element.isEditable()) {
-            Utils.guilog("[ERROR] " + element.getQualifiedName() + " is not editable!");
+        Constraint c = Utils.getViewConstraint(element);
+        if (c != null && !c.isEditable()) {
+            Utils.guilog("[ERROR] " + c.getQualifiedName() + " is not editable!");
             return;
         }
         execute("Change view constraint");
