@@ -78,6 +78,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private Package viewInstancesPackage = null;
     private Package unusedPackage = null;
 
+    private Stereotype viewClassStereotype = Utils.getViewClassStereotype();
+    
     private boolean recurse;
     private Element view;
     private boolean isFromTeamwork = false;
@@ -145,7 +147,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             viewInstanceBuilder(view2pe, view2unused);
             for (Element v : view2elements.keySet()) {
                 JSONArray es = view2elements.get(v);
-                if (tryToLock(project, v)) //TODO relax this
+                Object eles = StereotypesHelper.getStereotypePropertyFirst(v, viewClassStereotype, "elements");
+                boolean needChange = true;
+                if (eles instanceof String) {
+                    try {
+                        JSONArray elements = (JSONArray)JSONValue.parse((String)eles);
+                        if (Utils.jsonArraySetDiff(elements, es)) {
+                            needChange = false;
+                        }
+                    } catch (Exception e) {
+                        
+                    }
+                }
+                if (needChange && tryToLock(project, v)) //TODO relax this
                     StereotypesHelper.setStereotypePropertyValue(v, Utils.getViewClassStereotype(), "elements", es.toJSONString());
             }
             if (cancelSession) {
