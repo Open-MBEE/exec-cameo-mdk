@@ -344,6 +344,8 @@ public class ImportUtility {
     					ordered.add((Property)prop);
     			}
     		}
+    		//if (ordered.size() < c.getOwnedAttribute().size())
+    		  //  return; //some prevention of accidental model corruption, if property can be left without an owner
     		c.getOwnedAttribute().clear();
     		c.getOwnedAttribute().addAll(ordered);
     	}

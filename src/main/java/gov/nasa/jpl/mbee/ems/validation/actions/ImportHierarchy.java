@@ -136,6 +136,7 @@ AnnotationAction, IRuleViolationAction {
         Set<String> deletedIds = (Set<String>)results.get("deletedIds");
         List<Request> returns = new ArrayList<Request>();
         JSONArray changes = new JSONArray();
+        Set<Element> ownedAttr = (Set<Element>)results.get("ownedAttr");
         for (Element e: added) {
             changes.add(ExportUtility.fillElement(e, null));
         }
@@ -144,6 +145,9 @@ AnnotationAction, IRuleViolationAction {
         }
         for (Property p: ptyped) {
             changes.add(ExportUtility.fillElement(p, null));
+        }
+        for (Element e: ownedAttr) {
+            changes.add(ExportUtility.fillOwnedAttribute(e, null));
         }
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
@@ -309,6 +313,7 @@ AnnotationAction, IRuleViolationAction {
         Set<Element> added = new HashSet<Element>();
         Set<Element> deleted = new HashSet<Element>();
         Set<Property> ptyped = new HashSet<Property>();
+        Set<Element> owned = new HashSet<Element>();
         for (Object vid: keyed.keySet()) { //go through all views on mms
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
@@ -346,7 +351,7 @@ AnnotationAction, IRuleViolationAction {
                         Property p = availableProps.remove(0);
                         if (p.getOwner() != view) {
                             moved.add(p);
-                            
+                            owned.add(p.getOwner());
                             Property opposite = getOpposite(p);//p.getOpposite();
                             if (opposite != null) {
                                 opposite.setType((Type)view);
@@ -372,11 +377,13 @@ AnnotationAction, IRuleViolationAction {
                 //
                 ((Class)view).getOwnedAttribute().clear();
                 ((Class)view).getOwnedAttribute().addAll(cprops);
+                owned.add(view);
             }
         }
         for (List<Property> props: viewId2props.values()) {
             for (Property p: props) {
                 deleted.add(p);
+                owned.add(p.getOwner());
                 Association asso = p.getAssociation();
                 if (asso != null) {
                     deleted.addAll(asso.getOwnedEnd());
@@ -394,6 +401,7 @@ AnnotationAction, IRuleViolationAction {
         retval.put("added", added);
         retval.put("moved", moved);
         retval.put("ptyped", ptyped);
+        retval.put("ownedAttr", owned);
         return retval;
     }
     
