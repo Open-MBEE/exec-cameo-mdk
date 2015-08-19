@@ -26,13 +26,13 @@ public class OneClickUpdateDoc extends MDAction {
         ManualSyncRunner msr = new ManualSyncRunner(false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         if (msr.getFailure()) {
-            Utils.guilog("[ERROR] Update from MMS cannot be completed");
+            Utils.guilog("[ERROR] Update from MMS was not completed");
             return;
         }
         ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
         if (vg.getFailure()) {
-            Utils.guilog("[ERROR] View generation cannot be completed");
+            Utils.guilog("[ERROR] View generation was not completed");
             return;
         }
         ManualSyncRunner msr2 = new ManualSyncRunner(true, true);

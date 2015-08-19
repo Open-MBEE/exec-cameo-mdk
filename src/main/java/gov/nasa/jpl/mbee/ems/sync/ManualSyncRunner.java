@@ -418,6 +418,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         sm.cancelSession();
                     }
                     listener.enable();
+                    failure = true;
                     mv.showWindow();
                     return;
                 } 
