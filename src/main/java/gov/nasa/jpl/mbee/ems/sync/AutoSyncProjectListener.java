@@ -364,6 +364,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                     //continue;
                 }
                 JSONObject ws2 = (JSONObject) ob.get("workspace2");
+                if (ws2 == null) {
+                    m.acknowledge();
+                    m = consumer.receive(1000);
+                    continue;
+                }
                 final JSONArray updated = (JSONArray) ws2.get("updatedElements");
                 final JSONArray added = (JSONArray) ws2.get("addedElements");
                 final JSONArray deleted = (JSONArray) ws2.get("deletedElements");

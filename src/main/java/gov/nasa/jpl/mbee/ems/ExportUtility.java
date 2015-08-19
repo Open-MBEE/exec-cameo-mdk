@@ -1239,8 +1239,10 @@ public class ExportUtility {
         }
         Element client = ModelHelper.getClientElement(e);
         Element supplier = ModelHelper.getSupplierElement(e);
-        specialization.put("source", getElementID(client));
-        specialization.put("target", getElementID(supplier));
+        if (client != null) //this shouldn't happen
+            specialization.put("source", getElementID(client));
+        if (supplier != null) //this shouldn't happen
+            specialization.put("target", getElementID(supplier));
         return specialization;
     }
 

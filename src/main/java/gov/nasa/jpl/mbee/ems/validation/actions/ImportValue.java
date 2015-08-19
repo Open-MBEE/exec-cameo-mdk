@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ReferenceException;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -84,16 +85,26 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
             }
             Map<String, JSONObject> map = (Map<String, JSONObject>)result.get("elementsKeyed");
             JSONArray vals = (JSONArray)((JSONObject)((JSONObject)map.get(e.getID())).get("specialization")).get("value");
-            if (e instanceof Property) {
-                ImportUtility.setPropertyDefaultValue((Property)e, vals);
-            } else if (e instanceof Slot) {
-                ImportUtility.setSlotValues((Slot)e, vals);
+            try {
+                if (e instanceof Property) {
+                    ImportUtility.setPropertyDefaultValue((Property)e, vals);
+                } else if (e instanceof Slot) {
+                    ImportUtility.setSlotValues((Slot)e, vals);
+                }
+            } catch (ReferenceException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
             }
         } else {
-            if (element instanceof Property) {
-                ImportUtility.setPropertyDefaultValue((Property)element, values);
-            } else if (element instanceof Slot) {
-                ImportUtility.setSlotValues((Slot)element, values);
+            try {
+                if (element instanceof Property) {
+                    ImportUtility.setPropertyDefaultValue((Property)element, values);
+                } else if (element instanceof Slot) {
+                    ImportUtility.setSlotValues((Slot)element, values);
+                }
+            } catch (ReferenceException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
             }
         }
         return true;

@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -13,6 +14,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
@@ -45,22 +47,34 @@ public class ImportViewConstraint extends RuleViolationAction implements Annotat
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
             Element e = (Element)anno.getTarget();
-            if (!e.isEditable()) {
-                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
+            Constraint c = Utils.getViewConstraint(e);
+            if (c != null && !c.isEditable()) {
+                Utils.guilog("[ERROR] " + c.get_representationText() + " isn't editable");
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-            ImportUtility.setViewConstraint(e, (JSONObject)resultOb.get("specialization"));
+            try {
+                ImportUtility.setViewConstraint(e, (JSONObject)resultOb.get("specialization"));
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
+            }
         } else {
-            ImportUtility.setViewConstraint(element, spec);
+            try {
+                ImportUtility.setViewConstraint(element, spec);
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
+            }
         }
         return true;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!element.isEditable()) {
-            Utils.guilog("[ERROR] " + element.getQualifiedName() + " is not editable!");
+        Constraint c = Utils.getViewConstraint(element);
+        if (c != null && !c.isEditable()) {
+            Utils.guilog("[ERROR] " + c.getQualifiedName() + " is not editable!");
             return;
         }
         execute("Change view constraint");
