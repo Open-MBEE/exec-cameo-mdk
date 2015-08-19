@@ -25,5 +25,6 @@
 		<library name="lib/slf4j-api-1.7.2.jar"/>
 		<library name="lib/slf4j-log4j12-1.7.2.jar"/>		
 		<library name="lib/activemq-all-5.9.1.jar"/>
+		<library name="lib/wlthint3client.jar"/>
 	</runtime>
 </plugin>
