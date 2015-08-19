@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ImportException;
 
 import java.awt.event.ActionEvent;
 
@@ -29,7 +30,12 @@ public class CopyAction extends SRAction {
 		final Element owner = element.getOwner();
 		SessionManager.getInstance().createSession("copying element");
 		element.refDelete();
-		final Element copy = ImportUtility.createElement(json, true);
+		Element copy = null;
+		try {
+		    copy = ImportUtility.createElement(json, true);
+		} catch (ImportException ex) {
+		    
+		}
 		System.out.println(copy);
 		owner.getOwnedElement().add(copy);
 		SessionManager.getInstance().closeSession();

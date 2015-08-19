@@ -129,7 +129,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
             }
             SessionManager.getInstance().closeSession();
             if (noneditable) {
-                Application.getInstance().getGUILog().log("[ERROR] There were some elements that're not editable");
+                Application.getInstance().getGUILog().log("[ERROR] There were some elements couldn't be imported");
             } else
                 saySuccess();
             //AnnotationManager.getInstance().update();

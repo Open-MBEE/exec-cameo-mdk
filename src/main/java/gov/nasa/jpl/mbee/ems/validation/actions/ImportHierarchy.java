@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
@@ -292,18 +293,25 @@ AnnotationAction, IRuleViolationAction {
                 }
             }
         }
-        List<JSONObject> sortedNewviews = ImportUtility.getCreationOrder(newviews);
-        if (sortedNewviews == null) {
+        Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(newviews);
+        List<JSONObject> sortedNewviews = toCreate.get("create");
+        if (!toCreate.get("fail").isEmpty()) {
             Utils.guilog("[ERROR] Creating new view(s) failed.");
             retval.put("success", false);
             return retval;
         }
         for (JSONObject ob: sortedNewviews) {
-            Element newview = ImportUtility.createElement(ob, true);
-            if (newview != null) {
-                List<Property> viewprops = new ArrayList<Property>();
-                viewId2props.put(newview.getID(), viewprops);
-            } else {
+            try {
+                Element newview = ImportUtility.createElement(ob, true);
+                if (newview != null) {
+                    List<Property> viewprops = new ArrayList<Property>();
+                    viewId2props.put(newview.getID(), viewprops);
+                } else {
+                    Utils.guilog("[ERROR] Creating new view(s) failed.");
+                    retval.put("success", false);
+                    return retval;
+                }
+            } catch (ImportException ex) {
                 Utils.guilog("[ERROR] Creating new view(s) failed.");
                 retval.put("success", false);
                 return retval;

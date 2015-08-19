@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -50,9 +51,19 @@ public class ImportConstraint extends RuleViolationAction implements AnnotationA
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-            ImportUtility.setConstraintSpecification((Constraint)e, (JSONObject)resultOb.get("specialization"));
+            try {
+                ImportUtility.setConstraintSpecification((Constraint)e, (JSONObject)resultOb.get("specialization"));
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
+            }
         } else {
-            ImportUtility.setConstraintSpecification(element, spec);
+            try {
+                ImportUtility.setConstraintSpecification(element, spec);
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
+            }
         }
         return true;
     }

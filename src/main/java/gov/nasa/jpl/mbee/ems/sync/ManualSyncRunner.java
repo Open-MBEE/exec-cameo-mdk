@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
@@ -202,7 +203,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 if (webElements.containsKey(webAdd))
                     webAddedObjects.add(webElements.get(webAdd));
             }
-            List<JSONObject> webAddedSorted = ImportUtility.getCreationOrder(webAddedObjects);
+            
             
             //calculate potential conflicted set and clean web updated set
             Set<String> localChangedIds = new HashSet<String>(localChanged.keySet());
@@ -230,6 +231,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change");
             try {
+                Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(webAddedObjects);
+                
+                List<JSONObject> webAddedSorted = toCreate.get("create");
+                List<JSONObject> fails = toCreate.get("fail");
                 List<Map<String, Object>> toChange = new ArrayList<Map<String, Object>>();
                 //take care of web added
                 if (webAddedSorted != null) {
@@ -237,7 +242,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     for (Object element : webAddedSorted) {
                         try {
                             ImportUtility.createElement((JSONObject) element, false);
-                        } catch (Exception ex) {
+                        } catch (ImportException ex) {
                             
                         }
                     }
@@ -250,19 +255,19 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         } catch (Exception ex) {
                             log.error("", ex);
                             cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
-                            ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED]");
+                            ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ex.getMessage());
                             vrv.addAction(new DetailDiff(new JSONObject(), (JSONObject)element));
                             cannotCreate.addViolation(vrv);
                         }
                     }
-                } else {
-                    for (Object element: webAddedObjects) {
-                        cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
-                        ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED]");
-                        vrv.addAction(new DetailDiff(new JSONObject(), (JSONObject)element));
-                        cannotCreate.addViolation(vrv);
-                    }
+                } 
+                for (JSONObject element: fails) {
+                    cannotAdd.add((String)element.get("sysmlid"));
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] Owner or chain of owners not found");
+                    vrv.addAction(new DetailDiff(new JSONObject(), element));
+                    cannotCreate.addViolation(vrv);
                 }
+                
             
                 //take care of updated
                 for (JSONObject webUpdated: webChangedObjects) {
@@ -349,7 +354,30 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 for (Map<String, Object> r: toChange) {
                     ImportHierarchy.sendChanges(r); //what about if doc is involved in conflict?
                 }
+            } catch (Exception ex) {
+                //something really bad happened, save all changes for next time;
+                log.error("", ex);
+                sm.cancelSession();
+                Utils.printException(ex);
+                cannotAdd.clear();
+                cannotChange.clear();
+                cannotDelete.clear();
+                updated.getViolations().clear();
+                cannotUpdate.getViolations().clear();
+                cannotRemove.getViolations().clear();
+                cannotCreate.getViolations().clear();
+                for (String e: webDeleted) {
+                    cannotDelete.add(e);
+                }
+                for (JSONObject element: webAddedObjects) {
+                    cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                }
+                for (JSONObject element: webChangedObjects) {
+                    cannotChange.add((String)element.get("sysmlid"));
+                }
+                Utils.guilog("[ERROR] Unexpected exception happened, all changes will be reattempted at next update.");
                 
+            }
                 if (!cannotAdd.isEmpty() || !cannotChange.isEmpty() || !cannotDelete.isEmpty()) {
                     JSONObject failed = new JSONObject();
                     JSONArray failedAdd = new JSONArray();
@@ -399,7 +427,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 JSONObject mvResult = new JSONObject();
                 mvResult.put("elements", webConflictedObjects);
                 ModelValidator mv = new ModelValidator(null, mvResult, false, localConflictedElements, false);
-                mv.validate(false, null);
+                try {
+                    mv.validate(false, null);
+                } catch (ServerException ex) {
+                    
+                }
                 Set<Element> conflictedElements = mv.getDifferentElements();
                 if (!conflictedElements.isEmpty()) {
                     JSONObject conflictedToSave = new JSONObject();
@@ -422,10 +454,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     mv.showWindow();
                     return;
                 } 
-            } catch (Exception e) {
-                log.error("", e);
-                sm.cancelSession();
-            }
         } else {
             if (!skipUpdate)
                 Utils.guilog("[INFO] MMS has no updates.");

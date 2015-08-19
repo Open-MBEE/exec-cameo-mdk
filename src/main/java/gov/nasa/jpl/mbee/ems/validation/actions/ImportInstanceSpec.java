@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -77,9 +78,19 @@ public class ImportInstanceSpec extends RuleViolationAction implements Annotatio
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-            ImportUtility.setInstanceSpecification((InstanceSpecification)e, (JSONObject)resultOb.get("specialization"));
+            try {
+                ImportUtility.setInstanceSpecification((InstanceSpecification)e, (JSONObject)resultOb.get("specialization"));
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
+            }
         } else {
-            ImportUtility.setInstanceSpecification(element, spec);
+            try {
+                ImportUtility.setInstanceSpecification(element, spec);
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
+            }
         }
         return true;
     }
