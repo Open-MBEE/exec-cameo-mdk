@@ -39,6 +39,7 @@ import java.awt.event.ActionEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 
@@ -89,7 +90,7 @@ public class ExportViewHierarchyAction extends MDAction {
             pm.setRequestHeader("Content-Type", "application/json");
             pm.setRequestEntity(JsonRequestEntity.create(post));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, posturl);
+            ViewEditUtils.setCredentials(client, posturl, pm);
             // gl.log(post);
             gl.log("[INFO] Sending...");
             int code = client.executeMethod(pm);

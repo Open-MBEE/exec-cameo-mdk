@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mgss.mbee.docgen.docbook;
 
+import gov.nasa.jpl.mbee.model.DocGenElement;
+
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
@@ -45,6 +47,8 @@ public abstract class DocumentElement implements IDocumentElement {
     protected From    fromProperty; // this is for view editor purpose (where
                                     // the document fragment comes from -
                                     // element's name/documentation, etc)
+    
+    protected DocGenElement dgElement; //the DocGenElement that generated this
 
     public DocumentElement() {
         title = "";
@@ -84,6 +88,14 @@ public abstract class DocumentElement implements IDocumentElement {
     @Override
     public From getFromProperty() {
         return fromProperty;
+    }
+
+    public DocGenElement getDgElement() {
+        return dgElement;
+    }
+
+    public void setDgElement(DocGenElement dgElement) {
+        this.dgElement = dgElement;
     }
 
     @Override

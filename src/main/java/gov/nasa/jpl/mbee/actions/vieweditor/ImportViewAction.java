@@ -41,6 +41,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.simple.JSONArray;
@@ -53,6 +54,7 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -121,7 +123,7 @@ public class ImportViewAction extends MDAction {
                 else
                     gl.log("*** Starting consistency check ***");
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, geturl);
+                ViewEditUtils.setCredentials(client, geturl, gm);
                 int code = client.executeMethod(gm);
                 if (ViewEditUtils.showErrorMessage(code))
                     return;
@@ -226,7 +228,7 @@ public class ImportViewAction extends MDAction {
                             }
                         }
                         if (mdelement instanceof Property && element.containsKey("dvalue")) {
-                            if (!((Property)mdelement).getDefault().equals(element.get("dvalue"))) {
+                            if (!UML2ModelUtil.getDefault(((Property)mdelement)).equals(element.get("dvalue"))) {
                                 if (!mdelement.isEditable()) {
                                     notLocked.addViolation((Element)mdelement,
                                             "Default value can't be changed - not editable");

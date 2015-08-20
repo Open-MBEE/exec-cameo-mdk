@@ -35,20 +35,14 @@ import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.ViewParser;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,18 +67,12 @@ import org.eclipse.ocl.helper.OCLHelper;
 import org.eclipse.ocl.lpg.AbstractLexer;
 import org.eclipse.ocl.lpg.AbstractParser;
 import org.eclipse.ocl.lpg.ProblemHandler;
-import org.eclipse.ocl.util.Bag;
-import org.eclipse.ocl.util.CollectionUtil;
 import org.eclipse.ocl.util.OCLUtil;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
@@ -293,10 +281,10 @@ public class OclEvaluator {
         } catch (ParserException e) {
             queryStatus = QueryStatus.PARSE_EXCEPTION;
             if (verbose) {
-                e.printStackTrace();
+            	e.printStackTrace();
                 Debug.outln("my diag = " + getBasicDiagnostic());
-                Object analyzer = getBasicDiagnostic().getData().get(0);
-                Debug.outln("analyzer = " + analyzer);
+                //Object analyzer = getBasicDiagnostic().getData().get(0);
+                //Debug.outln("analyzer = " + analyzer);
                 Debug.outln("ProblemHandler = " + getProblemHandler());
                 if (getProblemHandler() != null) {
                     int offset = getProblemHandler().getErrorReportLineOffset();
@@ -321,7 +309,7 @@ public class OclEvaluator {
             this.errorMessage = e.getLocalizedMessage();
             // }
             throw e;// new ParserException( getBasicDiagnostic() );
-        }
+        } catch (NullPointerException ignored) {}
 
         if (query != null) {
             result = getOcl().evaluate(context, query);
@@ -361,11 +349,14 @@ public class OclEvaluator {
         ev.setOclTracingEnabled(verbose);
         ev.queryStatus = QueryStatus.VALID_OCL;
 
-        if (context instanceof EObject) {
-            ev.getHelper().setContext(context == null ? null : ((EObject)context).eClass());
-        } else if (context instanceof Collection) {
-            ev.getHelper().setContext(
-                    context == null ? null : OCLStandardLibraryImpl.INSTANCE.getCollection());
+        if (context == null) {
+        	ev.getHelper().setContext(OCLStandardLibraryImpl.INSTANCE.getOclVoid());
+        }
+        else if (context instanceof EObject) {
+            ev.getHelper().setContext(((EObject)context).eClass());
+        }
+        else if (context instanceof Collection) {
+            ev.getHelper().setContext(OCLStandardLibraryImpl.INSTANCE.getSequence());
         }
 
         Object result = null;
@@ -982,15 +973,23 @@ public class OclEvaluator {
     }
 
     public List<Choice> commandCompletionChoices(OCLHelper<EClassifier, ?, ?, Constraint> helper,
-            EObject context, String oclInput) {
-        getHelper().setContext(context == null ? null : context.eClass());
+            Object context, String oclInput) {
+    	EClassifier helperContext = null;
+    	if (context instanceof EObject) {
+    		helperContext = ((EObject) context).eClass();
+    	}
+    	else if (context instanceof Collection) {
+    		helperContext = OCLStandardLibraryImpl.INSTANCE.getSequence();
+    	}
+    	
+		getHelper().setContext(helperContext != null ? helperContext : OCLStandardLibraryImpl.INSTANCE.getOclVoid());
         List<Choice> choices = getHelper().getSyntaxHelp(ConstraintKind.INVARIANT, oclInput);
-        //Debug.outln("Completion choices for OCL expression \"" + oclInput + "\" = " + choices);
+        Debug.outln("Completion choices for OCL expression \"" + oclInput + "\" = " + choices);
         return choices;
     }
 
     public List<String> commandCompletionChoiceStrings(OCLHelper<EClassifier, ?, ?, Constraint> helper,
-            EObject context, String oclInput, int depth) {
+            Object context, String oclInput, int depth) {
         Object result = null;
         try {
             result = evaluateQuery(context, oclInput, Debug.isOn());
@@ -1024,7 +1023,7 @@ public class OclEvaluator {
     }
 
     public List<String> commandCompletionChoiceStrings(OCLHelper<EClassifier, ?, ?, Constraint> helper,
-            EObject context, String oclInput) {
+            Object context, String oclInput) {
 //        boolean wasOn = Debug.isOn();
 //        Debug.turnOn();
         List<String> choiceList = new ArrayList<String>();

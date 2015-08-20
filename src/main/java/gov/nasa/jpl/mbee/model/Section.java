@@ -46,8 +46,9 @@ public class Section extends Container {
     private boolean isView;
     private boolean isNoSection;
 
-    private Element viewpoint;
-    private List<Element> exposes;
+    private Element viewpoint; //if view, the viewpoint
+    private List<Element> exposes; //if view, the elements exposed
+    private Element loopElement; //if dynamic section, the element that generated this section (if looped)
     
     public Section() {
         isAppendix = false;
@@ -118,6 +119,14 @@ public class Section extends Container {
 
     public void setExposes(List<Element> exposes) {
         this.exposes = exposes;
+    }
+
+    public Element getLoopElement() {
+        return loopElement;
+    }
+
+    public void setLoopElement(Element loopElement) {
+        this.loopElement = loopElement;
     }
 
 }

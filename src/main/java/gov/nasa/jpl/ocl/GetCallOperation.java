@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.lib.EmfUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.lib.Utils.AvailableAttribute;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,6 +44,7 @@ import org.eclipse.emf.ecore.EObject;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
@@ -266,6 +268,10 @@ public class GetCallOperation implements CallOperation {
                         objectToAdd =
                                 Utils.getElementAttribute( (Element)source,
                                                            AvailableAttribute.Value );
+                    }
+                    if ( Utils2.isNullOrEmpty( objectToAdd )
+                		 && source instanceof ElementValue ) {
+                    	objectToAdd = ((ElementValue) source).getElement();
                     }
                     if ( Utils2.isNullOrEmpty( objectToAdd )
                          && source instanceof ValueSpecification ) {

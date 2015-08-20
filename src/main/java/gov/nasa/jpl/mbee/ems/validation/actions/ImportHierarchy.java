@@ -28,17 +28,13 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.ems.sync.Request;
-import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.model.Document;
-import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -51,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.uml2.uml.AggregationKind;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -63,13 +58,10 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -124,7 +116,7 @@ AnnotationAction, IRuleViolationAction {
                 //}
                 return true;
             } else {
-                Application.getInstance().getGUILog().log("[ERROR] Import hierarchy aborted because view hierarchy isn't editable. Lock it first.");
+                Utils.guilog("[ERROR] Import hierarchy aborted because view hierarchy isn't editable. Lock it first.");
                 return false;
             }
         }
@@ -145,6 +137,7 @@ AnnotationAction, IRuleViolationAction {
         Set<String> deletedIds = (Set<String>)results.get("deletedIds");
         List<Request> returns = new ArrayList<Request>();
         JSONArray changes = new JSONArray();
+        Set<Element> ownedAttr = (Set<Element>)results.get("ownedAttr");
         for (Element e: added) {
             changes.add(ExportUtility.fillElement(e, null));
         }
@@ -154,12 +147,15 @@ AnnotationAction, IRuleViolationAction {
         for (Property p: ptyped) {
             changes.add(ExportUtility.fillElement(p, null));
         }
+        for (Element e: ownedAttr) {
+            changes.add(ExportUtility.fillOwnedAttribute(e, null));
+        }
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
         tosend.put("source", "magicdraw");
         String url = ExportUtility.getPostElementsUrl();
         if (!changes.isEmpty()) {
-            Request r = new Request(url, tosend.toJSONString(), "POST", false, changes.size());
+            Request r = new Request(url, tosend.toJSONString(), "POST", false, changes.size(), "Hierarchy Property Changes");
             OutputQueue.getInstance().offer(r);
         }
         if (!deletedIds.isEmpty()) {
@@ -173,7 +169,7 @@ AnnotationAction, IRuleViolationAction {
                 eo.put("sysmlid", e);
                 elements.add(eo);
             }
-            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", false, elements.size()));
+            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", false, elements.size(), "Hierarchy Property Changes"));
         }
         return returns;
     }
@@ -275,7 +271,12 @@ AnnotationAction, IRuleViolationAction {
                 //Element newview = null;
                 String url = ExportUtility.getUrlWithWorkspace();
                 url += "/elements/" + viewid;
-                String result = ExportUtility.get(url, false);
+                String result = null;
+                try {
+                    result = ExportUtility.get(url, false);
+                } catch (ServerException ex) {
+                    
+                }
                 if (result != null) {
                     JSONObject ob = (JSONObject)JSONValue.parse(result);
                     if (ob != null) {
@@ -285,22 +286,33 @@ AnnotationAction, IRuleViolationAction {
                             newviews.add(viewob);
                         }
                     }
+                } else {
+                    Utils.guilog("[ERROR] View " + viewid + " not found in model and cannot get from server, aborted.");
+                    retval.put("success", false);
+                    return retval;
                 }
             }
         }
-        List<JSONObject> sortedNewviews = ImportUtility.getCreationOrder(newviews);
-        if (sortedNewviews == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Creating new view(s) failed.");
+        Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(newviews);
+        List<JSONObject> sortedNewviews = toCreate.get("create");
+        if (!toCreate.get("fail").isEmpty()) {
+            Utils.guilog("[ERROR] Creating new view(s) failed.");
             retval.put("success", false);
             return retval;
         }
         for (JSONObject ob: sortedNewviews) {
-            Element newview = ImportUtility.createElement(ob, true);
-            if (newview != null) {
-                List<Property> viewprops = new ArrayList<Property>();
-                viewId2props.put(newview.getID(), viewprops);
-            } else {
-                Application.getInstance().getGUILog().log("[ERROR] Creating new view(s) failed.");
+            try {
+                Element newview = ImportUtility.createElement(ob, true);
+                if (newview != null) {
+                    List<Property> viewprops = new ArrayList<Property>();
+                    viewId2props.put(newview.getID(), viewprops);
+                } else {
+                    Utils.guilog("[ERROR] Creating new view(s) failed.");
+                    retval.put("success", false);
+                    return retval;
+                }
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] Creating new view(s) failed.");
                 retval.put("success", false);
                 return retval;
             }
@@ -309,6 +321,7 @@ AnnotationAction, IRuleViolationAction {
         Set<Element> added = new HashSet<Element>();
         Set<Element> deleted = new HashSet<Element>();
         Set<Property> ptyped = new HashSet<Property>();
+        Set<Element> owned = new HashSet<Element>();
         for (Object vid: keyed.keySet()) { //go through all views on mms
             String viewid = (String)vid;
             JSONArray children = (JSONArray)keyed.get(vid);
@@ -346,7 +359,7 @@ AnnotationAction, IRuleViolationAction {
                         Property p = availableProps.remove(0);
                         if (p.getOwner() != view) {
                             moved.add(p);
-                            
+                            owned.add(p.getOwner());
                             Property opposite = getOpposite(p);//p.getOpposite();
                             if (opposite != null) {
                                 opposite.setType((Type)view);
@@ -372,11 +385,13 @@ AnnotationAction, IRuleViolationAction {
                 //
                 ((Class)view).getOwnedAttribute().clear();
                 ((Class)view).getOwnedAttribute().addAll(cprops);
+                owned.add(view);
             }
         }
         for (List<Property> props: viewId2props.values()) {
             for (Property p: props) {
                 deleted.add(p);
+                owned.add(p.getOwner());
                 Association asso = p.getAssociation();
                 if (asso != null) {
                     deleted.addAll(asso.getOwnedEnd());
@@ -394,6 +409,7 @@ AnnotationAction, IRuleViolationAction {
         retval.put("added", added);
         retval.put("moved", moved);
         retval.put("ptyped", ptyped);
+        retval.put("ownedAttr", owned);
         return retval;
     }
     

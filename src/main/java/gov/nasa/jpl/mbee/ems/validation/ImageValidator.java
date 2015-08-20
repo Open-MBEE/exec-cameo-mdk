@@ -39,6 +39,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.simple.JSONObject;
@@ -71,7 +72,7 @@ public class ImageValidator {
             int status = 0;
             try {
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, baseurl);
+                ViewEditUtils.setCredentials(client, baseurl, get);
                 client.executeMethod(get);
                 status = get.getStatusCode();
             } catch (Exception ex) {
@@ -90,5 +91,9 @@ public class ImageValidator {
     
     public ValidationSuite getSuite() {
         return suite;
+    }
+    
+    public ValidationRule getRule() {
+    	return rule;
     }
 }

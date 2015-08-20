@@ -181,6 +181,8 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             for (int index = 0; index < book.getAuthor().size(); index++) {
                 if (book.getAuthor().get(index) != null && !book.getAuthor().get(index).equals("")) {
                     String[] tokens = book.getAuthor().get(index).split(delims);
+                    if (tokens.length < 5)
+                    	continue;
                     out.append("\n<author><personname><firstname>" + tokens[0] + "</firstname><surname>"
                             + tokens[1] + "</surname></personname><affiliation>" + "<jobtitle>" + tokens[2]
                             + "</jobtitle><org><orgname>" + tokens[3] + "</orgname><orgdiv>" + tokens[4]
@@ -190,6 +192,8 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             for (int index = 0; index < book.getApprover().size(); index++) {
                 if (book.getApprover().get(index) != null && !book.getApprover().get(index).equals("")) {
                     String[] tokens = book.getApprover().get(index).split(delims);
+                    if (tokens.length < 5)
+                    	continue;
                     out.append("\n<editor><personname><firstname>" + tokens[0] + "</firstname><surname>"
                             + tokens[1] + "</surname></personname><affiliation>" + "<jobtitle>" + tokens[2]
                             + "</jobtitle><org><orgname>" + tokens[3] + "</orgname><orgdiv>" + tokens[4]
@@ -200,6 +204,8 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             for (int index = 0; index < book.getConcurrance().size(); index++) {
                 if (book.getConcurrance().get(index) != null && !book.getConcurrance().get(index).equals("")) {
                     String[] tokens = book.getConcurrance().get(index).split(delims);
+                    if (tokens.length < 5)
+                    	continue;
                     out.append("\n<othercredit><personname><firstname>" + tokens[0] + "</firstname><surname>"
                             + tokens[1] + "</surname></personname><affiliation>" + "<jobtitle>" + tokens[2]
                             + "</jobtitle><org><orgname>" + tokens[3] + "</orgname><orgdiv>" + tokens[4]
@@ -210,6 +216,8 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                 if (book.getRevisionHistory().get(index) != null
                         && !book.getRevisionHistory().get(index).equals("")) {
                     String[] tokens = book.getRevisionHistory().get(index).split(revdelims);
+                    if (tokens.length < 5)
+                    	continue;
                     out.append("\n<revhistory><revision><revnumber>" + tokens[0] + "</revnumber><date>"
                             + tokens[1] + "</date><author><personname><firstname>" + tokens[2]
                             + "</firstname><surname>" + tokens[3]
@@ -266,8 +274,10 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             out.append("<acknowledgement>"
                     + DocGenUtils.addDocbook(DocGenUtils.fixString(book.getAcknowledgement()))
                     + "</acknowledgement>\n");
-        for (DocumentElement e: book.getChildren())
-            e.accept(this);
+        for (DocumentElement e: book.getChildren()) {
+            if (e instanceof DBSection && ((DBSection)e).isView())
+                e.accept(this);
+        }
         if (book.getIndex())
             out.append("<index/>");
         out.append("</book>");

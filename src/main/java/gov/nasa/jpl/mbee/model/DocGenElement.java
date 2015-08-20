@@ -42,7 +42,7 @@ public abstract class DocGenElement implements IDocGenElement {
     /**
      * this is usually the call behavior action element in a viewpoint method
      */
-    protected Element dgElement;
+    protected Element dgElement; //the call behavior action/structured activity that correspond to this/ the view element if a view section
 
     public DocGenElement() {
         ignore = false;

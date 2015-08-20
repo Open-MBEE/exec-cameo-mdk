@@ -45,22 +45,14 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private Element element;
-    private Stereotype view = Utils.getViewStereotype();
-    private Stereotype viewpoint = Utils.getViewpointStereotype();
-    
+
     public ExportElement(Element e) {
-    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-    	//
         super("ExportElement", "Commit element", null, null);
         this.element = e;
     }
@@ -91,38 +83,24 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         if (url == null) {
             return;
         }
-        Boolean background = Utils.getUserYesNoAnswer("Do you want to export " + infos.size() + " elements in the background? You'll get an email when done.");
+        String[] buttons = {"Background job on server", "Background job on magicdraw","Abort Export"};
+        Boolean background = Utils.getUserYesNoAnswerWithButton("Do you want to export " + infos.size() + " elements in the background on server? You'll get an email when done.", buttons);
         if (background != null && background)
             url += "?background=true";
         if (background == null) {
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
-        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationsAndUpdateWindow(annos);
-        }*/
+        Utils.guilog("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size(), "Element"));
+        if (!url.contains("background"))
+            Utils.guilog("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.okToExport(element))
-            return;
         JSONArray elements = new JSONArray();
-        JSONObject send = new JSONObject();
         elements.add(ExportUtility.fillElement(element, null));
-        send.put("elements", elements);
-        send.put("source", "magicdraw");
-        //gl.log(send.toJSONString());
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
-        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationsAndUpdateWindow(annos);
-        }*/
+        commit(elements, "Element");
     }
 }

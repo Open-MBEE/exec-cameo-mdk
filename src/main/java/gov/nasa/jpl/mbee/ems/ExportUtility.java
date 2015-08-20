@@ -38,6 +38,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -60,7 +61,9 @@ import javax.jms.Topic;
 import javax.swing.JOptionPane;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -89,6 +92,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
@@ -153,7 +157,12 @@ public class ExportUtility {
         if (url == null)
             return;
         url += "/workspaces";
-        String result = get(url, false);
+        String result = null;
+        try {
+            result = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
         if (result != null) {
             idmapping.clear();
             JSONObject ob =  (JSONObject) JSONValue.parse(result);
@@ -181,7 +190,12 @@ public class ExportUtility {
         if (url == null)
             return;
         url += "/workspaces/master/sites";
-        String result = get(url, false);
+        String result = null;
+        try {
+            result = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
         if (result != null) {
             idmapping.clear();
             JSONObject ob =  (JSONObject) JSONValue.parse(result);
@@ -297,7 +311,8 @@ public class ExportUtility {
             "_17_0_3_85f027d_1362349793876_101885_3031", //specification table
             "_17_0_3_85f027d_1362349793876_376001_3032",
             "_17_0_3_85f027d_1362349793876_780075_3033",
-            "_17_0_4beta_85f027d_1366953341699_324867_3761"
+            "_17_0_4beta_85f027d_1366953341699_324867_3761",
+            "_18_0_2_407019f_1433361787467_278914_14410" //view elements dummy slot
             ));
 
     public static Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
@@ -314,6 +329,9 @@ public class ExportUtility {
     
 
     public static String getElementID(Element e) {
+    	if (e == null) {
+    		return null;
+    	}
         if (e instanceof Slot) {
             if (e.getOwner() == null || ((Slot)e).getDefiningFeature() == null)
                 return null;
@@ -424,7 +442,7 @@ public class ExportUtility {
             if (id != null)
                 return id;
         }
-        Application.getInstance().getGUILog().log("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
+        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
         return null;
     }
     
@@ -484,7 +502,7 @@ public class ExportUtility {
                     Utils.showPopupMessage("You are not authorized or don't have permission, (you can login and try again).");
                 else
                     Utils.guilog("You are not authorized or don't have permission, (you can login and try again).");
-                ViewEditUtils.clearCredentials();
+                ViewEditUtils.clearUsernameAndPassword();
             } else if (code == 403) {
                 if (showPopupErrors)
                     Utils.showPopupMessage("You do not have permission to do this");
@@ -521,7 +539,7 @@ public class ExportUtility {
         DeleteMethod gm = new DeleteMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, gm);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             log.info("delete: " + url);
@@ -553,11 +571,11 @@ public class ExportUtility {
         if (url == null)
             return null;
         try {
-            GUILog gl = Application.getInstance().getGUILog();
+            //GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
             log.info("send file: " + url);
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("send file response: " + code + " " + response);
@@ -584,7 +602,7 @@ public class ExportUtility {
             pm = new PostMethod(url);
         else
             pm = new PutMethod(url);
-        GUILog gl = Application.getInstance().getGUILog();
+        //GUILog gl = Application.getInstance().getGUILog();
         try {
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Sending...");
@@ -598,7 +616,7 @@ public class ExportUtility {
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("send response: " + code + " " + response);
@@ -629,7 +647,7 @@ public class ExportUtility {
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("deleteWithBody Response: " + code + " " + response);
@@ -647,7 +665,7 @@ public class ExportUtility {
         }
     }
     
-    public static String getWithBody(String url, String json) {
+    public static String getWithBody(String url, String json) throws ServerException {
         EntityEnclosingMethod pm = null;
         pm = new GetMethodWithEntity(url);
         try {
@@ -656,17 +674,22 @@ public class ExportUtility {
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             log.info("getWithBody Response: " + code + " " + response);
-            if (showErrors(code, response, false)) {
-                return null;
+            if (showErrors(code, json, false)) {
+                throw new ServerException(json, code);
             }
+            if (code == 400)
+                throw new ServerException(json, code);
             return response;
-        } catch (Exception ex) {
+        } catch (HttpException ex) {
             Utils.printException(ex);
-            return null;
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
         } finally {
             pm.releaseConnection();
         }
@@ -699,17 +722,17 @@ public class ExportUtility {
         return response;
     }
 
-    public static String get(String url) {
+    public static String get(String url) throws ServerException {
         return get(url, true);
     }
 
-    public static String get(String url, boolean showPopupErrors) {
+    public static String get(String url, boolean showPopupErrors) throws ServerException {
         if (url == null)
             return null;
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url);
+            ViewEditUtils.setCredentials(client, url, gm);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             log.info("get: " + url);
@@ -717,16 +740,25 @@ public class ExportUtility {
             String json = gm.getResponseBodyAsString();
             log.info("get response: " + code + " " + json);
             if (showErrors(code, json, showPopupErrors)) {
-                return null;
+                throw new ServerException(json, code);
             }
+            if (code == 400)
+                throw new ServerException(json, code); //?
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
-        } catch (Exception ex) {
+        } catch (HttpException ex) {
             Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+        		Utils.showPopupMessage("URL is malformed");
+        		Utils.printException(ex);
+        		throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
         }
-        return null;
     }
 
     //check if comment is actually the documentation of its owner
@@ -883,7 +915,7 @@ public class ExportUtility {
         if (e instanceof Package) {
             fillPackage((Package)e, specialization);
         } else if (e instanceof Property || e instanceof Slot) {
-            fillPropertySpecialization(e, specialization, true);
+        		fillPropertySpecialization(e, specialization, true, true);
         } else if (e instanceof DirectedRelationship) {
             fillDirectedRelationshipSpecialization((DirectedRelationship)e, specialization);
         } else if (e instanceof Connector) {
@@ -894,11 +926,11 @@ public class ExportUtility {
             fillConstraintSpecialization((Constraint)e, specialization);
         } else if (e instanceof InstanceSpecification) {
             specialization.put("type", "InstanceSpecification");
-
+            fillInstanceSpecificationSpecialization((InstanceSpecification)e, specialization);
             /*ValueSpecification spec = ((InstanceSpecification) e)
                     .getSpecification();
             if (spec != null)
-                specialization.put("specification",
+                specialization.put("instanceSpecificationSpecification",
                         spec.getID());*/
         } else if (e instanceof Parameter) {
             fillParameterSpecialization((Parameter)e, specialization);
@@ -909,48 +941,84 @@ public class ExportUtility {
         } else if (e.getClass().getSimpleName().equals("ClassImpl")) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
             Stereotype view = Utils.getViewStereotype();
+            Stereotype doc = Utils.getProductStereotype();
             //Stereotype view = Utils.getViewStereotype();
             if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
                 specialization.put("type", "Viewpoint");
-            else if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view))
-                specialization.put("type", "View");
-            else
+            else if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view)) {
+                if (StereotypesHelper.hasStereotypeOrDerived(e, doc))
+                    specialization.put("type", "Product");
+                else
+                    specialization.put("type", "View");
+                fillViewContent(e, specialization);
+            } else
                 specialization.put("type", "Element");
         } else {
             specialization.put("type", "Untyped");
         }
+        fillOwnedAttribute(e, elementInfo);
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
+        fillMetatype(e, elementInfo);
         elementInfo.put("sysmlid", getElementID(e));
         return elementInfo;
     }
 
+	public static JSONObject fillViewContent(Element e, JSONObject spec) {
+        Stereotype doc = Utils.getProductStereotype();
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        if (StereotypesHelper.hasStereotypeOrDerived(e, doc))
+            specialization.put("type", "Product");
+        else
+            specialization.put("type", "View");
+        Constraint c = Utils.getViewConstraint(e);
+        if (c != null) {
+            JSONObject cob = fillConstraintSpecialization(c, null);
+            if (cob.containsKey("specification"))
+                specialization.put("contents", (JSONObject)cob.get("specification"));
+        }
+        Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
+        if (o != null && o instanceof String) {
+            try {
+                JSONArray a = (JSONArray)JSONValue.parse((String)o);
+                specialization.put("allowedElements", a);
+                specialization.put("displayedElements", a);
+            } catch (Exception ex) {}
+        }
+        return specialization;
+    }
+    
     @SuppressWarnings("unchecked")
-    public static JSONObject fillPropertySpecialization(Element e, JSONObject spec, boolean ptype) {
+    public static JSONObject fillPropertySpecialization(Element e, JSONObject spec, boolean value, boolean ptype) {
         JSONObject specialization = spec;
         if (specialization == null)
             specialization = new JSONObject();
         if (e instanceof Property) {
+        		specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
             specialization.put("type", "Property");
             specialization.put("isDerived", ((Property) e).isDerived());
             specialization.put("isSlot", false);
-            ValueSpecification vs = ((Property) e).getDefaultValue();
-            JSONArray singleElementSpecVsArray = new JSONArray();
-            if (vs != null) {
-                // Create a new JSONObject and a new JSONArray. Fill in
-                // the values to the new JSONObject and then insert
-                // that JSONObject into the array (NOTE: there will
-                // be single element in this array). Finally, insert
-                // the array into the specialization element as the
-                // value of the "value" property.
-                //
-                
-                JSONObject newElement = new JSONObject();
-                fillValueSpecification(vs, newElement);
-                singleElementSpecVsArray.add(newElement);
+            if (value) {
+                ValueSpecification vs = ((Property) e).getDefaultValue();
+                JSONArray singleElementSpecVsArray = new JSONArray();
+                if (vs != null) {
+                    // Create a new JSONObject and a new JSONArray. Fill in
+                    // the values to the new JSONObject and then insert
+                    // that JSONObject into the array (NOTE: there will
+                    // be single element in this array). Finally, insert
+                    // the array into the specialization element as the
+                    // value of the "value" property.
+                    //
+                    
+                    JSONObject newElement = new JSONObject();
+                    fillValueSpecification(vs, newElement);
+                    singleElementSpecVsArray.add(newElement);
+                }
+                specialization.put("value", singleElementSpecVsArray);
             }
-            specialization.put("value", singleElementSpecVsArray);
             //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
             //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
             if (ptype) {
@@ -964,6 +1032,7 @@ public class ExportUtility {
             specialization.put("type", "Property");
             specialization.put("isDerived", false);
             specialization.put("isSlot", true);
+            
 
             // Retrieve a list of ValueSpecification objects.
             // Loop through these objects, creating a new JSONObject
@@ -973,16 +1042,18 @@ public class ExportUtility {
             // specifications, insert the JSONArray into the
             // new specialization element.
             //
-            List<ValueSpecification> vsl = ((Slot) e).getValue();
-            JSONArray specVsArray = new JSONArray();
-            if (vsl != null && vsl.size() > 0) {
-                for (ValueSpecification vs : vsl) {
-                    JSONObject newElement = new JSONObject();
-                    fillValueSpecification(vs, newElement);
-                    specVsArray.add(newElement);
+            if (value) {
+                List<ValueSpecification> vsl = ((Slot) e).getValue();
+                JSONArray specVsArray = new JSONArray();
+                if (vsl != null && vsl.size() > 0) {
+                    for (ValueSpecification vs : vsl) {
+                        JSONObject newElement = new JSONObject();
+                        fillValueSpecification(vs, newElement);
+                        specVsArray.add(newElement);
+                    }
                 }
+                specialization.put("value", specVsArray);
             }
-            specialization.put("value", specVsArray);
             if (ptype) {
                 Element type = ((Slot) e).getDefiningFeature();
                 if (type != null) {
@@ -994,6 +1065,36 @@ public class ExportUtility {
     }
     
     @SuppressWarnings("unchecked")
+    public static JSONObject fillInstanceSpecificationSpecialization(InstanceSpecification e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        if (e.getSpecification() != null)
+            specialization.put("instanceSpecificationSpecification", fillValueSpecification(e.getSpecification(), null));
+        JSONArray classifiers = new JSONArray();
+        for (Classifier c: e.getClassifier()) {
+            classifiers.add(c.getID());
+        }
+        specialization.put("classifier", classifiers);
+        specialization.put("type", "InstanceSpecification");
+        return specialization;
+    }
+    
+	public static JSONObject sanitizeJSON(JSONObject spec) {
+		List<Object> remKeys = new ArrayList<Object>();
+		for (Object key: spec.keySet()) {
+			// delete empty JSONArray
+			if (spec.get(key) instanceof JSONArray && ((JSONArray)spec.get(key)).isEmpty()) {
+				remKeys.add(key);
+			}
+		}
+		for (Object key: remKeys) {
+			spec.remove(key);
+		}
+		return spec;
+	}
+    
+    @SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
         JSONObject specialization = spec;
         if (specialization == null)
@@ -1002,10 +1103,10 @@ public class ExportUtility {
         for (Property p: e.getMemberEnd()) {
             if (i == 0) {
                 specialization.put("source", p.getID());
-                specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
+                // specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
             } else {
                 specialization.put("target", p.getID());
-                specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
+                // specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
         }
@@ -1138,8 +1239,10 @@ public class ExportUtility {
         }
         Element client = ModelHelper.getClientElement(e);
         Element supplier = ModelHelper.getSupplierElement(e);
-        specialization.put("source", getElementID(client));
-        specialization.put("target", getElementID(supplier));
+        if (client != null) //this shouldn't happen
+            specialization.put("source", getElementID(client));
+        if (supplier != null) //this shouldn't happen
+            specialization.put("target", getElementID(supplier));
         return specialization;
     }
 
@@ -1168,6 +1271,25 @@ public class ExportUtility {
         return info;
     }
     
+	@SuppressWarnings("unchecked")
+	public static JSONObject fillOwnedAttribute(Element e, JSONObject einfo) {
+		JSONObject info = einfo;
+		if (info == null) {
+			info = new JSONObject();
+			info.put("sysmlid", getElementID(e));
+		}
+		
+		JSONArray propIDs = new JSONArray();
+		if (e instanceof Class) {
+			for (Property prop: ((Class)e).getOwnedAttribute()) {
+				propIDs.add(getElementID(prop));
+			}
+		}
+		if (!propIDs.isEmpty())
+			info.put("ownedAttribute", propIDs);
+		return info;
+	}
+    
     @SuppressWarnings("unchecked")
     public static JSONObject fillOwner(Element e, JSONObject einfo) {
         JSONObject info = einfo;
@@ -1186,8 +1308,50 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
+        }
+        info.put("sysmlid", getElementID(e));
+        return info;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillMetatype(Element e, JSONObject einfo) {
+        JSONObject info = einfo;
+        if (info == null) {
+            info = new JSONObject();
             info.put("sysmlid", getElementID(e));
         }
+        info.put("isMetatype", false);
+        if (e instanceof Stereotype) {
+            info.put("isMetatype", true);
+            JSONArray metatypes = new JSONArray();
+            for (Class c: ((Stereotype)e).getSuperClass()) {
+                if (c instanceof Stereotype) {
+                    metatypes.add(c.getID());
+                }
+            }
+            for (Class c: StereotypesHelper.getBaseClasses((Stereotype)e)) {
+                metatypes.add(c.getID());
+            }
+            info.put("metatypes", metatypes);
+        }
+        if (e instanceof Class) {
+            try {
+                java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class)e);
+                if (c != null) {
+                    info.put("isMetatype", true);
+                    info.put("metatypes", new JSONArray());
+                }
+            } catch (Exception ex) {}
+        }
+        List<Stereotype> stereotypes = StereotypesHelper.getStereotypes(e);
+        JSONArray applied = new JSONArray();
+        for (Stereotype s: stereotypes) {
+            applied.add(s.getID());
+        }
+        Class baseClass = StereotypesHelper.getBaseClass(e);
+        if (baseClass != null)
+            applied.add(baseClass.getID());
+        info.put("appliedMetatypes", applied);
         return info;
     }
     
@@ -1226,10 +1390,7 @@ public class ExportUtility {
             List<String> tags = ProjectUtilities.getVersionTags(prj
                     .getPrimaryProject());
             if (!tags.contains(baselineTag)) {
-                Application
-                        .getInstance()
-                        .getGUILog()
-                        .log("The current project is not an approved baseline version!");
+                Utils.guilog("The current project is not an approved baseline version!");
                 return false;
             }
 
@@ -1238,11 +1399,7 @@ public class ExportUtility {
                 if (ProjectUtilities.isFromTeamworkServer(proj)) {
                     List<String> tags2 = ProjectUtilities.getVersionTags(proj);
                     if (!tags2.contains(baselineTag)) {
-                        Application
-                                .getInstance()
-                                .getGUILog()
-                                .log(proj.getName()
-                                        + " is not an approved baseline module version!");
+                        Utils.guilog(proj.getName() + " is not an approved baseline module version!");
                         return false;
                     }
                 }
@@ -1277,7 +1434,12 @@ public class ExportUtility {
     }
     
     private static Integer getAlfrescoProjectVersionWithUrl(String url) {
-        String json = get(url, false);
+        String json = null;
+        try {
+            json = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
         if (json == null)
             return null; // ??
         JSONObject result = (JSONObject) JSONValue.parse(json);
@@ -1455,8 +1617,8 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        Utils.guilog("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
     }
     
@@ -1472,8 +1634,8 @@ public class ExportUtility {
         String url = baseurl + "/projects";
         if (!url.contains("master"))
             url += "?createSite=true";
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString()));
+        Utils.guilog("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
     }
 
@@ -1496,11 +1658,13 @@ public class ExportUtility {
         Session session = null;
         MessageConsumer consumer = null;
         try {
-            String url = AutoSyncProjectListener.getJMSUrl();
+            Map<String, String> urlInfo = new HashMap<String, String>();
+            AutoSyncProjectListener.getJMSUrl(urlInfo);
+            String url = urlInfo.get( "url" );
             if (url == null) {
                 return;
             }
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
+            ConnectionFactory connectionFactory = AutoSyncProjectListener.createConnectionFactory( urlInfo );
             connection = connectionFactory.createConnection();
             String subscriberId = projectId + "/" + taskId;
             connection.setClientID(subscriberId);
@@ -1546,14 +1710,14 @@ public class ExportUtility {
                 && ExportUtility.isElementDocumentation((Comment) e))
             return false;
         if (e instanceof InstanceSpecification && !(e instanceof EnumerationLiteral)) {
-            boolean haveIgnore = false;
+            boolean shouldIgnore = true;
             for (Classifier c: ((InstanceSpecification)e).getClassifier()) {
                 if (!(c instanceof Stereotype))
                     return true;
-                if (IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
-                    haveIgnore = true;
+                if (!IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
+                    shouldIgnore = false;
             }
-            if (!haveIgnore && !e.getOwnedElement().isEmpty())
+            if (!shouldIgnore && !e.getOwnedElement().isEmpty())
                 return true;
             return false;
             /*if (((InstanceSpecification)e).getClassifier().size() == 1 && 
@@ -1570,9 +1734,22 @@ public class ExportUtility {
                 return false;
         if (e.getID().endsWith("sync") || (e.getOwner() != null && e.getOwner().getID().endsWith("sync"))) //delayed sync stuff
             return false;
+        if (e instanceof Constraint) {
+            if (isViewConstraint((Constraint)e))
+                return false;
+        }
         return true;
     }
 
+    public static boolean isViewConstraint(Constraint e) {
+        Element maybeView = e.getOwner();
+        Stereotype v = Utils.getViewStereotype();
+        List<Element> constrained = ((Constraint)e).getConstrainedElement();
+        if (maybeView != null && v != null && StereotypesHelper.hasStereotypeOrDerived(maybeView, v) && constrained.size() == 1 && constrained.get(0) == maybeView)
+            return true; //view constraint, get from view itself
+        return false;
+    }
+    
     public static final Pattern HTML_WHITESPACE_END = Pattern.compile(
             "\\s*</p>", Pattern.DOTALL);
     public static final Pattern HTML_WHITESPACE_START = Pattern.compile(
@@ -1627,5 +1804,22 @@ public class ExportUtility {
         }
         return branch;
     }
+
+    /**
+     * Gets JMS JNDI connection details from the MMS server
+     * @return  JSONObject of the connection details
+     */
+    public static JSONObject getJmsConnectionDetails() {
+        String url = getUrl() + "/connection/jms";
+        String jsonString = null;
+        try {
+            jsonString = get(url, false);
+        } catch (ServerException ex) {}
+        if (jsonString == null) return null; 
+        
+        return (JSONObject)JSONValue.parse( jsonString );
+    }
+
+
 
 }

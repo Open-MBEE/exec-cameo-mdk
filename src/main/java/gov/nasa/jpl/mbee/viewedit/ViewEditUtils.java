@@ -49,9 +49,12 @@ import javax.swing.JRootPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.params.HttpMethodParams;
@@ -67,6 +70,7 @@ public class ViewEditUtils {
     private static String             username              = "";
     private static String             password              = "";
     private static boolean            passwordSet           = false;
+    private static String             authStringEnc         = "";
     private static final List<String> servers               = Arrays.asList(
                                                                     "http://docgen.jpl.nasa.gov:8080/editor",
                                                                     // "https://europaems:8443/alfresco/service",
@@ -145,7 +149,7 @@ public class ViewEditUtils {
      * @param client
      * @param urlstring
      */
-    public static void setCredentials(HttpClient client, String urlstring) {
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method) {
         try {
             URL url = new URL(urlstring);
 
@@ -177,9 +181,7 @@ public class ViewEditUtils {
                         "Enter your username and password for ViewEditor:", JOptionPane.OK_CANCEL_OPTION,
                         JOptionPane.PLAIN_MESSAGE);
 
-                username = usernameFld.getText();
-                password = new String(passwordFld.getPassword());
-                passwordSet = true;
+                setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);
             }
 
             Credentials creds = new UsernamePasswordCredentials(username, password);
@@ -193,6 +195,8 @@ public class ViewEditUtils {
             e.printStackTrace();
         }
 
+        // proxy cache needs Authorization header
+        method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
     }
     
     private static void makeSureUserGetsFocus(final JTextField user) {
@@ -229,16 +233,14 @@ public class ViewEditUtils {
         });
     }
 
-    public static void clearCredentials() {
-        passwordSet = false;
-        username = "";
-        password = "";
+    public static void clearUsernameAndPassword() {
+        setUsernameAndPassword("", "", false);
     }
 
     public static boolean showErrorMessage(int code) {
         if (code == 401) {
             Utils.showPopupMessage("[ERROR] You may have entered the wrong credentials: You've been logged out, try again");
-            ViewEditUtils.clearCredentials();
+            ViewEditUtils.clearUsernameAndPassword();
         } else if (code == 500)
             Utils.showPopupMessage("[ERROR] Server error occured, you may not have permission to modify view(s) or their contents");
         else if (code == 404)
@@ -250,5 +252,21 @@ public class ViewEditUtils {
     
     public static boolean isPasswordSet() {
         return passwordSet;
+    }
+    
+    /**
+     * utility for setting authorization header encoding at same time as username and password.
+     */
+    private static void setUsernameAndPassword(String uname, String pword, boolean isPasswordSet) {
+        passwordSet = isPasswordSet;
+        username = uname;
+        password = pword;
+        String authString = username + ":" + password;
+        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
+        authStringEnc = "Basic " + new String(authEncBytes);
+    }
+    
+    public static String getAuthStringEnc() {
+        return authStringEnc;
     }
 }

@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
@@ -53,7 +54,7 @@ public class EMSLoginAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewEditUtils.clearCredentials();
+        ViewEditUtils.clearUsernameAndPassword();
         if (Application.getInstance().getProject() == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return;
@@ -61,7 +62,10 @@ public class EMSLoginAction extends MDAction {
         String url = ExportUtility.getUrl();
         if (url == null)
             return;
-        String response = ExportUtility.get(url + "/checklogin");
+        String response = null;
+        try {
+            response = ExportUtility.get(url + "/checklogin");
+        } catch (ServerException ex) {}
         if (response ==  null)
             return;
         Application.getInstance().getGUILog().log("Logged in");

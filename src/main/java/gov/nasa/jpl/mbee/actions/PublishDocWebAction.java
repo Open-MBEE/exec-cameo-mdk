@@ -69,7 +69,7 @@ public class PublishDocWebAction extends MDAction {
     public static final String actionid = "Publish2DocWeb";
 
     public PublishDocWebAction(NamedElement p) {
-        super(actionid, "Publish to Docweb", null, null);
+        super(actionid, "Publish to Docweb (Dep.)", null, null);
         this.p = p;
     }
 

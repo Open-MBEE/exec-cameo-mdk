@@ -51,6 +51,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -262,19 +263,18 @@ public class Paragraph extends Query {
         } else if (gotText && !gotTargets) { // tryOcl must be true
             Debug.outln( "case 7" );
             // case 7: return a paragraph of the evaluation of the text as OCL on dgElement 
-            addOclParagraph( res, getText(), dgElement );
+            addOclParagraph( res, getText(), new ArrayList<Object>() );
         } else if ( gotTargets ) {
             // In case 5, we get the OCL from the targets; if the targets are
             // Properties, then we look for the OCL in their values; otherwise,
             // we use the documentation as OCL.
             allTargetsAreProperties = true;
             for (Object o: targets) {
-                if ( o != null && !( o instanceof Property ) ) {
-                    if ( ! ( o instanceof Slot ) ) {
-                        allTargetsAreProperties = false;
-                        break;
-                    }
+                if ( o != null && !( o instanceof Property ) && !( o instanceof Slot ) && !(o instanceof Constraint)) {
+                    allTargetsAreProperties = false;
+                    break;
                 }
+                
             }
             // Build up a list of References before generating DBParagraphs.
             for (Object o: targets) {
@@ -299,11 +299,14 @@ public class Paragraph extends Query {
                         Debug.outln( "case 2 or 5" );
                         // for cases 2 and 5
                         //Object ocl = allTargetsAreProperties ? : ModelHelper.getComment( e );
-                        if ( allTargetsAreProperties && tryOcl ) {
+                        if ( allTargetsAreProperties && tryOcl) {
                             Object v = Utils.getElementAttribute( e, AvailableAttribute.Value );
                             ref = new Reference(e, From.DVALUE, v);
                         } else {
-                            ref = new Reference(e, From.DOCUMENTATION, ModelHelper.getComment(e));
+                        	if (attribute != null) {
+                        		ref = new Reference(e, fromProperty, Utils.getElementAttribute(e, attribute));
+                        	} else
+                        		ref = new Reference(e, From.DOCUMENTATION, ModelHelper.getComment(e));
                         }
                     }
                     refs.add( ref );
@@ -346,7 +349,7 @@ public class Paragraph extends Query {
                             // cases 5 & 6: add a paragraph of the evaluation of
                             // the value of each target-property (6) or of each target's
                             // documentation (5) as OCL on dgElement
-                            addOclParagraph( res, r.getResult(), dgElement );
+                            addOclParagraph( res, r.getResult(), new ArrayList<Object>() );
                         }
                     }
                 }

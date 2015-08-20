@@ -30,6 +30,9 @@ package gov.nasa.jpl.mbee.ems.validation;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
+import gov.nasa.jpl.mbee.ems.validation.actions.CompareHierarchy;
+import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportElementComments;
 import gov.nasa.jpl.mbee.ems.validation.actions.ExportHierarchy;
@@ -41,6 +44,7 @@ import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.JSONUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
@@ -119,7 +123,10 @@ public class ViewValidator {
             return false;
         String globalUrl = ExportUtility.getUrl();
         globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        String globalResponse = ExportUtility.get(globalUrl, false);
+        String globalResponse = null;
+        try {
+            globalResponse = ExportUtility.get(globalUrl, false);
+        } catch (ServerException ex) {}
         String url = ExportUtility.getUrlWithWorkspace();
         
         if (globalResponse == null) {
@@ -132,7 +139,10 @@ public class ViewValidator {
             projectExist.addViolation(v);
             return false;
         }
-        String response = ExportUtility.get(projectUrl, false);
+        String response = null;
+        try {
+            response = ExportUtility.get(projectUrl, false);
+        } catch (ServerException ex) {}
         if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
             if (url == null)
                 return false;
@@ -163,7 +173,7 @@ public class ViewValidator {
         (new PostProcessor()).process(dge);
         
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
-        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse);
+        DBAlfrescoVisitor visitor2 = new DBAlfrescoVisitor(recurse, true);
         if (!hierarchyOnly) {
             dge.accept(visitor);
             DBBook book = visitor.getBook();
@@ -211,11 +221,18 @@ public class ViewValidator {
 
             //check to see if view exists on alfresco
             String existurl = url + "/elements/" + viewid;
-            String response = ExportUtility.get(existurl, false);
+            String response = null;
+            try {
+                response = ExportUtility.get(existurl, false);
+            } catch(ServerException ex) {}
             //response is the string version of the view json gotten from the web
             if (!ViewEditUtils.isPasswordSet())
                 return false;
-            if (response == null || !response.contains("contains")) {
+            JSONObject webView = null;
+            if (response != null) {
+                webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("elements")).get(0);
+            }
+            if (webView == null || (!webView.containsKey("specialization"))) {
                 //if the json doesn't contain the "contains" key, that means the view hasn't been exported yet
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                 v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
@@ -224,10 +241,10 @@ public class ViewValidator {
                 //v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
                 exists.addViolation(v);
             } else {
-                //view has been on the web
-                JSONObject webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("elements")).get(0);
                 Object containsObj = ((JSONObject)webView.get("specialization")).get("contains");
-                if (containsObj == null) {
+                Object contentsObj = ((JSONObject)webView.get("specialization")).get("contents");
+                Boolean editable = (Boolean) webView.get("editable");
+                if (containsObj == null && contentsObj == null) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                     v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
                     //v.addAction(new ExportView(currentView, false, true, "Commit View with Elements to MMS"));
@@ -235,17 +252,13 @@ public class ViewValidator {
                     //v.addAction(new ExportView(currentView, true, true, "Commit View with Elements Hierarchically to MMS"));
                     exists.addViolation(v);
                 } else {
-                    Boolean editable = (Boolean) webView.get("editable");
                     if (!hierarchyOnly) {
                         String viewElementsUrl = url + "/views/" + viewid + "/elements";
                         JSONArray localElements = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("displayedElements");
                         // get the current elements referenced by the view in the current model
                         JSONArray localContains = (JSONArray)((JSONObject)((JSONObject)visitor2.getViews().get(viewid)).get("specialization")).get("contains");
                         // get the current model view structure
-    
-                        
-                        // this is the json object for the view on the web
-    
+
                         // this is the web view structure
                         JSONArray webContains = null;
                         if (containsObj instanceof JSONArray) {
@@ -254,7 +267,10 @@ public class ViewValidator {
                         if (ps != null && ps.isCancel())
                             break;
                         // quick way to get all element info referenced by view from the web
-                        String viewelements = ExportUtility.get(viewElementsUrl, false);
+                        String viewelements = null;
+                        try {
+                            viewelements = ExportUtility.get(viewElementsUrl, false);
+                        } catch (ServerException ex) {}
                         if (viewelements == null)
                             continue;
                         JSONObject viewresults = (JSONObject)JSONValue.parse(viewelements);
@@ -285,21 +301,28 @@ public class ViewValidator {
                             cachedResultElements.put((String)((JSONObject)reselement).get("sysmlid"), (JSONObject) reselement);
                         }
                     }
-                    // see if the list of view elements referenced matches and view structures match
-                    boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
-                    
-                    if (!hierarchyMatches) {
-                        // Update the hierarchy in MagicDraw based on MagicDraw
-                        ValidationRuleViolation v = new ValidationRuleViolation( currentView, "[Hierarchy] Document Hierarchy is different");
-                        JSONArray view2view = (JSONArray)((JSONObject)webView.get("specialization")).get("view2view");
-                        if (editable)
-                            v.addAction(new ExportHierarchy(currentView));
-                        if (view2view != null) {
-                            JSONObject keyed = ExportUtility.keyView2View(view2view);
-                            v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
-                        }
-                        hierarchy.addViolation(v);
+                }
+             // see if the list of view elements referenced matches and view structures match
+                boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
+                
+                if (!hierarchyMatches) {
+                    // Update the hierarchy in MagicDraw based on MagicDraw
+                    ValidationRuleViolation v = new ValidationRuleViolation( currentView, "[Hierarchy] Document Hierarchy is different");
+                    JSONArray view2view = (JSONArray)((JSONObject)webView.get("specialization")).get("view2view");
+                    if (editable != null && editable)
+                        v.addAction(new ExportHierarchy(currentView));
+                    JSONObject keyed = new JSONObject();
+                    if (view2view != null) {
+                        keyed = ExportUtility.keyView2View(view2view);
+                        v.addAction(new CompareHierarchy(currentView, keyed, vhv.getView2View()));
+                        v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
                     }
+                    //JSONObject modelData = JSONUtils.nest(vhv.getView2View());
+                    //JSONObject webData = JSONUtils.nest(keyed);
+                    //v.addAction(new DetailDiff(modelData, webData));
+                    //cann't use detail diff since it randomizes order of children
+                    
+                    hierarchy.addViolation(v);
                 }
             }
         }
@@ -312,7 +335,9 @@ public class ViewValidator {
             starts.add(view);
             ModelValidator mv = new ModelValidator(starts, results, true, visitor2.getElementSet(), true); //visitor2.getElementSet() has the local model elements
             //do the actual element validations between model and web
-            mv.validate(false, ps);
+            try {
+                mv.validate(false, ps);
+            } catch (ServerException ex) {}
             modelSuite = mv.getSuite();
 
             Utils.guilog("[INFO] Validating images");

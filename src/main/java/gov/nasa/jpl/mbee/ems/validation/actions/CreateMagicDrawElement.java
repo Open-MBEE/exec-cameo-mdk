@@ -28,10 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -39,26 +37,14 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
-import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class CreateMagicDrawElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -119,28 +105,52 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                     }
                 }
             }
-            tocreate = ImportUtility.getCreationOrder(tocreate);
-            if (tocreate == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Cannot create elements (owner(s) not found)");
+            Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(tocreate);
+            tocreate = toCreate.get("create");
+            List<JSONObject> fail = toCreate.get("fail");
+            if (!fail.isEmpty()) {
+                Utils.guilog("[ERROR] Cannot create elements (owner(s) not found)");
                 multipleSuccess = false;
                 return false;
             } else {
+                ImportUtility.outputError = false;
                 for (JSONObject newe: tocreate) {
-                    Element newElement = ImportUtility.createElement(newe, false);
-                    if (newElement == null) {
-                        Application.getInstance().getGUILog().log("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
+                    try {
+                        Element newElement = ImportUtility.createElement(newe, false);
+                        if (newElement == null) {
+                            Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
+                            multipleSuccess = false;
+                            return false;
+                        }
+                    } catch (ImportException ex) {
+                        
+                    }
+                }
+                ImportUtility.outputError = true;
+                for (JSONObject newe: tocreate) {
+                    try {
+                        Element newElement = ImportUtility.createElement(newe, true);
+                        if (newElement == null) {
+                            Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (references not found)");
+                            multipleSuccess = false;
+                            return false;
+                        }
+                    } catch (ImportException ex) {
+                        Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (references not found)");
                         multipleSuccess = false;
                         return false;
                     }
                 }
-                for (JSONObject newe: tocreate) {
-                    ImportUtility.createElement(newe, true);
-                }
             }
         } else {
-            Element magicDrawElement = ImportUtility.createElement(ob, true); 
-            if (magicDrawElement == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Element not created (id already exists or owner not found)");
+            try {
+                Element magicDrawElement = ImportUtility.createElement(ob, true); 
+                if (magicDrawElement == null) {
+                    Utils.guilog("[ERROR] Cannot create element (references or owner not found)");
+                    return false;
+                }
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] Cannot create element (references or owner not found)");
                 return false;
             }
         }

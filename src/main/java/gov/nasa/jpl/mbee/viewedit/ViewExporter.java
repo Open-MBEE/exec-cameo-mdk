@@ -52,6 +52,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
@@ -147,7 +148,7 @@ public class ViewExporter implements RunnableWithProgress {
                 pm.setRequestHeader("Content-Type", "application/json");
                 pm.setRequestEntity(JsonRequestEntity.create(post));
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, posturl);
+                ViewEditUtils.setCredentials(client, posturl, pm);
                 // gl.log(post);
                 gl.log("[INFO] Sending View Hierarchy...");
                 int code = client.executeMethod(pm);
@@ -241,7 +242,7 @@ public class ViewExporter implements RunnableWithProgress {
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, baseurl);
+            ViewEditUtils.setCredentials(client, baseurl, pm);
             gl.log("[INFO] Sending...");
             int code = client.executeMethod(pm);
             if (ViewEditUtils.showErrorMessage(code))
@@ -304,7 +305,7 @@ public class ViewExporter implements RunnableWithProgress {
             int status = 0;
             try {
                 HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, baseurl);
+                ViewEditUtils.setCredentials(client, baseurl, get);
                 gl.log("[INFO] Checking if imagefile exists... " + key + "_cs" + cs + extension);
                 client.executeMethod(get);
 
@@ -328,7 +329,7 @@ public class ViewExporter implements RunnableWithProgress {
                                 imageFile.length()));
                     }
                     HttpClient client = new HttpClient();
-                    ViewEditUtils.setCredentials(client, baseurl);
+                    ViewEditUtils.setCredentials(client, baseurl, post);
                     gl.log("[INFO] Did not find image, uploading file... " + key + "_cs" + cs + extension);
                     client.executeMethod(post);
 

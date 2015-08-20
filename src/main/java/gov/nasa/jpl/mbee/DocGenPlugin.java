@@ -31,6 +31,8 @@ package gov.nasa.jpl.mbee;
 import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
 import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
+import gov.nasa.jpl.mbee.ems.sync.AutosyncStatusConfigurator;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
@@ -82,6 +84,7 @@ public class DocGenPlugin extends Plugin {
         System.setProperty ("jsse.enableSNIExtension", "false");
         DocGenConfigurator dgc = new DocGenConfigurator();
         acm.addContainmentBrowserContextConfigurator(dgc);
+        acm.addSearchBrowserContextConfigurator(dgc);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, dgc);
         //acm.addBaseDiagramContextConfigurator("Class Diagram", dgc);
         //acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
@@ -91,6 +94,14 @@ public class DocGenPlugin extends Plugin {
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, plc);
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
+        
+        SRConfigurator srconfig = new SRConfigurator();
+        acm.addSearchBrowserContextConfigurator(srconfig);
+        acm.addContainmentBrowserContextConfigurator(srconfig);
+        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srconfig);
+        
+        acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
+        acm.addMainToolbarConfigurator(new AutosyncStatusConfigurator());
 
         getOclPlugin().init();
         getVcPlugin().init();

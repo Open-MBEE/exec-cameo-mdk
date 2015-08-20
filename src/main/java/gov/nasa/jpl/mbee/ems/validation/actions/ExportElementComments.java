@@ -29,8 +29,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -42,7 +40,6 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -66,7 +63,6 @@ public class ExportElementComments extends RuleViolationAction implements Annota
     @SuppressWarnings("unchecked")
     @Override
     public void execute(Collection<Annotation> annos) {
-        JSONObject send = new JSONObject();
         JSONArray infos = new JSONArray();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
@@ -78,24 +74,13 @@ public class ExportElementComments extends RuleViolationAction implements Annota
                 infos.add(info);
             }
         }
-        send.put("elements", infos);
-        send.put("source", "magicdraw");
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size()));
-        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationsAndUpdateWindow(annos);
-        }*/
+        commit(infos, "Element Comment");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
-        JSONObject send = new JSONObject();
         for (Comment c: element.get_commentOfAnnotatedElement()) {
             if (ExportUtility.isElementDocumentation(c))
                 continue;
@@ -103,16 +88,6 @@ public class ExportElementComments extends RuleViolationAction implements Annota
             ExportUtility.fillElement(c, info);
             elements.add(info);
         }
-        send.put("elements", elements);
-        send.put("source", "magicdraw");
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString()));
-        /*if (ExportUtility.send(url, send.toJSONString()) != null) {
-            this.removeViolationsAndUpdateWindow(annos);
-        }*/
+        commit(elements, "Element Comment");
     }
 }

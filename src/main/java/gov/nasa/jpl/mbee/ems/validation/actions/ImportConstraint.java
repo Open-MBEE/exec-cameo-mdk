@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
@@ -12,10 +14,8 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 
 public class ImportConstraint extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -47,13 +47,23 @@ public class ImportConstraint extends RuleViolationAction implements AnnotationA
         if (anno != null) {
             Element e = (Element)anno.getTarget();
             if (!e.isEditable()) {
-                Application.getInstance().getGUILog().log("[ERROR] " + e.get_representationText() + " isn't editable");
+                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-            ImportUtility.setConstraintSpecification((Constraint)e, (JSONObject)resultOb.get("specialization"));
+            try {
+                ImportUtility.setConstraintSpecification((Constraint)e, (JSONObject)resultOb.get("specialization"));
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
+            }
         } else {
-            ImportUtility.setConstraintSpecification(element, spec);
+            try {
+                ImportUtility.setConstraintSpecification(element, spec);
+            } catch (ImportException ex) {
+                Utils.guilog("[ERROR] " + ex.getMessage());
+                return false;
+            }
         }
         return true;
     }
@@ -61,7 +71,7 @@ public class ImportConstraint extends RuleViolationAction implements AnnotationA
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {
-            Application.getInstance().getGUILog().log("[ERROR] Element is not editable!");
+            Utils.guilog("[ERROR] Element is not editable!");
             return;
         }
         execute("Change constraint");

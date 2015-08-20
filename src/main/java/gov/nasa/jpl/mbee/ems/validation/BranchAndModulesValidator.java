@@ -27,6 +27,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateAlfrescoTask;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateModuleSite;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateTeamworkBranch;
@@ -75,7 +76,12 @@ public class BranchAndModulesValidator {
             
             boolean siteExists = ExportUtility.siteExists(siteHuman, true);
             if (siteExists) {
-                String response = ExportUtility.get(ExportUtility.getUrlForProject(module), false);
+                String response = null;
+                try {
+                    response = ExportUtility.get(ExportUtility.getUrlForProject(module), false);
+                } catch (ServerException ex) {
+                    
+                }
                 if (response == null) {
                     Set<Element> packages = new HashSet<Element>();
                     for (IMountPoint mp: mounts) {
@@ -99,7 +105,7 @@ public class BranchAndModulesValidator {
         if (!ProjectUtilities.isFromTeamworkServer(prj))
             return;
         if (TeamworkUtils.getLoggedUserName() == null) {
-            Application.getInstance().getGUILog().log("You need to log in to teamwork first to do branches validation.");
+        	Utils.guilog("You need to log in to teamwork first to do branches validation.");
             return;
         }
         ExportUtility.updateWorkspaceIdMapping();

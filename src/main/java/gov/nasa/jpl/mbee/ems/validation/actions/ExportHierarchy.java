@@ -33,6 +33,7 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -122,8 +123,8 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             send.put("source", "magicdraw");
             //if (ExportUtility.send(docurl, send.toJSONString()) == null)
             //    return false;
-            Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-            OutputQueue.getInstance().offer(new Request(docurl, send.toJSONString()));
+            Utils.guilog("[INFO] Request is added to queue.");
+            OutputQueue.getInstance().offer(new Request(docurl, send.toJSONString(), "Hierarchy"));
         } else {
             JSONArray views = new JSONArray();
             for (Object viewid: view2view.keySet()) {
@@ -139,8 +140,8 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             send.put("source", "magicdraw");
             //if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
             //    return false;
-            Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString()));
+            Utils.guilog("[INFO] Request is added to queue.");
+            OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "Hierarchy"));
         }
         return true;
         

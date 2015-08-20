@@ -154,11 +154,11 @@ public class Reference {
     public boolean isResultEditable() {
         if (result == null
                 || element == null
-                || from == null
+                || from == null)
                 //|| (element instanceof Slot && (((Slot)element).getDefiningFeature().getUpper() > 1 || ((Slot)element)
                 //        .getDefiningFeature().getUpper() == -1))
                 //|| (result instanceof Collection && ((Collection<?>)result).size() > 1)
-                || !Utils.isLiteral(result))
+                //|| !Utils.isLiteral(result))
             return false;
         return true;
     }

@@ -63,6 +63,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -292,8 +293,8 @@ public class EditableTable extends JDialog {
                                     String curValue = (String)ntable.getValueAt(row, col);
 
                                     if (e instanceof Property && whatToChange == PropertyEnum.VALUE) {
-                                        if (((Property)e).getDefault() == null
-                                                || !((Property)e).getDefault().equals(value)) {
+                                        if (UML2ModelUtil.getDefault(((Property)e)) == null
+                                                || !UML2ModelUtil.getDefault(((Property)e)).equals(value)) {
                                             if (value.equals("")) {
                                                 int ok = JOptionPane.showConfirmDialog(null,
                                                         "You're about to set the value of "

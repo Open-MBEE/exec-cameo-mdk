@@ -31,5 +31,6 @@
 	<classpathentry kind="lib" path="lib/ecj-3.7.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/activemq-all-5.9.1.jar"/>
+    <classpathentry kind="lib" path="lib/wlthint3client.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

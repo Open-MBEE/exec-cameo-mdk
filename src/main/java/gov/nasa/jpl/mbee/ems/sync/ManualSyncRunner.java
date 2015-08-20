@@ -1,13 +1,21 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
+import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +38,9 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 public class ManualSyncRunner implements RunnableWithProgress {
 
@@ -39,6 +49,22 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private GUILog gl = Application.getInstance().getGUILog();
     private Logger log = Logger.getLogger(ManualSyncRunner.class);
     
+    private boolean isFromTeamwork = false;
+    private boolean loggedIn = true;
+    private boolean failure = false;
+    private boolean skipUpdate = false;
+    
+    private ValidationSuite suite = new ValidationSuite("Updated Elements/Failed Updates");
+    private ValidationRule updated = new ValidationRule("updated", "updated", ViolationSeverity.INFO);
+    private ValidationRule cannotUpdate = new ValidationRule("cannotUpdate", "cannotUpdate", ViolationSeverity.ERROR);
+    private ValidationRule cannotRemove = new ValidationRule("cannotDelete", "cannotDelete", ViolationSeverity.WARNING);
+    private ValidationRule cannotCreate = new ValidationRule("cannotCreate", "cannotCreate", ViolationSeverity.ERROR);
+    
+    public ManualSyncRunner(boolean commit, boolean skipUpdate) {
+        this.commit = commit;
+        this.skipUpdate = skipUpdate;
+    }
+    
     public ManualSyncRunner(boolean commit) {
         this.commit = commit;
     }
@@ -46,6 +72,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private void tryToLock(Project project) {
         if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) 
             return;
+        
         for (Element e: project.getModel().getOwnedElement()) {
             if (ProjectUtilities.isElementInAttachedProject(e))
                 continue;
@@ -53,28 +80,44 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
     }
     
+    private boolean tryToLock(Project project, Element e) {
+        return Utils.tryToLock(project, e, isFromTeamwork);
+    }
+    
     @SuppressWarnings("unchecked")
     @Override
     public void run(ProgressStatus ps) {
-        Application.getInstance().getGUILog().log("[INFO] Getting changes from MMS...");
+        if (!skipUpdate)
+            Utils.guilog("[INFO] Getting changes from MMS...");
+    	suite.addValidationRule(updated);
+    	suite.addValidationRule(cannotUpdate);
+    	suite.addValidationRule(cannotRemove);
+    	suite.addValidationRule(cannotCreate);
+    	
         Project project = Application.getInstance().getProject();
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            isFromTeamwork = true;
             if (TeamworkUtils.getLoggedUserName() == null) {
-                gl.log("[ERROR] You need to be logged in to teamwork first.");
+                loggedIn = false;
+                failure = true;
+                Utils.guilog("[ERROR] You need to be logged in to teamwork first.");
                 return;
             }
         }
             
         AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
         if (listener == null) {
-            gl.log("[ERROR] Unexpected error happened.");
+            Utils.guilog("[ERROR] Unexpected error happened, cannot get commit listener.");
+            failure = true;
             return; //some error here
         }
         listener.disable();
         Map<String, Set<String>> jms = AutoSyncProjectListener.getJMSChanges(Application.getInstance().getProject());
         listener.enable();
-        if (jms == null)
+        if (jms == null) {
+            failure = true;
             return;
+        }
         Map<String, Element> localAdded = listener.getAddedElements();
         Map<String, Element> localDeleted = listener.getDeletedElements();
         Map<String, Element> localChanged = listener.getChangedElements();
@@ -83,7 +126,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         JSONObject previousUpdates = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
         if (previousUpdates != null) {
             for (String added: (List<String>)previousUpdates.get("added")) {
-                if (localAdded.containsKey(added))
+                if (localAdded.containsKey(added) || localChanged.containsKey(added))
                     continue;
                 Element e = ExportUtility.getElementFromID(added);
                 if (e != null)
@@ -98,6 +141,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 localAdded.remove(updated);
             }
             for (String deleted: (List<String>)previousUpdates.get("deleted")) {
+                if (ExportUtility.getElementFromID(deleted) != null) {
+                    if (localDeleted.containsKey(deleted))
+                        localDeleted.remove(deleted);
+                    continue; //not deleted?
+                }
                 if (!localDeleted.containsKey(deleted)) {
                     localDeleted.put(deleted, null);
                 }
@@ -119,7 +167,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         
         if (!toGet.isEmpty()) {
             //TeamworkUtils.lockElement(project, project.getModel(), true);
-            tryToLock(project);
+            //tryToLock(project);
             JSONObject getJson = new JSONObject();
             JSONArray getElements = new JSONArray();
             getJson.put("elements", getElements);
@@ -130,10 +178,15 @@ public class ManualSyncRunner implements RunnableWithProgress {
             }
             String url = ExportUtility.getUrlWithWorkspace();
             url += "/elements";
-            gl.log("[INFO] Getting " + getElements.size() + " elements from MMS.");
-            String response = ExportUtility.getWithBody(url, getJson.toJSONString());
+            Utils.guilog("[INFO] Getting " + getElements.size() + " elements from MMS.");
+            String response = null;
+            try {
+                response = ExportUtility.getWithBody(url, getJson.toJSONString());
+            } catch (ServerException ex) {
+                Utils.guilog("[ERROR] Get elements failed.");
+            }
             if (response == null)
-                return; //bad
+                return; //should repopulate error block?
             Map<String, JSONObject> webElements = new HashMap<String, JSONObject>();
             JSONObject webObject = (JSONObject)JSONValue.parse(response);
             JSONArray webArray = (JSONArray)webObject.get("elements");
@@ -150,7 +203,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 if (webElements.containsKey(webAdd))
                     webAddedObjects.add(webElements.get(webAdd));
             }
-            List<JSONObject> webAddedSorted = ImportUtility.getCreationOrder(webAddedObjects);
+            
             
             //calculate potential conflicted set and clean web updated set
             Set<String> localChangedIds = new HashSet<String>(localChanged.keySet());
@@ -174,52 +227,79 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     webChangedObjects.add(webElements.get(webUpdate));
             }
             
-            gl.log("[INFO] Applying changes...");
+            Utils.guilog("[INFO] Applying changes...");
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change");
             try {
+                Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(webAddedObjects);
+                
+                List<JSONObject> webAddedSorted = toCreate.get("create");
+                List<JSONObject> fails = toCreate.get("fail");
                 List<Map<String, Object>> toChange = new ArrayList<Map<String, Object>>();
                 //take care of web added
                 if (webAddedSorted != null) {
+                    ImportUtility.outputError = false;
                     for (Object element : webAddedSorted) {
                         try {
                             ImportUtility.createElement((JSONObject) element, false);
-                        } catch (Exception ex) {
+                        } catch (ImportException ex) {
                             
                         }
                     }
+                    ImportUtility.outputError = true;
                     for (Object element : webAddedSorted) { 
                         try {
                             Element newe = ImportUtility.createElement((JSONObject) element, true);
-                            gl.log("[SYNC] " + newe.getHumanName() + " created.");
+                            //Utils.guilog("[SYNC ADD] " + newe.getHumanName() + " created.");
+                            updated.addViolation(new ValidationRuleViolation(newe, "[CREATED]"));
                         } catch (Exception ex) {
                             log.error("", ex);
                             cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                            ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ex.getMessage());
+                            vrv.addAction(new DetailDiff(new JSONObject(), (JSONObject)element));
+                            cannotCreate.addViolation(vrv);
                         }
                     }
-                } else {
-                    for (Object element: webAddedObjects) {
-                        cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
-                    }
+                } 
+                for (JSONObject element: fails) {
+                    cannotAdd.add((String)element.get("sysmlid"));
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] Owner or chain of owners not found");
+                    vrv.addAction(new DetailDiff(new JSONObject(), element));
+                    cannotCreate.addViolation(vrv);
                 }
+                
             
                 //take care of updated
                 for (JSONObject webUpdated: webChangedObjects) {
                     Element e = ExportUtility.getElementFromID((String)webUpdated.get("sysmlid"));
                     if (e == null) {
-                        //bad? maybe it was supposed to have been added?
+                        //TODO bad? maybe it was supposed to have been added?
                         continue;
                     }
-                    if (!e.isEditable()) {
+                    JSONObject spec = (JSONObject)webUpdated.get("specialization");
+                    if (spec != null && spec.get("contents") != null) {
+                        Constraint c = Utils.getViewConstraint(e);
+                        if (c != null) {
+                            if (!tryToLock(project, c)) {
+                                cannotChange.add(ExportUtility.getElementID(e)); //this is right since contents is embedded in view
+                                //Utils.guilog("[ERROR - SYNC UPDATE] " + e.getHumanName() + " not editable.");
+                                cannotUpdate.addViolation(new ValidationRuleViolation(c, "[UPDATE FAILED] - not editable"));
+                                continue;
+                            }
+                        }
+                    }
+                    if (!tryToLock(project, e)) {
                         cannotChange.add(ExportUtility.getElementID(e));
-                        gl.log("[ERROR - SYNC] " + e.getHumanName() + " not editable.");
+                        //Utils.guilog("[ERROR - SYNC UPDATE] " + e.getHumanName() + " not editable.");
+                        cannotUpdate.addViolation(new ValidationRuleViolation(e, "[UPDATE FAILED] - not editable"));
                         continue;
                     }
                     try {
                         ImportUtility.updateElement(e, webUpdated);
                         ImportUtility.setOwner(e, webUpdated);
-                        gl.log("[SYNC] " + e.getHumanName() + " updated.");
-                        if (webUpdated.containsKey("specialization")) {
+                        updated.addViolation(new ValidationRuleViolation(e, "[UPDATED]"));
+                        //Utils.guilog("[SYNC UPDATE] " + e.getHumanName() + " updated.");
+                        /*if (webUpdated.containsKey("specialization")) { //do auto doc hierarchy? very risky
                             JSONArray view2view = (JSONArray)((JSONObject)webUpdated.get("specialization")).get("view2view");
                             if (view2view != null) {
                                 JSONObject web = ExportUtility.keyView2View(view2view);
@@ -231,15 +311,17 @@ public class ManualSyncRunner implements RunnableWithProgress {
                                 if (!ViewValidator.viewHierarchyMatch(e, dge, vhv, (JSONObject)webUpdated.get("specialization"))) {
                                     Map<String, Object> result = ImportHierarchy.importHierarchy(e, model, web);
                                     if (result != null && (Boolean)result.get("success")) {
-                                        gl.log("[SYNC] Document hierarchy updated for " + e.getHumanName());
+                                        Utils.guilog("[SYNC] Document hierarchy updated for " + e.getHumanName());
                                         toChange.add(result);
                                     } else
                                         cannotChange.add(ExportUtility.getElementID(e));
                                 }
                             }
-                        }
+                        }*/
                     } catch (Exception ex) {
-                        gl.log("[ERROR - SYNC] " + e.getHumanName() + " failed to update from MMS: " + ex.getMessage());
+                        //Utils.guilog("[ERROR - SYNC UPDATE] " + e.getHumanName() + " failed to update from MMS: " + ex.getMessage());
+                        ValidationRuleViolation vrv = new ValidationRuleViolation(e, "[UPDATE FAILED] " + ex.getMessage());
+                        cannotUpdate.addViolation(vrv);
                         log.error("", ex);
                         cannotChange.add(ExportUtility.getElementID(e));
                     }
@@ -250,9 +332,15 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     Element toBeDeleted = ExportUtility.getElementFromID(e);
                     if (toBeDeleted == null)
                         continue;
+                    if (!tryToLock(project, toBeDeleted)) {
+                        cannotDelete.add(e);
+                        cannotRemove.addViolation(new ValidationRuleViolation(toBeDeleted, "[DELETE FAILED] - not editable"));
+                        //Utils.guilog("[ERROR - SYNC DELETE] " + toBeDeleted.getHumanName() + " not editable.");
+                        continue;
+                    }
                     try {
                         ModelElementsManager.getInstance().removeElement(toBeDeleted);
-                        gl.log("[SYNC] " + toBeDeleted.getHumanName() + " deleted.");
+                        Utils.guilog("[SYNC DELETE] " + toBeDeleted.getHumanName() + " deleted.");
                     } catch (Exception ex) {
                         log.error("", ex);
                         cannotDelete.add(e);
@@ -261,11 +349,35 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 listener.disable();
                 sm.closeSession();
                 listener.enable();
-                gl.log("[INFO] Finished applying changes.");
+                if (!skipUpdate)
+                    Utils.guilog("[INFO] Finished applying changes.");
                 for (Map<String, Object> r: toChange) {
                     ImportHierarchy.sendChanges(r); //what about if doc is involved in conflict?
                 }
+            } catch (Exception ex) {
+                //something really bad happened, save all changes for next time;
+                log.error("", ex);
+                sm.cancelSession();
+                Utils.printException(ex);
+                cannotAdd.clear();
+                cannotChange.clear();
+                cannotDelete.clear();
+                updated.getViolations().clear();
+                cannotUpdate.getViolations().clear();
+                cannotRemove.getViolations().clear();
+                cannotCreate.getViolations().clear();
+                for (String e: webDeleted) {
+                    cannotDelete.add(e);
+                }
+                for (JSONObject element: webAddedObjects) {
+                    cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                }
+                for (JSONObject element: webChangedObjects) {
+                    cannotChange.add((String)element.get("sysmlid"));
+                }
+                Utils.guilog("[ERROR] Unexpected exception happened, all changes will be reattempted at next update.");
                 
+            }
                 if (!cannotAdd.isEmpty() || !cannotChange.isEmpty() || !cannotDelete.isEmpty()) {
                     JSONObject failed = new JSONObject();
                     JSONArray failedAdd = new JSONArray();
@@ -287,14 +399,39 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         sm.cancelSession();
                     }
                     listener.enable();
-                    gl.log("[INFO] There were changes that couldn't be applied. These will be attempted on the next update.");
+                    Utils.guilog("[INFO] There were changes that couldn't be applied. These will be attempted on the next update.");
+                    if (!cannotAdd.isEmpty() || !cannotChange.isEmpty()) {
+                        failure = true;
+                    }
+                } else {
+                    listener.disable();
+                    sm.createSession("failed changes");
+                    try {
+                        AutoSyncProjectListener.setUpdatesOrFailed(project, null, "error");
+                        sm.closeSession();
+                    } catch (Exception ex) {
+                        log.error("", ex);
+                        sm.cancelSession();
+                    }
+                    listener.enable();
                 }
+                
+                //show window of what got changed
+                List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+                vss.add(suite);
+                if (suite.hasErrors())
+                    Utils.displayValidationWindow(vss, "Delta Sync Log");
+                
                 
               //conflicts
                 JSONObject mvResult = new JSONObject();
                 mvResult.put("elements", webConflictedObjects);
                 ModelValidator mv = new ModelValidator(null, mvResult, false, localConflictedElements, false);
-                mv.validate(false, null);
+                try {
+                    mv.validate(false, null);
+                } catch (ServerException ex) {
+                    
+                }
                 Set<Element> conflictedElements = mv.getDifferentElements();
                 if (!conflictedElements.isEmpty()) {
                     JSONObject conflictedToSave = new JSONObject();
@@ -302,7 +439,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     for (Element ce: conflictedElements)
                         conflictedElementIds.add(ExportUtility.getElementID(ce));
                     conflictedToSave.put("elements", conflictedElementIds);
-                    gl.log("[INFO] There are potential conflicts between changes from MMS and locally changed elements, please resolve first and rerun update/commit.");
+                    Utils.guilog("[INFO] There are potential conflicts between changes from MMS and locally changed elements, please resolve first and rerun update/commit.");
                     listener.disable();
                     sm.createSession("failed changes");
                     try {
@@ -313,22 +450,20 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         sm.cancelSession();
                     }
                     listener.enable();
+                    failure = true;
                     mv.showWindow();
                     return;
                 } 
-            } catch (Exception e) {
-                log.error("", e);
-                sm.cancelSession();
-            }
         } else {
-            gl.log("[INFO] MMS has no updates.");
+            if (!skipUpdate)
+                Utils.guilog("[INFO] MMS has no updates.");
             //AutoSyncProjectListener.setLooseEnds(project, null);
             //AutoSyncProjectListener.setFailed(project, null);
         }
         
         //send local changes
         if (commit) {
-            gl.log("[INFO] Committing local changes to MMS...");
+            Utils.guilog("[INFO] Committing local changes to MMS...");
             JSONArray toSendElements = new JSONArray();
             for (Element e: localAdded.values()) {
                 toSendElements.add(ExportUtility.fillElement(e, null));
@@ -344,8 +479,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
             }
             //do foreground?
             if (!toSendElements.isEmpty()) {
-                Application.getInstance().getGUILog().log("[INFO] Change requests are added to queue.");
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true, toSendElements.size()));
+            	Utils.guilog("[INFO] Change requests are added to queue.");
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true, toSendElements.size(), "Sync Changes"));
             }
             localAdded.clear();
             localChanged.clear();
@@ -360,14 +495,14 @@ public class ManualSyncRunner implements RunnableWithProgress {
             }
             toSendUpdates.put("elements", toDeleteElements);
             if (!toDeleteElements.isEmpty()) {
-                Application.getInstance().getGUILog().log("[INFO] Delete requests are added to queue.");
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size()));
+            	Utils.guilog("[INFO] Delete requests are added to queue.");
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));
             }
             localDeleted.clear();
             if (toDeleteElements.isEmpty() && toSendElements.isEmpty())
-                gl.log("[INFO] No changes to commit.");
+                Utils.guilog("[INFO] No changes to commit.");
             if (!toDeleteElements.isEmpty() || !toSendElements.isEmpty() || !toGet.isEmpty())
-                gl.log("[INFO] Don't forget to save or commit to teamwork and unlock!");
+                Utils.guilog("[INFO] Don't forget to save or commit to teamwork and unlock!");
             
             listener.disable();
             SessionManager sm = SessionManager.getInstance();
@@ -382,6 +517,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
             listener.enable();
         }
         if (!toGet.isEmpty() && !commit)
-            gl.log("[INFO] Don't forget to save or commit to teamwork and unlock!");
+            Utils.guilog("[INFO] Don't forget to save or commit to teamwork and unlock!");
+    }
+    
+    public boolean getFailure() {
+        return failure;
     }
 }
