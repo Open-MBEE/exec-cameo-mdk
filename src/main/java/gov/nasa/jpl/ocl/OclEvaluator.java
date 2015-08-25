@@ -468,7 +468,7 @@ public class OclEvaluator {
         doi.setOperation(new CallOperation() {
             @Override
             public Object callOperation(Object source, Object[] args) {
-                Pattern pattern = Pattern.compile((String)args[0]);
+                Pattern pattern = Pattern.compile((String)args[0], Pattern.MULTILINE | Pattern.DOTALL);
                 Matcher matcher = pattern.matcher((String)source);
 
                 return matcher.matches() ? matcher.group() : null;
