@@ -269,10 +269,10 @@ public class GetCallOperation implements CallOperation {
                                 Utils.getElementAttribute( (Element)source,
                                                            AvailableAttribute.Value );
                     }
-                    if ( Utils2.isNullOrEmpty( objectToAdd )
+                    /*if ( Utils2.isNullOrEmpty( objectToAdd )
                 		 && source instanceof ElementValue ) {
                     	objectToAdd = ((ElementValue) source).getElement();
-                    }
+                    }*/
                     if ( Utils2.isNullOrEmpty( objectToAdd )
                          && source instanceof ValueSpecification ) {
                         objectToAdd =

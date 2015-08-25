@@ -351,7 +351,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (!auto)
                     deletedElements.put(elementID, sourceElement);
             } 
-            else if (propertyName.equals(UML2MetamodelConstants.BEFORE_DELETE) && sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement)) {
+            else if (propertyName.equals(UML2MetamodelConstants.BEFORE_DELETE) && sourceElement instanceof Slot) { // && ExportUtility.shouldAdd(sourceElement)) {
                 elementID = ExportUtility.getElementID(sourceElement);
                 if (elementID == null)
                     return;
@@ -393,6 +393,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 ExportUtility.fillOwner(sourceElement, elementOb);
             } else if (sourceElement instanceof ConnectorEnd && propertyName.equals(PropertyNames.ROLE)) {
                 Connector conn = ((ConnectorEnd)sourceElement).get_connectorOfEnd();
+                if (conn == null)
+                    return;
                 elementOb = getElementObject(conn);
                 JSONObject specialization = ExportUtility.fillConnectorSpecialization(conn, null);
                 elementOb.put("specialization", specialization);
@@ -410,7 +412,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     elementOb.put("specialization", specialization);
                     ExportUtility.fillOwner(sourceElement, elementOb);
                 //}
-            } else if (sourceElement instanceof InstanceSpecification && (propertyName.equals(PropertyNames.SPECIFICATION) || propertyName.equals(PropertyNames.CLASSIFIER))) {
+            } else if (sourceElement instanceof InstanceSpecification && ExportUtility.shouldAdd(sourceElement) && (propertyName.equals(PropertyNames.SPECIFICATION) || propertyName.equals(PropertyNames.CLASSIFIER))) {
             	if (isDiagramCreated(sourceElement)) {
                     String id = ExportUtility.getElementID(sourceElement);
                     toRemove.add(id);

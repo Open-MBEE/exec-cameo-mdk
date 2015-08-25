@@ -1151,6 +1151,8 @@ public class ExportUtility {
             specialization = new JSONObject();
         specialization.put("type", "Connector");
         int i = 0;
+        if (e.getEnd() == null)
+            return spec;
         for ( ConnectorEnd end : e.getEnd()) {
             JSONArray propertyPath = new JSONArray();
             if ( end.getRole() != null ) {
