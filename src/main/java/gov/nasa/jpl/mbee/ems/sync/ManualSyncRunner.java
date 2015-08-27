@@ -465,18 +465,27 @@ public class ManualSyncRunner implements RunnableWithProgress {
         if (commit) {
             Utils.guilog("[INFO] Committing local changes to MMS...");
             JSONArray toSendElements = new JSONArray();
+            Set<String> alreadyAdded = new HashSet<String>();
             for (Element e: localAdded.values()) {
                 if (e == null)
                     continue;
-                if (ExportUtility.getElementID(e) == null)
+                String id = ExportUtility.getElementID(e);
+                if (id == null)
                     continue;
+                if (alreadyAdded.contains(id))
+                    continue;
+                alreadyAdded.add(id);
                 toSendElements.add(ExportUtility.fillElement(e, null));
             }
             for (Element e: localChanged.values()) {
                 if (e == null)
                     continue;
-                if (ExportUtility.getElementID(e) == null)
+                String id = ExportUtility.getElementID(e);
+                if (id == null)
                     continue;
+                if (alreadyAdded.contains(id))
+                    continue;
+                alreadyAdded.add(id);
                 toSendElements.add(ExportUtility.fillElement(e, null));
             }
             JSONObject toSendUpdates = new JSONObject();
