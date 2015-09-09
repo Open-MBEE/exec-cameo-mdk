@@ -493,7 +493,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 listener = new AutoSyncCommitListener(true); 
                 MDTransactionManager transactionManager = (MDTransactionManager) project.getRepository()
                     .getTransactionManager();
-                listener.setTm(transactionManager);
+                //listener.setTm(transactionManager);
                 transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
                 projectInstances.put(LISTENER, listener);
             }
@@ -629,7 +629,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         AutoSyncCommitListener listener = new AutoSyncCommitListener(false); //change to just set auto to true in existing listener
         MDTransactionManager transactionManager = (MDTransactionManager) project.getRepository()
                 .getTransactionManager();
-        listener.setTm(transactionManager);
+        //listener.setTm(transactionManager);
         transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
         projectInstances.put(LISTENER, listener);
         /*JSONObject previousUpdates = getUpdatesOrFailed(project, "update");

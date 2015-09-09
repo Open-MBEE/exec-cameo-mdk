@@ -59,6 +59,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private ValidationRule cannotUpdate = new ValidationRule("cannotUpdate", "cannotUpdate", ViolationSeverity.ERROR);
     private ValidationRule cannotRemove = new ValidationRule("cannotDelete", "cannotDelete", ViolationSeverity.WARNING);
     private ValidationRule cannotCreate = new ValidationRule("cannotCreate", "cannotCreate", ViolationSeverity.ERROR);
+    private Set<String> cannotChange;
     
     public ManualSyncRunner(boolean commit, boolean skipUpdate) {
         this.commit = commit;
@@ -67,6 +68,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
     
     public ManualSyncRunner(boolean commit) {
         this.commit = commit;
+    }
+    
+    public Set<String> getCannotChange() {
+        return cannotChange;
     }
     
     private void tryToLock(Project project) {
@@ -162,7 +167,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         toGet.addAll(webAdded);
         
         Set<String> cannotAdd = new HashSet<String>();
-        Set<String> cannotChange = new HashSet<String>();
+        cannotChange = new HashSet<String>();
         Set<String> cannotDelete = new HashSet<String>();
         
         if (!toGet.isEmpty()) {
@@ -400,9 +405,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                     listener.enable();
                     Utils.guilog("[INFO] There were changes that couldn't be applied. These will be attempted on the next update.");
-                    if (!cannotAdd.isEmpty() || !cannotChange.isEmpty()) {
-                        failure = true;
-                    }
+                    //if (!cannotAdd.isEmpty() || !cannotChange.isEmpty()) {
+                      //  failure = true;
+                    //}
                 } else {
                     listener.disable();
                     sm.createSession("failed changes");

@@ -44,7 +44,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
     /**
      * Allow listener to be disabled during imports.
      */
-    private boolean disabled = false;
+    private volatile boolean disabled = false;
     private TransactionManager tm;
     private boolean auto = false;
     private Map<String, Element> changedElements = new HashMap<String, Element>();

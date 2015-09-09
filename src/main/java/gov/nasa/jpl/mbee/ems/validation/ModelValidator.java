@@ -136,7 +136,7 @@ public class ModelValidator {
     private ValidationRule valueDiff = new ValidationRule("Mismatched Value", "property/slot value is different", ViolationSeverity.ERROR);
     private ValidationRule propertyTypeDiff = new ValidationRule("Mismatched Property Type", "property type is different", ViolationSeverity.ERROR);
     private ValidationRule ownership = new ValidationRule("Moved", "Wrong containment", ViolationSeverity.ERROR);
-    private ValidationRule exist = new ValidationRule("Exist", "Doesn't Exist or Moved", ViolationSeverity.WARNING);
+    private ValidationRule exist = new ValidationRule("Exist", "Doesn't Exist or Moved", ViolationSeverity.ERROR);
     private ValidationRule relDiff = new ValidationRule("Relationship", "Relationship source or target", ViolationSeverity.ERROR);
     private ValidationRule commentDiff = new ValidationRule("Comment", "Comment different", ViolationSeverity.ERROR);
     private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);

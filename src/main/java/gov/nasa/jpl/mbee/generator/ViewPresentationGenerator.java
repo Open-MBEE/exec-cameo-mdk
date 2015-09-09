@@ -63,6 +63,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationRule docPackage = new ValidationRule("docPackage", "docPackage", ViolationSeverity.ERROR);
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule viewParent = new ValidationRule("viewParent", "viewParent", ViolationSeverity.WARNING);
+    private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
     
     private Classifier paraC = Utils.getOpaqueParaClassifier();
     private Classifier tableC = Utils.getOpaqueTableClassifier();
@@ -96,9 +97,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private Map<Element, Package> view2pac = new HashMap<Element, Package>();
     private Project project;
     
-    public ViewPresentationGenerator(Element view, boolean recursive) {
+    private Set<String> cannotChange;
+    
+    public ViewPresentationGenerator(Element view, boolean recursive, Set<String> cannotChange) {
         this.view = view;
         this.recurse = recursive;
+        this.cannotChange = cannotChange; //from one click doc gen, if update has unchangeable elements, check if those are things the view generation touches
     }
     
     private boolean tryToLock(Project project, Element e) {
@@ -116,6 +120,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         suite.addValidationRule(docPackage);
         suite.addValidationRule(viewInProject);
         suite.addValidationRule(viewParent);
+        suite.addValidationRule(updateFailed);
         
         DocumentValidator dv = new DocumentValidator(view);
         dv.validateDocument();
@@ -269,6 +274,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     is.getClassifier().add(imageC);
                 else if (pe.getType() == PEType.SECTION)
                     is.getClassifier().add(sectionC);
+                is.setOwner(owner);
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);
                 s.setDefiningFeature(generatedFromView);
@@ -327,6 +333,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             pe.setInstance(is);
         }
         if (section != null) {
+            if (cannotChange != null && cannotChange.contains(section.getID())) {
+                cancelSession = true;
+                updateFailed.addViolation(new ValidationRuleViolation(section, "[UPDATE FAILED] This section instance failed to update previously."));
+                return;
+            }
             boolean needEdit = false;
             if (section.getSpecification() != null && section.getSpecification() instanceof Expression) {
                 List<ValueSpecification> model = ((Expression)section.getSpecification()).getOperand();
@@ -357,6 +368,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         } else {
+            if (cannotChange != null && cannotChange.contains(view.getID())) {
+                cancelSession = true;
+                updateFailed.addViolation(new ValidationRuleViolation(view, "[UPDATE FAILED] This view failed to update previously."));
+                return;
+            }
             Constraint c = getViewConstraint(view);
             boolean needEdit = false;
             if (c.getSpecification() != null && c.getSpecification() instanceof Expression) {
@@ -409,7 +425,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         if (!results.isEmpty() && results.get(0) instanceof Package) {
             final Package p = (Package) results.get(0);
             //setPackageHierarchy(view, viewInst, p);
-            //p.setName(getViewTargetPackageName(view));
+            String viewName = ((NamedElement)view).getName();
+            viewName = ((viewName == null || viewName.isEmpty()) ? view.getID() : viewName) + " " + genericInstSuffix;
+            if (!p.getName().equals(viewName) && tryToLock(project, p))
+                p.setName(viewName);
             return p;
         }
         if (create) {
