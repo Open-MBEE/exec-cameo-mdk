@@ -43,7 +43,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
 public class ManualSyncRunner implements RunnableWithProgress {
-
+    private boolean delete = false;
     private boolean commit;
     
     private GUILog gl = Application.getInstance().getGUILog();
@@ -61,13 +61,15 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private ValidationRule cannotCreate = new ValidationRule("cannotCreate", "cannotCreate", ViolationSeverity.ERROR);
     private Set<String> cannotChange;
     
-    public ManualSyncRunner(boolean commit, boolean skipUpdate) {
+    public ManualSyncRunner(boolean commit, boolean skipUpdate, boolean delete) {
         this.commit = commit;
         this.skipUpdate = skipUpdate;
+        this.delete = delete;
     }
     
-    public ManualSyncRunner(boolean commit) {
+    public ManualSyncRunner(boolean commit, boolean delete) {
         this.commit = commit;
+        this.delete = delete;
     }
     
     public Set<String> getCannotChange() {
@@ -508,29 +510,41 @@ public class ManualSyncRunner implements RunnableWithProgress {
             localChanged.clear();
             
             JSONArray toDeleteElements = new JSONArray();
-            for (String e: localDeleted.keySet()) {
-                if (ExportUtility.getElementFromID(e) != null) //somehow the model has it, don't delete on server
-                    continue;
-                JSONObject toDelete = new JSONObject();
-                toDelete.put("sysmlid", e);
-                toDeleteElements.add(toDelete);
+            if (delete) {
+                for (String e: localDeleted.keySet()) {
+                    if (ExportUtility.getElementFromID(e) != null) //somehow the model has it, don't delete on server
+                        continue;
+                    JSONObject toDelete = new JSONObject();
+                    toDelete.put("sysmlid", e);
+                    toDeleteElements.add(toDelete);
+                }
+                toSendUpdates.put("elements", toDeleteElements);
+                if (!toDeleteElements.isEmpty()) {
+                	Utils.guilog("[INFO] Delete requests are added to queue.");
+                    OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));
+                }
+                localDeleted.clear();
             }
-            toSendUpdates.put("elements", toDeleteElements);
-            if (!toDeleteElements.isEmpty()) {
-            	Utils.guilog("[INFO] Delete requests are added to queue.");
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));
-            }
-            localDeleted.clear();
             if (toDeleteElements.isEmpty() && toSendElements.isEmpty())
                 Utils.guilog("[INFO] No changes to commit.");
             if (!toDeleteElements.isEmpty() || !toSendElements.isEmpty() || !toGet.isEmpty())
                 Utils.guilog("[INFO] Don't forget to save or commit to teamwork and unlock!");
             
+            JSONObject toSave = null;
+            if (!delete && !localDeleted.isEmpty()) {
+                toSave = new JSONObject();
+                JSONArray toSaveDelete = new JSONArray();
+                toSaveDelete.addAll(localDeleted.keySet());
+                toSave.put("deleted", toSaveDelete);
+                toSave.put("changed", new JSONArray());
+                toSave.put("added", new JSONArray());
+                localDeleted.clear();
+            }
             listener.disable();
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("updates sent");
             try {
-                AutoSyncProjectListener.setUpdatesOrFailed(project, null, "update");
+                AutoSyncProjectListener.setUpdatesOrFailed(project, toSave, "update");
                 sm.closeSession();
             } catch (Exception ex) {
                 log.error("", ex);

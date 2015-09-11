@@ -35,6 +35,7 @@ import gov.nasa.jpl.mbee.actions.ems.MigrationCategory;
 import gov.nasa.jpl.mbee.actions.ems.SendProjectVersionAction;
 import gov.nasa.jpl.mbee.actions.ems.StartAutoSyncAction;
 import gov.nasa.jpl.mbee.actions.ems.UpdateFromJMS;
+import gov.nasa.jpl.mbee.actions.ems.UpdateFromJMSAndCommitWithDelete;
 import gov.nasa.jpl.mbee.actions.ems.UpdateWorkspacesAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateMountStructureAction;
 import gov.nasa.jpl.mbee.lib.MDUtils;
@@ -71,6 +72,7 @@ public class MMSConfigurator implements AMConfigurator {
             category.addAction(new CloseAutoSyncAction());
             category.addAction(new UpdateFromJMS(false));
             category.addAction(new UpdateFromJMS(true));
+            category.addAction(new UpdateFromJMSAndCommitWithDelete());
             category.addAction(new SendProjectVersionAction());
             category.addAction(new MigrationCategory());
             if (MDUtils.isDeveloperMode()) {

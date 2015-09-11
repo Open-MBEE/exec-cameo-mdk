@@ -20,6 +20,6 @@ public class UpdateFromJMS extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
-        ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(commit), "Delta Sync", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(commit, false), "Delta Sync", true, 0);
     }
 }
