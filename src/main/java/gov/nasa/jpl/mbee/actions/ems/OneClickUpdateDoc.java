@@ -26,7 +26,7 @@ public class OneClickUpdateDoc extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
-        ManualSyncRunner msr = new ManualSyncRunner(false);
+        ManualSyncRunner msr = new ManualSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         if (msr.getFailure()) {
             Utils.guilog("[ERROR] Update from MMS was not completed");
@@ -41,7 +41,7 @@ public class OneClickUpdateDoc extends MDAction {
         Stereotype documentView = Utils.getProductStereotype();
         if (StereotypesHelper.hasStereotypeOrDerived(doc, documentView))
             ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(doc, false, true), "Validating View Hierarchy", true, 0);
-        ManualSyncRunner msr2 = new ManualSyncRunner(true, true);
+        ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
         ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
     }
 }
