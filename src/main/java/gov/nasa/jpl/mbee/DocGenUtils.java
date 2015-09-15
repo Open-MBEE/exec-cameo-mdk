@@ -204,14 +204,6 @@ public class DocGenUtils {
             return Double.toString(((LiteralReal)s).getValue());
         } else if ( ( rv = getRestrictedValue(s)) != null){
         	return rv;
-        /*//if Expression is used only for RestrictedValue 	
-        else if ( s instanceof Expression){ //Expression is NamedElement
-        	List<ValueSpecification> ves = ((Expression)s).getOperand();
-        	for (ValueSpecification vs : ves){  //LiteralString (RestrictedValue), ElementValue, Expression
-        		if ( vs instanceof ElementValue)
-        			return fixString((((NamedElement) ((ElementValue)vs).getElement()).getName()));
-        	}
-        	return "";*/
     	} else if (s instanceof NamedElement) {
             return fixString(((NamedElement)s).getName());
         } else if (s instanceof Comment) {
@@ -231,17 +223,21 @@ public class DocGenUtils {
         }
         return "";
     }
-    //in case Expression is used other than RestrictedValue
+    //in case Expression is used other than RestrictedValue, only considered as RestrictedValue when 1st operand is LiteralString with "RestrictedValue"
     private static String getRestrictedValue(Object s){
     	if (s instanceof Expression){ //Expression is NamedElement
-         	List<ValueSpecification> ves = ((Expression)s).getOperand(); //LiteralString (RestrictedValue), ElementValue, Expression - see CreatedRestrictedValueAction.actionPerformed
-         	if ( ves.get(0) instanceof LiteralString){
-         		if (((LiteralString)ves.get(0)).getValue().compareTo("RestrictedValue") == 0)
-         			if (  ves.get(1) instanceof ElementValue)
+         	List<ValueSpecification> ves = ((Expression)s).getOperand(); 
+         	if ( ves.size() > 0 && ves.get(0) instanceof LiteralString ){
+         		if (((LiteralString)ves.get(0)).getValue().compareTo("RestrictedValue") == 0){ //then assumed to be RestrictedValue
+         			// ves.size() == 3 (LiteralString ("RestrictedValue"), ElementValue, Expression) - see CreatedRestrictedValueAction.actionPerformed
+         			if ( ves.size() == 3 && ves.get(1) instanceof ElementValue)
              			return fixString((((NamedElement) ((ElementValue)ves.get(1)).getElement()).getName()));
+         			else
+         				return "malformed restricted value";
+         		}
          	}
          }
-         return null;
+         return null; //assume not to be a RestrictedValue
     }
     
     public static Object getLiteralValue( Object s, boolean convertHtml ) {
