@@ -67,6 +67,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
@@ -169,7 +170,8 @@ public class DocGenUtils {
     }
 
     public static String fixString(Object s, boolean convertHtml) {
-        // may want to look at
+       String rv;
+    	// may want to look at
         // com.nomagic.magicdraw.uml.RepresentationTextCreator.getRepresentedText
         if (s instanceof String) {
             if (((String)s).contains("<html>"))
@@ -200,7 +202,9 @@ public class DocGenUtils {
             return Integer.toString(((LiteralUnlimitedNatural)s).getValue());
         } else if (s instanceof LiteralReal) {
             return Double.toString(((LiteralReal)s).getValue());
-        } else if (s instanceof NamedElement) {
+        } else if ( ( rv = getRestrictedValue(s)) != null){
+        	return rv;
+    	} else if (s instanceof NamedElement) {
             return fixString(((NamedElement)s).getName());
         } else if (s instanceof Comment) {
             return fixString(((Comment)s).getBody());
@@ -218,6 +222,22 @@ public class DocGenUtils {
             return fixString(s.toString());
         }
         return "";
+    }
+    //in case Expression is used other than RestrictedValue, only considered as RestrictedValue when 1st operand is LiteralString with "RestrictedValue"
+    private static String getRestrictedValue(Object s){
+    	if (s instanceof Expression){ //Expression is NamedElement
+         	List<ValueSpecification> ves = ((Expression)s).getOperand(); 
+         	if ( ves.size() > 0 && ves.get(0) instanceof LiteralString ){
+         		if (((LiteralString)ves.get(0)).getValue().compareTo("RestrictedValue") == 0){ //then assumed to be RestrictedValue
+         			// ves.size() == 3 (LiteralString ("RestrictedValue"), ElementValue, Expression) - see CreatedRestrictedValueAction.actionPerformed
+         			if ( ves.size() == 3 && ves.get(1) instanceof ElementValue)
+             			return fixString((((NamedElement) ((ElementValue)ves.get(1)).getElement()).getName()));
+         			else
+         				return "malformed restricted value";
+         		}
+         	}
+         }
+         return null; //assume not to be a RestrictedValue
     }
     
     public static Object getLiteralValue( Object s, boolean convertHtml ) {
