@@ -1286,9 +1286,8 @@ public class ExportUtility {
 			for (Property prop: ((Class)e).getOwnedAttribute()) {
 				propIDs.add(getElementID(prop));
 			}
-		}
-		if (!propIDs.isEmpty())
 			info.put("ownedAttribute", propIDs);
+		}
 		return info;
 	}
     
