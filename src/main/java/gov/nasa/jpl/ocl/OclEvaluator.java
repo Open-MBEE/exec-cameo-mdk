@@ -793,6 +793,14 @@ public class OclEvaluator {
         addOperation(new String[] {"value", "values", "v"}, callerType, returnType, stringType, "value", true,
                 true, CallReturnType.VALUE, envFactory);
     }
+    
+    protected static void addDefaultOperation(DgEnvironmentFactory envFactory) {
+        EClassifier callerType = getGenericCallerType();
+        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getString();
+        EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
+        addOperation(new String[] {"default"}, callerType, returnType, stringType,
+                "default", true, true, CallReturnType.DEFAULT, envFactory);
+    }
 
     protected static void addSOperation(DgEnvironmentFactory envFactory) {
 
@@ -966,6 +974,7 @@ public class OclEvaluator {
         addNOperation( getEnvironmentFactory() );
         addOOperation( getEnvironmentFactory() );
         addVOperation( getEnvironmentFactory() );
+        addDefaultOperation( getEnvironmentFactory());
 
         addExpressionOperations( getEnvironmentFactory() );
 
