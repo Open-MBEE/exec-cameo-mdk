@@ -352,7 +352,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             String messageSelector = constructSelectorString(projectID, wsID);
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
-            Message m = consumer.receive(1000);
+            Message m = consumer.receive(10000);
             while (m != null) {
                 TextMessage message = (TextMessage)m;
                 log.info("From JMS (Manual receive): " + message.getText());
