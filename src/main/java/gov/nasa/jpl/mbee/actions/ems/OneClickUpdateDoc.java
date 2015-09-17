@@ -19,7 +19,7 @@ public class OneClickUpdateDoc extends MDAction {
     private Element doc;
     
     public OneClickUpdateDoc(Element doc) {
-        super(actionid, "Update, Generate, and Commit", null, null);
+        super(actionid, "Generate, and Commit", null, null);
         this.doc = doc;
     }
     

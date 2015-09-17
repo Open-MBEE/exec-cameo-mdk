@@ -13,7 +13,7 @@ public class UpdateFromJMS extends MDAction {
     
     private boolean commit;
     public UpdateFromJMS(boolean commit) {
-        super(commit ? "CommitToMMS" : "UpdateFromJMS", commit ? "Update and Commit" : "Update", null, null);
+        super(commit ? "CommitToMMS" : "UpdateFromJMS", commit ? "Commit" : "Update", null, null);
         this.commit = commit;
     }
     

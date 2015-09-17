@@ -12,7 +12,7 @@ public class UpdateFromJMSAndCommitWithDelete extends MDAction {
     public static final String actionid = "UpdateFromJMSAndCommitWithDelete";
     
     public UpdateFromJMSAndCommitWithDelete() {
-        super(actionid, "Update and Commit With Deletes", null, null);
+        super(actionid, "Commit With Deletes", null, null);
     }
     
     @SuppressWarnings("unchecked")
