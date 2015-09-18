@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.ems;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -440,7 +441,6 @@ public class ImportUtility {
         if (values != null && values.isEmpty())
             p.setDefaultValue(null);
     }
-    
     public static void setProperty(Property p, JSONObject spec) {
         // fix the property type here
         String ptype = (String)spec.get("propertyType");
@@ -457,6 +457,31 @@ public class ImportUtility {
         AggregationKind aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
         if (aggr != null) {
             p.setAggregation(aggr);
+        }
+        ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+        LiteralInteger pmin =ef.createLiteralIntegerInstance();
+        String spmin = (String) spec.get("multiplicityMin");
+        if ( spmin != null){
+        	try{
+	        	pmin.setValue(Integer.parseInt(spmin));
+	        	p.setLowerValue(pmin);
+        	}
+        	catch (NumberFormatException en){}
+        }
+        LiteralInteger pmax =ef.createLiteralIntegerInstance();
+        String spmax = (String) spec.get("multiplicityMax");
+        if ( spmax != null){
+        	try{
+        		pmax.setValue(Integer.parseInt(spmax));
+        		p.setUpperValue(pmax);
+        	}
+        	catch (NumberFormatException en){}
+        }
+        JSONArray redefineds = (JSONArray) spec.get("redefines");
+        Collection<Property> redefinedps = p.getRedefinedProperty();
+        for (Object redefined: redefineds){
+        	Property redefinedp = (Property) ExportUtility.getElementFromID((String)redefined);
+        	redefinedps.add(redefinedp);
         }
     }
     
