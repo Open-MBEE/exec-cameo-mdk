@@ -28,9 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
-import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
-import gov.nasa.jpl.mbee.dgview.DgviewPackage;
 import gov.nasa.jpl.mbee.ems.sync.AutosyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
@@ -109,27 +106,7 @@ public class DocGenPlugin extends Plugin {
         (new Thread(new OutputSyncRunner())).start();
         ApplicationSyncEventSubscriber.subscribe();
 
-        getEmbeddedSystemProperty();
-        if (runEmbeddedServer) {
-            try {
-                embeddedServer = new DocGenEmbeddedTomcatServer();
-                embeddedServer.setup();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-        }
-        
         loadExtensionJars(); // people can actaully just create a new plugin and
-        // let magicdraw's classloader load it?
-        try {
-            QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
-            QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
-        } catch (Exception ex) {
-            //?
-        }
-        
-        // QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore",
-        // "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
     }
 
     public OclEvaluatorPlugin getOclPlugin() {
