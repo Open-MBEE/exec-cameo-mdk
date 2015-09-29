@@ -2045,6 +2045,10 @@ public class Utils {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueParagraph");
     }
     
+    public static Classifier getParaClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Paragraph");
+    }
+    
     public static Classifier getOpaqueTableClassifier() {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueTable");
     }
@@ -3574,6 +3578,26 @@ public class Utils {
     	if (a == b)
     		return true;
     	return false;
-    	}
+    }
 
+    public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork) {
+        if (e.isEditable())
+            return true;
+        if (!isFromTeamwork) {
+            return false;
+        }
+        if (e instanceof Property)
+            TeamworkUtils.lockElement(project, e.getOwner(), false);
+        else if (e instanceof Slot) {
+            Element owner = e.getOwner();
+            if (owner != null && owner.getOwner() instanceof Package)
+                TeamworkUtils.lockElement(project, owner, false);
+            else
+                TeamworkUtils.lockElement(project, owner.getOwner(), false);
+        } else
+            TeamworkUtils.lockElement(project, e, false);
+        if (e.isEditable())
+            return true;
+        return false;
+    }
 }

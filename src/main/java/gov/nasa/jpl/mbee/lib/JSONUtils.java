@@ -32,6 +32,10 @@ public class JSONUtils {
 	 */
 	public static boolean compare(Object dirtyMod, Object dirtyWeb) {		
 		if (dirtyMod == dirtyWeb) return true;
+		if (dirtyMod ==  null && (dirtyWeb instanceof Collection) && ((Collection)dirtyWeb).isEmpty())
+		    return true;
+		if (dirtyMod instanceof Collection && ((Collection)dirtyMod).isEmpty() && dirtyWeb == null)
+		    return true;
 		if (dirtyMod == null || dirtyWeb == null) return false;
 
 		if (dirtyMod instanceof JSONObject && dirtyWeb instanceof JSONObject) {

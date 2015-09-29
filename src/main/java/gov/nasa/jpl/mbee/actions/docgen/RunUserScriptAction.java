@@ -28,16 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.docgen;
 
-import gov.nasa.jpl.mbee.dgview.Paragraph;
 import gov.nasa.jpl.mbee.dgview.ViewElement;
 import gov.nasa.jpl.mbee.model.UserScript;
 
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.Map;
-
-import org.eclipse.emf.ecore.EObject;
-//import org.eclipse.m2m.qvt.oml.ModelExtent;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -91,13 +87,7 @@ public class RunUserScriptAction extends MDAction {
                             log.log(res.toString());
                         }
                     }
-//                } else if (result instanceof ModelExtent) {
-//                    for (EObject object: ((ModelExtent)result).getContents()) {
-//                        if (object instanceof Paragraph) {
-//                            log.log(((Paragraph)object).getText());
-//                        }
-//                    }
-                }
+                } 
             }
 
         } else

@@ -13,13 +13,13 @@ public class UpdateFromJMS extends MDAction {
     
     private boolean commit;
     public UpdateFromJMS(boolean commit) {
-        super(commit ? "CommitToMMS" : "UpdateFromJMS", commit ? "Update and Commit" : "Update", null, null);
+        super(commit ? "CommitToMMS" : "UpdateFromJMS", commit ? "Commit to MMS" : "Update from MMS", null, null);
         this.commit = commit;
     }
     
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
-        ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(commit), "Delta Sync", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(commit, false), "Delta Sync", true, 0);
     }
 }

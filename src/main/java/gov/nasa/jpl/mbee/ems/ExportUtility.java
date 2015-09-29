@@ -1151,6 +1151,8 @@ public class ExportUtility {
             specialization = new JSONObject();
         specialization.put("type", "Connector");
         int i = 0;
+        if (e.getEnd() == null)
+            return spec;
         for ( ConnectorEnd end : e.getEnd()) {
             JSONArray propertyPath = new JSONArray();
             if ( end.getRole() != null ) {
@@ -1239,8 +1241,10 @@ public class ExportUtility {
         }
         Element client = ModelHelper.getClientElement(e);
         Element supplier = ModelHelper.getSupplierElement(e);
-        specialization.put("source", getElementID(client));
-        specialization.put("target", getElementID(supplier));
+        if (client != null) //this shouldn't happen
+            specialization.put("source", getElementID(client));
+        if (supplier != null) //this shouldn't happen
+            specialization.put("target", getElementID(supplier));
         return specialization;
     }
 
@@ -1282,9 +1286,8 @@ public class ExportUtility {
 			for (Property prop: ((Class)e).getOwnedAttribute()) {
 				propIDs.add(getElementID(prop));
 			}
-		}
-		if (!propIDs.isEmpty())
 			info.put("ownedAttribute", propIDs);
+		}
 		return info;
 	}
     

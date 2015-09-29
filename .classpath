@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/test"/>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="lib/jsoup-1.6.1.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="http://jsoup.org/apidocs/"/>
@@ -18,22 +17,21 @@
 			<attribute name="javadoc_location" value="http://www.json.org/javadoc/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/org.eclipse.uml2.uml_5.1.0.v20150601-0733.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.ocl_3.5.0.v20150521-1211.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.ocl.ecore_3.5.0.v20150525-1635.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/swingx-all-1.6.4.jar" sourcepath="lib/swingx-all-1.6.4-sources.jar"/>
+	<classpathentry kind="lib" path="lib/swingx-beaninfo-1.6.4.jar"/>
+	<classpathentry kind="lib" path="lib/activemq-all-5.9.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="lib/guava-18.0.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.ocl_3.2.0.201210251512.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.ocl.ecore_3.2.2.201210251512.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.ocl.ecore.edit_3.1.0.v20110526-1523.jar"/>
 	<classpathentry kind="lib" path="lib/opencsv-2.3.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.ocl.edit_3.1.0.v20120206-0606.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.2.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.7.2.jar"/>
 	<classpathentry kind="lib" path="lib/ecj-3.7.2.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="con" path="gov.nasa.jpl.magicdraw.CLASSPATH_LIB_CONTAINER/,lib/,lib/graphics/,lib/webservice/,plugins/com.nomagic.magicdraw.automaton/,plugins/com.nomagic.magicdraw.automaton/engines/,plugins/com.nomagic.magicdraw.automaton/engines/beanshell/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/embeddable/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/indy/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/lib/,plugins/com.nomagic.magicdraw.automaton/engines/js-rhino/,plugins/com.nomagic.magicdraw.automaton/help/,plugins/com.nomagic.magicdraw.automaton/lib/,plugins/com.nomagic.magicdraw.automaton/resources/,plugins/com.nomagic.magicdraw.diagramtable/,plugins/com.nomagic.magicdraw.jpython/,plugins/com.nomagic.magicdraw.jpython/jython/,plugins/com.nomagic.magicdraw.jpython/jython/Lib/,plugins/com.nomagic.magicdraw.jpython/jython/Lib/test/,plugins/com.nomagic.magicdraw.jpython/jython/Lib/test/bug1126"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/activemq-all-5.9.1.jar"/>
-	<classpathentry kind="con" path="com.nomagic.magicdraw.CLASSPATH_LIB_CONTAINER/,lib/,lib/graphics/,lib/webservice/,plugins/com.nomagic.magicdraw.automaton/,plugins/com.nomagic.magicdraw.automaton/engines/,plugins/com.nomagic.magicdraw.automaton/engines/beanshell/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/embeddable/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/indy/,plugins/com.nomagic.magicdraw.automaton/engines/groovy-2.0.1/lib/,plugins/com.nomagic.magicdraw.automaton/engines/js-rhino/,plugins/com.nomagic.magicdraw.automaton/help/,plugins/com.nomagic.magicdraw.automaton/lib/,plugins/com.nomagic.magicdraw.automaton/resources/,plugins/com.nomagic.magicdraw.dependencymatrix/,plugins/com.nomagic.magicdraw.dependencymatrix/resources/,plugins/com.nomagic.magicdraw.diagramtable"/>
-	<classpathentry kind="lib" path="lib/guava-18.0.jar"/>
-	<classpathentry kind="lib" path="lib/swingx-all-1.6.4.jar"/>
-	<classpathentry kind="lib" path="lib/swingx-beaninfo-1.6.4.jar"/>
-	<classpathentry kind="lib" path="lib/lpg-java-runtime-bin-2.0.23.jar"/>
-	<classpathentry kind="lib" path="lib/joda-time-2.8.jar"/>
-	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

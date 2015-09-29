@@ -232,6 +232,9 @@ public class ViewValidator {
             if (response != null) {
                 webView = (JSONObject)((JSONArray)((JSONObject)JSONValue.parse(response)).get("elements")).get(0);
             }
+            Boolean editable = true;
+            if (webView != null)
+                editable = (Boolean) webView.get("editable");
             if (webView == null || (!webView.containsKey("specialization"))) {
                 //if the json doesn't contain the "contains" key, that means the view hasn't been exported yet
                 ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
@@ -243,7 +246,7 @@ public class ViewValidator {
             } else {
                 Object containsObj = ((JSONObject)webView.get("specialization")).get("contains");
                 Object contentsObj = ((JSONObject)webView.get("specialization")).get("contents");
-                Boolean editable = (Boolean) webView.get("editable");
+                
                 if (containsObj == null && contentsObj == null) {
                     ValidationRuleViolation v = new ValidationRuleViolation(currentView, "[EXIST] This view doesn't exist on view editor yet");
                     v.addAction(new ExportView(currentView, false, false, "Commit View to MMS"));
@@ -302,28 +305,34 @@ public class ViewValidator {
                         }
                     }
                 }
-             // see if the list of view elements referenced matches and view structures match
-                boolean hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
-                
-                if (!hierarchyMatches) {
-                    // Update the hierarchy in MagicDraw based on MagicDraw
-                    ValidationRuleViolation v = new ValidationRuleViolation( currentView, "[Hierarchy] Document Hierarchy is different");
-                    JSONArray view2view = (JSONArray)((JSONObject)webView.get("specialization")).get("view2view");
-                    if (editable != null && editable)
-                        v.addAction(new ExportHierarchy(currentView));
-                    JSONObject keyed = new JSONObject();
-                    if (view2view != null) {
-                        keyed = ExportUtility.keyView2View(view2view);
-                        v.addAction(new CompareHierarchy(currentView, keyed, vhv.getView2View()));
-                        v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
-                    }
-                    //JSONObject modelData = JSONUtils.nest(vhv.getView2View());
-                    //JSONObject webData = JSONUtils.nest(keyed);
-                    //v.addAction(new DetailDiff(modelData, webData));
-                    //cann't use detail diff since it randomizes order of children
-                    
-                    hierarchy.addViolation(v);
+            }
+         // see if the list of view elements referenced matches and view structures match
+            boolean hierarchyMatches = true;
+            if (dge.getDgElement() != null && dge.getDgElement() == currentView)
+                hierarchyMatches = false;
+            if (webView != null)
+                hierarchyMatches = viewHierarchyMatch(currentView, dge, vhv, (JSONObject)webView.get("specialization")); // this compares the view hierarchy structure
+            
+            if (!hierarchyMatches) {
+                // Update the hierarchy in MagicDraw based on MagicDraw
+                ValidationRuleViolation v = new ValidationRuleViolation( currentView, "[Hierarchy] Document Hierarchy is different");
+                JSONArray view2view = null;
+                if (webView != null && webView.get("specialization") != null)
+                    view2view = (JSONArray)((JSONObject)webView.get("specialization")).get("view2view");
+                if (editable != null && editable)
+                    v.addAction(new ExportHierarchy(currentView));
+                JSONObject keyed = new JSONObject();
+                if (view2view != null) {
+                    keyed = ExportUtility.keyView2View(view2view);
+                    v.addAction(new CompareHierarchy(currentView, keyed, vhv.getView2View()));
+                    v.addAction(new ImportHierarchy(currentView, vhv.getView2View(), keyed));
                 }
+                //JSONObject modelData = JSONUtils.nest(vhv.getView2View());
+                //JSONObject webData = JSONUtils.nest(keyed);
+                //v.addAction(new DetailDiff(modelData, webData));
+                //cann't use detail diff since it randomizes order of children
+                
+                hierarchy.addViolation(v);
             }
         }
         resultElements.addAll(cachedResultElements.values());
@@ -384,6 +393,8 @@ public class ViewValidator {
          * { "parentId": ["firstchildId", "secondChildId", ...], ... }
          */
         if (dge.getDgElement() != null && dge.getDgElement() == view) {//view is a document
+            if (spec == null)
+                return false;
                     JSONArray view2view = (JSONArray)spec.get("view2view");
                     if (view2view == null)
                         return false;

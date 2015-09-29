@@ -1,65 +1,211 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<project xmlns:qvto="http://www.eclipse.org/qvt/1.0.0/Operational" name="gov.nasa.jpl.mbee.docgen" basedir=".">
+<project name="MDK" default="dist" basedir=".">
+  <description>
+     build file for docgen plugin.
+  </description>
 
-    <property environment="env"/>
-	<loadproperties srcFile="build.properties"/>
+  <property environment="env"/>
+  <loadproperties srcFile="build.properties"/>
+
+   <!-- set your own MagicDraw and Python setup here -->
+   <property name="md" value="C:\\Program Files\\MagicDraw_180_sp4_no_install" />
+   <property name="python-exe" value="C:\\Python\\python.exe"/>	
 	
-	<condition property="md" value="${env.md.install.dir}" else="/Applications/MagicDraw/Development/MD18.0-PackageI.2">
-		<isset property="plugin.dir"/>
-	  </condition>
-    <import file="${md}/data/eclipse/zip.xml"/>
+  
+  <!-- Conditional properties to load based on whether or not this is being called from jenkins build -->
+  <condition property="md" value="${md.install.dir}" else="/Applications/MagicDraw UML 18.0">
+	<isset property="plugin.dir"/>
+  </condition>
 
-    <property name="md.build.tools.dir" location="${md}/data/eclipse/resource/SMDP-PackageB"/>
+  <condition property="dist" value="artifacts" else="dist">
+    <isset property="plugin.dir"/>
+  </condition>
+	
+  <condition property="build.version.internal" value="${env.BUILD_NUMBER}" else="${release.version.internal}">
+    <isset property="env.BUILD_NUMBER"/>
+  </condition>
+	
+  <condition property="zip.file" value="MD${release.version}-${plugin.archive}-v${build.version.internal}.zip" 
+	    else="docgen-${release.version}.zip">
+	    <isset property="plugin.dir"/>
+  </condition>
+	 <property name="src" location="src"/>
+	  <property name="src.java" location="${src}/main/java"/>
+	  <property name="src.test.java" location="${src}/test"/>
+	  <property name="src.plugin.xml" location="${src}/main/resources/plugin.xml"/>
+	  <property name="src.descriptor" location="data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
+	  <property name="src.profiles" location="profiles"/>
+  <property name="src.diagrams" location="data/diagrams"/>
+  <property name="src.upload" location="upload.sh"/>
+  <property name="src.userscript" location="DocGenUserScripts"/>
+  <property name="build" location="build"/>
+  <property name="build.plugin.classes" location="${build}/plugin/classes"/>
+  <condition property="build.zipfile" value="root" else="${build}/zipfile">
+    <isset property="plugin.dir"/>
+  </condition>
+  <property name="build.plugin.jar" location="${build.zipfile}/plugins/gov.nasa.jpl.mbee.docgen/DocGen-plugin.jar"/>
+  <property name="build.test.classes" value="${build}/test/classes" />
+  <property name="build.test.junit.data" value="${build}/test/junit/data" />
+  <property name="build.test.junit.report" value="${build}/test/junit/report" />
 
-    <tstamp>
-        <format property="now" pattern="yyyyMMdd"/>
-        <format property="date" pattern="yyyy-MM-dd"/>
-    </tstamp>
+  <path id="mdclasspath">
+    <fileset dir="lib" includes="**/*.jar">
+       
+    </fileset>
+    <fileset dir="${md}/lib" includes="**/*.jar">
+    </fileset>
+  
+    <fileset dir="${md}/plugins/com.nomagic.magicdraw.automaton" includes="**/*.jar">
+     
+    </fileset>
+    <fileset dir="${md}/plugins/com.nomagic.magicdraw.diagramtable" includes="**/*.jar">
+         
+    </fileset>
+  	<pathelement path="${build.plugin.classes}"/>
+  </path>
 
-    <import file="${md.build.tools.dir}/build.md.plugin.xml"/>
-	<echoproperties prefix="md"/>
-    <property name="bundle.name"            value="${md.bundle.prefix}-build${env.BUILD_NUMBER}-${now}"/>
-        
-    <property name="plugin.dir" location="${basedir}"/>
-    <property name="plugin.project" value="${ant.project.name}"/>
-    <property name="plugin.resource" value="${plugin.resources}/data/resourcemanager/MDR_Plugin_Docgen_91110_descriptor.xml"/>
-    <property name="plugin.archive" value="gov.nasa.jpl.mbee.docgen"/>
+  <path id="testclasspath">
+    <fileset dir="lib/test">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${md}/lib">
+      <include name="*.jar"/>
+      <exclude name="md_commontw*.jar"/>
+    </fileset>
+  </path>
 
-    <target name="all" depends="all.error,all.ok,install"/>
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp><format property="release.date" pattern="yyyy-MM-dd"/></tstamp>
+    <property file="build.properties"/>
+    <mkdir dir="${build.zipfile}"/>
+  </target>
+
+  <target name="compile" depends="init"
+    description="compile the java files">
+    <mkdir dir="${build.plugin.classes}"/>
+        <javac
+            verbose="false"
+            debug="on"
+            deprecation="on"
+            srcdir="${src.java}"
+            destdir="${build.plugin.classes}"
+            includeantruntime="false">
+            <classpath refid="mdclasspath"/>
+        </javac>
     
-    <target name="all.error" unless="all.precondition.md">
-        <echo message="Check the environment variables tested in the target 'all.precondition.md'"/>
-        <fail/>
-    </target>
-        
-    <target name="all.ok" if="all.precondition.md" depends="zip">
-       <!-- <propertyfile file="${plugin.dir}/artifacts/${md.bundle.prefix}.properties">
-            <entry key="${md.bundle.prefix}.bundle.version"     value="${md.bundle.version}"/>
-            <entry key="${md.bundle.prefix}.bundle.prefix"      value="${md.bundle.prefix}"/>
-            <entry key="${md.bundle.prefix}.bundle.name"        value="${bundle.name}"/>
-        </propertyfile>-->
-    	<save.job.properties/>
-    </target>
+  </target>
 
-    <!-- use the build from build-nojenkins, need to keep IMCE's zip target--> 
-	<import file="${plugin.dir}/build-nojenkins.xml"/>
-    <target name="zip" depends="dist"/>
-    		
-    <target name="install">
-        <md.install.zip
-            plugin.dir="${plugin.dir}" 
-            plugin.archive="${plugin.archive}"
-            plugin.version="${build.version.internal}"
-            install.dir="${md.install.dir}"/>
-        <md.zip.all
-            bundle.dest.dir="${plugin.dir}/artifacts"
-            bundle.name="${bundle.name}"
-            bundle.source.dir="${md.install.dir}"/>
+  <target name="test.compile"
+          description="Compiles the java unit test code"
+          unless="skiptests">
+    <mkdir dir="${build.test.classes}"/>
+    <javac srcdir="${src.test.java}" destdir="${build.test.classes}"
+           debug="true" deprecation="true" includeantruntime="false">
+      <classpath>
+        <pathelement path="${build.plugin.classes}" />
+        <pathelement path="${build.extension.classes}" />
+        <path refid="mdclasspath"/>
+        <path refid="testclasspath" />
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="test.unit"
+          depends="test.compile"
+          description="Run the java unit tests"
+          unless="skiptests">
+    <mkdir dir="${build.test.junit.data}"/>
+    <mkdir dir="${build.test.junit.report}"/>
+    <junit printsummary="true"
+           showoutput="true"
+           haltonfailure="false"
+           errorProperty="test.failed"
+           failureProperty="test.failed"
+           fork="true"
+           dir="${basedir}">
+      <classpath>
+        <pathelement path="${build.plugin.classes}" />
+        <pathelement path="${build.test.classes}" />
+        <path refid="mdclasspath"/>
+        <path refid="testclasspath" />
+      </classpath>        
+      <formatter type="xml"/>
+      <formatter type="plain"/>
+      <batchtest todir="${build.test.junit.data}">
+        <fileset dir="${build.test.classes}" includes="gov/nasa/jpl/**/*Test.class"/>
+      </batchtest>
+    </junit>
+    <junitreport todir="${build.test.junit.report}">
+      <fileset dir="${build.test.junit.data}">
+        <include name="TEST-*.xml"/>
+      </fileset>
+      <report format="frames" todir="${build.test.junit.report}"/>
+    </junitreport>
+    <echo message="Test report: ${build.test.junit.report}/index.html"/>
+    <fail if="test.failed" message="Java unit tests failed."/>
+    <echo message="Java unit tests passed"/>
+  </target>
+
+  <target name="jar" depends="compile" description="compile and jar">
+    <jar destfile="${build.plugin.jar}" basedir="${build.plugin.classes}"/>
+  </target>
+
+  <target name="dist" depends="jar" description = "create MD plugin zip file">
+    <copy todir="${build.zipfile}/plugins/gov.nasa.jpl.mbee.docgen/lib">
+        <fileset dir="lib" excludes="test/**"/>
+    </copy>
+
+    <copy todir="${build.zipfile}/data/defaults/data/diagrams">
+        <fileset dir="${src.diagrams}"/>
+    </copy>
+  	
+    <copy todir="${build.zipfile}/DocGenUserScripts">
+        <fileset dir="${src.userscript}"/>
+    </copy>
+ 
+  	<copy todir="${build.zipfile}/profiles">
+  	        <fileset dir="${src.profiles}"/>
+  	</copy>
+    
+    <!--
+  	<copy todir="${build.zipfile}/plugins/com.nomagic.magicdraw.jpython/scripts/SystemsReasoner">
+  	      <fileset dir="SystemsReasoner"/>
+  	</copy>
+  	-->
+  	
+  	<filter token="release.date" value="${release.date}"/>
+  	<filter token="release.version" value="${release.version}"/>
+  	<filter token="release.version.internal" value="${build.version.internal}"/>
+  	
+  	<copy todir="${build.zipfile}/plugins/gov.nasa.jpl.mbee.docgen" file="${src.plugin.xml}" filtering="true" overwrite="true"/>
+
+  	<!--
+  	<echo message="copy from ${src.descriptor}"/>
+  	<echo message="to ${build.zipfile}/data/resourcemanager}"/>
+  	<copy todir="${build.zipfile}/data/resourcemanager" file="${src.descriptor}" filtering="true"/>
+  	-->
+  	
+  	<exec executable="${python-exe}">
+  	      <arg value="resource_descriptor_generator.py"/>
+  	</exec>
+  	
+    <!-- don't use a filtersfile, because we use the tstamp task to set release.date -->
+    <copy todir="${build.zipfile}/data/resourcemanager" file="${src.descriptor}" filtering="true" overwrite="true"/>
+   
+    <zip destfile="${dist}/${zip.file}" basedir="${build.zipfile}"/>
+  </target>
+    
+    <target name="copyplugin" depends="jar">
+        <copy todir="${md}/plugins/gov.nasa.jpl.mbee.docgen" file="${build.plugin.jar}"/>
+  		<copy todir="${md}/plugins/gov.nasa.jpl.mbee.docgen" file="${src.plugin.xml}"/>
+    	<copy todir="${md}/plugins/gov.nasa.jpl.mbee.docgen/lib">
+    	  	      <fileset dir="lib"/>
+    	  	</copy>
     </target>
     
-    <target name="clean-jenkins" depends="clean">
-        <delete failonerror="false" quiet="true" dir="${plugin.dir}/root"/>
-        <delete failonerror="false" quiet="true" dir="${plugin.dir}/artifacts"/>
-    </target>
-    
+  <target name="clean">
+    <delete dir="${dist}"/>
+    <delete dir="${build}"/>
+  </target>
+
 </project>

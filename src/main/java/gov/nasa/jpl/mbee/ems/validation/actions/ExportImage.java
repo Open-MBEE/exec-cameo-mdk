@@ -66,54 +66,10 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         return true;
     }
 
-    @Override
-    public void execute(Collection<Annotation> annos) {
-        for (Annotation anno: annos) {
-            Element e = (Element)anno.getTarget();
-            String key = e.getID();
-            String filename = (String)images.get(key).get("abspath");
-            String cs = (String)images.get(key).get("cs");
-            String extension = (String)images.get(key).get("extension");
-            String url = ExportUtility.getUrlWithWorkspace();
-            if (url == null)
-                return;
-            String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
-            String site = ExportUtility.getSite();
-            String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
-
-            //String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
-            File imageFile = new File(filename);
-            PostMethod post = new PostMethod(posturl);
-            try { 
-                Part[] parts = {new FilePart("content", imageFile)};
-                post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
-                
-                OutputQueue.getInstance().offer(new Request(posturl, post, "Image"));
-                /*
-                HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, baseurl, post);
-                client.executeMethod(post);
-                int status = post.getStatusCode();
-                if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
-                    Utils.guilog("[INFO] Successful");
-                }
-                */
-            } catch (Exception ex) {
-                Utils.printException(ex);
-            } finally {
-                //post.releaseConnection();
-            }
-        }
-        Utils.guilog("[INFO] Requests are added to queue.");
-       
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        String key = element.getID();
-        String filename = (String)images.get(key).get("abspath");
-        String cs = (String)images.get(key).get("cs");
-        String extension = (String)images.get(key).get("extension");
+    public static void postImage(String key, Map<String, JSONObject> is) {
+        String filename = (String)is.get(key).get("abspath");
+        String cs = (String)is.get(key).get("cs");
+        String extension = (String)is.get(key).get("extension");
         String url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
             return;
@@ -121,13 +77,13 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         String site = ExportUtility.getSite();
         String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
 
+        //String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
         File imageFile = new File(filename);
         PostMethod post = new PostMethod(posturl);
         try { 
             Part[] parts = {new FilePart("content", imageFile)};
             post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
             
-            Utils.guilog("[INFO] Request is added to queue.");
             OutputQueue.getInstance().offer(new Request(posturl, post, "Image"));
             /*
             HttpClient client = new HttpClient();
@@ -143,6 +99,29 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         } finally {
             //post.releaseConnection();
         }
+    }
+    
+    public static void postImages(Map<String, JSONObject> is) {
+        for (String key: is.keySet()) {
+            postImage(key, is);
+        }
+    }
+    
+    @Override
+    public void execute(Collection<Annotation> annos) {
+        for (Annotation anno: annos) {
+            Element e = (Element)anno.getTarget();
+            String key = e.getID();
+            postImage(key, images);
+        }
+        Utils.guilog("[INFO] Requests are added to queue.");
+       
+    }
 
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String key = element.getID();
+        postImage(key, images);
+        Utils.guilog("[INFO] Request is added to queue.");
     }
 }

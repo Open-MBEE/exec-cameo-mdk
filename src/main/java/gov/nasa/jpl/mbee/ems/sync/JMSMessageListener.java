@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
@@ -72,7 +73,8 @@ public class JMSMessageListener implements MessageListener {
             // JSONObject.
             //
             JSONObject ws2 = (JSONObject) ob.get("workspace2");
-
+            if (ws2 == null)
+                return;
             // Retrieve the changed elements: each type of change (updated,
             // added, moved, deleted)
             // will be returned as an JSONArray.
@@ -101,7 +103,9 @@ public class JMSMessageListener implements MessageListener {
                         List<Map<String, Object>> toChange = new ArrayList<Map<String, Object>>();
                         // Loop through each specified element.
                         //
-                        List<JSONObject> sortedAdded = ImportUtility.getCreationOrder((List<JSONObject>)added);
+                        Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder((List<JSONObject>)added);
+                        List<JSONObject> sortedAdded = toCreate.get("create");
+                        List<JSONObject> fail = toCreate.get("fail");
                         if (sortedAdded != null) {
                             for (Object element : added) {
                                 addElement((JSONObject) element, false);
@@ -109,12 +113,11 @@ public class JMSMessageListener implements MessageListener {
                             for (Object element : added) { //do a second pass to update relations in case relations are part of new elements
                                 addElement((JSONObject) element, true);
                             }
-                        } else {
-                            log.error("jms message added can't be executed - " + added.toJSONString());
-                            for (JSONObject element: (List<JSONObject>)added) {
-                                cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
-                            }
+                        } 
+                        for (JSONObject element: fail) {
+                            cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
                         }
+                        
                         for (Object element : moved) {
                             moveElement((JSONObject) element);
                         }
@@ -193,6 +196,8 @@ public class JMSMessageListener implements MessageListener {
                         return null;
                     } catch (Exception ex) {
                         log.error("", ex);
+                        if (ex instanceof ImportException)
+                            Utils.guilog("[ERROR -- Autosync] " + ex.getMessage());
                         cannotChange.add(sysmlid);
                         return null;
                     }
@@ -209,6 +214,8 @@ public class JMSMessageListener implements MessageListener {
                             Utils.guilog("[Autosync] " + e.getHumanName() + " created");
                     } catch (Exception ex) {
                         log.error("", ex);
+                        if (ex instanceof ImportException)
+                            Utils.guilog("[ERROR -- Autosync] " + ex.getMessage());
                         cannotAdd.add((String)ob.get("sysmlid"));
                     }
                 }

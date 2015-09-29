@@ -25,8 +25,10 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
@@ -61,6 +63,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationRule docPackage = new ValidationRule("docPackage", "docPackage", ViolationSeverity.ERROR);
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule viewParent = new ValidationRule("viewParent", "viewParent", ViolationSeverity.WARNING);
+    private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
     
     private Classifier paraC = Utils.getOpaqueParaClassifier();
     private Classifier tableC = Utils.getOpaqueTableClassifier();
@@ -76,8 +79,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private Package viewInstancesPackage = null;
     private Package unusedPackage = null;
 
+    private Stereotype viewClassStereotype = Utils.getViewClassStereotype();
+    
     private boolean recurse;
     private Element view;
+    private boolean isFromTeamwork = false;
+    private boolean failure = false;
 
     // use these prefixes then add project_id to form the view instances id and unused view id respectively
     private String viewInstPrefix = "View_Instances";
@@ -88,19 +95,32 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
     private boolean cancelSession = false;
     private Map<Element, Package> view2pac = new HashMap<Element, Package>();
+    private Project project;
     
-    public ViewPresentationGenerator(Element view, boolean recursive) {
+    private Set<String> cannotChange;
+    
+    public ViewPresentationGenerator(Element view, boolean recursive, Set<String> cannotChange) {
         this.view = view;
         this.recurse = recursive;
+        this.cannotChange = cannotChange; //from one click doc gen, if update has unchangeable elements, check if those are things the view generation touches
+    }
+    
+    private boolean tryToLock(Project project, Element e) {
+        return Utils.tryToLock(project, e, isFromTeamwork);
     }
     
     @Override
     public void run(ProgressStatus ps) {
+        project = Application.getInstance().getProject();
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            isFromTeamwork = true;
+        }
         suite.addValidationRule(uneditableContent);
         suite.addValidationRule(uneditableOwner);
         suite.addValidationRule(docPackage);
         suite.addValidationRule(viewInProject);
         suite.addValidationRule(viewParent);
+        suite.addValidationRule(updateFailed);
         
         DocumentValidator dv = new DocumentValidator(view);
         dv.validateDocument();
@@ -132,10 +152,23 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             viewInstanceBuilder(view2pe, view2unused);
             for (Element v : view2elements.keySet()) {
                 JSONArray es = view2elements.get(v);
-                if (v.isEditable())
+                Object eles = StereotypesHelper.getStereotypePropertyFirst(v, viewClassStereotype, "elements");
+                boolean needChange = true;
+                if (eles instanceof String) {
+                    try {
+                        JSONArray elements = (JSONArray)JSONValue.parse((String)eles);
+                        if (Utils.jsonArraySetDiff(elements, es)) {
+                            needChange = false;
+                        }
+                    } catch (Exception e) {
+                        
+                    }
+                }
+                if (needChange && tryToLock(project, v)) //TODO relax this
                     StereotypesHelper.setStereotypePropertyValue(v, Utils.getViewClassStereotype(), "elements", es.toJSONString());
             }
             if (cancelSession) {
+                failure = true;
                 SessionManager.getInstance().cancelSession();
                 Utils.guilog("[ERROR] View Generation canceled because some elements that require updates are not editable. See validation window.");
             } else {
@@ -183,7 +216,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             for (PresentationElement presentationElement : presElems) {
                 // but we only really care about these instances, since that's all that we can ask about
                 InstanceSpecification is = presentationElement.getInstance();
-                if (!ProjectUtilities.isElementInAttachedProject(is) && is.isEditable()) {
+                if (!ProjectUtilities.isElementInAttachedProject(is) && tryToLock(project, is)) {
                     is.setOwner(unusedPackage);
                 }
             }
@@ -216,7 +249,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // if the owner doesn't have the presents stereotype, it resets
                 // the owner to the correct one
                 if (touchMe) {
-                    if (inst.isEditable())
+                    if (tryToLock(project, inst))
                         inst.setOwner(owner);
                     else {
                         ValidationRuleViolation vrv = new ValidationRuleViolation(inst, "[NOT EDITABLE (OWNER)] This instance cannot be moved into a view instance package.");
@@ -241,6 +274,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     is.getClassifier().add(imageC);
                 else if (pe.getType() == PEType.SECTION)
                     is.getClassifier().add(sectionC);
+                is.setOwner(owner);
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);
                 s.setDefiningFeature(generatedFromView);
@@ -256,35 +290,35 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     ss.getValue().add(ev2);
                 }
             }
-            if (is.isEditable()) {
-                is.setOwner(owner);
-                if (pe.getNewspec() != null) {
-                    LiteralString ls = ef.createLiteralStringInstance();
-                    ls.setOwner(is);
-                    ls.setValue(pe.getNewspec().toJSONString());
-                    is.setSpecification(ls);
-                }
-                is.setName(pe.getName());
-                if (is.getName() == null || is.getName().isEmpty()) {
-                    is.setName("<>");
-                }
-            } else {
-                //check if this really needs to be edited
-                boolean needEdit = false;
-                ValueSpecification oldvs = is.getSpecification();
-                if (pe.getNewspec() != null && !pe.getNewspec().get("type").equals("Section")) {
-                    if (oldvs instanceof LiteralString && ((LiteralString)oldvs).getValue() != null) {
-                        JSONObject oldob = (JSONObject)JSONValue.parse(((LiteralString)oldvs).getValue());
-                        if (!oldob.equals(pe.getNewspec()))
-                            needEdit = true;
-                    } else
+          //check if this really needs to be edited
+            boolean needEdit = false;
+            ValueSpecification oldvs = is.getSpecification();
+            if (pe.getNewspec() != null && !pe.getNewspec().get("type").equals("Section")) {
+                if (oldvs instanceof LiteralString && ((LiteralString)oldvs).getValue() != null) {
+                    JSONObject oldob = (JSONObject)JSONValue.parse(((LiteralString)oldvs).getValue());
+                    if (!oldob.equals(pe.getNewspec()))
                         needEdit = true;
-                }
-                if (is.getOwner() != owner) {
-                    ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[NOT EDITABLE (OWNER)] This presentation element instance can't be moved to the right view instance package.");
-                    uneditableOwner.addViolation(vrv);
-                }
-                if (needEdit) {
+                } else
+                    needEdit = true;
+            }
+            if (needEdit) {
+                if (tryToLock(project, is)) {
+                    is.setOwner(owner);
+                    if (pe.getNewspec() != null) {
+                        LiteralString ls = ef.createLiteralStringInstance();
+                        ls.setOwner(is);
+                        ls.setValue(pe.getNewspec().toJSONString());
+                        is.setSpecification(ls);
+                    }
+                    is.setName(pe.getName());
+                    if (is.getName() == null || is.getName().isEmpty()) {
+                        is.setName("<>");
+                    }
+                } else {
+                    if (is.getOwner() != owner) {
+                        ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[NOT EDITABLE (OWNER)] This presentation element instance can't be moved to the right view instance package.");
+                        uneditableOwner.addViolation(vrv);
+                    }
                     ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[NOT EDITABLE (CONTENT)] This presentation element instance can't be updated.");
                     uneditableContent.addViolation(vrv);
                     cancelSession = true;
@@ -299,65 +333,75 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             pe.setInstance(is);
         }
         if (section != null) {
-            if (!section.isEditable()) {
-                boolean needEdit = false;
-                if (section.getSpecification() != null && section.getSpecification() instanceof Expression) {
-                    List<ValueSpecification> model = ((Expression)section.getSpecification()).getOperand();
-                    if (model.size() != list.size())
-                        needEdit = true;
-                    else {
-                        for (int i = 0; i < model.size(); i++) {
-                            ValueSpecification modelvs = model.get(i);
-                            if (!(modelvs instanceof InstanceValue) || ((InstanceValue)modelvs).getInstance() != list.get(i).getInstance()) {
-                                needEdit = true;
-                                break;
-                            }
+            if (cannotChange != null && cannotChange.contains(section.getID())) {
+                cancelSession = true;
+                updateFailed.addViolation(new ValidationRuleViolation(section, "[UPDATE FAILED] This section instance failed to update previously."));
+                return;
+            }
+            boolean needEdit = false;
+            if (section.getSpecification() != null && section.getSpecification() instanceof Expression) {
+                List<ValueSpecification> model = ((Expression)section.getSpecification()).getOperand();
+                if (model.size() != list.size())
+                    needEdit = true;
+                else {
+                    for (int i = 0; i < model.size(); i++) {
+                        ValueSpecification modelvs = model.get(i);
+                        if (!(modelvs instanceof InstanceValue) || ((InstanceValue)modelvs).getInstance() != list.get(i).getInstance()) {
+                            needEdit = true;
+                            break;
                         }
                     }
-                } else
-                    needEdit = true;
-                if (needEdit) {
+                }
+            } else
+                needEdit = true;
+            if (needEdit) {
+                if (!tryToLock(project, section)) {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(section, "[NOT EDITABLE (SECTION CONTENT)] This section instance can't be updated.");
                     uneditableContent.addViolation(vrv);
                     if (created)
                         cancelSession = true;
+                } else {
+                    Expression ex = ef.createExpressionInstance();
+                    ex.setOwner(section);
+                    ex.getOperand().addAll(list);
+                    section.setSpecification(ex);
                 }
-            } else {
-                Expression ex = ef.createExpressionInstance();
-                ex.setOwner(section);
-                ex.getOperand().addAll(list);
-                section.setSpecification(ex);
             }
         } else {
+            if (cannotChange != null && cannotChange.contains(view.getID())) {
+                cancelSession = true;
+                updateFailed.addViolation(new ValidationRuleViolation(view, "[UPDATE FAILED] This view failed to update previously."));
+                return;
+            }
             Constraint c = getViewConstraint(view);
-            if (!c.isEditable()) {
-                boolean needEdit = false;
-                if (c.getSpecification() != null && c.getSpecification() instanceof Expression) {
-                    List<ValueSpecification> model = ((Expression)c.getSpecification()).getOperand();
-                    if (model.size() != list.size())
-                        needEdit = true;
-                    else {
-                        for (int i = 0; i < model.size(); i++) {
-                            ValueSpecification modelvs = model.get(i);
-                            if (!(modelvs instanceof InstanceValue) || ((InstanceValue)modelvs).getInstance() != list.get(i).getInstance()) {
-                                needEdit = true;
-                                break;
-                            }
+            boolean needEdit = false;
+            if (c.getSpecification() != null && c.getSpecification() instanceof Expression) {
+                List<ValueSpecification> model = ((Expression)c.getSpecification()).getOperand();
+                if (model.size() != list.size())
+                    needEdit = true;
+                else {
+                    for (int i = 0; i < model.size(); i++) {
+                        ValueSpecification modelvs = model.get(i);
+                        if (!(modelvs instanceof InstanceValue) || ((InstanceValue)modelvs).getInstance() != list.get(i).getInstance()) {
+                            needEdit = true;
+                            break;
                         }
                     }
-                } else
-                    needEdit = true;
-                if (needEdit) {
+                }
+            } else
+                needEdit = true;
+            if (needEdit) {
+                if (!tryToLock(project, c)) {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(c, "[NOT EDITABLE (VIEW CONTENT)] This view constraint can't be updated.");
                     uneditableContent.addViolation(vrv);
                     if (created)
                         cancelSession = true;
+                } else {
+                    Expression ex = ef.createExpressionInstance();
+                    ex.setOwner(c);
+                    ex.getOperand().addAll(list);
+                    c.setSpecification(ex);
                 }
-            } else {
-                Expression ex = ef.createExpressionInstance();
-                ex.setOwner(c);
-                ex.getOperand().addAll(list);
-                c.setSpecification(ex);
             }
         }
     }
@@ -381,7 +425,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         if (!results.isEmpty() && results.get(0) instanceof Package) {
             final Package p = (Package) results.get(0);
             //setPackageHierarchy(view, viewInst, p);
-            //p.setName(getViewTargetPackageName(view));
+            String viewName = ((NamedElement)view).getName();
+            viewName = ((viewName == null || viewName.isEmpty()) ? view.getID() : viewName) + " " + genericInstSuffix;
+            if (!p.getName().equals(viewName) && tryToLock(project, p))
+                p.setName(viewName);
             return p;
         }
         if (create) {
@@ -448,7 +495,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             Package currentPack = view2pac.get(view);
             if (currentPack.getOwner() != parentPack) {
-                if (currentPack.isEditable())
+                if (tryToLock(project, currentPack))
                     currentPack.setOwner(parentPack);
                 else {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(currentPack, "[NOT EDITABLE (OWNER)] View instance package cannot be moved to right hierarchy");
@@ -483,9 +530,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         if (viewInst.isEditable() && viewInst.getOwner() != owner)
             viewInst.setOwner(owner);
         else if (viewInst.getOwner() != owner) {
+            if (!tryToLock(project, viewInst)) {
             //vlaidation error of trying to change owner but can't?
+            }
         }
         return viewInst;
+    }
+    
+    public boolean getFailure() {
+        return failure;
     }
 
 }

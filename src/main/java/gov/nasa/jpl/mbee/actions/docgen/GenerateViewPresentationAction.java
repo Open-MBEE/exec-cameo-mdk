@@ -24,7 +24,7 @@ public class GenerateViewPresentationAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse);
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
     }
 }

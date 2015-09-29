@@ -64,7 +64,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
 
 public class ImportUtility {
     public static Logger log = Logger.getLogger(ImportUtility.class);
-    
+    public static boolean outputError = true;
     public static final Set<String> VALUESPECS = new HashSet<String>(Arrays.asList(
             new String[] {"LiteralInteger", "LiteralString", "LiteralBoolean", 
                     "LiteralUnlimitedNatural", "Expression", "InstanceValue", 
@@ -73,7 +73,9 @@ public class ImportUtility {
                     
        ));
     
-    public static List<JSONObject> getCreationOrder(List<JSONObject> newElements) {
+    public static Map<String, List<JSONObject>> getCreationOrder(List<JSONObject> newElements) {
+        Map<String, List<JSONObject>> returns = new HashMap<String, List<JSONObject>>();
+        
         DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>> graph = new DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>>();
         Map<String, JSONObject> id2ob = new HashMap<String, JSONObject>();
         for (JSONObject ob: newElements) {
@@ -83,26 +85,44 @@ public class ImportUtility {
             id2ob.put(sysmlid, ob);
             graph.addVertex(ob);
         }
+        Map<String, JSONObject> fail = new HashMap<String, JSONObject>();
         for (JSONObject ob: newElements) {
             String sysmlid = (String)ob.get("sysmlid");
             String ownerid = (String)ob.get("owner");
             Element newE = ExportUtility.getElementFromID(sysmlid);
             Element ownerE = ExportUtility.getElementFromID(ownerid);
-            if (ownerE == null && !id2ob.containsKey(ownerid))
-                return null; //cannot all be created
+            if (ownerE == null && !id2ob.containsKey(ownerid)) {
+                fail.put(sysmlid, ob);
+                continue;
+            }
             if (newE != null || ownerE != null)
                 continue;
             JSONObject newj = id2ob.get(sysmlid);
             JSONObject ownerj = id2ob.get(ownerid);
-            graph.addEdge(newj, ownerj);
+            if (newj != null && ownerj != null)
+                graph.addEdge(newj, ownerj);
         }
+        
         SortedSet<JSONObject> reverse = (new TopologicalSort()).topological_sort(graph);
         List<JSONObject> toposort = new ArrayList<JSONObject>(reverse);
-        //Collections.reverse(toposort);
-        return toposort;
+        
+        Set<JSONObject> fails = new HashSet<JSONObject>();
+        fails.addAll(fail.values());
+        int size = fails.size()-1;
+        while (fails.size() > size) {
+            size = fails.size();
+            Set<DirectedEdgeVector<JSONObject>> edges = graph.findEdgesWithTargetVertices(fails);
+            for (DirectedEdgeVector<JSONObject> edge: edges) {
+                fails.add(edge.getSourceVertex());
+            }
+        }
+        toposort.removeAll(fails);
+        returns.put("create", toposort);
+        returns.put("fail", new ArrayList<JSONObject>(fails));
+        return returns;
     }
     
-    public static Element createElement(JSONObject ob, boolean updateRelations) {
+    public static Element createElement(JSONObject ob, boolean updateRelations) throws ImportException {
         Project project = Application.getInstance().getProject();
         ElementsFactory ef = project.getElementsFactory();
         project.getCounter().setCanResetIDForObject(true);
@@ -124,160 +144,174 @@ public class ImportUtility {
             elementType = (String) specialization.get("type");
         }
         Element newE = existing;
-        if (elementType.equalsIgnoreCase("view")) {
-            if (newE == null) {
-                Class view = ef.createClassInstance();
-                newE = view;
-            }
-            Stereotype sysmlView = Utils.getViewClassStereotype();
-            StereotypesHelper.addStereotype(newE, sysmlView);
-            setViewConstraint(newE, specialization);
-        } else if (elementType.equalsIgnoreCase("viewpoint")) {
-            if (newE == null) {
-                Class view = ef.createClassInstance();
-                newE = view;
-            }
-            Stereotype sysmlView = Utils.getViewpointStereotype();
-            StereotypesHelper.addStereotype(newE, sysmlView);
-        } else if (elementType.equalsIgnoreCase("Property")) {
-            JSONArray vals = (JSONArray) specialization.get("value");
-            Boolean isSlot = (Boolean) specialization.get("isSlot");
-            if ((isSlot != null) && (isSlot == true)) {
+        try {
+            if (elementType.equalsIgnoreCase("view")) {
                 if (newE == null) {
-                    Slot newSlot = ef.createSlotInstance();
-                    newE = newSlot;
+                    Class view = ef.createClassInstance();
+                    newE = view;
                 }
-                if (specialization.containsKey("value"))
-                    setSlotValues((Slot)newE, vals);
-            } else {
+                Stereotype sysmlView = Utils.getViewClassStereotype();
+                StereotypesHelper.addStereotype(newE, sysmlView);
+                setViewConstraint(newE, specialization);
+            } else if (elementType.equalsIgnoreCase("viewpoint")) {
                 if (newE == null) {
-                    Property newProperty = ef.createPropertyInstance();
-                    newE = newProperty;
+                    Class view = ef.createClassInstance();
+                    newE = view;
                 }
-                if (specialization.containsKey("value"))
-                		setPropertyDefaultValue((Property)newE, vals);
-                if (specialization.containsKey("propertyType"))
-                		setProperty((Property)newE, specialization);
-            }
-        } else if (elementType.equalsIgnoreCase("Dependency")
-                || elementType.equalsIgnoreCase("Expose")
-                || elementType.equalsIgnoreCase("DirectedRelationship")
-                || elementType.equalsIgnoreCase("Characterizes")) {
-            if (newE == null) {
-                Dependency newDependency = ef.createDependencyInstance();
-                newE = newDependency;
-            }
-            setRelationshipEnds((Dependency)newE, specialization);
-            if (elementType.equalsIgnoreCase("Characterizes")) {
-                Stereotype character = Utils.getCharacterizesStereotype();
-                StereotypesHelper.addStereotype((Dependency)newE, character);
-            } else if (elementType.equalsIgnoreCase("Expose")) {
-                Stereotype expose = Utils.getExposeStereotype();
-                StereotypesHelper.addStereotype((Dependency)newE, expose);
-            }
-        } else if (elementType.equalsIgnoreCase("Generalization") || elementType.equalsIgnoreCase("Conform")) {
-            if (newE == null) {
-                Generalization newGeneralization = ef.createGeneralizationInstance();
-                newE = newGeneralization;
-            }
-            setRelationshipEnds((Generalization)newE, specialization);
-            if (elementType.equalsIgnoreCase("Conform")) {
-                Stereotype conform = Utils.getSysML14ConformsStereotype();
-                StereotypesHelper.addStereotype((Generalization)newE, conform);
-            }
-        } else if (elementType.equalsIgnoreCase("Package")) {
-            if (newE == null) {
-                Package newPackage = ef.createPackageInstance();
-                newE = newPackage;
-            }
-        } else if (elementType.equalsIgnoreCase("Constraint")) {
-            if (newE == null) {
-                Constraint c = ef.createConstraintInstance();
-                newE = c;
-            }
-            setConstraintSpecification((Constraint)newE, specialization);
-        } else if (elementType.equalsIgnoreCase("Product")) {
-            if (newE == null) {
-                Class prod = ef.createClassInstance();
-                newE = prod;
-            }
-            Stereotype product = Utils.getDocumentStereotype();
-            StereotypesHelper.addStereotype(newE, product);
-            setViewConstraint(newE, specialization);
-        } else if (elementType.equalsIgnoreCase("Association")) {
-            if (newE == null) {
-                AssociationClass ac = ef.createAssociationClassInstance();
-                newE = ac;
-            }
-            try {
-                setAssociation((Association)newE, specialization);
-            } catch (Exception ex) {
-                if (newE instanceof AssociationClass && updateRelations) {
-                    newE.dispose();
-                    return null;
+                Stereotype sysmlView = Utils.getViewpointStereotype();
+                StereotypesHelper.addStereotype(newE, sysmlView);
+            } else if (elementType.equalsIgnoreCase("Property")) {
+                JSONArray vals = (JSONArray) specialization.get("value");
+                Boolean isSlot = (Boolean) specialization.get("isSlot");
+                if ((isSlot != null) && (isSlot == true)) {
+                    if (newE == null) {
+                        Slot newSlot = ef.createSlotInstance();
+                        newE = newSlot;
+                    }
+                    if (specialization.containsKey("value"))
+                        setSlotValues((Slot)newE, vals);
+                } else {
+                    if (newE == null) {
+                        Property newProperty = ef.createPropertyInstance();
+                        newE = newProperty;
+                    }
+                    if (specialization.containsKey("value"))
+                    		setPropertyDefaultValue((Property)newE, vals);
+                    if (specialization.containsKey("propertyType"))
+                    		setProperty((Property)newE, specialization);
                 }
+            } else if (elementType.equalsIgnoreCase("Dependency")
+                    || elementType.equalsIgnoreCase("Expose")
+                    || elementType.equalsIgnoreCase("DirectedRelationship")
+                    || elementType.equalsIgnoreCase("Characterizes")) {
+                if (newE == null) {
+                    Dependency newDependency = ef.createDependencyInstance();
+                    newE = newDependency;
+                }
+                setRelationshipEnds((Dependency)newE, specialization);
+                if (elementType.equalsIgnoreCase("Characterizes")) {
+                    Stereotype character = Utils.getCharacterizesStereotype();
+                    StereotypesHelper.addStereotype((Dependency)newE, character);
+                } else if (elementType.equalsIgnoreCase("Expose")) {
+                    Stereotype expose = Utils.getExposeStereotype();
+                    StereotypesHelper.addStereotype((Dependency)newE, expose);
+                }
+            } else if (elementType.equalsIgnoreCase("Generalization") || elementType.equalsIgnoreCase("Conform")) {
+                if (newE == null) {
+                    Generalization newGeneralization = ef.createGeneralizationInstance();
+                    newE = newGeneralization;
+                }
+                setRelationshipEnds((Generalization)newE, specialization);
+                if (elementType.equalsIgnoreCase("Conform")) {
+                    Stereotype conform = Utils.getSysML14ConformsStereotype();
+                    StereotypesHelper.addStereotype((Generalization)newE, conform);
+                }
+            } else if (elementType.equalsIgnoreCase("Package")) {
+                if (newE == null) {
+                    Package newPackage = ef.createPackageInstance();
+                    newE = newPackage;
+                }
+            } else if (elementType.equalsIgnoreCase("Constraint")) {
+                if (newE == null) {
+                    Constraint c = ef.createConstraintInstance();
+                    newE = c;
+                }
+                setConstraintSpecification((Constraint)newE, specialization);
+            } else if (elementType.equalsIgnoreCase("Product")) {
+                if (newE == null) {
+                    Class prod = ef.createClassInstance();
+                    newE = prod;
+                }
+                Stereotype product = Utils.getDocumentStereotype();
+                StereotypesHelper.addStereotype(newE, product);
+                setViewConstraint(newE, specialization);
+            } else if (elementType.equalsIgnoreCase("Association")) {
+                if (newE == null) {
+                    AssociationClass ac = ef.createAssociationClassInstance();
+                    newE = ac;
+                }
+                try {
+                    setAssociation((Association)newE, specialization);
+                } catch (Exception ex) {
+                    if (newE instanceof AssociationClass && updateRelations) {
+                        newE.dispose();
+                        return null;
+                    }
+                }
+            } else if (elementType.equalsIgnoreCase("Connector")) { 
+                if (newE == null) {
+                    Connector conn = ef.createConnectorInstance();
+                    newE = conn;
+                }
+                setConnectorEnds((Connector)newE, specialization);
+            } else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
+                if (newE == null) {
+                    InstanceSpecification is = ef.createInstanceSpecificationInstance();
+                    newE = is;
+                }
+                setInstanceSpecification((InstanceSpecification)newE, specialization);
+            } else if (newE == null) {
+                Class newElement = ef.createClassInstance();
+                newE = newElement;
             }
-        } else if (elementType.equalsIgnoreCase("Connector")) { 
-            if (newE == null) {
-                Connector conn = ef.createConnectorInstance();
-                newE = conn;
-            }
-            setConnectorEnds((Connector)newE, specialization);
-        } else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
-            if (newE == null) {
-                InstanceSpecification is = ef.createInstanceSpecificationInstance();
-                newE = is;
-            }
-            setInstanceSpecification((InstanceSpecification)newE, specialization);
-        } else if (newE == null) {
-            Class newElement = ef.createClassInstance();
-            newE = newElement;
+            setName(newE, ob);
+            setOwner(newE, ob);
+            setDocumentation(newE, ob);
+            setOwnedAttribute(newE, ob);
+            newE.setID(sysmlID);
+        } catch (ImportException ex) {
+            setName(newE, ob);
+            setOwner(newE, ob);
+            setDocumentation(newE, ob);
+            newE.setID(sysmlID);
+            throw ex;
         }
-        setName(newE, ob);
-        setOwner(newE, ob);
-        setDocumentation(newE, ob);
-        setOwnedAttribute(newE, ob);
-        newE.setID(sysmlID);
         return newE;
     }
     
-    public static void updateElement(Element e, JSONObject o) {
+    public static void updateElement(Element e, JSONObject o) throws ImportException {
         setName(e, o);
         setDocumentation(e, o);
         setOwnedAttribute(e, o);
         JSONObject spec = (JSONObject)o.get("specialization");
         if (spec != null) {
-            String type = (String)spec.get("type");
-            if (type != null && type.equals("Property") && e instanceof Property) {
-            		setProperty((Property)e, spec);
-                if (spec.containsKey("value"))
-                    setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
-//                if (spec.containsKey("propertyType"))
-//                    setProperty((Property)e, spec);
-            }
-            if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
-                setSlotValues((Slot)e, (JSONArray)spec.get("value"));
-            if (type != null && e instanceof DirectedRelationship)
-                setRelationshipEnds((DirectedRelationship)e, spec);
-            if (type != null && e instanceof Constraint && type.equals("Constraint"))
-                setConstraintSpecification((Constraint)e, spec);
-            if (type != null && e instanceof Connector && type.equals("Connector"))
-                setConnectorEnds((Connector)e, spec);
-            if (type != null && e instanceof Association && type.equals("Association")) {
-                try {
-                    setAssociation((Association)e, spec);
-                } catch (Exception ex) {
-                    
+            try {
+                String type = (String)spec.get("type");
+                if (type != null && type.equals("Property") && e instanceof Property) {
+                		setProperty((Property)e, spec);
+                    if (spec.containsKey("value"))
+                        setPropertyDefaultValue((Property)e, (JSONArray)spec.get("value"));
+    //                if (spec.containsKey("propertyType"))
+    //                    setProperty((Property)e, spec);
                 }
+                if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
+                    setSlotValues((Slot)e, (JSONArray)spec.get("value"));
+                if (type != null && e instanceof DirectedRelationship)
+                    setRelationshipEnds((DirectedRelationship)e, spec);
+                if (type != null && e instanceof Constraint && type.equals("Constraint"))
+                    setConstraintSpecification((Constraint)e, spec);
+                if (type != null && e instanceof Connector && type.equals("Connector"))
+                    setConnectorEnds((Connector)e, spec);
+                if (type != null && e instanceof Association && type.equals("Association")) {
+                    try {
+                        setAssociation((Association)e, spec);
+                    } catch (Exception ex) {
+                        
+                    }
+                }
+                if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
+                    setInstanceSpecification((InstanceSpecification)e, spec);
+                if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
+                    setViewConstraint(e, spec);
+            } catch (ReferenceException ex) {
+                throw new ImportException(e, o, ex.getMessage());
+            } catch (ImportException ex) {
+                throw new ImportException(e, o, ex.getMessage());
             }
-            if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
-                setInstanceSpecification((InstanceSpecification)e, spec);
-            if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
-                setViewConstraint(e, spec);
         }
     }
 
-	public static void setViewConstraint(Element e, JSONObject specialization) {
+	public static void setViewConstraint(Element e, JSONObject specialization) throws ImportException {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {
             c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
@@ -287,8 +321,13 @@ public class ImportUtility {
         if (specialization.containsKey("contents")) {
             if (specialization.get("contents") == null) {
                 c.setSpecification(null);
-            } else 
-                c.setSpecification(createValueSpec((JSONObject)specialization.get("contents"), c.getSpecification()));
+            } else {
+                try {
+                    c.setSpecification(createValueSpec((JSONObject)specialization.get("contents"), c.getSpecification()));
+                } catch (ReferenceException ex) {
+                    throw new ImportException(e, specialization, "View constraint: " + ex.getMessage());
+                }
+            }
         }
     }
     
@@ -314,7 +353,8 @@ public class ImportUtility {
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            Utils.guilog("[ERROR] Owner not found for mms sync add");
+            if (outputError)
+                Utils.guilog("[ERROR] Owner not found for mms sync add");
             return;
         }
         e.setOwner(owner);
@@ -344,15 +384,21 @@ public class ImportUtility {
     					ordered.add((Property)prop);
     			}
     		}
+    		//if (ordered.size() < c.getOwnedAttribute().size())
+    		  //  return; //some prevention of accidental model corruption, if property can be left without an owner
     		c.getOwnedAttribute().clear();
     		c.getOwnedAttribute().addAll(ordered);
     	}
     }
     
-    public static void setInstanceSpecification(InstanceSpecification is, JSONObject specialization) {
+    public static void setInstanceSpecification(InstanceSpecification is, JSONObject specialization) throws ImportException {
         JSONObject spec = (JSONObject)specialization.get("instanceSpecificationSpecification");
         if (spec != null) {
-            is.setSpecification(createValueSpec(spec, is.getSpecification()));
+            try {
+                is.setSpecification(createValueSpec(spec, is.getSpecification()));
+            } catch (ReferenceException ex) {
+                throw new ImportException(is, specialization, "Specification: " + ex.getMessage());
+            }
         } else
             is.setSpecification(null);
         if (specialization.containsKey("classifier")) {
@@ -361,13 +407,17 @@ public class ImportUtility {
                 log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
                 return;
             }
-            is.getClassifier().clear();
+            List<Classifier> newClassifiers = new ArrayList<Classifier>();
             for (Object id: classifier) {
                 Element e = ExportUtility.getElementFromID((String)id);
                 if (e instanceof Classifier) {
-                    is.getClassifier().add((Classifier)e);
+                    newClassifiers.add((Classifier)e);
+                } else {
+                    throw new ImportException(is, specialization, (String)id + " is not a classifier");
                 }
             }
+            is.getClassifier().clear();
+            is.getClassifier().addAll(newClassifiers);
         }
     }
     
@@ -384,7 +434,7 @@ public class ImportUtility {
         }
     }
     
-    public static void setPropertyDefaultValue(Property p, JSONArray values) {
+    public static void setPropertyDefaultValue(Property p, JSONArray values) throws ReferenceException {
         if (values != null && values.size() > 0)
             p.setDefaultValue(createValueSpec((JSONObject)values.get(0), p.getDefaultValue()));
         if (values != null && values.isEmpty())
@@ -392,7 +442,6 @@ public class ImportUtility {
     }
     
     public static void setProperty(Property p, JSONObject spec) {
-    		
         // fix the property type here
         String ptype = (String)spec.get("propertyType");
         if (ptype != null) {
@@ -405,9 +454,11 @@ public class ImportUtility {
         }
         
         // set aggregation here
-        AggregationKind aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
+        AggregationKind aggr = null;
+        if (spec.get("aggregation") != null)
+            aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
         if (aggr != null) {
-        		p.setAggregation(aggr);
+            p.setAggregation(aggr);
         }
     }
     
@@ -415,28 +466,39 @@ public class ImportUtility {
         p.setType(type);
     }
     
-    public static void setSlotValues(Slot s, JSONArray values) {
+    public static void setSlotValues(Slot s, JSONArray values) throws ReferenceException {
         if (values == null)
             return;
         List<ValueSpecification> originals = new ArrayList<ValueSpecification>(s.getValue());
-        s.getValue().clear();
-        for (Object o: values) {
-            ValueSpecification vs = null;
-            if (originals.size() > 0)
-                vs = createValueSpec((JSONObject)o, originals.remove(0));
-            else
-                vs = createValueSpec((JSONObject)o, null);
-            if (vs != null)
-                s.getValue().add(vs);
+        List<ValueSpecification> origs = new ArrayList<ValueSpecification>(originals);
+        try {
+            s.getValue().clear();
+            for (Object o: values) {
+                ValueSpecification vs = null;
+                if (originals.size() > 0)
+                    vs = createValueSpec((JSONObject)o, originals.remove(0));
+                else
+                    vs = createValueSpec((JSONObject)o, null);
+                if (vs != null)
+                    s.getValue().add(vs);
+            }
+        } catch (ReferenceException ex) {
+            s.getValue().clear();
+            s.getValue().addAll(origs);
+            throw ex;
         }
     }
     
-    public static void setConstraintSpecification(Constraint c, JSONObject spec) {
+    public static void setConstraintSpecification(Constraint c, JSONObject spec) throws ImportException {
         if (!spec.containsKey("specification"))
             return;
         JSONObject sp = (JSONObject)spec.get("specification");
         if (sp != null) {
-            c.setSpecification(createValueSpec(sp, c.getSpecification()));
+            try {
+                c.setSpecification(createValueSpec(sp, c.getSpecification()));
+            } catch (ReferenceException ex) {
+                throw new ImportException(c, spec, "Constraint Specification: " + ex.getMessage());
+            }
         }
     }
     
@@ -472,7 +534,7 @@ public class ImportUtility {
             c.setType((Association)asso);
     }
     
-    public static void setAssociation(Association a, JSONObject spec) throws Exception {
+    public static void setAssociation(Association a, JSONObject spec) throws ImportException {
         String webSourceId = (String)spec.get("source");
         String webTargetId = (String)spec.get("target");
         Element webSource = ExportUtility.getElementFromID(webSourceId);
@@ -485,7 +547,7 @@ public class ImportUtility {
         int i = 0;
         if (webSource == null || webTarget == null) {
             log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
-            throw new Exception("Association creation failed");
+            throw new ImportException(a, spec, "Association missing ends");
         }
         for (Property end: a.getMemberEnd()) {
             if (end != webSource && end != webTarget)
@@ -550,7 +612,7 @@ public class ImportUtility {
         return result;
     }
     
-    public static ValueSpecification createValueSpec(JSONObject o, ValueSpecification v) {
+    public static ValueSpecification createValueSpec(JSONObject o, ValueSpecification v) throws ReferenceException {
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         String valueType = (String)o.get("type");
         ValueSpecification newval = null;
@@ -609,7 +671,10 @@ public class ImportUtility {
         case ElementValue:
             Element find = ExportUtility.getElementFromID((String)o.get("element"));
             if (find == null) {
-                Utils.guilog("Element with id " + o.get("element") + " not found!");
+                if (outputError) {
+                    //Utils.guilog("Element with id " + o.get("element") + " not found!");
+                    throw new ReferenceException(v, o, "Element with id " + o.get("element") + " for ElementValue not found!");
+                }
                 break;
             }
             if (v != null && v instanceof ElementValue)
@@ -620,12 +685,18 @@ public class ImportUtility {
             break;
         case InstanceValue:
             Element findInst = ExportUtility.getElementFromID((String)o.get("instance"));
-            if (findInst == null) {
-            	Utils.guilog("Element with id " + o.get("instance") + " not found!");
+            if (findInst == null){
+                if (outputError) {
+                    //Utils.guilog("Element with id " + o.get("instance") + " not found!");
+                    throw new ReferenceException(v, o, "Instance with id " + o.get("instance") + " for InstanceValue not found!");
+                }
                 break;
             }
             if (!(findInst instanceof InstanceSpecification)) {
-            	Utils.guilog("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
+                if (outputError) {
+                    //Utils.guilog("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
+                    throw new ReferenceException(v, o, "Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
+                }
                 break;
             }
             if (v != null && v instanceof InstanceValue)

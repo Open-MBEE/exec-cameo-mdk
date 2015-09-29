@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -103,23 +105,37 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                     }
                 }
             }
-            tocreate = ImportUtility.getCreationOrder(tocreate);
-            if (tocreate == null) {
+            Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(tocreate);
+            tocreate = toCreate.get("create");
+            List<JSONObject> fail = toCreate.get("fail");
+            if (!fail.isEmpty()) {
                 Utils.guilog("[ERROR] Cannot create elements (owner(s) not found)");
                 multipleSuccess = false;
                 return false;
             } else {
+                ImportUtility.outputError = false;
                 for (JSONObject newe: tocreate) {
-                    Element newElement = ImportUtility.createElement(newe, false);
-                    if (newElement == null) {
-                        Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
-                        multipleSuccess = false;
-                        return false;
+                    try {
+                        Element newElement = ImportUtility.createElement(newe, false);
+                        if (newElement == null) {
+                            Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
+                            multipleSuccess = false;
+                            return false;
+                        }
+                    } catch (ImportException ex) {
+                        
                     }
                 }
+                ImportUtility.outputError = true;
                 for (JSONObject newe: tocreate) {
-                    Element newElement = ImportUtility.createElement(newe, true);
-                    if (newElement == null) {
+                    try {
+                        Element newElement = ImportUtility.createElement(newe, true);
+                        if (newElement == null) {
+                            Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (references not found)");
+                            multipleSuccess = false;
+                            return false;
+                        }
+                    } catch (ImportException ex) {
                         Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (references not found)");
                         multipleSuccess = false;
                         return false;
@@ -127,8 +143,13 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                 }
             }
         } else {
-            Element magicDrawElement = ImportUtility.createElement(ob, true); 
-            if (magicDrawElement == null) {
+            try {
+                Element magicDrawElement = ImportUtility.createElement(ob, true); 
+                if (magicDrawElement == null) {
+                    Utils.guilog("[ERROR] Cannot create element (references or owner not found)");
+                    return false;
+                }
+            } catch (ImportException ex) {
                 Utils.guilog("[ERROR] Cannot create element (references or owner not found)");
                 return false;
             }

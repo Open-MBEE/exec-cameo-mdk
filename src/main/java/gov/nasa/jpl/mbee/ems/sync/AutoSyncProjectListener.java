@@ -352,7 +352,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             String messageSelector = constructSelectorString(projectID, wsID);
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
-            Message m = consumer.receive(1000);
+            Message m = consumer.receive(10000);
             while (m != null) {
                 TextMessage message = (TextMessage)m;
                 log.info("From JMS (Manual receive): " + message.getText());
@@ -364,6 +364,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                     //continue;
                 }
                 JSONObject ws2 = (JSONObject) ob.get("workspace2");
+                if (ws2 == null) {
+                    m.acknowledge();
+                    m = consumer.receive(1000);
+                    continue;
+                }
                 final JSONArray updated = (JSONArray) ws2.get("updatedElements");
                 final JSONArray added = (JSONArray) ws2.get("addedElements");
                 final JSONArray deleted = (JSONArray) ws2.get("deletedElements");
@@ -488,7 +493,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 listener = new AutoSyncCommitListener(true); 
                 MDTransactionManager transactionManager = (MDTransactionManager) project.getRepository()
                     .getTransactionManager();
-                listener.setTm(transactionManager);
+                //listener.setTm(transactionManager);
                 transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
                 projectInstances.put(LISTENER, listener);
             }
@@ -624,7 +629,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         AutoSyncCommitListener listener = new AutoSyncCommitListener(false); //change to just set auto to true in existing listener
         MDTransactionManager transactionManager = (MDTransactionManager) project.getRepository()
                 .getTransactionManager();
-        listener.setTm(transactionManager);
+        //listener.setTm(transactionManager);
         transactionManager.addTransactionCommitListenerIncludingUndoAndRedo(listener);
         projectInstances.put(LISTENER, listener);
         /*JSONObject previousUpdates = getUpdatesOrFailed(project, "update");
@@ -833,7 +838,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             for (int ii = 0; ii < conns.size(); ii++) {
                 json = (JSONObject) conns.get( ii );
                 if (json.containsKey( "eventType" )) {
-                    if (json.get( "eventType" ).equals( "delta" )) 
+                    if (json.get( "eventType" ).equals( "DELTA" )) 
                         break;
                 }
             }

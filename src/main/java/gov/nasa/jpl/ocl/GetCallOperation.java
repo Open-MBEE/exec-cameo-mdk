@@ -42,6 +42,7 @@ import java.util.List;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
@@ -59,7 +60,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class GetCallOperation implements CallOperation {
 
     public enum CallReturnType {
-        SELF, NAME, TYPE, VALUE, MEMBER, RELATIONSHIP, OWNER
+        SELF, NAME, TYPE, VALUE, MEMBER, RELATIONSHIP, OWNER, DEFAULT
     };
 
     private boolean       collect                    = true;                     // TODO
@@ -269,10 +270,10 @@ public class GetCallOperation implements CallOperation {
                                 Utils.getElementAttribute( (Element)source,
                                                            AvailableAttribute.Value );
                     }
-                    if ( Utils2.isNullOrEmpty( objectToAdd )
+                    /*if ( Utils2.isNullOrEmpty( objectToAdd )
                 		 && source instanceof ElementValue ) {
                     	objectToAdd = ((ElementValue) source).getElement();
-                    }
+                    }*/
                     if ( Utils2.isNullOrEmpty( objectToAdd )
                          && source instanceof ValueSpecification ) {
                         objectToAdd =
@@ -323,6 +324,19 @@ public class GetCallOperation implements CallOperation {
                 if (!loop) {
                     if (asElement && elem != null) {
                         objectToAdd = EmfUtils.getRelationships(elem);
+                    } else {
+                        // REVIEW -- TODO -- asEObject???!
+                        // REVIEW -- TODO -- ActivityEdge?
+                        // REVIEW -- TODO -- complain???!
+                    }
+                } else {
+                    objectToAdd = source;
+                }
+                break;
+            case DEFAULT:
+                if (!loop) {
+                    if (asElement && elem != null && elem instanceof Property) {
+                        objectToAdd = UML2ModelUtil.getDefault((Property)elem);
                     } else {
                         // REVIEW -- TODO -- asEObject???!
                         // REVIEW -- TODO -- ActivityEdge?

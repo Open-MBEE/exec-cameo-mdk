@@ -70,8 +70,7 @@ import org.eclipse.ocl.utilities.ExpressionInOCL;
 public class OCLSyntaxHelper<PK, C, O, P, EL, PM, S, COA, SSA, CT, CLS, E> extends
         org.eclipse.ocl.internal.helper.OCLSyntaxHelper<PK, C, O, P, EL, PM, S, COA, SSA, CT, CLS, E> {
 
-    @SuppressWarnings("rawtypes")
-	protected class ASTVisitor extends org.eclipse.ocl.internal.helper.OCLSyntaxHelper.ASTVisitor {
+    protected class ASTVisitor extends org.eclipse.ocl.internal.helper.OCLSyntaxHelper.ASTVisitor {
         Object lastVisited = null;
 
         @Override

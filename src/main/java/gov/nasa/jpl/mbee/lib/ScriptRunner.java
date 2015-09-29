@@ -206,15 +206,7 @@ public class ScriptRunner {
                     AutomatonPlugin.class.getClassLoader());
 
             Thread.currentThread().setContextClassLoader(automatonClassLoaderWithBinDir);
-//            if (language.equals("qvt")) {
-//                QVTScriptRunner qvt = new QVTScriptRunner(inputs, script, binDirs);
-//                Object result = qvt.run();
-//                if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
-//                    SessionManager.getInstance().closeSession();
-//                    sessionCreated = false;
-//                }
-//                return result;
-//            } else {
+            
             ScriptEngineManager sem = new ScriptEngineManager();
             ScriptEngine se = sem.getEngineByName(language);
             if (null == se)
@@ -238,7 +230,7 @@ public class ScriptRunner {
             // se.put("scriptEngine", se);
             se.eval(fr, sc);
             output = se.get("scriptOutput");
-//            }
+            
             if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().closeSession();
                 sessionCreated = false;
