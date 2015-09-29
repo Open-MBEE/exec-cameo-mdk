@@ -454,7 +454,9 @@ public class ImportUtility {
         }
         
         // set aggregation here
-        AggregationKind aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
+        AggregationKind aggr = null;
+        if (spec.get("aggregation") != null)
+            aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
         if (aggr != null) {
             p.setAggregation(aggr);
         }
