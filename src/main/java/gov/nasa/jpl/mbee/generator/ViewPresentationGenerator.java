@@ -295,9 +295,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             ValueSpecification oldvs = is.getSpecification();
             if (pe.getNewspec() != null && !pe.getNewspec().get("type").equals("Section")) {
                 if (oldvs instanceof LiteralString && ((LiteralString)oldvs).getValue() != null) {
-                    JSONObject oldob = (JSONObject)JSONValue.parse(((LiteralString)oldvs).getValue());
-                    if (!oldob.equals(pe.getNewspec()))
+                    try {
+                        JSONObject oldob = (JSONObject)JSONValue.parse(((LiteralString)oldvs).getValue());
+                        if (oldob == null || !oldob.equals(pe.getNewspec()))
+                            needEdit = true;
+                    } catch (Exception ex) {
                         needEdit = true;
+                    }
                 } else
                     needEdit = true;
             }
