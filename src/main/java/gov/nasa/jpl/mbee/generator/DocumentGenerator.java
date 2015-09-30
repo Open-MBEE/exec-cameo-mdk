@@ -231,16 +231,19 @@ public class DocumentGenerator {
                 }
             }
             Collection<Behavior> viewpointBehavior = ((Class)viewpoint).getOwnedBehavior();
-            Behavior b = null;
-            if (viewpointBehavior.size() > 0)
+            Behavior b = ((Class)viewpoint).getClassifierBehavior();
+            if (b == null && viewpointBehavior.size() > 0)
                 b = viewpointBehavior.iterator().next();
-            else {
+            if (b == null){
                 // viewpoint can inherit other viewpoints, if this viewpoint has
                 // no behavior, check inherited behaviors
                 Class now = (Class)viewpoint;
                 while (now != null) {
                     if (!now.getSuperClass().isEmpty()) {
                         now = now.getSuperClass().iterator().next();
+                        b = now.getClassifierBehavior();
+                        if (b != null)
+                            break;
                         if (now.getOwnedBehavior().size() > 0) {
                             b = now.getOwnedBehavior().iterator().next();
                             break;

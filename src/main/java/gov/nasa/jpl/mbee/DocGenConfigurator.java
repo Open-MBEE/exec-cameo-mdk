@@ -168,6 +168,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         Stereotype sysmlview = Utils.getViewStereotype();
         Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
         Stereotype documentView = Utils.getProductStereotype();
+        Stereotype classview = Utils.getViewClassStereotype();
         if (e == null)
             return;
 
@@ -237,13 +238,18 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             // There may be no view query actions to add, in which case we need
             // to avoid adding an empty menu category, so the category is
             // removed in this case.
-            ActionsCategory category = (ActionsCategory)manager.getActionFor("ViewInteraction");
-            if (category == null) {
-                category = new MDActionsCategory("ViewInteraction", "View Interaction");
-                category.setNested(true);
-                boolean added = addViewQueryActions(manager, category, (NamedElement)e);
-                if (added)
-                    manager.addCategory(0, category);
+            if (classview != null) {
+            Boolean collectActions = (Boolean)StereotypesHelper.getStereotypePropertyFirst(e, classview, "collectViewActions");
+            if (collectActions != null && collectActions) {
+                ActionsCategory category = (ActionsCategory)manager.getActionFor("ViewInteraction");
+                if (category == null) {
+                    category = new MDActionsCategory("ViewInteraction", "View Interaction");
+                    category.setNested(true);
+                    boolean added = addViewQueryActions(manager, category, (NamedElement)e);
+                    if (added)
+                        manager.addCategory(0, category);
+                }
+            }
             }
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
             if (ViewEditUtils.isPasswordSet()) {
