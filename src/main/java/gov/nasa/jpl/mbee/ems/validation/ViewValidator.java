@@ -91,15 +91,16 @@ public class ViewValidator {
     private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
     
     private Stereotype productS = Utils.getProductStereotype();
-    
+    private boolean showValidations;
     private ValidationSuite modelSuite;
     private ValidationSuite imageSuite;
     private DocumentValidator dv;
     private Element view;
     private boolean recurse;
     private boolean hierarchyOnly;
+    List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
 
-    public ViewValidator(Element view, boolean recursive, boolean hierarchyOnly) {
+    public ViewValidator(Element view, boolean recursive, boolean hierarchyOnly, boolean showValidations) {
         this.view = view;
         this.dv = new DocumentValidator( view );
         if (!hierarchyOnly) {
@@ -113,6 +114,7 @@ public class ViewValidator {
         suite.addValidationRule(hierarchy);
         this.recurse = recursive;
         this.hierarchyOnly = hierarchyOnly;
+        this.showValidations = showValidations;
     }
     
     public boolean checkProject() {
@@ -359,16 +361,22 @@ public class ViewValidator {
     }
 
     public void showWindow() {
-        List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+        
         vss.add(suite);
         if (modelSuite != null)
             vss.add(modelSuite);
         if (imageSuite != null)
             vss.add(imageSuite);
-        Utils.guilog("Showing validations...");
-        Utils.displayValidationWindow(vss, "View Web Difference Validation");
+        if (showValidations) {
+            Utils.guilog("Showing validations...");
+            Utils.displayValidationWindow(vss, "View Web Difference Validation");
+        }
     }
 
+    public List<ValidationSuite> getValidations() {
+        return vss;
+    }
+    
     @SuppressWarnings("unchecked")
     private boolean viewElementsMatch(JSONArray viewDisplayedElements, JSONObject veResults) {
         //return true; // workaround for server not giving back the right number
