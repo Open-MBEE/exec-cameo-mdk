@@ -82,29 +82,9 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         if (doc.getTitle() == null || doc.getTitle().equals(""))
             book.setTitle("Default Title");
         book.setFrom(doc.getDgElement());
-        book.setSubtitle(doc.getSubtitle());
-        book.setLegalnotice(doc.getLegalnotice());
-        book.setAcknowledgement(doc.getAcknowledgement());
-        book.setCoverimage(doc.getCoverimage());
-        book.setDocumentID(doc.getDocumentID());
-        book.setDocumentVersion(doc.getDocumentVersion());
-        book.setLogoAlignment(doc.getLogoAlignment());
-        book.setLogoLocation(doc.getLogoLocation());
-        book.setAbbreviatedProjectName(doc.getAbbreviatedProjectName());
-        book.setDocushareLink(doc.getDocushareLink());
-        book.setAbbreviatedTitle(doc.getAbbreviatedTitle());
-        book.setTitlePageLegalNotice(doc.getTitlePageLegalNotice());
-        book.setFooterLegalNotice(doc.getFooterLegalNotice());
-        book.setCollaboratorEmail(doc.getCollaboratorEmail());
         book.setRemoveBlankPages(doc.getRemoveBlankPages());
-        book.setAuthor(doc.getAuthor());
-        book.setApprover(doc.getApprover());
-        book.setConcurrance(doc.getConcurrance());
-        book.setJPLProjectTitle(doc.getJPLProjectTitle());
-        book.setRevisionHistory(doc.getRevisionHistory());
         book.setUseDefaulStylesheet(doc.getUseDefaultStylesheet());
-        book.setLogoSize(doc.getLogoSize());
-        book.setIndex(doc.isIndex());
+        book.setMetadata(doc.getMetadata());
         parent.push(book);
         visitChildren(doc);
     }
