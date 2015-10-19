@@ -977,8 +977,10 @@ public class ExportUtility {
         Constraint c = Utils.getViewConstraint(e);
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
-            if (cob.containsKey("specification"))
+            if (cob.containsKey("specification")) {
                 specialization.put("contents", (JSONObject)cob.get("specification"));
+                specialization.put("contains", "[]");
+            }
         }
         Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
         if (o != null && o instanceof String) {
