@@ -342,7 +342,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     return; //this happens when slot is deleted ARGHHHH
                 elements.remove(elementID);
                 
-                if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()))
+                if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()) || !ExportUtility.shouldAdd(sourceElement))
                     return; //prevent unneeded deletes
                 
                 deletes.add(elementID);
