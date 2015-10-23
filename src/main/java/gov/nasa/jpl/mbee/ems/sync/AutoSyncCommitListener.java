@@ -277,6 +277,10 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (actual instanceof Slot || actual instanceof Property) {
                     JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true, true);
                     elementOb.put("specialization", specialization);
+                    if (actual instanceof Slot && ExportUtility.shouldAdd(actual.getOwner())) { //catch instanceSpec if it wasn't caught before
+                        elementOb = getElementObject(actual.getOwner(), false);
+                        ExportUtility.fillElement(actual.getOwner(), elementOb);
+                    }
                 } else if (actual instanceof Constraint) {
                     JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)actual, null);
                     elementOb.put("specialization", specialization);
@@ -301,6 +305,10 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
+                if (sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement.getOwner())) { //catch instanceSpec if it wasn't caught before
+                    elementOb = getElementObject(sourceElement.getOwner(), false);
+                    ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
+                }
             }
             else if ((sourceElement instanceof Class) && propertyName.equals(PropertyNames.OWNED_ATTRIBUTE)) {
             	elementOb = getElementObject(sourceElement);
@@ -331,7 +339,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     elementOb = getElementObject(sourceElement, true);
                     ExportUtility.fillElement(sourceElement, elementOb);
                     if (sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement.getOwner())) { //catch instanceSpec if it wasn't caught before
-                    	elementOb = getElementObject(sourceElement.getOwner(), true);
+                    	elementOb = getElementObject(sourceElement.getOwner(), false);
                     	ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
                     }
                 }
