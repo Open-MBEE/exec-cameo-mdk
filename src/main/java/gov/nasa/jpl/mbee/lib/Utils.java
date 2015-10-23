@@ -2045,6 +2045,10 @@ public class Utils {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueParagraph");
     }
     
+    public static Classifier getParaClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Paragraph");
+    }
+    
     public static Classifier getOpaqueTableClassifier() {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueTable");
     }

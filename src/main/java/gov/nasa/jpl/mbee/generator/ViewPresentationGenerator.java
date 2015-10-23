@@ -96,13 +96,16 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private boolean cancelSession = false;
     private Map<Element, Package> view2pac = new HashMap<Element, Package>();
     private Project project;
-    
+    private boolean showValidation;
     private Set<String> cannotChange;
     
-    public ViewPresentationGenerator(Element view, boolean recursive, Set<String> cannotChange) {
+    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    
+    public ViewPresentationGenerator(Element view, boolean recursive, Set<String> cannotChange, boolean showValidation) {
         this.view = view;
         this.recurse = recursive;
         this.cannotChange = cannotChange; //from one click doc gen, if update has unchangeable elements, check if those are things the view generation touches
+        this.showValidation = showValidation;
     }
     
     private boolean tryToLock(Project project, Element e) {
@@ -185,13 +188,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         iv.validate();
         if (!iv.getRule().getViolations().isEmpty() || suite.hasErrors()) {
             ValidationSuite imageSuite = iv.getSuite();
-            List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+            
             vss.add(imageSuite);
             vss.add(suite);
-            Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+            if (showValidation)
+                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
         }
     }
 
+    public List<ValidationSuite> getValidations() {
+        return vss;
+    }
+    
     private void viewInstanceBuilder( Map<Element, List<PresentationElement>> view2pe, Map<Element, List<PresentationElement>> view2unused) {
         // first pass through all the views and presentation elements to handle them
         Set<Element> skippedViews = new HashSet<Element>();
@@ -295,9 +303,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             ValueSpecification oldvs = is.getSpecification();
             if (pe.getNewspec() != null && !pe.getNewspec().get("type").equals("Section")) {
                 if (oldvs instanceof LiteralString && ((LiteralString)oldvs).getValue() != null) {
-                    JSONObject oldob = (JSONObject)JSONValue.parse(((LiteralString)oldvs).getValue());
-                    if (!oldob.equals(pe.getNewspec()))
+                    try {
+                        JSONObject oldob = (JSONObject)JSONValue.parse(((LiteralString)oldvs).getValue());
+                        if (oldob == null || !oldob.equals(pe.getNewspec()))
+                            needEdit = true;
+                    } catch (Exception ex) {
                         needEdit = true;
+                    }
                 } else
                     needEdit = true;
             }

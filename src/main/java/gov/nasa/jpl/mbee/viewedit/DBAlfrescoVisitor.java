@@ -458,9 +458,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         this.curContains.push(contains);
         addToElements(e);
         //MDEV-443 add view exposed elements to view elements
-        for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
+        /*for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                 DocGen3Profile.queriesStereotype, 1, false, 1))
-            addToElements(exposed);
+            addToElements(exposed);*/
         sibviews.peek().add(e.getID());
         JSONArray childViews = new JSONArray();
         sibviews.push(childViews);

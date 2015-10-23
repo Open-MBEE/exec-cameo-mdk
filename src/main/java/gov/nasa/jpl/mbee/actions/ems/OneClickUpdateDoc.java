@@ -19,7 +19,7 @@ public class OneClickUpdateDoc extends MDAction {
     private Element doc;
     
     public OneClickUpdateDoc(Element doc) {
-        super(actionid, "Update, Generate, and Commit", null, null);
+        super(actionid, "Generate Views and Commit to MMS", null, null);
         this.doc = doc;
     }
     
@@ -32,7 +32,7 @@ public class OneClickUpdateDoc extends MDAction {
             Utils.guilog("[ERROR] Update from MMS was not completed");
             return;
         }
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange());
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
         if (vg.getFailure()) {
             Utils.guilog("[ERROR] View generation was not completed");
@@ -40,7 +40,7 @@ public class OneClickUpdateDoc extends MDAction {
         }
         Stereotype documentView = Utils.getProductStereotype();
         if (StereotypesHelper.hasStereotypeOrDerived(doc, documentView))
-            ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(doc, false, true), "Validating View Hierarchy", true, 0);
+            ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(doc, false, true, true), "Validating View Hierarchy", true, 0);
         ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
         ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
     }
