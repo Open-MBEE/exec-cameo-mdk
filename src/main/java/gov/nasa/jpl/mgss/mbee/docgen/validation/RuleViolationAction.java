@@ -29,7 +29,6 @@
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
@@ -53,8 +52,6 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public abstract class RuleViolationAction extends MDAction implements IRuleViolationAction {
     
@@ -180,6 +177,6 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
         }
         
         Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), type));
+        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), type, false));
     }
 }

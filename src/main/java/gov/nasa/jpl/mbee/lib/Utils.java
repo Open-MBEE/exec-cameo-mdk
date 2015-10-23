@@ -2271,7 +2271,7 @@ public class Utils {
         int res = JOptionPane.showOptionDialog(null, question, "Choose", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
             return true;
-        if (res == JOptionPane.NO_OPTION)
+        else if (res == JOptionPane.NO_OPTION)
             return false;
         return null;
     }
@@ -2284,7 +2284,7 @@ public class Utils {
         int res = JOptionPane.showConfirmDialog(null, question);
         if (res == JOptionPane.YES_OPTION)
             return true;
-        if (res == JOptionPane.NO_OPTION)
+        else if (res == JOptionPane.NO_OPTION)
             return false;
         return null;
     }

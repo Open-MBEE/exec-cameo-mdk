@@ -69,6 +69,9 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.httpclient.params.HttpClientParams;
+import org.apache.commons.httpclient.params.HttpConnectionParams;
+import org.apache.commons.httpclient.params.HttpParams;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -563,10 +566,7 @@ public class ExportUtility {
         
     }
     
-    public static String send(String url, String json, String method) {
-        return send(url, json, method, true, false);
-    }
-    
+   
     public static String send(String url, PostMethod pm) {
         if (url == null)
             return null;
@@ -592,16 +592,15 @@ public class ExportUtility {
         }
     }
     
-    public static String send(String url, String json, String method,
-            boolean showPopupErrors, boolean suppressGuiLog) {
+    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog) {
         if (url == null)
             return null;
 
         EntityEnclosingMethod pm = null;
-        if (method == null)
+        //if (method == null)
             pm = new PostMethod(url);
-        else
-            pm = new PutMethod(url);
+        //else
+            //pm = new PutMethod(url);
         //GUILog gl = Application.getInstance().getGUILog();
         try {
             if (!suppressGuiLog)
@@ -612,12 +611,20 @@ public class ExportUtility {
                 //gl.log("(see md.log for what got sent - too big to show)");
             } else
                 log.info("send: " + url + ": " + json);// gl.log(json);
-            pm.setRequestHeader("Content-Type",
-                    "application/json;charset=utf-8");
+            pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
+            
+            
+            int timeout = 120; // seconds
+            HttpParams httpParams = client.getParams();
+            httpParams.setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, timeout * 1000); //cause ConnectionTimeoutException
+            httpParams.setParameter(HttpConnectionParams.SO_TIMEOUT, timeout * 1000); //casue SockteTimeoutException
+            
             ViewEditUtils.setCredentials(client, url, pm);
+            log.info("executing....");
             int code = client.executeMethod(pm);
+            log.info("server returned: " + code);
             String response = pm.getResponseBodyAsString();
             log.info("send response: " + code + " " + response);
             if (showErrors(code, response, showPopupErrors)) {
@@ -626,16 +633,26 @@ public class ExportUtility {
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Send Successful.");
             return response;
-        } catch (Exception ex) {
+        } catch( org.apache.commons.httpclient.ConnectTimeoutException ex){ //the time to establish the connection with the remote host
+        	Utils.printException(ex);
+        	return null;
+        } catch(  java.net.SocketTimeoutException ex){ //the time waiting for data – after the connection was established; maximum time of inactivity between two data packets
+        	Utils.printException(ex);
+        	return null;
+        } catch (Exception ex) { //java.net.SocketException: Software caused connection abort: recv failed
             Utils.printException(ex);
             return null;
         } finally {
             pm.releaseConnection();
         }
     }
+    /*public static String send(String url, String json, String method) {
+    return send(url, json, method, true, false);
+	}*/
 
     public static String send(String url, String json) {
-        return send(url, json, null);
+        //return send(url, json, null); //method == null means POST
+    	return send(url, json/*, method*/, true, false);
     }
 
     public static String deleteWithBody(String url, String json, boolean feedback) {
@@ -1650,7 +1667,7 @@ public class ExportUtility {
         tosend.put("elements", array);
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
-        return ExportUtility.send(projUrl, tosend.toJSONString(), null, false, false);
+        return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);
     }
     
     public static void initializeDurableQueue(String taskId) {
