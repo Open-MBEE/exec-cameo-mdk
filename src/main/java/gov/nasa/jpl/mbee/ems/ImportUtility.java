@@ -461,29 +461,44 @@ public class ImportUtility {
             p.setAggregation(aggr);
         }
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
-        LiteralInteger pmin =ef.createLiteralIntegerInstance();
+        
         String spmin = (String) spec.get("multiplicityMin");
         if ( spmin != null){
         	try{
-	        	pmin.setValue(Integer.parseInt(spmin));
+        	    ValueSpecification pmin = p.getLowerValue();
+        	    if (pmin == null)
+        	        pmin = ef.createLiteralUnlimitedNaturalInstance();
+        	    if (pmin instanceof LiteralInteger)
+        	        ((LiteralInteger)pmin).setValue(Integer.parseInt(spmin));
+        	    if (pmin instanceof LiteralUnlimitedNatural)
+        	        ((LiteralUnlimitedNatural)pmin).setValue(Integer.parseInt(spmin));
 	        	p.setLowerValue(pmin);
         	}
         	catch (NumberFormatException en){}
         }
-        LiteralInteger pmax =ef.createLiteralIntegerInstance();
         String spmax = (String) spec.get("multiplicityMax");
         if ( spmax != null){
         	try{
-        		pmax.setValue(Integer.parseInt(spmax));
-        		p.setUpperValue(pmax);
+        	    ValueSpecification pmax = p.getUpperValue();
+                if (pmax == null)
+                    pmax = ef.createLiteralUnlimitedNaturalInstance();
+                if (pmax instanceof LiteralInteger)
+                    ((LiteralInteger)pmax).setValue(Integer.parseInt(spmax));
+                if (pmax instanceof LiteralUnlimitedNatural)
+                    ((LiteralUnlimitedNatural)pmax).setValue(Integer.parseInt(spmax));
+                p.setUpperValue(pmax);
         	}
         	catch (NumberFormatException en){}
         }
         JSONArray redefineds = (JSONArray) spec.get("redefines");
         Collection<Property> redefinedps = p.getRedefinedProperty();
-        for (Object redefined: redefineds){
-        	Property redefinedp = (Property) ExportUtility.getElementFromID((String)redefined);
-        	redefinedps.add(redefinedp);
+        if (redefineds != null && redefineds.size() != 0) { //for now prevent accidental removal of things in case server doesn't have the right reference
+            redefinedps.clear();
+            for (Object redefined: redefineds){
+                Property redefinedp = (Property) ExportUtility.getElementFromID((String)redefined);
+                if (redefinedp != null)
+                    redefinedps.add(redefinedp);
+            }
         }
     }
     
