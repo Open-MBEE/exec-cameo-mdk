@@ -277,7 +277,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (actual instanceof Slot || actual instanceof Property) {
                     JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true, true);
                     elementOb.put("specialization", specialization);
-                    if (actual instanceof Slot && ExportUtility.shouldAdd(actual.getOwner())) { //catch instanceSpec if it wasn't caught before
+                    if (actual instanceof Slot && actual.getOwner() != null) { //catch instanceSpec if it wasn't caught before
                         elementOb = getElementObject(actual.getOwner(), false);
                         ExportUtility.fillElement(actual.getOwner(), elementOb);
                     }
@@ -294,7 +294,9 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             // statement
             // to handle the case where a value is being deleted.
             //
-            else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE))) {
+            else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE) || 
+                    propertyName.equals(PropertyNames.LOWER_VALUE) || propertyName.equals(PropertyNames.UPPER_VALUE) || propertyName.equals("multiplicity") ||
+                    propertyName.equals(PropertyNames.REDEFINED_PROPERTY))) {
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb = getElementObject(sourceElement);
                 elementOb.put("specialization", specialization);
@@ -305,7 +307,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
-                if (sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement.getOwner())) { //catch instanceSpec if it wasn't caught before
+                if (sourceElement instanceof Slot && sourceElement.getOwner() != null) { //catch instanceSpec if it wasn't caught before
                     elementOb = getElementObject(sourceElement.getOwner(), false);
                     ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
                 }
@@ -338,7 +340,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 } else {
                     elementOb = getElementObject(sourceElement, true);
                     ExportUtility.fillElement(sourceElement, elementOb);
-                    if (sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement.getOwner())) { //catch instanceSpec if it wasn't caught before
+                    if (sourceElement instanceof Slot && sourceElement.getOwner() != null) { //catch instanceSpec if it wasn't caught before
                     	elementOb = getElementObject(sourceElement.getOwner(), false);
                     	ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
                     }

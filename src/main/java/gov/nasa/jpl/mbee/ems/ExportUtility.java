@@ -1030,8 +1030,8 @@ public class ExportUtility {
 		        } else
 		            specialization.put("propertyType", null);
 		    }
-		    specialization.put("multiplicityMin", ((Property)e).getLower());
-		    specialization.put("multiplicityMax", ((Property)e).getUpper());
+		    specialization.put("multiplicityMin", (long)((Property)e).getLower());
+		    specialization.put("multiplicityMax", (long)((Property)e).getUpper());
 		     
 		    Collection<Property> cps = ((Property)e).getRedefinedProperty();
 		    JSONArray redefinedProperties = new JSONArray();

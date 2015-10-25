@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.google.common.primitives.Ints;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
@@ -462,30 +463,30 @@ public class ImportUtility {
         }
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         
-        String spmin = (String) spec.get("multiplicityMin");
+        Long spmin = (Long) spec.get("multiplicityMin");
         if ( spmin != null){
         	try{
         	    ValueSpecification pmin = p.getLowerValue();
         	    if (pmin == null)
-        	        pmin = ef.createLiteralUnlimitedNaturalInstance();
+        	        pmin = ef.createLiteralIntegerInstance();
         	    if (pmin instanceof LiteralInteger)
-        	        ((LiteralInteger)pmin).setValue(Integer.parseInt(spmin));
+        	        ((LiteralInteger)pmin).setValue(Ints.checkedCast(spmin));
         	    if (pmin instanceof LiteralUnlimitedNatural)
-        	        ((LiteralUnlimitedNatural)pmin).setValue(Integer.parseInt(spmin));
+        	        ((LiteralUnlimitedNatural)pmin).setValue(Ints.checkedCast(spmin));
 	        	p.setLowerValue(pmin);
         	}
         	catch (NumberFormatException en){}
         }
-        String spmax = (String) spec.get("multiplicityMax");
+        Long spmax = (Long) spec.get("multiplicityMax");
         if ( spmax != null){
         	try{
         	    ValueSpecification pmax = p.getUpperValue();
                 if (pmax == null)
                     pmax = ef.createLiteralUnlimitedNaturalInstance();
                 if (pmax instanceof LiteralInteger)
-                    ((LiteralInteger)pmax).setValue(Integer.parseInt(spmax));
+                    ((LiteralInteger)pmax).setValue(Ints.checkedCast(spmax));
                 if (pmax instanceof LiteralUnlimitedNatural)
-                    ((LiteralUnlimitedNatural)pmax).setValue(Integer.parseInt(spmax));
+                    ((LiteralUnlimitedNatural)pmax).setValue(Ints.checkedCast(spmax));
                 p.setUpperValue(pmax);
         	}
         	catch (NumberFormatException en){}
