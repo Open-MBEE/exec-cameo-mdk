@@ -992,7 +992,7 @@ public class ExportUtility {
         if (o != null && o instanceof String) {
             try {
                 JSONArray a = (JSONArray)JSONValue.parse((String)o);
-                specialization.put("allowedElements", a);
+                specialization.put("allowedElements", new JSONArray());
                 specialization.put("displayedElements", a);
             } catch (Exception ex) {}
         }
