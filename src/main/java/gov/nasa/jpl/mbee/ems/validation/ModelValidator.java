@@ -705,6 +705,8 @@ public class ModelValidator {
         JSONObject specialization = (JSONObject)info.get("specialization");
         
         JSONObject webcopy  = (JSONObject)specialization.clone();
+        if (webcopy.containsKey("value"))
+            webcopy.remove("value");
         JSONObject model = ExportUtility.fillPropertySpecialization(e, null, false, true);
         if (!JSONUtils.compare(webcopy, model)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property type/aggregation/multiplicity/redefines is different");
