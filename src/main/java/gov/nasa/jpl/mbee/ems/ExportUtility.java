@@ -815,6 +815,8 @@ public class ExportUtility {
             Element elem = ((ElementValue) vs).getElement();
             if (elem != null) {
                 elementInfo.put("element", ExportUtility.getElementID(elem));
+            } else {
+                elementInfo.put("element", null);
             }
         } else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
@@ -837,6 +839,8 @@ public class ExportUtility {
             InstanceSpecification i = iv.getInstance();
             if (i != null) {
                 elementInfo.put("instance", ExportUtility.getElementID(i));
+            } else {
+                elementInfo.put("instance", null);
             }
         } else if (vs instanceof LiteralSpecification) {
             if (vs instanceof LiteralBoolean) {
@@ -871,6 +875,8 @@ public class ExportUtility {
             List<String> body = ((OpaqueExpression) vs).getBody();
             if (body != null) {
                 elementInfo.put("expressionBody", makeJsonArray(body));
+            } else {
+                elementInfo.put("expressionBody", new JSONArray());
             }
         } else if (vs instanceof StringExpression) {
             elementInfo.put("type", "StringExpression");
@@ -984,14 +990,16 @@ public class ExportUtility {
         Constraint c = Utils.getViewConstraint(e);
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
-            if (cob.containsKey("specification"))
+            if (cob.containsKey("specification")) {
                 specialization.put("contents", (JSONObject)cob.get("specification"));
+                specialization.put("contains", new JSONArray());
+            }
         }
         Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
         if (o != null && o instanceof String) {
             try {
                 JSONArray a = (JSONArray)JSONValue.parse((String)o);
-                specialization.put("allowedElements", a);
+                specialization.put("allowedElements", new JSONArray());
                 specialization.put("displayedElements", a);
             } catch (Exception ex) {}
         }

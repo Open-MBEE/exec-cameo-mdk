@@ -28,7 +28,10 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
+import java.util.List;
+
 import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
@@ -39,21 +42,27 @@ public class ValidateViewRunner implements RunnableWithProgress {
     private Element view;
     private boolean recurse; 
     private boolean hierarchy;
-    
-    public ValidateViewRunner(Element view, boolean recurse, boolean hierarchy) {
+    private boolean showValidations;
+    private ViewValidator vv;
+    public ValidateViewRunner(Element view, boolean recurse, boolean hierarchy, boolean showValidations) {
         this.view = view;
         this.recurse = recurse;
         this.hierarchy = hierarchy;
+        this.showValidations = showValidations;
     }
     
     @Override
     public void run(ProgressStatus arg0) {
-        ViewValidator vv = new ViewValidator(view, recurse, hierarchy);
+        vv = new ViewValidator(view, recurse, hierarchy, showValidations);
         if (vv.checkProject()) {
             if (vv.validate(arg0))
                 vv.showWindow();
         } else
             vv.showWindow();
+    }
+    
+    public List<ValidationSuite> getValidations() {
+        return vv.getValidations();
     }
 
 }

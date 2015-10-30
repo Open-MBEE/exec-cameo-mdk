@@ -25,7 +25,7 @@ public class ValidateHierarchyAction extends MDAction {
         if (!ExportUtility.checkBaseline()) {    
             return;
         }
-        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false, true), "Validating View Hierarchy", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false, true, true), "Validating View Hierarchy", true, 0);
     }
 }
 
