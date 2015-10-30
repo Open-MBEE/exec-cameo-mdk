@@ -32,21 +32,18 @@ import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
-import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,15 +57,13 @@ import javax.jms.Session;
 import javax.jms.Topic;
 import javax.swing.JOptionPane;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.commons.httpclient.Header;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -77,22 +72,17 @@ import org.json.simple.JSONValue;
 
 import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
-import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.foundation.MDObject;
-import com.nomagic.magicdraw.teamwork2.ProjectVersion;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
-import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
@@ -124,7 +114,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Interval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
@@ -563,10 +552,7 @@ public class ExportUtility {
         
     }
     
-    public static String send(String url, String json, String method) {
-        return send(url, json, method, true, false);
-    }
-    
+   
     public static String send(String url, PostMethod pm) {
         if (url == null)
             return null;
@@ -591,51 +577,72 @@ public class ExportUtility {
             pm.releaseConnection();
         }
     }
-    
-    public static String send(String url, String json, String method,
-            boolean showPopupErrors, boolean suppressGuiLog) {
+    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog) {
+    	return send(url, json, showPopupErrors, suppressGuiLog, "Send#?");
+    }
+    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog, String _threadName) {
         if (url == null)
             return null;
 
         EntityEnclosingMethod pm = null;
-        if (method == null)
+        //if (method == null)
             pm = new PostMethod(url);
-        else
-            pm = new PutMethod(url);
+        //else
+            //pm = new PutMethod(url);
         //GUILog gl = Application.getInstance().getGUILog();
         try {
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Sending...");
-            if (json.length() > 3000) {
+           // if (json.length() > 3000) {
                 // System.out.println(json);
-                log.info("send: " + url + ": " + json);
+             //   log.info(_id + " send: " + url + ": " + json);
                 //gl.log("(see md.log for what got sent - too big to show)");
-            } else
-                log.info("send: " + url + ": " + json);// gl.log(json);
-            pm.setRequestHeader("Content-Type",
-                    "application/json;charset=utf-8");
+            //} else
+                log.info(_threadName + " send: " + url + ": " + json);// gl.log(json);
+            pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
+            
+            
+            /*int timeout = 120; // seconds
+            HttpParams httpParams = client.getParams();
+            httpParams.setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, timeout * 1000); //cause ConnectionTimeoutException
+            httpParams.setParameter(HttpConnectionParams.SO_TIMEOUT, timeout * 1000); //casue SockteTimeoutException
+            */
+            
             ViewEditUtils.setCredentials(client, url, pm);
+            log.info(_threadName + " executing....");
             int code = client.executeMethod(pm);
+            log.info(_threadName + " server returned: " + code);
             String response = pm.getResponseBodyAsString();
-            log.info("send response: " + code + " " + response);
+            log.info(_threadName + " response: " + code + " " + response);
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
+            log.info(_threadName + " Send Successful.");
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Send Successful.");
             return response;
-        } catch (Exception ex) {
+        } catch( org.apache.commons.httpclient.ConnectTimeoutException ex){ //the time to establish the connection with the remote host
+        	Utils.printException(ex);
+        	return null;
+        } catch(  java.net.SocketTimeoutException ex){ //the time waiting for data – after the connection was established; maximum time of inactivity between two data packets
+        	Utils.printException(ex);
+        	return null;
+        } catch (Exception ex) { //java.net.SocketException: Software caused connection abort: recv failed
             Utils.printException(ex);
             return null;
         } finally {
             pm.releaseConnection();
         }
     }
+    /*public static String send(String url, String json, String method) {
+    return send(url, json, method, true, false);
+	}*/
 
     public static String send(String url, String json) {
-        return send(url, json, null);
+        //return send(url, json, null); //method == null means POST
+    	return send(url, json/*, method*/, true, false);
     }
 
     public static String deleteWithBody(String url, String json, boolean feedback) {
@@ -1658,7 +1665,7 @@ public class ExportUtility {
         tosend.put("elements", array);
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
-        return ExportUtility.send(projUrl, tosend.toJSONString(), null, false, false);
+        return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);
     }
     
     public static void initializeDurableQueue(String taskId) {

@@ -1,26 +1,38 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import javax.swing.AbstractAction;
+import javax.swing.AbstractCellEditor;
+import javax.swing.Action;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 import com.nomagic.magicdraw.core.Application;
 
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 public class OutputQueueStatusAction extends SRAction {	
 	private static final long serialVersionUID = 1L;
@@ -66,6 +78,7 @@ public class OutputQueueStatusAction extends SRAction {
 			columns.addElement("# Elements");
 			columns.addElement("Type");
 			columns.addElement("URL");
+			columns.addElement("");
 		}
 		
 		//private AbstractTableModel tableModel;
@@ -92,6 +105,11 @@ public class OutputQueueStatusAction extends SRAction {
 			final JPanel panel  = new JPanel(new BorderLayout());
 			panel.add(tableScrollPane, BorderLayout.CENTER);
 			
+			TableButtonColumn buttonEditor = new TableButtonColumn(table);
+			table.getColumnModel().getColumn(5).setCellRenderer(buttonEditor);
+			table.getColumnModel().getColumn(5).setCellEditor(buttonEditor);
+			
+			
 			this.setContentPane(panel);
 			this.pack();
 		}
@@ -109,6 +127,7 @@ public class OutputQueueStatusAction extends SRAction {
                 row.addElement(current.getNumElements());
                 row.addElement(current.getType());
                 row.addElement(current.getUrl());
+                row.addElement("Cancel");
                 data.addElement(row);
 			}
 			while (it.hasNext()) {
@@ -123,7 +142,7 @@ public class OutputQueueStatusAction extends SRAction {
 				row.addElement(r.getNumElements());
 				row.addElement(r.getType());
 				row.addElement(r.getUrl());
-				
+				row.addElement("Delete");
 				data.addElement(row);
 				
 				counter++;
@@ -138,86 +157,88 @@ public class OutputQueueStatusAction extends SRAction {
 		}
 		
 	}
-	
-	// Tried doing it "properly" with a table model, but it wants to be able to get values arbitrarily by row and column
-	// would cause excessive iteration of the queue so was abandoned for a more manual approach.
-	
-	/*protected class OutputQueueTableModel extends AbstractTableModel implements TableModel {
+	public class TableButtonColumn extends AbstractCellEditor implements TableCellRenderer, TableCellEditor, ActionListener {
 		
-		private Map<String, Class<?>> headers = new LinkedHashMap<String, Class<?>>();
-		
-		{
-			headers.put("#", Integer.class);
-			headers.put("Type", String.class);
-			headers.put("URL", String.class);
-		}
+		  private JTable table;
+		  private Action action;
+		  private JButton renderButton;
+		  private JButton editButton;
 
-		@Override
-		public int getRowCount() {
-			return OutputQueue.getInstance().size();
-		}
-
-		@Override
-		public int getColumnCount() {
-			return headers.size();
-		}
-
-		@Override
-		public String getColumnName(int columnIndex) {
-			final Iterator<String> it = headers.keySet().iterator();
-			for (int i = 0; i < columnIndex; i++) {
-				it.next();
+		  public TableButtonColumn(JTable table)
+			{
+				this.table = table;
+				this.action =  new AbstractAction()
+				{
+				    public void actionPerformed(ActionEvent e)
+				    {
+				        int modelRow = Integer.valueOf( e.getActionCommand() );
+				        if ( modelRow == 0){
+				        	Utils.guilog("Cancel Pressed.");
+				        	OutputQueue.getInstance().setCurrent(null);
+		                    SwingUtilities.invokeLater(new Runnable() {
+		                        @Override
+		                        public void run() {
+		                            OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+		                        }
+		                    });
+				        }
+				        else {
+				        	Utils.guilog("Delete Pressed.");
+				        	OutputQueue.getInstance().remove(modelRow);
+				        }
+				    }
+				};
+				
+				renderButton = new JButton();
+				editButton = new JButton();
+				editButton.setFocusPainted( false );
+				editButton.addActionListener( this );
+				
+				TableColumnModel columnModel = table.getColumnModel();
+				columnModel.getColumn(5).setCellRenderer( this );
+				columnModel.getColumn(5).setCellEditor( this );
+				//table.addMouseListener( this );
 			}
-			return it.next();
-		}
+		  /*
+			 *	The button has been pressed. Stop editing and invoke the custom Action
+			 */
+			public void actionPerformed(ActionEvent e)
+			{
+				int row = table.convertRowIndexToModel( table.getEditingRow() );
+				fireEditingStopped();
 
-		@Override
-		public Class<?> getColumnClass(int columnIndex) {
-			final Iterator<Class<?>> it = headers.values().iterator();
-			for (int i = 0; i < columnIndex; i++) {
-				it.next();
+				//  Invoke the Action
+				ActionEvent event = new ActionEvent(table,ActionEvent.ACTION_PERFORMED, "" + row);
+				action.actionPerformed(event);
 			}
-			return it.next();
-		}
-
-		@Override
-		public boolean isCellEditable(int rowIndex, int columnIndex) {
-			return false;
-		}
-
-		@Override
-		public Object getValueAt(int rowIndex, int columnIndex) {
-			if (rowIndex >= OutputQueue.getInstance().size()) {
+			@Override
+			public Object getCellEditorValue() {
 				return null;
 			}
-			final Request request = null;
-			try {
-				request = OutputQueue.getInstance().
-			} catch (ArrayIndexOutOfBoundsException ignored) {
-				// crude way to prevent errors caused by concurrent modification of the output queue
-			}
-			if (request == null) {
+			@Override
+			public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
+					int row, int column) {
+				//Utils.guilog("getTableCellEditorComponent - value is null");
+				if ( value != null){
+					//Utils.guilog("getTableCellEditorComponent: " + value.toString());
+					editButton.setText( value.toString() );
+					editButton.setIcon( null );
+					return editButton;
+				}
 				return null;
 			}
-		}
-
-		@Override
-		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void addTableModelListener(TableModelListener l) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void removeTableModelListener(TableModelListener l) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-	}*/
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				//Utils.guilog("getTableCellRendererComponent- value is null");
+				if ( value != null) {
+					//Utils.guilog("getTableCellRendererComponent: " + value.toString());
+					renderButton.setText( value.toString() );
+					renderButton.setIcon( null );
+					return renderButton;
+				//}
+				}
+				return null;
+			}
+	}
 }

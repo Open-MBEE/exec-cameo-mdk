@@ -79,10 +79,10 @@ public class ExportModelAction extends MDAction {
             return;
         }
         String[] buttons = {"Background job on server", "Background job on magicdraw","Abort Export"};
-        boolean background = Utils.getUserYesNoAnswerWithButton("Use background export on server? You'll get an email when done.", buttons);
-        if (background)
-            url = url + "?background=true";
-        ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(start, depth, packageOnly, url), "Exporting Model", true, 0);
+        Boolean background = Utils.getUserYesNoAnswerWithButton("Use background export on server? You'll get an email when done.", buttons);
+        //if (background)
+            //url = url + "?background=true";
+        ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(start, depth, packageOnly, url, background), "Exporting Model", true, 0 );
         /*
         if (start instanceof Model) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
