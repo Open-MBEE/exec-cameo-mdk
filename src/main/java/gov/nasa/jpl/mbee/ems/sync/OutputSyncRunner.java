@@ -1,7 +1,11 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import javax.swing.SwingUtilities;
+
 import org.apache.log4j.Logger;
+
+import com.nomagic.magicdraw.core.Application;
+
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 
@@ -87,6 +91,9 @@ public class OutputSyncRunner implements Runnable {
                 log.error("", e);
             }
             if (q.isEmpty()) {
+                AutoSyncCommitListener lis = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
+                if (lis != null && lis.isAuto())
+                    return; //prevent ui focus steal
                 Utils.guilog("[INFO] Finished processing queued requests.");
             }
             
