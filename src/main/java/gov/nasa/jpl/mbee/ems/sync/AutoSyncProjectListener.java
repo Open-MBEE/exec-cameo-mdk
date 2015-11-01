@@ -661,6 +661,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 try {
                     setUpdatesOrFailed(project, failed, "error", false);
                     sm.closeSession();
+                    j.getCannotAdd().clear();
+                    j.getCannotChange().clear();
+                    j.getCannotDelete().clear();
                 } catch (Exception e) {
                     log.error("", e);
                     sm.cancelSession();
