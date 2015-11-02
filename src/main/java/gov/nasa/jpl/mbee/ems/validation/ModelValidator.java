@@ -704,6 +704,19 @@ public class ModelValidator {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject specialization = (JSONObject)info.get("specialization");
         
+        JSONObject webcopy  = (JSONObject)specialization.clone();
+        if (webcopy.containsKey("value"))
+            webcopy.remove("value");
+        JSONObject model = ExportUtility.fillPropertySpecialization(e, null, false, true);
+        if (!JSONUtils.compare(webcopy, model)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property type/aggregation/multiplicity/redefines is different");
+            if (editable)
+                v.addAction(new ExportProperty(e));
+            v.addAction(new ImportProperty(e, result, specialization));
+            return v;
+        }
+        return null;
+        /*
         // diff the aggregation
         String modelAggr = e.getAggregation().toString().toUpperCase();
         String webAggr = null;
@@ -732,7 +745,7 @@ public class ModelValidator {
             v.addAction(new ImportProperty(e, (Type)webTypeElement, result));
             return v;
         }
-        return null;
+        return null;*/
     }
         
     private ValidationRuleViolation slotTypeDiff(Slot e, JSONObject info) {

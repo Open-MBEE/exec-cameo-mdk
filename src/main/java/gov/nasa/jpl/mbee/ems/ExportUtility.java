@@ -1011,71 +1011,80 @@ public class ExportUtility {
         JSONObject specialization = spec;
         if (specialization == null)
             specialization = new JSONObject();
-        if (e instanceof Property) {
-        		specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
-            specialization.put("type", "Property");
-            specialization.put("isDerived", ((Property) e).isDerived());
-            specialization.put("isSlot", false);
-            if (value) {
-                ValueSpecification vs = ((Property) e).getDefaultValue();
-                JSONArray singleElementSpecVsArray = new JSONArray();
-                if (vs != null) {
-                    // Create a new JSONObject and a new JSONArray. Fill in
-                    // the values to the new JSONObject and then insert
-                    // that JSONObject into the array (NOTE: there will
-                    // be single element in this array). Finally, insert
-                    // the array into the specialization element as the
-                    // value of the "value" property.
-                    //
-                    
-                    JSONObject newElement = new JSONObject();
-                    fillValueSpecification(vs, newElement);
-                    singleElementSpecVsArray.add(newElement);
-                }
-                specialization.put("value", singleElementSpecVsArray);
-            }
-            //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
-            //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
-            if (ptype) {
-                Type type = ((Property) e).getType();
-                if (type != null) {
-                    specialization.put("propertyType", "" + type.getID());
-                } else
-                    specialization.put("propertyType", null);
-            }
-        } else if (e instanceof Slot) {
-            specialization.put("type", "Property");
-            specialization.put("isDerived", false);
-            specialization.put("isSlot", true);
-            
-
-            // Retrieve a list of ValueSpecification objects.
-            // Loop through these objects, creating a new JSONObject
-            // for each value spec. Fill in the new JSONObject and
-            // insert them into a new JSONArray.
-            // Finally, once you've looped through all the value
-            // specifications, insert the JSONArray into the
-            // new specialization element.
-            //
-            if (value) {
-                List<ValueSpecification> vsl = ((Slot) e).getValue();
-                JSONArray specVsArray = new JSONArray();
-                if (vsl != null && vsl.size() > 0) {
-                    for (ValueSpecification vs : vsl) {
-                        JSONObject newElement = new JSONObject();
-                        fillValueSpecification(vs, newElement);
-                        specVsArray.add(newElement);
-                    }
-                }
-                specialization.put("value", specVsArray);
-            }
-            if (ptype) {
-                Element type = ((Slot) e).getDefiningFeature();
-                if (type != null) {
-                    specialization.put("propertyType", "" + type.getID());
-                }
-            }
-        }
+		if (e instanceof Property) {
+		    specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
+			specialization.put("type", "Property");
+		    specialization.put("isDerived", ((Property) e).isDerived());
+		    specialization.put("isSlot", false);
+		    if (value) {
+		        ValueSpecification vs = ((Property) e).getDefaultValue();
+		        JSONArray singleElementSpecVsArray = new JSONArray();
+		        if (vs != null) {
+		            // Create a new JSONObject and a new JSONArray. Fill in
+		            // the values to the new JSONObject and then insert
+		            // that JSONObject into the array (NOTE: there will
+		            // be single element in this array). Finally, insert
+		            // the array into the specialization element as the
+		            // value of the "value" property.
+		            //
+		            
+		            JSONObject newElement = new JSONObject();
+		            fillValueSpecification(vs, newElement);
+		            singleElementSpecVsArray.add(newElement);
+		        }
+		        specialization.put("value", singleElementSpecVsArray);
+		    }
+		    //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
+		    //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
+		    if (ptype) {
+		        Type type = ((Property) e).getType();
+		        if (type != null) {
+		            specialization.put("propertyType", "" + type.getID());
+		        } else
+		            specialization.put("propertyType", null);
+		    }
+		    specialization.put("multiplicityMin", (long)((Property)e).getLower());
+		    specialization.put("multiplicityMax", (long)((Property)e).getUpper());
+		     
+		    Collection<Property> cps = ((Property)e).getRedefinedProperty();
+		    JSONArray redefinedProperties = new JSONArray();
+		    for (Property cp : cps) 
+		     	redefinedProperties.add(getElementID(cp));
+		    specialization.put("redefines", redefinedProperties);
+		   
+		} else { //if (e instanceof Slot) {
+			specialization.put("type", "Property");
+			specialization.put("isDerived", false);
+		    specialization.put("isSlot", true);
+		    
+		
+		    // Retrieve a list of ValueSpecification objects.
+		    // Loop through these objects, creating a new JSONObject
+		    // for each value spec. Fill in the new JSONObject and
+		    // insert them into a new JSONArray.
+		    // Finally, once you've looped through all the value
+		    // specifications, insert the JSONArray into the
+		    // new specialization element.
+		    //
+		    if (value) {
+		        List<ValueSpecification> vsl = ((Slot) e).getValue();
+		        JSONArray specVsArray = new JSONArray();
+		        if (vsl != null && vsl.size() > 0) {
+		            for (ValueSpecification vs : vsl) {
+		                JSONObject newElement = new JSONObject();
+		                fillValueSpecification(vs, newElement);
+		                specVsArray.add(newElement);
+		            }
+		        }
+		        specialization.put("value", specVsArray);
+		    }
+		    if (ptype) {
+		        Element type = ((Slot) e).getDefiningFeature();
+		        if (type != null) {
+		            specialization.put("propertyType", "" + type.getID());
+		        }
+		    }
+		}
         return specialization;
     }
     

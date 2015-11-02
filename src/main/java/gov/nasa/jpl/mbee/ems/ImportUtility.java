@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.ems;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +22,7 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.google.common.primitives.Ints;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
@@ -440,7 +442,6 @@ public class ImportUtility {
         if (values != null && values.isEmpty())
             p.setDefaultValue(null);
     }
-    
     public static void setProperty(Property p, JSONObject spec) {
         // fix the property type here
         String ptype = (String)spec.get("propertyType");
@@ -459,6 +460,46 @@ public class ImportUtility {
             aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
         if (aggr != null) {
             p.setAggregation(aggr);
+        }
+        ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+        
+        Long spmin = (Long) spec.get("multiplicityMin");
+        if ( spmin != null){
+        	try{
+        	    ValueSpecification pmin = p.getLowerValue();
+        	    if (pmin == null)
+        	        pmin = ef.createLiteralIntegerInstance();
+        	    if (pmin instanceof LiteralInteger)
+        	        ((LiteralInteger)pmin).setValue(Ints.checkedCast(spmin));
+        	    if (pmin instanceof LiteralUnlimitedNatural)
+        	        ((LiteralUnlimitedNatural)pmin).setValue(Ints.checkedCast(spmin));
+	        	p.setLowerValue(pmin);
+        	}
+        	catch (NumberFormatException en){}
+        }
+        Long spmax = (Long) spec.get("multiplicityMax");
+        if ( spmax != null){
+        	try{
+        	    ValueSpecification pmax = p.getUpperValue();
+                if (pmax == null)
+                    pmax = ef.createLiteralUnlimitedNaturalInstance();
+                if (pmax instanceof LiteralInteger)
+                    ((LiteralInteger)pmax).setValue(Ints.checkedCast(spmax));
+                if (pmax instanceof LiteralUnlimitedNatural)
+                    ((LiteralUnlimitedNatural)pmax).setValue(Ints.checkedCast(spmax));
+                p.setUpperValue(pmax);
+        	}
+        	catch (NumberFormatException en){}
+        }
+        JSONArray redefineds = (JSONArray) spec.get("redefines");
+        Collection<Property> redefinedps = p.getRedefinedProperty();
+        if (redefineds != null && redefineds.size() != 0) { //for now prevent accidental removal of things in case server doesn't have the right reference
+            redefinedps.clear();
+            for (Object redefined: redefineds){
+                Property redefinedp = (Property) ExportUtility.getElementFromID((String)redefined);
+                if (redefinedp != null)
+                    redefinedps.add(redefinedp);
+            }
         }
     }
     

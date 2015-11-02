@@ -21,16 +21,16 @@ public class ImportProperty extends RuleViolationAction implements AnnotationAct
 
     private static final long serialVersionUID = 1L;
     private Element element;
-    private Type type;
     private JSONObject result;
+    private JSONObject spec;
     
-    public ImportProperty(Element e, Type type, JSONObject result) {
+    public ImportProperty(Element e, JSONObject result, JSONObject spec) {
         //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
         //
         super("ImportProperty", "Accept property", null, null);
         this.element = e;
-        this.type = type;
         this.result = result;
+        this.spec = spec;
     }
     
     @Override
@@ -58,7 +58,7 @@ public class ImportProperty extends RuleViolationAction implements AnnotationAct
             } 
         } else {
             if (element instanceof Property) {
-                ImportUtility.setPropertyType((Property)element, type);
+                ImportUtility.setProperty((Property)element, spec);
             }
         }
         return true;
