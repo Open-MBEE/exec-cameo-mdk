@@ -399,7 +399,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     listener.disable();
                     sm.createSession("failed changes");
                     try {
-                        AutoSyncProjectListener.setUpdatesOrFailed(project, failed, "error");
+                        AutoSyncProjectListener.setUpdatesOrFailed(project, failed, "error", true);
                         sm.closeSession();
                     } catch (Exception ex) {
                         log.error("", ex);
@@ -414,7 +414,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     listener.disable();
                     sm.createSession("failed changes");
                     try {
-                        AutoSyncProjectListener.setUpdatesOrFailed(project, null, "error");
+                        AutoSyncProjectListener.setUpdatesOrFailed(project, null, "error", true);
                         sm.closeSession();
                     } catch (Exception ex) {
                         log.error("", ex);
@@ -544,7 +544,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("updates sent");
             try {
-                AutoSyncProjectListener.setUpdatesOrFailed(project, toSave, "update");
+                AutoSyncProjectListener.setUpdatesOrFailed(project, toSave, "update", true);
                 sm.closeSession();
             } catch (Exception ex) {
                 log.error("", ex);
