@@ -252,6 +252,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //
         entry.put("type", "Image");
         entry.put("sysmlid", image.getImage().getID());
+        entry.put("title", image.getTitle());
         curContains.peek().add(entry);
         
         //for ems 2.2 reference tree
