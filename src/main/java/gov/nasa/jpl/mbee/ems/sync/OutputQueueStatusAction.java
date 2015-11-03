@@ -174,17 +174,23 @@ public class OutputQueueStatusAction extends SRAction {
 				        int modelRow = Integer.valueOf( e.getActionCommand() );
 				        if ( modelRow == 0){
 				        	Utils.guilog("Cancel Pressed.");
-				        	OutputQueue.getInstance().setCurrent(null);
-		                    SwingUtilities.invokeLater(new Runnable() {
+				        	OutputQueue.getInstance().setCurrent(null); //let the table update when it actually moves on 
+		                    /*SwingUtilities.invokeLater(new Runnable() {
 		                        @Override
 		                        public void run() {
 		                            OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
 		                        }
-		                    });
+		                    });*/
 				        }
 				        else {
 				        	Utils.guilog("Delete Pressed.");
 				        	OutputQueue.getInstance().remove(modelRow);
+				        	SwingUtilities.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+                                }
+                            });
 				        }
 				    }
 				};

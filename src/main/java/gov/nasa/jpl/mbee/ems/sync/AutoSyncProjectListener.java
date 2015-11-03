@@ -135,8 +135,12 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             folder.setID(folderId);
         } else {
             if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-                if (TeamworkUtils.getLoggedUserName() != null && (create || clearAll))
-                    TeamworkUtils.lockElement(project, folder, true);
+                if (TeamworkUtils.getLoggedUserName() != null && (create || clearAll)) {
+                    for (Element e: folder.getOwnedElement()) {
+                        if (e instanceof Class)
+                            TeamworkUtils.lockElement(project, e, false);
+                    }
+                }
             }
         }
         for (Element e: folder.getOwnedElement()) {

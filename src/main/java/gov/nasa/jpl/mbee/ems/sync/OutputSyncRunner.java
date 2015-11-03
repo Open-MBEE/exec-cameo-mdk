@@ -72,8 +72,8 @@ public class OutputSyncRunner implements Runnable {
                 	final int waitTime = (r.isBackgournd() ? maximumWaitTime * 1000: (r.getWait() > maximumWaitTime*1000 ? maximumWaitTime*1000: r.getWait()));
                 	st.join(waitTime);  
                     
-    	            Utils.guilog("[INFO] A send request did not finish within expected time. So keep waiting..."); //until a user press cancel
-    	            log.info(st.getName() + " A send request did not finish within expected time.");
+    	            //Utils.guilog("[INFO] A send request did not finish within expected time. So keep waiting..."); //until a user press cancel
+    	            //log.info(st.getName() + " A send request did not finish within expected time.");
     	            while (st.isAlive() && r == q.getCurrent() ) { // r is not current if "cancel" in queue dialog is pressed
     	             	 log.info(st.getName() + " Did not finish yet so waiting another 5 sec.");
     	                 Thread.sleep(5000);
@@ -81,11 +81,7 @@ public class OutputSyncRunner implements Runnable {
     	             log.info(st.getName() + " received response or cancel is pressed."); 
                 }	//end of r == current
                 
-                
-                if ( r == q.getCurrent() ) {//if this r is still current - it will be false if a user press "cancel" in the queue dialog
-                	q.setCurrent(null);
-                	log.info("Setting current as null");
-                }
+                q.setCurrent(null);
                 
             } catch (Exception e) {
                 log.error("", e);
@@ -93,7 +89,7 @@ public class OutputSyncRunner implements Runnable {
             if (q.isEmpty()) {
                 AutoSyncCommitListener lis = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
                 if (lis != null && lis.isAuto())
-                    return; //prevent ui focus steal
+                    continue; //prevent ui focus steal
                 Utils.guilog("[INFO] Finished processing queued requests.");
             }
             

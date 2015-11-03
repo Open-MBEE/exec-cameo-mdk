@@ -626,7 +626,7 @@ public class ExportUtility {
         } catch( org.apache.commons.httpclient.ConnectTimeoutException ex){ //the time to establish the connection with the remote host
         	Utils.printException(ex);
         	return null;
-        } catch(  java.net.SocketTimeoutException ex){ //the time waiting for data – after the connection was established; maximum time of inactivity between two data packets
+        } catch(  java.net.SocketTimeoutException ex){ //the time waiting for data after the connection was established; maximum time of inactivity between two data packets
         	Utils.printException(ex);
         	return null;
         } catch (Exception ex) { //java.net.SocketException: Software caused connection abort: recv failed
