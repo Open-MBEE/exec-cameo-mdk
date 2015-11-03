@@ -42,9 +42,12 @@ public class OutputQueue extends LinkedBlockingQueue<Request> {
     }
     public void remove(int _rowNum ){
     	//linkedQueue not contain current so the index of removing row is (_rowNum -1)
-    	Request toBeRemoved = (Request) this.toArray()[_rowNum-1];
-    	log.info("[INFO] Removing  a queue: " + toBeRemoved.getJson());
-    	super.remove(toBeRemoved);
+        if (this.size() >= _rowNum) {
+            Request toBeRemoved = (Request) this.toArray()[_rowNum-1];
+            if (toBeRemoved != null && toBeRemoved.getJson() != null)
+                log.info("[INFO] Removing  a queue: " + toBeRemoved.getJson());
+            super.remove(toBeRemoved);
+        }
     }
     
 }
