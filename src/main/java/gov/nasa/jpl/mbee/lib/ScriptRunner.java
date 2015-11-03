@@ -155,6 +155,7 @@ public class ScriptRunner {
         inputs.putAll(addInputs);
         if (!inputs.containsKey("DocGenTargets"))
             inputs.put("DocGenTargets", queries);
+        inputs.put("__name__", "__main__");
         return runScript(lang, inputs, script, binDirs);
     }
 
