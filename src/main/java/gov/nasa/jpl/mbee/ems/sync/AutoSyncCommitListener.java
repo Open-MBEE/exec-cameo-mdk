@@ -352,8 +352,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     return; //this happens when slot is deleted ARGHHHH
                 elements.remove(elementID);
                 
-                if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()) || !ExportUtility.shouldAdd(sourceElement))
-                    return; //prevent unneeded deletes
+                if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()) || (!ExportUtility.shouldAdd(sourceElement) && !(sourceElement instanceof InstanceSpecification)))
+                    return; //prevent unneeded deletes (instance specs don't have enough info at this point to determine if they're unneeded delete or not, so just delete them)
                 
                 deletes.add(elementID);
                 changedElements.remove(elementID);
@@ -361,7 +361,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (!auto)
                     deletedElements.put(elementID, sourceElement);
             } 
-            else if (propertyName.equals(UML2MetamodelConstants.BEFORE_DELETE) && sourceElement instanceof Slot) { // && ExportUtility.shouldAdd(sourceElement)) {
+            else if (propertyName.equals(UML2MetamodelConstants.BEFORE_DELETE) && (sourceElement instanceof Slot )) {
+                //this is useless
                 elementID = ExportUtility.getElementID(sourceElement);
                 if (elementID == null)
                     return;
