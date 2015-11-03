@@ -136,13 +136,17 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         } else {
             if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
                 if (TeamworkUtils.getLoggedUserName() != null && (create || clearAll)) {
+                    boolean sessionCreated = SessionManager.getInstance().isSessionCreated(project);
                     for (Element e: folder.getOwnedElement()) {
                         if (e instanceof Class)
                             TeamworkUtils.lockElement(project, e, false);
                     }
+                    if (sessionCreated && !SessionManager.getInstance().isSessionCreated(project))
+                        SessionManager.getInstance().createSession(project, "session after lock");
                 }
             }
         }
+        
         for (Element e: folder.getOwnedElement()) {
             if (e instanceof Class) {
                 String name = ((Class)e).getName();

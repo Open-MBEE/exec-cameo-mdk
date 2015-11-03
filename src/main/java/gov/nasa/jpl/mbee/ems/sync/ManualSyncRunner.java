@@ -76,17 +76,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
         return cannotChange;
     }
     
-    private void tryToLock(Project project) {
-        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) 
-            return;
-        
-        for (Element e: project.getModel().getOwnedElement()) {
-            if (ProjectUtilities.isElementInAttachedProject(e))
-                continue;
-            TeamworkUtils.lockElement(project, e, true);
-        }
-    }
-    
     private boolean tryToLock(Project project, Element e) {
         return Utils.tryToLock(project, e, isFromTeamwork);
     }

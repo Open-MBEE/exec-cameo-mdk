@@ -85,6 +85,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
@@ -3586,6 +3587,7 @@ public class Utils {
         if (!isFromTeamwork) {
             return false;
         }
+        boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
         if (e instanceof Property)
             TeamworkUtils.lockElement(project, e.getOwner(), false);
         else if (e instanceof Slot) {
@@ -3596,6 +3598,8 @@ public class Utils {
                 TeamworkUtils.lockElement(project, owner.getOwner(), false);
         } else
             TeamworkUtils.lockElement(project, e, false);
+        if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
+            SessionManager.getInstance().createSession("session after lock");
         if (e.isEditable())
             return true;
         return false;

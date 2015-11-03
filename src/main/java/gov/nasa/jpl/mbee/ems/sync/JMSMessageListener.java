@@ -28,6 +28,7 @@ import org.json.simple.JSONValue;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -37,8 +38,12 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 public class JMSMessageListener implements MessageListener {
 
     private Project project;
+    private boolean isFromTeamwork;
     private static Logger log = Logger.getLogger(JMSMessageListener.class);
     public JMSMessageListener(Project project) {
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            isFromTeamwork = true;
+        }
         this.project = project;
     }
 
@@ -142,7 +147,8 @@ public class JMSMessageListener implements MessageListener {
                             listener.enable();
                     }
                     catch (Exception e) {
-                        sm.cancelSession();
+                        if (SessionManager.getInstance().isSessionCreated())
+                            sm.cancelSession();
                         log.error(e, e);
                         if (listener != null)
                             listener.enable();
@@ -163,7 +169,7 @@ public class JMSMessageListener implements MessageListener {
                             Utils.guilog("[ERROR - Autosync] element " + sysmlid + " not found for autosync change");
                             return null;
                         } else if (!changedElement.isEditable()) {
-                            if (!TeamworkUtils.lockElement(project, changedElement, false)) {
+                            if (!Utils.tryToLock(project, changedElement, isFromTeamwork)) {
                                 Utils.guilog("[ERROR - Autosync] " + changedElement.getHumanName() + " is not editable!");
                                 cannotChange.add(sysmlid);
                                 return null;
@@ -228,7 +234,7 @@ public class JMSMessageListener implements MessageListener {
                         return;
                     }
                     if (!changedElement.isEditable())
-                        TeamworkUtils.lockElement(project, changedElement, false);
+                        Utils.tryToLock(project, changedElement, isFromTeamwork);
                     try {
                         ModelElementsManager.getInstance().removeElement(changedElement);
                         Utils.guilog("[Autosync] " + changedElement.getHumanName() + " deleted");
