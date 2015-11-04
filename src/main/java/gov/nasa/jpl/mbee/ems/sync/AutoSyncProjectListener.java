@@ -207,7 +207,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             }
         }
         //what's in elements array now are blocks that haven't been processed and should be returned, or empty if clearAll is true
-        NamedElement editable = null;
+        /*NamedElement editable = null;
         for (NamedElement e: elements) {
             if (e.isEditable()) {
                 editable = e;
@@ -217,7 +217,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         if (editable != null) {
             elements.remove(editable);
             elements.add(0, editable);
-        } else if (create) {
+        } else */
+        if (create) {
             NamedElement modify = project.getElementsFactory().createClassInstance();
             modify.setOwner(folder);
             modify.setName(prefix + "_" + df.format(new Date()));
