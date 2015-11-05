@@ -725,8 +725,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"))
             return;
         try {
-            saveAutoSyncErrors(project);
             saveLocalUpdates(project);
+            saveAutoSyncErrors(project);
         } catch (Exception e) {
             log.error("", e); //potential session isn't created error if need to update from tw while commiting
         }
