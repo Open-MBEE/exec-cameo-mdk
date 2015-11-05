@@ -691,6 +691,8 @@ public class ModelValidator {
                 Element owner = null;
                 if (webOwnerID != null)
                     owner = (Element)prj.getElementByID(webOwnerID);
+                if (e.getOwner() == owner)
+                    return null; //in case owner is Data
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? webOwnerID : owner.getHumanName()));
                 if (!crippled) {
                     if (editable)
