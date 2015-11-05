@@ -674,7 +674,7 @@ public class ModelValidator {
     private ValidationRuleViolation ownerDiff(Element e, JSONObject elementInfo) {
         Boolean editable = (Boolean)elementInfo.get("editable");
         if ( e.getOwner() != null ) {
-            String ownerID = e.getOwner().getID();
+            String ownerID = ExportUtility.getElementID(e.getOwner());
             String webOwnerID = (String)elementInfo.get("owner");
             if (webOwnerID == null || webOwnerID.startsWith("PROJECT")) {
                 if (webOwnerID == null)
