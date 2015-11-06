@@ -226,6 +226,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             Utils.guilog("[INFO] Applying changes...");
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change");
+            listener.disable();
             try {
                 Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(webAddedObjects);
                 
@@ -373,6 +374,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 }
                 Utils.guilog("[ERROR] Unexpected exception happened, all changes will be reattempted at next update.");
                 
+            } finally {
+                listener.enable();
             }
                 if (!cannotAdd.isEmpty() || !cannotChange.isEmpty() || !cannotDelete.isEmpty()) {
                     JSONObject failed = new JSONObject();
