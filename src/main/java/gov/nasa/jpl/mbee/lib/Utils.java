@@ -633,7 +633,7 @@ public class Utils {
             res.add((T)o);
         else if (o instanceof Collection) {
             for (Object obj: (Collection<?>)o) {
-                res.addAll(getListOfType(obj, type));
+                res.addAll(getListOfType(obj, type, seen));
             }
         }
         return res;
