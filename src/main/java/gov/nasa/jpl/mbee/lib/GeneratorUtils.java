@@ -30,6 +30,9 @@ package gov.nasa.jpl.mbee.lib;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.model.docmeta.DocumentMeta;
+import gov.nasa.jpl.mbee.model.docmeta.Person;
+import gov.nasa.jpl.mbee.model.docmeta.Revision;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -128,6 +131,9 @@ public class GeneratorUtils {
     }
 
     public static void docMetadata(Document doc, Element start) {
+        DocumentMeta meta = new DocumentMeta();
+        doc.setMetadata(meta);
+        
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
         // documentMeta Backwards Compatibility
@@ -348,42 +354,94 @@ public class GeneratorUtils {
             Concurrence = concurCollect;
         }
 
-        doc.setGenNewImage(gen);
-        doc.setAcknowledgement(acknowledgements);
         doc.setChunkFirstSections(chunkFirstSections);
         doc.setChunkSectionDepth(chunkSectionDepth);
-        doc.setCoverimage(coverImage);
         doc.setFooter(footer);
         doc.setHeader(header);
-        doc.setIndex(index);
-        doc.setLegalnotice(legalNotice);
         doc.setSubfooter(subfooter);
         doc.setSubheader(subheader);
-        doc.setSubtitle(subtitle);
         doc.setTitle(title);
         doc.setTocSectionDepth(tocSectionDepth);
-        doc.setDocumentID(DocumentID);
-        doc.setDocumentVersion(DocumentVersion);
-        doc.setLogoAlignment(LogoAlignment);
-        doc.setLogoLocation(LogoLocation);
-        doc.setAbbreviatedProjectName(AbbreviatedProjectName);
-        doc.setAbbreviatedTitle(AbbreiviatedTitle);
-        doc.setDocushareLink(DocushareLink);
-        doc.setTitlePageLegalNotice(TitlePageLegalNotice);
-        doc.setFooterLegalNotice(FooterLegalNotice);
-        doc.setCollaboratorEmail(CollaboratorEmail);
+
         doc.setRemoveBlankPages(RemoveBlankPages);
-        doc.setAuthor(Author);
-        doc.setApprover(Approver);
-        doc.setConcurrance(Concurrence);
-        doc.setJPLProjectTitle(JPLProjectTitle);
-        doc.setRevisionHistory(RevisionHistory);
+        
         doc.setUseDefaultStylesheet(UseDefaultStylesheet);
-        doc.setLogoSize(LogoSize);
-        doc.setInstLogo(instLogo);
-        doc.setInstLogoSize(instLogoSize);
-        doc.setInstTxt1(instTxt1);
-        doc.setInstTxt2(instTxt2);
+        
+        meta.setAuthors(getPersons(Author));
+        meta.setApprovers(getPersons(Approver));
+        meta.setConcurrances(getPersons(Concurrence));
+        meta.setHistory(getRevisions(RevisionHistory));
+        
+        meta.setCollaboratorEmails(CollaboratorEmail);
+        meta.setGenNewImages(gen);
+        meta.setAcknowledgement(acknowledgements);
+        meta.setChunkSectionDepth(chunkSectionDepth);
+        meta.setChunkFirstSections(chunkFirstSections);
+        meta.setCoverImage(coverImage);
+        meta.setFooter(footer);
+        meta.setHeader(header);
+        meta.setTitlePageLegalNotice(legalNotice);
+        meta.setIndex(index);
+        meta.setSubfooter(subfooter);
+        meta.setSubheader(subheader);
+        meta.setSubtitle(subtitle);
+        meta.setTitle(title);
+        meta.setTocSectionDepth(tocSectionDepth);
+        meta.setDocumentId(DocumentID);
+        meta.setVersion(DocumentVersion);
+        meta.setLogoAlignment(LogoAlignment);
+        meta.setLogoLink(LogoLocation);
+        meta.setProjectAcronym(AbbreviatedProjectName);
+        meta.setDocumentAcronym(AbbreiviatedTitle);
+        meta.setTitlePageLegalNotice(TitlePageLegalNotice);
+        meta.setLink(DocushareLink);
+        meta.setFooterLegalNotice(FooterLegalNotice);
+        meta.setProjectTitle(JPLProjectTitle);
+        meta.setUseDefaultStyleSheet(UseDefaultStylesheet);
+        meta.setLogoSize(LogoSize);
+        meta.setInstituteLogoLink(instLogo);
+        meta.setInstituteLogoSize(instLogoSize);
+        meta.setInstituteName(instTxt1);
+        meta.setInstituteName2(instTxt2);
+        
+    }
+    
+    public static List<Person> getPersons(List<String> s) {
+        List<Person> ps = new ArrayList<Person>();
+        for (String author: s) {
+            if (author == null || author.equals(""))
+                continue;
+            String[] tokens = author.split("[,]");
+            if (tokens.length < 5)
+                continue;
+            Person p = new Person();
+            p.setFirstname(tokens[0]);
+            p.setLastname(tokens[1]);
+            p.setTitle(tokens[2]);
+            p.setOrgname(tokens[3]);
+            p.setOrgdiv(tokens[4]);
+            ps.add(p);
+        }
+        return ps;
+    }
+    
+    public static List<Revision> getRevisions(List<String> s) {
+        List<Revision> rs = new ArrayList<Revision>();
+        for (String rev: s) {
+            if (rev == null || rev.equals(""))
+                continue;
+            String[] tokens = rev.split("[|]");
+            if (tokens.length < 5)
+                continue;
+            Revision p = new Revision();
+            p.setRevNumber(tokens[0]);
+            p.setDate(tokens[1]);
+            p.setFirstName(tokens[2]);
+            p.setLastName(tokens[3]);
+            p.setRemark(tokens[4]);
+            rs.add(p);
+        }
+        return rs;
     }
 
 }

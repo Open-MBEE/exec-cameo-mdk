@@ -29,6 +29,9 @@
 package gov.nasa.jpl.mgss.mbee.docgen.docbook;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.model.docmeta.DocumentMeta;
+import gov.nasa.jpl.mbee.model.docmeta.Person;
+import gov.nasa.jpl.mbee.model.docmeta.Revision;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,10 +79,9 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
 
     @Override
     public void visit(DBBook book) {
+        DocumentMeta meta = book.getMetadata();
         out.append("<book xmlns=\"http://docbook.org/ns/docbook\" xmlns:xl=\"http://www.w3.org/1999/xlink\" version=\"5.0\">\n");
         String title = null;
-        String delims = "[,]";
-        String revdelims = "[|]";
         out.append("<info>");
         if (book.getUseDefaultStylesheet() == true) {
             if (book.getSubtitle() == null || book.getSubtitle().equals(""))
@@ -90,147 +92,107 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                     + "</subtitle>");
         } else {
 
-            if (book.getDocumentID() != null && !book.getDocumentID().equals("")) {
-                out.append("\n<productnumber>" + book.getDocumentID() + "</productnumber>");
+            if (meta.getDocumentId() != null && !meta.getDocumentId().equals("")) {
+                out.append("\n<productnumber>" + meta.getDocumentId() + "</productnumber>");
             }
-            if (book.getDocumentVersion() != null && !book.getDocumentVersion().equals("")) {
-                out.append("\n<releaseinfo>" + book.getDocumentVersion() + "</releaseinfo>");
+            if (meta.getVersion() != null && !meta.getVersion().equals("")) {
+                out.append("\n<releaseinfo>" + meta.getVersion() + "</releaseinfo>");
             }
-            if (book.getLogoLocation() != null && !book.getLogoLocation().equals("") && book.getLogoAlignment() != null && !book.getLogoAlignment().equals("")) {
-                if (book.getLogoSize() != null && !book.getLogoSize().equals("")) {
-
-                    if (book.getLogoAlignment().equals("center") || book.getLogoAlignment().equals("Center")) {
-                        out.append("\n<mediaobject><imageobject><imagedata align= \"center\" fileref=\""
-                                + book.getLogoLocation() + "\" depth=\"" + book.getLogoSize()
-                                + "\"/></imageobject></mediaobject>");
-                    } else if (book.getLogoAlignment().equals("left")
-                            || book.getLogoAlignment().equals("Left")) {
-                        out.append("\n<mediaobject><imageobject><imagedata align= \"left\" fileref=\""
-                                + book.getLogoLocation() + "\" depth=\"" + book.getLogoSize()
-                                + "\"/></imageobject></mediaobject>");
-                    } else if (book.getLogoAlignment().equals("right")
-                            || book.getLogoAlignment().equals("Right")) {
-                        out.append("\n<mediaobject><imageobject><imagedata align= \"right\" fileref=\""
-                                + book.getLogoLocation() + "\" depth=\"" + book.getLogoSize()
-                                + "\"/></imageobject></mediaobject>");
-                    }
-                } else {
-                    if (book.getLogoAlignment().equals("center") || book.getLogoAlignment().equals("Center")) {
-                        out.append("\n<mediaobject><imageobject><imagedata align= \"center\" fileref=\""
-                                + book.getLogoLocation() + "\"/></imageobject></mediaobject>");
-                    } else if (book.getLogoAlignment().equals("left")
-                            || book.getLogoAlignment().equals("Left")) {
-                        out.append("\n<mediaobject><imageobject><imagedata align= \"left\" fileref=\""
-                                + book.getLogoLocation() + "\"/></imageobject></mediaobject>");
-                    } else if (book.getLogoAlignment().equals("right")
-                            || book.getLogoAlignment().equals("Right")) {
-                        out.append("\n<mediaobject><imageobject><imagedata align= \"right\" fileref=\""
-                                + book.getLogoLocation() + "\"/></imageobject></mediaobject>");
-                    }
-                }
+            if (meta.getLogoLink() != null && !meta.getLogoLink().equals("") && meta.getLogoAlignment() != null && !meta.getLogoAlignment().equals("")) {
+                String depth = "";
+                if (meta.getLogoSize() != null && !meta.getLogoSize().equals(""))
+                    depth = "depth=\"" + meta.getLogoSize() + "\"";
+                String align = "";
+                if (meta.getLogoAlignment().equals("center") || meta.getLogoAlignment().equals("Center"))
+                    align = "center";
+                else if (meta.getLogoAlignment().equals("left") || meta.getLogoAlignment().equals("Left"))
+                    align = "left";
+                else if (meta.getLogoAlignment().equals("right") || meta.getLogoAlignment().equals("Right"))
+                    align = "right";
+                out.append("\n<mediaobject><imageobject><imagedata align=\"" + align + "\" fileref=\""
+                            + meta.getLogoLink() + "\" " + depth + "/></imageobject></mediaobject>");
+                
             }
-            if (book.getAbbreviatedProjectName() != null && !book.getAbbreviatedProjectName().equals("")) {
-                if (book.getDocushareLink() != null && !book.getDocushareLink().equals(""))
-                    out.append("\n<publisher><publishername>" + book.getAbbreviatedProjectName()
-                            + "</publishername><address>" + book.getDocushareLink()
+            if (meta.getProjectAcronym() != null && !meta.getProjectAcronym().equals("")) {
+                if (meta.getLink() != null && !meta.getLink().equals(""))
+                    out.append("\n<publisher><publishername>" + meta.getProjectAcronym()
+                            + "</publishername><address>" + meta.getLink()
                             + "</address></publisher>");
                 else
-                    out.append("\n<publisher><publishername>" + book.getAbbreviatedProjectName()
+                    out.append("\n<publisher><publishername>" + meta.getProjectAcronym()
                             + "</publishername></publisher>");
             }
             out.append("\n<pubdate>" + new Date().toString() + "</pubdate>");
-            if (book.getJPLProjectTitle() == null || book.getJPLProjectTitle().equals("")) {
+            if (meta.getProjectTitle() == null || meta.getProjectTitle().equals("")) {
                 out.append("\n<title>" + DocGenUtils.fixString(book.getTitle()) + "</title>");
             } else {
-                out.append("\n<title>" + book.getJPLProjectTitle() + "</title><subtitle>"
+                out.append("\n<title>" + meta.getProjectTitle() + "</title><subtitle>"
                     + DocGenUtils.fixString(book.getTitle()) + "</subtitle>");
             }
-            if (book.getAbbreviatedTitle() != null && !book.getAbbreviatedTitle().equals("")) {
-                out.append("\n<titleabbrev>" + book.getAbbreviatedTitle() + "</titleabbrev>");
+            if (meta.getDocumentAcronym() != null && !meta.getDocumentAcronym().equals("")) {
+                out.append("\n<titleabbrev>" + meta.getDocumentAcronym() + "</titleabbrev>");
             }
-            out.append("\n<legalnotice><title>" + book.getTitlePageLegalNotice() + "</title><para>"
-                    + book.getFooterLegalNotice() + "</para></legalnotice>");
+            out.append("\n<legalnotice><title>" + meta.getTitlePageLegalNotice() + "</title><para>"
+                    + meta.getFooterLegalNotice() + "</para></legalnotice>");
 
-            if (book.getInstTxt1() != null) {
-                out.append("\n<collab><org>\n<orgname>" + book.getInstTxt1() + "</orgname>");
+            if (meta.getInstituteName() != null) {
+                out.append("\n<collab><org>\n<orgname>" + meta.getInstituteName() + "</orgname>");
 
             } else {
                 out.append("\n<collab><org>\n<orgname>Jet Propulsion Laboratory</orgname>");
             }
 
-            if (book.getInstTxt2() != null) {
-                out.append("\n<orgdiv>" + book.getInstTxt2() + "</orgdiv>");
+            if (meta.getInstituteName2() != null) {
+                out.append("\n<orgdiv>" + meta.getInstituteName2() + "</orgdiv>");
 
             } else {
                 out.append("\n<orgdiv>California Institute of Technology</orgdiv>");
             }
 
-            if (book.getInstLogo() != null) {
-                out.append("\n<uri>" + book.getInstLogo() + "</uri>");
+            if (meta.getInstituteLogoLink() != null) {
+                out.append("\n<uri>" + meta.getInstituteLogoLink() + "</uri>");
 
             } else {
                 out.append("\n<uri>http://sec274.jpl.nasa.gov/img/logos/jpl_logo(220x67).gif</uri>");
             }
-            if (book.getInstLogoSize() != null) {
-                out.append("\n<address><alt>" + book.getInstLogoSize() + "</alt></address>\n</org></collab>");
+            if (meta.getInstituteLogoSize() != null) {
+                out.append("\n<address><alt>" + meta.getInstituteLogoSize() + "</alt></address>\n</org></collab>");
 
             } else {
                 out.append("\n<address><alt>36px</alt></address>\n</org></collab>");
             }
 
-            for (int index = 0; index < book.getAuthor().size(); index++) {
-                if (book.getAuthor().get(index) != null && !book.getAuthor().get(index).equals("")) {
-                    String[] tokens = book.getAuthor().get(index).split(delims);
-                    if (tokens.length < 5)
-                    	continue;
-                    out.append("\n<author><personname><firstname>" + tokens[0] + "</firstname><surname>"
-                            + tokens[1] + "</surname></personname><affiliation>" + "<jobtitle>" + tokens[2]
-                            + "</jobtitle><org><orgname>" + tokens[3] + "</orgname><orgdiv>" + tokens[4]
-                            + "</orgdiv></org></affiliation></author>");
-                }
+            for (Person p: meta.getAuthors()) {
+                out.append("\n<author><personname><firstname>" + p.getFirstname() + "</firstname><surname>"
+                        + p.getLastname() + "</surname></personname><affiliation>" + "<jobtitle>" + p.getTitle()
+                        + "</jobtitle><org><orgname>" + p.getOrgname() + "</orgname><orgdiv>" + p.getOrgdiv()
+                        + "</orgdiv></org></affiliation></author>");
+            
             }
-            for (int index = 0; index < book.getApprover().size(); index++) {
-                if (book.getApprover().get(index) != null && !book.getApprover().get(index).equals("")) {
-                    String[] tokens = book.getApprover().get(index).split(delims);
-                    if (tokens.length < 5)
-                    	continue;
-                    out.append("\n<editor><personname><firstname>" + tokens[0] + "</firstname><surname>"
-                            + tokens[1] + "</surname></personname><affiliation>" + "<jobtitle>" + tokens[2]
-                            + "</jobtitle><org><orgname>" + tokens[3] + "</orgname><orgdiv>" + tokens[4]
-                            + "</orgdiv></org></affiliation></editor>");
-                }
+            for (Person p: meta.getApprovers()) {
+                out.append("\n<editor><personname><firstname>" + p.getFirstname() + "</firstname><surname>"
+                        + p.getLastname() + "</surname></personname><affiliation>" + "<jobtitle>" + p.getTitle()
+                        + "</jobtitle><org><orgname>" + p.getOrgname() + "</orgname><orgdiv>" + p.getOrgdiv()
+                        + "</orgdiv></org></affiliation></editor>");
+            
             }
-
-            for (int index = 0; index < book.getConcurrance().size(); index++) {
-                if (book.getConcurrance().get(index) != null && !book.getConcurrance().get(index).equals("")) {
-                    String[] tokens = book.getConcurrance().get(index).split(delims);
-                    if (tokens.length < 5)
-                    	continue;
-                    out.append("\n<othercredit><personname><firstname>" + tokens[0] + "</firstname><surname>"
-                            + tokens[1] + "</surname></personname><affiliation>" + "<jobtitle>" + tokens[2]
-                            + "</jobtitle><org><orgname>" + tokens[3] + "</orgname><orgdiv>" + tokens[4]
+            for (Person p: meta.getConcurrances()) {
+                    out.append("\n<othercredit><personname><firstname>" + p.getFirstname() + "</firstname><surname>"
+                            + p.getLastname() + "</surname></personname><affiliation>" + "<jobtitle>" + p.getTitle()
+                            + "</jobtitle><org><orgname>" + p.getOrgname() + "</orgname><orgdiv>" + p.getOrgdiv()
                             + "</orgdiv></org></affiliation></othercredit>");
-                }
+                
             }
-            for (int index = 0; index < book.getRevisionHistory().size(); index++) {
-                if (book.getRevisionHistory().get(index) != null
-                        && !book.getRevisionHistory().get(index).equals("")) {
-                    String[] tokens = book.getRevisionHistory().get(index).split(revdelims);
-                    if (tokens.length < 5)
-                    	continue;
-                    out.append("\n<revhistory><revision><revnumber>" + tokens[0] + "</revnumber><date>"
-                            + tokens[1] + "</date><author><personname><firstname>" + tokens[2]
-                            + "</firstname><surname>" + tokens[3]
-                            + "</surname></personname></author><revremark>" + tokens[4]
-                            + "</revremark></revision></revhistory>");
-                }
+            for (Revision rev: meta.getHistory()) {
+                out.append("\n<revhistory><revision><revnumber>" + rev.getRevNumber() + "</revnumber><date>"
+                    + rev.getDate() + "</date><author><personname><firstname>" + rev.getFirstName()
+                    + "</firstname><surname>" + rev.getLastName()
+                    + "</surname></personname></author><revremark>" + rev.getRemark()
+                    + "</revremark></revision></revhistory>");
+                
             }
-            for (int index = 0; index < book.getCollaboratorEmail().size(); index++) {
-                if (book.getCollaboratorEmail().get(index) != null
-                        && !book.getCollaboratorEmail().get(index).equals("")) {
-                    String[] tokens = book.getCollaboratorEmail().get(index).split(delims);
-                    out.append("\n<address><email>" + tokens[0] + "</email></address>");
-                }
+            for (String email: meta.getCollaboratorEmails()) {
+                out.append("\n<address><email>" + email + "</email></address>");
             }
         }
         // out.append("<productnumber>" + book.getDocumentID() +
@@ -242,13 +204,13 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
          * + "</legalnotice>");
          */
         // do authors
-        if (book.getCoverimage() != null) {
+        if (meta.getCoverImage() != null) {
             File imageDir = new File(dir, "images");
             imageDir.mkdirs();
             List<String> s = null;
             boolean ok = true;
             try {
-                s = DocGenUtils.exportDiagram(book.getCoverimage(), imageDir, false);
+                s = DocGenUtils.exportDiagram(meta.getCoverImage(), imageDir, false);
             } catch (IOException e) {
                 e.printStackTrace();
                 ok = false;
@@ -270,15 +232,15 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             }
         }
         out.append("</info>\n");
-        if (book.getAcknowledgement() != null && !book.getAcknowledgement().equals(""))
+        if (meta.getAcknowledgement() != null && !meta.getAcknowledgement().equals(""))
             out.append("<acknowledgement>"
-                    + DocGenUtils.addDocbook(DocGenUtils.fixString(book.getAcknowledgement()))
+                    + DocGenUtils.addDocbook(DocGenUtils.fixString(meta.getAcknowledgement()))
                     + "</acknowledgement>\n");
         for (DocumentElement e: book.getChildren()) {
             if (e instanceof DBSection && ((DBSection)e).isView())
                 e.accept(this);
         }
-        if (book.getIndex())
+        if (meta.isIndex())
             out.append("<index/>");
         out.append("</book>");
     }

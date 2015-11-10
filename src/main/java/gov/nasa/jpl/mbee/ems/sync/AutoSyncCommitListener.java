@@ -277,6 +277,10 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (actual instanceof Slot || actual instanceof Property) {
                     JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true, true);
                     elementOb.put("specialization", specialization);
+                    if (actual instanceof Slot && actual.getOwner() != null) { //catch instanceSpec if it wasn't caught before
+                        elementOb = getElementObject(actual.getOwner(), false);
+                        ExportUtility.fillElement(actual.getOwner(), elementOb);
+                    }
                 } else if (actual instanceof Constraint) {
                     JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)actual, null);
                     elementOb.put("specialization", specialization);
@@ -290,7 +294,9 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             // statement
             // to handle the case where a value is being deleted.
             //
-            else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE))) {
+            else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE) || 
+                    propertyName.equals(PropertyNames.LOWER_VALUE) || propertyName.equals(PropertyNames.UPPER_VALUE) || propertyName.equals("multiplicity") ||
+                    propertyName.equals(PropertyNames.REDEFINED_PROPERTY))) {
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb = getElementObject(sourceElement);
                 elementOb.put("specialization", specialization);
@@ -301,6 +307,10 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb.put("specialization", specialization);
                 ExportUtility.fillOwner(sourceElement, elementOb);
+                if (sourceElement instanceof Slot && sourceElement.getOwner() != null) { //catch instanceSpec if it wasn't caught before
+                    elementOb = getElementObject(sourceElement.getOwner(), false);
+                    ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
+                }
             }
             else if ((sourceElement instanceof Class) && propertyName.equals(PropertyNames.OWNED_ATTRIBUTE)) {
             	elementOb = getElementObject(sourceElement);
@@ -330,8 +340,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 } else {
                     elementOb = getElementObject(sourceElement, true);
                     ExportUtility.fillElement(sourceElement, elementOb);
-                    if (sourceElement instanceof Slot && ExportUtility.shouldAdd(sourceElement.getOwner())) { //catch instanceSpec if it wasn't caught before
-                    	elementOb = getElementObject(sourceElement.getOwner(), true);
+                    if (sourceElement instanceof Slot && sourceElement.getOwner() != null) { //catch instanceSpec if it wasn't caught before
+                    	elementOb = getElementObject(sourceElement.getOwner(), false);
                     	ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
                     }
                 }
@@ -342,8 +352,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     return; //this happens when slot is deleted ARGHHHH
                 elements.remove(elementID);
                 
-                if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()))
-                    return; //prevent unneeded deletes
+                if (diagramElements.contains(elementID) || diagramElements.contains(sourceElement.getID()) || (!ExportUtility.shouldAdd(sourceElement) && !(sourceElement instanceof InstanceSpecification)))
+                    return; //prevent unneeded deletes (instance specs don't have enough info at this point to determine if they're unneeded delete or not, so just delete them)
                 
                 deletes.add(elementID);
                 changedElements.remove(elementID);
@@ -351,7 +361,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (!auto)
                     deletedElements.put(elementID, sourceElement);
             } 
-            else if (propertyName.equals(UML2MetamodelConstants.BEFORE_DELETE) && sourceElement instanceof Slot) { // && ExportUtility.shouldAdd(sourceElement)) {
+            else if (propertyName.equals(UML2MetamodelConstants.BEFORE_DELETE) && (sourceElement instanceof Slot )) {
+                //this is useless
                 elementID = ExportUtility.getElementID(sourceElement);
                 if (elementID == null)
                     return;

@@ -66,6 +66,7 @@ public class DBTable extends DocumentElement {
     private int                         cols;
     private boolean                     transpose;
     private boolean 					hideHeaders;
+    private boolean                     showIfEmpty;
 
     public List<List<DocumentElement>> getBody() {
         return body;
@@ -89,6 +90,14 @@ public class DBTable extends DocumentElement {
 
     public String getStyle() {
         return style;
+    }
+
+    public boolean isShowIfEmpty() {
+        return showIfEmpty;
+    }
+
+    public void setShowIfEmpty(boolean showIfEmpty) {
+        this.showIfEmpty = showIfEmpty;
     }
 
     /**
@@ -152,7 +161,7 @@ public class DBTable extends DocumentElement {
     }
     
     /*
-     * transpose the table 
+     * transpose the table (this is actually rotate 90 degrees counterclockwise
      */
     public void transpose() {
         //this whole thing looks complicated because of transposing colspans and rowspans
@@ -164,6 +173,7 @@ public class DBTable extends DocumentElement {
         //do the transpose, if i is index of the col and j is index of the row in the old table, 
         //the new table's rows would be i and cols would be j
         List<List<DocumentElement>> newbody = new ArrayList<List<DocumentElement>>();
+        if (headers != null && headers.size() > 0) {
         for (int i = headers.get(0).size()-1; i >= 0; i--) {
             List<DocumentElement> newrow = new ArrayList<DocumentElement>();
             newbody.add(newrow);
@@ -195,6 +205,8 @@ public class DBTable extends DocumentElement {
                 }
             }
         }
+        }
+        if (body != null && body.size() > 0) {
         for (int i = body.get(0).size()-1; i >= 0; i--) {
             List<DocumentElement> newrow = newbody.get(newbody.size()-i-1);
             for (int j = 0; j < body.size(); j++) {
@@ -225,6 +237,7 @@ public class DBTable extends DocumentElement {
                 }
             }
         }
+        }
         this.body = newbody;
         this.headers =  null;
         this.cols = newbody.get(0).size();
@@ -237,11 +250,15 @@ public class DBTable extends DocumentElement {
     }
     
     private void removeAllNulls() {
+        if (headers != null) {
         for (List<DocumentElement> row: headers) {
             while (row.remove(null)) {}
         }
+        }
+        if (body != null) {
         for (List<DocumentElement> row: body) {
             while (row.remove(null)) {}
+        }
         }
     }
     
@@ -255,6 +272,8 @@ public class DBTable extends DocumentElement {
     }
     
     private void handleColspan(List<List<DocumentElement>> body) {
+        if (body == null)
+            return;
         for (List<DocumentElement> row: body) {
             List<DocumentElement> copy = new ArrayList<DocumentElement>(row);
             for (int i = copy.size()-1; i >=0; i--) {
@@ -281,6 +300,8 @@ public class DBTable extends DocumentElement {
     }
     
     private void handleRowspan(List<List<DocumentElement>> body) {
+        if (body == null)
+            return;
       //int j = 0;
         //need to handle old rowspans bottom up because of stuff
         int i = 0;

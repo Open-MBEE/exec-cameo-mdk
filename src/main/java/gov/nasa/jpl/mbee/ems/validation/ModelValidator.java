@@ -626,7 +626,10 @@ public class ModelValidator {
             modelContents = (JSONObject)modelview.get("contents");
         // replaced this thing here v
         //    if (!modelContents.equals(webContents)) {
-        if (modelContents != null) {
+        JSONArray webDisplayed = (JSONArray)webViewSpec.get("displayedElements");
+        JSONArray modelDisplayed = (JSONArray)modelview.get("displayedElements");
+        
+        if (modelContents != null || (webDisplayed == null && modelDisplayed != null) || !Utils.jsonArraySetDiff(webDisplayed, modelDisplayed)) {
             if (!JSONUtils.compare(modelContents, webContents)) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint is different");
                 v.addAction(new ExportViewConstraint((NamedElement)e));
@@ -671,7 +674,7 @@ public class ModelValidator {
     private ValidationRuleViolation ownerDiff(Element e, JSONObject elementInfo) {
         Boolean editable = (Boolean)elementInfo.get("editable");
         if ( e.getOwner() != null ) {
-            String ownerID = e.getOwner().getID();
+            String ownerID = ExportUtility.getElementID(e.getOwner());
             String webOwnerID = (String)elementInfo.get("owner");
             if (webOwnerID == null || webOwnerID.startsWith("PROJECT")) {
                 if (webOwnerID == null)
@@ -688,7 +691,9 @@ public class ModelValidator {
                 Element owner = null;
                 if (webOwnerID != null)
                     owner = (Element)prj.getElementByID(webOwnerID);
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? "null" : owner.getHumanName()));
+                if (e.getOwner() == owner)
+                    return null; //in case owner is Data
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? webOwnerID : owner.getHumanName()));
                 if (!crippled) {
                     if (editable)
                         v.addAction(new ExportOwner(e));
@@ -704,6 +709,19 @@ public class ModelValidator {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject specialization = (JSONObject)info.get("specialization");
         
+        JSONObject webcopy  = (JSONObject)specialization.clone();
+        if (webcopy.containsKey("value"))
+            webcopy.remove("value");
+        JSONObject model = ExportUtility.fillPropertySpecialization(e, null, false, true);
+        if (!JSONUtils.compare(webcopy, model)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property type/aggregation/multiplicity/redefines is different");
+            if (editable)
+                v.addAction(new ExportProperty(e));
+            v.addAction(new ImportProperty(e, result, specialization));
+            return v;
+        }
+        return null;
+        /*
         // diff the aggregation
         String modelAggr = e.getAggregation().toString().toUpperCase();
         String webAggr = null;
@@ -732,7 +750,7 @@ public class ModelValidator {
             v.addAction(new ImportProperty(e, (Type)webTypeElement, result));
             return v;
         }
-        return null;
+        return null;*/
     }
         
     private ValidationRuleViolation slotTypeDiff(Slot e, JSONObject info) {

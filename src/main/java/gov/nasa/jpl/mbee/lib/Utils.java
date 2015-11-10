@@ -85,6 +85,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
@@ -632,7 +633,7 @@ public class Utils {
             res.add((T)o);
         else if (o instanceof Collection) {
             for (Object obj: (Collection<?>)o) {
-                res.addAll(getListOfType(obj, type));
+                res.addAll(getListOfType(obj, type, seen));
             }
         }
         return res;
@@ -2271,7 +2272,7 @@ public class Utils {
         int res = JOptionPane.showOptionDialog(null, question, "Choose", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
             return true;
-        if (res == JOptionPane.NO_OPTION)
+        else if (res == JOptionPane.NO_OPTION)
             return false;
         return null;
     }
@@ -2284,7 +2285,7 @@ public class Utils {
         int res = JOptionPane.showConfirmDialog(null, question);
         if (res == JOptionPane.YES_OPTION)
             return true;
-        if (res == JOptionPane.NO_OPTION)
+        else if (res == JOptionPane.NO_OPTION)
             return false;
         return null;
     }
@@ -3586,6 +3587,7 @@ public class Utils {
         if (!isFromTeamwork) {
             return false;
         }
+        boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
         if (e instanceof Property)
             TeamworkUtils.lockElement(project, e.getOwner(), false);
         else if (e instanceof Slot) {
@@ -3596,6 +3598,8 @@ public class Utils {
                 TeamworkUtils.lockElement(project, owner.getOwner(), false);
         } else
             TeamworkUtils.lockElement(project, e, false);
+        if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
+            SessionManager.getInstance().createSession("session after lock");
         if (e.isEditable())
             return true;
         return false;

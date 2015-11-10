@@ -252,6 +252,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //
         entry.put("type", "Image");
         entry.put("sysmlid", image.getImage().getID());
+        entry.put("title", image.getTitle());
         curContains.peek().add(entry);
         
         //for ems 2.2 reference tree
@@ -458,9 +459,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         this.curContains.push(contains);
         addToElements(e);
         //MDEV-443 add view exposed elements to view elements
-        for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
+        /*for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                 DocGen3Profile.queriesStereotype, 1, false, 1))
-            addToElements(exposed);
+            addToElements(exposed);*/
         sibviews.peek().add(e.getID());
         JSONArray childViews = new JSONArray();
         sibviews.push(childViews);

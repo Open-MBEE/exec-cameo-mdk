@@ -76,17 +76,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
         return cannotChange;
     }
     
-    private void tryToLock(Project project) {
-        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) 
-            return;
-        
-        for (Element e: project.getModel().getOwnedElement()) {
-            if (ProjectUtilities.isElementInAttachedProject(e))
-                continue;
-            TeamworkUtils.lockElement(project, e, true);
-        }
-    }
-    
     private boolean tryToLock(Project project, Element e) {
         return Utils.tryToLock(project, e, isFromTeamwork);
     }
@@ -237,6 +226,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             Utils.guilog("[INFO] Applying changes...");
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change");
+            listener.disable();
             try {
                 Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(webAddedObjects);
                 
@@ -384,6 +374,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 }
                 Utils.guilog("[ERROR] Unexpected exception happened, all changes will be reattempted at next update.");
                 
+            } finally {
+                listener.enable();
             }
                 if (!cannotAdd.isEmpty() || !cannotChange.isEmpty() || !cannotDelete.isEmpty()) {
                     JSONObject failed = new JSONObject();
@@ -399,7 +391,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     listener.disable();
                     sm.createSession("failed changes");
                     try {
-                        AutoSyncProjectListener.setUpdatesOrFailed(project, failed, "error");
+                        AutoSyncProjectListener.setUpdatesOrFailed(project, failed, "error", true);
                         sm.closeSession();
                     } catch (Exception ex) {
                         log.error("", ex);
@@ -414,7 +406,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     listener.disable();
                     sm.createSession("failed changes");
                     try {
-                        AutoSyncProjectListener.setUpdatesOrFailed(project, null, "error");
+                        AutoSyncProjectListener.setUpdatesOrFailed(project, null, "error", true);
                         sm.closeSession();
                     } catch (Exception ex) {
                         log.error("", ex);
@@ -544,7 +536,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("updates sent");
             try {
-                AutoSyncProjectListener.setUpdatesOrFailed(project, toSave, "update");
+                AutoSyncProjectListener.setUpdatesOrFailed(project, toSave, "update", true);
                 sm.closeSession();
             } catch (Exception ex) {
                 log.error("", ex);

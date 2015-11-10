@@ -75,10 +75,10 @@ public class Crushinator21To22Migrator extends Migrator {
 
 			// switch the aggregation from Association spec to Property spec
 			if (elem instanceof Property) {
-				JSONObject spec = new JSONObject();
+			    JSONObject spec = ExportUtility.fillPropertySpecialization(elem, null, false, false);
 				einfo.put("specialization", spec);
-				spec.put("type", "Property");
-				spec.put("aggregation", ((Property)elem).getAggregation().toString().toUpperCase());
+				//spec.put("type", "Property");
+				//spec.put("aggregation", ((Property)elem).getAggregation().toString().toUpperCase());*/
 			}
 
 			// now we have all the element updates to add to export

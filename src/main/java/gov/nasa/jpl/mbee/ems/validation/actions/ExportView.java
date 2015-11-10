@@ -188,7 +188,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             send.put("source", "magicdraw");
             if (url == null)
                 return false;
-            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false, false) == null)
+            if (ExportUtility.send(sendElementsUrl, send.toJSONString()/*, null*/, false, false) == null)
                 return false;
         }
         //send elements first, then view info
@@ -217,7 +217,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             }
         }*/
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size(), "View"));
+        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size(), "View", false));
         //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
         //    return false;
         
