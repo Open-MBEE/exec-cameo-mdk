@@ -72,15 +72,29 @@ val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_
 val lib_patches_packageA = Artifact(lib_patches_packageID.name, "zip", "zip")
 val lib_patches_package_zipID = lib_patches_packageID.artifacts(lib_patches_packageA)
 
-val mdk_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp4_mdk" % "1.0"
+val mdk_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp4_mdk" % "2.3"
 val mdk_packageA = Artifact(mdk_packageID.name, "zip", "zip")
 
-val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "1.0"
+val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "2.3"
 val mdk_pluginA = Artifact(mdk_pluginID.name, "zip", "zip")
+val mdk_plugin_zipID = mdk_pluginID.artifacts(mdk_pluginA)
 
 unmanagedJars in Compile <++= getMdClasspath
-
-lazy val core = Project("cae_magicdraw_packages_mdk", file("."))
+/*
+lazy val prebuilt = (project in file("."))
+  .settings(noSourcesSettings)
+  .settings(artifactPackageZipFile := { baseDirectory.value / "package" / "CAE.MDK.Package.zip" })
+  .settings(addArtifact( mdk_packageA, artifactPackageZipFile ).settings: _*) 
+  .settings(moduleSettings(mdk_packageID): _*)
+  .settings(
+    resourceDirectory := baseDirectory.value / "package",
+    libraryDependencies ++= Seq(
+       mdk_plugin_zipID,
+       lib_patches_package_zipID
+    )
+  )
+  */
+lazy val plugin = (project in file("."))
   .settings(noSourcesSettings)
   .settings(artifactPackageZipFile := { baseDirectory.value / "package" / "CAE.MDK.Package.zip" })
   .settings(artifactPluginZipFile := { baseDirectory.value / "package" / "CAE.MDK.Plugin.zip" })
