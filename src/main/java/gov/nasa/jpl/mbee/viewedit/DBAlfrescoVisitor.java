@@ -104,6 +104,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                                     //not nested tables/lists since those are embedded in json blob, main is false for Table and List Visitor
     private Set<Element> notEditable = new HashSet<Element>();
     
+    private InstanceSpecification viewDocHack = null;
+    
     public DBAlfrescoVisitor(boolean recurse) {
         this(recurse, false);
     }
@@ -668,7 +670,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                             try {
                                 JSONObject ob = (JSONObject)(new JSONParser()).parse(((LiteralString)is.getSpecification()).getValue());
                                 if (view.getID().equals(ob.get("source")) && "documentation".equals(ob.get("sourceProperty"))) {
-                                    viewinstance = true; //a view doc instance created on ve
+                                    viewinstance = false; //a view doc instance
+                                    viewDocHack = is;
+                                     //argh, need to change to non opaque paragraph, point to itself and add transclusion
                                 }
                             } catch (Exception x) {}
                         }
@@ -733,6 +737,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             InstanceSpecification is = instances.get(0);
             PresentationElement pe = new PresentationElement(is, null, null, null, null, null, null);
             pe.setManual(true);
+            if (is == viewDocHack) {
+                pe.setViewDocHack(true);
+                pe.setView(currentView.peek());
+                viewDocHack = null;
+            }
             newpe.peek().add(pe);
             manuals.remove(is);
             instances.remove(is);
@@ -741,6 +750,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             for (InstanceSpecification is: new ArrayList<InstanceSpecification>(manuals)) {
                 PresentationElement pe = new PresentationElement(is, null, null, null, null, null, null);
                 pe.setManual(true);
+                if (is == viewDocHack) {
+                    pe.setViewDocHack(true);
+                    pe.setView(currentView.peek());
+                    viewDocHack = null;
+                }
                 newpe.peek().add(pe);
                 manuals.remove(is);
                 instances.remove(is);

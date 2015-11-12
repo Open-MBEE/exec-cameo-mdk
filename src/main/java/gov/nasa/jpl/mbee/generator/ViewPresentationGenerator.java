@@ -70,6 +70,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private Classifier listC = Utils.getOpaqueListClassifier();
     private Classifier imageC = Utils.getOpaqueImageClassifier();
     private Classifier sectionC = Utils.getSectionClassifier();
+    private Classifier tparaC = Utils.getParaClassifier();
     private Property generatedFromView = Utils.getGeneratedFromViewProperty();
     private Property generatedFromElement = Utils.getGeneratedFromElementProperty();
     private Stereotype presentsS = Utils.getPresentsStereotype();
@@ -132,7 +133,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
         // first run a local generation of the view model to get the current model view structure
-        DocumentGenerator dg = new DocumentGenerator(view, dv, null);
+        DocumentGenerator dg = new DocumentGenerator(view, dv, null, false);
         Document dge = dg.parseDocument(true, recurse, false);
         (new PostProcessor()).process(dge);
 
@@ -243,6 +244,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 InstanceSpecification inst = pe.getInstance();
                 iv.setInstance(inst);
                 list.add(iv);
+                if (pe.isViewDocHack()) {
+                    if (tryToLock(project, inst)) {
+                        JSONObject n = new JSONObject();
+                        n.put("source", inst.getID());
+                        n.put("type", "Paragraph");
+                        n.put("sourceProperty", "documentation");
+                        String transclude = "<mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\"></mms-transclude-doc>";
+                        ModelHelper.setComment(inst, transclude);
+                        ((LiteralString)inst.getSpecification()).setValue(n.toJSONString());
+                        inst.getClassifier().clear();
+                        inst.getClassifier().add(tparaC);
+                    }
+                }
                 // lets do some testing on the instance owner
                 Element instOwner = inst.getOwner();
                 boolean touchMe = true;
