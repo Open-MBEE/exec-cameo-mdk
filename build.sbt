@@ -9,6 +9,12 @@ val cae_artifactory_releases =
     url("https://cae-artrepo.jpl.nasa.gov/artifactory/ext-release-local")
   )(Resolver.mavenStylePatterns)
 
+val cae_artifactory_snapshots = 
+  Resolver.url(
+    "Artifactory Realm",
+    url("https://cae-artrepo.jpl.nasa.gov/artifactory/libs-snapshot-local")
+  )(Resolver.mavenStylePatterns)
+  
 ivyLoggingLevel := UpdateLogging.Full
 
 logLevel in Compile := Level.Debug
@@ -66,7 +72,7 @@ val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_
 val lib_patches_packageA = Artifact(lib_patches_packageID.name, "zip", "zip")
 val lib_patches_package_zipID = lib_patches_packageID.artifacts(lib_patches_packageA)
 
-val mdk_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "mdk" % "1.0"
+val mdk_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp4_mdk" % "1.0"
 val mdk_packageA = Artifact(mdk_packageID.name, "zip", "zip")
 
 val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "1.0"
@@ -81,6 +87,7 @@ lazy val core = Project("cae_magicdraw_packages_mdk", file("."))
   .settings(addArtifact( mdk_packageA, artifactPackageZipFile ).settings: _*) //TODO can a project publish 2 artifacts?
   .settings(addArtifact( mdk_pluginA, artifactPluginZipFile).settings: _*)
   .settings(moduleSettings(mdk_packageID): _*)
+  .settings(moduleSettings(mdk_pluginID): _*) //TODO this is probably wrong
   .settings(
     homepage := Some(url("https://github.jpl.nasa.gov/mbee-dev/mdk")),
     organizationHomepage := Some(url("http://cae.jpl.nasa.gov"))
