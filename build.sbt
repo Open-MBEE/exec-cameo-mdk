@@ -80,8 +80,9 @@ val mdk_pluginA = Artifact(mdk_pluginID.name, "zip", "zip")
 val mdk_plugin_zipID = mdk_pluginID.artifacts(mdk_pluginA)
 
 unmanagedJars in Compile <++= getMdClasspath
-/*
-lazy val prebuilt = (project in file("."))
+
+//TODO figure out how to publish plugin zip and prebuilt zip
+lazy val prebuilt = project
   .settings(noSourcesSettings)
   .settings(artifactPackageZipFile := { baseDirectory.value / "package" / "CAE.MDK.Package.zip" })
   .settings(addArtifact( mdk_packageA, artifactPackageZipFile ).settings: _*) 
@@ -92,8 +93,8 @@ lazy val prebuilt = (project in file("."))
        mdk_plugin_zipID,
        lib_patches_package_zipID
     )
-  )
-  */
+  ).dependsOn(plugin)
+  
 lazy val plugin = (project in file("."))
   .settings(noSourcesSettings)
   .settings(artifactPackageZipFile := { baseDirectory.value / "package" / "CAE.MDK.Package.zip" })
