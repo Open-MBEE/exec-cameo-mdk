@@ -22,7 +22,6 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.google.common.primitives.Ints;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
@@ -470,9 +469,9 @@ public class ImportUtility {
         	    if (pmin == null)
         	        pmin = ef.createLiteralIntegerInstance();
         	    if (pmin instanceof LiteralInteger)
-        	        ((LiteralInteger)pmin).setValue(Ints.checkedCast(spmin));
+        	        ((LiteralInteger)pmin).setValue(spmin.intValue());
         	    if (pmin instanceof LiteralUnlimitedNatural)
-        	        ((LiteralUnlimitedNatural)pmin).setValue(Ints.checkedCast(spmin));
+        	        ((LiteralUnlimitedNatural)pmin).setValue(spmin.intValue());
 	        	p.setLowerValue(pmin);
         	}
         	catch (NumberFormatException en){}
@@ -484,9 +483,9 @@ public class ImportUtility {
                 if (pmax == null)
                     pmax = ef.createLiteralUnlimitedNaturalInstance();
                 if (pmax instanceof LiteralInteger)
-                    ((LiteralInteger)pmax).setValue(Ints.checkedCast(spmax));
+                    ((LiteralInteger)pmax).setValue(spmax.intValue());
                 if (pmax instanceof LiteralUnlimitedNatural)
-                    ((LiteralUnlimitedNatural)pmax).setValue(Ints.checkedCast(spmax));
+                    ((LiteralUnlimitedNatural)pmax).setValue(spmax.intValue());
                 p.setUpperValue(pmax);
         	}
         	catch (NumberFormatException en){}

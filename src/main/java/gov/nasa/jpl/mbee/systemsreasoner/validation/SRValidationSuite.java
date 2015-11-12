@@ -19,7 +19,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
-import com.google.common.collect.Lists;
 import com.nomagic.actions.NMAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -63,7 +62,9 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 	}
 
 	public SRValidationSuite(final Element element) {
-		this(Lists.newArrayList(element));
+	    super(NAME);
+	    this.elements = new ArrayList<Element>();
+	    this.elements.add(element);
 	}
 	
 	public SRValidationSuite(final List<Element> elements) {

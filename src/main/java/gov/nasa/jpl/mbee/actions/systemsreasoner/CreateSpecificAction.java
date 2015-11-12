@@ -7,7 +7,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -56,10 +55,10 @@ public class CreateSpecificAction extends SRAction {
 			if (dlg.isOkClicked() && dlg.getSelectedElement() != null && dlg.getSelectedElement() instanceof Namespace) {
 				SessionManager.getInstance().createSession("create specific");
 				final Classifier specific  = (Classifier) CopyPasting.copyPasteElement(classifier, (Namespace) dlg.getSelectedElement(), true);
-				for (final Generalization generalization : Lists.newArrayList(specific.getGeneralization())) {
+				for (final Generalization generalization : new ArrayList<Generalization>(specific.getGeneralization())) {
 					generalization.dispose();
 				}
-				for (final NamedElement ne : Lists.newArrayList(specific.getOwnedMember())) {
+				for (final NamedElement ne : new ArrayList<NamedElement>(specific.getOwnedMember())) {
 					ne.dispose();
 				}
 				//instance.getOwnedMember().clear();

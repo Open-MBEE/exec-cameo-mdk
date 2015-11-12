@@ -5,7 +5,6 @@ import java.util.List;
 
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 
-import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
@@ -108,10 +107,10 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 		}
 		//System.out.println(general.getQualifiedName());
 		final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
-		for (final NamedElement ne : Lists.newArrayList(special.getOwnedMember())) {
+		for (final NamedElement ne : new ArrayList<NamedElement>(special.getOwnedMember())) {
 			ne.dispose();
 		}
-		for (final Generalization g : Lists.newArrayList(special.getGeneralization())) {
+		for (final Generalization g :new ArrayList<Generalization>(special.getGeneralization())) {
 			g.dispose();
 		}
 		//special.getOwnedMember().clear();

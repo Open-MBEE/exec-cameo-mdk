@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
@@ -371,7 +370,9 @@ public class TableStructure extends Table {
                         	
                         	final GenerationContext nestedContext = new GenerationContext(new Stack<List<Object>>(), tc.activityNode, getValidator(), Application.getInstance().getGUILog());
                         	//Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
-                        	nestedContext.pushTargets(Lists.newArrayList((Object) re));
+                        	List<Object> newl = new ArrayList<Object>();
+                        	newl.add(re);
+                        	nestedContext.pushTargets(newl);
                         	//context.pushTargets(new ArrayList<Object>(startElements));
                         	dg.setContext(nestedContext);
                         	

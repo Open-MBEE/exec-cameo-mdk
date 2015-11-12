@@ -14,7 +14,6 @@ import gov.nasa.jpl.mbee.systemsreasoner.validation.IndeterminateProgressMonitor
 import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.CreateInstanceAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecifyAction;
 
-import com.google.common.collect.Lists;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
@@ -112,7 +111,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     	//System.out.println("Instance2BST: " + instance2BSTAction.getClass().getCanonicalName());
         
         // Clear out the category of unused actions
-    	final List<NMAction> clonedActions = Lists.newArrayList(category.getActions());
+    	final List<NMAction> clonedActions = new ArrayList<NMAction>(category.getActions());
     	category.getActions().clear();
         /*for (NMAction action : clonedActions) {
         	if (action != null) {

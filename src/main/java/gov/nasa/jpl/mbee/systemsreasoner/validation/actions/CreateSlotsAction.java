@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
@@ -99,7 +98,7 @@ public class CreateSlotsAction extends GenericRuleViolationAction {
 				}
 				//slot.dispose();
 			}
-			for (final Slot slot : Lists.newArrayList(instance.getSlot())) {
+			for (final Slot slot : new ArrayList<Slot>(instance.getSlot())) {
 				slot.dispose();
 			}
 		}

@@ -7,7 +7,6 @@ import javax.swing.JOptionPane;
 
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 
-import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -101,7 +100,7 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 			}*/
 			redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(re, clazz, false);
 			if (redefinedElement instanceof Namespace) {
-				for (final NamedElement ne : Lists.newArrayList(((Namespace) redefinedElement).getOwnedMember())) {
+				for (final NamedElement ne : new ArrayList<NamedElement>(((Namespace) redefinedElement).getOwnedMember())) {
 					ne.dispose();
 				}
 			}
