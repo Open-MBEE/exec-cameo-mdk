@@ -655,6 +655,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 Set<String> cannotAdd = new HashSet<String>(j.getCannotAdd());
                 Set<String> cannotChange = new HashSet<String>(j.getCannotChange());
                 Set<String> cannotDelete = new HashSet<String>(j.getCannotDelete());
+                if (cannotAdd.isEmpty() && cannotChange.isEmpty() && cannotDelete.isEmpty())
+                    return;
                 JSONObject failed = new JSONObject();
                 JSONArray failedAdd = new JSONArray();
                 failedAdd.addAll(cannotAdd);
@@ -686,7 +688,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     public void saveLocalUpdates(Project project) {
         AutoSyncCommitListener listener = getCommitListener(project);
         final Set<String> newAdded = listener.getAddedElements().keySet(), newChanged = listener.getChangedElements().keySet(), newDeleted = listener.getDeletedElements().keySet();
-        
+        if (newAdded.isEmpty() && newChanged.isEmpty() && newDeleted.isEmpty())
+            return; //no need to save if nothing to save
         JSONObject notSaved = new JSONObject();
         JSONArray addeda = new JSONArray();
         JSONArray updateda = new JSONArray();
