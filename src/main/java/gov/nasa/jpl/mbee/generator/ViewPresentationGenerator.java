@@ -246,15 +246,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 list.add(iv);
                 if (pe.isViewDocHack()) {
                     if (tryToLock(project, inst)) {
-                        JSONObject n = new JSONObject();
+                        /*JSONObject n = new JSONObject();
                         n.put("source", inst.getID());
                         n.put("type", "Paragraph");
                         n.put("sourceProperty", "documentation");
                         String transclude = "<mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\"></mms-transclude-doc>";
                         ModelHelper.setComment(inst, transclude);
-                        ((LiteralString)inst.getSpecification()).setValue(n.toJSONString());
+                        ((LiteralString)inst.getSpecification()).setValue(n.toJSONString());*/
                         inst.getClassifier().clear();
-                        inst.getClassifier().add(tparaC);
+                        inst.getClassifier().add(tparaC); //just change it so it's not opaque para
                     }
                 }
                 // lets do some testing on the instance owner
