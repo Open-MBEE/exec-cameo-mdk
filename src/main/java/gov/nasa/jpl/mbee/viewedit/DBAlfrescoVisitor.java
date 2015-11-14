@@ -660,12 +660,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                     if (!is.getClassifier().isEmpty()) {
                         List<Classifier> iscs = is.getClassifier();
                         boolean viewinstance = false;
+                      if (iscs.contains(paraC) || iscs.contains(tableC) || iscs.contains(listC) || iscs.contains(imageC) || iscs.contains(sectionC)) {
                         for (Element el: is.getOwnedElement()) {
                             if (el instanceof Slot && ((Slot)el).getDefiningFeature().getName().equals("generatedFromView") &&
                                     !((Slot)el).getValue().isEmpty() && ((Slot)el).getValue().get(0) instanceof ElementValue &&
                                     ((ElementValue)((Slot)el).getValue().get(0)).getElement() == view)
                                 viewinstance = true;
                         }
+                      }
                         if (iscs.contains(paraC) && topLevel && is.getSpecification() instanceof LiteralString) {
                             try {
                                 JSONObject ob = (JSONObject)(new JSONParser()).parse(((LiteralString)is.getSpecification()).getValue());
