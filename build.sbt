@@ -1,5 +1,6 @@
 import java.io.File
-
+import java.util.Calendar
+import java.text.SimpleDateFormat
 import sbt.Keys._
 import sbt._
 
@@ -41,7 +42,8 @@ val commonSettings: Seq[Setting[_]] = Seq(
   crossPaths := false,
   publishArtifact in (Compile, packageBin) := true,
   publishArtifact in (Compile, packageDoc) := false,
-  publishArtifact in (Compile, packageSrc) := true
+  publishArtifact in (Compile, packageSrc) := true,
+  publishArtifact in Test := false
 )
 
 def moduleSettings(moduleID: ModuleID): Seq[Setting[_]] =
@@ -82,15 +84,19 @@ lazy val plugin = (project in file("."))
     publish <<= publish dependsOn zipMdk,
 
     extractArchives <<= (baseDirectory, update, streams) map { (base, up, s) =>
-      val extractFolder = base / "target" / "expand"
-      val filter = artifactFilter(`type`="zip", extension = "zip")
-      val zips: Seq[File] = up.matching(filter)
-      s.log.info(s"*** Got: ${zips.size} zips")
-      zips.foreach { zip =>
-        s.log.info(s"\n\nzip: $zip")
-        val files = IO.unzip(zip, extractFolder)
-        s.log.info(s"=> extracted ${files.size} files!")
-      }
+      val extractFolderString = sys.props.getOrElse("MD_BASE_DIR", "")
+      var extractFolder = base / "target" / "expand"
+      if (extractFolderString == null || extractFolderString == "") {
+        val filter = artifactFilter(`type`="zip", extension = "zip")
+        val zips: Seq[File] = up.matching(filter)
+        s.log.info(s"*** Got: ${zips.size} zips")
+        zips.foreach { zip =>
+            s.log.info(s"\n\nzip: $zip")
+            val files = IO.unzip(zip, extractFolder)
+            s.log.info(s"=> extracted ${files.size} files!")
+        }
+      } else
+        extractFolder = file(extractFolderString)
       extractFolder
     },
     
@@ -122,17 +128,17 @@ lazy val plugin = (project in file("."))
     genResourceDescriptor := {
         val zipfolder = buildMdk.value
         val template = IO.read(baseDirectory.value / "data" / "resourcemanager" / "MDR_Plugin_Docgen_91110_descriptor_template.xml")
-        //val filesInZip = zipfolder ** "*.*"
         val subpaths = Path.selectSubpaths(zipfolder, "*.*")
         val content = ("" /: subpaths) { 
             case (result, (file, subpath)) =>
                 result + "<file from=\"" + subpath + "\" to=\"" + subpath + "\"/>\n"
         }
         //streams.value.log.info(content)
-        //TODO need release version info in descriptor
+        val dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")
+        val currentDate = dateFormat.format(Calendar.getInstance().getTime())
         val towrite = template.replaceAllLiterally("@installation@", content)
                               .replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1"))
-                              .replaceAllLiterally("@release.date@", sys.props.getOrElse("BUILD_ID", "2015-33-33"))
+                              .replaceAllLiterally("@release.date@", sys.props.getOrElse("BUILD_ID",currentDate))
         IO.write(zipfolder / "data" / "resourcemanager" / "MDR_Plugin_Docgen_91110_descriptor.xml", towrite, append=false)
         zipfolder
     },
