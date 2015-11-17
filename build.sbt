@@ -27,6 +27,7 @@ separate out package zip into separate repo
 ask robert about plugin/resource manager versioning info
 add in version and release info into xml files from jenkins env var
 look at https://github.jpl.nasa.gov/secae/sbt.mbee.plugin to see reusable funcs for building md plugins
+get md base dir via env var and only extract if not present
 */
 
 val commonSettings: Seq[Setting[_]] = Seq(
@@ -77,7 +78,6 @@ lazy val plugin = (project in file("."))
   )
   .settings(
     unmanagedJars in Compile <++= getMdClasspath,
-    resourceDirectory := baseDirectory.value / "target" / "package",
     libraryDependencies += lib_patches_package_zipID,
     publish <<= publish dependsOn zipMdk,
 

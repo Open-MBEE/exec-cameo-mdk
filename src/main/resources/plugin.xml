@@ -2,7 +2,7 @@
 	id="gov.nasa.jpl.mgss.mbee.docgen.plugin"
 	name="DocGen"
    internalVersion="@release.version.internal@"
-	version="@release.version@"
+	version="2.3"
 	provider-name="NASA / Jet Propulsion Laboratory / Caltech"
 	ownClassLoader="true"
 	class-lookup="LocalFirst"
