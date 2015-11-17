@@ -134,7 +134,7 @@ lazy val plugin = (project in file("."))
                 result + "<file from=\"" + subpath + "\" to=\"" + subpath + "\"/>\n"
         }
         //streams.value.log.info(content)
-        val dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")
+        val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
         val currentDate = dateFormat.format(Calendar.getInstance().getTime())
         val towrite = template.replaceAllLiterally("@installation@", content)
                               .replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1"))
