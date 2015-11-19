@@ -40,9 +40,10 @@ val commonSettings: Seq[Setting[_]] = Seq(
   autoScalaLibrary := false,
   // disable using the Scala version in output paths and artifacts
   crossPaths := false,
-  publishArtifact in (Compile, packageBin) := true,
+  //disable publishing other artifacts as a workaround for weird snapshot behavior
+  publishArtifact in (Compile, packageBin) := false,
   publishArtifact in (Compile, packageDoc) := false,
-  publishArtifact in (Compile, packageSrc) := true,
+  publishArtifact in (Compile, packageSrc) := false,
   publishArtifact in Test := false
 )
 
