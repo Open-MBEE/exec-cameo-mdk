@@ -8,4 +8,8 @@
       <artifactId>mdk</artifactId>
       <version>2.3-SNAPSHOT</version>
       <packaging>zip</packaging>
+      <build>
+        <defaultGoal>install</defaultGoal>
+        <directory>${basedir}/target/package</directory>
+      </build>
     </project>
