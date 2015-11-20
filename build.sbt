@@ -13,7 +13,7 @@ val cae_artifactory_releases =
 val cae_artifactory_snapshots = 
   Resolver.url(
     "Artifactory Realm",
-    url("https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-snapshot-local")
+    url("https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-snapshot-local;build.timestamp=" + new java.util.Date().getTime())
   )(Resolver.mavenStylePatterns)
   
 ivyLoggingLevel := UpdateLogging.Full
@@ -41,9 +41,9 @@ val commonSettings: Seq[Setting[_]] = Seq(
   // disable using the Scala version in output paths and artifacts
   crossPaths := false,
   //disable publishing other artifacts as a workaround for weird snapshot behavior
-  publishArtifact in (Compile, packageBin) := false,
+  publishArtifact in (Compile, packageBin) := true,
   publishArtifact in (Compile, packageDoc) := false,
-  publishArtifact in (Compile, packageSrc) := false,
+  publishArtifact in (Compile, packageSrc) := true,
   publishArtifact in Test := false
 )
 
