@@ -5,5 +5,5 @@
 *.jresult
 *.diff
 /build-nojenkins.xml
-/target
-/project
+target/
+.idea
