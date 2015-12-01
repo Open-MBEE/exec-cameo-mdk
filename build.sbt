@@ -10,6 +10,12 @@ val cae_artifactory_releases =
     url("https://cae-artrepo.jpl.nasa.gov/artifactory/ext-release-local")
   )(Resolver.mavenStylePatterns)
 
+val cae_artifactory_plugin_releases = 
+  Resolver.url(
+    "Artifactory Realm",
+    url("https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-release-local")
+  )(Resolver.mavenStylePatterns)
+  
 val cae_artifactory_snapshots = 
   Resolver.url(
     "Artifactory Realm",
@@ -21,15 +27,6 @@ ivyLoggingLevel := UpdateLogging.Full
 logLevel in Compile := Level.Debug
 
 persistLogLevel := Level.Debug
-
-/*
-TODO
-separate out package zip into separate repo
-ask robert about plugin/resource manager versioning info
-add in version and release info into xml files from jenkins env var
-look at https://github.jpl.nasa.gov/secae/sbt.mbee.plugin to see reusable funcs for building md plugins
-get md base dir via env var and only extract if not present
-*/
 
 val commonSettings: Seq[Setting[_]] = Seq(
   publishMavenStyle := true,
@@ -139,7 +136,7 @@ lazy val plugin = (project in file("."))
         val currentDate = dateFormat.format(Calendar.getInstance().getTime())
         val towrite = template.replaceAllLiterally("@installation@", content)
                               .replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1"))
-                              .replaceAllLiterally("@release.date@", sys.props.getOrElse("BUILD_ID",currentDate))
+                              .replaceAllLiterally("@release.date@", currentDate)
         IO.write(zipfolder / "data" / "resourcemanager" / "MDR_Plugin_Docgen_91110_descriptor.xml", towrite, append=false)
         zipfolder
     },
