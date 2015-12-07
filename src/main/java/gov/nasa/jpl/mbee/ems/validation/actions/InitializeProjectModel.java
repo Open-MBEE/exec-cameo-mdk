@@ -91,8 +91,8 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
             String[] buttons = {"Background job on server", "Background job on magicdraw","Abort Export"};
             //null can returns
             Boolean background = Utils.getUserYesNoAnswerWithButton("Use background export on server? You'll get an email when done.", buttons);
-            //if (background)
-                //url = url + "?background=true";
+            if (background == null)
+                return;
             ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false, url, background), "Exporting Model", true, 0);
    
         }
