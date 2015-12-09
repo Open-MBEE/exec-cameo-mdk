@@ -33,7 +33,7 @@ persistLogLevel := Level.Debug
 
 val commonSettings: Seq[Setting[_]] = Seq(
   publishMavenStyle := true,
-  publishTo := Some(cae_artifactory_plugin_snapshots),
+  publishTo := Some(cae_artifactory_plugin_releases),
   fullResolvers ++= Seq(new MavenRepository("cae ext-release-local", "https://cae-artrepo.jpl.nasa.gov/artifactory/ext-release-local"),
                         new MavenRepository("cae plugins-snapshot-local", "https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-snapshot-local")
                     ),
@@ -62,11 +62,11 @@ lazy val genResourceDescriptor = TaskKey[File]("gen-resource-descriptor", "gener
 lazy val zipMdk = TaskKey[File]("zip-mdk", "zip up mdk plugin")
 
 // lib_patches package
-val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp4_lib_patches" % "1.0"
+val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp5_lib_patches" % "1.0"
 val lib_patches_packageA = Artifact(lib_patches_packageID.name, "zip", "zip")
 val lib_patches_package_zipID = lib_patches_packageID.artifacts(lib_patches_packageA)
 
-val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "2.3-SNAPSHOT"
+val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "2.3"
 val mdk_pluginA = Artifact(mdk_pluginID.name, "zip", "zip")
 val mdk_plugin_zipID = mdk_pluginID.artifacts(mdk_pluginA)
 
