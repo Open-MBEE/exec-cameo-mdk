@@ -5,11 +5,11 @@ import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -68,7 +68,7 @@ public class RedefineActionAction extends GenericRuleViolationAction {
 			if (redefinedElement == null) {
 				redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(re, act, false);
 				if (redefinedElement instanceof Namespace) {
-					for (final NamedElement ne : Lists.newArrayList(((Namespace) redefinedElement).getOwnedMember())) {
+					for (final Element ne : new ArrayList<Element>(((Namespace) redefinedElement).getOwnedMember())) {
 						ne.dispose();
 					}
 				}

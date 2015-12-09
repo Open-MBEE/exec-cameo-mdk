@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -16,6 +15,7 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activit
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DataType;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PrimitiveType;
@@ -79,10 +79,10 @@ public class AspectRemedyAction extends GenericRuleViolationAction {
 		}
 
 		final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
-		for (final NamedElement ne : Lists.newArrayList(special.getOwnedMember())) {
+		for (final Element ne : new ArrayList<Element>(special.getOwnedMember())) {
 			ne.dispose();
 		}
-		for (final Generalization g : Lists.newArrayList(special.getGeneralization())) {
+		for (final Generalization g : new ArrayList<Generalization>(special.getGeneralization())) {
 			g.dispose();
 		}
 		SpecializeClassifierAction.specialize(special, general);
