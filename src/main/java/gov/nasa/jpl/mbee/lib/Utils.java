@@ -2481,11 +2481,18 @@ public class Utils {
         g.setOwner(child);
     }
 
+    private static void setOwnerPackage(Element child, Element parent) {
+        Element realParent = parent;
+        while (!(parent instanceof Package))
+            realParent = parent.getOwner();
+        child.setOwner(realParent);
+    }
+    
     public static void createDependency(Element from, Element to) {
         Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     public static void createDependencyWithStereotype(Element from, Element to, Stereotype s) {
@@ -2493,7 +2500,7 @@ public class Utils {
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotype(d, s);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     public static void createDependencyWithStereotypes(Element from, Element to, Collection<Stereotype> s) {
@@ -2501,7 +2508,7 @@ public class Utils {
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotypes(d, s);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     public static void createDependencyWithStereotypeName(Element from, Element to, String stereotype) {
@@ -2509,7 +2516,7 @@ public class Utils {
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotypeByString(d, stereotype);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     public static void createDependencyWithStereotypeNames(Element from, Element to,
@@ -2518,7 +2525,7 @@ public class Utils {
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotypesWithNames(d, stereotypes);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     /**
