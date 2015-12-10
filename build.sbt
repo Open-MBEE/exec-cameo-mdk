@@ -33,7 +33,7 @@ persistLogLevel := Level.Debug
 
 val commonSettings: Seq[Setting[_]] = Seq(
   publishMavenStyle := true,
-  publishTo := Some(cae_artifactory_plugin_releases),
+  publishTo := Some(cae_artifactory_plugin_snapshots),
   fullResolvers ++= Seq(new MavenRepository("cae ext-release-local", "https://cae-artrepo.jpl.nasa.gov/artifactory/ext-release-local"),
                         new MavenRepository("cae plugins-snapshot-local", "https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-snapshot-local")
                     ),
@@ -66,7 +66,7 @@ val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_
 val lib_patches_packageA = Artifact(lib_patches_packageID.name, "zip", "zip")
 val lib_patches_package_zipID = lib_patches_packageID.artifacts(lib_patches_packageA)
 
-val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "2.3"
+val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "2.3-SNAPSHOT"
 val mdk_pluginA = Artifact(mdk_pluginID.name, "zip", "zip")
 val mdk_plugin_zipID = mdk_pluginID.artifacts(mdk_pluginA)
 
