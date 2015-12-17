@@ -85,6 +85,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
@@ -3610,5 +3611,16 @@ public class Utils {
         if (e.isEditable())
             return true;
         return false;
+    }
+    
+    public static boolean recommendUpdateFromTeamwork() {
+        Project prj = Application.getInstance().getProject();
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
+            String[] buttons = {"Continue with MMS", "Cancel, I will update from teamwork first","Cancel"};
+            Boolean reply = Utils.getUserYesNoAnswerWithButton("It's highly recommended that you update from teamwork first before interacting with MMS, \nand commit to teamwork immediately afterwards. Do you want to continue?", buttons);
+            if (reply == null || !reply)
+                return false;
+        }
+        return true;
     }
 }
