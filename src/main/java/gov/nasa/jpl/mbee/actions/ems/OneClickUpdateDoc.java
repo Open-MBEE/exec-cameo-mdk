@@ -26,6 +26,8 @@ public class OneClickUpdateDoc extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
+        if (!Utils.recommendUpdateFromTeamwork())
+            return;
         ManualSyncRunner msr = new ManualSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         if (msr.getFailure()) {
