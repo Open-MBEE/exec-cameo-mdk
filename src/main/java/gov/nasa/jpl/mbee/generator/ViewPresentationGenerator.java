@@ -133,7 +133,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
         // first run a local generation of the view model to get the current model view structure
-        DocumentGenerator dg = new DocumentGenerator(view, dv, null, true);
+        DocumentGenerator dg = new DocumentGenerator(view, dv, null, false);
         Document dge = dg.parseDocument(true, recurse, false);
         (new PostProcessor()).process(dge);
 
@@ -242,21 +242,29 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (pe.isManual()) {
                 InstanceValue iv = ef.createInstanceValueInstance();
                 InstanceSpecification inst = pe.getInstance();
+                if (inst == null && pe.isViewDocHack()) { //view doc hack for new views
+                    inst = ef.createInstanceSpecificationInstance();
+                    inst.setOwner(owner);
+                    inst.setName("View Documentation");
+                    LiteralString ls = ef.createLiteralStringInstance();
+                    inst.setSpecification(ls);
+                }
                 iv.setInstance(inst);
                 list.add(iv);
-                /*if (pe.isViewDocHack()) {
+                if (pe.isViewDocHack()) {
                     if (tryToLock(project, inst)) {
-                        /*JSONObject n = new JSONObject();
+                        JSONObject n = new JSONObject();
                         n.put("source", inst.getID());
                         n.put("type", "Paragraph");
                         n.put("sourceProperty", "documentation");
-                        String transclude = "<mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\"></mms-transclude-doc>";
+                        String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\">[cf." + ((NamedElement)pe.getView()).getName() +".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
                         ModelHelper.setComment(inst, transclude);
+                        inst.setName("View Documentation");
                         ((LiteralString)inst.getSpecification()).setValue(n.toJSONString());
                         inst.getClassifier().clear();
                         inst.getClassifier().add(tparaC); //just change it so it's not opaque para
                     }
-                }*/
+                }
                 // lets do some testing on the instance owner
                 Element instOwner = inst.getOwner();
                 boolean touchMe = true;

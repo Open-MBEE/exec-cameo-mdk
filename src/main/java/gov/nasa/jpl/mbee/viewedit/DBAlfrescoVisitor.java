@@ -96,6 +96,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stack<List<InstanceSpecification>> currentManualInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<PresentationElement>> newpe = new Stack<List<PresentationElement>>();
     private Classifier paraC = Utils.getOpaqueParaClassifier();
+    private Classifier tparaC = Utils.getParaClassifier();
     private Classifier tableC = Utils.getOpaqueTableClassifier();
     private Classifier listC = Utils.getOpaqueListClassifier();
     private Classifier imageC = Utils.getOpaqueImageClassifier();
@@ -507,7 +508,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         view2elements.put(e, viewEs);
         addManualInstances(true);
         processUnusedInstances(e);
-        newpe.pop();
+        List<PresentationElement> pes = newpe.pop();
+        if (pes.isEmpty()) {
+            //new view with nothing, auto add a pe that with cf that points to view doc
+            PresentationElement hack = new PresentationElement(null, null, null, e, null, null, null);
+            hack.setManual(true);
+            hack.setViewDocHack(true);
+            pes.add(hack);
+        }
         currentView.pop();
         currentManualInstances.pop();
         currentImageInstances.pop();
@@ -668,13 +676,12 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                                 viewinstance = true;
                         }
                       }
-                        if (iscs.contains(paraC) && topLevel && is.getSpecification() instanceof LiteralString) {
+                        if ((iscs.contains(paraC) || iscs.contains(tparaC)) && topLevel && is.getSpecification() instanceof LiteralString) {
                             try {
                                 JSONObject ob = (JSONObject)(new JSONParser()).parse(((LiteralString)is.getSpecification()).getValue());
                                 if (view.getID().equals(ob.get("source")) && "documentation".equals(ob.get("sourceProperty"))) {
-                                    viewinstance = true; //a view doc instance
-                                    //viewDocHack = is;
-                                     //argh, need to change to non opaque paragraph, point to itself and add transclusion
+                                    viewinstance = false; //a view doc instance
+                                    viewDocHack = is;
                                 }
                             } catch (Exception x) {}
                         }
@@ -739,11 +746,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             InstanceSpecification is = instances.get(0);
             PresentationElement pe = new PresentationElement(is, null, null, null, null, null, null);
             pe.setManual(true);
-            /*if (is == viewDocHack) {
+            if (is == viewDocHack) {
                 pe.setViewDocHack(true);
                 pe.setView(currentView.peek());
                 viewDocHack = null;
-            }*/
+            }
             newpe.peek().add(pe);
             manuals.remove(is);
             instances.remove(is);
@@ -752,11 +759,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             for (InstanceSpecification is: new ArrayList<InstanceSpecification>(manuals)) {
                 PresentationElement pe = new PresentationElement(is, null, null, null, null, null, null);
                 pe.setManual(true);
-                /*if (is == viewDocHack) {
+                if (is == viewDocHack) {
                     pe.setViewDocHack(true);
                     pe.setView(currentView.peek());
                     viewDocHack = null;
-                }*/
+                }
                 newpe.peek().add(pe);
                 manuals.remove(is);
                 instances.remove(is);
