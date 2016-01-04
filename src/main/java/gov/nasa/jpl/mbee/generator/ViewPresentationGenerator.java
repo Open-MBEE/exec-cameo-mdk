@@ -242,17 +242,25 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (pe.isManual()) {
                 InstanceValue iv = ef.createInstanceValueInstance();
                 InstanceSpecification inst = pe.getInstance();
+                if (inst == null && pe.isViewDocHack()) { //view doc hack for new views
+                    inst = ef.createInstanceSpecificationInstance();
+                    inst.setOwner(owner);
+                    inst.setName("View Documentation");
+                    LiteralString ls = ef.createLiteralStringInstance();
+                    inst.setSpecification(ls);
+                }
                 iv.setInstance(inst);
                 list.add(iv);
                 if (pe.isViewDocHack()) {
                     if (tryToLock(project, inst)) {
-                        /*JSONObject n = new JSONObject();
+                        JSONObject n = new JSONObject();
                         n.put("source", inst.getID());
                         n.put("type", "Paragraph");
                         n.put("sourceProperty", "documentation");
-                        String transclude = "<mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\"></mms-transclude-doc>";
+                        String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\">[cf." + ((NamedElement)pe.getView()).getName() +".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
                         ModelHelper.setComment(inst, transclude);
-                        ((LiteralString)inst.getSpecification()).setValue(n.toJSONString());*/
+                        inst.setName("View Documentation");
+                        ((LiteralString)inst.getSpecification()).setValue(n.toJSONString());
                         inst.getClassifier().clear();
                         inst.getClassifier().add(tparaC); //just change it so it's not opaque para
                     }
