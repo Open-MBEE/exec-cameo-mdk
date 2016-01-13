@@ -366,11 +366,11 @@ public class ExportUtility {
             url = (String) StereotypesHelper.getStereotypePropertyFirst(model,
                     "ModelManagementSystem", "MMS URL");
             if (url == null || url.equals("")) {
-                JOptionPane.showMessageDialog(null, "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
                 url = null;
             }
         } else {
-            JOptionPane.showMessageDialog(null,"Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
             url = null;
         }
         if (url == null && MDUtils.isDeveloperMode()) {
@@ -388,7 +388,7 @@ public class ExportUtility {
         String site = (String) StereotypesHelper.getStereotypePropertyFirst(
                 model, "ModelManagementSystem", "MMS Site");
         if (site == null || site.equals("")) {
-            JOptionPane.showMessageDialog(null,"Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
             site = null;
         }
         if (site == null && MDUtils.isDeveloperMode()) {

@@ -2249,7 +2249,7 @@ public class Utils {
             strings[i] = e;
             i++;
         }
-        Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null,
+        Object input = JOptionPane.showInputDialog(Application.getInstance().getMainFrame(), message, title, JOptionPane.PLAIN_MESSAGE, null,
                 strings, initial);
         if (input != null) {
             for (int j = 0; j < strings.length; j++) {
@@ -2266,11 +2266,11 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
-        JOptionPane.showMessageDialog(null, message);
+        JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
     }
 
     public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons) {
-        int res = JOptionPane.showOptionDialog(null, question, "Choose", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
+        int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
             return true;
         else if (res == JOptionPane.NO_OPTION)
@@ -2283,7 +2283,7 @@ public class Utils {
      * @return null if user hits cancel
      */
     public static Boolean getUserYesNoAnswer(String question) {
-        int res = JOptionPane.showConfirmDialog(null, question);
+        int res = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), question);
         if (res == JOptionPane.YES_OPTION)
             return true;
         else if (res == JOptionPane.NO_OPTION)

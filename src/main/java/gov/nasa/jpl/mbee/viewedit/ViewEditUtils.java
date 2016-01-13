@@ -177,7 +177,7 @@ public class ViewEditUtils {
                     passwordFld.setText(password);
                 }
                 makeSureUserGetsFocus(usernameFld);
-                JOptionPane.showConfirmDialog(null, userPanel,
+                JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                         "Enter your username and password for ViewEditor:", JOptionPane.OK_CANCEL_OPTION,
                         JOptionPane.PLAIN_MESSAGE);
 
