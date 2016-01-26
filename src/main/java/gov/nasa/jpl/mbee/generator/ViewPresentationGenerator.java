@@ -528,7 +528,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
             Package currentPack = view2pac.get(view);
-            if (currentPack.getOwner() != parentPack) {
+            if (currentPack.getOwner() != parentPack && parentPack != viewInstancesPackage) {
                 if (tryToLock(project, currentPack))
                     currentPack.setOwner(parentPack);
                 else {
