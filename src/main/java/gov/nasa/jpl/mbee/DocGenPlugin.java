@@ -104,7 +104,7 @@ public class DocGenPlugin extends Plugin {
         getVcPlugin().init();
         getAutoSyncPlugin().init();
         (new Thread(new OutputSyncRunner())).start();
-        ApplicationSyncEventSubscriber.subscribe();
+        //ApplicationSyncEventSubscriber.subscribe(); //really old docweb sync, should remove related code
 
         loadExtensionJars(); // people can actaully just create a new plugin and
     }
