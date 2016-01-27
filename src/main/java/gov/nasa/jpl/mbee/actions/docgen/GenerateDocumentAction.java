@@ -58,6 +58,8 @@ public class GenerateDocumentAction extends MDAction {
     private static final long serialVersionUID = 1L;
     private Element            doc;
     public static final String actionid = "GenerateDocument";
+    private static GUILog gl = Application.getInstance().getGUILog();
+
 
     public GenerateDocumentAction(Element e) {
         super(actionid, "Generate DocGen 3 Document", null, null);
@@ -66,34 +68,10 @@ public class GenerateDocumentAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        GUILog gl = Application.getInstance().getGUILog();
-
-        DocumentValidator dv = new DocumentValidator(doc);
-        try {
-            dv.validateDocument();
-            if (dv.isFatal()) {
-                dv.printErrors();
-                return;
-            }
-            DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
-            Document dge = dg.parseDocument();
-            boolean genNewImage = dge.getGenNewImage();
-            (new PostProcessor()).process(dge);
-            JFileChooser choose = new JFileChooser();
-            choose.setDialogTitle("Save to output xml...");
-            int retval = choose.showSaveDialog(null);
-            if (retval == JFileChooser.APPROVE_OPTION) {
-                if (choose.getSelectedFile() != null) {
-                    File savefile = choose.getSelectedFile();
-                    String userName = savefile.getName();
-                    String filename = userName;
-                    if (userName.length() < 4 || !userName.endsWith(".xml"))
-                        filename = userName + ".xml";
-                    File dir = savefile.getParentFile();
-                    File realfile = new File(dir, filename);
-                    ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage,
-                            dir), "Generating DocGen 3 Document...", true, 0);
-                }
+    	try {
+    		File savefile = fileSelect();
+            if (savefile != null) {
+            	generate(savefile);
             }
         } catch (Exception ex) {
             StringWriter sw = new StringWriter();
@@ -102,6 +80,43 @@ public class GenerateDocumentAction extends MDAction {
             gl.log(sw.toString()); // stack trace as a string
             ex.printStackTrace();
         }
+    }
+    
+    private File fileSelect() {
+    	// DELETE THESE LINES
+    	File ref = new File("/Users/brower/git/ems-rci/mdk/reference");
+    	//
+        JFileChooser choose = new JFileChooser(ref); // change back to null
+        choose.setDialogTitle("Save to output xml...");
+        int retval = choose.showSaveDialog(null);
+        if (retval == JFileChooser.APPROVE_OPTION)
+        	return choose.getSelectedFile();
+        return null;
+    }
+    
+    public void generate(File savefile) {
+        DocumentValidator dv = new DocumentValidator(doc);
+
+    	dv.validateDocument();
+        if (dv.isFatal()) {
+            dv.printErrors();
+            return;
+        }
+        
+        DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
+        Document dge = dg.parseDocument();
+        boolean genNewImage = dge.getGenNewImage();
+        (new PostProcessor()).process(dge);
+        
+        String userName = savefile.getName();
+		String filename = userName;
+		if (userName.length() < 4 || !userName.endsWith(".xml"))
+			filename = userName + ".xml";
+		File dir = savefile.getParentFile();
+		File realfile = new File(dir, filename);
+        ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage,
+                dir), "Generating DocGen 3 Document...", true, 0);
         dv.printErrors();
     }
+    
 }
