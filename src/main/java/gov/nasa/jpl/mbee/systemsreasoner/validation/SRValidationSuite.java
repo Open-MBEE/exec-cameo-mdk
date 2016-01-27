@@ -123,22 +123,33 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 									Type superPartType = ((Property) superChild).getType();
 									final ValidationRuleViolation v = new ValidationRuleViolation(classifier, associationInheritanceRule.getDescription() + ": [GENERAL] "
 											+ general.getName() + " - [SPECIFIC] " + classifier.getName());
-									if (partType.equals(superPartType)) {
-
-										if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
-											break assocRule;
-										} else {
-											v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
-											associationInheritanceRule.addViolation(v);
-											System.out.println("Yes");
-										}
-									} else if (partType instanceof Classifier) {
-										if (((Classifier) partType).getGeneral().contains(superPartType)) {
+									if (partType == null || superPartType == null) {
+										// the following will always add a rule violation, without thinking at all
+										// this is future to handle null types as if they were other types
+										// name check will still catch the differences, likely
+										//
+										// if (partType == superPartType) {
+										//	v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
+										//	associationInheritanceRule.addViolation(v);
+										// }
+									} else {
+										if (partType.equals(superPartType)) {
+											// when the partType and the superPartType are equivalent, we check for the Inheritance Association and fix if its broke
 											if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
 												break assocRule;
 											} else {
 												v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
 												associationInheritanceRule.addViolation(v);
+											}
+										} else if (partType instanceof Classifier) {
+											// if they are not equivalent, we have to do more work
+											if (((Classifier) partType).getGeneral().contains(superPartType)) {
+												if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
+													break assocRule;
+												} else {
+													v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
+													associationInheritanceRule.addViolation(v);
+												}
 											}
 										}
 									}
@@ -174,7 +185,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 							if (!redefinedInContext) {
 								final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (redefEl instanceof TypedElement
 										&& ((TypedElement) redefEl).getType() != null ? "[TYPED] " : "")
-										+ attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName());
+										+ attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName()); // this is the attribute hook
 								for (final Property p : classifier.getAttribute()) {
 									if (p.getName().equals(redefEl.getName()) && !p.hasRedefinedElement()) {
 										v.addAction(new SetRedefinitionAction(p, redefEl, "Redefine by Name Collision"));
