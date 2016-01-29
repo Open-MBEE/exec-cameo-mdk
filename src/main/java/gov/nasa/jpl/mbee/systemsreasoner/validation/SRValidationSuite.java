@@ -123,23 +123,15 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 									Type superPartType = ((Property) superChild).getType();
 									final ValidationRuleViolation v = new ValidationRuleViolation(classifier, associationInheritanceRule.getDescription() + ": [GENERAL] "
 											+ general.getName() + " - [SPECIFIC] " + classifier.getName());
-									if (partType == null || superPartType == null) {
-										// the following will always add a rule violation, without thinking at all
-										// this is future to handle null types as if they were other types
-										// name check will still catch the differences, likely
-										//
-										// if (partType == superPartType) {
-										//	v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
-										//	associationInheritanceRule.addViolation(v);
-										// }
-									} else {
+									if (partType != null) {
 										if (partType.equals(superPartType)) {
-											// when the partType and the superPartType are equivalent, we check for the Inheritance Association and fix if its broke
-											if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
-												break assocRule;
-											} else {
-												v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
-												associationInheritanceRule.addViolation(v);
+											if(hasAssociation(superChild)) {
+												if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
+													break assocRule;
+												} else {
+													v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
+													associationInheritanceRule.addViolation(v);
+												}
 											}
 										} else if (partType instanceof Classifier) {
 											// if they are not equivalent, we have to do more work
@@ -338,6 +330,11 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 			}
 		}
 	}
+	
+	private boolean hasAssociation(Element superChild) {
+		return ((Property) superChild).getAssociation()!=null;
+	}
+
 	private boolean hasInheritanceFromTo(Association association, Association superAssociation) {
 		if (ModelHelper.getGeneralClassifiersRecursivelly(association).contains(superAssociation)) {
 			return true;
