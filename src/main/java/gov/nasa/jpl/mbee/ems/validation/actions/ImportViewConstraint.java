@@ -46,10 +46,10 @@ public class ImportViewConstraint extends RuleViolationAction implements Annotat
     @Override
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
-            Element e = (Element)anno.getTarget();
+            NamedElement e = (NamedElement)anno.getTarget();
             Constraint c = Utils.getViewConstraint(e);
-            if (c != null && !c.isEditable()) {
-                Utils.guilog("[ERROR] " + c.get_representationText() + " isn't editable");
+            if ((c != null && !c.isEditable()) || !e.isEditable()) {
+                Utils.guilog("[ERROR] View " + e.getQualifiedName() + " or its constraint isn't editable");
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
@@ -73,8 +73,8 @@ public class ImportViewConstraint extends RuleViolationAction implements Annotat
     @Override
     public void actionPerformed(ActionEvent e) {
         Constraint c = Utils.getViewConstraint(element);
-        if (c != null && !c.isEditable()) {
-            Utils.guilog("[ERROR] " + c.getQualifiedName() + " is not editable!");
+        if ((c != null && !c.isEditable()) || !element.isEditable()) {
+            Utils.guilog("[ERROR] View or view constraint is not editable!");
             return;
         }
         execute("Change view constraint");

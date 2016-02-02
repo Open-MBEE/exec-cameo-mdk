@@ -1002,6 +1002,8 @@ public class ExportUtility {
                 specialization.put("allowedElements", new JSONArray());
                 specialization.put("displayedElements", a);
             } catch (Exception ex) {}
+        } else {
+            specialization.put("displayedElements", new JSONArray());
         }
         return specialization;
     }
