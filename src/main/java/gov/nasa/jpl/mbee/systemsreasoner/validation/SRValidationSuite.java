@@ -106,13 +106,6 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 					}
 				}
 				for (final Classifier general : classifier.getGeneral()) {
-					// if (!classifier.getName().equals(general.getName())) {
-					// final ValidationRuleViolation v = new ValidationRuleViolation(classifier, generalSpecificNameRule.getDescription() + ": [GENERAL] " + general.getName()
-					// + " - [SPECIFIC] " + classifier.getName());
-					// v.addAction(new RenameElementAction(general, classifier, "Update Specific"));
-					// v.addAction(new RenameElementAction(classifier, general, "Update General"));
-					// generalSpecificNameRule.addViolation(v);
-					// }
 
 					// Inheritance on Associations Rule
 					assocRule : for (Element child : classifier.getOwnedElement()) {
@@ -125,16 +118,16 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 											+ general.getName() + " - [SPECIFIC] " + classifier.getName());
 									if (partType != null) {
 										if (partType.equals(superPartType)) {
-											if(hasAssociation(superChild)) {
+											if (hasAnAssociation(superChild)) {
 												if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
 													break assocRule;
 												} else {
 													v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
 													associationInheritanceRule.addViolation(v);
+													System.out.println("Yes");
 												}
 											}
 										} else if (partType instanceof Classifier) {
-											// if they are not equivalent, we have to do more work
 											if (((Classifier) partType).getGeneral().contains(superPartType)) {
 												if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
 													break assocRule;
@@ -145,6 +138,44 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 											}
 										}
 									}
+								}
+							}
+						}
+					}
+					/**
+					 * Check for aspect structures:
+					 */
+					for (Dependency d : general.getClientDependency()) {
+						boolean aspectFound = false;
+						Classifier aspect = null;
+						Stereotype s = StereotypesHelper.getAppliedStereotypeByString(d, "aspect");
+						if (s != null) {
+							for (Element el : d.getTarget()) {
+								if (el instanceof Classifier) {
+									aspect = (Classifier) el;
+									for (Element q : classifier.getOwnedElement()) {
+										if (q instanceof Property) {
+											Type t = ((TypedElement) q).getType();
+											if (t instanceof Classifier) {
+												if (((Classifier) t).getGeneral().contains(el)) {
+													aspectFound = true;
+												}
+											}
+										} else if (q instanceof CallBehaviorAction) {
+											Behavior b = ((CallBehaviorAction) q).getBehavior();
+											if (b.getGeneral().contains(el)) {
+												aspectFound = true;
+											}
+										}
+									}
+								}
+							}
+							if (!aspectFound) {
+								if (aspect != null) {
+									final ValidationRuleViolation v = new ValidationRuleViolation(classifier, aspectMissingRule.getDescription() + ": [CLASS WITH ASPECT] "
+											+ classifier.getName() + " - [ASPECT] " + aspect.getName());
+									v.addAction(new AspectRemedyAction(classifier, aspect));
+									aspectMissingRule.addViolation(v);
 								}
 							}
 						}
@@ -177,7 +208,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 							if (!redefinedInContext) {
 								final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (redefEl instanceof TypedElement
 										&& ((TypedElement) redefEl).getType() != null ? "[TYPED] " : "")
-										+ attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName()); // this is the attribute hook
+										+ attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName());
 								for (final Property p : classifier.getAttribute()) {
 									if (p.getName().equals(redefEl.getName()) && !p.hasRedefinedElement()) {
 										v.addAction(new SetRedefinitionAction(p, redefEl, "Redefine by Name Collision"));
@@ -219,46 +250,6 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 										attributeTypeRule.addViolation(v);
 									}
 								}
-							}
-						}
-
-					}
-				}
-				/**
-				 * Check for aspect structures:
-				 */
-				for (Dependency d : classifier.getClientDependency()) {
-					boolean aspectFound = false;
-					Classifier aspect = null;
-					Stereotype s = StereotypesHelper.getAppliedStereotypeByString(d, "aspect");
-					if (s != null) {
-						for (Element el : d.getTarget()) {
-							if (el instanceof Classifier) {
-								aspect = (Classifier) el;
-								for (Element q : classifier.getOwnedElement()) {
-									if (q instanceof Property) {
-										Type t = ((TypedElement) q).getType();
-										if (t instanceof Classifier) {
-											if (((Classifier) t).getGeneral().contains(el)) {
-												aspectFound = true;
-
-											}
-										}
-									} else if (q instanceof CallBehaviorAction) {
-										Behavior b = ((CallBehaviorAction) q).getBehavior();
-										if (b.getGeneral().contains(el)) {
-											aspectFound = true;
-										}
-									}
-								}
-							}
-						}
-						if (!aspectFound) {
-							if (aspect != null) {
-								final ValidationRuleViolation v = new ValidationRuleViolation(classifier, aspectMissingRule.getDescription() + ": [CLASS WITH ASPECT] "
-										+ classifier.getName() + " - [ASPECT] " + aspect.getName());
-								v.addAction(new AspectRemedyAction(classifier, aspect));
-								aspectMissingRule.addViolation(v);
 							}
 						}
 					}
@@ -330,17 +321,22 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 			}
 		}
 	}
-	
-	private boolean hasAssociation(Element superChild) {
-		return ((Property) superChild).getAssociation()!=null;
+	private boolean hasAnAssociation(Element superChild) {
+		return ((Property) superChild).getAssociation() != null;
+
 	}
 
 	private boolean hasInheritanceFromTo(Association association, Association superAssociation) {
-		if (ModelHelper.getGeneralClassifiersRecursivelly(association).contains(superAssociation)) {
-			return true;
+		if (association != null) {
+			if (ModelHelper.getGeneralClassifiersRecursivelly(association).contains(superAssociation)) {
+				return true;
+			} else {
+				return false;
+			}
 		} else {
 			return false;
 		}
+
 	}
 	public static boolean doesEventuallyRedefine(final RedefinableElement source, final RedefinableElement target) {
 		if (source.getRedefinedElement().contains(target)) {
