@@ -159,10 +159,16 @@ public class ModelValidator {
 	private boolean checkExist;
     private Set<Element> elementSet;
     private boolean crippled;
+	public static Map<String, JSONObject> keyedElements;
         
     public Set<Element> getDifferentElements() {
         return differentElements;
     }
+    
+	public Map<String, JSONObject> getKeyed()
+	{
+		return keyedElements;
+	}
 
     public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
         //result is from web, elementSet is from model
@@ -187,7 +193,6 @@ public class ModelValidator {
         suite.addValidationRule(viewConstraint);
         suite.addValidationRule(metatypes);
         suite.addValidationRule(ownedAttribute);
-
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -309,6 +314,7 @@ public class ModelValidator {
         } else {
             validateModel(elementsKeyed, elementSet, ps);
         }
+        keyedElements= new HashMap<String, JSONObject>(elementsKeyed);
         result.put("elementsKeyed", elementsKeyed);
     }
     

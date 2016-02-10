@@ -199,6 +199,38 @@ public class ViewEditUtils {
         method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
     }
     
+    /**
+     * Sets credentials for the client based on the actual URL string
+     * 
+     * @param client
+     * @param urlstring
+     * @param username
+     * @param password
+     */
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method,String username,String password) {
+        try {
+            URL url = new URL(urlstring);
+
+            if (!passwordSet) 
+            {
+                setUsernameAndPassword(username ,password, true);
+            }
+
+            Credentials creds = new UsernamePasswordCredentials(username, password);
+            client.getState().setCredentials(
+                    new AuthScope(url.getHost(), url.getPort(), AuthScope.ANY_REALM), creds);
+            client.setTimeout(0);
+            client.setConnectionTimeout(0);
+            client.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
+                    new DefaultHttpMethodRetryHandler(0, false));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        // proxy cache needs Authorization header
+        method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
+    }
+    
     private static void makeSureUserGetsFocus(final JTextField user) {
         //from http://stackoverflow.com/questions/14096140/how-to-set-default-input-field-in-joptionpane
         user.addHierarchyListener(new HierarchyListener()

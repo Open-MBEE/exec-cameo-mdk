@@ -74,5 +74,25 @@ public class EMSLoginAction extends MDAction {
         logout.setEnabled(true);
         logout.updateState(); //doesn't work
     }
+    
+    public boolean login(String username, String password)
+    {
+        ViewEditUtils.clearUsernameAndPassword();
+        if (Application.getInstance().getProject() == null) {
+            Utils.showPopupMessage("You need to have a project open first!");
+            return false;
+        }
+        String url = ExportUtility.getUrl();
+        if (url == null)
+            return false;
+        String response = null;
+        try {
+            response = ExportUtility.get(url + "/checklogin",username,password);
+        } catch (ServerException ex) {}
+        if (response ==  null)
+            return false;
+        Application.getInstance().getGUILog().log("Logged in");
+		return true;
+    }
 
 }
