@@ -330,6 +330,11 @@ public class ImportUtility {
                 }
             }
         }
+        if (specialization.containsKey("displayedElements")) {
+            JSONArray des = (JSONArray)specialization.get("displayedElements");
+            if (des != null)
+                StereotypesHelper.setStereotypePropertyValue(e, Utils.getViewClassStereotype(), "elements", des.toJSONString());
+        }
     }
     
     public static void setName(Element e, JSONObject o) {

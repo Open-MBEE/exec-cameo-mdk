@@ -2,11 +2,11 @@ package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.actions.systemsreasoner.AspectAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateOntoBehaviorBlocks;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecifyAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.SpecifyAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
 
 import java.util.ArrayList;
@@ -27,13 +27,14 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 
 public class SRConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
 	public static final String NAME = "Systems Reasoner";
 
-	private SRAction validateAction = null, specAction = null, despecAction = null, createSpecificAction = null, instance2BSTAction = null, createInstanceMenuAction = null,
-			aspectAction;
+	private SRAction validateAction = null, specAction = null, despecAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null,
+			createInstanceMenuAction = null, aspectAction;
 
 	private AspectAction mySecondAction;
 
@@ -65,12 +66,12 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 	}
 
 	protected void configure(ActionsManager manager, List<Element> elements) {
-
 		// refresh the actions for every new click (or selection)
 		validateAction = null;
 		specAction = null;
 		despecAction = null;
 		// copyAction = null;
+		ontoBehaviorAction = null;
 		createSpecificAction = null;
 		createInstanceMenuAction = null;
 		instance2BSTAction = null;
@@ -98,7 +99,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		manager.addCategory(0, category);
 
 		category.addAction(validateAction);
-		category.addAction(specAction);
+		// category.addAction(specAction); Taking this one out because all it does is create an inheritance relation ship. This can be done easily through existing means.
+		category.addAction(ontoBehaviorAction);
 		category.addAction(despecAction);
 		// category.addAction(copyAction);
 		category.addAction(createSpecificAction);
@@ -165,10 +167,10 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		category.addAction(validateAction);
 
 		if (!classifiers.isEmpty()) {
-			specAction = new SpecifyAction(classifiers);
-			if (hasUneditable) {
-				specAction.disable("Not Editable");
-			}
+			// specAction = new SpecifyAction(classifiers);
+			// if (hasUneditable) {
+			// specAction.disable("Not Editable");
+			// }
 
 			despecAction = new DespecifyAction(classifiers);
 			if (hasUneditable) {
@@ -208,19 +210,22 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		if (element instanceof Classifier) {
 			final Classifier classifier = (Classifier) element;
 			validateAction = new ValidateAction(classifier);
-			specAction = new SpecifyAction(classifier);
+			// specAction = new SpecifyAction(classifier);
 			despecAction = new DespecifyAction(classifier);
 			if (!element.isEditable()) {
 				specAction.disable("Locked");
 				despecAction.disable("Locked");
 			}
 			// copyAction = new CopyAction(clazz);
+			ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier);
 			createSpecificAction = new CreateSpecificAction(classifier);
 			createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
 			aspectAction = new AspectAction(classifier);
-			mySecondAction = new AspectAction(classifier);
 			if (despecAction != null && classifier.getGeneralization().isEmpty()) {
 				despecAction.disable("No Generalizations");
+			}
+			if (classifier instanceof Behavior) {
+
 			}
 		} else if (element instanceof InstanceSpecification) {
 			final InstanceSpecification instance = (InstanceSpecification) element;

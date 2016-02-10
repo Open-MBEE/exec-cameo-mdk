@@ -635,15 +635,11 @@ public class ModelValidator {
         JSONArray webDisplayed = (JSONArray)webViewSpec.get("displayedElements");
         JSONArray modelDisplayed = (JSONArray)modelview.get("displayedElements");
         
-        if (modelContents != null || (webDisplayed == null && modelDisplayed != null) || !Utils.jsonArraySetDiff(webDisplayed, modelDisplayed)) {
-            if (!JSONUtils.compare(modelContents, webContents)) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint is different");
+        if (!JSONUtils.compare(modelContents, webContents) || !Utils.jsonArraySetDiff(webDisplayed, modelDisplayed)) {
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint or displayed elements are different");
                 v.addAction(new ExportViewConstraint((NamedElement)e));
                 v.addAction(new ImportViewConstraint((NamedElement)e, webViewSpec, result));
                 return v;
-            }
-        } else if (webContents != null && modelContents ==  null) {
-            
         }
         return null;
     }

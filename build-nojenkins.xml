@@ -58,12 +58,7 @@
     <fileset dir="${md}/plugins/com.nomagic.magicdraw.diagramtable" includes="**/*.jar">
          
         </fileset>
-  	<fileset dir="${md}/plugins/gov.nasa.jpl.magicdraw.qvto.library" includes="**/*.jar">
-  	          
-  	        </fileset>
-  	<fileset dir="${md}/plugins/com.nomagic.magicdraw.qvt" includes="**/*.jar">
-  	  	          
-  	  	        </fileset>
+
     <fileset dir="lib" includes="**/*.jar">
        
     </fileset>

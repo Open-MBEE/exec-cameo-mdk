@@ -60,6 +60,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
     private ValidationRule uneditableOwner = new ValidationRule("Uneditable owner", "uneditable owner", ViolationSeverity.WARNING);
+    private ValidationRule uneditableElements = new ValidationRule("Uneditable elements", "uneditable elements", ViolationSeverity.WARNING);
     private ValidationRule docPackage = new ValidationRule("docPackage", "docPackage", ViolationSeverity.ERROR);
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule viewParent = new ValidationRule("viewParent", "viewParent", ViolationSeverity.WARNING);
@@ -125,6 +126,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         suite.addValidationRule(viewInProject);
         suite.addValidationRule(viewParent);
         suite.addValidationRule(updateFailed);
+        suite.addValidationRule(uneditableElements);
         
         DocumentValidator dv = new DocumentValidator(view);
         dv.validateDocument();
@@ -168,8 +170,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         
                     }
                 }
-                if (needChange && tryToLock(project, v)) //TODO relax this
-                    StereotypesHelper.setStereotypePropertyValue(v, Utils.getViewClassStereotype(), "elements", es.toJSONString());
+                if (needChange) {
+                    if (tryToLock(project, v)) {
+                        StereotypesHelper.setStereotypePropertyValue(v, Utils.getViewClassStereotype(), "elements", es.toJSONString());
+                    } else {
+                        ValidationRuleViolation violation = new ValidationRuleViolation(v, "[NOT EDITABLE (view displayed elements)] The list of view displayed elements cannot be updated.");
+                        uneditableElements.addViolation(violation);
+                    }
+                }
             }
             if (cancelSession) {
                 failure = true;
