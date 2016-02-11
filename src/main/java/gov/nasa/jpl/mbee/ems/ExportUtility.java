@@ -726,7 +726,7 @@ public class ExportUtility {
                     .get("childrenViews");
             if (response.containsKey(id) && !((JSONArray)response.get(id)).equals(children)) {
                 //something is messed up
-                Utils.log("[WARNING] Document hierarchy from MMS is inconsistent and will interfere with validation, please file a CAE Support jira at https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary to request help to resolve.");
+                Utils.log("[WARNING] Document hierarchy from MMS is inconsistent and will interfere with validation, please file a CAE Support jira at https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary with component MD.MDK to request help to resolve.");
             }
             response.put(id, children);
         }
