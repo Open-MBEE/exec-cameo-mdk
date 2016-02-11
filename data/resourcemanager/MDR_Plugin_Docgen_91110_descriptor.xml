@@ -4,11 +4,11 @@
 	description="DocGen and common profiles" 
 	id="91110" 
 	mdVersionMax="higher" 
-	mdVersionMin="17.0.5" 
+	mdVersionMin="18.0" 
 	name="Model Development Kit" 
 	product="JPL Model Development Kit" 
 	type="Plugin">
-  <version human="@release.version@" resource="@release.version.internal@" internal="@release.version.internal@"/>
+  <version human="2.3" resource="@release.version.internal@" internal="@release.version.internal@"/>
   <provider name="NASA / Jet Propulsion Laboratory / Caltech"/>
   <edition>Standard</edition>
   <edition>Enterprise</edition>
@@ -116,6 +116,7 @@
 	<file from="plugins/com.nomagic.magicdraw.jpython/scripts/SystemsReasoner/refactor/ValidateTimeline.py" to="plugins/com.nomagic.magicdraw.jpython/scripts/SystemsReasoner/refactor/ValidateTimeline.py"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/DocGen-plugin.jar" to="plugins/gov.nasa.jpl.mbee.docgen/DocGen-plugin.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/plugin.xml" to="plugins/gov.nasa.jpl.mbee.docgen/plugin.xml"/>
+	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/activemq-all-5.9.1.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/activemq-all-5.9.1.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/commons-lang-2.6.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/commons-lang-2.6.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/ecj-3.7.2.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/ecj-3.7.2.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/jgrapht-0.8.3-jdk1.6.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/jgrapht-0.8.3-jdk1.6.jar"/>
@@ -131,6 +132,7 @@
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-core-7.0.16.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-core-7.0.16.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-jasper.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-jasper.jar"/>
 	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-logging-juli-7.0.37.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/tomcat-embed-logging-juli-7.0.37.jar"/>
+	<file from="plugins/gov.nasa.jpl.mbee.docgen/lib/wlthint3client.jar" to="plugins/gov.nasa.jpl.mbee.docgen/lib/wlthint3client.jar"/>
 	<file from="profiles/MDK/SysML Extensions.mdxml" to="profiles/MDK/SysML Extensions.mdxml"/>
 
   </installation>
