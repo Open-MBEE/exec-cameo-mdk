@@ -484,6 +484,12 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             notEditable.add(c);
         if (c == null && !e.isEditable())
             notEditable.add(e);
+        if (c == null || currentInstanceList.peek().isEmpty()) { //new view, add view doc hack
+            PresentationElement hack = new PresentationElement(null, null, null, e, null, null, null);
+            hack.setManual(true);
+            hack.setViewDocHack(true);
+            newpe.peek().add(hack);
+        }
         addManualInstances(false);
     }
     
