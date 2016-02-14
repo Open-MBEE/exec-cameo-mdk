@@ -11,6 +11,7 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+@Deprecated
 public class ExportViewAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
