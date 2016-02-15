@@ -8,6 +8,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,10 +18,12 @@ import java.util.Set;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.impl.ElementsFactory;
 
@@ -38,7 +41,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam
  *
  */
-public class OrganizeViewInstances implements RunnableWithProgress {
+public class ViewInstancesOrganizer implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Organization");
     //unable to move instances or packages to their right place
     private ValidationRule uneditableOwner = new ValidationRule("Uneditable owner", "uneditable owner", ViolationSeverity.WARNING);
@@ -55,8 +58,10 @@ public class OrganizeViewInstances implements RunnableWithProgress {
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
     private Project project = Application.getInstance().getProject();
     private Set<Element> shouldMove = new HashSet<Element>();
+    private Map<Element, ViewInstanceInfo> infos = new HashMap<Element, ViewInstanceInfo>();
+    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     
-    public OrganizeViewInstances(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu) {
+    public ViewInstancesOrganizer(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu) {
         this.start = start;
         this.recurse = recurse;
         this.showValidation = showValidation;
@@ -69,6 +74,7 @@ public class OrganizeViewInstances implements RunnableWithProgress {
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             isFromTeamwork = true;
         }
+        vss.add(suite);
     }
     
     @Override
@@ -83,37 +89,49 @@ public class OrganizeViewInstances implements RunnableWithProgress {
         List<Element> views = instanceUtils.getViewProcessOrder(start, view2view);
         
         Set<Element> skippedViews = new HashSet<Element>();
-        Map<Element, ViewInstanceInfo> infos = new HashMap<Element, ViewInstanceInfo>();
         for (Element view: views) {
             if (ProjectUtilities.isElementInAttachedProject(view)) {
                 skippedViews.add(view);
                 continue;
             }
-            infos.put(view, lockElements(view, null));
-        }
-        //start session
-        for (Element view: views) {
-            if (skippedViews.contains(view))
-                continue;
-            Package p = createOrMoveViewInstancePackage(view);
-            ViewInstanceInfo info = infos.get(view);
-            for (InstanceSpecification is: info.getOpaque())
-                moveViewInstance(is, p);
-            for (InstanceSpecification is: info.getManuals()) {
-                if (shouldMove.contains(is))
-                    moveViewInstance(is, p);
+            Package viewPackage = instanceUtils.findViewInstancePackage(view);
+            List<Package> parents = instanceUtils.findCorrectViewInstancePackageOwners(view);
+            if (viewPackage != null && !parents.contains(viewPackage.getOwner())) {
+                Utils.tryToLock(project, viewPackage, isFromTeamwork); //package needs moving
+                shouldMove.add(viewPackage);
             }
+            lockElements(view, view, viewPackage);
+        }
+        boolean sessionCreated = false;
+        try {
+            if (!SessionManager.getInstance().isSessionCreated()) {
+                SessionManager.getInstance().createSession("view instance organize");
+                sessionCreated = true;
+            }
+            for (Element view: views) {
+                if (skippedViews.contains(view))
+                    continue;
+                Package p = createOrMoveViewInstancePackage(view);
+                handle(view, p);
+            }
+            if (sessionCreated)
+                SessionManager.getInstance().closeSession();
+        } catch (Exception ex) {
+            if (sessionCreated)
+                SessionManager.getInstance().cancelSession();
+            Utils.printException(ex);
         }
         //end session and show validation
+        if (showValidation)
+            Utils.displayValidationWindow(vss, "Organize View Validation");
     }
     
-    public ViewInstanceInfo lockElements(Element view, ViewInstanceInfo infoo) { //try to lock things, doesn't matter if fails
-        ViewInstanceInfo info = infoo;
-        if (info == null)    
-            info = instanceUtils.getCurrentInstances(view, view);
-        Package viewPackage = instanceUtils.findViewInstancePackage(view);
-        List<Package> parents = instanceUtils.findCorrectViewInstancePackageOwners(view);
-
+    public void lockElements(Element viewOrSection, Element view, Package viewPackage) { //try to lock things, doesn't matter if fails
+        ViewInstanceInfo info = instanceUtils.getCurrentInstances(viewOrSection, view);
+        
+        for (InstanceSpecification is: info.getSections()) {
+            lockElements(is, view, viewPackage);
+        }
         for (InstanceSpecification is: info.getOpaque()) {
             if (is.getOwner() != viewPackage) { //check sections
                 Utils.tryToLock(project, is, isFromTeamwork); //instance needs moving
@@ -121,18 +139,35 @@ public class OrganizeViewInstances implements RunnableWithProgress {
             }
         }
         for (InstanceSpecification is: info.getManuals()) {
+            if (instanceUtils.isSection(is))
+                lockElements(is, view, viewPackage);
             if (!instanceUtils.isInSomeViewPackage(is)) {
                 Utils.tryToLock(project, is, isFromTeamwork); //manual instance needs moving
                 shouldMove.add(is);
             }
         }
-        if (viewPackage != null && !parents.contains(viewPackage.getOwner())) {
-            Utils.tryToLock(project, viewPackage, isFromTeamwork); //package needs moving
-            shouldMove.add(viewPackage);
+        for (InstanceSpecification is: info.getExtraRef()) {
+            ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[REFERENCE] This is a DocGen generated instance from another view that's being referenced by " + ((NamedElement)view).getQualifiedName());
+            instanceRef.addViolation(vrv);
         }
-        return info;
+        infos.put(viewOrSection, info);
     }
 
+    private void handle(Element viewOrSection, Package p) {
+        ViewInstanceInfo info = infos.get(viewOrSection);
+        for (InstanceSpecification is: info.getSections()) {
+            handle(is, p);
+        }
+        for (InstanceSpecification is: info.getOpaque())
+            moveViewInstance(is, p);
+        for (InstanceSpecification is: info.getManuals()) {
+            if (instanceUtils.isSection(is))
+                handle(is, p);
+            if (shouldMove.contains(is))
+                moveViewInstance(is, p);
+        }
+    }
+    
     public boolean moveViewInstance(InstanceSpecification is, Package owner) {
         if (is.getOwner() == owner) {
             return true;
@@ -165,5 +200,9 @@ public class OrganizeViewInstances implements RunnableWithProgress {
             viewParent.addViolation(vrv);
         }
         return viewPackage;
+    }
+    
+    public ValidationSuite getValidations() {
+        return suite;
     }
 }

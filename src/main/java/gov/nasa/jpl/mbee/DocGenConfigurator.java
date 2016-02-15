@@ -49,6 +49,7 @@ import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.ems.OneClickUpdateDoc;
+import gov.nasa.jpl.mbee.actions.ems.OrganizeViewInstancesAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
@@ -283,6 +284,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 action = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
                 if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(e, true));
+                }
+                action = manager.getActionFor(OrganizeViewInstancesAction.actionid);
+                if (action == null) {
+                    viewInstances.addAction(new OrganizeViewInstancesAction(e, false));
+                }
+                action = manager.getActionFor(OrganizeViewInstancesAction.recurseActionid);
+                if (action == null) {
+                    viewInstances.addAction(new OrganizeViewInstancesAction(e, true));
                 }
                 action = manager.getActionFor(OneClickUpdateDoc.actionid);
                 if (action == null) {

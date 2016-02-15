@@ -44,7 +44,8 @@ public class ViewInstanceUtils {
     private Classifier tableC = Utils.getOpaqueTableClassifier();
     private Classifier listC = Utils.getOpaqueListClassifier();
     private Classifier imageC = Utils.getOpaqueImageClassifier();
-    private Classifier sectionC = Utils.getSectionClassifier();
+    private Classifier sectionC = Utils.getOpaqueSectionClassifier();
+    private Classifier tsectionC = Utils.getSectionClassifier();
     private Stereotype presentsS = Utils.getPresentsStereotype();
     private Stereotype productS = Utils.getProductStereotype();
     private Stereotype viewS = Utils.getViewClassStereotype();
@@ -135,6 +136,12 @@ public class ViewInstanceUtils {
             }
         }
         return res;
+    }
+    
+    public boolean isSection(InstanceSpecification is) {
+        if (is.getClassifier().contains(sectionC) || is.getClassifier().contains(tsectionC))
+            return true;
+        return false;
     }
     
     public boolean isInSomeViewPackage(InstanceSpecification is) {
@@ -394,5 +401,28 @@ public class ViewInstanceUtils {
             }
         }
         return false;
+    }
+    
+    public Package getOrCreateUnusedInstancePackage() {
+        Package rootPackage = Utils.getRootElement();
+        String viewInstID = Utils.getProject().getPrimaryProject() .getProjectID().replace("PROJECT", "View_Instances");
+        String unusedId = Utils.getProject().getPrimaryProject() .getProjectID().replace("PROJECT", "Unused_View_Instances");
+        Package viewInst = (Package)Application.getInstance().getProject().getElementByID(viewInstID);
+        Package unusedViewInst = (Package)Application.getInstance().getProject().getElementByID(unusedId);
+        if (unusedViewInst != null)
+            return unusedViewInst;
+        Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+        if (viewInst == null) {
+            viewInst = ef.createPackageInstance();
+            viewInst.setID(viewInstID);
+            viewInst.setName("View Instances");
+            viewInst.setOwner(rootPackage);
+        }
+        unusedViewInst = ef.createPackageInstance();
+        unusedViewInst.setID(unusedId);
+        unusedViewInst.setName("Unused View Instances");
+        unusedViewInst.setOwner(viewInst);
+        return unusedViewInst;
+        
     }
 }

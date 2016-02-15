@@ -2063,10 +2063,14 @@ public class Utils {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueImage");
     }
 
-    public static Classifier getSectionClassifier() {
+    public static Classifier getOpaqueSectionClassifier() {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection");
     }
 
+    public static Classifier getSectionClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section");
+    }
+    
     public static Stereotype getPresentsStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents");
     }
@@ -3595,6 +3599,10 @@ public class Utils {
         if (!isFromTeamwork) {
             return false;
         }
+        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
+        if (listener != null)
+            listener.disable(); 
+        //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
         if (e instanceof Property)
             TeamworkUtils.lockElement(project, e.getOwner(), false);
@@ -3607,7 +3615,10 @@ public class Utils {
         } else
             TeamworkUtils.lockElement(project, e, false);
         if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
-            SessionManager.getInstance().createSession("session after lock");
+            SessionManager.getInstance().createSession("session after lock"); 
+        if (listener != null)
+            listener.enable();
+        //if a session was open and lock triggered a teamwork update, session would be closed
         if (e.isEditable())
             return true;
         return false;
@@ -3615,12 +3626,14 @@ public class Utils {
     
     public static boolean recommendUpdateFromTeamwork() {
         Project prj = Application.getInstance().getProject();
-        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
-            String[] buttons = {"Continue with MMS", "Cancel, I will update from teamwork first","Cancel"};
-            Boolean reply = Utils.getUserYesNoAnswerWithButton("It's highly recommended that you update from teamwork first before interacting with MMS, \nand commit to teamwork immediately afterwards. Do you want to continue?", buttons);
-            if (reply == null || !reply)
-                return false;
-        }
+        if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+            return true;
+        String[] buttons = {"Continue with MMS (May trigger update)", "Cancel, I will update from teamwork first","Cancel"};
+        Boolean reply = Utils.getUserYesNoAnswerWithButton("It's highly recommended that you update from teamwork first, \n"
+                + "and commit to teamwork immediately afterwards.\n "
+                + "This action may autolock elements and trigger an update. Do you want to continue?", buttons);
+        if (reply == null || !reply)
+            return false;
         return true;
     }
 }

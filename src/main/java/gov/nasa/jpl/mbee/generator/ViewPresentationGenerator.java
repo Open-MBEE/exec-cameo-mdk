@@ -56,6 +56,11 @@ import com.nomagic.uml2.impl.ElementsFactory;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 
+/**
+ * 
+ * @author dlam
+ *
+ */
 public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
@@ -63,9 +68,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
     
-    private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
     private ViewInstanceUtils instanceUtils;
-    private OrganizeViewInstances organizer;
+    private ViewInstancesOrganizer organizer;
 
     private Stereotype viewClassStereotype = Utils.getViewClassStereotype();
     
@@ -73,10 +77,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private Element start;
     private boolean isFromTeamwork = false;
     private boolean failure = false;
-
-    // use these prefixes then add project_id to form the view instances id and unused view id respectively
-    private String viewInstPrefix = "View_Instances";
-    private String unusedInstPrefix = "Unused_View_Instances";
 
     private Project project = Application.getInstance().getProject();;
     private boolean showValidation;
@@ -98,11 +98,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         if (this.instanceUtils == null) {
             this.instanceUtils = new ViewInstanceUtils();
         }
-        this.organizer = new OrganizeViewInstances(start, recurse, false, this.instanceUtils);
+        this.organizer = new ViewInstancesOrganizer(start, recurse, false, this.instanceUtils);
         suite.addValidationRule(uneditableContent);
         suite.addValidationRule(viewInProject);
         suite.addValidationRule(updateFailed);
         suite.addValidationRule(uneditableElements);
+        vss.add(suite);
+        vss.add(this.organizer.getValidations());
     }
     
     @Override
@@ -130,9 +132,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<Element, List<PresentationElement>> view2unused = visitor2.getView2Unused();
         Map<Element, JSONArray> view2elements = visitor2.getView2Elements();
         
-        List<Element> views = instanceUtils.getViewProcessOrder(start, visitor2.getHierarchyElements());
-        Map<Element, ViewInstanceInfo> infos = new HashMap<Element, ViewInstanceInfo>();
-        
+        List<Element> views = instanceUtils.getViewProcessOrder(start, visitor2.getHierarchyElements());        
         Set<Element> skippedViews = new HashSet<Element>();
         
         //lock elements first
@@ -142,9 +142,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 viewInProject.addViolation(violation);
                 skippedViews.add(view);
                 continue;
-            }
-            if (cannotChange != null && cannotChange.contains(view.getID())) {
-                updateFailed.addViolation(new ValidationRuleViolation(view, "[UPDATE FAILED] This view failed to update from MMS."));
             }
             JSONArray es = view2elements.get(view);
             Object eles = StereotypesHelper.getStereotypePropertyFirst(view, viewClassStereotype, "elements");
@@ -165,34 +162,62 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 needEdit.add(view);
             }
             if (instanceUtils.needLockForEditConstraint(view, view2pe.get(view))) {
+                if (cannotChange != null && cannotChange.contains(view.getID())) {
+                    updateFailed.addViolation(new ValidationRuleViolation(view, "[UPDATE FAILED] This view failed to update from MMS and will not be changed to prevent conflicts."));
+                    failure = true;
+                }
                 Constraint c = Utils.getViewConstraint(view);
                 if (c != null) {
                     if (!Utils.tryToLock(project, c, isFromTeamwork)) {
                         ValidationRuleViolation vrv = new ValidationRuleViolation(c, "[NOT EDITABLE (VIEW CONTENT)] This view constraint can't be updated.");
                         uneditableContent.addViolation(vrv);
+                        failure = true;
                     }
                     needEdit.add(c);
                 }
             }
-            lockInstances(view2pe.get(view));
+            Package viewPackage = instanceUtils.findViewInstancePackage(view);
+            List<Package> parents = instanceUtils.findCorrectViewInstancePackageOwners(view);
+            if (viewPackage != null && !parents.contains(viewPackage.getOwner())) {
+                Utils.tryToLock(project, viewPackage, isFromTeamwork); //package needs moving
+                shouldMove.add(viewPackage);
+            }
+            lockInstances(view2pe.get(view), viewPackage);
         }
         
-        //create session
+        if (failure) {
+            if (showValidation)
+                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+            return;
+        }
         //from view hierarchy top down: create view instance package first
         //then for view instances bottom up: create or update instances
-        for (Element view: views) {
-            if (skippedViews.contains(view))
-                continue;
-            Package p = organizer.createOrMoveViewInstancePackage(view);
-            handlePes(view2pe.get(view), p);
-            Constraint c = Utils.getViewConstraint(view);
-            if (c == null || (needEdit.contains(c) && c.isEditable())) {
-                instanceUtils.updateOrCreateConstraint(view, view2pe.get(view));
+        boolean sessionCreated = false;
+        try {
+            if (!SessionManager.getInstance().isSessionCreated()) {
+                SessionManager.getInstance().createSession("view presentation generation");
+                sessionCreated = true;
             }
-            if (needEdit.contains(view) && view.isEditable())
-                StereotypesHelper.setStereotypePropertyValue(view, viewClassStereotype, "elements", view2elements.get(view).toJSONString());
+            for (Element view: views) {
+                if (skippedViews.contains(view))
+                    continue;
+                Package p = organizer.createOrMoveViewInstancePackage(view);
+                handlePes(view2pe.get(view), p);
+                Constraint c = Utils.getViewConstraint(view);
+                if (c == null || (needEdit.contains(c) && c.isEditable())) {
+                    instanceUtils.updateOrCreateConstraint(view, view2pe.get(view));
+                }
+                if (needEdit.contains(view) && view.isEditable())
+                    StereotypesHelper.setStereotypePropertyValue(view, viewClassStereotype, "elements", view2elements.get(view).toJSONString());
+            }
+            if (sessionCreated)
+                SessionManager.getInstance().closeSession();
+        } catch (Exception ex) {
+            if (sessionCreated)
+                SessionManager.getInstance().cancelSession();
+            failure = true;
+            Utils.printException(ex);
         }
-        //end session
 
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         // this checks images generated from the local generation against what's on the web based on checksum
@@ -201,27 +226,31 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             ValidationSuite imageSuite = iv.getSuite();
             
             vss.add(imageSuite);
-            vss.add(suite);
             if (showValidation)
                 Utils.displayValidationWindow(vss, "View Generation and Images Validation");
         }
     }
 
-    private void lockInstances(List<PresentationElement> pes) {
+    private void lockInstances(List<PresentationElement> pes, Package viewPackage) {
         for (PresentationElement pe: pes) {
             if (pe.getChildren() != null && !pe.getChildren().isEmpty()) {
-                lockInstances(pe.getChildren());
+                lockInstances(pe.getChildren(), viewPackage);
             }
             if (instanceUtils.needLockForEdit(pe)) {
+                if (cannotChange != null && cannotChange.contains(pe.getInstance().getID())) {
+                    updateFailed.addViolation(new ValidationRuleViolation(pe.getInstance(), "[UPDATE FAILED] This instance failed to update from MMS and will not be changed to prevent conflicts."));
+                    failure = true;
+                }
                 if (!Utils.tryToLock(project, pe.getInstance(), isFromTeamwork)) {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(pe.getInstance(), "[NOT EDITABLE (CONTENT)] This presentation element instance can't be updated.");
                     uneditableContent.addViolation(vrv);
+                    failure = true;
                 }
                 needEdit.add(pe.getInstance());
             }
             if (pe.getInstance() != null) {
                 if ((pe.isManual() && !instanceUtils.isInSomeViewPackage(pe.getInstance())
-                        || !pe.isManual())) {
+                        || (!pe.isManual() && pe.getInstance().getOwner() != viewPackage))) {
                     shouldMove.add(pe.getInstance());
                     Utils.tryToLock(project, pe.getInstance(), isFromTeamwork);
                 }
@@ -244,34 +273,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     
     public List<ValidationSuite> getValidations() {
         return vss;
-    }
-
-    private Package createViewInstancesPackage() {
-        // fix root element, set it to project instead
-        return createParticularPackage(Utils.getRootElement(), viewInstPrefix, "View Instances");
-    }
-
-    private Package createUnusedInstancesPackage() {
-        Package rootPackage = createParticularPackage(Utils.getRootElement(), viewInstPrefix, "View Instances");
-        return createParticularPackage(rootPackage, unusedInstPrefix, "Unused View Instances");
-    }
-
-    //get or create package with id 
-    private Package createParticularPackage(Package owner, String packIDPrefix, String name) {
-        // fix root element, set it to project replace PROJECT with the packIDPrefix
-        String viewInstID = Utils.getProject().getPrimaryProject() .getProjectID().replace("PROJECT", packIDPrefix);
-        Package viewInst = (Package)Application.getInstance().getProject().getElementByID(viewInstID);
-        if (viewInst == null) {
-            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-            viewInst = ef.createPackageInstance();
-            viewInst.setID(viewInstID);
-            viewInst.setName(name);
-        }
-        // either way, set the owner to the owner we passed in
-        if (viewInst.isEditable() && viewInst.getOwner() != owner)
-            viewInst.setOwner(owner);
-        
-        return viewInst;
     }
     
     public boolean getFailure() {

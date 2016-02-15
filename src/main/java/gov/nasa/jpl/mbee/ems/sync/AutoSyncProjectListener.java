@@ -112,6 +112,21 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     }
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
+    
+    public static void lockSyncFolder(Project project) {
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            String folderId = project.getPrimaryProject().getProjectID();
+            folderId += "_sync";
+            Element folder = ExportUtility.getElementFromID(folderId);
+            if (folder == null)
+                return;
+            for (Element e: folder.getOwnedElement()) {
+                if (e instanceof Class)
+                    Utils.tryToLock(project, e, true);
+            }
+        }
+    }
+    
     /*
      * get sync blocks, ignore ones that have corresponding clear blocks,
      * if create is true, find one that's editable or create one and put it as the first element in the return array
@@ -133,19 +148,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             folder.setOwner(project.getModel());
             ((Package)folder).setName("__MMSSync__");
             folder.setID(folderId);
-        } else {
-            if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-                if (TeamworkUtils.getLoggedUserName() != null && (create || clearAll)) {
-                    boolean sessionCreated = SessionManager.getInstance().isSessionCreated(project);
-                    for (Element e: folder.getOwnedElement()) {
-                        if (e instanceof Class && clearAll)
-                            TeamworkUtils.lockElement(project, e, false);
-                    }
-                    if (sessionCreated && !SessionManager.getInstance().isSessionCreated(project))
-                        SessionManager.getInstance().createSession(project, "session after lock");
-                }
-            }
-        }
+        } 
         
         for (Element e: folder.getOwnedElement()) {
             if (e instanceof Class) {
@@ -233,6 +236,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         ModelHelper.setComment(es.get(0), (o == null) ? "{\"deleted\":[], \"changed\":[], \"added\":[]}" : o.toJSONString());
     }
     
+    @SuppressWarnings("unchecked")
     public static JSONObject getUpdatesOrFailed(Project project, String type) {
         List<NamedElement> es = getSyncElement(project, false, false, type);
         if (es.isEmpty())
@@ -403,6 +407,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 m.acknowledge();
                 m = consumer.receive(3000);
             }
+            lockSyncFolder(project);
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change logs");
             try {
