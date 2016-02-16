@@ -60,6 +60,7 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
     private Set<Element> shouldMove = new HashSet<Element>();
     private Map<Element, ViewInstanceInfo> infos = new HashMap<Element, ViewInstanceInfo>();
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    private Package unused = null;
     
     public ViewInstancesOrganizer(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu) {
         this.start = start;
@@ -108,6 +109,7 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
                 SessionManager.getInstance().createSession("view instance organize");
                 sessionCreated = true;
             }
+            unused = instanceUtils.getOrCreateUnusedInstancePackage();
             for (Element view: views) {
                 if (skippedViews.contains(view))
                     continue;
@@ -150,6 +152,9 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[REFERENCE] This is a DocGen generated instance from another view that's being referenced by " + ((NamedElement)view).getQualifiedName());
             instanceRef.addViolation(vrv);
         }
+        for (InstanceSpecification is: info.getUnused()) {
+            Utils.tryToLock(project, is, isFromTeamwork);
+        }
         infos.put(viewOrSection, info);
     }
 
@@ -166,6 +171,9 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             if (shouldMove.contains(is))
                 moveViewInstance(is, p);
         }
+        for (InstanceSpecification is: info.getUnused()) {
+            moveViewInstance(is, unused);
+        }
     }
     
     public boolean moveViewInstance(InstanceSpecification is, Package owner) {
@@ -173,6 +181,8 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             return true;
         }
         if (!is.isEditable()) {
+            if (owner == unused)
+                return false;
             ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[NOT EDITABLE (OWNER)] This presentation element instance can't be moved to the right view instance package.");
             uneditableOwner.addViolation(vrv);
             return false;
@@ -200,6 +210,10 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             viewParent.addViolation(vrv);
         }
         return viewPackage;
+    }
+    
+    public void setUnused(Package p) {
+        unused = p;
     }
     
     public ValidationSuite getValidations() {

@@ -82,6 +82,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stack<List<InstanceSpecification>> currentSectionInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentImageInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentManualInstances = new Stack<List<InstanceSpecification>>();
+    private Stack<List<InstanceSpecification>> currentUnusedInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<PresentationElement>> newpe = new Stack<List<PresentationElement>>();
 
     private boolean main = false; //for ems 2.2 reference tree, only consider generated pe from main view and 
@@ -495,6 +496,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentListInstances.pop();
         currentTableInstances.pop();
         currentInstanceList.pop();
+        currentUnusedInstances.pop();
     }
 
     protected void startSection(DBSection section) {
@@ -549,6 +551,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentListInstances.pop();
         currentTableInstances.pop();
         currentInstanceList.pop();
+        currentUnusedInstances.pop();
     }
     
     @SuppressWarnings("unchecked")
@@ -622,6 +625,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentListInstances.push(info.getLists());
         currentSectionInstances.push(info.getSections());
         currentManualInstances.push(info.getManuals());
+        currentUnusedInstances.push(info.getUnused());
         if (info.getViewDocHack() != null)
             viewDocHack = info.getViewDocHack();
     }
@@ -699,6 +703,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         }
         for (InstanceSpecification is: currentSectionInstances.peek()) {
             view2peOld.get(v).add(new PresentationElement(is, null, PEType.SECTION, v, is.getName(), null, null));
+        }
+        for (InstanceSpecification is: currentUnusedInstances.peek()) {
+            view2peOld.get(v).add(new PresentationElement(is, null, null, v, is.getName(), null, null));
         }
     }
 }

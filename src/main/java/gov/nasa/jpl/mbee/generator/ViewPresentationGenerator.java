@@ -1,60 +1,37 @@
 package gov.nasa.jpl.mbee.generator;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.viewedit.PresentationElement;
-import gov.nasa.jpl.mbee.viewedit.PresentationElement.PEType;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONValue;
+
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Relationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import com.nomagic.uml2.impl.ElementsFactory;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 /**
  * 
@@ -183,6 +160,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 shouldMove.add(viewPackage);
             }
             lockInstances(view2pe.get(view), viewPackage);
+            lockUnused(view2unused.get(view));
         }
         
         if (failure) {
@@ -198,6 +176,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 SessionManager.getInstance().createSession("view presentation generation");
                 sessionCreated = true;
             }
+            Package unused = instanceUtils.getOrCreateUnusedInstancePackage();
+            organizer.setUnused(unused);
             for (Element view: views) {
                 if (skippedViews.contains(view))
                     continue;
@@ -209,6 +189,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 if (needEdit.contains(view) && view.isEditable())
                     StereotypesHelper.setStereotypePropertyValue(view, viewClassStereotype, "elements", view2elements.get(view).toJSONString());
+                handleUnused(view2unused.get(view), unused);
             }
             if (sessionCreated)
                 SessionManager.getInstance().closeSession();
@@ -258,6 +239,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
     }
     
+    private void lockUnused(List<PresentationElement> pes) {
+        for (PresentationElement pe: pes) {
+            if (pe.getInstance() != null) {
+                Utils.tryToLock(project, pe.getInstance(), isFromTeamwork);
+            }
+        }
+    }
+    
     private void handlePes(List<PresentationElement> pes, Package p) {
         for (PresentationElement pe: pes) {
             if (pe.getChildren() != null && !pe.getChildren().isEmpty()) {
@@ -267,6 +256,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     (pe.getInstance().isEditable() && needEdit.contains(pe.getInstance())))
                 instanceUtils.updateOrCreateInstance(pe, p);
             if (shouldMove.contains(pe.getInstance()))
+                organizer.moveViewInstance(pe.getInstance(), p);
+        }
+    }
+    
+    private void handleUnused(List<PresentationElement> pes, Package p) {
+        for (PresentationElement pe: pes) {
+            if (pe.getInstance() != null && pe.getInstance().isEditable())
                 organizer.moveViewInstance(pe.getInstance(), p);
         }
     }

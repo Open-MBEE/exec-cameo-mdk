@@ -86,8 +86,11 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptor;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.magicdraw.teamwork2.TeamworkService;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
@@ -3628,6 +3631,13 @@ public class Utils {
         Project prj = Application.getInstance().getProject();
         if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
             return true;
+        ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(prj);
+        try {
+            if (TeamworkUtils.getLastVersion(currentProj) == TeamworkService.getInstance(prj).getVersion(prj).getNumber())
+                return true;
+        } catch (Exception ex) {
+            
+        }
         String[] buttons = {"Continue with MMS (May trigger update)", "Cancel, I will update from teamwork first","Cancel"};
         Boolean reply = Utils.getUserYesNoAnswerWithButton("It's highly recommended that you update from teamwork first, \n"
                 + "and commit to teamwork immediately afterwards.\n "
