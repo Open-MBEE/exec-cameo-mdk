@@ -3638,7 +3638,7 @@ public class Utils {
         } catch (Exception ex) {
             
         }
-        String[] buttons = {"Continue with MMS (May trigger update)", "Cancel, I will update from teamwork first","Cancel"};
+        String[] buttons = {"Continue (May trigger update)", "Cancel, I will update from teamwork first","Cancel"};
         Boolean reply = Utils.getUserYesNoAnswerWithButton("It's highly recommended that you update from teamwork first, \n"
                 + "and commit to teamwork immediately afterwards.\n "
                 + "This action may autolock elements and trigger an update. Do you want to continue?", buttons);

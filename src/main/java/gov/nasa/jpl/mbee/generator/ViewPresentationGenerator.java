@@ -203,12 +203,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         ImageValidator iv = new ImageValidator(visitor2.getImages());
         // this checks images generated from the local generation against what's on the web based on checksum
         iv.validate();
-        if (!iv.getRule().getViolations().isEmpty() || suite.hasErrors()) {
-            ValidationSuite imageSuite = iv.getSuite();
-            
-            vss.add(imageSuite);
-            if (showValidation)
+        vss.add(iv.getSuite());
+        if (showValidation) {
+            if (suite.hasErrors() || iv.getSuite().hasErrors())
                 Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+            else
+                Utils.guilog("[INFO] View Generation finished.");
         }
     }
 

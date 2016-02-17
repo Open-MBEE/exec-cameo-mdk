@@ -124,8 +124,12 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             Utils.printException(ex);
         }
         //end session and show validation
-        if (showValidation)
-            Utils.displayValidationWindow(vss, "Organize View Validation");
+        if (showValidation) {
+            if (suite.hasErrors())
+                Utils.displayValidationWindow(vss, "Organize View Validation");
+            else
+                Utils.guilog("[INFO] View Organize finished.");
+        }
     }
     
     public void lockElements(Element viewOrSection, Element view, Package viewPackage) { //try to lock things, doesn't matter if fails

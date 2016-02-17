@@ -48,6 +48,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     
     private Logger log = Logger.getLogger(ManualSyncRunner.class);
     private Project project = Application.getInstance().getProject();
+    private SessionManager sm = SessionManager.getInstance();
     
     private boolean isFromTeamwork = false;
     private boolean failure = false;
@@ -112,6 +113,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Map<String, Element> localChanged = listener.getChangedElements();
         
         //account for possible teamwork updates
+        AutoSyncProjectListener.lockSyncFolder(project);
         JSONObject previousUpdates = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
         if (previousUpdates != null) {
             for (String added: (List<String>)previousUpdates.get("added")) {
@@ -173,8 +175,31 @@ public class ManualSyncRunner implements RunnableWithProgress {
             } catch (ServerException ex) {
                 Utils.guilog("[ERROR] Get elements failed.");
             }
-            if (response == null)
-                return; //should repopulate error block?
+            if (response == null) {
+                JSONObject abort = new JSONObject();
+                JSONArray abortChanged = new JSONArray();
+                JSONArray abortDeleted = new JSONArray();
+                JSONArray abortAdded = new JSONArray();
+                abortChanged.addAll(webChanged);
+                abortDeleted.addAll(webDeleted);
+                abortAdded.addAll(webAdded);
+                abort.put("added", abortAdded);
+                abort.put("deleted", abortDeleted);
+                abort.put("changed", abortChanged);
+                listener.disable();
+                AutoSyncProjectListener.lockSyncFolder(project);
+                sm.createSession("failed changes");
+                try {
+                    AutoSyncProjectListener.setUpdatesOrFailed(project, abort, "error", true);
+                    sm.closeSession();
+                } catch (Exception ex) {
+                    log.error("", ex);
+                    sm.cancelSession();
+                }
+                listener.enable();
+                Utils.guilog("[ERROR] Cannot get elements from MMS server, update aborted. (All changes will be attempted at next update)");
+                return; 
+            }
             Map<String, JSONObject> webElements = new HashMap<String, JSONObject>();
             JSONObject webObject = (JSONObject)JSONValue.parse(response);
             JSONArray webArray = (JSONArray)webObject.get("elements");
@@ -226,7 +251,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
             }
             
             Utils.guilog("[INFO] Applying changes...");
-            SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change");
             listener.disable();
             try {
