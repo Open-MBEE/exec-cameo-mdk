@@ -205,7 +205,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         iv.validate();
         vss.add(iv.getSuite());
         if (showValidation) {
-            if (suite.hasErrors() || iv.getSuite().hasErrors())
+            if (suite.hasErrors() || iv.getSuite().hasErrors() || organizer.getValidations().hasErrors())
                 Utils.displayValidationWindow(vss, "View Generation and Images Validation");
             else
                 Utils.guilog("[INFO] View Generation finished.");
