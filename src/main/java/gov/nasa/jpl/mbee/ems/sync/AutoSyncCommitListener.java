@@ -14,6 +14,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -105,7 +106,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 // contains the change.
                 //
                 Object source = event.getSource();
-                if (source instanceof Element) {
+                if (source instanceof Element && !ProjectUtilities.isElementInAttachedProject((Element)source)) {
 
                     String changedPropertyName = event.getPropertyName();
                     if (changedPropertyName == null) {
