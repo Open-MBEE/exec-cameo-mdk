@@ -186,8 +186,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 abort.put("added", abortAdded);
                 abort.put("deleted", abortDeleted);
                 abort.put("changed", abortChanged);
-                listener.disable();
+                
                 AutoSyncProjectListener.lockSyncFolder(project);
+                listener.disable();
                 sm.createSession("failed changes");
                 try {
                     AutoSyncProjectListener.setUpdatesOrFailed(project, abort, "error", true);
@@ -197,6 +198,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     sm.cancelSession();
                 }
                 listener.enable();
+                failure = true;
                 Utils.guilog("[ERROR] Cannot get elements from MMS server, update aborted. (All changes will be attempted at next update)");
                 return; 
             }
