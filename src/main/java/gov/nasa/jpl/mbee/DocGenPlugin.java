@@ -32,6 +32,7 @@ import gov.nasa.jpl.mbee.ems.sync.AutosyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
 import gov.nasa.jpl.mbee.web.sync.ApplicationSyncEventSubscriber;
 
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.jar.JarFile;
 
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
@@ -97,6 +99,8 @@ public class DocGenPlugin extends Plugin {
         //ApplicationSyncEventSubscriber.subscribe(); //really old docweb sync, should remove related code
 
         loadExtensionJars(); // people can actaully just create a new plugin and
+        
+        Application.getInstance().getEnvironmentOptions().addGroup(new MDKOptionsGroup());
     }
 
     public OclEvaluatorPlugin getOclPlugin() {
