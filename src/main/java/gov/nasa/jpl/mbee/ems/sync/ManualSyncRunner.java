@@ -568,4 +568,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
     public boolean getFailure() {
         return failure;
     }
+    
+    public ValidationSuite getValidationSuite() {
+        return suite;
+    }
 }
