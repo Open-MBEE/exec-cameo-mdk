@@ -8,7 +8,7 @@
 	name="Model Development Kit" 
 	product="JPL Model Development Kit" 
 	type="Plugin">
-  <version human="2.3" resource="@release.version.internal@" internal="@release.version.internal@"/>
+  <version human="@release.version.human@" resource="@release.version.internal@" internal="@release.version.internal@"/>
   <provider name="NASA / Jet Propulsion Laboratory / Caltech"/>
   <edition>Standard</edition>
   <edition>Enterprise</edition>
