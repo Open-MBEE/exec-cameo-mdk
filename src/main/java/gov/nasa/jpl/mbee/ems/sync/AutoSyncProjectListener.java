@@ -420,7 +420,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             return changes;
         } catch (Exception e) {
             log.error("JMS (Manual receive): ", e);
-            Utils.guilog("[ERROR] Getting changes from mms failed: " + e.getMessage());
+            Utils.guilog("[ERROR] Getting changes from MMS failed, someone else may already be connected, please try again later (or check your internet connection). If error persists, please submit a JIRA on https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary");
+            Utils.guilog("[ERROR] Server message: " + e.getMessage());
             return null;
         } finally {
             try {
