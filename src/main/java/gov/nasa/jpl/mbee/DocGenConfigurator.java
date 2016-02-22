@@ -397,9 +397,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     if (act == null)
                         c.addAction(new NumberAssociationAction((Class)e));
                 }
-                act = manager.getActionFor(PublishDocWebAction.actionid); 
-                if (act == null) 
-                    c.addAction(new PublishDocWebAction((NamedElement)e));
+                //act = manager.getActionFor(PublishDocWebAction.actionid); 
+                //if (act == null) 
+                 //   c.addAction(new PublishDocWebAction((NamedElement)e));
             }
             /*
              * if (e instanceof Activity &&
