@@ -14,6 +14,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     public static final String GROUP = "MDK";
     
     public static final String LOG_JSON_ID = "LOG_JSON";
+    public static final String SAVE_CHANGES_ID = "SAVE_LOCAL_CHANGES_ON_PROJECT_SAVE";
+    public static final String LISTENER_ID = "ENABLE_COMMIT_LISTENER";
     
     public MDKOptionsGroup() {
         super(ID);
@@ -32,9 +34,32 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         BooleanProperty property = new BooleanProperty(LOG_JSON_ID, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-
         addProperty(property);
 
+    }
+    
+    public boolean isSaveChanges() {
+        Property p = getProperty(SAVE_CHANGES_ID);
+        return (Boolean)p.getValue();
+    }
+    
+    public void setSaveChanges(boolean value) {
+        BooleanProperty property = new BooleanProperty(SAVE_CHANGES_ID, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
+        addProperty(property);
+    }
+    
+    public boolean isCommitListener() {
+        Property p = getProperty(LISTENER_ID);
+        return (Boolean)p.getValue();
+    }
+    
+    public void setCommitListener(boolean value) {
+        BooleanProperty property = new BooleanProperty(LISTENER_ID, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
+        addProperty(property);
     }
     
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = new PropertyResourceProvider() {
@@ -47,6 +72,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     @Override
     public void setDefaultValues() {
         setLogJson(true);
+        setSaveChanges(true);
+        setCommitListener(true);
     }
     
     private static final String MDK_OPTIONS_NAME = "MDK";

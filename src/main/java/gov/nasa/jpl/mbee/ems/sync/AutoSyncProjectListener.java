@@ -733,6 +733,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
+        boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
+        if (!save)
+            return;
         if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"))
             return;
         try {
@@ -745,6 +748,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
+        boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
+        if (!save)
+            return;
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances == null)
             return; //investigate how this is possible
