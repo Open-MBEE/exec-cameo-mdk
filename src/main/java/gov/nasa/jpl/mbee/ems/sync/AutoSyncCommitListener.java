@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.properties.BooleanProperty;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -477,6 +479,9 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
 
     @Override
     public Runnable transactionCommited(Collection<PropertyChangeEvent> events) {
+        boolean save = MDKOptionsGroup.getMDKOptions().isCommitListener();
+        if (!save)
+            return null;
         return new TransactionCommitHandler(events);
     }
 }

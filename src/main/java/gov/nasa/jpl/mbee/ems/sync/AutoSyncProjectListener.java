@@ -14,6 +14,7 @@ import java.util.Set;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -359,9 +360,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
             Message m = consumer.receive(10000);
+            boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
             while (m != null) {
                 TextMessage message = (TextMessage)m;
-                log.info("From JMS (Manual receive): " + message.getText());
+                if (print)
+                    log.info("From JMS (Manual receive): " + message.getText());
                 JSONObject ob = (JSONObject) JSONValue.parse(message.getText());
                 boolean magicdraw = false;
                 if (ob.get("source") != null && ob.get("source").equals("magicdraw")) {
@@ -731,6 +734,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
+        boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
+        if (!save)
+            return;
         if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"))
             return;
         try {
@@ -743,6 +749,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
+        boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
+        if (!save)
+            return;
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances == null)
             return; //investigate how this is possible
