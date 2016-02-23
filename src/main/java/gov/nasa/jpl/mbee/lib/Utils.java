@@ -2087,6 +2087,8 @@ public class Utils {
     }
     
     public static Constraint getViewConstraint(Element view) {
+        if (view == null)
+            return null;
         for (Element e: view.getOwnedElement()) {
             if (e instanceof Constraint && ((Constraint)e).getConstrainedElement().contains(view))
                 return (Constraint)e;

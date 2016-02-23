@@ -250,6 +250,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 Element e = ExportUtility.getElementFromID(id);
                 if (e != null)
                     Utils.tryToLock(project, e, isFromTeamwork);
+                else
+                    continue;
                 Constraint c = Utils.getViewConstraint(e);
                 if (c != null)
                     Utils.tryToLock(project, c, isFromTeamwork);
