@@ -28,6 +28,10 @@ public class OneClickUpdateDoc extends MDAction {
     public void actionPerformed(ActionEvent ae) {
         if (!Utils.recommendUpdateFromTeamwork())
             return;
+        updateAction();
+    }
+    
+    public void updateAction() {
         ManualSyncRunner msr = new ManualSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         if (msr.getFailure()) {
