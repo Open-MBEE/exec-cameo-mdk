@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.actions.docgen;
 
 import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
 
@@ -24,7 +25,9 @@ public class GenerateViewPresentationAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse, null, true);
+        if (!Utils.recommendUpdateFromTeamwork())
+            return;
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse, null, true, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
     }
 }

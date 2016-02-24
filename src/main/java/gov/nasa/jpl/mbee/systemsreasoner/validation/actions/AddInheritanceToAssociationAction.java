@@ -38,13 +38,19 @@ public class AddInheritanceToAssociationAction extends SRAction {
 
 	public void actionPerformed(ActionEvent e) {
 		SessionManager.getInstance().createSession(actionid);
-		Generalization gen = UMLFactory.eINSTANCE.createGeneralization();
-		gen.setGeneral(superAssociation);
-		gen.setSpecific(association);
-		this.association.getGeneralization().add(gen);
-
-		Application.getInstance().getGUILog().log("Inheritance added to association" + association.getName());
-
+		if (association != null) {
+			if (superAssociation != null) {
+				Generalization gen = UMLFactory.eINSTANCE.createGeneralization();
+				gen.setGeneral(superAssociation);
+				gen.setSpecific(association);
+				this.association.getGeneralization().add(gen);
+				Application.getInstance().getGUILog().log("Inheritance added to association" + association.getName());
+			} else {
+				Application.getInstance().getGUILog().log("Association on super element missing.");
+			}
+		} else {
+			Application.getInstance().getGUILog().log("Association on inheriting element missing.");
+		}
 		SessionManager.getInstance().closeSession();
 	}
 }

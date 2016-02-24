@@ -8,6 +8,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 
 import java.util.ArrayList;
@@ -65,12 +66,14 @@ public class JMSMessageListener implements MessageListener {
 
     @Override
     public void onMessage(Message msg) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         try {
             // Take the incoming message and parse it into a
             // JSONObject.
             //
             TextMessage message = (TextMessage) msg;
-            log.info("From JMS: " + message.getText());
+            if (print)
+                log.info("From JMS: " + message.getText());
             JSONObject ob = (JSONObject) JSONValue.parse(message.getText());
             if (ob.get("source") != null && ob.get("source").equals("magicdraw"))
                 return;

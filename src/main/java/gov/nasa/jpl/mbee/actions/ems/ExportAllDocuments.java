@@ -18,7 +18,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
-
+@Deprecated
 public class ExportAllDocuments extends MDAction {
 
     private static final long serialVersionUID = 1L;

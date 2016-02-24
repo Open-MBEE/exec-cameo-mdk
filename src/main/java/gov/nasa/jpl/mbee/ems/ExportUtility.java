@@ -34,6 +34,7 @@ import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
@@ -523,20 +524,21 @@ public class ExportUtility {
     }
 
     public static String delete(String url, boolean feedback) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
         DeleteMethod gm = new DeleteMethod(url);
         try {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url, gm);
-            //Application.getInstance().getGUILog().log("[INFO] Getting...");
-            //Application.getInstance().getGUILog().log("url=" + url);
-            log.info("delete: " + url);
+            if (print)
+                log.info("delete: " + url);
             if (feedback)
                 Utils.guilog("[INFO] Deleting...");
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-            log.info("delete response: " + json);
+            if (print)
+                log.info("delete response: " + json);
             if (showErrors(code, json, false)) {
                 return null;
             }
@@ -554,17 +556,20 @@ public class ExportUtility {
     
    
     public static String send(String url, PostMethod pm) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
         try {
             //GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
-            log.info("send file: " + url);
+            if (print)
+                log.info("send file: " + url);
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            log.info("send file response: " + code + " " + response);
+            if (print)
+                log.info("send file response: " + code + " " + response);
             if (showErrors(code, response, false)) {
                 return null;
             }
@@ -581,6 +586,7 @@ public class ExportUtility {
     	return send(url, json, showPopupErrors, suppressGuiLog, "Send#?");
     }
     public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog, String _threadName) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
 
@@ -611,15 +617,19 @@ public class ExportUtility {
             */
             
             ViewEditUtils.setCredentials(client, url, pm);
-            log.info(_threadName + " executing....");
+            if (print)
+                log.info(_threadName + " executing....");
             int code = client.executeMethod(pm);
-            log.info(_threadName + " server returned: " + code);
+            if (print)
+                log.info(_threadName + " server returned: " + code);
             String response = pm.getResponseBodyAsString();
-            log.info(_threadName + " response: " + code + " " + response);
+            if (print)
+                log.info(_threadName + " response: " + code + " " + response);
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
-            log.info(_threadName + " Send Successful.");
+            if (print)
+                log.info(_threadName + " Send Successful.");
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Send Successful.");
             return response;
@@ -646,10 +656,12 @@ public class ExportUtility {
     }
 
     public static String deleteWithBody(String url, String json, boolean feedback) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
         pm = new DeleteMethodWithEntity(url);
         try {
-            log.info("deleteWithBody: " + url + ": " + json);// gl.log(json);
+            if (print)
+                log.info("deleteWithBody: " + url + ": " + json);// gl.log(json);
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
@@ -657,7 +669,8 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            log.info("deleteWithBody Response: " + code + " " + response);
+            if (print)
+                log.info("deleteWithBody Response: " + code + " " + response);
             if (showErrors(code, response, false)) {
                 return null;
             }
@@ -673,10 +686,12 @@ public class ExportUtility {
     }
     
     public static String getWithBody(String url, String json) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
         pm = new GetMethodWithEntity(url);
         try {
-            log.info("getWithBody: " + url + ": " + json);// gl.log(json);
+            if (print)
+                log.info("getWithBody: " + url + ": " + json);// gl.log(json);
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
@@ -684,7 +699,8 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            log.info("getWithBody Response: " + code + " " + response);
+            if (print)
+                log.info("getWithBody Response: " + code + " " + response);
             if (showErrors(code, json, false)) {
                 throw new ServerException(json, code);
             }
@@ -724,6 +740,10 @@ public class ExportUtility {
             String id = (String) ((JSONObject) viewinfo).get("id");
             JSONArray children = (JSONArray) ((JSONObject) viewinfo)
                     .get("childrenViews");
+            if (response.containsKey(id) && !((JSONArray)response.get(id)).equals(children)) {
+                //something is messed up
+                Utils.log("[WARNING] Document hierarchy from MMS is inconsistent and will interfere with validation, please file a CAE Support jira at https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary with component MD.MDK to request help to resolve.");
+            }
             response.put(id, children);
         }
         return response;
@@ -733,7 +753,43 @@ public class ExportUtility {
         return get(url, true);
     }
 
+    public static String get(String url,String username, String password) throws ServerException {
+        if (url == null)
+            return null;
+        GetMethod gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url, gm,username,password);
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
+            log.info("get: " + url);
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            log.info("get response: " + code + " " + json);
+            if (showErrors(code, json, true)) {
+                throw new ServerException(json, code);
+            }
+            if (code == 400)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            return json;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+        		Utils.showPopupMessage("URL is malformed");
+        		Utils.printException(ex);
+        		throw new ServerException("", 500);
+        } finally {
+            gm.releaseConnection();
+        }
+    }
+    
     public static String get(String url, boolean showPopupErrors) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
         GetMethod gm = new GetMethod(url);
@@ -742,10 +798,12 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url, gm);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
-            log.info("get: " + url);
+            if (print)
+                log.info("get: " + url);
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-            log.info("get response: " + code + " " + json);
+            if (print)
+                log.info("get response: " + code + " " + json);
             if (showErrors(code, json, showPopupErrors)) {
                 throw new ServerException(json, code);
             }
@@ -767,6 +825,8 @@ public class ExportUtility {
             gm.releaseConnection();
         }
     }
+    
+    
 
     //check if comment is actually the documentation of its owner
     public static boolean isElementDocumentation(Comment c) {
@@ -1002,6 +1062,8 @@ public class ExportUtility {
                 specialization.put("allowedElements", new JSONArray());
                 specialization.put("displayedElements", a);
             } catch (Exception ex) {}
+        } else {
+            specialization.put("displayedElements", new JSONArray());
         }
         return specialization;
     }

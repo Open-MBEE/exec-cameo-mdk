@@ -20,31 +20,31 @@ import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 
 public class SpecifyAction extends SRAction {
-	
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String actionid = "Specialize";
+	public static final String actionid = "Define General";
 	public List<Classifier> classifiers;
-	
+
 	public SpecifyAction(Classifier classifier) {
-        this(Utils2.newList(classifier));
+		this(Utils2.newList(classifier));
 	}
-	
+
 	public SpecifyAction(List<Classifier> classifiers) {
 		super(actionid);
 		this.classifiers = classifiers;
 	}
-	
+
 	@Override
-    public void actionPerformed(ActionEvent e) {
+	public void actionPerformed(ActionEvent e) {
 		final List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
 		types.add(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class);
-		
+
 		final Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
 		final ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
-		
+
 		final SelectElementTypes set = new SelectElementTypes(types, types, null, null);
 		final SelectElementInfo sei = new SelectElementInfo(true, false, Application.getInstance().getProject().getModel().getOwner(), true);
 		ElementSelectionDlgFactory.initMultiple(dlg, set, sei, new ArrayList<Object>());
