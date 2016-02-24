@@ -14,6 +14,7 @@ import java.util.Set;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -112,6 +113,21 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     }
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
+    
+    public static void lockSyncFolder(Project project) {
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            String folderId = project.getPrimaryProject().getProjectID();
+            folderId += "_sync";
+            Element folder = ExportUtility.getElementFromID(folderId);
+            if (folder == null)
+                return;
+            for (Element e: folder.getOwnedElement()) {
+                if (e instanceof Class)
+                    Utils.tryToLock(project, e, true);
+            }
+        }
+    }
+    
     /*
      * get sync blocks, ignore ones that have corresponding clear blocks,
      * if create is true, find one that's editable or create one and put it as the first element in the return array
@@ -133,19 +149,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             folder.setOwner(project.getModel());
             ((Package)folder).setName("__MMSSync__");
             folder.setID(folderId);
-        } else {
-            if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-                if (TeamworkUtils.getLoggedUserName() != null && (create || clearAll)) {
-                    boolean sessionCreated = SessionManager.getInstance().isSessionCreated(project);
-                    for (Element e: folder.getOwnedElement()) {
-                        if (e instanceof Class && clearAll)
-                            TeamworkUtils.lockElement(project, e, false);
-                    }
-                    if (sessionCreated && !SessionManager.getInstance().isSessionCreated(project))
-                        SessionManager.getInstance().createSession(project, "session after lock");
-                }
-            }
-        }
+        } 
         
         for (Element e: folder.getOwnedElement()) {
             if (e instanceof Class) {
@@ -233,6 +237,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         ModelHelper.setComment(es.get(0), (o == null) ? "{\"deleted\":[], \"changed\":[], \"added\":[]}" : o.toJSONString());
     }
     
+    @SuppressWarnings("unchecked")
     public static JSONObject getUpdatesOrFailed(Project project, String type) {
         List<NamedElement> es = getSyncElement(project, false, false, type);
         if (es.isEmpty())
@@ -355,9 +360,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
             Message m = consumer.receive(10000);
+            boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
             while (m != null) {
                 TextMessage message = (TextMessage)m;
-                log.info("From JMS (Manual receive): " + message.getText());
+                if (print)
+                    log.info("From JMS (Manual receive): " + message.getText());
                 JSONObject ob = (JSONObject) JSONValue.parse(message.getText());
                 boolean magicdraw = false;
                 if (ob.get("source") != null && ob.get("source").equals("magicdraw")) {
@@ -403,6 +410,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 m.acknowledge();
                 m = consumer.receive(3000);
             }
+            lockSyncFolder(project);
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change logs");
             try {
@@ -415,7 +423,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             return changes;
         } catch (Exception e) {
             log.error("JMS (Manual receive): ", e);
-            Utils.guilog("[ERROR] Getting changes from mms failed: " + e.getMessage());
+            Utils.guilog("[ERROR] Getting changes from MMS failed, someone else may already be connected, please try again later (or check your internet connection). If error persists, please submit a JIRA on https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary");
+            Utils.guilog("[ERROR] Server message: " + e.getMessage());
             return null;
         } finally {
             try {
@@ -725,6 +734,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
+        boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
+        if (!save)
+            return;
         if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"))
             return;
         try {
@@ -737,6 +749,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
+        boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
+        if (!save)
+            return;
         Map<String, Object> projectInstances = ProjectListenerMapping.getInstance().get(project);
         if (projectInstances == null)
             return; //investigate how this is possible

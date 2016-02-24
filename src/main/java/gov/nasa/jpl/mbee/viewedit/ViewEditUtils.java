@@ -289,7 +289,7 @@ public class ViewEditUtils {
     /**
      * utility for setting authorization header encoding at same time as username and password.
      */
-    private static void setUsernameAndPassword(String uname, String pword, boolean isPasswordSet) {
+    public static void setUsernameAndPassword(String uname, String pword, boolean isPasswordSet) {
         passwordSet = isPasswordSet;
         username = uname;
         password = pword;

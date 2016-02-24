@@ -1,8 +1,9 @@
 package gov.nasa.jpl.mbee.viewedit;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.generator.ViewInstanceInfo;
+import gov.nasa.jpl.mbee.generator.ViewInstanceUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Section;
 import gov.nasa.jpl.mbee.viewedit.PresentationElement.PEType;
@@ -35,50 +36,37 @@ import java.util.zip.Checksum;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
-    protected JSONObject elements;
-    private JSONObject   views;
-    private Stack<JSONArray>          curContains;  //MDEV #674 -- change to a Stack of JSONArrays
-    private Stack<JSONArray>          sibviews; //sibling views (array of view ids)
-    private Stack<Set<String>>        viewElements; //ids of view elements
-    private Map<String, JSONObject>   images;        
+    protected JSONObject              elements = new JSONObject();
+    private JSONObject                views = new JSONObject();
+    private Stack<JSONArray>          curContains = new Stack<JSONArray>();  //MDEV #674 -- change to a Stack of JSONArrays
+    private Stack<JSONArray>          sibviews = new Stack<JSONArray>(); //sibling views (array of view ids)
+    private Stack<List<Element>>      sibviewsElements = new Stack<List<Element>>();
+    private Stack<Set<String>>        viewElements = new Stack<Set<String>>(); //ids of view elements
+    private Map<String, JSONObject>   images = new HashMap<String, JSONObject>();
     protected boolean                 recurse;
-    private GUILog                    gl;
+    private GUILog                    gl = Application.getInstance().getGUILog();;
     private static String             FILE_EXTENSION = ".svg";
-    private Stereotype view = Utils.getViewStereotype();
-    private Stereotype viewpoint = Utils.getViewpointStereotype();
 
-    private Map<From, String> sourceMapping;
-    private JSONObject                view2view; //parent view id to array of children view ids (from sibviews)
+    private Map<From, String>         sourceMapping = new HashMap<From, String>();
+    private JSONObject                view2view = new JSONObject(); //parent view id to array of children view ids (from sibviews)
+    private Map<Element, List<Element>> view2viewElements = new HashMap<Element, List<Element>>();
     private JSONArray                 noSections = new JSONArray();
     private boolean doc;
-    protected Set<Element> elementSet = new HashSet<Element>();
+    protected Set<Element>            elementSet = new HashSet<Element>();
     
     //for ems 2.2 reference tree
     // these are linked hash maps to make recursive sense in ViewPresentationGenerator
@@ -94,40 +82,25 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stack<List<InstanceSpecification>> currentSectionInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentImageInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentManualInstances = new Stack<List<InstanceSpecification>>();
+    private Stack<List<InstanceSpecification>> currentUnusedInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<PresentationElement>> newpe = new Stack<List<PresentationElement>>();
-    private Classifier paraC = Utils.getOpaqueParaClassifier();
-    private Classifier tparaC = Utils.getParaClassifier();
-    private Classifier tableC = Utils.getOpaqueTableClassifier();
-    private Classifier listC = Utils.getOpaqueListClassifier();
-    private Classifier imageC = Utils.getOpaqueImageClassifier();
-    private Classifier sectionC = Utils.getSectionClassifier();
+
     private boolean main = false; //for ems 2.2 reference tree, only consider generated pe from main view and 
                                     //not nested tables/lists since those are embedded in json blob, main is false for Table and List Visitor
-    private Set<Element> notEditable = new HashSet<Element>();
     
     private InstanceSpecification viewDocHack = null;
+    private ViewInstanceUtils viu = new ViewInstanceUtils();
     
     public DBAlfrescoVisitor(boolean recurse) {
         this(recurse, false);
     }
     
     public DBAlfrescoVisitor(boolean recurse, boolean main) {
-        elements = new JSONObject();
-        views = new JSONObject();
-        curContains = new Stack<JSONArray>();
-        sibviews = new Stack<JSONArray>();
-        viewElements = new Stack<Set<String>>();
-
         this.recurse = recurse;
-        gl = Application.getInstance().getGUILog();
-        images = new HashMap<String, JSONObject>();
-        sourceMapping = new HashMap<From, String>();
         sourceMapping.put(From.DOCUMENTATION, "documentation");
         sourceMapping.put(From.DVALUE, "value");
         sourceMapping.put(From.NAME, "name");
-        view2view = new JSONObject();
         this.main = main;
-
     }
 
     public int getNumberOfElements() {
@@ -164,6 +137,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     public void visit(DBBook book) {
         JSONArray childviews = new JSONArray();
         sibviews.push(childviews);
+        sibviewsElements.push(new ArrayList<Element>());
         
         if (book.getFrom() != null) {
             doc = true; 
@@ -189,6 +163,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (doc)
             endView(book.getFrom());
         sibviews.pop();
+        sibviewsElements.pop();
     }
 
     @Override
@@ -266,8 +241,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentImageInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
-        if (i != null && !i.isEditable())
-            notEditable.add(i);
+
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, entry, PEType.IMAGE, currentView.peek(), "image", parentSec, null);
         newpe.peek().add(ipe);
@@ -290,8 +264,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentListInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
-        if (i != null && !i.isEditable())
-            notEditable.add(i);
+
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, l.getObject(), PEType.LIST, currentView.peek(), "list", parentSec, null);
         newpe.peek().add(ipe);
@@ -311,8 +284,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentParaInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
-        if (i != null && !i.isEditable())
-            notEditable.add(i);
+
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, entry, PEType.PARA, currentView.peek(), "paragraph", parentSec, null);
         newpe.peek().add(ipe);
@@ -348,8 +320,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentParaInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
-        if (i != null && !i.isEditable())
-            notEditable.add(i);
+
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, entry, PEType.PARA, currentView.peek(), "paragraph", parentSec, null);
         newpe.peek().add(ipe);
@@ -429,8 +400,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             i = currentTableInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
-        if (i != null && !i.isEditable())
-            notEditable.add(i);
+
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElement ipe = new PresentationElement(i, v.getObject(), PEType.TABLE, currentView.peek(), table.getTitle() != null ? table.getTitle() : "table", parentSec, null);
         newpe.peek().add(ipe);
@@ -466,8 +436,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
                 DocGen3Profile.queriesStereotype, 1, false, 1))
             addToElements(exposed);*/
         sibviews.peek().add(e.getID());
+        sibviewsElements.peek().add(e);
         JSONArray childViews = new JSONArray();
         sibviews.push(childViews);
+        sibviewsElements.push(new ArrayList<Element>());
         
       //for ems 2.2 reference tree
         currentView.push(e);
@@ -475,16 +447,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         newpe.push(viewChildren);
         view2pe.put(e, viewChildren);
         view2peOld.put(e, new ArrayList<PresentationElement>());
-        Expression ex = null;
-        Constraint c = findViewConstraint(e);
-        if (c != null && c.getSpecification() instanceof Expression)
-            ex = (Expression)c.getSpecification();
-        processCurrentInstances(ex, e, true);
-        if (c != null && !c.isEditable())
-            notEditable.add(c);
-        if (c == null && !e.isEditable())
-            notEditable.add(e);
-        if (c == null || currentInstanceList.peek().isEmpty()) { //new view, add view doc hack
+        
+        processCurrentInstances(e, e);
+        if (currentInstanceList.peek().isEmpty()) { //new view, add view doc hack
             PresentationElement hack = new PresentationElement(null, null, null, e, null, null, null);
             hack.setManual(true);
             hack.setViewDocHack(true);
@@ -508,6 +473,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (recurse && !doc)
         	specialization.put("childrenViews", sibviews.peek());
         view2view.put(e.getID(), sibviews.pop());
+        view2viewElements.put(e, sibviewsElements.pop());
         this.curContains.pop();
         
       //for ems 2.2 reference tree
@@ -530,6 +496,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentListInstances.pop();
         currentTableInstances.pop();
         currentInstanceList.pop();
+        currentUnusedInstances.pop();
     }
 
     protected void startSection(DBSection section) {
@@ -557,8 +524,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentInstanceList.peek().remove(sec);
             currentSectionInstances.peek().remove(sec);
         }
-        if (sec != null && !sec.isEditable())
-            notEditable.add(sec);
+
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         List<PresentationElement> secChildren = new ArrayList<PresentationElement>();
         PresentationElement pe = new PresentationElement(sec, newSection, PEType.SECTION, currentView.peek(), section.getTitle() != null ? section.getTitle() : "section", parentSec, secChildren);
@@ -566,11 +532,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         newpe.peek().add(pe);
         currentSection.push(pe);
         newpe.push(secChildren);
-        Expression e = null;
-        if (sec != null && sec.getSpecification() instanceof Expression)
-            e = (Expression)sec.getSpecification();
-        processCurrentInstances(e, currentView.peek(), false);
-        
+        processCurrentInstances(sec, currentView.peek());
         addManualInstances(false);
     }
     
@@ -589,6 +551,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentListInstances.pop();
         currentTableInstances.pop();
         currentInstanceList.pop();
+        currentUnusedInstances.pop();
     }
     
     @SuppressWarnings("unchecked")
@@ -629,6 +592,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         return view2view;
     }
     
+    public Map<Element, List<Element>> getHierarchyElements() {
+        return view2viewElements;
+    }
+    
     public JSONArray getNosections() {
         return noSections;
     }
@@ -648,75 +615,19 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     public Map<Element, List<PresentationElement>> getView2Unused() {
         return view2peOld;
     }
-    
-    private Constraint findViewConstraint(Element view) {
-        return Utils.getViewConstraint(view);
-    }
-    
-    public Set<Element> getNotEditable() {
-        return notEditable;
-    }
-    
-    private void processCurrentInstances(Expression e, Element view, boolean topLevel) {
-        List<InstanceSpecification> tables = new ArrayList<InstanceSpecification>();
-        List<InstanceSpecification> lists = new ArrayList<InstanceSpecification>();
-        List<InstanceSpecification> sections = new ArrayList<InstanceSpecification>();
-        List<InstanceSpecification> paras = new ArrayList<InstanceSpecification>();
-        List<InstanceSpecification> images = new ArrayList<InstanceSpecification>();
-        List<InstanceSpecification> manuals = new ArrayList<InstanceSpecification>();
-        List<InstanceSpecification> all = new ArrayList<InstanceSpecification>();
-        if (e != null) {
-            for (ValueSpecification vs: e.getOperand()) {
-                if (vs instanceof InstanceValue) {
-                    InstanceSpecification is = ((InstanceValue)vs).getInstance();
-                    if (is ==  null)
-                        continue;
-                    if (!is.getClassifier().isEmpty()) {
-                        List<Classifier> iscs = is.getClassifier();
-                        boolean viewinstance = false;
-                      if (iscs.contains(paraC) || iscs.contains(tableC) || iscs.contains(listC) || iscs.contains(imageC) || iscs.contains(sectionC)) {
-                        for (Element el: is.getOwnedElement()) {
-                            if (el instanceof Slot && ((Slot)el).getDefiningFeature().getName().equals("generatedFromView") &&
-                                    !((Slot)el).getValue().isEmpty() && ((Slot)el).getValue().get(0) instanceof ElementValue &&
-                                    ((ElementValue)((Slot)el).getValue().get(0)).getElement() == view)
-                                viewinstance = true;
-                        }
-                      }
-                        if ((iscs.contains(paraC) || iscs.contains(tparaC)) && topLevel && is.getSpecification() instanceof LiteralString) {
-                            try {
-                                JSONObject ob = (JSONObject)(new JSONParser()).parse(((LiteralString)is.getSpecification()).getValue());
-                                if (view.getID().equals(ob.get("source")) && "documentation".equals(ob.get("sourceProperty"))) {
-                                    viewinstance = false; //a view doc instance
-                                    viewDocHack = is;
-                                }
-                            } catch (Exception x) {}
-                        }
-                        if (viewinstance) {//instance generated by current view
-                            if (iscs.contains(paraC))
-                                paras.add(is);
-                            else if (iscs.contains(tableC))
-                                tables.add(is);
-                            else if (iscs.contains(listC))
-                                lists.add(is);
-                            else if (iscs.contains(imageC))
-                                images.add(is);
-                            else if (iscs.contains(sectionC))
-                                sections.add(is);
-                        } else {
-                            manuals.add(is);
-                        }
-                        all.add(is);
-                    }
-                }
-            }
-        }
-        currentInstanceList.push(all);
-        currentImageInstances.push(images);
-        currentTableInstances.push(tables);
-        currentParaInstances.push(paras);
-        currentListInstances.push(lists);
-        currentSectionInstances.push(sections);
-        currentManualInstances.push(manuals);
+
+    private void processCurrentInstances(Element viewOrSection, Element view) {
+        ViewInstanceInfo info = viu.getCurrentInstances(viewOrSection, view);
+        currentInstanceList.push(info.getAll());
+        currentImageInstances.push(info.getImages());
+        currentTableInstances.push(info.getTables());
+        currentParaInstances.push(info.getParas());
+        currentListInstances.push(info.getLists());
+        currentSectionInstances.push(info.getSections());
+        currentManualInstances.push(info.getManuals());
+        currentUnusedInstances.push(info.getUnused());
+        if (info.getViewDocHack() != null)
+            viewDocHack = info.getViewDocHack();
     }
     
     private InstanceSpecification findInstanceForSection(Element e) {
@@ -792,6 +703,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         }
         for (InstanceSpecification is: currentSectionInstances.peek()) {
             view2peOld.get(v).add(new PresentationElement(is, null, PEType.SECTION, v, is.getName(), null, null));
+        }
+        for (InstanceSpecification is: currentUnusedInstances.peek()) {
+            view2peOld.get(v).add(new PresentationElement(is, null, null, v, is.getName(), null, null));
         }
     }
 }

@@ -67,6 +67,7 @@ import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+@Deprecated
 public class ExportView extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element view;

@@ -62,7 +62,7 @@ lazy val genResourceDescriptor = TaskKey[File]("gen-resource-descriptor", "gener
 lazy val zipMdk = TaskKey[File]("zip-mdk", "zip up mdk plugin")
 
 // lib_patches package
-val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp5_lib_patches" % "1.6"
+val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp5_lib_patches" % "1.9"
 val lib_patches_packageA = Artifact(lib_patches_packageID.name, "zip", "zip")
 val lib_patches_package_zipID = lib_patches_packageID.artifacts(lib_patches_packageA)
 
@@ -120,7 +120,7 @@ lazy val plugin = (project in file("."))
       IO.copyDirectory(baseDirectory.value / "lib", zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "lib", true)
       
       val pluginxml = IO.read(baseDirectory.value / "src" / "main" / "resources" / "plugin.xml")
-      val towrite = pluginxml.replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1")).replaceAllLiterally("@release.version.human@", "2.3-" + githash) 
+      val towrite = pluginxml.replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1")).replaceAllLiterally("@release.version.human@", "2.3-SNAPSHOT-" + githash) 
       IO.write(zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "plugin.xml", towrite, append=false)
       //IO.copyFile(baseDirectory.value / "src" / "main" / "resources" / "plugin.xml", zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "plugin.xml", true)
       //get env var BUILD_NUMBER, GIT_COMMIT, JOB_NAME, BUILD_ID (date)
@@ -141,6 +141,7 @@ lazy val plugin = (project in file("."))
         val towrite = template.replaceAllLiterally("@installation@", content)
                               .replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1"))
                               .replaceAllLiterally("@release.date@", currentDate)
+                              .replaceAllLiterally("@release.version.human@", "2.3 SNAPSHOT")
         IO.write(zipfolder / "data" / "resourcemanager" / "MDR_Plugin_Docgen_91110_descriptor.xml", towrite, append=false)
         zipfolder
     },
