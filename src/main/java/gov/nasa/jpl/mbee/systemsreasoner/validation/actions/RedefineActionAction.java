@@ -3,13 +3,13 @@ package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -68,9 +68,8 @@ public class RedefineActionAction extends GenericRuleViolationAction {
 			if (redefinedElement == null) {
 				redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(re, act, false);
 				if (redefinedElement instanceof Namespace) {
-					for (final Element ne : new ArrayList<Element>(((Namespace) redefinedElement).getOwnedMember())) {
-						ne.dispose();
-					}
+					Collection<?> emptyCollection = new ArrayList<String>();
+					((Namespace) redefinedElement).getOwnedMember().retainAll(emptyCollection); 
 				}
 				redefinedElement.getRedefinedElement().add((RedefinableElement) re);
 				if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {
