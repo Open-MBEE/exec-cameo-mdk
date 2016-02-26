@@ -1,19 +1,5 @@
 package gov.nasa.jpl.mbee.systemsreasoner.validation;
 
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.AddInheritanceToAssociationAction;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.AspectRemedyAction;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.CreateSlotsAction;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.OpenSpecificationAction;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.RedefineAttributeAction;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.RenameElementAction;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.RetypeElementAction;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.SelectInContainmentTreeAction;
-import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.SetRedefinitionAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -22,7 +8,6 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
@@ -38,22 +23,36 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.AddInheritanceToAssociationAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.AspectRemedyAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.CreateSlotsAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.OpenSpecificationAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.RedefineAttributeAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.RenameElementAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.RetypeElementAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.SelectInContainmentTreeAction;
+import gov.nasa.jpl.mbee.systemsreasoner.validation.actions.SetRedefinitionAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
+
 public class SRValidationSuite extends ValidationSuite implements Runnable {
 
 	private static final String NAME = "SR Validate";
 	private List<Element> elements;
 
 	private static final ValidationRule generalMissingRule = new ValidationRule("Missing General", "General is missing in generalization", ViolationSeverity.ERROR),
-			generalNotClassRule = new ValidationRule("General Not Class", "General is not of type class", ViolationSeverity.ERROR), attributeMissingRule = new ValidationRule(
-					"Missing Owned Attribute", "Owned attribute is missing", ViolationSeverity.ERROR), aspectMissingRule = new ValidationRule("Missing Defined Aspect",
-					"An aspect is defined but not realized", ViolationSeverity.ERROR), nameRule = new ValidationRule("Naming Inconsistency", "Names are inconsistent",
-					ViolationSeverity.WARNING),
+			generalNotClassRule = new ValidationRule("General Not Class", "General is not of type class", ViolationSeverity.ERROR),
+			attributeMissingRule = new ValidationRule("Missing Owned Attribute", "Owned attribute is missing", ViolationSeverity.ERROR),
+			aspectMissingRule = new ValidationRule("Missing Defined Aspect", "An aspect is defined but not realized", ViolationSeverity.ERROR),
+			nameRule = new ValidationRule("Naming Inconsistency", "Names are inconsistent", ViolationSeverity.WARNING),
 			attributeTypeRule = new ValidationRule("Attribute Type Inconsistency", "Attribute types are inconsistent", ViolationSeverity.WARNING),
 			generalSpecificNameRule = new ValidationRule("General Specific Name Inconsistency", "General and specific names are inconsistent", ViolationSeverity.INFO),
 			// orphanAttributeRule = new ValidationRule("Potential Orphan", "First degree attribute is never redefined", ViolationSeverity.WARNING);
 			instanceClassifierExistenceRule = new ValidationRule("Instance Classifier Unspecified", "Instance classifier is not specified", ViolationSeverity.ERROR),
-			missingSlotsRule = new ValidationRule("Missing Slot(s) Detected", "Missing slot(s) detected", ViolationSeverity.ERROR), associationInheritanceRule = new ValidationRule(
-					"Association inheritance missing.", "The association of the specialized element does not inherit from its general counterpart.", ViolationSeverity.ERROR);
+			missingSlotsRule = new ValidationRule("Missing Slot(s) Detected", "Missing slot(s) detected", ViolationSeverity.ERROR),
+			associationInheritanceRule = new ValidationRule("Association inheritance missing.", "The association of the specialized element does not inherit from its general counterpart.", ViolationSeverity.ERROR);
 
 	{
 		this.addValidationRule(generalMissingRule);
@@ -67,12 +66,6 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 		this.addValidationRule(instanceClassifierExistenceRule);
 		this.addValidationRule(missingSlotsRule);
 		this.addValidationRule(associationInheritanceRule);
-	}
-
-	public SRValidationSuite(final Element element) {
-	    super(NAME);
-	    this.elements = new ArrayList<Element>();
-	    this.elements.add(element);
 	}
 
 	public SRValidationSuite(final List<Element> elements) {
@@ -105,17 +98,18 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 						iterator.previous();
 					}
 				}
+				checkForAspects(classifier, classifier);
+
 				for (final Classifier general : classifier.getGeneral()) {
 
 					// Inheritance on Associations Rule
-					assocRule : for (Element child : classifier.getOwnedElement()) {
+					assocRule: for (Element child : classifier.getOwnedElement()) {
 						if (child instanceof Property) {
 							Type partType = ((Property) child).getType();
 							for (Element superChild : general.getOwnedElement()) {
 								if (superChild instanceof Property) {
 									Type superPartType = ((Property) superChild).getType();
-									final ValidationRuleViolation v = new ValidationRuleViolation(classifier, associationInheritanceRule.getDescription() + ": [GENERAL] "
-											+ general.getName() + " - [SPECIFIC] " + classifier.getName());
+									final ValidationRuleViolation v = new ValidationRuleViolation(classifier, associationInheritanceRule.getDescription() + ": [GENERAL] " + general.getName() + " - [SPECIFIC] " + classifier.getName());
 									if (partType != null) {
 										if (partType.equals(superPartType)) {
 											if (hasAnAssociation(superChild)) {
@@ -142,44 +136,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 							}
 						}
 					}
-					/**
-					 * Check for aspect structures:
-					 */
-					for (Dependency d : general.getClientDependency()) {
-						boolean aspectFound = false;
-						Classifier aspect = null;
-						Stereotype s = StereotypesHelper.getAppliedStereotypeByString(d, "aspect");
-						if (s != null) {
-							for (Element el : d.getTarget()) {
-								if (el instanceof Classifier) {
-									aspect = (Classifier) el;
-									for (Element q : classifier.getOwnedElement()) {
-										if (q instanceof Property) {
-											Type t = ((TypedElement) q).getType();
-											if (t instanceof Classifier) {
-												if (((Classifier) t).getGeneral().contains(el)) {
-													aspectFound = true;
-												}
-											}
-										} else if (q instanceof CallBehaviorAction) {
-											Behavior b = ((CallBehaviorAction) q).getBehavior();
-											if (b.getGeneral().contains(el)) {
-												aspectFound = true;
-											}
-										}
-									}
-								}
-							}
-							if (!aspectFound) {
-								if (aspect != null) {
-									final ValidationRuleViolation v = new ValidationRuleViolation(classifier, aspectMissingRule.getDescription() + ": [CLASS WITH ASPECT] "
-											+ classifier.getName() + " - [ASPECT] " + aspect.getName());
-									v.addAction(new AspectRemedyAction(classifier, aspect));
-									aspectMissingRule.addViolation(v);
-								}
-							}
-						}
-					}
+					checkForAspects(classifier, general);
 				}
 
 				for (final NamedElement ne : classifier.getInheritedMember()) {
@@ -199,33 +156,34 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 						if (redefingEl == null) {
 							boolean redefinedInContext = false;
 							for (final NamedElement ne2 : classifier.getInheritedMember()) {
-								if (ne2 instanceof RedefinableElement && ne2 instanceof RedefinableElement
-										&& doesEventuallyRedefine((RedefinableElement) ne2, (RedefinableElement) redefEl)) {
+								if (ne2 instanceof RedefinableElement && ne2 instanceof RedefinableElement && doesEventuallyRedefine((RedefinableElement) ne2, (RedefinableElement) redefEl)) {
 									redefinedInContext = true;
 									break;
 								}
 							}
 							if (!redefinedInContext) {
-								final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (redefEl instanceof TypedElement
-										&& ((TypedElement) redefEl).getType() != null ? "[TYPED] " : "")
-										+ attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName());
+								final ValidationRuleViolation v = new ValidationRuleViolation(classifier,
+										(redefEl instanceof TypedElement && ((TypedElement) redefEl).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName());
 								for (final Property p : classifier.getAttribute()) {
 									if (p.getName().equals(redefEl.getName()) && !p.hasRedefinedElement()) {
 										v.addAction(new SetRedefinitionAction(p, redefEl, "Redefine by Name Collision"));
 									}
 								}
-								v.addAction(new RedefineAttributeAction(classifier, redefEl));
-								if (redefEl instanceof TypedElement && ((TypedElement) redefEl).getType() != null) {
-									// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
-									// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
-									v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively"));
+								if (ne instanceof Property) {
+									if (!((Property) ne).isComposite()) {
+										v.addAction(new RedefineAttributeAction(classifier, redefEl));
+									}
+									if (redefEl instanceof TypedElement && ((TypedElement) redefEl).getType() != null) {
+										// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
+										// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
+										v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively"));
+									}
 								}
 								attributeMissingRule.addViolation(v);
 							}
 						} else {
 							if ((redefingEl.getName() == null && redefEl.getName() != null) || (redefingEl.getName() != null && !redefingEl.getName().equals(redefEl.getName()))) {
-								final ValidationRuleViolation v = new ValidationRuleViolation(redefingEl, nameRule.getDescription() + ": [GENERAL] " + redefEl.getName()
-										+ " - [SPECIFIC] " + redefingEl.getName());
+								final ValidationRuleViolation v = new ValidationRuleViolation(redefingEl, nameRule.getDescription() + ": [GENERAL] " + redefEl.getName() + " - [SPECIFIC] " + redefingEl.getName());
 								v.addAction(new RenameElementAction(redefEl, redefingEl, "Update Specific"));
 								v.addAction(new RenameElementAction(redefingEl, redefEl, "Update General"));
 								nameRule.addViolation(v);
@@ -234,17 +192,15 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 								final TypedElement redefingTypdEl = (TypedElement) redefingEl;
 								final TypedElement redefableTypdEl = (TypedElement) redefEl;
 
-								if ((redefingTypdEl.getType() == null && redefableTypdEl.getType() != null)
-										|| (redefingTypdEl.getType() != null && redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier && !doesEventuallyGeneralizeTo(
-												(Classifier) redefingTypdEl.getType(), (Classifier) redefableTypdEl.getType()))) {
-									if (redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier
-											&& ((Classifier) redefingTypdEl.getType()).getGeneral().contains(redefableTypdEl.getType())) {
+								if ((redefingTypdEl.getType() == null && redefableTypdEl.getType() != null) || (redefingTypdEl.getType() != null && redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier
+										&& !doesEventuallyGeneralizeTo((Classifier) redefingTypdEl.getType(), (Classifier) redefableTypdEl.getType()))) {
+									if (redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier && ((Classifier) redefingTypdEl.getType()).getGeneral().contains(redefableTypdEl.getType())) {
 										iterator.add(((Classifier) redefingTypdEl.getType()));
 										iterator.previous();
 									} else {
-										final ValidationRuleViolation v = new ValidationRuleViolation(redefingTypdEl, attributeTypeRule.getDescription() + ": [GENERAL] "
-												+ (redefableTypdEl.getType() != null ? redefableTypdEl.getType().getQualifiedName() : "null") + " - [SPECIFIC] "
-												+ (redefingTypdEl.getType() != null ? redefingTypdEl.getType().getQualifiedName() : "null"));
+										final ValidationRuleViolation v = new ValidationRuleViolation(redefingTypdEl,
+												attributeTypeRule.getDescription() + ": [GENERAL] " + (redefableTypdEl.getType() != null ? redefableTypdEl.getType().getQualifiedName() : "null") + " - [SPECIFIC] "
+														+ (redefingTypdEl.getType() != null ? redefingTypdEl.getType().getQualifiedName() : "null"));
 										v.addAction(new RetypeElementAction(redefableTypdEl, redefingTypdEl, "Update Specific"));
 										v.addAction(new RetypeElementAction(redefingTypdEl, redefableTypdEl, "Update General"));
 										attributeTypeRule.addViolation(v);
@@ -304,31 +260,68 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 							}
 						}
 					}
-					final ValidationRuleViolation v = new ValidationRuleViolation(instance, (!instance.hasSlot()
-							? missingSlotsRule.getDescription().replaceFirst("Missing", "No")
-							: missingSlotsRule.getDescription()) + suffix);
+					final ValidationRuleViolation v = new ValidationRuleViolation(instance, (!instance.hasSlot() ? missingSlotsRule.getDescription().replaceFirst("Missing", "No") : missingSlotsRule.getDescription()) + suffix);
 					v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, false, false, false, "Create Missing Slots"), "Systems Reasoner"));
 					v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, false, false, true, "Recreate Slots"), "Systems Reasoner"));
-					v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, false, true, true, "Delete Child Instances & Recreate Slots"),
-							"Systems Reasoner"));
+					v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, false, true, true, "Delete Child Instances & Recreate Slots"), "Systems Reasoner"));
 
 					v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, true, false, false, "[R] Create Missing Slots"), "Systems Reasoner"));
 					v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, true, false, true, "[R] Recreate Slots"), "Systems Reasoner"));
-					v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, true, true, true, "[R] Delete Child Instances & Recreate Slots"),
-							"Systems Reasoner"));
+					v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, true, true, true, "[R] Delete Child Instances & Recreate Slots"), "Systems Reasoner"));
 					missingSlotsRule.addViolation(v);
 				}
 			}
 		}
 	}
+
+	private void checkForAspects(final Classifier classifier, final Classifier general) {
+		/**
+		 * Check for aspect structures:
+		 */
+		for (Dependency d : general.getClientDependency()) {
+			boolean aspectFound = false;
+			Classifier aspect = null;
+			Stereotype s = StereotypesHelper.getAppliedStereotypeByString(d, "aspect");
+			if (s != null) {
+				for (Element el : d.getTarget()) {
+					if (el instanceof Classifier) {
+						aspect = (Classifier) el;
+						for (Element ownedElement : classifier.getOwnedElement()) {
+							if (ownedElement instanceof Property) {
+								Type type = ((TypedElement) ownedElement).getType();
+								if (type instanceof Classifier) {
+									if ((hasInheritanceFromTo((Classifier) type, aspect))) {
+										aspectFound = true;
+									}
+								}
+							} else if (ownedElement instanceof CallBehaviorAction) {
+								Behavior b = ((CallBehaviorAction) ownedElement).getBehavior();
+								if (b.getGeneral().contains(el)) {
+									aspectFound = true;
+								}
+							}
+						}
+					}
+				}
+				if (!aspectFound) {
+					if (aspect != null) {
+						final ValidationRuleViolation v = new ValidationRuleViolation(classifier, aspectMissingRule.getDescription() + ": [CLASS WITH ASPECT] " + classifier.getName() + " - [ASPECT] " + aspect.getName());
+						v.addAction(new AspectRemedyAction(classifier, aspect));
+						aspectMissingRule.addViolation(v);
+					}
+				}
+			}
+		}
+	}
+
 	private boolean hasAnAssociation(Element superChild) {
 		return ((Property) superChild).getAssociation() != null;
 
 	}
 
-	private boolean hasInheritanceFromTo(Association association, Association superAssociation) {
-		if (association != null) {
-			if (ModelHelper.getGeneralClassifiersRecursivelly(association).contains(superAssociation)) {
+	private boolean hasInheritanceFromTo(Classifier classifier, Classifier general) {
+		if (classifier != null) {
+			if (ModelHelper.getGeneralClassifiersRecursivelly(classifier).contains(general)) {
 				return true;
 			} else {
 				return false;
@@ -336,8 +329,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 		} else {
 			return false;
 		}
-
 	}
+
 	public static boolean doesEventuallyRedefine(final RedefinableElement source, final RedefinableElement target) {
 		if (source.getRedefinedElement().contains(target)) {
 			return true;
