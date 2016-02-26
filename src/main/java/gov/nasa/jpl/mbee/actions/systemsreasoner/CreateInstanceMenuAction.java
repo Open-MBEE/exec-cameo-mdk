@@ -53,6 +53,7 @@ public class CreateInstanceMenuAction extends SRAction {
 				SessionManager.getInstance().createSession(actionid);
 				final InstanceSpecification instance = CreateInstanceAction.createInstance(classifier, (Namespace) dlg.getSelectedElement(), false);
 				SessionManager.getInstance().closeSession();
+				
 				ValidateAction.validate(instance);
 			}
 		}

@@ -38,12 +38,7 @@ public class Instance2BSTAction extends SRAction {
 	public static final String actionid = "Convert Instance to BST";
 	public List<InstanceSpecification> instances;
 	
-	public Instance2BSTAction(InstanceSpecification instance) {
-	    super(actionid);
-		this.instances = new ArrayList<InstanceSpecification>();
-		this.instances.add(instance);
-	}
-	
+
 	public Instance2BSTAction(List<InstanceSpecification> instances) {
 		super(actionid);
 		this.instances = instances;
@@ -76,10 +71,10 @@ public class Instance2BSTAction extends SRAction {
 		
 		final Classifier classifier = instance.getClassifier().get(0);
 		final Classifier specific  = (Classifier) CopyPasting.copyPasteElement(classifier, instance.getOwner(), true);
-		for (final Generalization generalization : new ArrayList<Generalization>(specific.getGeneralization())) {
+		for (final Generalization generalization : specific.getGeneralization()) {
 			generalization.dispose();
 		}
-		for (final NamedElement ne : new ArrayList<NamedElement>(specific.getOwnedMember())) {
+		for (final NamedElement ne : specific.getOwnedMember()) {
 			ne.dispose();
 		}
 		

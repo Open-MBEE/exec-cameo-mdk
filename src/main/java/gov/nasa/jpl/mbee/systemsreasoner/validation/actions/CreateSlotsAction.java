@@ -95,10 +95,9 @@ public class CreateSlotsAction extends GenericRuleViolationAction {
 					for (final InstanceSpecification is : getChildInstancesRecursively(slot)) {
 						is.dispose();
 					}
-				}
-				//slot.dispose();
+				} 
 			}
-			for (final Slot slot : new ArrayList<Slot>(instance.getSlot())) {
+			for (final Slot slot : instance.getSlot()) {
 				slot.dispose();
 			}
 		}
