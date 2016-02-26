@@ -43,7 +43,7 @@ public class JSONUtils {
 		} else if (dirtyMod instanceof JSONArray && dirtyWeb instanceof JSONArray) {
 			return compareJSONArray((JSONArray) dirtyMod, (JSONArray) dirtyWeb);
 		} else {
-			return false;
+			return dirtyMod.equals(dirtyWeb);
 		}
 	}
 
@@ -54,29 +54,16 @@ public class JSONUtils {
 	 * @param dirtyWeb a particular element json (not sanitized)
 	 * @return boolean if web and model are equivalent
 	 */
-	private static boolean compareJSONObject(JSONObject dirtyMod, JSONObject dirtyWeb) {		
-		JSONObject mod = sanitizeJSONObject(dirtyMod);
-		JSONObject web = sanitizeJSONObject(dirtyWeb);
-
-		// checking the keys is easy
-		if (!(mod.keySet().equals(web.keySet()))) return false;
-
+	private static boolean compareJSONObject(JSONObject mod, JSONObject web) {		
 		Set<Object> keys = mod.keySet();
-
+		keys.addAll(web.keySet());
 		// checking the values is more involved
 		for (Object key : keys) {
 			Object modVal = mod.get(key);
 			Object webVal = web.get(key);
-			if (!(modVal.getClass().equals(webVal.getClass()))) return false;
-			if (modVal instanceof JSONObject && webVal instanceof JSONObject) {
-				if (!compareJSONObject((JSONObject) modVal, (JSONObject) webVal)) return false;
-			} else if (modVal instanceof JSONArray && webVal instanceof JSONArray) {
-				if (!compareJSONArray((JSONArray) modVal, (JSONArray) webVal)) return false;
-			} else {
-				if (!modVal.equals(webVal)) return false;
-			}
+			if (!compare(modVal, webVal)) 
+				return false;
 		}
-
 		return true;
 	}
 
@@ -89,25 +76,20 @@ public class JSONUtils {
 	 * @param dirtyWeb a particular element json (not sanitized)
 	 * @return boolean if web and model are equivalent
 	 */
-	private static boolean compareJSONArray(JSONArray dirtyMod, JSONArray dirtyWeb) {		
-		JSONArray mod = sanitizeJSONArray(dirtyMod);
-		JSONArray web = sanitizeJSONArray(dirtyWeb);
+	private static boolean compareJSONArray(JSONArray mod, JSONArray web) {		
+		//JSONArray mod = sanitizeJSONArray(dirtyMod);
+		//JSONArray web = sanitizeJSONArray(dirtyWeb);
 		
-		if (mod.size() != web.size()) return false;
+		if (mod.size() != web.size()) 
+			return false;
 		if (mod.equals(web)) return true;
 
-		for (Object modItem: mod) {
-			int ind = mod.indexOf(modItem);
-			Object webItem = web.get(ind);
-			if (modItem instanceof JSONArray && webItem instanceof JSONArray) {
-				if (!(compareJSONArray((JSONArray) modItem, (JSONArray) webItem))) return false;
-			} else if (modItem instanceof JSONObject && webItem instanceof JSONObject) {
-				if (!(compareJSONObject((JSONObject) modItem, (JSONObject) webItem))) return false;
-			} else {
-				if (!modItem.equals(webItem)) return false;
-			}
+		for (int i = 0; i < mod.size(); i++) {
+			Object modItem = mod.get(i);
+			Object webItem = web.get(i);
+			if (!compare(modItem, webItem))
+				return false;
 		}
-		
 		return true;
 	}
 
