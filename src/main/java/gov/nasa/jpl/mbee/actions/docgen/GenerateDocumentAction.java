@@ -56,10 +56,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 public class GenerateDocumentAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element            doc;
+    private Element doc;
     public static final String actionid = "GenerateDocument";
-    private static GUILog gl = Application.getInstance().getGUILog();
-
 
     public GenerateDocumentAction(Element e) {
         super(actionid, "Generate DocGen 3 Document", null, null);
@@ -68,6 +66,7 @@ public class GenerateDocumentAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+    	GUILog gl = Application.getInstance().getGUILog();
     	try {
     		File savefile = fileSelect();
             if (savefile != null) {
@@ -83,10 +82,7 @@ public class GenerateDocumentAction extends MDAction {
     }
     
     private File fileSelect() {
-    	// DELETE THESE LINES
-    	File ref = new File("/Users/brower/git/ems-rci/mdk/reference");
-    	//
-        JFileChooser choose = new JFileChooser(ref); // change back to null
+        JFileChooser choose = new JFileChooser();
         choose.setDialogTitle("Save to output xml...");
         int retval = choose.showSaveDialog(null);
         if (retval == JFileChooser.APPROVE_OPTION)
@@ -96,18 +92,15 @@ public class GenerateDocumentAction extends MDAction {
     
     public void generate(File savefile) {
         DocumentValidator dv = new DocumentValidator(doc);
-
     	dv.validateDocument();
         if (dv.isFatal()) {
             dv.printErrors();
             return;
         }
-        
         DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
         Document dge = dg.parseDocument();
         boolean genNewImage = dge.getGenNewImage();
         (new PostProcessor()).process(dge);
-        
         String userName = savefile.getName();
 		String filename = userName;
 		if (userName.length() < 4 || !userName.endsWith(".xml"))
