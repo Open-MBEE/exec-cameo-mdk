@@ -749,53 +749,33 @@ public class ExportUtility {
         return response;
     }
 
+    // helper method for long for get() method. will trigger a login dialogue    
     public static String get(String url) throws ServerException {
-        return get(url, true);
-    }
-
-    public static String get(String url,String username, String password) throws ServerException {
-        if (url == null)
-            return null;
-        GetMethod gm = new GetMethod(url);
-        try {
-            HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url, gm,username,password);
-            //Application.getInstance().getGUILog().log("[INFO] Getting...");
-            //Application.getInstance().getGUILog().log("url=" + url);
-            log.info("get: " + url);
-            int code = client.executeMethod(gm);
-            String json = gm.getResponseBodyAsString();
-            log.info("get response: " + code + " " + json);
-            if (showErrors(code, json, true)) {
-                throw new ServerException(json, code);
-            }
-            if (code == 400)
-                throw new ServerException(json, code); //?
-            //Application.getInstance().getGUILog().log("[INFO] Successful...");
-            return json;
-        } catch (HttpException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IOException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IllegalArgumentException ex) {
-        		Utils.showPopupMessage("URL is malformed");
-        		Utils.printException(ex);
-        		throw new ServerException("", 500);
-        } finally {
-            gm.releaseConnection();
-        }
+        return get(url, "", "", true);
     }
     
+    // helper method for long for get() method. will trigger a login dialogue
     public static String get(String url, boolean showPopupErrors) throws ServerException {
+    	return get(url, "", "", showPopupErrors);
+    }
+    
+    // helper method for long for get() method. will bypass the login dialogue if username is not ""
+    public static String get(String url, String username, String password) throws ServerException {
+    	return get(url, username, password, true);
+    }
+    
+    // long form get method allowing option of bypassing the login dialog if username is not ""
+    public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url, gm);
+            if (username.equals(""))
+            	ViewEditUtils.setCredentials(client, url, gm);
+            else
+            	ViewEditUtils.setCredentials(client, url, gm, username, password);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             if (print)
@@ -826,8 +806,6 @@ public class ExportUtility {
         }
     }
     
-    
-
     //check if comment is actually the documentation of its owner
     public static boolean isElementDocumentation(Comment c) {
         if (c.getAnnotatedElement().size() > 1

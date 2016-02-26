@@ -200,35 +200,22 @@ public class ViewEditUtils {
     }
     
     /**
-     * Sets credentials for the client based on the actual URL string
+     * Sets credentials for the client based on the actual URL string and supplied strings.
+     * Intended to bypass the confirmDialog generated in the primary method
      * 
      * @param client
      * @param urlstring
+     * @param method
      * @param username
      * @param password
      */
-    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method,String username,String password) {
-        try {
-            URL url = new URL(urlstring);
-
-            if (!passwordSet) 
-            {
-                setUsernameAndPassword(username ,password, true);
-            }
-
-            Credentials creds = new UsernamePasswordCredentials(username, password);
-            client.getState().setCredentials(
-                    new AuthScope(url.getHost(), url.getPort(), AuthScope.ANY_REALM), creds);
-            client.setTimeout(0);
-            client.setConnectionTimeout(0);
-            client.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
-                    new DefaultHttpMethodRetryHandler(0, false));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method, String username, String password) {
+        if (!passwordSet) 
+        {
+        	// setting the password here will cause us to skip the confirmDialog in the main setCredentials method
+            setUsernameAndPassword(username ,password, true);
         }
-
-        // proxy cache needs Authorization header
-        method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
+        setCredentials(client, urlstring, method);
     }
     
     private static void makeSureUserGetsFocus(final JTextField user) {

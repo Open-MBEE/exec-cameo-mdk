@@ -54,28 +54,15 @@ public class EMSLoginAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewEditUtils.clearUsernameAndPassword();
-        if (Application.getInstance().getProject() == null) {
-            Utils.showPopupMessage("You need to have a project open first!");
-            return;
-        }
-        String url = ExportUtility.getUrl();
-        if (url == null)
-            return;
-        String response = null;
-        try {
-            response = ExportUtility.get(url + "/checklogin");
-        } catch (ServerException ex) {}
-        if (response ==  null)
-            return;
-        Application.getInstance().getGUILog().log("Logged in");
+        // passing in "" as the username will trigger the login dialogue popup
+    	loginAction("", "");
         this.setEnabled(false);
         this.updateState();
         logout.setEnabled(true);
         logout.updateState(); //doesn't work
     }
     
-    public boolean login(String username, String password)
+    public boolean loginAction(String username, String password)
     {
         ViewEditUtils.clearUsernameAndPassword();
         if (Application.getInstance().getProject() == null) {
@@ -87,7 +74,7 @@ public class EMSLoginAction extends MDAction {
             return false;
         String response = null;
         try {
-            response = ExportUtility.get(url + "/checklogin",username,password);
+            response = ExportUtility.get(url + "/checklogin", username, password);
         } catch (ServerException ex) {}
         if (response ==  null)
             return false;
