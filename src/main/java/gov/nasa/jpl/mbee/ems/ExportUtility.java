@@ -751,20 +751,20 @@ public class ExportUtility {
 
     // helper method for long for get() method. will trigger a login dialogue    
     public static String get(String url) throws ServerException {
-        return get(url, "", "", true);
+        return get(url, null, null, true);
     }
     
     // helper method for long for get() method. will trigger a login dialogue
     public static String get(String url, boolean showPopupErrors) throws ServerException {
-    	return get(url, "", "", showPopupErrors);
+    	return get(url, null, null, showPopupErrors);
     }
     
-    // helper method for long for get() method. will bypass the login dialogue if username is not ""
+    // helper method for long for get() method. will bypass the login dialogue if username is not null or empty ""
     public static String get(String url, String username, String password) throws ServerException {
     	return get(url, username, password, true);
     }
     
-    // long form get method allowing option of bypassing the login dialog if username is not ""
+    // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
     public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
@@ -772,7 +772,7 @@ public class ExportUtility {
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
-            if (username.equals(""))
+            if (username == null || username.equals(""))
             	ViewEditUtils.setCredentials(client, url, gm);
             else
             	ViewEditUtils.setCredentials(client, url, gm, username, password);
