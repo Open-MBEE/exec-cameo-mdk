@@ -55,8 +55,9 @@ public class JSONUtils {
 	 * @return boolean if web and model are equivalent
 	 */
 	private static boolean compareJSONObject(JSONObject mod, JSONObject web) {		
-		Set<Object> keys = mod.keySet();
-		keys.addAll(web.keySet());
+		Set<String> keys = new HashSet<String>();
+		keys.addAll((Set<String>)mod.keySet());
+		keys.addAll((Set<String>)web.keySet());
 		// checking the values is more involved
 		for (Object key : keys) {
 			Object modVal = mod.get(key);
