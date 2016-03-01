@@ -228,7 +228,7 @@ public class ImportUtility {
                 setViewConstraint(newE, specialization);
             } else if (elementType.equalsIgnoreCase("Association")) {
                 if (newE == null) {
-                    AssociationClass ac = ef.createAssociationClassInstance();
+                    Association ac = ef.createAssociationInstance();
                     newE = ac;
                 }
                 try {
