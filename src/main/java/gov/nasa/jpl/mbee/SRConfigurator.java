@@ -4,8 +4,7 @@ import gov.nasa.jpl.mbee.actions.systemsreasoner.AspectAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateOntoBehaviorBlocks;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.DespecifyAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
+ import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
 
@@ -33,11 +32,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
 	public static final String NAME = "Systems Reasoner";
 
-	private SRAction validateAction = null, specAction = null, despecAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null,
+	private SRAction validateAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null,
 			createInstanceMenuAction = null, aspectAction;
-
-	private AspectAction mySecondAction;
-
+ 
 	@Override
 	public int getPriority() {
 		return 0; // medium
@@ -67,11 +64,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
 	protected void configure(ActionsManager manager, List<Element> elements) {
 		// refresh the actions for every new click (or selection)
-		validateAction = null;
-		specAction = null;
-		despecAction = null;
-		// copyAction = null;
-		ontoBehaviorAction = null;
+		validateAction = null; 
+ 		ontoBehaviorAction = null;
 		createSpecificAction = null;
 		createInstanceMenuAction = null;
 		instance2BSTAction = null;
@@ -99,24 +93,17 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		manager.addCategory(0, category);
 
 		category.addAction(validateAction);
-		// category.addAction(specAction); Taking this one out because all it does is create an inheritance relation ship. This can be done easily through existing means.
-		if (elements.size() < 2) {
+ 		if (elements.size() < 2) {
 			if (elements.get(0) instanceof Behavior) {
 				category.addAction(ontoBehaviorAction);
 			}
 		}
-		category.addAction(despecAction);
-		// category.addAction(copyAction);
-		category.addAction(createSpecificAction);
+ 		category.addAction(createSpecificAction);
 		category.addAction(createInstanceMenuAction);
 		category.addAction(instance2BSTAction);
 		category.addAction(aspectAction);
-		category.addAction(mySecondAction);
-		// System.out.println("Instance2BST: " + instance2BSTAction.getClass().getCanonicalName());
-
-		// Clear out the category of unused actions
-	//	final List<NMAction> clonedActions = Lists.newArrayList(category.getActions());
-		category.getActions().clear();
+ 	 
+	 	category.getActions().clear();
   		category.setUseActionForDisable(true);
  		if (category.isEmpty()) {
 			final MDAction mda = new MDAction(null, null, null, "null");
@@ -127,9 +114,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 	}
 
 	public ActionsCategory handleMultipleNodes(ActionsCategory category, ActionsManager manager, List<Element> elements) {
-		// final List<Element> validatableElements = new ArrayList<Element>();
-		// boolean hasClassifier = false, hasInstance = false;
-		final List<Classifier> classifiers = new ArrayList<Classifier>();
+	 	final List<Classifier> classifiers = new ArrayList<Classifier>();
 		final List<InstanceSpecification> instances = new ArrayList<InstanceSpecification>();
 		final List<Element> validatableElements = new ArrayList<Element>();
 		boolean hasUneditable = false;
@@ -142,8 +127,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 				} else if (element instanceof InstanceSpecification) {
 					instances.add((InstanceSpecification) element);
 					validatableElements.add(element);
-				}
-
+				} 
 				if (!hasUneditable && !element.isEditable()) {
 					hasUneditable = true;
 				}
@@ -156,30 +140,11 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 			return null;
 		} 
 		// otherwise, add the classes to the ValidateAction action
-		validateAction = new ValidateAction(validatableElements);
-
-		// add the action to the actions category
-		category.addAction(validateAction);
-
+		validateAction = new ValidateAction(validatableElements);  
+		category.addAction(validateAction); 
 		if (!classifiers.isEmpty()) {  
-			despecAction = new DespecifyAction(classifiers);
-			if (hasUneditable) {
-				despecAction.disable("Not Editable");
-			}
-
-			boolean hasGeneralization = false;
-			for (final Classifier classifier : classifiers) {
-				if (!classifier.getGeneralization().isEmpty()) {
-					hasGeneralization = true;
-					break;
-				}
-			}
-			if (!hasGeneralization) {
-				despecAction.disable("No Generalizations");
-			}
 			aspectAction = new AspectAction(classifiers);
-		}
-
+		} 
 		if (!instances.isEmpty()) {
 			instance2BSTAction = new Instance2BSTAction(instances);
 		}
@@ -189,31 +154,14 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
 	public ActionsCategory handleSingleNode(ActionsCategory category, ActionsManager manager, Element element) {
 		if (element == null)
-			return null;
-
-		// copyAction = new CopyAction(target);
-
-		// check target instanceof
-		/*
-		 * if (target instanceof Activity) { Activity active = (Activity) target; copyAction = new CopyAction(active); }
-		 */
+			return null; 
 		if (element instanceof Classifier) {
 			final Classifier classifier = (Classifier) element;
-			validateAction = new ValidateAction(classifier);
-			// specAction = new SpecifyAction(classifier);
-			despecAction = new DespecifyAction(classifier);
-			if (!element.isEditable()) {
-		//		specAction.disable("Locked");
-				despecAction.disable("Locked");
-			}
-			// copyAction = new CopyAction(clazz);
-			ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
+			validateAction = new ValidateAction(classifier); 
+	 		ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
 			createSpecificAction = new CreateSpecificAction(classifier, false);
 			createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
-			aspectAction = new AspectAction(classifier);
-			if (despecAction != null && classifier.getGeneralization().isEmpty()) {
-				despecAction.disable("No Generalizations");
-			}
+			aspectAction = new AspectAction(classifier); 
 			if (classifier instanceof Behavior) {
 
 			}
@@ -225,11 +173,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 			instance2BSTAction = new Instance2BSTAction(insts);
 		} else {
 			return null;
-		}
-		/*
-		 * if (target instanceof Classifier) { Classifier clazzifier = (Classifier) target; copyAction = new CopyAction(clazzifier); }
-		 */
-
+		} 
 		return category;
 	}
 

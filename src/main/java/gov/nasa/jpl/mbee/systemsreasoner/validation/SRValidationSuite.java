@@ -139,8 +139,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 					checkForAspects(classifier, general);
 				}
 
-				for (final NamedElement ne : classifier.getInheritedMember()) {
-					if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
+				for (final NamedElement ne : classifier.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?  
+					if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
 						final RedefinableElement redefEl = (RedefinableElement) ne;
 						RedefinableElement redefingEl = null;
 

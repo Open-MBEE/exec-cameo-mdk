@@ -2491,11 +2491,11 @@ public class Utils {
         g.setOwner(child);
     }
 
-    private static void setOwnerPackage(Element child, Element parent) {
-        Element realParent = parent;
-        while (!(parent instanceof Package))
-            realParent = parent.getOwner();
-        child.setOwner(realParent);
+    private static void setOwnerPackage(Element child, Element parent) { 
+        while (!(parent instanceof Package)){
+        	parent = parent.getOwner();
+        }
+        child.setOwner(parent);
     }
     
     public static void createDependency(Element from, Element to) {
