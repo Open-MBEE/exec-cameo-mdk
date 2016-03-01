@@ -2278,8 +2278,9 @@ public class Utils {
         JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
     }
 
-    public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons) {
-        int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
+    public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons, boolean includeCancel) {
+    	int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
+        int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", option, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
             return true;
         else if (res == JOptionPane.NO_OPTION)
@@ -3640,10 +3641,10 @@ public class Utils {
         } catch (Exception ex) {
             
         }
-        String[] buttons = {"Continue (May trigger update)", "Cancel, I will update from teamwork first","Cancel"};
-        Boolean reply = Utils.getUserYesNoAnswerWithButton("It's highly recommended that you update from teamwork first, \n"
-                + "and commit to teamwork immediately afterwards.\n "
-                + "This action may autolock elements and trigger an update. Do you want to continue?", buttons);
+        String[] buttons = {"Continue (May trigger update)", "Cancel"};
+        Boolean reply = Utils.getUserYesNoAnswerWithButton("There's a new project version available on teamwork.\nIt's highly recommended that you update from teamwork first,\n"
+                + "and commit to teamwork immediately after this action.\n"
+                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?", buttons, false);
         if (reply == null || !reply)
             return false;
         return true;
