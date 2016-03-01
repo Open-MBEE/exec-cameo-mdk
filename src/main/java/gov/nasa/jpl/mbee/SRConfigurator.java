@@ -203,7 +203,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 			// specAction = new SpecifyAction(classifier);
 			despecAction = new DespecifyAction(classifier);
 			if (!element.isEditable()) {
-				specAction.disable("Locked");
+				//specAction.disable("Locked");
 				despecAction.disable("Locked");
 			}
 			// copyAction = new CopyAction(clazz);
