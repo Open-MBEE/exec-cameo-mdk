@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.generator;
 
+import gov.nasa.jpl.mbee.generator.validation.actions.FixReferenceAction;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
@@ -61,6 +62,8 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
     private Map<Element, ViewInstanceInfo> infos = new HashMap<Element, ViewInstanceInfo>();
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     private Package unused = null;
+    
+    private Map<Element, List<InstanceSpecification>> all = new HashMap<Element, List<InstanceSpecification>>();
     
     public ViewInstancesOrganizer(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu) {
         this.start = start;
@@ -152,8 +155,10 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
                 shouldMove.add(is);
             }
         }
-        for (InstanceSpecification is: info.getExtraRef()) {
-            ValidationRuleViolation vrv = new ValidationRuleViolation(is, "[REFERENCE] This is a DocGen generated instance from another view that's being referenced by " + ((NamedElement)view).getQualifiedName());
+        if (!info.getExtraRef().isEmpty()) {
+            ValidationRuleViolation vrv = new ValidationRuleViolation(viewOrSection, "[REFERENCE] This view or section is referencing DocGen generated presentation elements from other views.");
+            vrv.addAction(new FixReferenceAction(viewOrSection, view, all));
+            all.put(viewOrSection, info.getExtraRef());
             instanceRef.addViolation(vrv);
         }
         for (InstanceSpecification is: info.getUnused()) {
