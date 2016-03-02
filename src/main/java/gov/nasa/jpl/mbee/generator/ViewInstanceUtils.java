@@ -65,8 +65,10 @@ public class ViewInstanceUtils {
         List<InstanceSpecification> extraRef = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> unused = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> opaque = new ArrayList<InstanceSpecification>();
+        List<InstanceSpecification> extraManualRef = new ArrayList<InstanceSpecification>();
         
-        ViewInstanceInfo res = new ViewInstanceInfo(all, images, tables, lists, paras, sections, manuals, extraRef, unused, opaque);
+        Package viewInstancePackage = findViewInstancePackage(view);
+        ViewInstanceInfo res = new ViewInstanceInfo(all, images, tables, lists, paras, sections, manuals, extraRef, extraManualRef, unused, opaque);
         Expression e = getViewOrSectionExpression(viewOrSection);
         boolean isView = viewOrSection instanceof InstanceSpecification ? false : true;
         if (e == null) {
@@ -93,6 +95,7 @@ public class ViewInstanceUtils {
                             for (InstanceValue iv: is.get_instanceValueOfInstance()) {
                                 if (iv != vs) { //an opaque instance that's referenced from somewhere else
                                     extraRef.add(is);
+                                    break;
                                 }
                             }
                         }
@@ -120,6 +123,12 @@ public class ViewInstanceUtils {
                         opaque.add(is);
                     } else {
                         manuals.add(is);
+                        for (InstanceValue iv: is.get_instanceValueOfInstance()) {
+                            if (iv != vs) { //a non opaque instance being referenced from somewhere else
+                                extraManualRef.add(is);
+                                break;
+                            }
+                        }
                     }
                     all.add(is);
                 }

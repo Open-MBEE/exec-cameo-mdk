@@ -9,13 +9,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.validation.RuleViolationResult;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -28,16 +25,17 @@ public class FixReferenceAction extends MDAction implements AnnotationAction {
     private static final long serialVersionUID = 1L;
     private Element viewOrSection;
     private Element view;
-    private String doc;
-    private JSONObject result;
-    private Map<Element, List<InstanceSpecification>> all;
+    private boolean all;
+    private Map<Element, List<InstanceSpecification>> opaque;
+    private Map<Element, List<InstanceSpecification>> manual;
     
-    public FixReferenceAction(Element viewOrSection, Element view, Map<Element, List<InstanceSpecification>> all) {
-    	super("FixReference", "Remove Reference(s)", null, null);
+    public FixReferenceAction(boolean all, Element viewOrSection, Element view, Map<Element, List<InstanceSpecification>> opaque, Map<Element, List<InstanceSpecification>> manual) {
+    	super(all ? "FixAllReference" : "FixReference", all ? "Remove All Duplicated Reference(s)" : "Remove DocGen Generated Duplicated Reference(s)", null, null);
     	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
         this.viewOrSection = viewOrSection;
         this.view = view;
-        this.viewOrSection = viewOrSection;
+        this.opaque = opaque;
+        this.manual = manual;
         this.all = all;
     }
     
@@ -51,15 +49,19 @@ public class FixReferenceAction extends MDAction implements AnnotationAction {
         SessionManager.getInstance().createSession("fix duplicate references");
         for (Annotation a : arg0) {
             Element e = (Element) a.getTarget();
-            List<InstanceSpecification> toRemove = all.get(e);
+            List<InstanceSpecification> toRemove = opaque.get(e);
+            List<InstanceSpecification> maybeRemove = manual.get(e);
             Expression ex = ViewInstanceUtils.getViewOrSectionExpression(e);
+            if (ex == null)
+                continue;
             if (!ex.isEditable()) {
                 Utils.guilog("[ERROR] " + ((NamedElement)e).getQualifiedName() + " is not editable, skipping.");
                 continue;
             }
             List<ValueSpecification> newOperand = new ArrayList<ValueSpecification>();
             for (ValueSpecification vs : ex.getOperand()) {
-                if (vs instanceof InstanceValue && toRemove.contains(((InstanceValue) vs).getInstance()))
+                if ((vs instanceof InstanceValue && toRemove.contains(((InstanceValue) vs).getInstance())) ||
+                        (all && maybeRemove.contains(((InstanceValue) vs).getInstance())))
                     continue;
                 newOperand.add(vs);
             }
@@ -73,16 +75,20 @@ public class FixReferenceAction extends MDAction implements AnnotationAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        List<InstanceSpecification> toRemove = all.get(viewOrSection);
+        List<InstanceSpecification> toRemove = opaque.get(viewOrSection);
+        List<InstanceSpecification> maybeRemove = manual.get(viewOrSection);
         Expression ex = ViewInstanceUtils
                 .getViewOrSectionExpression(viewOrSection);
+        if (ex == null)
+            return;
         if (!ex.isEditable()) {
             Utils.guilog("[ERROR] Element is not editable.");
             return;
         }
         List<ValueSpecification> newOperand = new ArrayList<ValueSpecification>();
         for (ValueSpecification vs : ex.getOperand()) {
-            if (vs instanceof InstanceValue && toRemove.contains(((InstanceValue) vs).getInstance()))
+            if ((vs instanceof InstanceValue && toRemove.contains(((InstanceValue) vs).getInstance())) ||
+                    (all && maybeRemove.contains(((InstanceValue) vs).getInstance())))
                 continue;
             newOperand.add(vs);
         }
@@ -91,7 +97,6 @@ public class FixReferenceAction extends MDAction implements AnnotationAction {
         ex.getOperand().addAll(newOperand);
         SessionManager.getInstance().closeSession();
         Utils.guilog("[INFO] Successful.");
-
     }
 }
 

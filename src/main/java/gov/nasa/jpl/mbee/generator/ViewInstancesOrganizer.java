@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.generator;
 
+import gov.nasa.jpl.mbee.generator.validation.actions.ClearAllReferencesAction;
 import gov.nasa.jpl.mbee.generator.validation.actions.FixReferenceAction;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
@@ -64,6 +65,7 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
     private Package unused = null;
     
     private Map<Element, List<InstanceSpecification>> all = new HashMap<Element, List<InstanceSpecification>>();
+    private Map<Element, List<InstanceSpecification>> allManual = new HashMap<Element, List<InstanceSpecification>>();
     
     public ViewInstancesOrganizer(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu) {
         this.start = start;
@@ -155,10 +157,15 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
                 shouldMove.add(is);
             }
         }
-        if (!info.getExtraRef().isEmpty()) {
-            ValidationRuleViolation vrv = new ValidationRuleViolation(viewOrSection, "[REFERENCE] This view or section is referencing DocGen generated presentation elements from other views.");
-            vrv.addAction(new FixReferenceAction(viewOrSection, view, all));
+        if (!info.getExtraRef().isEmpty() || !info.getExtraManualRef().isEmpty()) {
+            ValidationRuleViolation vrv = new ValidationRuleViolation(viewOrSection, "[REFERENCE] This view or section is referencing presentation elements from other views.");
+            if (!info.getExtraRef().isEmpty())
+                vrv.addAction(new FixReferenceAction(false, viewOrSection, view, all, allManual));
+            if (!info.getExtraManualRef().isEmpty())
+                vrv.addAction(new FixReferenceAction(true, viewOrSection, view, all, allManual));
+            vrv.addAction(new ClearAllReferencesAction(viewOrSection, view));
             all.put(viewOrSection, info.getExtraRef());
+            allManual.put(viewOrSection, info.getExtraManualRef());
             instanceRef.addViolation(vrv);
         }
         for (InstanceSpecification is: info.getUnused()) {
