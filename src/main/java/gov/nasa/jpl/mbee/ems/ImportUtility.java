@@ -152,15 +152,21 @@ public class ImportUtility {
                     newE = view;
                 }
                 Stereotype sysmlView = Utils.getViewClassStereotype();
-                StereotypesHelper.addStereotype(newE, sysmlView);
-                setViewConstraint(newE, specialization);
+                if (updateRelations) {
+                    //StereotypesHelper.addStereotype(newE, sysmlView);
+                    setOrCreateAsi(sysmlView, newE);
+                    setViewConstraint(newE, specialization);
+                }
             } else if (elementType.equalsIgnoreCase("viewpoint")) {
                 if (newE == null) {
                     Class view = ef.createClassInstance();
                     newE = view;
                 }
-                Stereotype sysmlView = Utils.getViewpointStereotype();
-                StereotypesHelper.addStereotype(newE, sysmlView);
+                if (updateRelations) {
+                    Stereotype sysmlView = Utils.getViewpointStereotype();
+                    //StereotypesHelper.addStereotype(newE, sysmlView);
+                    setOrCreateAsi(sysmlView, newE);
+                }
             } else if (elementType.equalsIgnoreCase("Property")) {
                 JSONArray vals = (JSONArray) specialization.get("value");
                 Boolean isSlot = (Boolean) specialization.get("isSlot");
@@ -223,9 +229,12 @@ public class ImportUtility {
                     Class prod = ef.createClassInstance();
                     newE = prod;
                 }
-                Stereotype product = Utils.getDocumentStereotype();
-                StereotypesHelper.addStereotype(newE, product);
-                setViewConstraint(newE, specialization);
+                if (updateRelations) {
+                    Stereotype product = Utils.getDocumentStereotype();
+                    //StereotypesHelper.addStereotype(newE, product);
+                    setOrCreateAsi(product, newE);
+                    setViewConstraint(newE, specialization);
+                }
             } else if (elementType.equalsIgnoreCase("Association")) {
                 if (newE == null) {
                     Association ac = ef.createAssociationInstance();
@@ -316,6 +325,8 @@ public class ImportUtility {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {
             c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
+            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+            c.setID(e.getID() + "_vc");
             c.setOwner(e);
             c.getConstrainedElement().add(e);
         }
@@ -799,5 +810,35 @@ public class ImportUtility {
             log.error("Bad PropertyValueType: " + valueType);
         };
         return newval;
+    }
+    
+    public static InstanceSpecification setOrCreateAsi(Stereotype s, Element e) {
+        List<Stereotype> ss = new ArrayList<Stereotype>();
+        ss.add(s);
+        return setOrCreateAsi(ss, e);
+    }
+    //create applied steretype instance manually so we can set id explicitly instead of letting md generate id
+    public static InstanceSpecification setOrCreateAsi(List<Stereotype> stereotypes, Element e) {
+        InstanceSpecification is = null;
+        for (Element child: e.getOwnedElement()) {
+            if (child instanceof InstanceSpecification) {
+                is = (InstanceSpecification)child;
+                for (Classifier c: is.getClassifier()) {
+                    if (!(c instanceof Stereotype)) { //not asi
+                        is = null;
+                        break;
+                    }
+                }
+            }
+        }
+        if (is == null) {
+            is = Application.getInstance().getProject().getElementsFactory().createInstanceSpecificationInstance();
+            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+            is.setID(e.getID() + "_asi");
+            is.setOwner(e);
+        }
+        is.getClassifier().clear();
+        is.getClassifier().addAll(stereotypes);
+        return is;
     }
 }

@@ -365,6 +365,8 @@ public class ViewInstanceUtils {
         if (c != null)
             return c;
         c = ef.createConstraintInstance();
+        Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+        c.setID(view.getID() + "_vc");
         c.setOwner(view);
         c.getConstrainedElement().add(view);
         return c;
