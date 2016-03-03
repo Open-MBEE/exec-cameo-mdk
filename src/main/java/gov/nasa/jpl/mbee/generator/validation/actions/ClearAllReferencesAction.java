@@ -10,6 +10,7 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
@@ -40,8 +41,9 @@ public class ClearAllReferencesAction extends MDAction implements AnnotationActi
             Expression ex = ViewInstanceUtils.getViewOrSectionExpression(e);
             if (ex == null)
                 continue;
+            Constraint c = Utils.getViewConstraint(e);
             if (!ex.isEditable()) {
-                Utils.guilog("[ERROR] " + ((NamedElement)e).getQualifiedName() + " is not editable, skipping.");
+                Utils.guilog("[ERROR] " + (c == null ? c.getQualifiedName() : ((NamedElement)e).getQualifiedName()) + " is not editable, skipping.");
                 continue;
             }
             ex.getOperand().clear();
@@ -53,10 +55,11 @@ public class ClearAllReferencesAction extends MDAction implements AnnotationActi
     @Override
     public void actionPerformed(ActionEvent e) {
         Expression ex = ViewInstanceUtils.getViewOrSectionExpression(viewOrSection);
+        Constraint c = Utils.getViewConstraint(viewOrSection);
         if (ex == null)
             return;
         if (!ex.isEditable()) {
-            Utils.guilog("[ERROR] Element is not editable.");
+            Utils.guilog("[ERROR] " + (c == null ? c.getQualifiedName() : ((NamedElement)viewOrSection).getQualifiedName()) + " is not editable.");
             return;
         }
         SessionManager.getInstance().createSession("fix duplicate references");
