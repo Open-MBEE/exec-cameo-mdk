@@ -3,8 +3,8 @@ package gov.nasa.jpl.mbee.systemsreasoner.validation.actions;
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-
 
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
@@ -108,13 +108,11 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 		}
 		// System.out.println(general.getQualifiedName());
 		final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
-		for (final NamedElement ne : new ArrayList<NamedElement>(special.getOwnedMember())) {
-			ne.dispose();
-		}
-		for (final Generalization g :new ArrayList<Generalization>(special.getGeneralization())) {
-			g.dispose();
-		}
-		// special.getOwnedMember().clear();
+		
+		Collection<?> emptyCollection = new ArrayList<String>();
+		special.getOwnedMember().retainAll(emptyCollection);
+		special.getGeneralization().retainAll(emptyCollection);
+		 
 		SpecializeClassifierAction.specialize(special, general);
 		return special;
 	}

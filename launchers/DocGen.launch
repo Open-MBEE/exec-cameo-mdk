@@ -15,6 +15,6 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.nomagic.magicdraw.Main"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="DEVELOPER"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="MDK"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="${jrebel_args}&#10;-Dinstall.root=&quot;${md.install.dir}&quot;&#10;-Xbootclasspath/p:&quot;${md.install.dir}/lib/xalan.jar&quot; &#10;-XX:PermSize=60M &#10;-XX:MaxPermSize=500M&#10;-Xmx2200M &#10;-DLOCALCONFIG=true&#10;-Djsse.enableSNIExtension=false"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dcom.sun.media.imageio.disableCodecLib=true&#13;&#10;-Dinstall.root=&quot;${md.install.dir}&quot;&#13;&#10;-Xbootclasspath/p:&quot;${md.install.dir}/lib/xalan.jar&quot; &#13;&#10;-XX:PermSize=60M &#13;&#10;-XX:MaxPermSize=500M&#13;&#10;-Xmx2200M &#13;&#10;-DLOCALCONFIG=true&#13;&#10;-Djsse.enableSNIExtension=false"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${md.install.dir}"/>
 </launchConfiguration>

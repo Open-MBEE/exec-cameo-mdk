@@ -310,7 +310,8 @@ AnnotationAction, IRuleViolationAction {
         }
         for (JSONObject ob: sortedNewviews) {
             try {
-                Element newview = ImportUtility.createElement(ob, true);
+                Element newview = ImportUtility.createElement(ob, false);
+                newview = ImportUtility.createElement(ob, true);
                 if (newview != null) {
                     List<Property> viewprops = new ArrayList<Property>();
                     viewId2props.put(newview.getID(), viewprops);

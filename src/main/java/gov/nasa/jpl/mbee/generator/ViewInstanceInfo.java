@@ -17,6 +17,7 @@ public class ViewInstanceInfo {
     private InstanceSpecification viewDocHack;
     
     private List<InstanceSpecification> extraRef; //opaque instances that are referenced by > 1 view
+    private List<InstanceSpecification> extraManualRef; //manual instances that are referenced by > 1 view
     private List<InstanceSpecification> unused; //unused instances in view instance package
     
     public ViewInstanceInfo() {
@@ -25,7 +26,7 @@ public class ViewInstanceInfo {
     
     public ViewInstanceInfo(List<InstanceSpecification> all, List<InstanceSpecification> images, List<InstanceSpecification> tables,
             List<InstanceSpecification> lists, List<InstanceSpecification> paras, List<InstanceSpecification> sections, 
-            List<InstanceSpecification> manuals, List<InstanceSpecification> extraRef, List<InstanceSpecification> unused,
+            List<InstanceSpecification> manuals, List<InstanceSpecification> extraRef, List<InstanceSpecification> extraManualRef, List<InstanceSpecification> unused,
             List<InstanceSpecification> opaque) {
         this.all = all;
         this.images = images;
@@ -35,6 +36,7 @@ public class ViewInstanceInfo {
         this.paras = paras;
         this.sections = sections;
         this.extraRef = extraRef;
+        this.extraManualRef = extraManualRef;
         this.unused = unused;
         this.opaque = opaque;
     }
@@ -112,6 +114,14 @@ public class ViewInstanceInfo {
 
     public void setOpaque(List<InstanceSpecification> opaque) {
         this.opaque = opaque;
+    }
+
+    public List<InstanceSpecification> getExtraManualRef() {
+        return extraManualRef;
+    }
+
+    public void setExtraManualRef(List<InstanceSpecification> extraManualRef) {
+        this.extraManualRef = extraManualRef;
     }
     
 }

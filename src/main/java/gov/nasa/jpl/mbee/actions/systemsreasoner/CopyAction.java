@@ -32,6 +32,7 @@ public class CopyAction extends SRAction {
 		element.refDelete();
 		Element copy = null;
 		try {
+		    copy = ImportUtility.createElement(json, false);
 		    copy = ImportUtility.createElement(json, true);
 		} catch (ImportException ex) {
 		    

@@ -4,7 +4,9 @@ import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
 import gov.nasa.jpl.mbee.systemsreasoner.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import com.nomagic.magicdraw.copypaste.CopyPasting;
@@ -15,11 +17,11 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activit
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DataType;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PrimitiveType;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 
 public class AspectRemedyAction extends GenericRuleViolationAction {
@@ -60,7 +62,12 @@ public class AspectRemedyAction extends GenericRuleViolationAction {
 				ModelHelper.setNavigable(ModelHelper.getSecondMemberEnd(association), false);
 				association.setOwner(aspected);
 			}
-
+			for(NamedElement aspectProps : aspect.getOwnedMember()){
+				if(aspectProps instanceof RedefinableElement){
+					RedefineAttributeAction raa = new RedefineAttributeAction(special, (RedefinableElement) aspectProps);
+					raa.run();
+				}
+			}
 		}
 		ValidateAction.validate(specials);
 	}
@@ -79,12 +86,11 @@ public class AspectRemedyAction extends GenericRuleViolationAction {
 		}
 
 		final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
-		for (final Element ne : new ArrayList<Element>(special.getOwnedMember())) {
-			ne.dispose();
-		}
-		for (final Generalization g : new ArrayList<Generalization>(special.getGeneralization())) {
-			g.dispose();
-		}
+		
+		Collection<?> emptyCollection = new ArrayList<String>();
+		special.getOwnedMember().retainAll(emptyCollection);
+		special.getGeneralization().retainAll(emptyCollection);
+
 		SpecializeClassifierAction.specialize(special, general);
 		return special;
 	}
