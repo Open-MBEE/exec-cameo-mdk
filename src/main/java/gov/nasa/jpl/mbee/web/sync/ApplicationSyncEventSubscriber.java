@@ -42,6 +42,7 @@ import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
  *     ApplicationSyncEventSubscriber.subscribe();
  * </code>
  */
+@Deprecated
 public class ApplicationSyncEventSubscriber extends ProjectEventListenerAdapter {
 
     /** Makes sure application event listeners are only set up once. */

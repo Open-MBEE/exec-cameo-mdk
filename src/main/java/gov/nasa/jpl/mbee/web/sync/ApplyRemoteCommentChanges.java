@@ -46,7 +46,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
-
+@Deprecated
 public class ApplyRemoteCommentChanges extends ChangeTheModel {
 
     private final Element              owner;

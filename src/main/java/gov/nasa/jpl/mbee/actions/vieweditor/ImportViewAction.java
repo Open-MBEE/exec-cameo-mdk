@@ -68,6 +68,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
  * @author dlam
  * 
  */
+@Deprecated
 public class ImportViewAction extends MDAction {
     private static final long serialVersionUID = 1L;
     private Element            doc;

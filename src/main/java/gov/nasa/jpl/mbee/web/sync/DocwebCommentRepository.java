@@ -49,7 +49,7 @@ import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
+@Deprecated
 public class DocwebCommentRepository implements CommentRepository {
     private final String baseUrlString;
     private final URL    baseUrl;
