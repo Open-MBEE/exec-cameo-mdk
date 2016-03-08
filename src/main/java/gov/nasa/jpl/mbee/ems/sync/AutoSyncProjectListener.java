@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,6 +16,7 @@ import java.util.Set;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -112,7 +114,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         urlInfo.put( "url", url );
     }
 
-    private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
+    private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
     
     public static void lockSyncFolder(Project project) {
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
@@ -231,6 +233,41 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         return elements;
     }
     
+    //get a timestamp that should roughly be the last time someone pulled updates from mms using jms
+    public static Date getLastDeltaTimestamp(Project project) {
+        String folderId = project.getPrimaryProject().getProjectID();
+        folderId += "_sync";
+        Element folder = ExportUtility.getElementFromID(folderId);
+        Date res = null;
+        try {
+            res = df.parse("1990-12-12T12:12:12.000-0800"); //some old time
+        } catch (ParseException e1) {
+            //should not happen
+        }
+        if (folder == null) {
+            return res;
+        } 
+        for (Element e: folder.getOwnedElement()) {
+            if (e instanceof Class) {
+                String name = ((Class)e).getName();
+                if (name.startsWith("error_")) {
+                    String time = "";
+                    if (!name.endsWith("_clear"))
+                        time = name.substring(6);
+                    else
+                        time = name.substring(6, name.length()-6);
+                    try {
+                        Date timed = df.parse(time);
+                        if (timed.compareTo(res) > 0)
+                            res = timed;
+                    } catch (ParseException ex) {}
+                }
+            }
+        }
+        res = new Date(res.getTime() - 60*60*1000); //give 1 hour margin
+        return res;
+    }
+    
     public static void setUpdatesOrFailed(Project project, JSONObject o, String type, boolean clearAll) {
         List<NamedElement> es = getSyncElement(project, true, clearAll, type);
         es.get(0).setName(type + "_" + df.format(new Date()));
@@ -323,6 +360,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Utils.guilog("[ERROR] Cannot get server workspace that corresponds to this project branch");
             return null;
         }
+        String username = ViewEditUtils.getUsername();
+        if (username == null || username.equals("")) {
+            Utils.guilog("[ERROR] You must be logged into MMS first");
+            return null;
+        }
         Connection connection = null;
         Session session = null;
         MessageConsumer consumer = null;
@@ -337,9 +379,10 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         if (previousConflicts != null) {
             changedIds.addAll((List<String>)previousConflicts.get("elements"));
         }
+        Date lastTime = getLastDeltaTimestamp(project);
         try {
             ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
-            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
+            String subscriberId = projectID + "-" + wsID + "-" + username; // weblogic can't have '/' in id
             connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
@@ -384,24 +427,36 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 final JSONArray moved = (JSONArray) ws2.get("movedElements");
                 for (Object e: updated) {
                     String id = (String)((JSONObject)e).get("sysmlid");
+                    //String modified = (String)((JSONObject)e).get("modified");
+                    //if (modified != null && modified.compareTo(lastTime) < 0)
+                    //    continue;
                     if (!magicdraw) 
                         changedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: added) {
                     String id = (String)((JSONObject)e).get("sysmlid");
+                    //String modified = (String)((JSONObject)e).get("modified");
+                    //if (modified != null && modified.compareTo(lastTime) < 0)
+                    //    continue;
                     if (!magicdraw) 
                         addedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: moved) {
                     String id = (String)((JSONObject)e).get("sysmlid");
+                    //String modified = (String)((JSONObject)e).get("modified");
+                    //if (modified != null && modified.compareTo(lastTime) < 0)
+                    //    continue;
                     if (!magicdraw) 
                         changedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: deleted) {
                     String id = (String)((JSONObject)e).get("sysmlid");
+                    //String modified = (String)((JSONObject)e).get("modified");
+                    //if (modified != null && modified.compareTo(lastTime) < 0)
+                    //    continue;
                     if (!magicdraw)
                         deletedIds.add(id);
                     addedIds.remove(id);
@@ -498,6 +553,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 }
             }
         }
+        String username = ViewEditUtils.getUsername();
+        if (username == null || username.equals("")) {
+            Utils.guilog("[ERROR] You must be logged into MMS first - dynamic sync will not start");
+            return;
+        }
         try {
             AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get(LISTENER);
             if (listener == null) {
@@ -511,7 +571,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             listener.setAuto(true);
 
             ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
-            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
+            String subscriberId = projectID + "-" + wsID + "-" + username; // weblogic can't have '/' in id
             Connection connection = connectionFactory.createConnection();
             connection.setExceptionListener(new ExceptionListener() {
                 @Override

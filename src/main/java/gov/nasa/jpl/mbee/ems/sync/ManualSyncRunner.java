@@ -325,7 +325,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                     try {
                         ImportUtility.updateElement(e, webUpdated);
-                        ImportUtility.setOwner(e, webUpdated);
+                        if (!(e.getOwner() != null && webUpdated.get("owner") instanceof String && 
+                                ((String)webUpdated.get("owner")).contains("holding_bin")))
+                            //don't update owner if trying to update existing element's owner to under a holding bin
+                            ImportUtility.setOwner(e, webUpdated);
                         updated.addViolation(new ValidationRuleViolation(e, "[UPDATED]"));
                         //Utils.guilog("[SYNC UPDATE] " + e.getHumanName() + " updated.");
                         /*if (webUpdated.containsKey("specialization")) { //do auto doc hierarchy? very risky

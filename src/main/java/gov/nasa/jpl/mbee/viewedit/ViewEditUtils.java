@@ -269,4 +269,8 @@ public class ViewEditUtils {
     public static String getAuthStringEnc() {
         return authStringEnc;
     }
+    
+    public static String getUsername() {
+        return username;
+    }
 }
