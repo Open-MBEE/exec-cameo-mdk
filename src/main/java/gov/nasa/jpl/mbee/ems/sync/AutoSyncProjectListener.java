@@ -264,7 +264,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 }
             }
         }
-        res = new Date(res.getTime() - 60*60*1000); //give 1 hour margin
+        res = new Date(res.getTime() - 10*60*1000); //give 10 min margin
         return res;
     }
     
@@ -330,6 +330,68 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         }
         ((JSONArray)update.get("elements")).addAll(elements);
         return update;
+    }
+    
+    public static boolean initializeJms(Project project) {
+        String projectID = ExportUtility.getProjectId(project);
+        String wsID = ExportUtility.getWorkspace();
+        Map<String, String> urlInfo = new HashMap<String, String>();
+        getJMSUrl(urlInfo);
+        String url = urlInfo.get( "url" );
+        if (url == null) {
+            Utils.guilog("[ERROR] Cannot get server url");
+            return false;
+        }
+        if (wsID == null) {
+            Utils.guilog("[ERROR] Cannot get server workspace that corresponds to this project branch");
+            return false;
+        }
+        String username = ViewEditUtils.getUsername();
+        if (username == null || username.equals("")) {
+            Utils.guilog("[ERROR] You must be logged into MMS first");
+            return false;
+        }
+        Connection connection = null;
+        Session session = null;
+        MessageConsumer consumer = null;
+        try {
+            ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
+            String subscriberId = projectID + "-" + wsID + "-" + username; // weblogic can't have '/' in id
+            connection = connectionFactory.createConnection();
+            connection.setClientID(subscriberId);// + (new Date()).toString());
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+            // weblogic createTopic doesn't work if it already exists, unlike activemq
+            Topic topic = null;
+            try {
+                if (ctx != null) {
+                    topic = (Topic) ctx.lookup( JMS_TOPIC );
+                }                    
+            } catch (NameNotFoundException nnfe) {
+                // do nothing (just means topic hasnt been created yet
+            } finally {
+                if (topic == null) {
+                    topic = session.createTopic(JMS_TOPIC);
+                }
+            }
+            String messageSelector = constructSelectorString(projectID, wsID);
+            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
+            connection.start();
+        } catch (Exception e) {
+            log.error("JMS (Initialization): ", e);
+            Utils.guilog("[ERROR] MMS Message Queue initialization failed: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+            if (consumer != null)
+                consumer.close();
+            if (session != null)
+                session.close();
+            if (connection != null)
+                connection.close();
+            } catch (JMSException e) {
+            }
+        }
+        return true;
     }
     
     @SuppressWarnings("unchecked")
@@ -421,42 +483,41 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                     m = consumer.receive(3000);
                     continue;
                 }
+                String timestamp = (String)ws2.get("timestamp");
+                try {
+                    if (timestamp != null) {
+                        Date jmsTime = df.parse(timestamp);
+                        if (jmsTime.before(lastTime)) {
+                            m.acknowledge();
+                            m = consumer.receive(3000);
+                            continue; //ignore messages before last delta time in case someone else already processed them
+                        }
+                    }
+                } catch (ParseException ex) {}
                 final JSONArray updated = (JSONArray) ws2.get("updatedElements");
                 final JSONArray added = (JSONArray) ws2.get("addedElements");
                 final JSONArray deleted = (JSONArray) ws2.get("deletedElements");
                 final JSONArray moved = (JSONArray) ws2.get("movedElements");
                 for (Object e: updated) {
                     String id = (String)((JSONObject)e).get("sysmlid");
-                    //String modified = (String)((JSONObject)e).get("modified");
-                    //if (modified != null && modified.compareTo(lastTime) < 0)
-                    //    continue;
                     if (!magicdraw) 
                         changedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: added) {
                     String id = (String)((JSONObject)e).get("sysmlid");
-                    //String modified = (String)((JSONObject)e).get("modified");
-                    //if (modified != null && modified.compareTo(lastTime) < 0)
-                    //    continue;
                     if (!magicdraw) 
                         addedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: moved) {
                     String id = (String)((JSONObject)e).get("sysmlid");
-                    //String modified = (String)((JSONObject)e).get("modified");
-                    //if (modified != null && modified.compareTo(lastTime) < 0)
-                    //    continue;
                     if (!magicdraw) 
                         changedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: deleted) {
                     String id = (String)((JSONObject)e).get("sysmlid");
-                    //String modified = (String)((JSONObject)e).get("modified");
-                    //if (modified != null && modified.compareTo(lastTime) < 0)
-                    //    continue;
                     if (!magicdraw)
                         deletedIds.add(id);
                     addedIds.remove(id);

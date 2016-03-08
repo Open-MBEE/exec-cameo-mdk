@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
@@ -68,11 +69,12 @@ public class EMSLoginAction extends MDAction {
         } catch (ServerException ex) {}
         if (response ==  null)
             return;
-        Application.getInstance().getGUILog().log("Logged in");
+        Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
         this.setEnabled(false);
         this.updateState();
         logout.setEnabled(true);
         logout.updateState(); //doesn't work
+        AutoSyncProjectListener.initializeJms(Application.getInstance().getProject());
     }
 
 }
