@@ -74,7 +74,8 @@ public class EMSLoginAction extends MDAction {
         this.updateState();
         logout.setEnabled(true);
         logout.updateState(); //doesn't work
-        AutoSyncProjectListener.initializeJms(Application.getInstance().getProject());
+        if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
+            Application.getInstance().getGUILog().log("Finished.");
     }
 
 }

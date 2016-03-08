@@ -115,6 +115,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     }
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
+    private static DateFormat dfserver = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     
     public static void lockSyncFolder(Project project) {
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
@@ -240,9 +241,9 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         Element folder = ExportUtility.getElementFromID(folderId);
         Date res = null;
         try {
-            res = df.parse("1990-12-12T12:12:12.000-0800"); //some old time
+            res = df.parse("1990-12-12T12.12.12.000-0800"); //some old time
         } catch (ParseException e1) {
-            //should not happen
+            e1.printStackTrace();
         }
         if (folder == null) {
             return res;
@@ -486,7 +487,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 String timestamp = (String)ws2.get("timestamp");
                 try {
                     if (timestamp != null) {
-                        Date jmsTime = df.parse(timestamp);
+                        Date jmsTime = dfserver.parse(timestamp);
                         if (jmsTime.before(lastTime)) {
                             m.acknowledge();
                             m = consumer.receive(3000);
