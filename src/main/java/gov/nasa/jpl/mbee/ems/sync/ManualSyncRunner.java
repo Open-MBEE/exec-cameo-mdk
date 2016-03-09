@@ -533,6 +533,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     toDeleteElements.add(toDelete);
                 }
                 toSendUpdates.put("elements", toDeleteElements);
+                toSendUpdates.put("source", "magicdraw");
                 if (!toDeleteElements.isEmpty()) {
                 	Utils.guilog("[INFO] Delete requests are added to queue.");
                     OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));
