@@ -236,36 +236,16 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
     
     //get a timestamp that should roughly be the last time someone pulled updates from mms using jms
     public static Date getLastDeltaTimestamp(Project project) {
-        String folderId = project.getPrimaryProject().getProjectID();
-        folderId += "_sync";
-        Element folder = ExportUtility.getElementFromID(folderId);
-        Date res = null;
-        try {
-            res = df.parse("1990-12-12T12.12.12.000-0800"); //some old time
-        } catch (ParseException e1) {
-            e1.printStackTrace();
+        List<NamedElement> jmstimes = getSyncElement(project, false, false, "lastmms");
+        Date res =  new Date(100000);
+        for (NamedElement e: jmstimes) {
+            String name = e.getName();
+            try {
+                Date maybe = df.parse(name.substring(8));
+                if (maybe.after(res))
+                    res = maybe;
+            } catch (ParseException ex) {}
         }
-        if (folder == null) {
-            return res;
-        } 
-        for (Element e: folder.getOwnedElement()) {
-            if (e instanceof Class) {
-                String name = ((Class)e).getName();
-                if (name.startsWith("error_")) {
-                    String time = "";
-                    if (!name.endsWith("_clear"))
-                        time = name.substring(6);
-                    else
-                        time = name.substring(6, name.length()-6);
-                    try {
-                        Date timed = df.parse(time);
-                        if (timed.compareTo(res) > 0)
-                            res = timed;
-                    } catch (ParseException ex) {}
-                }
-            }
-        }
-        res = new Date(res.getTime() - 10*60*1000); //give 10 min margin
         return res;
     }
     
@@ -467,6 +447,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             connection.start();
             Message m = consumer.receive(10000);
             boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+            Date newTime = new Date(lastTime.getTime());
             while (m != null) {
                 TextMessage message = (TextMessage)m;
                 if (print)
@@ -493,6 +474,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                             m = consumer.receive(3000);
                             continue; //ignore messages before last delta time in case someone else already processed them
                         }
+                        if (jmsTime.after(newTime))
+                            newTime = jmsTime;
                     }
                 } catch (ParseException ex) {}
                 final JSONArray updated = (JSONArray) ws2.get("updatedElements");
@@ -533,6 +516,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             try {
                 //setUpdatesOrFailed(project, null, "error");
                 setConflicts(project, null);
+                List<NamedElement> jmstimes = getSyncElement(project, true, true, "lastmms");
+                jmstimes.get(0).setName("lastmms_" + df.format(newTime));
                 sm.closeSession();
             } catch (Exception e) {
                 sm.cancelSession();
