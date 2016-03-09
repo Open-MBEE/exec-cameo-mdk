@@ -57,6 +57,7 @@ public class InitializeProjectAction extends MDAction {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         JSONObject result = ExportUtility.getProjectJson();
         array.add(result);
         String json = tosend.toJSONString();
