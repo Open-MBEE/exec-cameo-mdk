@@ -325,8 +325,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                     try {
                         ImportUtility.updateElement(e, webUpdated);
-                        if (!(e.getOwner() != null && webUpdated.get("owner") instanceof String && 
-                                ((String)webUpdated.get("owner")).contains("holding_bin")))
+                        if (!(e.getOwner() != null && webUpdated.get("qualifiedId") instanceof String && 
+                                ((String)webUpdated.get("qualifiedId")).contains("holding_bin")))
                             //don't update owner if trying to update existing element's owner to under a holding bin
                             ImportUtility.setOwner(e, webUpdated);
                         updated.addViolation(new ValidationRuleViolation(e, "[UPDATED]"));
