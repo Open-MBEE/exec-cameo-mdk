@@ -41,7 +41,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
+@Deprecated
 public class CommentUtil {
     /** stereotype name */
     public static final String        DOCUMENT_VIEW      = DocGen3Profile.documentViewStereotype;

@@ -47,7 +47,7 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
+@Deprecated
 public class ExportViewHierarchyAction extends MDAction {
     private static final long serialVersionUID = 1L;
     private Element            doc;

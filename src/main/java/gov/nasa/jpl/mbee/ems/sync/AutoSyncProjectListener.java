@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,6 +16,7 @@ import java.util.Set;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -112,7 +114,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         urlInfo.put( "url", url );
     }
 
-    private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
+    private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
+    private static DateFormat dfserver = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     
     public static void lockSyncFolder(Project project) {
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
@@ -231,6 +234,21 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         return elements;
     }
     
+    //get a timestamp that should roughly be the last time someone pulled updates from mms using jms
+    public static Date getLastDeltaTimestamp(Project project) {
+        List<NamedElement> jmstimes = getSyncElement(project, false, false, "lastmms");
+        Date res =  new Date(100000);
+        for (NamedElement e: jmstimes) {
+            String name = e.getName();
+            try {
+                Date maybe = df.parse(name.substring(8));
+                if (maybe.after(res))
+                    res = maybe;
+            } catch (ParseException ex) {}
+        }
+        return res;
+    }
+    
     public static void setUpdatesOrFailed(Project project, JSONObject o, String type, boolean clearAll) {
         List<NamedElement> es = getSyncElement(project, true, clearAll, type);
         es.get(0).setName(type + "_" + df.format(new Date()));
@@ -295,6 +313,68 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         return update;
     }
     
+    public static boolean initializeJms(Project project) {
+        String projectID = ExportUtility.getProjectId(project);
+        String wsID = ExportUtility.getWorkspace();
+        Map<String, String> urlInfo = new HashMap<String, String>();
+        getJMSUrl(urlInfo);
+        String url = urlInfo.get( "url" );
+        if (url == null) {
+            Utils.guilog("[ERROR] Cannot get server url");
+            return false;
+        }
+        if (wsID == null) {
+            Utils.guilog("[ERROR] Cannot get server workspace that corresponds to this project branch");
+            return false;
+        }
+        String username = ViewEditUtils.getUsername();
+        if (username == null || username.equals("")) {
+            Utils.guilog("[ERROR] You must be logged into MMS first");
+            return false;
+        }
+        Connection connection = null;
+        Session session = null;
+        MessageConsumer consumer = null;
+        try {
+            ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
+            String subscriberId = projectID + "-" + wsID + "-" + username; // weblogic can't have '/' in id
+            connection = connectionFactory.createConnection();
+            connection.setClientID(subscriberId);// + (new Date()).toString());
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+            // weblogic createTopic doesn't work if it already exists, unlike activemq
+            Topic topic = null;
+            try {
+                if (ctx != null) {
+                    topic = (Topic) ctx.lookup( JMS_TOPIC );
+                }                    
+            } catch (NameNotFoundException nnfe) {
+                // do nothing (just means topic hasnt been created yet
+            } finally {
+                if (topic == null) {
+                    topic = session.createTopic(JMS_TOPIC);
+                }
+            }
+            String messageSelector = constructSelectorString(projectID, wsID);
+            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
+            connection.start();
+        } catch (Exception e) {
+            log.error("JMS (Initialization): ", e);
+            Utils.guilog("[ERROR] MMS Message Queue initialization failed: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+            if (consumer != null)
+                consumer.close();
+            if (session != null)
+                session.close();
+            if (connection != null)
+                connection.close();
+            } catch (JMSException e) {
+            }
+        }
+        return true;
+    }
+    
     @SuppressWarnings("unchecked")
     public static Map<String, Set<String>> getJMSChanges(Project project) {
         Map<String, Set<String>> changes = new HashMap<String, Set<String>>();
@@ -323,6 +403,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Utils.guilog("[ERROR] Cannot get server workspace that corresponds to this project branch");
             return null;
         }
+        String username = ViewEditUtils.getUsername();
+        if (username == null || username.equals("")) {
+            Utils.guilog("[ERROR] You must be logged into MMS first");
+            return null;
+        }
         Connection connection = null;
         Session session = null;
         MessageConsumer consumer = null;
@@ -337,9 +422,10 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
         if (previousConflicts != null) {
             changedIds.addAll((List<String>)previousConflicts.get("elements"));
         }
+        Date lastTime = getLastDeltaTimestamp(project);
         try {
             ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
-            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
+            String subscriberId = projectID + "-" + wsID + "-" + username; // weblogic can't have '/' in id
             connection = connectionFactory.createConnection();
             connection.setClientID(subscriberId);// + (new Date()).toString());
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
@@ -361,6 +447,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             connection.start();
             Message m = consumer.receive(10000);
             boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+            Date newTime = new Date(lastTime.getTime());
             while (m != null) {
                 TextMessage message = (TextMessage)m;
                 if (print)
@@ -378,6 +465,19 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                     m = consumer.receive(3000);
                     continue;
                 }
+                String timestamp = (String)ws2.get("timestamp");
+                try {
+                    if (timestamp != null) {
+                        Date jmsTime = dfserver.parse(timestamp);
+                        if (jmsTime.before(lastTime)) {
+                            m.acknowledge();
+                            m = consumer.receive(3000);
+                            continue; //ignore messages before last delta time in case someone else already processed them
+                        }
+                        if (jmsTime.after(newTime))
+                            newTime = jmsTime;
+                    }
+                } catch (ParseException ex) {}
                 final JSONArray updated = (JSONArray) ws2.get("updatedElements");
                 final JSONArray added = (JSONArray) ws2.get("addedElements");
                 final JSONArray deleted = (JSONArray) ws2.get("deletedElements");
@@ -416,6 +516,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             try {
                 //setUpdatesOrFailed(project, null, "error");
                 setConflicts(project, null);
+                List<NamedElement> jmstimes = getSyncElement(project, true, true, "lastmms");
+                jmstimes.get(0).setName("lastmms_" + df.format(newTime));
                 sm.closeSession();
             } catch (Exception e) {
                 sm.cancelSession();
@@ -498,6 +600,11 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 }
             }
         }
+        String username = ViewEditUtils.getUsername();
+        if (username == null || username.equals("")) {
+            Utils.guilog("[ERROR] You must be logged into MMS first - dynamic sync will not start");
+            return;
+        }
         try {
             AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get(LISTENER);
             if (listener == null) {
@@ -511,7 +618,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             listener.setAuto(true);
 
             ConnectionFactory connectionFactory = createConnectionFactory(urlInfo);
-            String subscriberId = projectID + "-" + wsID; // weblogic can't have '/' in id
+            String subscriberId = projectID + "-" + wsID + "-" + username; // weblogic can't have '/' in id
             Connection connection = connectionFactory.createConnection();
             connection.setExceptionListener(new ExceptionListener() {
                 @Override

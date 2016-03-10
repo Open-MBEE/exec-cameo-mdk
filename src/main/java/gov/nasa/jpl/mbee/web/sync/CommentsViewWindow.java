@@ -52,7 +52,7 @@ import javax.swing.ScrollPaneConstants;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
+@Deprecated
 public class CommentsViewWindow extends JFrame {
     private static final long serialVersionUID = 1L;
 

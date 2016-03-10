@@ -72,7 +72,7 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
+@Deprecated
 public class ViewExporter implements RunnableWithProgress {
 
     private Document                    dge;
