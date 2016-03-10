@@ -469,13 +469,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 try {
                     if (timestamp != null) {
                         Date jmsTime = dfserver.parse(timestamp);
-                        if (jmsTime.before(lastTime)) {
+                        if (!jmsTime.after(lastTime)) {
                             m.acknowledge();
                             m = consumer.receive(3000);
                             continue; //ignore messages before last delta time in case someone else already processed them
                         }
-                        if (jmsTime.after(newTime))
-                            newTime = jmsTime;
+                        //if (jmsTime.after(newTime))
+                        newTime = jmsTime;
                     }
                 } catch (ParseException ex) {}
                 final JSONArray updated = (JSONArray) ws2.get("updatedElements");
