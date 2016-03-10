@@ -48,6 +48,7 @@ import com.nomagic.uml2.transaction.TransactionCommitListener;
  * TransactionCommitListener, its changes are made within the same
  * session/transaction as the triggering change.
  */
+@Deprecated
 public class CommentChangeListener implements TransactionCommitListener {
     /**
      * Allow listener to be disabled during imports, to prevent automatic update

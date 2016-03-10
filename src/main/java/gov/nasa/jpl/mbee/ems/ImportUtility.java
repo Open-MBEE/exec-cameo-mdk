@@ -265,13 +265,19 @@ public class ImportUtility {
                 newE = newElement;
             }
             setName(newE, ob);
-            setOwner(newE, ob);
+            if (!(newE.getOwner() != null && ob.get("owner") instanceof String && 
+                    ((String)ob.get("owner")).contains("holding_bin")))
+                //don't update owner if trying to update existing element's owner to under a holding bin
+                setOwner(newE, ob);
             setDocumentation(newE, ob);
             setOwnedAttribute(newE, ob);
             newE.setID(sysmlID);
         } catch (ImportException ex) {
             setName(newE, ob);
-            setOwner(newE, ob);
+            if (!(newE.getOwner() != null && ob.get("owner") instanceof String && 
+                    ((String)ob.get("owner")).contains("holding_bin")))
+                //don't update owner if trying to update existing element's owner to under a holding bin
+                setOwner(newE, ob);
             setDocumentation(newE, ob);
             newE.setID(sysmlID);
             throw ex;

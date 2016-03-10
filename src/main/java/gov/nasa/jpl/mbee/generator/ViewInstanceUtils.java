@@ -93,7 +93,7 @@ public class ViewInstanceUtils {
                         }
                         if (!viewinstance) {
                             for (InstanceValue iv: is.get_instanceValueOfInstance()) {
-                                if (iv != vs) { //an opaque instance that's referenced from somewhere else
+                                if (iv != vs && iv.getOwner() != null) { //an opaque instance that's referenced from somewhere else
                                     extraRef.add(is);
                                     break;
                                 }
@@ -124,7 +124,7 @@ public class ViewInstanceUtils {
                     } else {
                         manuals.add(is);
                         for (InstanceValue iv: is.get_instanceValueOfInstance()) {
-                            if (iv != vs) { //a non opaque instance being referenced from somewhere else
+                            if (iv != vs && iv.getOwner() != null) { //a non opaque instance being referenced from somewhere else
                                 extraManualRef.add(is);
                                 break;
                             }

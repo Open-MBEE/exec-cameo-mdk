@@ -41,7 +41,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
+@Deprecated
 public class SynchronizeViewAction extends MDAction {
 
     private static final long serialVersionUID = 1L;

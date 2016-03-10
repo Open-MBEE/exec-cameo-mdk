@@ -47,7 +47,7 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
+@Deprecated
 public class ProjectExporter {
 
     private Element    project;

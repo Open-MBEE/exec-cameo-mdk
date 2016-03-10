@@ -74,6 +74,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
  * @author dlam
  * 
  */
+@Deprecated
 public class DBEditDocwebVisitor extends DBAbstractVisitor {
     /*
      * { views: [{ mdid: magicdrawid, nosection: true/false, contains: [{type:

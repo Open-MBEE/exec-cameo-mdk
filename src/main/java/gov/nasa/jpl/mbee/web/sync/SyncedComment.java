@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.web.sync;
-
+@Deprecated
 public class SyncedComment {
 
     public enum Action {
