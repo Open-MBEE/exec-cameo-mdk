@@ -474,8 +474,8 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                             m = consumer.receive(3000);
                             continue; //ignore messages before last delta time in case someone else already processed them
                         }
-                        //if (jmsTime.after(newTime))
-                        newTime = jmsTime;
+                        if (jmsTime.after(newTime))
+                            newTime = jmsTime;
                     }
                 } catch (ParseException ex) {}
                 final JSONArray updated = (JSONArray) ws2.get("updatedElements");
