@@ -749,18 +749,33 @@ public class ExportUtility {
         return response;
     }
 
+    // helper method for long for get() method. will trigger a login dialogue    
     public static String get(String url) throws ServerException {
-        return get(url, true);
+        return get(url, null, null, true);
     }
-
+    
+    // helper method for long for get() method. will trigger a login dialogue
     public static String get(String url, boolean showPopupErrors) throws ServerException {
+    	return get(url, null, null, showPopupErrors);
+    }
+    
+    // helper method for long for get() method. will bypass the login dialogue if username is not null or empty ""
+    public static String get(String url, String username, String password) throws ServerException {
+    	return get(url, username, password, true);
+    }
+    
+    // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
+    public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url, gm);
+            if (username == null || username.equals(""))
+            	ViewEditUtils.setCredentials(client, url, gm);
+            else
+            	ViewEditUtils.setCredentials(client, url, gm, username, password);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             if (print)
@@ -790,7 +805,7 @@ public class ExportUtility {
             gm.releaseConnection();
         }
     }
-
+    
     //check if comment is actually the documentation of its owner
     public static boolean isElementDocumentation(Comment c) {
         if (c.getAnnotatedElement().size() > 1

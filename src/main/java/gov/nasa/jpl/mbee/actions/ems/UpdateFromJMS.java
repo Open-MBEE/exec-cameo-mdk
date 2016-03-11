@@ -23,6 +23,10 @@ public class UpdateFromJMS extends MDAction {
     public void actionPerformed(ActionEvent ae) {
         if (!Utils.recommendUpdateFromTeamwork())
             return;
+        updateAction();
+    }
+    
+    public void updateAction() {
         ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(commit, false), "Delta Sync", true, 0);
     }
 }

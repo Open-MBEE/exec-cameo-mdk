@@ -55,27 +55,37 @@ public class EMSLoginAction extends MDAction {
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        // passing in "" as the username will trigger the login dialogue popup
+    	boolean ok = loginAction("", "");
+        
+        if (ok) {
+            Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
+            if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
+                Application.getInstance().getGUILog().log("Finished.");
+            this.setEnabled(false);
+            this.updateState();
+            logout.setEnabled(true);
+            logout.updateState(); //doesn't work
+        }
+    }
+    
+    public boolean loginAction(String username, String password)
+    {
         ViewEditUtils.clearUsernameAndPassword();
         if (Application.getInstance().getProject() == null) {
             Utils.showPopupMessage("You need to have a project open first!");
-            return;
+            return false;
         }
         String url = ExportUtility.getUrl();
         if (url == null)
-            return;
+            return false;
         String response = null;
         try {
-            response = ExportUtility.get(url + "/checklogin");
+            response = ExportUtility.get(url + "/checklogin", username, password);
         } catch (ServerException ex) {}
         if (response ==  null)
-            return;
-        Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
-        this.setEnabled(false);
-        this.updateState();
-        logout.setEnabled(true);
-        logout.updateState(); //doesn't work
-        if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
-            Application.getInstance().getGUILog().log("Finished.");
+            return false;
+		return true;
     }
 
 }

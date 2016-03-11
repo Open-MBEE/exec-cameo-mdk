@@ -27,6 +27,10 @@ public class GenerateViewPresentationAction extends MDAction {
     public void actionPerformed(ActionEvent e) {
         if (!Utils.recommendUpdateFromTeamwork())
             return;
+        updateAction();
+    }
+    
+    public void updateAction() {
         ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse, null, true, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
     }
