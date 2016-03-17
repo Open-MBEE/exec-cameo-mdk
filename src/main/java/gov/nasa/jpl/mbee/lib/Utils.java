@@ -3634,6 +3634,11 @@ public class Utils {
         Project prj = Application.getInstance().getProject();
         if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
             return true;
+        String user = TeamworkUtils.getLoggedUserName();
+        if (user == null) {
+            Utils.guilog("[ERROR] You must be logged into teamwork first.");
+            return false;
+        }
         ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(prj);
         try {
             if (TeamworkUtils.getLastVersion(currentProj) == TeamworkService.getInstance(prj).getVersion(prj).getNumber())
