@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -50,9 +51,17 @@ public class ImportConnector extends RuleViolationAction implements AnnotationAc
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
-            ImportUtility.setConnectorEnds((Connector)e, (JSONObject)resultOb.get("specialization"));
+            try {
+                ImportUtility.setConnectorEnds((Connector)e, (JSONObject)resultOb.get("specialization"));
+            } catch (ImportException ex) {
+                
+            }
         } else {
-            ImportUtility.setConnectorEnds(element, spec);
+            try {
+                ImportUtility.setConnectorEnds(element, spec);
+            } catch (ImportException ex) {
+                
+            }
         }
         return true;
     }

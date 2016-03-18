@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ReferenceException;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -77,11 +78,19 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
             }
             JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
             JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-            ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
+            try {
+                ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
+            } catch (ReferenceException ex) {
+                
+            }
         } else {
             JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID());
             JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-            ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
+            try {
+                ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
+            } catch (ReferenceException ex) {
+                
+            }
         }
         return true;
     }
