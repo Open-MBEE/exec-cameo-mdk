@@ -106,9 +106,12 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallOperationAction;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ActivityPartition;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
@@ -133,6 +136,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectableElement;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
@@ -3653,5 +3659,34 @@ public class Utils {
         if (reply == null || !reply)
             return false;
         return true;
+    }
+    
+    //check if the given element would have a model inconsistency in the current state
+    public static boolean modelInconsistency(Element e) {
+        if (e instanceof DirectedRelationship) {
+            if (((DirectedRelationship)e).getSource().isEmpty() || ((DirectedRelationship)e).getTarget().isEmpty())
+                return true;
+        }
+        if (e instanceof Association) {
+            List<Property> memberEnds = ((Association)e).getMemberEnd();
+            if (memberEnds.size() != 2)
+                return true;
+            if (!(memberEnds.get(0) instanceof Property) || !(memberEnds.get(1) instanceof Property))
+                return true;
+        }
+        if (e instanceof Connector) {
+            List<ConnectorEnd> ends = ((Connector)e).getEnd();
+            if (ends.size() != 2 || !(ends.get(1).getRole() instanceof ConnectableElement) || !(ends.get(0).getRole() instanceof ConnectableElement))
+                return true;
+        }
+        if (e instanceof ActivityEdge) {
+            if (!(((ActivityEdge)e).getSource() instanceof ActivityNode) || !(((ActivityEdge)e).getSource() instanceof ActivityNode))
+                return true;
+        }
+        if (e instanceof InstanceSpecification) {
+            if (((InstanceSpecification)e).getClassifier().isEmpty())
+                return true;
+        }
+        return false;
     }
 }

@@ -270,7 +270,7 @@ public class ImportUtility {
             setOwnedAttribute(newE, ob);
             newE.setID(sysmlID);
         } catch (ImportException ex) {
-            if (ex instanceof ReferenceException && updateRelations) {
+            if (Utils.modelInconsistency(newE)  && updateRelations) {
                 newE.dispose();
                 throw ex;
             }

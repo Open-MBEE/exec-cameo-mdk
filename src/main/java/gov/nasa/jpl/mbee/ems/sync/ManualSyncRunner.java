@@ -242,15 +242,17 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     webChangedObjects.add(webElements.get(webUpdate));
             }
             
+            Map<String, Element> mapping = new HashMap<String, Element>();
             //lock stuff that needs to be changed first
             Set<String> toLockIds = new HashSet<String>(webChanged);
             toLockIds.addAll(webAdded);
             toLockIds.addAll(webDeleted);
             for (String id: toLockIds) {
                 Element e = ExportUtility.getElementFromID(id);
-                if (e != null)
+                if (e != null) {
                     Utils.tryToLock(project, e, isFromTeamwork);
-                else
+                    mapping.put(id, e);
+                } else
                     continue;
                 Constraint c = Utils.getViewConstraint(e);
                 if (c != null)
@@ -269,16 +271,25 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 //take care of web added
                 if (webAddedSorted != null) {
                     ImportUtility.outputError = false;
-                    for (Object element : webAddedSorted) {
+                    for (JSONObject element : webAddedSorted) {
                         try {
+                            Element e = mapping.get((String)element.get("sysmlid"));
+                            if (e != null && !e.isEditable()) {
+                                //existing element and not editable
+                                continue;
+                            }
                             ImportUtility.createElement((JSONObject) element, false);
                         } catch (ImportException ex) {
                             
                         }
                     }
                     ImportUtility.outputError = true;
-                    for (Object element : webAddedSorted) { 
+                    for (JSONObject element : webAddedSorted) { 
                         try {
+                            Element e = mapping.get((String)element.get("sysmlid"));
+                            if (e != null && !e.isEditable()) {
+                                continue; //TODO log this?
+                            }
                             Element newe = ImportUtility.createElement((JSONObject) element, true);
                             //Utils.guilog("[SYNC ADD] " + newe.getHumanName() + " created.");
                             updated.addViolation(new ValidationRuleViolation(newe, "[CREATED]"));
