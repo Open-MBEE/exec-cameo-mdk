@@ -2,12 +2,15 @@ package gov.nasa.jpl.mbee.actions.docgen;
 
 import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import java.awt.event.ActionEvent;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
+import java.util.List;
 
 public class GenerateViewPresentationAction extends MDAction {
     private static final long serialVersionUID = 1L;
@@ -30,8 +33,9 @@ public class GenerateViewPresentationAction extends MDAction {
         updateAction();
     }
     
-    public void updateAction() {
+    public List<ValidationSuite> updateAction() {
         ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse, null, true, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
+        return vg.getValidations();
     }
 }

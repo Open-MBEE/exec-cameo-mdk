@@ -2,8 +2,11 @@ package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.sync.ManualSyncRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -11,6 +14,8 @@ import com.nomagic.ui.ProgressStatusRunner;
 public class UpdateFromJMS extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "UpdateFromJMS";
+    private static ArrayList<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    
     
     private boolean commit;
     public UpdateFromJMS(boolean commit) {
@@ -26,7 +31,10 @@ public class UpdateFromJMS extends MDAction {
         updateAction();
     }
     
-    public void updateAction() {
-        ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(commit, false), "Delta Sync", true, 0);
+    public List<ValidationSuite> updateAction() {
+    	ManualSyncRunner msr = new ManualSyncRunner(commit, false);
+        ProgressStatusRunner.runWithProgressStatus(msr, "Delta Sync", true, 0);
+        vss.add(msr.getValidationSuite());
+        return vss;
     }
 }
