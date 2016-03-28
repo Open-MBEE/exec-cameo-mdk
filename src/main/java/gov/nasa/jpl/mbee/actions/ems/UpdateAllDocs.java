@@ -28,8 +28,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class UpdateAllDocs extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "GenerateAllAndCommit";
-    private static List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     
+    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     
     public UpdateAllDocs() {
         super(actionid, "Generate All Documents and Commit to MMS", null, null);
@@ -46,30 +46,34 @@ public class UpdateAllDocs extends MDAction {
     public List<ValidationSuite> updateAction() {
         ManualSyncRunner msr = new ManualSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
+        vss.addAll(msr.getValidations());
         if (msr.getFailure()) {
             Utils.guilog("[ERROR] Update from MMS was not completed");
-            return null;
+            return vss;
         }
         
         Set<Element> docs = getProjectDocuments();
         ViewInstanceUtils viu = new ViewInstanceUtils();
         for (Element doc: docs) {
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu);
+            
+        	ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.getFailure()) {
                 Utils.guilog("[ERROR] Document generation was not completed");
                 Utils.displayValidationWindow(vss, "View Generation and Images Validation");
-                return null;
+                return vss;
             }
+            
             ValidateViewRunner vvr = new ValidateViewRunner(doc, false, true, false);
             ProgressStatusRunner.runWithProgressStatus(vvr, "Validating View Hierarchy", true, 0);
             vss.addAll(vvr.getValidations());
         }
         Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+        
         ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
         ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
-        vss.add(msr2.getValidationSuite());
+        vss.addAll(msr2.getValidations());
         return vss;
     }
     
@@ -103,4 +107,9 @@ public class UpdateAllDocs extends MDAction {
         }
         return projDocs;
     }
+    
+    public List<ValidationSuite> getValidations() {
+    	return vss;
+    }
+    
 }

@@ -10,15 +10,18 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GenerateViewPresentationAction extends MDAction {
     private static final long serialVersionUID = 1L;
-    private Element            doc;
-    private boolean recurse;
     public static final String actionid = "GenerateViewPresentation";
     public static final String recurseActionid = "GenerateViewPresentationR";
 
+    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    private Element doc;
+    private boolean recurse;
+    
 
     public GenerateViewPresentationAction(Element e, boolean recurse) {
         super(recurse ? recurseActionid : actionid, recurse ? "Generate Views": "Generate View", null, null);
@@ -36,6 +39,12 @@ public class GenerateViewPresentationAction extends MDAction {
     public List<ValidationSuite> updateAction() {
         ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse, null, true, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
-        return vg.getValidations();
+        vss.addAll(vg.getValidations());
+        return vss;
     }
+    
+    public List<ValidationSuite> getValidations() {
+    	return vss;
+    }
+    
 }

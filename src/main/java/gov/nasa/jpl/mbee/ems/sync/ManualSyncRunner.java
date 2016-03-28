@@ -61,6 +61,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private ValidationRule cannotCreate = new ValidationRule("cannotCreate", "cannotCreate", ViolationSeverity.ERROR);
     private Set<String> cannotChange;
     
+    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    
     public ManualSyncRunner(boolean commit, boolean skipUpdate, boolean delete) {
         this.commit = commit;
         this.skipUpdate = skipUpdate;
@@ -438,7 +440,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 Utils.guilog("[INFO] There were changes that couldn't be applied. These will be attempted on the next update.");
 
             //show window of what got changed
-            List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
             vss.add(suite);
             if (suite.hasErrors())
                 Utils.displayValidationWindow(vss, "Delta Sync Log");
@@ -472,6 +473,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 }
                 listener.enable();
                 failure = true;
+                vss.add(mv.getSuite());
                 mv.showWindow();
                 return;
             }
@@ -575,7 +577,12 @@ public class ManualSyncRunner implements RunnableWithProgress {
         return failure;
     }
     
-    public ValidationSuite getValidationSuite() {
-        return suite;
+//    public ValidationSuite getSuite() {
+//        return suite;
+//    }
+//    
+    public List<ValidationSuite> getValidations() {
+    	return vss;
     }
+    
 }

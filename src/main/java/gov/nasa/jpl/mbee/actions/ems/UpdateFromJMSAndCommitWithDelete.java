@@ -14,8 +14,8 @@ import com.nomagic.ui.ProgressStatusRunner;
 public class UpdateFromJMSAndCommitWithDelete extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "UpdateFromJMSAndCommitWithDelete";
-    private static ArrayList<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     
+    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     
     public UpdateFromJMSAndCommitWithDelete() {
         super(actionid, "Commit With Deletes to MMS", null, null);
@@ -32,7 +32,12 @@ public class UpdateFromJMSAndCommitWithDelete extends MDAction {
     public List<ValidationSuite> updateAction() {
     	ManualSyncRunner msr = new ManualSyncRunner(true, true);
         ProgressStatusRunner.runWithProgressStatus(msr, "Delta Sync", true, 0);
-        vss.add(msr.getValidationSuite());
+        vss.addAll(msr.getValidations());
         return vss;
     }
+    
+    public List<ValidationSuite> getValidations() {
+    	return vss;
+    }
+    
 }

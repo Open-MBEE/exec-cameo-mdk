@@ -20,9 +20,9 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 public class OneClickUpdateDoc extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "OneClickUpdate";
-    private Element doc;
-    private static ArrayList<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     
+    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    private Element doc;
     
     public OneClickUpdateDoc(Element doc) {
         super(actionid, "Generate Views and Commit to MMS", null, null);
@@ -40,22 +40,35 @@ public class OneClickUpdateDoc extends MDAction {
     public List<ValidationSuite> updateAction() {
         ManualSyncRunner msr = new ManualSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
+        vss.addAll(msr.getValidations());
         if (msr.getFailure()) {
             Utils.guilog("[ERROR] Update from MMS was not completed");
-            return null;
+            return vss;
         }
+        
         ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
+        vss.addAll(vg.getValidations());
         if (vg.getFailure()) {
             Utils.guilog("[ERROR] View generation was not completed");
-            return null;
+            return vss;
         }
+        
         Stereotype documentView = Utils.getProductStereotype();
-        if (StereotypesHelper.hasStereotypeOrDerived(doc, documentView))
-            ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(doc, false, true, true), "Validating View Hierarchy", true, 0);
+        if (StereotypesHelper.hasStereotypeOrDerived(doc, documentView)) {
+        	ValidateViewRunner vvr = new ValidateViewRunner(doc, false, true, true);
+            ProgressStatusRunner.runWithProgressStatus(vvr, "Validating View Hierarchy", true, 0);
+            vss.addAll(vvr.getValidations());
+        }
+        
         ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
         ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
-        vss.add(msr.getValidationSuite());
+        vss.addAll(msr2.getValidations());
         return vss;
     }
+
+    public List<ValidationSuite> getValidations() {
+    	return vss;
+    }
+    
 }
