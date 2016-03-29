@@ -56,17 +56,7 @@ public class EMSLoginAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         // passing in "" as the username will trigger the login dialogue popup
-    	boolean ok = loginAction("", "");
-        
-        if (ok) {
-            Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
-            if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
-                Application.getInstance().getGUILog().log("Finished.");
-            this.setEnabled(false);
-            this.updateState();
-            logout.setEnabled(true);
-            logout.updateState(); //doesn't work
-        }
+    	loginAction("", "");
     }
     
     public boolean loginAction(String username, String password)
@@ -85,6 +75,15 @@ public class EMSLoginAction extends MDAction {
         } catch (ServerException ex) {}
         if (response ==  null)
             return false;
+        Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
+        if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
+            Application.getInstance().getGUILog().log("Finished.");
+        this.setEnabled(false);
+        this.updateState();
+        if (logout != null) {
+        	logout.setEnabled(true);
+        	logout.updateState(); //doesn't work
+        }
 		return true;
     }
 
