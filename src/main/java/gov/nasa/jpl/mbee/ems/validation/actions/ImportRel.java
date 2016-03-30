@@ -86,6 +86,7 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
                 ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
             } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] " + name + " cannot be imported because it would create a model inconsistency due to one or both ends missing.");
+                return false;
             }
         } else {
             String name = element.get_representationText();
@@ -97,6 +98,7 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
                 ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
             } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] " + name + " cannot be imported because it would create a model inconsistency due to one or both roles missing.");
+                return false;
             }
         }
         return true;

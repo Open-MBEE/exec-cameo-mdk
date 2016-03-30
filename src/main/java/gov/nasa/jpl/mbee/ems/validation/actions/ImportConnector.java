@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ReferenceException;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -57,14 +58,16 @@ public class ImportConnector extends RuleViolationAction implements AnnotationAc
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
             try {
                 ImportUtility.setConnectorEnds((Connector)e, (JSONObject)resultOb.get("specialization"));
-            } catch (ImportException ex) {
+            } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] " + name + " cannot be imported because it would create a model inconsistency due to one or both roles missing.");
+                return false;
             }
         } else {
             try {
                 ImportUtility.setConnectorEnds(element, spec);
-            } catch (ImportException ex) {
+            } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] " + element.getQualifiedName() + " cannot be imported because it would create a model inconsistency due to one or both roles missing.");
+                return false;
             }
         }
         return true;

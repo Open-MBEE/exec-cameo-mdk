@@ -601,7 +601,7 @@ public class ImportUtility {
             c.setType((Association)asso);
     }
     
-    public static void setAssociation(Association a, JSONObject spec) throws ImportException {
+    public static void setAssociation(Association a, JSONObject spec) throws ReferenceException {
         String webSourceId = (String)spec.get("source");
         String webTargetId = (String)spec.get("target");
         Element webSource = ExportUtility.getElementFromID(webSourceId);
