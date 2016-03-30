@@ -288,7 +288,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         try {
                             Element e = mapping.get((String)element.get("sysmlid"));
                             if (e != null && !e.isEditable()) {
-                                continue; //TODO log this?
+                                continue; //TODO log this? this is an element that's already been created and 
+                                //currently not editable, most likely already processed by someone else,
+                                //should be taken off the to be created list
                             }
                             Element newe = ImportUtility.createElement((JSONObject) element, true);
                             //Utils.guilog("[SYNC ADD] " + newe.getHumanName() + " created.");
