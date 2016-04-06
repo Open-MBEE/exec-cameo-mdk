@@ -35,6 +35,7 @@ import org.json.simple.JSONObject;
 
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
@@ -44,6 +45,7 @@ public class ValidateModelRunner implements RunnableWithProgress {
 
     private Collection<Element> start;
 	private Map<String, JSONObject> keyedElements;
+	private ValidationSuite suite;
     
     public ValidateModelRunner(Collection<Element> start) {
         this.start = start;
@@ -53,6 +55,10 @@ public class ValidateModelRunner implements RunnableWithProgress {
 	{
 		return keyedElements;
 	}
+	
+	public ValidationSuite getSuite() {
+    	return suite;
+    }
     
     @Override
     public void run(ProgressStatus arg0) {
@@ -62,11 +68,14 @@ public class ValidateModelRunner implements RunnableWithProgress {
                 validator.validate(true, arg0);
                 if (!arg0.isCancel())
                     validator.showWindow();
+                	suite = validator.getSuite();
                 keyedElements = validator.getKeyed();
             } catch (ServerException ex) {
             	Utils.guilog("[ERROR] Validate model cannot be completed because of server error.");
             }
         } else
+        	suite = validator.getSuite();
             validator.showWindow();
     }
+    
 }

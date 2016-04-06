@@ -158,6 +158,9 @@ public class Utils {
     public static final int[] TABBED_PANE_INDICES = { 1, 0, 0, 0, 1, 0, 0, 1, 1 };
     // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);
 	
+    private static boolean forceDialogFalse = false;
+    private static boolean forceDialogTrue = false;
+    
     private Utils() {
     }
 
@@ -182,6 +185,7 @@ public class Utils {
         }
         return res;
     }
+    
 
     /**
      * returns collection of model elements that's on the diagram
@@ -2279,6 +2283,10 @@ public class Utils {
     }
 
     public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons, boolean includeCancel) {
+    	if (forceDialogFalse)
+    		return false;
+    	if (forceDialogTrue)
+    		return true;
     	int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
         int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", option, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
@@ -3653,5 +3661,19 @@ public class Utils {
         if (reply == null || !reply)
             return false;
         return true;
+    }
+    
+    public static void forceDialogReturnFalse(boolean enable) {
+    	if (enable)
+    		forceDialogFalse = true;
+    	else
+    		forceDialogFalse = false;
+    }
+    
+    public static void forceDialogReturnTrue(boolean enable) {
+    	if (enable)
+    		forceDialogTrue = true;
+    	else
+    		forceDialogTrue = false;
     }
 }
