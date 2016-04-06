@@ -57,7 +57,7 @@ public class ModelExportRunner implements RunnableWithProgress {
         //if (background)
         	//this.url = url + "?background=true";
         this.url = url;
-        this.background = background;
+        this.background = (background == null) ? false : background;
     }
     
     @Override

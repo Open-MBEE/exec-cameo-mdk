@@ -2,7 +2,7 @@
 	id="gov.nasa.jpl.mgss.mbee.docgen.plugin"
 	name="DocGen"
    internalVersion="@release.version.internal@"
-	version="@release.version@"
+	version="@release.version.human@"
 	provider-name="NASA / Jet Propulsion Laboratory / Caltech"
 	ownClassLoader="true"
 	class-lookup="LocalFirst"
@@ -18,10 +18,6 @@
 	   <library name="lib/opencsv-2.3.jar"/>
 	   <library name="lib/swingx-all-1.6.4.jar"/>
 	   <library name="lib/swingx-beaninfo-1.6.4.jar"/>
-		<library name="lib/tomcat-embed-core-7.0.16.jar"/>
-		<library name="lib/tomcat-embed-jasper.jar"/>
-		<library name="lib/tomcat-embed-logging-juli-7.0.37.jar"/>
-		<library name="lib/ecj-3.7.2.jar"/>
 		<library name="lib/slf4j-api-1.7.2.jar"/>
 		<library name="lib/slf4j-log4j12-1.7.2.jar"/>		
 		<library name="lib/activemq-all-5.9.1.jar"/>

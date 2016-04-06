@@ -822,7 +822,7 @@ public class OclEvaluator {
     protected static void addNOperation(DgEnvironmentFactory envFactory) {
 
         EClassifier callerType = getGenericCallerType();
-        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getSequence();
+        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getString();
         EClassifier stringType = OCLStandardLibraryImpl.INSTANCE.getString();
         addOperation(new String[] {"name", "n"}, callerType, returnType, stringType, "name", true, true,
                 CallReturnType.NAME, envFactory);

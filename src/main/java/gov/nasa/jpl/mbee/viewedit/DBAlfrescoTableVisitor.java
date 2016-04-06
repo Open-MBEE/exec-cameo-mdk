@@ -105,6 +105,7 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
                 tablejson.put("style", table.getStyle());
             tablejson.put("title", table.getTitle());
             tablejson.put("type", "Table");
+            tablejson.put("showIfEmpty", table.isShowIfEmpty());
             // gl.log( "tablejson =\n" + tablejson );
         }
     }

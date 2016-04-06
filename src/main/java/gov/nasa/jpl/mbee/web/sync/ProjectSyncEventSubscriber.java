@@ -35,6 +35,7 @@ import com.nomagic.uml2.transaction.TransactionCommitListener;
  * Subscribes a listener to comment change events within a project. Create
  * whenever a project is opened, and unsubscribe when the project is closed.
  */
+@Deprecated
 public class ProjectSyncEventSubscriber {
     private final Project                   project;
     private final TransactionCommitListener listener;

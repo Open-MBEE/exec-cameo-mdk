@@ -22,7 +22,6 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.google.common.primitives.Ints;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
@@ -153,15 +152,21 @@ public class ImportUtility {
                     newE = view;
                 }
                 Stereotype sysmlView = Utils.getViewClassStereotype();
-                StereotypesHelper.addStereotype(newE, sysmlView);
-                setViewConstraint(newE, specialization);
+                if (updateRelations) {
+                    //StereotypesHelper.addStereotype(newE, sysmlView);
+                    setOrCreateAsi(sysmlView, newE);
+                    setViewConstraint(newE, specialization);
+                }
             } else if (elementType.equalsIgnoreCase("viewpoint")) {
                 if (newE == null) {
                     Class view = ef.createClassInstance();
                     newE = view;
                 }
-                Stereotype sysmlView = Utils.getViewpointStereotype();
-                StereotypesHelper.addStereotype(newE, sysmlView);
+                if (updateRelations) {
+                    Stereotype sysmlView = Utils.getViewpointStereotype();
+                    //StereotypesHelper.addStereotype(newE, sysmlView);
+                    setOrCreateAsi(sysmlView, newE);
+                }
             } else if (elementType.equalsIgnoreCase("Property")) {
                 JSONArray vals = (JSONArray) specialization.get("value");
                 Boolean isSlot = (Boolean) specialization.get("isSlot");
@@ -224,12 +229,15 @@ public class ImportUtility {
                     Class prod = ef.createClassInstance();
                     newE = prod;
                 }
-                Stereotype product = Utils.getDocumentStereotype();
-                StereotypesHelper.addStereotype(newE, product);
-                setViewConstraint(newE, specialization);
+                if (updateRelations) {
+                    Stereotype product = Utils.getDocumentStereotype();
+                    //StereotypesHelper.addStereotype(newE, product);
+                    setOrCreateAsi(product, newE);
+                    setViewConstraint(newE, specialization);
+                }
             } else if (elementType.equalsIgnoreCase("Association")) {
                 if (newE == null) {
-                    AssociationClass ac = ef.createAssociationClassInstance();
+                    Association ac = ef.createAssociationInstance();
                     newE = ac;
                 }
                 try {
@@ -257,13 +265,19 @@ public class ImportUtility {
                 newE = newElement;
             }
             setName(newE, ob);
-            setOwner(newE, ob);
+            if (!(newE.getOwner() != null && ob.get("owner") instanceof String && 
+                    ((String)ob.get("owner")).contains("holding_bin")))
+                //don't update owner if trying to update existing element's owner to under a holding bin
+                setOwner(newE, ob);
             setDocumentation(newE, ob);
             setOwnedAttribute(newE, ob);
             newE.setID(sysmlID);
         } catch (ImportException ex) {
             setName(newE, ob);
-            setOwner(newE, ob);
+            if (!(newE.getOwner() != null && ob.get("owner") instanceof String && 
+                    ((String)ob.get("owner")).contains("holding_bin")))
+                //don't update owner if trying to update existing element's owner to under a holding bin
+                setOwner(newE, ob);
             setDocumentation(newE, ob);
             newE.setID(sysmlID);
             throw ex;
@@ -317,6 +331,8 @@ public class ImportUtility {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {
             c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
+            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+            c.setID(e.getID() + "_vc");
             c.setOwner(e);
             c.getConstrainedElement().add(e);
         }
@@ -330,6 +346,11 @@ public class ImportUtility {
                     throw new ImportException(e, specialization, "View constraint: " + ex.getMessage());
                 }
             }
+        }
+        if (specialization.containsKey("displayedElements")) {
+            JSONArray des = (JSONArray)specialization.get("displayedElements");
+            if (des != null)
+                StereotypesHelper.setStereotypePropertyValue(e, Utils.getViewClassStereotype(), "elements", des.toJSONString());
         }
     }
     
@@ -470,9 +491,9 @@ public class ImportUtility {
         	    if (pmin == null)
         	        pmin = ef.createLiteralIntegerInstance();
         	    if (pmin instanceof LiteralInteger)
-        	        ((LiteralInteger)pmin).setValue(Ints.checkedCast(spmin));
+        	        ((LiteralInteger)pmin).setValue(spmin.intValue());
         	    if (pmin instanceof LiteralUnlimitedNatural)
-        	        ((LiteralUnlimitedNatural)pmin).setValue(Ints.checkedCast(spmin));
+        	        ((LiteralUnlimitedNatural)pmin).setValue(spmin.intValue());
 	        	p.setLowerValue(pmin);
         	}
         	catch (NumberFormatException en){}
@@ -484,9 +505,9 @@ public class ImportUtility {
                 if (pmax == null)
                     pmax = ef.createLiteralUnlimitedNaturalInstance();
                 if (pmax instanceof LiteralInteger)
-                    ((LiteralInteger)pmax).setValue(Ints.checkedCast(spmax));
+                    ((LiteralInteger)pmax).setValue(spmax.intValue());
                 if (pmax instanceof LiteralUnlimitedNatural)
-                    ((LiteralUnlimitedNatural)pmax).setValue(Ints.checkedCast(spmax));
+                    ((LiteralUnlimitedNatural)pmax).setValue(spmax.intValue());
                 p.setUpperValue(pmax);
         	}
         	catch (NumberFormatException en){}
@@ -795,5 +816,35 @@ public class ImportUtility {
             log.error("Bad PropertyValueType: " + valueType);
         };
         return newval;
+    }
+    
+    public static InstanceSpecification setOrCreateAsi(Stereotype s, Element e) {
+        List<Stereotype> ss = new ArrayList<Stereotype>();
+        ss.add(s);
+        return setOrCreateAsi(ss, e);
+    }
+    //create applied steretype instance manually so we can set id explicitly instead of letting md generate id
+    public static InstanceSpecification setOrCreateAsi(List<Stereotype> stereotypes, Element e) {
+        InstanceSpecification is = null;
+        for (Element child: e.getOwnedElement()) {
+            if (child instanceof InstanceSpecification) {
+                is = (InstanceSpecification)child;
+                for (Classifier c: is.getClassifier()) {
+                    if (!(c instanceof Stereotype)) { //not asi
+                        is = null;
+                        break;
+                    }
+                }
+            }
+        }
+        if (is == null) {
+            is = Application.getInstance().getProject().getElementsFactory().createInstanceSpecificationInstance();
+            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+            is.setID(e.getID() + "_asi");
+            is.setOwner(e);
+        }
+        is.getClassifier().clear();
+        is.getClassifier().addAll(stereotypes);
+        return is;
     }
 }

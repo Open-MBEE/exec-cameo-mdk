@@ -28,13 +28,11 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.magicdraw.qvto.QVTOUtils;
-import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
-import gov.nasa.jpl.mbee.dgview.DgviewPackage;
 import gov.nasa.jpl.mbee.ems.sync.AutosyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
 import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
 import gov.nasa.jpl.mbee.web.sync.ApplicationSyncEventSubscriber;
 
@@ -48,14 +46,12 @@ import java.util.List;
 import java.util.jar.JarFile;
 
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 
 public class DocGenPlugin extends Plugin {
-    // Variables for running embedded web server for exposing services
-    private DocGenEmbeddedServer        embeddedServer;
-    private boolean                     runEmbeddedServer     = false;
     protected OclEvaluatorPlugin        oclPlugin             = null;
     protected ValidateConstraintsPlugin vcPlugin              = null;
     protected AutoSyncPlugin            autoSyncPlugin        = null;
@@ -68,13 +64,6 @@ public class DocGenPlugin extends Plugin {
 
     @Override
     public boolean close() {
-        if (runEmbeddedServer) {
-            try {
-                embeddedServer.teardown();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-        }
         return true;
     }
 
@@ -107,29 +96,11 @@ public class DocGenPlugin extends Plugin {
         getVcPlugin().init();
         getAutoSyncPlugin().init();
         (new Thread(new OutputSyncRunner())).start();
-        ApplicationSyncEventSubscriber.subscribe();
+        //ApplicationSyncEventSubscriber.subscribe(); //really old docweb sync, should remove related code
 
-        getEmbeddedSystemProperty();
-        if (runEmbeddedServer) {
-            try {
-                embeddedServer = new DocGenEmbeddedTomcatServer();
-                embeddedServer.setup();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-        }
-        
         loadExtensionJars(); // people can actaully just create a new plugin and
-        // let magicdraw's classloader load it?
-        try {
-            QVTOUtils.loadMetamodelPackage(DgviewPackage.class);
-            QVTOUtils.loadMetamodelPackage(DgvalidationPackage.class);
-        } catch (Exception ex) {
-            //?
-        }
         
-        // QVTOUtils.registerMetamodel("http:///gov/nasa/jpl/mgss/mbee/docgen/dgview.ecore",
-        // "gov.nasa.jpl.mgss.mbee.docgen.dgview.DgviewFactory");
+        Application.getInstance().getEnvironmentOptions().addGroup(new MDKOptionsGroup());
     }
 
     public OclEvaluatorPlugin getOclPlugin() {
@@ -156,20 +127,6 @@ public class DocGenPlugin extends Plugin {
     @Override
     public boolean isSupported() {
         return true;
-    }
-
-    /**
-     * Overrides the embedded server flag based on system property being set.
-     */
-    private void getEmbeddedSystemProperty() {
-        String embedded = System.getProperty("mdk.embeddedserver");
-        if (embedded != null) {
-            if (embedded.equalsIgnoreCase("true")) {
-                runEmbeddedServer = true;
-            } else if (embedded.equalsIgnoreCase("false")) {
-                runEmbeddedServer = false;
-            }
-        }
     }
 
     private void loadExtensionJars() {

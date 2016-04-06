@@ -31,7 +31,7 @@ package gov.nasa.jpl.mbee.web.sync;
 import java.util.List;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
+@Deprecated
 public interface CommentRepository {
 
     void connect() throws CommentSyncFailure;

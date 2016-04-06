@@ -1,0 +1,15 @@
+    <project xmlns="http://maven.apache.org/POM/4.0.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                          http://maven.apache.org/xsd/maven-4.0.0.xsd">
+      <modelVersion>4.0.0</modelVersion>
+     
+      <groupId>gov.nasa.jpl.cae.magicdraw.plugins</groupId>
+      <artifactId>mdk</artifactId>
+      <version>2.3-SNAPSHOT</version>
+      <packaging>zip</packaging>
+      <build>
+        <defaultGoal>install</defaultGoal>
+        <directory>${basedir}/target/package</directory>
+      </build>
+    </project>

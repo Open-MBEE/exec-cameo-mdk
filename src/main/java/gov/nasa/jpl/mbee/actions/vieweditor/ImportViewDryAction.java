@@ -35,7 +35,7 @@ import java.awt.event.ActionEvent;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
+@Deprecated
 public class ImportViewDryAction extends MDAction {
     private static final long serialVersionUID = 1L;
     private Element            doc;

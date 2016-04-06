@@ -177,7 +177,7 @@ public class ViewEditUtils {
                     passwordFld.setText(password);
                 }
                 makeSureUserGetsFocus(usernameFld);
-                JOptionPane.showConfirmDialog(null, userPanel,
+                JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                         "Enter your username and password for ViewEditor:", JOptionPane.OK_CANCEL_OPTION,
                         JOptionPane.PLAIN_MESSAGE);
 
@@ -197,6 +197,25 @@ public class ViewEditUtils {
 
         // proxy cache needs Authorization header
         method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
+    }
+    
+    /**
+     * Sets credentials for the client based on the actual URL string and supplied strings.
+     * Intended to bypass the confirmDialog generated in the primary method
+     * 
+     * @param client
+     * @param urlstring
+     * @param method
+     * @param username
+     * @param password
+     */
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method, String username, String password) {
+        if (!passwordSet) 
+        {
+        	// setting the password here will cause us to skip the confirmDialog in the main setCredentials method
+            setUsernameAndPassword(username ,password, true);
+        }
+        setCredentials(client, urlstring, method);
     }
     
     private static void makeSureUserGetsFocus(final JTextField user) {
@@ -257,7 +276,7 @@ public class ViewEditUtils {
     /**
      * utility for setting authorization header encoding at same time as username and password.
      */
-    private static void setUsernameAndPassword(String uname, String pword, boolean isPasswordSet) {
+    public static void setUsernameAndPassword(String uname, String pword, boolean isPasswordSet) {
         passwordSet = isPasswordSet;
         username = uname;
         password = pword;
@@ -268,5 +287,9 @@ public class ViewEditUtils {
     
     public static String getAuthStringEnc() {
         return authStringEnc;
+    }
+    
+    public static String getUsername() {
+        return username;
     }
 }

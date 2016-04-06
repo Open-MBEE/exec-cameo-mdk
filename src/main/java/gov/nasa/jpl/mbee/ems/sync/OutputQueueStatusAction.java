@@ -98,6 +98,7 @@ public class OutputQueueStatusAction extends SRAction {
 			table.getColumnModel().getColumn(2).setPreferredWidth(100);
 			table.getColumnModel().getColumn(3).setPreferredWidth(200);
 			table.getColumnModel().getColumn(4).setPreferredWidth(370);
+			table.getColumnModel().getColumn(5).setPreferredWidth(100);
 			
 			final JScrollPane tableScrollPane = new JScrollPane(table);
 			tableScrollPane.setPreferredSize(new Dimension(500, 200));
@@ -127,7 +128,7 @@ public class OutputQueueStatusAction extends SRAction {
                 row.addElement(current.getNumElements());
                 row.addElement(current.getType());
                 row.addElement(current.getUrl());
-                row.addElement("Cancel");
+                row.addElement("Continue in Background");
                 data.addElement(row);
 			}
 			while (it.hasNext()) {

@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.web.sync;
-
+@Deprecated
 public class CommentSyncFailure extends Exception {
     private static final long serialVersionUID = 1L;
 

@@ -32,22 +32,25 @@ import gov.nasa.jpl.mbee.model.AbstractModelVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.Section;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
+
 public class ViewHierarchyVisitor extends AbstractModelVisitor {
 
-    private JSONObject       result;
-    private Stack<JSONArray> curChildren;
-    private JSONArray        nosections;
-
-    public ViewHierarchyVisitor() {
-        result = new JSONObject();
-        curChildren = new Stack<JSONArray>();
-        nosections = new JSONArray();
-    }
+    private JSONObject       result = new JSONObject();
+    private Map<Element, List<Element>> resultElements = new HashMap<Element, List<Element>>();
+    private Stack<JSONArray> curChildren = new Stack<JSONArray>();
+    private Stack<List<Element>> curChildrenElements = new Stack<List<Element>>();
+    private JSONArray        nosections = new JSONArray();
 
     @SuppressWarnings("unchecked")
     public JSONObject getResult() {
@@ -62,10 +65,12 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
     public void visit(Document doc) {
         if (doc.getDgElement() != null) {
             curChildren.push(new JSONArray());
+            curChildrenElements.push(new ArrayList<Element>());
         }
         visitChildren(doc);
         if (doc.getDgElement() != null) {
             result.put(doc.getDgElement().getID(), curChildren.pop());
+            resultElements.put(doc.getDgElement(), curChildrenElements.pop());
         }
     }
 
@@ -75,18 +80,26 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
         if (sec.isView()) {
             if (sec.isNoSection())
                 nosections.add(sec.getDgElement().getID());
-            if (!curChildren.isEmpty())
+            if (!curChildren.isEmpty()) {
                 curChildren.peek().add(sec.getDgElement().getID());
+                curChildrenElements.peek().add(sec.getDgElement());
+            }
             curChildren.push(new JSONArray());
+            curChildrenElements.push(new ArrayList<Element>());
         }
         visitChildren(sec);
         if (sec.isView()) {
             result.put(sec.getDgElement().getID(), curChildren.pop());
+            resultElements.put(sec.getDgElement(), curChildrenElements.pop());
         }
     }
     
     public JSONObject getView2View() {
         return result;
+    }
+    
+    public Map<Element, List<Element>> getView2ViewElements() {
+        return resultElements;
     }
     
     public JSONArray getNosections() {

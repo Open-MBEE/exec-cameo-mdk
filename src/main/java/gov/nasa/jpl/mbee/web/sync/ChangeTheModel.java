@@ -43,6 +43,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
  * exists or needs to be created, this handles both cases from a
  * "defensive programming" posture.
  */
+@Deprecated
 public abstract class ChangeTheModel implements Runnable {
 
     public abstract String getDescription();

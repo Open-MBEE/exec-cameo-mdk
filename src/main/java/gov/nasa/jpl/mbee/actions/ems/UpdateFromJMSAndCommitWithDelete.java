@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.sync.ManualSyncRunner;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
 
@@ -18,6 +19,12 @@ public class UpdateFromJMSAndCommitWithDelete extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
+        if (!Utils.recommendUpdateFromTeamwork())
+            return;
+        updateAction();
+    }
+    
+    public void updateAction() {
         ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(true, true), "Delta Sync", true, 0);
     }
 }

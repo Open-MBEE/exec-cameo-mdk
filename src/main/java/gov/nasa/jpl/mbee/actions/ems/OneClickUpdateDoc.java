@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 import gov.nasa.jpl.mbee.ems.sync.ManualSyncRunner;
+import gov.nasa.jpl.mbee.generator.ViewInstanceUtils;
 import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 
@@ -26,13 +27,19 @@ public class OneClickUpdateDoc extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
+        if (!Utils.recommendUpdateFromTeamwork())
+            return;
+        updateAction();
+    }
+    
+    public void updateAction() {
         ManualSyncRunner msr = new ManualSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         if (msr.getFailure()) {
             Utils.guilog("[ERROR] Update from MMS was not completed");
             return;
         }
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true);
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
         if (vg.getFailure()) {
             Utils.guilog("[ERROR] View generation was not completed");

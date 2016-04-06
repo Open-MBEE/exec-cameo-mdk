@@ -39,6 +39,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  * @author dlam
  * 
  */
+@Deprecated
 public class ImportViewRecursiveAction extends MDAction {
 
     private static final long serialVersionUID = 1L;

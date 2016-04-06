@@ -181,10 +181,11 @@ AnnotationAction, IRuleViolationAction {
         return returns;
     }
     
-    private static boolean lock(Element e, boolean isTeamwork, Project project) {
+    private static boolean lock(NamedElement e, boolean isTeamwork, Project project) {
         if (e == null)
             return true;
         if (!e.isEditable()) {
+            Utils.guilog("Please lock element with ID: " + e.getID() + " (" + e.getQualifiedName() + ")");
             return false;
             /*if (!ProjectUtilities.isElementInAttachedProject(e)) {
                 if (isTeamwork) {
@@ -225,7 +226,7 @@ AnnotationAction, IRuleViolationAction {
             String viewid = (String)vid;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                if (!lock(view, isTeamwork, project)) {
+                if (!lock((NamedElement)view, isTeamwork, project)) {
                     retval.put("success", false);
                     return retval;
                 }
@@ -254,7 +255,7 @@ AnnotationAction, IRuleViolationAction {
                 continue;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                if (!lock(view, isTeamwork, project)) {
+                if (!lock((NamedElement)view, isTeamwork, project)) {
                     retval.put("success", false);
                     return retval;
                 }
@@ -309,7 +310,8 @@ AnnotationAction, IRuleViolationAction {
         }
         for (JSONObject ob: sortedNewviews) {
             try {
-                Element newview = ImportUtility.createElement(ob, true);
+                Element newview = ImportUtility.createElement(ob, false);
+                newview = ImportUtility.createElement(ob, true);
                 if (newview != null) {
                     List<Property> viewprops = new ArrayList<Property>();
                     viewId2props.put(newview.getID(), viewprops);

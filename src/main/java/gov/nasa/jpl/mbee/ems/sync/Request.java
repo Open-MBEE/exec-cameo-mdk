@@ -49,7 +49,7 @@ public class Request {
         this.wait = wait*1000 + 120000;
         this.type = type;
         this.numElements = wait;
-        this.background = background;
+        this.background = (background == null) ? false : background;
     }
     
     public Request(String url, PostMethod pm, String type) {

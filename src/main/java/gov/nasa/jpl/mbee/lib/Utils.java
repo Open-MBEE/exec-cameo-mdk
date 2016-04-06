@@ -85,8 +85,12 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptor;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.magicdraw.teamwork2.TeamworkService;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
@@ -633,7 +637,7 @@ public class Utils {
             res.add((T)o);
         else if (o instanceof Collection) {
             for (Object obj: (Collection<?>)o) {
-                res.addAll(getListOfType(obj, type));
+                res.addAll(getListOfType(obj, type, seen));
             }
         }
         return res;
@@ -2062,10 +2066,14 @@ public class Utils {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueImage");
     }
 
-    public static Classifier getSectionClassifier() {
+    public static Classifier getOpaqueSectionClassifier() {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection");
     }
 
+    public static Classifier getSectionClassifier() {
+        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section");
+    }
+    
     public static Stereotype getPresentsStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents");
     }
@@ -2079,8 +2087,10 @@ public class Utils {
     }
     
     public static Constraint getViewConstraint(Element view) {
+        if (view == null)
+            return null;
         for (Element e: view.getOwnedElement()) {
-            if (e instanceof Constraint)
+            if (e instanceof Constraint && ((Constraint)e).getConstrainedElement().contains(view))
                 return (Constraint)e;
         }
         return null;
@@ -2248,7 +2258,7 @@ public class Utils {
             strings[i] = e;
             i++;
         }
-        Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null,
+        Object input = JOptionPane.showInputDialog(Application.getInstance().getMainFrame(), message, title, JOptionPane.PLAIN_MESSAGE, null,
                 strings, initial);
         if (input != null) {
             for (int j = 0; j < strings.length; j++) {
@@ -2265,11 +2275,12 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
-        JOptionPane.showMessageDialog(null, message);
+        JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
     }
 
-    public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons) {
-        int res = JOptionPane.showOptionDialog(null, question, "Choose", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
+    public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons, boolean includeCancel) {
+    	int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
+        int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", option, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
             return true;
         else if (res == JOptionPane.NO_OPTION)
@@ -2282,7 +2293,7 @@ public class Utils {
      * @return null if user hits cancel
      */
     public static Boolean getUserYesNoAnswer(String question) {
-        int res = JOptionPane.showConfirmDialog(null, question);
+        int res = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), question);
         if (res == JOptionPane.YES_OPTION)
             return true;
         else if (res == JOptionPane.NO_OPTION)
@@ -2481,11 +2492,18 @@ public class Utils {
         g.setOwner(child);
     }
 
+    private static void setOwnerPackage(Element child, Element parent) { 
+        while (!(parent instanceof Package)){
+        	parent = parent.getOwner();
+        }
+        child.setOwner(parent);
+    }
+    
     public static void createDependency(Element from, Element to) {
         Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     public static void createDependencyWithStereotype(Element from, Element to, Stereotype s) {
@@ -2493,7 +2511,7 @@ public class Utils {
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotype(d, s);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     public static void createDependencyWithStereotypes(Element from, Element to, Collection<Stereotype> s) {
@@ -2501,7 +2519,7 @@ public class Utils {
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotypes(d, s);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     public static void createDependencyWithStereotypeName(Element from, Element to, String stereotype) {
@@ -2509,7 +2527,7 @@ public class Utils {
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotypeByString(d, stereotype);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     public static void createDependencyWithStereotypeNames(Element from, Element to,
@@ -2518,7 +2536,7 @@ public class Utils {
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotypesWithNames(d, stereotypes);
-        d.setOwner(from);
+        setOwnerPackage(d, from);
     }
 
     /**
@@ -3587,6 +3605,10 @@ public class Utils {
         if (!isFromTeamwork) {
             return false;
         }
+        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
+        if (listener != null)
+            listener.disable(); 
+        //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
         if (e instanceof Property)
             TeamworkUtils.lockElement(project, e.getOwner(), false);
@@ -3599,9 +3621,37 @@ public class Utils {
         } else
             TeamworkUtils.lockElement(project, e, false);
         if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
-            SessionManager.getInstance().createSession("session after lock");
+            SessionManager.getInstance().createSession("session after lock"); 
+        if (listener != null)
+            listener.enable();
+        //if a session was open and lock triggered a teamwork update, session would be closed
         if (e.isEditable())
             return true;
         return false;
+    }
+    
+    public static boolean recommendUpdateFromTeamwork() {
+        Project prj = Application.getInstance().getProject();
+        if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+            return true;
+        String user = TeamworkUtils.getLoggedUserName();
+        if (user == null) {
+            Utils.guilog("[ERROR] You must be logged into teamwork first.");
+            return false;
+        }
+        ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(prj);
+        try {
+            if (TeamworkUtils.getLastVersion(currentProj) == TeamworkService.getInstance(prj).getVersion(prj).getNumber())
+                return true;
+        } catch (Exception ex) {
+            
+        }
+        String[] buttons = {"Continue (May trigger update)", "Cancel"};
+        Boolean reply = Utils.getUserYesNoAnswerWithButton("There's a new project version available on teamwork.\nIt's highly recommended that you update from teamwork first,\n"
+                + "and commit to teamwork immediately after this action.\n"
+                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?", buttons, false);
+        if (reply == null || !reply)
+            return false;
+        return true;
     }
 }

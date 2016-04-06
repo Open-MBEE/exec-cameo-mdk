@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 import gov.nasa.jpl.mbee.ems.sync.ManualSyncRunner;
+import gov.nasa.jpl.mbee.generator.ViewInstanceUtils;
 import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
@@ -35,6 +36,12 @@ public class UpdateAllDocs extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
+        if (!Utils.recommendUpdateFromTeamwork())
+            return;
+        updateAction();
+    }
+    
+    public void updateAction() {
         ManualSyncRunner msr = new ManualSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         if (msr.getFailure()) {
@@ -44,8 +51,9 @@ public class UpdateAllDocs extends MDAction {
         
         Set<Element> docs = getProjectDocuments();
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+        ViewInstanceUtils viu = new ViewInstanceUtils();
         for (Element doc: docs) {
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false);
+            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.getFailure()) {

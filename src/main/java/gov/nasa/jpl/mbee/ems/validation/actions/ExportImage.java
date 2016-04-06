@@ -66,13 +66,17 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         return true;
     }
 
-    public static void postImage(String key, Map<String, JSONObject> is) {
+    public static boolean postImage(String key, Map<String, JSONObject> is) {
+        if (is == null || is.get(key) == null) {
+            Utils.guilog("[ERROR] Image data with id " + key + " not found!");
+            return false;
+        }
         String filename = (String)is.get(key).get("abspath");
         String cs = (String)is.get(key).get("cs");
         String extension = (String)is.get(key).get("extension");
         String url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
-            return;
+            return false;
         String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
         String site = ExportUtility.getSite();
         String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
@@ -96,9 +100,11 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             */
         } catch (Exception ex) {
             Utils.printException(ex);
+            return false;
         } finally {
             //post.releaseConnection();
         }
+        return true;
     }
     
     public static void postImages(Map<String, JSONObject> is) {
@@ -121,7 +127,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
     @Override
     public void actionPerformed(ActionEvent e) {
         String key = element.getID();
-        postImage(key, images);
-        Utils.guilog("[INFO] Request is added to queue.");
+        if (postImage(key, images))
+            Utils.guilog("[INFO] Request is added to queue.");
     }
 }

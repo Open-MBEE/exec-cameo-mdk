@@ -38,7 +38,7 @@ import java.util.Date;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
+@Deprecated
 public class UpdateCommentTags extends ChangeTheModel {
     private final Comment comment;
 

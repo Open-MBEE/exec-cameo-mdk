@@ -75,7 +75,7 @@ public class OutputSyncRunner implements Runnable {
     	            //Utils.guilog("[INFO] A send request did not finish within expected time. So keep waiting..."); //until a user press cancel
     	            //log.info(st.getName() + " A send request did not finish within expected time.");
     	            while (st.isAlive() && r == q.getCurrent() ) { // r is not current if "cancel" in queue dialog is pressed
-    	             	 log.info(st.getName() + " Did not finish yet so waiting another 5 sec.");
+    	             	 //log.info(st.getName() + " Did not finish yet so waiting another 5 sec.");
     	                 Thread.sleep(5000);
     	             } //end of while
     	             log.info(st.getName() + " received response or cancel is pressed."); 

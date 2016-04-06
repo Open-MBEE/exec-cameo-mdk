@@ -1,4 +1,4 @@
 In original, missing from final:
 In final, missing from original:
-	from="data/defaults/data/diagrams/View Diagram/descriptor.xml"
-	from="data/defaults/data/diagrams/Viewpoint Method Diagram/descriptor.xml"
+	from="plugins/gov.nasa.jpl.mbee.docgen/lib/activemq-all-5.9.1.jar"
+	from="plugins/gov.nasa.jpl.mbee.docgen/lib/wlthint3client.jar"
