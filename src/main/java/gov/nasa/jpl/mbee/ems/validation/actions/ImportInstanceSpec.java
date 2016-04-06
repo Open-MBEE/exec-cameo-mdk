@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ReferenceException;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -44,6 +45,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class ImportInstanceSpec extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -74,21 +76,27 @@ public class ImportInstanceSpec extends RuleViolationAction implements Annotatio
         if (anno != null) {
             Element e = (Element)anno.getTarget();
             if (!e.isEditable()) {
-                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
+                Utils.guilog("[ERROR] " + ((NamedElement)e).getQualifiedName() + " isn't editable");
                 return false;
             }
             JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
             try {
                 ImportUtility.setInstanceSpecification((InstanceSpecification)e, (JSONObject)resultOb.get("specialization"));
             } catch (ImportException ex) {
-                Utils.guilog("[ERROR] " + ex.getMessage());
+                if (ex instanceof ReferenceException) {
+                    Utils.guilog("[ERROR] " + ((NamedElement)e).getQualifiedName() + " cannot be imported because it'll be missing classifiers.");
+                } else
+                    Utils.guilog("[ERROR] " + ex.getMessage());
                 return false;
             }
         } else {
             try {
                 ImportUtility.setInstanceSpecification(element, spec);
             } catch (ImportException ex) {
-                Utils.guilog("[ERROR] " + ex.getMessage());
+                if (ex instanceof ReferenceException) {
+                    Utils.guilog("[ERROR] " + element.getQualifiedName() + " cannot be imported because it'll be missing classifiers.");
+                } else
+                    Utils.guilog("[ERROR] " + ex.getMessage());
                 return false;
             }
         }
