@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.ems;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,17 +14,13 @@ import gov.nasa.jpl.graphs.DirectedEdgeVector;
 import gov.nasa.jpl.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
-import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils;
-
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
-import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdassociationclasses.AssociationClass;
@@ -50,7 +45,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ParameterDirectionKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
@@ -224,6 +222,12 @@ public class ImportUtility {
                     newE = c;
                 }
                 setConstraintSpecification((Constraint)newE, specialization);
+            } else if (elementType.equalsIgnoreCase("Operation")) {
+                if (newE == null) {
+                    Operation c = ef.createOperationInstance();
+                    newE = c;
+                }
+                setOperationSpecification((Operation)newE, specialization);
             } else if (elementType.equalsIgnoreCase("Product")) {
                 if (newE == null) {
                     Class prod = ef.createClassInstance();
@@ -564,6 +568,121 @@ public class ImportUtility {
         }
     }
     
+    protected static void setOperationSpecification(Operation operation,
+                                                    JSONObject spec) throws ImportException {
+        if (!spec.containsKey("specification"))
+            return;
+        JSONObject sp = (JSONObject)spec.get("specification");
+        if (sp != null) {
+            // set postconditions
+            Constraint postcondition = getOrCreatePostcondition( operation );
+           //c.getPostcondition()
+            JSONObject methodJson = (JSONObject)spec.get("method");
+            if ( methodJson != null ) {                    
+                try {
+                    ValueSpecification vs = null;
+                    vs = createValueSpec(methodJson, null);
+                    if ( vs != null ) {
+                        ValueSpecification pcSpec = 
+                                postcondition.getSpecification();
+                        if ( pcSpec != null && pcSpec instanceof Expression ) {
+                            List<ValueSpecification> operands =
+                                    ((Expression)pcSpec).getOperand();
+                            if ( operands.size() == 2 ) {
+                                operands.add( vs );
+                            } else if ( operands.size() == 3 ) {
+                                operands.set( 2, vs );
+                            } else {
+                                // TODO -- ERROR!
+                            }
+                        }
+                    }
+                } catch (ReferenceException ex) {
+                    throw new ImportException(operation, spec,
+                                              "Operation Specification: " 
+                                              + ex.getMessage());
+                }
+            }
+            // update parameters from expression
+            Object params = spec.get("parameters");
+            JSONArray jarr = (JSONArray)(params instanceof JSONArray ? params : null);
+            setOperationParameters(operation, jarr);
+        }
+    }
+
+    
+    protected static void setOperationParameters( Operation operation,
+                                                  JSONArray parameters ) {
+        if ( operation == null ) return;
+        List<Parameter> params = operation.getOwnedParameter();
+        if ( params == null ) return;
+        List<Parameter> newParams = new ArrayList<Parameter>();
+        Collection<Constraint> pcs = operation.getPostcondition();
+        if ( pcs == null ) return;
+        // TODO -- this creates them all or adds nothing--we need to be able to
+        // update them.  It also ignores the incoming JSON.
+        if ( operation.getOwnedParameter() != null &&
+             !operation.getOwnedParameter().isEmpty() ) {
+            for ( Constraint c : pcs ) {
+                ValueSpecification cSpec = c.getSpecification();
+                addParametersFromValueSpec( cSpec, newParams );
+            }
+            operation.getOwnedParameter().addAll(newParams);
+        }
+    }
+
+    protected static void addParametersFromValueSpec( ValueSpecification cSpec,
+                                                      List<Parameter> params ) {
+        if ( cSpec instanceof ElementValue ) {
+            Element elem = ((ElementValue)cSpec).getElement();
+            if ( elem instanceof Parameter ) {
+                params.add((Parameter) elem);
+            } else if ( elem instanceof Expression ) {
+                List<ValueSpecification> operands = 
+                        ((Expression)elem).getOperand();
+                if ( operands != null ) {
+                    for ( ValueSpecification vs : operands ) {
+                        addParametersFromValueSpec( vs, params );
+                    }
+                }
+            }
+        }
+    }
+
+    protected static Constraint getOrCreatePostcondition(Operation operation) {
+        if ( operation.getPostcondition() != null ) {
+            for ( Constraint child : operation.getPostcondition() ) {
+                if ( child != null ) return child;
+            }
+
+            // Create a new postcondition constraint
+            ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+            Constraint pc = ef.createConstraintInstance();
+            operation.getPostcondition().add(pc);
+            Expression expr = ef.createExpressionInstance();
+            pc.setSpecification(expr);
+            List<ValueSpecification> operands = expr.getOperand();
+            if ( operands == null ) {
+                operands = new ArrayList<ValueSpecification>();
+                
+                LiteralString equals = ef.createLiteralStringInstance();
+                equals.setValue("Equals");
+                operands.add(equals);
+                
+                Parameter result = ef.createParameterInstance();
+                result.setName("result");
+                result.setDirection(ParameterDirectionKindEnum.IN);
+                ElementValue ev = ef.createElementValueInstance();
+                ev.setElement(result);
+                operands.add(ev);
+                
+                // The third operand should be added by the caller.
+            }
+            return pc;
+        }
+        return null;
+    }
+
     public static void setConnectorEnds(Connector c, JSONObject spec) {
         JSONArray webSourcePath = (JSONArray)spec.get("sourcePath");
         JSONArray webTargetPath = (JSONArray)spec.get("targetPath");

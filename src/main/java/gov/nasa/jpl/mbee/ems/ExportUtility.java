@@ -1314,23 +1314,25 @@ public class ExportUtility {
             specialization.put("parameters", makeJsonArrayOfIDs(vsl));
         }
         //Find the postcondition constraint representing the operation's implementation.
-        if ( e.getPostcondition().size() > 1 ) {
+        if ( e.getPostcondition() != null && e.getPostcondition().size() > 1 ) {
             // TODO -- WARNING!
         }
-        for ( Constraint child : e.getPostcondition() ) {
-            // See if the constraint expression is of the form, Equals(result, <valueSpec>).
-            // If so, just get the valueSpec instead of the whole expression.
-            ValueSpecification valueSpec = child.getSpecification();
-            if ( valueSpec != null ) {
-                valueSpec = getOperationMethodValueSpec( valueSpec );
-                // Add the method value spec json.
-                JSONObject methodJson = new JSONObject(); 
-                fillValueSpecification( valueSpec, methodJson );
-                specialization.put( "method", methodJson );
+        if ( e.getPostcondition() != null ) {
+            for ( Constraint child : e.getPostcondition() ) {
+                // See if the constraint expression is of the form, Equals(result, <valueSpec>).
+                // If so, just get the valueSpec instead of the whole expression.
+                ValueSpecification valueSpec = child.getSpecification();
+                if ( valueSpec != null ) {
+                    valueSpec = getOperationMethodValueSpec( valueSpec );
+                    // Add the method value spec json.
+                    JSONObject methodJson = new JSONObject(); 
+                    fillValueSpecification( valueSpec, methodJson );
+                    specialization.put( "method", methodJson );
+                }
+                // There should only be one postcondition, but in case there are
+                // more, just break after the first.
+                break;
             }
-            // There should only be one postcondition, but in case there are
-            // more, just break after the first.
-            break;
         }
         return specialization;
     }
