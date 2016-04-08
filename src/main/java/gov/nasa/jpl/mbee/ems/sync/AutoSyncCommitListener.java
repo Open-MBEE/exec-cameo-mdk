@@ -144,6 +144,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             eles.addAll(elements.values());
             toSend.put("elements", eles);
             toSend.put("source", "magicdraw");
+            toSend.put("mmsVersion", "2.3");
             if (!eles.isEmpty()) {
                 String url = ExportUtility.getPostElementsUrl();
                 if (url != null) {
@@ -157,6 +158,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONArray elements = new JSONArray();
                 send.put("elements", elements);
                 send.put("source", "magicdraw");
+                send.put("mmsVersion", "2.3");
                 for (String id: deletes) {
                     JSONObject eo = new JSONObject();
                     eo.put("sysmlid", id);

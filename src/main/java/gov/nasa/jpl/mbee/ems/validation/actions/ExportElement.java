@@ -77,6 +77,8 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
             return;
         send.put("elements", infos);
         send.put("source", "magicdraw");
+        send.put("mmsVersion", "2.3");
+
         //gl.log(send.toJSONString());
         
         String url = ExportUtility.getPostElementsUrl();

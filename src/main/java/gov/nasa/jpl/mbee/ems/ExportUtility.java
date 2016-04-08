@@ -1678,6 +1678,8 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1695,6 +1697,8 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1712,6 +1716,8 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
         return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);

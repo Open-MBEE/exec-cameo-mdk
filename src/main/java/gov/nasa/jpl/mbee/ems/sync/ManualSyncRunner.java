@@ -527,6 +527,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             JSONObject toSendUpdates = new JSONObject();
             toSendUpdates.put("elements", toSendElements);
             toSendUpdates.put("source", "magicdraw");
+            toSendUpdates.put("mmsVersion", "2.3");
             if (toSendElements.size() > 100) {
                 
             }
@@ -549,6 +550,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 }
                 toSendUpdates.put("elements", toDeleteElements);
                 toSendUpdates.put("source", "magicdraw");
+                toSendUpdates.put("mmsVersion", "2.3");
                 if (!toDeleteElements.isEmpty()) {
                 	Utils.guilog("[INFO] Delete requests are added to queue.");
                     OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));
