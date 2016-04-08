@@ -243,7 +243,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         }
 
         PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElement ipe = new PresentationElement(i, entry, PEType.IMAGE, currentView.peek(), "image", parentSec, null);
+        PresentationElement ipe = new PresentationElement(i, entry, PEType.IMAGE, currentView.peek(), (image.getTitle() == null ? "image": image.getTitle()), parentSec, null);
         newpe.peek().add(ipe);
     }
 
