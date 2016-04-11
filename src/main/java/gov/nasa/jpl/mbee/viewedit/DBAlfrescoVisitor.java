@@ -187,7 +187,12 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         String svgFilename = image.getImage().getID();
 
         // create image file
-        File directory = new File("images");
+        String userhome = System.getProperty("user.home");
+        File directory = null;
+        if (userhome != null)
+            directory = new File(userhome + File.separator + "mdkimages"); 
+        else
+            directory = new File("mdkimages");
         if (!directory.exists()) {
             directory.mkdirs();
         }
