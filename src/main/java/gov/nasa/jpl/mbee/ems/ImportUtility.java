@@ -53,6 +53,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.StructuralFeature;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
@@ -174,6 +175,18 @@ public class ImportUtility {
                     if (newE == null) {
                         Slot newSlot = ef.createSlotInstance();
                         newE = newSlot;
+                        if ( sysmlID.contains("-slot-")){
+                            Project prj = Application.getInstance().getProject();
+                            String[] ids = sysmlID.split("-slot-");
+                            if (ids.length == 2) {
+                                Element definingFeature = (Element) prj.getElementByID(ids[1]);
+                                if (definingFeature instanceof StructuralFeature)
+                                    newSlot.setDefiningFeature((StructuralFeature)definingFeature);
+                                else
+                                    throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                            } else
+                                throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                        }
                     }
                     if (specialization.containsKey("value"))
                         setSlotValues((Slot)newE, vals);

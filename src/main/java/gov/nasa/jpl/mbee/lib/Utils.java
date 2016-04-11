@@ -132,6 +132,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.StructuralFeature;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
@@ -3707,6 +3708,10 @@ public class Utils {
         }
         if (e instanceof InstanceSpecification) {
             if (((InstanceSpecification)e).getClassifier().isEmpty())
+                return true;
+        }
+        if (e instanceof Slot) {
+            if (!(((Slot)e).getDefiningFeature() instanceof StructuralFeature))
                 return true;
         }
         return false;
