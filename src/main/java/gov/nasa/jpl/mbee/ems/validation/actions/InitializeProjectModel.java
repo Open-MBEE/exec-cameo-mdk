@@ -72,6 +72,9 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("mmsVersion", "2.3");
+        tosend.put("source", "magicdraw");
+
         JSONObject result = ExportUtility.getProjectJson();
         array.add(result);
         String url = ExportUtility.getUrlWithWorkspaceAndSite();

@@ -37,6 +37,8 @@ public abstract class Migrator {
 		JSONObject send = new JSONObject();
 		send.put("elements", elements);
 		send.put("source", "magicdraw");
+        send.put("mmsVersion", "2.3");
+
 
 		String url = ExportUtility.getPostElementsUrl();
 		if (url == null) {

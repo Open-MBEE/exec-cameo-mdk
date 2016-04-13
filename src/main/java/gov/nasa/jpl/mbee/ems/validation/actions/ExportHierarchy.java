@@ -121,6 +121,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             documents.add(doc);
             send.put("elements", documents);
             send.put("source", "magicdraw");
+            send.put("mmsVersion", "2.3");
             //if (ExportUtility.send(docurl, send.toJSONString()) == null)
             //    return false;
             Utils.guilog("[INFO] Request is added to queue.");
@@ -138,6 +139,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             JSONObject send  = new JSONObject();
             send.put("elements", views);
             send.put("source", "magicdraw");
+            send.put("mmsVersion", "2.3");
             //if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
             //    return false;
             Utils.guilog("[INFO] Request is added to queue.");

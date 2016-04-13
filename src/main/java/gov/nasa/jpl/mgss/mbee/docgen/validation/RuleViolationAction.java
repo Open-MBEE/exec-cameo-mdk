@@ -67,6 +67,10 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     private RuleViolationResult rvr;
     private ValidationWindowRun vwr;
     
+    public Annotation getAnnotation() {
+    	return annotation;
+    }
+    
     @Override
     public void setAnnotation(Annotation anno) {
         annotation = anno;

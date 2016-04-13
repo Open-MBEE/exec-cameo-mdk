@@ -160,6 +160,7 @@ AnnotationAction, IRuleViolationAction {
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
         tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         String url = ExportUtility.getPostElementsUrl();
         if (!changes.isEmpty()) {
             Request r = new Request(url, tosend.toJSONString(), "POST", false, changes.size(), "Hierarchy Property Changes");
@@ -171,6 +172,7 @@ AnnotationAction, IRuleViolationAction {
             JSONArray elements = new JSONArray();
             send.put("elements", elements);
             send.put("source", "magicdraw");
+            send.put("mmsVersion", "2.3");
             for (String e: deletedIds) {
                 JSONObject eo = new JSONObject();
                 eo.put("sysmlid", e);

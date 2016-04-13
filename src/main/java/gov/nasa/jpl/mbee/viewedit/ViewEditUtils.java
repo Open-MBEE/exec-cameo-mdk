@@ -199,6 +199,25 @@ public class ViewEditUtils {
         method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
     }
     
+    /**
+     * Sets credentials for the client based on the actual URL string and supplied strings.
+     * Intended to bypass the confirmDialog generated in the primary method
+     * 
+     * @param client
+     * @param urlstring
+     * @param method
+     * @param username
+     * @param password
+     */
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method, String username, String password) {
+        if (!passwordSet) 
+        {
+        	// setting the password here will cause us to skip the confirmDialog in the main setCredentials method
+            setUsernameAndPassword(username ,password, true);
+        }
+        setCredentials(client, urlstring, method);
+    }
+    
     private static void makeSureUserGetsFocus(final JTextField user) {
         //from http://stackoverflow.com/questions/14096140/how-to-set-default-input-field-in-joptionpane
         user.addHierarchyListener(new HierarchyListener()

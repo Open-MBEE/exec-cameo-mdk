@@ -69,6 +69,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
         JSONArray elements = new JSONArray();
         send.put("elements", elements);
         send.put("source", "magicdraw");
+        send.put("mmsVersion", "2.3");
         for (Annotation anno: annos) {
             String message = anno.getText();
             String[] mes = message.split("`");

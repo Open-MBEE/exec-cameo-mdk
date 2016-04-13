@@ -81,7 +81,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         suite.addValidationRule(updateFailed);
         suite.addValidationRule(uneditableElements);
         vss.add(suite);
-        vss.add(this.organizer.getValidations());
+        vss.add(this.organizer.getSuite());
     }
     
     @Override
@@ -205,7 +205,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         iv.validate();
         vss.add(iv.getSuite());
         if (showValidation) {
-            if (suite.hasErrors() || iv.getSuite().hasErrors() || organizer.getValidations().hasErrors())
+            if (suite.hasErrors() || iv.getSuite().hasErrors() || organizer.getSuite().hasErrors())
                 Utils.displayValidationWindow(vss, "View Generation and Images Validation");
             else
                 Utils.guilog("[INFO] View Generation finished.");
