@@ -32,10 +32,11 @@ import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
 
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 
-public class EMSLogoutAction extends MDAction {
+public class EMSLogoutAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "Logout";
 
@@ -53,10 +54,7 @@ public class EMSLogoutAction extends MDAction {
     public void actionPerformed(ActionEvent e) {
         ViewEditUtils.clearUsernameAndPassword();
         Application.getInstance().getGUILog().log("Logged out");
-        this.setEnabled(false);
-        this.updateState();
-        login.setEnabled(true);
-        login.updateState(); //doesn't work
+        ActionsStateUpdater.updateActionsState();
     }
 
 }

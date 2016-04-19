@@ -36,6 +36,7 @@ import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
 
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 
@@ -57,6 +58,7 @@ public class EMSLoginAction extends MDAction {
     public void actionPerformed(ActionEvent e) {
         // passing in "" as the username will trigger the login dialogue popup
     	loginAction("", "");
+    	ActionsStateUpdater.updateActionsState();
     }
     
     public boolean loginAction(String username, String password)
@@ -78,12 +80,6 @@ public class EMSLoginAction extends MDAction {
         Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
         if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
             Application.getInstance().getGUILog().log("Finished.");
-        this.setEnabled(false);
-        this.updateState();
-        if (logout != null) {
-        	logout.setEnabled(true);
-        	logout.updateState(); //doesn't work
-        }
 		return true;
     }
 
