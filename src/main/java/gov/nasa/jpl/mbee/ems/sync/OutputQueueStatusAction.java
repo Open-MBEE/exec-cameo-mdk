@@ -92,6 +92,8 @@ public class OutputQueueStatusAction extends SRAction {
 			table = new JTable(data, columns) {
 			    @Override
 			    public boolean isCellEditable(int row, int column) {
+			        if (column == 5)
+			            return true;
 			        return false;
 			    }
 			};
@@ -163,7 +165,7 @@ public class OutputQueueStatusAction extends SRAction {
 		}
 		
 	}
-	public class TableButtonColumn extends AbstractCellEditor implements TableCellRenderer, ActionListener {
+	public class TableButtonColumn extends AbstractCellEditor implements TableCellRenderer, TableCellEditor, ActionListener {
 		
 		  private JTable table;
 		  private Action action;
@@ -208,7 +210,7 @@ public class OutputQueueStatusAction extends SRAction {
 				
 				TableColumnModel columnModel = table.getColumnModel();
 				columnModel.getColumn(5).setCellRenderer( this );
-				//columnModel.getColumn(5).setCellEditor( this );
+				columnModel.getColumn(5).setCellEditor( this );
 				//table.addMouseListener( this );
 			}
 		  /*
@@ -227,7 +229,7 @@ public class OutputQueueStatusAction extends SRAction {
 			public Object getCellEditorValue() {
 				return null;
 			}
-			/*@Override
+			@Override
 			public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
 					int row, int column) {
 				//Utils.guilog("getTableCellEditorComponent - value is null");
@@ -238,7 +240,7 @@ public class OutputQueueStatusAction extends SRAction {
 					return editButton;
 				}
 				return null;
-			}*/
+			}
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
