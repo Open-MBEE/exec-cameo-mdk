@@ -89,7 +89,12 @@ public class OutputQueueStatusAction extends SRAction {
 			this.setLocationRelativeTo(Application.getInstance().getMainFrame());
 			
 			//tableModel = new OutputQueueTableModel();
-			table = new JTable(data, columns);
+			table = new JTable(data, columns) {
+			    @Override
+			    public boolean isCellEditable(int row, int column) {
+			        return false;
+			    }
+			};
 			table.setFillsViewportHeight(true);
 			
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -108,7 +113,7 @@ public class OutputQueueStatusAction extends SRAction {
 			
 			TableButtonColumn buttonEditor = new TableButtonColumn(table);
 			table.getColumnModel().getColumn(5).setCellRenderer(buttonEditor);
-			table.getColumnModel().getColumn(5).setCellEditor(buttonEditor);
+			//table.getColumnModel().getColumn(5).setCellEditor(buttonEditor);
 			
 			
 			this.setContentPane(panel);
@@ -158,7 +163,7 @@ public class OutputQueueStatusAction extends SRAction {
 		}
 		
 	}
-	public class TableButtonColumn extends AbstractCellEditor implements TableCellRenderer, TableCellEditor, ActionListener {
+	public class TableButtonColumn extends AbstractCellEditor implements TableCellRenderer, ActionListener {
 		
 		  private JTable table;
 		  private Action action;
@@ -203,7 +208,7 @@ public class OutputQueueStatusAction extends SRAction {
 				
 				TableColumnModel columnModel = table.getColumnModel();
 				columnModel.getColumn(5).setCellRenderer( this );
-				columnModel.getColumn(5).setCellEditor( this );
+				//columnModel.getColumn(5).setCellEditor( this );
 				//table.addMouseListener( this );
 			}
 		  /*
@@ -222,7 +227,7 @@ public class OutputQueueStatusAction extends SRAction {
 			public Object getCellEditorValue() {
 				return null;
 			}
-			@Override
+			/*@Override
 			public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
 					int row, int column) {
 				//Utils.guilog("getTableCellEditorComponent - value is null");
@@ -233,7 +238,7 @@ public class OutputQueueStatusAction extends SRAction {
 					return editButton;
 				}
 				return null;
-			}
+			}*/
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column) {
