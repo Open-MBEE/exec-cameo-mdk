@@ -37,7 +37,7 @@ public class GenerateViewPresentationAction extends MDAction {
     }
     
     public List<ValidationSuite> updateAction() {
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse, null, true, null);
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, recurse, null, true, null, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
         vss.addAll(vg.getValidations());
         return vss;

@@ -46,7 +46,7 @@ public class OneClickUpdateDoc extends MDAction {
             return vss;
         }
         
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true, null);
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true, null, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
         vss.addAll(vg.getValidations());
         if (vg.getFailure()) {

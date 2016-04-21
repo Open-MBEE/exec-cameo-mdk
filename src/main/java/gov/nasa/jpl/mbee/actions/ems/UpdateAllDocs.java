@@ -9,9 +9,13 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -53,9 +57,9 @@ public class UpdateAllDocs extends MMSAction {
         
         Set<Element> docs = getProjectDocuments();
         ViewInstanceUtils viu = new ViewInstanceUtils();
+        Map<String, JSONObject> images = new HashMap<String, JSONObject>();
         for (Element doc: docs) {
-            
-        	ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu);
+            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu, images);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.getFailure()) {

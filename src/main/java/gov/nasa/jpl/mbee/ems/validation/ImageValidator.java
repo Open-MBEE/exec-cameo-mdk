@@ -37,6 +37,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.net.HttpURLConnection;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.httpclient.Header;
@@ -51,9 +52,14 @@ public class ImageValidator {
     private Map<String, JSONObject> images;
     private ValidationSuite suite = new ValidationSuite("images");
     private ValidationRule rule = new ValidationRule("Image Outdated", "Diagram is outdated", ViolationSeverity.ERROR);
+    private Map<String, JSONObject> allimages;
     
-    public ImageValidator(Map<String, JSONObject> images) {
+    public ImageValidator(Map<String, JSONObject> images, Map<String, JSONObject> allimages) {
         this.images = images;
+        this.allimages = allimages;
+        if (allimages == null)
+            this.allimages = new HashMap<String, JSONObject>();
+        this.allimages.putAll(images);
         suite.addValidationRule(rule);
     }
     
@@ -83,7 +89,7 @@ public class ImageValidator {
 
             if (status != HttpURLConnection.HTTP_OK) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web");
-                v.addAction(new ExportImage(e, images));
+                v.addAction(new ExportImage(e, allimages));
                 rule.addViolation(v);
             }
         }
