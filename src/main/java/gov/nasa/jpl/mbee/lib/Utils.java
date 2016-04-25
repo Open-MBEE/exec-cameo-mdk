@@ -167,6 +167,8 @@ public class Utils {
 	
     private static boolean forceDialogFalse = false;
     private static boolean forceDialogTrue = false;
+    private static boolean forceDialogCancel = false;
+    private static boolean skipDialog = false;
     
     private Utils() {
     }
@@ -2286,15 +2288,27 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
+        if (skipDialog) {
+            skipDialog = false;
+            return;
+        }
         JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
     }
 
     public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons, boolean includeCancel) {
-    	if (forceDialogFalse)
-    		return false;
-    	if (forceDialogTrue)
-    		return true;
-    	int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
+        if (forceDialogFalse) {
+        	forceDialogFalse = false;
+        	return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+        if (forceDialogCancel) {
+        	forceDialogCancel = false;
+            return null;
+        }
+        int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
         int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", option, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
             return true;
@@ -2308,6 +2322,18 @@ public class Utils {
      * @return null if user hits cancel
      */
     public static Boolean getUserYesNoAnswer(String question) {
+    	if (forceDialogFalse) {
+        	forceDialogFalse = false;
+        	return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+        if (forceDialogCancel) {
+        	forceDialogCancel = false;
+            return null;
+        }
         int res = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), question);
         if (res == JOptionPane.YES_OPTION)
             return true;
@@ -3650,7 +3676,15 @@ public class Utils {
     }
     
     public static boolean recommendUpdateFromTeamwork(String add) {
-        Project prj = Application.getInstance().getProject();
+        if (forceDialogFalse) {
+        	forceDialogFalse = false;
+            return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+    	Project prj = Application.getInstance().getProject();
         if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
             return true;
         String user = TeamworkUtils.getLoggedUserName();
@@ -3674,20 +3708,6 @@ public class Utils {
         return true;
     }
     
-    public static void forceDialogReturnFalse(boolean enable) {
-        if (enable)
-            forceDialogFalse = true;
-        else
-            forceDialogFalse = false;
-    }
-    
-    public static void forceDialogReturnTrue(boolean enable) {
-        if (enable)
-            forceDialogTrue = true;
-        else
-            forceDialogTrue = false;
-    }
-
     //check if the given element would have a model inconsistency in the current state
     public static boolean modelInconsistency(Element e) {
         if (e instanceof DirectedRelationship) {
@@ -3720,4 +3740,33 @@ public class Utils {
         }
         return false;
     }
+    
+    /**
+     * Cause the next call of a user dialog generating method to return the indicated value
+     * The called method should then reset these values, so they don't accidentally get used again
+     */
+    
+    public static void forceDialogReturnTrue() {
+    	forceDialogTrue = true;
+    }
+
+    public static void forceDialogReturnFalse() {
+    	forceDialogFalse = true;
+    }
+
+    public static void forceDialogReturnCancel() {
+    	forceDialogCancel = true;
+    }
+    
+    public static void forceSkipDialog() {
+    	skipDialog = true;
+    }
+    
+    public static void resetForcedReturns() {
+    	forceDialogTrue = false;
+    	forceDialogFalse = false;
+    	forceDialogCancel = false;
+    	skipDialog = false;
+    }
+
 }
