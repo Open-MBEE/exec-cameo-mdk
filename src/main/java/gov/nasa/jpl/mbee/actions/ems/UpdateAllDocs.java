@@ -59,6 +59,8 @@ public class UpdateAllDocs extends MMSAction {
         ViewInstanceUtils viu = new ViewInstanceUtils();
         Map<String, JSONObject> images = new HashMap<String, JSONObject>();
         for (Element doc: docs) {
+            if (!Utils.recommendUpdateFromTeamwork())
+                return vss;
             ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu, images);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
@@ -74,6 +76,8 @@ public class UpdateAllDocs extends MMSAction {
         }
         Utils.displayValidationWindow(vss, "View Generation and Images Validation");
         
+        if (!Utils.recommendUpdateFromTeamwork("(MMS Update and Document Generations have finished.)"))
+            return vss;
         ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
         ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
         vss.addAll(msr2.getValidations());

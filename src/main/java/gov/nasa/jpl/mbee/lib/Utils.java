@@ -3646,6 +3646,10 @@ public class Utils {
     }
     
     public static boolean recommendUpdateFromTeamwork() {
+        return recommendUpdateFromTeamwork("");
+    }
+    
+    public static boolean recommendUpdateFromTeamwork(String add) {
         Project prj = Application.getInstance().getProject();
         if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
             return true;
@@ -3664,7 +3668,7 @@ public class Utils {
         String[] buttons = {"Continue (May trigger update)", "Cancel"};
         Boolean reply = Utils.getUserYesNoAnswerWithButton("There's a new project version available on teamwork.\nIt's highly recommended that you update from teamwork first,\n"
                 + "and commit to teamwork immediately after this action.\n"
-                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?", buttons, false);
+                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?\n" + add, buttons, false);
         if (reply == null || !reply)
             return false;
         return true;
