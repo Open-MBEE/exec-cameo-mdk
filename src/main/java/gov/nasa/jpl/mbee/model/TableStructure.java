@@ -366,6 +366,11 @@ public class TableStructure extends Table {
                         	
                         	final Container con = new Section();
                         	final DocumentGenerator dg = new DocumentGenerator(tc.activityNode, getValidator(), null);
+                        	if (tc.bnode == null) {
+                        	    if (tc.activityNode != null)
+                        	        Utils.guilog("[WARN] Table structure column is missing initial node, skipping: " + tc.activityNode.getQualifiedName());
+                        	    continue;
+                        	}
                         	final Element a = tc.bnode.getOwner();
                         	
                         	final GenerationContext nestedContext = new GenerationContext(new Stack<List<Object>>(), tc.activityNode, getValidator(), Application.getInstance().getGUILog());
