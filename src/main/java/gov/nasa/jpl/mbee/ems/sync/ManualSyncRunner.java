@@ -104,6 +104,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             return; //some error here
         }
         listener.disable();
+        AutoSyncProjectListener.lockSyncFolder(project);
         Map<String, Set<String>> jms = AutoSyncProjectListener.getJMSChanges(Application.getInstance().getProject());
         listener.enable();
         if (jms == null) {
@@ -114,8 +115,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Map<String, Element> localDeleted = listener.getDeletedElements();
         Map<String, Element> localChanged = listener.getChangedElements();
         
-        //account for possible teamwork updates
-        AutoSyncProjectListener.lockSyncFolder(project);
         JSONObject previousUpdates = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
         if (previousUpdates != null) {
             for (String added: (List<String>)previousUpdates.get("added")) {
