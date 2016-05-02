@@ -77,6 +77,7 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -161,7 +162,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam 
  */
 public class Utils {
-	
+    public static Logger log = Logger.getLogger(Utils.class);
     public static final int[] TABBED_PANE_INDICES = { 1, 0, 0, 0, 1, 0, 0, 1, 1 };
     // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);
 	
@@ -3651,16 +3652,21 @@ public class Utils {
             listener.disable(); 
         //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
-        if (e instanceof Property)
-            TeamworkUtils.lockElement(project, e.getOwner(), false);
-        else if (e instanceof Slot) {
-            Element owner = e.getOwner();
-            if (owner != null && owner.getOwner() instanceof Package)
-                TeamworkUtils.lockElement(project, owner, false);
-            else
-                TeamworkUtils.lockElement(project, owner.getOwner(), false);
-        } else
-            TeamworkUtils.lockElement(project, e, false);
+        try {
+            if (e instanceof Property)
+                TeamworkUtils.lockElement(project, e.getOwner(), false);
+            else if (e instanceof Slot) {
+                Element owner = e.getOwner();
+                if (owner != null && owner.getOwner() instanceof Package)
+                    TeamworkUtils.lockElement(project, owner, false);
+                else
+                    TeamworkUtils.lockElement(project, owner.getOwner(), false);
+            } else
+                TeamworkUtils.lockElement(project, e, false);
+        } catch (Exception ex) {
+            log.info("caught exception when locking:");
+            ex.printStackTrace();
+        }
         if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
             SessionManager.getInstance().createSession("session after lock"); 
         if (listener != null)
