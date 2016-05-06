@@ -515,7 +515,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 m.acknowledge();
                 m = consumer.receive(3000);
             }
-            lockSyncFolder(project);
+            //lockSyncFolder(project);
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change logs");
             try {
