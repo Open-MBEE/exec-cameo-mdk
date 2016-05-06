@@ -68,14 +68,15 @@ public class ValidateModelRunner implements RunnableWithProgress {
                 validator.validate(true, arg0);
                 if (!arg0.isCancel())
                     validator.showWindow();
-                	suite = validator.getSuite();
+                suite = validator.getSuite();
                 keyedElements = validator.getKeyed();
             } catch (ServerException ex) {
             	Utils.guilog("[ERROR] Validate model cannot be completed because of server error.");
             }
-        } else
+        } else {
         	suite = validator.getSuite();
             validator.showWindow();
+        }
     }
     
 }

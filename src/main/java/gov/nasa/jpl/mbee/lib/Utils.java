@@ -77,6 +77,7 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -161,12 +162,14 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam 
  */
 public class Utils {
-	
+    public static Logger log = Logger.getLogger(Utils.class);
     public static final int[] TABBED_PANE_INDICES = { 1, 0, 0, 0, 1, 0, 0, 1, 1 };
     // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);
 	
     private static boolean forceDialogFalse = false;
     private static boolean forceDialogTrue = false;
+    private static boolean forceDialogCancel = false;
+    private static boolean skipDialog = false;
     
     private Utils() {
     }
@@ -2286,15 +2289,27 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
+        if (skipDialog) {
+            skipDialog = false;
+            return;
+        }
         JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
     }
 
     public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons, boolean includeCancel) {
-    	if (forceDialogFalse)
-    		return false;
-    	if (forceDialogTrue)
-    		return true;
-    	int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
+        if (forceDialogFalse) {
+        	forceDialogFalse = false;
+        	return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+        if (forceDialogCancel) {
+        	forceDialogCancel = false;
+            return null;
+        }
+        int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
         int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", option, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
             return true;
@@ -2308,6 +2323,18 @@ public class Utils {
      * @return null if user hits cancel
      */
     public static Boolean getUserYesNoAnswer(String question) {
+    	if (forceDialogFalse) {
+        	forceDialogFalse = false;
+        	return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+        if (forceDialogCancel) {
+        	forceDialogCancel = false;
+            return null;
+        }
         int res = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), question);
         if (res == JOptionPane.YES_OPTION)
             return true;
@@ -3625,16 +3652,21 @@ public class Utils {
             listener.disable(); 
         //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
-        if (e instanceof Property)
-            TeamworkUtils.lockElement(project, e.getOwner(), false);
-        else if (e instanceof Slot) {
-            Element owner = e.getOwner();
-            if (owner != null && owner.getOwner() instanceof Package)
-                TeamworkUtils.lockElement(project, owner, false);
-            else
-                TeamworkUtils.lockElement(project, owner.getOwner(), false);
-        } else
-            TeamworkUtils.lockElement(project, e, false);
+        try {
+            if (e instanceof Property)
+                TeamworkUtils.lockElement(project, e.getOwner(), false);
+            else if (e instanceof Slot) {
+                Element owner = e.getOwner();
+                if (owner != null && owner.getOwner() instanceof Package)
+                    TeamworkUtils.lockElement(project, owner, false);
+                else
+                    TeamworkUtils.lockElement(project, owner.getOwner(), false);
+            } else
+                TeamworkUtils.lockElement(project, e, false);
+        } catch (Exception ex) {
+            log.info("caught exception when locking:");
+            ex.printStackTrace();
+        }
         if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
             SessionManager.getInstance().createSession("session after lock"); 
         if (listener != null)
@@ -3646,7 +3678,19 @@ public class Utils {
     }
     
     public static boolean recommendUpdateFromTeamwork() {
-        Project prj = Application.getInstance().getProject();
+        return recommendUpdateFromTeamwork("");
+    }
+    
+    public static boolean recommendUpdateFromTeamwork(String add) {
+        if (forceDialogFalse) {
+        	forceDialogFalse = false;
+            return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+    	Project prj = Application.getInstance().getProject();
         if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
             return true;
         String user = TeamworkUtils.getLoggedUserName();
@@ -3664,26 +3708,18 @@ public class Utils {
         String[] buttons = {"Continue (May trigger update)", "Cancel"};
         Boolean reply = Utils.getUserYesNoAnswerWithButton("There's a new project version available on teamwork.\nIt's highly recommended that you update from teamwork first,\n"
                 + "and commit to teamwork immediately after this action.\n"
-                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?", buttons, false);
+                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?\n" + add, buttons, false);
         if (reply == null || !reply)
             return false;
+        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(prj);
+        if (listener != null)
+            listener.disable(); 
+        TeamworkUtils.updateProject(prj);
+        if (listener != null)
+            listener.enable();
         return true;
     }
     
-    public static void forceDialogReturnFalse(boolean enable) {
-        if (enable)
-            forceDialogFalse = true;
-        else
-            forceDialogFalse = false;
-    }
-    
-    public static void forceDialogReturnTrue(boolean enable) {
-        if (enable)
-            forceDialogTrue = true;
-        else
-            forceDialogTrue = false;
-    }
-
     //check if the given element would have a model inconsistency in the current state
     public static boolean modelInconsistency(Element e) {
         if (e instanceof DirectedRelationship) {
@@ -3716,4 +3752,33 @@ public class Utils {
         }
         return false;
     }
+    
+    /**
+     * Cause the next call of a user dialog generating method to return the indicated value
+     * The called method should then reset these values, so they don't accidentally get used again
+     */
+    
+    public static void forceDialogReturnTrue() {
+    	forceDialogTrue = true;
+    }
+
+    public static void forceDialogReturnFalse() {
+    	forceDialogFalse = true;
+    }
+
+    public static void forceDialogReturnCancel() {
+    	forceDialogCancel = true;
+    }
+    
+    public static void forceSkipDialog() {
+    	skipDialog = true;
+    }
+    
+    public static void resetForcedReturns() {
+    	forceDialogTrue = false;
+    	forceDialogFalse = false;
+    	forceDialogCancel = false;
+    	skipDialog = false;
+    }
+
 }

@@ -353,7 +353,7 @@ public class ViewValidator {
             modelSuite = mv.getSuite();
 
             Utils.guilog("[INFO] Validating images");
-            ImageValidator iv = new ImageValidator(visitor2.getImages());
+            ImageValidator iv = new ImageValidator(visitor2.getImages(), null);
             //this checks images generated from the local generation against what's on the web based on checksum
             iv.validate();
             imageSuite = iv.getSuite();

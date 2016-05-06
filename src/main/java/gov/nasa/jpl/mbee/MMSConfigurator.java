@@ -45,6 +45,7 @@ import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 
 public class MMSConfigurator implements AMConfigurator {
@@ -86,5 +87,6 @@ public class MMSConfigurator implements AMConfigurator {
                 category.addAction(new UpdateWorkspacesAction());
             }
         }
+        ActionsStateUpdater.updateActionsState();
     }
 }

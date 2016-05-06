@@ -8,10 +8,9 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.ui.ProgressStatusRunner;
 
-public class UpdateFromJMS extends MDAction {
+public class UpdateFromJMS extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "UpdateFromJMS";
     

@@ -13,12 +13,14 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
@@ -62,9 +64,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     private Set<Element> needEdit = new HashSet<Element>();
     private Set<Element> shouldMove = new HashSet<Element>();
+    private Map<String, JSONObject> images;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu) {
+    public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images) {
         this.start = start;
+        this.images = images;
+        if (images == null)
+            this.images = new HashMap<String, JSONObject>();
         this.recurse = recurse;
         this.cannotChange = cannotChange; //from one click doc gen, if update has unchangeable elements, check if those are things the view generation touches
         this.showValidation = showValidation;
@@ -199,8 +205,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             failure = true;
             Utils.printException(ex);
         }
-
-        ImageValidator iv = new ImageValidator(visitor2.getImages());
+        ImageValidator iv = new ImageValidator(visitor2.getImages(), images);
         // this checks images generated from the local generation against what's on the web based on checksum
         iv.validate();
         vss.add(iv.getSuite());

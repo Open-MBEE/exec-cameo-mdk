@@ -124,9 +124,14 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             Element folder = ExportUtility.getElementFromID(folderId);
             if (folder == null)
                 return;
-            for (Element e: folder.getOwnedElement()) {
-                if (e instanceof Class)
-                    Utils.tryToLock(project, e, true);
+            try {
+                for (Element e: folder.getOwnedElement()) {
+                    if (e instanceof Class)
+                        Utils.tryToLock(project, e, true);
+                }
+            } catch (Exception e) {
+                log.info("exception caught");
+                e.printStackTrace();
             }
         }
     }
@@ -510,7 +515,7 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 m.acknowledge();
                 m = consumer.receive(3000);
             }
-            lockSyncFolder(project);
+            //lockSyncFolder(project);
             SessionManager sm = SessionManager.getInstance();
             sm.createSession("mms delayed sync change logs");
             try {

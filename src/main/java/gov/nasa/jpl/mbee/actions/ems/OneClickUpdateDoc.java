@@ -46,7 +46,9 @@ public class OneClickUpdateDoc extends MDAction {
             return vss;
         }
         
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true, null);
+        if (!Utils.recommendUpdateFromTeamwork("(MMS Update has finished.)"))
+            return vss;
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true, null, null);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
         vss.addAll(vg.getValidations());
         if (vg.getFailure()) {
@@ -61,6 +63,8 @@ public class OneClickUpdateDoc extends MDAction {
             vss.addAll(vvr.getValidations());
         }
         
+        if (!Utils.recommendUpdateFromTeamwork("(MMS Update and View Generation have finished.)"))
+            return vss;
         ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
         ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
         vss.addAll(msr2.getValidations());

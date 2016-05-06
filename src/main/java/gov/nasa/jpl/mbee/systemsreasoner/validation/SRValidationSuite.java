@@ -139,7 +139,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 					checkForAspects(classifier, general);
 				}
 
-				for (final NamedElement ne : classifier.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?  
+				for (final NamedElement ne : classifier.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
 					if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
 						final RedefinableElement redefEl = (RedefinableElement) ne;
 						RedefinableElement redefingEl = null;
@@ -173,7 +173,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 									if (!((Property) ne).isComposite()) {
 										v.addAction(new RedefineAttributeAction(classifier, redefEl));
 									}
-									if (redefEl instanceof TypedElement && ((TypedElement) redefEl).getType() != null) {
+									if (redefEl instanceof TypedElement) { // && ((TypedElement) redefEl).getType() != null
 										// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
 										// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
 										v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively"));

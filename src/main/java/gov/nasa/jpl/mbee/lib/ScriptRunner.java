@@ -217,6 +217,7 @@ public class ScriptRunner {
             ScriptContext sc = se.getContext();
             Bindings bindings = se.getBindings(ScriptContext.ENGINE_SCOPE);
             bindings.put(ScriptEngine.FILENAME, scriptResolvedPath);
+            //bindings.put("__name__", "__main__");
             // bindings.put(ACTION_EVENT, event);
             sc.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 
@@ -224,7 +225,9 @@ public class ScriptRunner {
             // ScriptContext.ENGINE_SCOPE);
             sc.setAttribute(ScriptEngine.FILENAME, scriptResolvedPath, ScriptContext.ENGINE_SCOPE);
             sc.setAttribute(ScriptEngine.FILENAME, scriptResolvedPath, ScriptContext.GLOBAL_SCOPE);
+            //sc.setAttribute("__name__", "__main__", ScriptContext.ENGINE_SCOPE);
             se.put(ScriptEngine.FILENAME, scriptResolvedPath);
+            se.put("__name__", "__main__");
 
             se.put("scriptInput", inputs);
             FileReader fr = new FileReader(scriptResolvedPath);
