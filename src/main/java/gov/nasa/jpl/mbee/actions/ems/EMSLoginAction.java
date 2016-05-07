@@ -40,7 +40,7 @@ import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 
-public class EMSLoginAction extends MDAction {
+public class EMSLoginAction extends MDAction {                       
     private static final long serialVersionUID = 1L;
     public static final String actionid = "Login";
 
@@ -53,7 +53,7 @@ public class EMSLoginAction extends MDAction {
     public void setLogoutAction(EMSLogoutAction logout) {
         this.logout = logout;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         // passing in "" as the username will trigger the login dialogue popup
@@ -73,7 +73,7 @@ public class EMSLoginAction extends MDAction {
             return false;
         String response = null;
         try {
-            response = ExportUtility.get(url + "/checklogin", username, password);
+            response = ExportUtility.getTicket(url + "/api/login", username, password, true); //used to be /checklogin
         } catch (ServerException ex) {}
         if (response ==  null)
             return false;
