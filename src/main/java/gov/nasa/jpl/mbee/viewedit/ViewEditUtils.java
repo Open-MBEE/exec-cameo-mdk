@@ -58,6 +58,7 @@ import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -179,13 +180,16 @@ public class ViewEditUtils {
                     JOptionPane.PLAIN_MESSAGE);
 
            
-            passwordSet = true;
-            username = usernameFld.getText();
-            password = new String(passwordFld.getPassword());
+            //passwordSet = true;
+            //username = usernameFld.getText();
+            //password = new String(passwordFld.getPassword());
             //or shuold call
-            //setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);
+            setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);
         }
-        return  "{\"username\":\""+ username + "\", \"password\":\""+ password + "\"}";
+        JSONObject temp = new JSONObject();
+        temp.put("username", username);
+        temp.put("password", password);
+        return  temp.toJSONString();
       }
     
     /**
@@ -242,7 +246,7 @@ public class ViewEditUtils {
         }
 
         // proxy cache needs Authorization header
-        //method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
+        method.addRequestHeader( new Header("Authorization", getAuthStringEnc()) );
     }
     
     /**

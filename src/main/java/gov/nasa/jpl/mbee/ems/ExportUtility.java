@@ -531,6 +531,7 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        url = addTicketToUrl(url);
         DeleteMethod gm = new DeleteMethod(url);
         try {
             HttpClient client = new HttpClient();
@@ -563,6 +564,7 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        url = addTicketToUrl(url);
         try {
             //GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
@@ -593,7 +595,7 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
-
+        url = addTicketToUrl(url);
         EntityEnclosingMethod pm = null;
         //if (method == null)
             pm = new PostMethod(url);
@@ -662,6 +664,7 @@ public class ExportUtility {
     public static String deleteWithBody(String url, String json, boolean feedback) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
+        url = addTicketToUrl(url);
         pm = new DeleteMethodWithEntity(url);
         try {
             if (print)
@@ -692,6 +695,7 @@ public class ExportUtility {
     public static String getWithBody(String url, String json) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
+        url = addTicketToUrl(url);
         pm = new GetMethodWithEntity(url);
         try {
             if (print)
@@ -786,8 +790,8 @@ public class ExportUtility {
                 ViewEditUtils.setUsernameAndPassword(username, password, true);
             
             userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
-            Application.getInstance().getGUILog().log("[INFO] Getting...");
-            Application.getInstance().getGUILog().log("url=" + url);
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
             
            // String JSON_STRING = "{\"username\":\"username\", \"password\":\"password\"}";
             
@@ -837,7 +841,7 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
-        url +="?alf_ticket=" + ViewEditUtils.getTicket();
+        url = addTicketToUrl(url);
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
@@ -873,6 +877,15 @@ public class ExportUtility {
         } finally {
             gm.releaseConnection();
         }
+    }
+    
+    public static String addTicketToUrl(String r) {
+        String url = r;
+        if (url.contains("?"))
+            url += "&alf_ticket=" + ViewEditUtils.getTicket();
+        else
+            url +="?alf_ticket=" + ViewEditUtils.getTicket();
+        return url;
     }
     
     //check if comment is actually the documentation of its owner
