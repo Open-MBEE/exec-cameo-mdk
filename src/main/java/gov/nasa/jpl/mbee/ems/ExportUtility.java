@@ -875,8 +875,10 @@ public class ExportUtility {
                 if (d != null && !d.isEmpty()) {
                     String ticket = (String)d.get("ticket");
                     ViewEditUtils.setTicket(ticket);
-                }
-            }
+                } else
+                    return null;
+            } else
+                return null;
             return json;
         } catch (HttpException ex) {
             Utils.printException(ex);

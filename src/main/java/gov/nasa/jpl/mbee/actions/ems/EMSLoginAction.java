@@ -78,9 +78,13 @@ public class EMSLoginAction extends MDAction {
         String response = null;
         try {
             response = ExportUtility.getTicket(url + "/api/login", username, password, true); //used to be /checklogin
-        } catch (ServerException ex) {}
-        if (response ==  null)
+        } catch (ServerException ex) {
+            ViewEditUtils.clearUsernameAndPassword();
+        }
+        if (response == null) {
+            ViewEditUtils.clearUsernameAndPassword();
             return false;
+        }
         if (initJms) {
             Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
             if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
