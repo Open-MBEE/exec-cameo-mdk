@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
@@ -531,6 +532,7 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
         url = addTicketToUrl(url);
         DeleteMethod gm = new DeleteMethod(url);
         try {
@@ -564,6 +566,7 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
         url = addTicketToUrl(url);
         try {
             //GUILog gl = Application.getInstance().getGUILog();
@@ -595,6 +598,7 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
         url = addTicketToUrl(url);
         EntityEnclosingMethod pm = null;
         //if (method == null)
@@ -660,9 +664,10 @@ public class ExportUtility {
         //return send(url, json, null); //method == null means POST
     	return send(url, json/*, method*/, true, false);
     }
-
+    
     public static String deleteWithBody(String url, String json, boolean feedback) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        checkAndResetTicket();
         EntityEnclosingMethod pm = null;
         url = addTicketToUrl(url);
         pm = new DeleteMethodWithEntity(url);
@@ -695,6 +700,7 @@ public class ExportUtility {
     public static String getWithBody(String url, String json) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
+        checkAndResetTicket();
         url = addTicketToUrl(url);
         pm = new GetMethodWithEntity(url);
         try {
@@ -772,6 +778,56 @@ public class ExportUtility {
     	return get(url, username, password, true);
     }
 
+    public static boolean checkAndResetTicket() {
+        String baseUrl = getUrl();
+        try {
+            boolean validTicket = checkTicket(baseUrl);
+            if (!validTicket) {
+                String loggedIn = getTicket(baseUrl + "/api/login", ViewEditUtils.getUsername(), ViewEditUtils.getPassword(), false);
+            }
+            return true;
+        } catch (ServerException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public static boolean checkTicket(String baseUrl) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        String ticket = ViewEditUtils.getTicket();
+        if (ticket == null || ticket.equals(""))
+            return false;
+        String url = baseUrl + "/mms/login/ticket/" + ViewEditUtils.getTicket();
+        GetMethod gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            if (print)
+                log.info("checkTicket: " + url);
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            if (print)
+                log.info("checkTicket response: " + code + " " + json);
+            if (code != 404 && code != 200)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            if (code == 404)
+                return false;
+            return true;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+            Utils.showPopupMessage("URL is malformed");
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } finally {
+            gm.releaseConnection();
+        }
+    }
     // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
     public static String getTicket(String url, String username, String password, boolean showPopupErrors) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
@@ -805,7 +861,7 @@ public class ExportUtility {
             int code = client.executeMethod(postMethod);
             String json = postMethod.getResponseBodyAsString();
             if (print)
-                log.info("get response: " + code + " " + json);
+                log.info("get ticket response: " + code + " " + json);
             if (showErrors(code, json, showPopupErrors)) {
                 throw new ServerException(json, code);
             }
@@ -829,9 +885,9 @@ public class ExportUtility {
             Utils.printException(ex);
             throw new ServerException("", 500);
         } catch (IllegalArgumentException ex) {
-        		Utils.showPopupMessage("URL is malformed");
-        		Utils.printException(ex);
-        		throw new ServerException("", 500);
+            Utils.showPopupMessage("URL is malformed");
+            Utils.printException(ex);
+            throw new ServerException("", 500);
         } finally {
             postMethod.releaseConnection();
         }
@@ -841,6 +897,7 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
         url = addTicketToUrl(url);
         GetMethod gm = new GetMethod(url);
         try {
@@ -880,11 +937,14 @@ public class ExportUtility {
     }
     
     public static String addTicketToUrl(String r) {
+        String ticket = ViewEditUtils.getTicket();
+        if (ticket == null || ticket.equals(""))
+            return r;
         String url = r;
         if (url.contains("?"))
-            url += "&alf_ticket=" + ViewEditUtils.getTicket();
+            url += "&alf_ticket=" + ticket;
         else
-            url +="?alf_ticket=" + ViewEditUtils.getTicket();
+            url +="?alf_ticket=" + ticket;
         return url;
     }
     

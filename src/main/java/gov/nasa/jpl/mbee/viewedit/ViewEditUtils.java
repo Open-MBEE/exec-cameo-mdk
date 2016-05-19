@@ -343,6 +343,11 @@ public class ViewEditUtils {
     public static String getUsername() {
         return username;
     }
+    
+    public static String getPassword() {
+        return password;
+    }
+    
     public static String getTicket(){
         return ticket;
     }

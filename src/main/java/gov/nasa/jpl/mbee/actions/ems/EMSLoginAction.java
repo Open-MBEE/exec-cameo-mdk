@@ -63,6 +63,10 @@ public class EMSLoginAction extends MDAction {
     
     public boolean loginAction(String username, String password)
     {
+        return loginAction(username, password, true);
+    }
+    
+    public static boolean loginAction(String username, String password, boolean initJms) {
         ViewEditUtils.clearUsernameAndPassword();
         if (Application.getInstance().getProject() == null) {
             Utils.showPopupMessage("You need to have a project open first!");
@@ -77,10 +81,12 @@ public class EMSLoginAction extends MDAction {
         } catch (ServerException ex) {}
         if (response ==  null)
             return false;
-        Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
-        if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
-            Application.getInstance().getGUILog().log("Finished.");
-		return true;
+        if (initJms) {
+            Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
+            if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
+                Application.getInstance().getGUILog().log("Finished.");
+        }
+        return true;
     }
 
 }
