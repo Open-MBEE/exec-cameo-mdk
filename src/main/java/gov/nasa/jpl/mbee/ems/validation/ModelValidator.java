@@ -159,10 +159,17 @@ public class ModelValidator {
 	private boolean checkExist;
     private Set<Element> elementSet;
     private boolean crippled;
+    
+	private Map<String, JSONObject> keyedElements;
         
     public Set<Element> getDifferentElements() {
         return differentElements;
     }
+    
+	public Map<String, JSONObject> getKeyed()
+	{
+		return keyedElements;
+	}
 
     public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
         //result is from web, elementSet is from model
@@ -187,7 +194,6 @@ public class ModelValidator {
         suite.addValidationRule(viewConstraint);
         suite.addValidationRule(metatypes);
         suite.addValidationRule(ownedAttribute);
-
         this.checkExist = checkExist;
         this.result = result;
         prj = Application.getInstance().getProject();
@@ -309,6 +315,7 @@ public class ModelValidator {
         } else {
             validateModel(elementsKeyed, elementSet, ps);
         }
+        keyedElements = elementsKeyed;
         result.put("elementsKeyed", elementsKeyed);
     }
     
@@ -626,15 +633,14 @@ public class ModelValidator {
             modelContents = (JSONObject)modelview.get("contents");
         // replaced this thing here v
         //    if (!modelContents.equals(webContents)) {
-        if (modelContents != null) {
-            if (!JSONUtils.compare(modelContents, webContents)) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint is different");
+        JSONArray webDisplayed = (JSONArray)webViewSpec.get("displayedElements");
+        JSONArray modelDisplayed = (JSONArray)modelview.get("displayedElements");
+        
+        if (!JSONUtils.compare(modelContents, webContents) || !Utils.jsonArraySetDiff(webDisplayed, modelDisplayed)) {
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint or displayed elements are different");
                 v.addAction(new ExportViewConstraint((NamedElement)e));
                 v.addAction(new ImportViewConstraint((NamedElement)e, webViewSpec, result));
                 return v;
-            }
-        } else if (webContents != null && modelContents ==  null) {
-            
         }
         return null;
     }
@@ -671,7 +677,7 @@ public class ModelValidator {
     private ValidationRuleViolation ownerDiff(Element e, JSONObject elementInfo) {
         Boolean editable = (Boolean)elementInfo.get("editable");
         if ( e.getOwner() != null ) {
-            String ownerID = e.getOwner().getID();
+            String ownerID = ExportUtility.getElementID(e.getOwner());
             String webOwnerID = (String)elementInfo.get("owner");
             if (webOwnerID == null || webOwnerID.startsWith("PROJECT")) {
                 if (webOwnerID == null)
@@ -688,7 +694,9 @@ public class ModelValidator {
                 Element owner = null;
                 if (webOwnerID != null)
                     owner = (Element)prj.getElementByID(webOwnerID);
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? "null" : owner.getHumanName()));
+                if (e.getOwner() == owner)
+                    return null; //in case owner is Data
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? webOwnerID : owner.getHumanName()));
                 if (!crippled) {
                     if (editable)
                         v.addAction(new ExportOwner(e));
@@ -704,6 +712,19 @@ public class ModelValidator {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject specialization = (JSONObject)info.get("specialization");
         
+        JSONObject webcopy  = (JSONObject)specialization.clone();
+        if (webcopy.containsKey("value"))
+            webcopy.remove("value");
+        JSONObject model = ExportUtility.fillPropertySpecialization(e, null, false, true);
+        if (!JSONUtils.compare(webcopy, model)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property type/aggregation/multiplicity/redefines is different");
+            if (editable)
+                v.addAction(new ExportProperty(e));
+            v.addAction(new ImportProperty(e, result, specialization));
+            return v;
+        }
+        return null;
+        /*
         // diff the aggregation
         String modelAggr = e.getAggregation().toString().toUpperCase();
         String webAggr = null;
@@ -732,7 +753,7 @@ public class ModelValidator {
             v.addAction(new ImportProperty(e, (Type)webTypeElement, result));
             return v;
         }
-        return null;
+        return null;*/
     }
         
     private ValidationRuleViolation slotTypeDiff(Slot e, JSONObject info) {

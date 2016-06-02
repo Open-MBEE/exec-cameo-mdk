@@ -33,7 +33,7 @@ import static gov.nasa.jpl.mbee.web.sync.CommentUtil.DOCUMENT_COMMENT;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
+@Deprecated
 public class ApplyDocumentCommentStereotype extends ChangeTheModel {
     private final Comment comment;
 

@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.actions;
 
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
+import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -32,6 +33,11 @@ public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
     }
 
     public void actionPerformed(ActionEvent e) {
+        Boolean con = Utils.getUserYesNoAnswer("Warning! Refactor with ID action is best used with an immediate commit to"
+                + " teamwork \nand no other active teamwork users on this project, else data loss may \n"
+                + "happen on update from teamwork. Do you want to continue?");
+        if (con == null || !con)
+            return;
         Project project = Application.getInstance().getProject();
         Map<String, ?> projectInstances = ProjectListenerMapping.getInstance()
                 .get(project);
@@ -50,7 +56,7 @@ public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
             
             // Converts the element to an interface.
             ConvertElementInfo info = new ConvertElementInfo(Component.class);
-            // Preserves the old element ID for the new element.
+            // Preserves the old element ID for the new element. this doesn't work, will throw md error if set to true
             info.setPreserveElementID(false);
             try {
                 Element conversionTarget = Refactoring.Converting.convert(element, info);

@@ -144,7 +144,8 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
             }
         } else {
             try {
-                Element magicDrawElement = ImportUtility.createElement(ob, true); 
+                Element magicDrawElement = ImportUtility.createElement(ob, false); 
+                magicDrawElement = ImportUtility.createElement(ob, true); 
                 if (magicDrawElement == null) {
                     Utils.guilog("[ERROR] Cannot create element (references or owner not found)");
                     return false;

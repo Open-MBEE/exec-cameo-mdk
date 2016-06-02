@@ -5,3 +5,6 @@
 *.jresult
 *.diff
 /build-nojenkins.xml
+target/
+.idea
+*.iml

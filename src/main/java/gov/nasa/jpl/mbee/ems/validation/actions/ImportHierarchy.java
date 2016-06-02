@@ -160,6 +160,7 @@ AnnotationAction, IRuleViolationAction {
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
         tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         String url = ExportUtility.getPostElementsUrl();
         if (!changes.isEmpty()) {
             Request r = new Request(url, tosend.toJSONString(), "POST", false, changes.size(), "Hierarchy Property Changes");
@@ -171,6 +172,7 @@ AnnotationAction, IRuleViolationAction {
             JSONArray elements = new JSONArray();
             send.put("elements", elements);
             send.put("source", "magicdraw");
+            send.put("mmsVersion", "2.3");
             for (String e: deletedIds) {
                 JSONObject eo = new JSONObject();
                 eo.put("sysmlid", e);
@@ -181,10 +183,11 @@ AnnotationAction, IRuleViolationAction {
         return returns;
     }
     
-    private static boolean lock(Element e, boolean isTeamwork, Project project) {
+    private static boolean lock(NamedElement e, boolean isTeamwork, Project project) {
         if (e == null)
             return true;
         if (!e.isEditable()) {
+            Utils.guilog("Please lock element with ID: " + e.getID() + " (" + e.getQualifiedName() + ")");
             return false;
             /*if (!ProjectUtilities.isElementInAttachedProject(e)) {
                 if (isTeamwork) {
@@ -225,7 +228,7 @@ AnnotationAction, IRuleViolationAction {
             String viewid = (String)vid;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                if (!lock(view, isTeamwork, project)) {
+                if (!lock((NamedElement)view, isTeamwork, project)) {
                     retval.put("success", false);
                     return retval;
                 }
@@ -254,7 +257,7 @@ AnnotationAction, IRuleViolationAction {
                 continue;
             Element view = ExportUtility.getElementFromID(viewid);
             if (view != null && view instanceof Class) {
-                if (!lock(view, isTeamwork, project)) {
+                if (!lock((NamedElement)view, isTeamwork, project)) {
                     retval.put("success", false);
                     return retval;
                 }
@@ -303,23 +306,30 @@ AnnotationAction, IRuleViolationAction {
         Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(newviews);
         List<JSONObject> sortedNewviews = toCreate.get("create");
         if (!toCreate.get("fail").isEmpty()) {
-            Utils.guilog("[ERROR] Creating new view(s) failed.");
+            Utils.guilog("[ERROR] Creating new view(s) failed. Owner(s) not found.");
+            Utils.guilog("[ERROR] List of views failed: ");
+            for (JSONObject fail: toCreate.get("fail")) {
+                String id = (String)fail.get("sysmlid");
+                if (id != null)
+                    Utils.guilog("[ERROR]      " + id);
+            }
             retval.put("success", false);
             return retval;
         }
         for (JSONObject ob: sortedNewviews) {
             try {
-                Element newview = ImportUtility.createElement(ob, true);
+                Element newview = ImportUtility.createElement(ob, false);
+                newview = ImportUtility.createElement(ob, true);
                 if (newview != null) {
                     List<Property> viewprops = new ArrayList<Property>();
                     viewId2props.put(newview.getID(), viewprops);
                 } else {
-                    Utils.guilog("[ERROR] Creating new view(s) failed.");
+                    Utils.guilog("[ERROR] Creating new view(s) failed for view " + ob.get("sysmlid"));
                     retval.put("success", false);
                     return retval;
                 }
             } catch (ImportException ex) {
-                Utils.guilog("[ERROR] Creating new view(s) failed.");
+                Utils.guilog("[ERROR] Creating new view(s) failed for view " + ob.get("sysmlid") + ": " + ex.getMessage());
                 retval.put("success", false);
                 return retval;
             }

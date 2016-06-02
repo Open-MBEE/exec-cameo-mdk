@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.ems;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.StructuralFeature;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
@@ -151,15 +153,21 @@ public class ImportUtility {
                     newE = view;
                 }
                 Stereotype sysmlView = Utils.getViewClassStereotype();
-                StereotypesHelper.addStereotype(newE, sysmlView);
-                setViewConstraint(newE, specialization);
+                if (updateRelations) {
+                    //StereotypesHelper.addStereotype(newE, sysmlView);
+                    setOrCreateAsi(sysmlView, newE);
+                    setViewConstraint(newE, specialization);
+                }
             } else if (elementType.equalsIgnoreCase("viewpoint")) {
                 if (newE == null) {
                     Class view = ef.createClassInstance();
                     newE = view;
                 }
-                Stereotype sysmlView = Utils.getViewpointStereotype();
-                StereotypesHelper.addStereotype(newE, sysmlView);
+                if (updateRelations) {
+                    Stereotype sysmlView = Utils.getViewpointStereotype();
+                    //StereotypesHelper.addStereotype(newE, sysmlView);
+                    setOrCreateAsi(sysmlView, newE);
+                }
             } else if (elementType.equalsIgnoreCase("Property")) {
                 JSONArray vals = (JSONArray) specialization.get("value");
                 Boolean isSlot = (Boolean) specialization.get("isSlot");
@@ -167,6 +175,18 @@ public class ImportUtility {
                     if (newE == null) {
                         Slot newSlot = ef.createSlotInstance();
                         newE = newSlot;
+                        if ( sysmlID.contains("-slot-")){
+                            Project prj = Application.getInstance().getProject();
+                            String[] ids = sysmlID.split("-slot-");
+                            if (ids.length == 2) {
+                                Element definingFeature = (Element) prj.getElementByID(ids[1]);
+                                if (definingFeature instanceof StructuralFeature)
+                                    newSlot.setDefiningFeature((StructuralFeature)definingFeature);
+                                else
+                                    throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                            } else
+                                throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                        }
                     }
                     if (specialization.containsKey("value"))
                         setSlotValues((Slot)newE, vals);
@@ -188,7 +208,8 @@ public class ImportUtility {
                     Dependency newDependency = ef.createDependencyInstance();
                     newE = newDependency;
                 }
-                setRelationshipEnds((Dependency)newE, specialization);
+                if (updateRelations)
+                    setRelationshipEnds((Dependency)newE, specialization);
                 if (elementType.equalsIgnoreCase("Characterizes")) {
                     Stereotype character = Utils.getCharacterizesStereotype();
                     StereotypesHelper.addStereotype((Dependency)newE, character);
@@ -201,7 +222,8 @@ public class ImportUtility {
                     Generalization newGeneralization = ef.createGeneralizationInstance();
                     newE = newGeneralization;
                 }
-                setRelationshipEnds((Generalization)newE, specialization);
+                if (updateRelations)
+                    setRelationshipEnds((Generalization)newE, specialization);
                 if (elementType.equalsIgnoreCase("Conform")) {
                     Stereotype conform = Utils.getSysML14ConformsStereotype();
                     StereotypesHelper.addStereotype((Generalization)newE, conform);
@@ -222,28 +244,26 @@ public class ImportUtility {
                     Class prod = ef.createClassInstance();
                     newE = prod;
                 }
-                Stereotype product = Utils.getDocumentStereotype();
-                StereotypesHelper.addStereotype(newE, product);
-                setViewConstraint(newE, specialization);
+                if (updateRelations) {
+                    Stereotype product = Utils.getDocumentStereotype();
+                    //StereotypesHelper.addStereotype(newE, product);
+                    setOrCreateAsi(product, newE);
+                    setViewConstraint(newE, specialization);
+                }
             } else if (elementType.equalsIgnoreCase("Association")) {
                 if (newE == null) {
-                    AssociationClass ac = ef.createAssociationClassInstance();
+                    Association ac = ef.createAssociationInstance();
                     newE = ac;
                 }
-                try {
+                if (updateRelations)
                     setAssociation((Association)newE, specialization);
-                } catch (Exception ex) {
-                    if (newE instanceof AssociationClass && updateRelations) {
-                        newE.dispose();
-                        return null;
-                    }
-                }
             } else if (elementType.equalsIgnoreCase("Connector")) { 
                 if (newE == null) {
                     Connector conn = ef.createConnectorInstance();
                     newE = conn;
                 }
-                setConnectorEnds((Connector)newE, specialization);
+                if (updateRelations)
+                    setConnectorEnds((Connector)newE, specialization);
             } else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
                 if (newE == null) {
                     InstanceSpecification is = ef.createInstanceSpecificationInstance();
@@ -255,13 +275,23 @@ public class ImportUtility {
                 newE = newElement;
             }
             setName(newE, ob);
-            setOwner(newE, ob);
+            if (!(newE.getOwner() != null && ob.get("owner") instanceof String && 
+                    ((String)ob.get("owner")).contains("holding_bin")))
+                //don't update owner if trying to update existing element's owner to under a holding bin
+                setOwner(newE, ob);
             setDocumentation(newE, ob);
             setOwnedAttribute(newE, ob);
             newE.setID(sysmlID);
         } catch (ImportException ex) {
+            if (Utils.modelInconsistency(newE)  && updateRelations) {
+                newE.dispose();
+                throw ex;
+            }
             setName(newE, ob);
-            setOwner(newE, ob);
+            if (!(newE.getOwner() != null && ob.get("owner") instanceof String && 
+                    ((String)ob.get("owner")).contains("holding_bin")))
+                //don't update owner if trying to update existing element's owner to under a holding bin
+                setOwner(newE, ob);
             setDocumentation(newE, ob);
             newE.setID(sysmlID);
             throw ex;
@@ -315,6 +345,8 @@ public class ImportUtility {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {
             c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
+            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+            c.setID(e.getID() + "_vc");
             c.setOwner(e);
             c.getConstrainedElement().add(e);
         }
@@ -328,6 +360,11 @@ public class ImportUtility {
                     throw new ImportException(e, specialization, "View constraint: " + ex.getMessage());
                 }
             }
+        }
+        if (specialization.containsKey("displayedElements")) {
+            JSONArray des = (JSONArray)specialization.get("displayedElements");
+            if (des != null)
+                StereotypesHelper.setStereotypePropertyValue(e, Utils.getViewClassStereotype(), "elements", des.toJSONString());
         }
     }
     
@@ -405,7 +442,7 @@ public class ImportUtility {
             JSONArray classifier = (JSONArray)specialization.get("classifier");
             if (classifier == null || classifier.isEmpty()) {
                 log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
-                return;
+                throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
             }
             List<Classifier> newClassifiers = new ArrayList<Classifier>();
             for (Object id: classifier) {
@@ -413,15 +450,17 @@ public class ImportUtility {
                 if (e instanceof Classifier) {
                     newClassifiers.add((Classifier)e);
                 } else {
-                    throw new ImportException(is, specialization, (String)id + " is not a classifier");
+                    //throw new ImportException(is, specialization, (String)id + " is not a classifier");
                 }
             }
+            if (newClassifiers.isEmpty())
+                throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
             is.getClassifier().clear();
             is.getClassifier().addAll(newClassifiers);
         }
     }
     
-    public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) {
+    public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) throws ReferenceException {
         String sourceId = (String) specialization.get("source");
         String targetId = (String) specialization.get("target");
         Element source = ExportUtility.getElementFromID(sourceId);
@@ -431,6 +470,7 @@ public class ImportUtility {
             ModelHelper.setClientElement(dr, source);
         } else {
             log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
+            throw (new ReferenceException(dr, specialization, "Directed relationship has no source or target"));
         }
     }
     
@@ -440,7 +480,6 @@ public class ImportUtility {
         if (values != null && values.isEmpty())
             p.setDefaultValue(null);
     }
-    
     public static void setProperty(Property p, JSONObject spec) {
         // fix the property type here
         String ptype = (String)spec.get("propertyType");
@@ -459,6 +498,46 @@ public class ImportUtility {
             aggr = AggregationKindEnum.getByName(((String)spec.get("aggregation")).toLowerCase());
         if (aggr != null) {
             p.setAggregation(aggr);
+        }
+        ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+        
+        Long spmin = (Long) spec.get("multiplicityMin");
+        if ( spmin != null){
+        	try{
+        	    ValueSpecification pmin = p.getLowerValue();
+        	    if (pmin == null)
+        	        pmin = ef.createLiteralIntegerInstance();
+        	    if (pmin instanceof LiteralInteger)
+        	        ((LiteralInteger)pmin).setValue(spmin.intValue());
+        	    if (pmin instanceof LiteralUnlimitedNatural)
+        	        ((LiteralUnlimitedNatural)pmin).setValue(spmin.intValue());
+	        	p.setLowerValue(pmin);
+        	}
+        	catch (NumberFormatException en){}
+        }
+        Long spmax = (Long) spec.get("multiplicityMax");
+        if ( spmax != null){
+        	try{
+        	    ValueSpecification pmax = p.getUpperValue();
+                if (pmax == null)
+                    pmax = ef.createLiteralUnlimitedNaturalInstance();
+                if (pmax instanceof LiteralInteger)
+                    ((LiteralInteger)pmax).setValue(spmax.intValue());
+                if (pmax instanceof LiteralUnlimitedNatural)
+                    ((LiteralUnlimitedNatural)pmax).setValue(spmax.intValue());
+                p.setUpperValue(pmax);
+        	}
+        	catch (NumberFormatException en){}
+        }
+        JSONArray redefineds = (JSONArray) spec.get("redefines");
+        Collection<Property> redefinedps = p.getRedefinedProperty();
+        if (redefineds != null && redefineds.size() != 0) { //for now prevent accidental removal of things in case server doesn't have the right reference
+            redefinedps.clear();
+            for (Object redefined: redefineds){
+                Property redefinedp = (Property) ExportUtility.getElementFromID((String)redefined);
+                if (redefinedp != null)
+                    redefinedps.add(redefinedp);
+            }
         }
     }
     
@@ -502,7 +581,7 @@ public class ImportUtility {
         }
     }
     
-    public static void setConnectorEnds(Connector c, JSONObject spec) {
+    public static void setConnectorEnds(Connector c, JSONObject spec) throws ReferenceException{
         JSONArray webSourcePath = (JSONArray)spec.get("sourcePath");
         JSONArray webTargetPath = (JSONArray)spec.get("targetPath");
         String webSource = null;
@@ -518,6 +597,7 @@ public class ImportUtility {
             c.getEnd().get(1).setRole((ConnectableElement)webTargetE);
         } else {
             log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
+            throw (new ReferenceException(c, spec, "Connector doesn't have both connectable roles."));
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
         if (webSourcePath != null && !webSourcePath.isEmpty()) {
@@ -534,7 +614,7 @@ public class ImportUtility {
             c.setType((Association)asso);
     }
     
-    public static void setAssociation(Association a, JSONObject spec) throws ImportException {
+    public static void setAssociation(Association a, JSONObject spec) throws ReferenceException {
         String webSourceId = (String)spec.get("source");
         String webTargetId = (String)spec.get("target");
         Element webSource = ExportUtility.getElementFromID(webSourceId);
@@ -547,7 +627,7 @@ public class ImportUtility {
         int i = 0;
         if (webSource == null || webTarget == null) {
             log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
-            throw new ImportException(a, spec, "Association missing ends");
+            throw new ReferenceException(a, spec, "Association missing ends");
         }
         for (Property end: a.getMemberEnd()) {
             if (end != webSource && end != webTarget)
@@ -754,5 +834,35 @@ public class ImportUtility {
             log.error("Bad PropertyValueType: " + valueType);
         };
         return newval;
+    }
+    
+    public static InstanceSpecification setOrCreateAsi(Stereotype s, Element e) {
+        List<Stereotype> ss = new ArrayList<Stereotype>();
+        ss.add(s);
+        return setOrCreateAsi(ss, e);
+    }
+    //create applied steretype instance manually so we can set id explicitly instead of letting md generate id
+    public static InstanceSpecification setOrCreateAsi(List<Stereotype> stereotypes, Element e) {
+        InstanceSpecification is = null;
+        for (Element child: e.getOwnedElement()) {
+            if (child instanceof InstanceSpecification) {
+                is = (InstanceSpecification)child;
+                for (Classifier c: is.getClassifier()) {
+                    if (!(c instanceof Stereotype)) { //not asi
+                        is = null;
+                        break;
+                    }
+                }
+            }
+        }
+        if (is == null) {
+            is = Application.getInstance().getProject().getElementsFactory().createInstanceSpecificationInstance();
+            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+            is.setID(e.getID() + "_asi");
+            is.setOwner(e);
+        }
+        is.getClassifier().clear();
+        is.getClassifier().addAll(stereotypes);
+        return is;
     }
 }

@@ -79,6 +79,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+@Deprecated //mostly deprecated except for validating view hierarchy
 public class ViewValidator {
 
     private ValidationRule projectExist = new ValidationRule("Project Exist", "Project doesn't exist", ViolationSeverity.ERROR);
@@ -352,7 +353,7 @@ public class ViewValidator {
             modelSuite = mv.getSuite();
 
             Utils.guilog("[INFO] Validating images");
-            ImageValidator iv = new ImageValidator(visitor2.getImages());
+            ImageValidator iv = new ImageValidator(visitor2.getImages(), null);
             //this checks images generated from the local generation against what's on the web based on checksum
             iv.validate();
             imageSuite = iv.getSuite();

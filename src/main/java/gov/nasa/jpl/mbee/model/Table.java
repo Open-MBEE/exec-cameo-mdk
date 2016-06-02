@@ -48,6 +48,7 @@ public abstract class Table extends Query {
     protected List<String>   colwidths;
     protected boolean       transpose;
     protected boolean		hideHeaders;
+    protected boolean       showIfEmpty;
     
     public void setIncludeDoc(boolean d) {
         includeDoc = d;
@@ -105,6 +106,14 @@ public abstract class Table extends Query {
         this.transpose = transpose;
     }
     
+    public boolean isShowIfEmpty() {
+        return showIfEmpty;
+    }
+
+    public void setShowIfEmpty(boolean showIfEmpty) {
+        this.showIfEmpty = showIfEmpty;
+    }
+
     public boolean isHideHeaders() {
     	return hideHeaders;
     }
@@ -138,6 +147,7 @@ public abstract class Table extends Query {
         }
         dbTable.setTranspose(transpose);
         dbTable.setHideHeaders(hideHeaders);
+        dbTable.setShowIfEmpty(showIfEmpty);
     }
 
     @SuppressWarnings("unchecked")
@@ -160,5 +170,7 @@ public abstract class Table extends Query {
                 "transpose", false));
         setHideHeaders((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
                 "hideHeaders", false));
+        setShowIfEmpty((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
+                "showIfEmpty", false));
     }
 }

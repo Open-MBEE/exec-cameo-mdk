@@ -52,6 +52,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  * @author dlam
  * 
  */
+@Deprecated
 public class ViewCommentVisitor extends AbstractModelVisitor {
     /*
      * { view2comment: {viewid:[mdid], ...} comments: [{id: mdid, body: body,

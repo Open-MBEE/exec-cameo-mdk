@@ -37,6 +37,8 @@ public abstract class Migrator {
 		JSONObject send = new JSONObject();
 		send.put("elements", elements);
 		send.put("source", "magicdraw");
+        send.put("mmsVersion", "2.3");
+
 
 		String url = ExportUtility.getPostElementsUrl();
 		if (url == null) {
@@ -44,10 +46,10 @@ public abstract class Migrator {
 		}
 		
 		// try to do a server background commit
-		url += "?background=true";
+		//url += "?background=true"; added in Request
 		
 		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), "Migration"));
+		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), "Migration",true));
 	}
 
 

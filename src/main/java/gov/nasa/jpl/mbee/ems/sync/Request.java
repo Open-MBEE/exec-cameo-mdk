@@ -13,6 +13,7 @@ public class Request {
     private int wait = 60000;
     private String type = "Element";
     private int numElements = 1;
+    private boolean background = false;
     
     public Request(String url, String json, String method, boolean feedback) {
         this.url = url;
@@ -39,12 +40,16 @@ public class Request {
         this.type = type;
     }
     
-    public Request(String url, String json, int wait, String type) {
-        this.url = url;
+    public Request(String url, String json, int wait, String type, Boolean background) {
+    	this.url = url;
+    	if (background != null && background)
+        	this.url += "?background=true";
+    	    		
         this.json = json;
         this.wait = wait*1000 + 120000;
         this.type = type;
         this.numElements = wait;
+        this.background = (background == null) ? false : background;
     }
     
     public Request(String url, PostMethod pm, String type) {
@@ -55,6 +60,9 @@ public class Request {
     
     public Request() {}
     
+    public boolean isBackgournd(){
+    	return background;
+    }
     public String getJson() {
         return json;
     }

@@ -68,6 +68,8 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
         JSONObject tosend = new JSONObject();
         JSONArray news = new JSONArray();
         tosend.put("workspaces", news);
+        tosend.put("mmsVersion", "2.3");
+
         JSONObject newws = new JSONObject();
         newws.put("name", branches[branches.length-1]);
         newws.put("parent", parentId);
@@ -75,7 +77,7 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
         newws.put("description", "Created from magicdraw.");
         news.add(newws);
         
-        String result = ExportUtility.send(url, tosend.toJSONString(), null, false, false);
+        String result = ExportUtility.send(url, tosend.toJSONString()/*, null*/, false, false);
         if (result == null || !result.startsWith("{"))
             return;
         JSONObject ob =  (JSONObject) JSONValue.parse(result);

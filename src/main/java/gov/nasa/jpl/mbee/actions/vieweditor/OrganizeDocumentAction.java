@@ -47,7 +47,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
+@Deprecated
 public class OrganizeDocumentAction extends MDAction {
 
     private static final long serialVersionUID = 1L;

@@ -104,6 +104,8 @@ public class ModelExporter {
         JSONArray elementss = new JSONArray();
         elementss.addAll(elements.values());
         result.put("elements", elementss);
+        result.put("source", "magicdraw");
+        result.put("mmsVersion", "2.3");
         //result.put("elementHierarchy", elementHierarchy);
         return result;
     }

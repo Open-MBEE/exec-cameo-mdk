@@ -10,8 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -35,10 +34,7 @@ public class ValidateAction extends SRAction {
 		this.elements = elements;
 	}
 	
-	public static void validate(final Element element) {
-		validate(Lists.newArrayList(element));
-	}
-	
+ 
 	public static void validate(final List<? extends Element> elements) {
 		final List<Element> elems = new ArrayList<Element>();
 		elems.addAll(elements);
@@ -65,5 +61,11 @@ public class ValidateAction extends SRAction {
     public void actionPerformed(ActionEvent e) {
 		validate(elements);
     }
+
+	public static void validate(InstanceSpecification instance) {
+		ArrayList<InstanceSpecification> insts = new ArrayList<InstanceSpecification>();
+		insts.add(instance);
+		validate(insts);
+	}
 	
 }

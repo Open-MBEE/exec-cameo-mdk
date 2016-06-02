@@ -4,11 +4,10 @@ import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 
 import java.awt.event.ActionEvent;
 
-import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 
-public class CloseAutoSyncAction extends MDAction {
+public class CloseAutoSyncAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "CloseAutoSync";
 

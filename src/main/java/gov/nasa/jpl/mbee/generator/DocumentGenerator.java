@@ -107,13 +107,19 @@ public class DocumentGenerator {
     private Stereotype        md18expose = Utils.get18ExposeStereotype();
     private Stereotype        ourExpose = Utils.getExposeStereotype();
     private boolean hierarchyOnly;
+    private boolean addViewDoc = true; //whether to add default view doc 
     
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
+        this(e, dv, wlog, true);
+    }
+    
+    public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog, boolean addViewDoc) {
         start = e;
         product = Utils.getProductStereotype();
         doc = new Document();
         context = new GenerationContext(new Stack<List<Object>>(), null, dv, Application.getInstance()
                 .getGUILog());
+        this.addViewDoc = addViewDoc;
     }
 
     public DocumentGenerator(Element e, PrintWriter wlog) {
@@ -221,7 +227,7 @@ public class DocumentGenerator {
                                               // prevent showing duplicate
                                               // documentation
                 String viewDoc = ModelHelper.getComment(view);
-                if (viewDoc != null) {
+                if (viewDoc != null && addViewDoc) {
                     Paragraph para = new Paragraph(viewDoc);
                     //if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGen3Profile.editableChoosable, "editable", true)) {
                         para.setDgElement(view);
@@ -296,7 +302,7 @@ public class DocumentGenerator {
                 viewSection.addElement(image);
             } else { // just show documentation
                 String viewDoc = ModelHelper.getComment(view);
-                if (viewDoc != null) {
+                if (viewDoc != null && addViewDoc) {
                     Paragraph para = new Paragraph(viewDoc);
                     para.setDgElement(view);
                     para.setFrom(From.DOCUMENTATION);

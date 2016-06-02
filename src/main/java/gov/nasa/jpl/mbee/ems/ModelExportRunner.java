@@ -32,18 +32,14 @@ import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
-import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ModelExportRunner implements RunnableWithProgress {
@@ -52,12 +48,16 @@ public class ModelExportRunner implements RunnableWithProgress {
     private int depth;
     private boolean packageOnly;
     private String url;
+    private Boolean background;
     
-    public ModelExportRunner(Element start, int depth, boolean packageOnly, String url) {
+    public ModelExportRunner(Element start, int depth, boolean packageOnly, String url, Boolean background) {
         this.start = start;
         this.depth = depth;
         this.packageOnly = packageOnly;
+        //if (background)
+        	//this.url = url + "?background=true";
         this.url = url;
+        this.background = (background == null) ? false : background;
     }
     
     @Override
@@ -79,8 +79,9 @@ public class ModelExportRunner implements RunnableWithProgress {
         Utils.guilog("Number of Elements: " + me.getNumberOfElements());
        // gl.log("*** Starting export view comments ***");
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, json, me.getNumberOfElements(), "Model Export"));
-        if (!url.contains("background"))
+        OutputQueue.getInstance().offer(new Request(url, json, me.getNumberOfElements(), "Model Export", background));
+        //if (!url.contains("background"))
+        if ( !background)
         	Utils.guilog("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
         //ExportUtility.send(url, json, null, false);
     }

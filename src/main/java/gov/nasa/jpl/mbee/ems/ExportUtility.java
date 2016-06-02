@@ -29,24 +29,24 @@
 package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
-import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +60,8 @@ import javax.jms.Session;
 import javax.jms.Topic;
 import javax.swing.JOptionPane;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
@@ -68,7 +69,7 @@ import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -77,22 +78,17 @@ import org.json.simple.JSONValue;
 
 import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
-import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.foundation.MDObject;
-import com.nomagic.magicdraw.teamwork2.ProjectVersion;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
-import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
@@ -124,7 +120,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Interval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
@@ -377,11 +372,11 @@ public class ExportUtility {
             url = (String) StereotypesHelper.getStereotypePropertyFirst(model,
                     "ModelManagementSystem", "MMS URL");
             if (url == null || url.equals("")) {
-                JOptionPane.showMessageDialog(null, "Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
                 url = null;
             }
         } else {
-            JOptionPane.showMessageDialog(null,"Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
             url = null;
         }
         if (url == null && MDUtils.isDeveloperMode()) {
@@ -399,7 +394,7 @@ public class ExportUtility {
         String site = (String) StereotypesHelper.getStereotypePropertyFirst(
                 model, "ModelManagementSystem", "MMS Site");
         if (site == null || site.equals("")) {
-            JOptionPane.showMessageDialog(null,"Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
             site = null;
         }
         if (site == null && MDUtils.isDeveloperMode()) {
@@ -534,20 +529,23 @@ public class ExportUtility {
     }
 
     public static String delete(String url, boolean feedback) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         DeleteMethod gm = new DeleteMethod(url);
         try {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url, gm);
-            //Application.getInstance().getGUILog().log("[INFO] Getting...");
-            //Application.getInstance().getGUILog().log("url=" + url);
-            log.info("delete: " + url);
+            if (print)
+                log.info("delete: " + url);
             if (feedback)
                 Utils.guilog("[INFO] Deleting...");
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-            log.info("delete response: " + json);
+            if (print)
+                log.info("delete response: " + json);
             if (showErrors(code, json, false)) {
                 return null;
             }
@@ -563,22 +561,24 @@ public class ExportUtility {
         
     }
     
-    public static String send(String url, String json, String method) {
-        return send(url, json, method, true, false);
-    }
-    
+   
     public static String send(String url, PostMethod pm) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         try {
             //GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
-            log.info("send file: " + url);
+            if (print)
+                log.info("send file: " + url);
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            log.info("send file response: " + code + " " + response);
+            if (print)
+                log.info("send file response: " + code + " " + response);
             if (showErrors(code, response, false)) {
                 return null;
             }
@@ -591,58 +591,89 @@ public class ExportUtility {
             pm.releaseConnection();
         }
     }
-    
-    public static String send(String url, String json, String method,
-            boolean showPopupErrors, boolean suppressGuiLog) {
+    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog) {
+    	return send(url, json, showPopupErrors, suppressGuiLog, "Send#?");
+    }
+    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog, String _threadName) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
-
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         EntityEnclosingMethod pm = null;
-        if (method == null)
+        //if (method == null)
             pm = new PostMethod(url);
-        else
-            pm = new PutMethod(url);
+        //else
+            //pm = new PutMethod(url);
         //GUILog gl = Application.getInstance().getGUILog();
         try {
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Sending...");
-            if (json.length() > 3000) {
+           // if (json.length() > 3000) {
                 // System.out.println(json);
-                log.info("send: " + url + ": " + json);
+             //   log.info(_id + " send: " + url + ": " + json);
                 //gl.log("(see md.log for what got sent - too big to show)");
-            } else
-                log.info("send: " + url + ": " + json);// gl.log(json);
-            pm.setRequestHeader("Content-Type",
-                    "application/json;charset=utf-8");
+            //} else
+                log.info(_threadName + " send: " + url + ": " + json);// gl.log(json);
+            pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
+            
+            
+            /*int timeout = 120; // seconds
+            HttpParams httpParams = client.getParams();
+            httpParams.setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, timeout * 1000); //cause ConnectionTimeoutException
+            httpParams.setParameter(HttpConnectionParams.SO_TIMEOUT, timeout * 1000); //casue SockteTimeoutException
+            */
+            
             ViewEditUtils.setCredentials(client, url, pm);
+            if (print)
+                log.info(_threadName + " executing....");
             int code = client.executeMethod(pm);
+            if (print)
+                log.info(_threadName + " server returned: " + code);
             String response = pm.getResponseBodyAsString();
-            log.info("send response: " + code + " " + response);
+            if (print)
+                log.info(_threadName + " response: " + code + " " + response);
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
+            if (print)
+                log.info(_threadName + " Send Successful.");
             if (!suppressGuiLog)
                 Utils.guilog("[INFO] Send Successful.");
             return response;
-        } catch (Exception ex) {
+        } catch( org.apache.commons.httpclient.ConnectTimeoutException ex){ //the time to establish the connection with the remote host
+        	Utils.printException(ex);
+        	return null;
+        } catch(  java.net.SocketTimeoutException ex){ //the time waiting for data after the connection was established; maximum time of inactivity between two data packets
+        	Utils.printException(ex);
+        	return null;
+        } catch (Exception ex) { //java.net.SocketException: Software caused connection abort: recv failed
             Utils.printException(ex);
             return null;
         } finally {
             pm.releaseConnection();
         }
     }
+    /*public static String send(String url, String json, String method) {
+    return send(url, json, method, true, false);
+	}*/
 
     public static String send(String url, String json) {
-        return send(url, json, null);
+        //return send(url, json, null); //method == null means POST
+    	return send(url, json/*, method*/, true, false);
     }
-
+    
     public static String deleteWithBody(String url, String json, boolean feedback) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        checkAndResetTicket();
         EntityEnclosingMethod pm = null;
+        url = addTicketToUrl(url);
         pm = new DeleteMethodWithEntity(url);
         try {
-            log.info("deleteWithBody: " + url + ": " + json);// gl.log(json);
+            if (print)
+                log.info("deleteWithBody: " + url + ": " + json);// gl.log(json);
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
@@ -650,7 +681,8 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            log.info("deleteWithBody Response: " + code + " " + response);
+            if (print)
+                log.info("deleteWithBody Response: " + code + " " + response);
             if (showErrors(code, response, false)) {
                 return null;
             }
@@ -666,10 +698,14 @@ public class ExportUtility {
     }
     
     public static String getWithBody(String url, String json) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         pm = new GetMethodWithEntity(url);
         try {
-            log.info("getWithBody: " + url + ": " + json);// gl.log(json);
+            if (print)
+                log.info("getWithBody: " + url + ": " + json);// gl.log(json);
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
@@ -677,7 +713,8 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            log.info("getWithBody Response: " + code + " " + response);
+            if (print)
+                log.info("getWithBody Response: " + code + " " + response);
             if (showErrors(code, json, false)) {
                 throw new ServerException(json, code);
             }
@@ -717,28 +754,168 @@ public class ExportUtility {
             String id = (String) ((JSONObject) viewinfo).get("id");
             JSONArray children = (JSONArray) ((JSONObject) viewinfo)
                     .get("childrenViews");
+            if (response.containsKey(id) && !((JSONArray)response.get(id)).equals(children)) {
+                //something is messed up
+                Utils.log("[WARNING] Document hierarchy from MMS is inconsistent and will interfere with validation, please file a CAE Support jira at https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary with component MD.MDK to request help to resolve.");
+            }
             response.put(id, children);
         }
         return response;
     }
 
+    // helper method for long for get() method. will trigger a login dialogue    
     public static String get(String url) throws ServerException {
-        return get(url, true);
+        return get(url, null, null, true);
+    }
+    
+    // helper method for long for get() method. will trigger a login dialogue
+    public static String get(String url, boolean showPopupErrors) throws ServerException {
+    	return get(url, null, null, showPopupErrors);
+    }
+    
+    // helper method for long for get() method. will bypass the login dialogue if username is not null or empty ""
+    public static String get(String url, String username, String password) throws ServerException {
+    	return get(url, username, password, true);
     }
 
-    public static String get(String url, boolean showPopupErrors) throws ServerException {
-        if (url == null)
-            return null;
+    public static boolean checkAndResetTicket() {
+        String baseUrl = getUrl();
+        try {
+            boolean validTicket = checkTicket(baseUrl);
+            if (!validTicket) {
+                String loggedIn = getTicket(baseUrl + "/api/login", ViewEditUtils.getUsername(), ViewEditUtils.getPassword(), false);
+            }
+            return true;
+        } catch (ServerException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public static boolean checkTicket(String baseUrl) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        String ticket = ViewEditUtils.getTicket();
+        if (ticket == null || ticket.equals(""))
+            return false;
+        String url = baseUrl + "/mms/login/ticket/" + ViewEditUtils.getTicket();
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url, gm);
-            //Application.getInstance().getGUILog().log("[INFO] Getting...");
-            //Application.getInstance().getGUILog().log("url=" + url);
-            log.info("get: " + url);
+            if (print)
+                log.info("checkTicket: " + url);
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-            log.info("get response: " + code + " " + json);
+            if (print)
+                log.info("checkTicket response: " + code + " " + json);
+            if (code != 404 && code != 200)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            if (code == 404)
+                return false;
+            return true;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+            Utils.showPopupMessage("URL is malformed");
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } finally {
+            gm.releaseConnection();
+        }
+    }
+    // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
+    public static String getTicket(String url, String username, String password, boolean showPopupErrors) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        
+        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
+      
+        HttpClient client = new HttpClient();
+        if (url == null)
+            return null;
+       // url = "https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login";
+        PostMethod postMethod = new PostMethod(url);
+        String userpasswordJsonString = "";
+        try {
+            
+            if (username != null && !username.equals(""))
+                ViewEditUtils.setUsernameAndPassword(username, password, true);
+            
+            userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
+            
+           // String JSON_STRING = "{\"username\":\"username\", \"password\":\"password\"}";
+            
+            StringRequestEntity requestEntity = new StringRequestEntity(
+                    userpasswordJsonString,
+                    "application/json",
+                    "UTF-8");
+
+            
+            postMethod.setRequestEntity(requestEntity);
+            int code = client.executeMethod(postMethod);
+            String json = postMethod.getResponseBodyAsString();
+            if (print)
+                log.info("get ticket response: " + code + " " + json);
+            if (showErrors(code, json, showPopupErrors)) {
+                throw new ServerException(json, code);
+            }
+            if (code == 400)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            
+            JSONObject ob =  (JSONObject) JSONValue.parse(json);
+            if (ob != null) {
+                JSONObject d = (JSONObject)ob.get("data");
+                if (d != null && !d.isEmpty()) {
+                    String ticket = (String)d.get("ticket");
+                    ViewEditUtils.setTicket(ticket);
+                } else
+                    return null;
+            } else
+                return null;
+            return json;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+            Utils.showPopupMessage("URL is malformed");
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } finally {
+            postMethod.releaseConnection();
+        }
+    }
+    // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
+    public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        if (url == null)
+            return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
+        GetMethod gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            if (username == null || username.equals(""))
+                ViewEditUtils.setCredentials(client, url, gm);
+            else
+                ViewEditUtils.setCredentials(client, url, gm, username, password);
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
+            if (print)
+                log.info("get: " + url);
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            if (print)
+                log.info("get response: " + code + " " + json);
             if (showErrors(code, json, showPopupErrors)) {
                 throw new ServerException(json, code);
             }
@@ -753,14 +930,26 @@ public class ExportUtility {
             Utils.printException(ex);
             throw new ServerException("", 500);
         } catch (IllegalArgumentException ex) {
-        		Utils.showPopupMessage("URL is malformed");
-        		Utils.printException(ex);
-        		throw new ServerException("", 500);
+                Utils.showPopupMessage("URL is malformed");
+                Utils.printException(ex);
+                throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
         }
     }
-
+    
+    public static String addTicketToUrl(String r) {
+        String ticket = ViewEditUtils.getTicket();
+        if (ticket == null || ticket.equals(""))
+            return r;
+        String url = r;
+        if (url.contains("?"))
+            url += "&alf_ticket=" + ticket;
+        else
+            url +="?alf_ticket=" + ticket;
+        return url;
+    }
+    
     //check if comment is actually the documentation of its owner
     public static boolean isElementDocumentation(Comment c) {
         if (c.getAnnotatedElement().size() > 1
@@ -808,6 +997,8 @@ public class ExportUtility {
             Element elem = ((ElementValue) vs).getElement();
             if (elem != null) {
                 elementInfo.put("element", ExportUtility.getElementID(elem));
+            } else {
+                elementInfo.put("element", null);
             }
         } else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
@@ -830,6 +1021,8 @@ public class ExportUtility {
             InstanceSpecification i = iv.getInstance();
             if (i != null) {
                 elementInfo.put("instance", ExportUtility.getElementID(i));
+            } else {
+                elementInfo.put("instance", null);
             }
         } else if (vs instanceof LiteralSpecification) {
             if (vs instanceof LiteralBoolean) {
@@ -864,6 +1057,8 @@ public class ExportUtility {
             List<String> body = ((OpaqueExpression) vs).getBody();
             if (body != null) {
                 elementInfo.put("expressionBody", makeJsonArray(body));
+            } else {
+                elementInfo.put("expressionBody", new JSONArray());
             }
         } else if (vs instanceof StringExpression) {
             elementInfo.put("type", "StringExpression");
@@ -979,16 +1174,18 @@ public class ExportUtility {
             JSONObject cob = fillConstraintSpecialization(c, null);
             if (cob.containsKey("specification")) {
                 specialization.put("contents", (JSONObject)cob.get("specification"));
-                specialization.put("contains", "[]");
+                specialization.put("contains", new JSONArray());
             }
         }
         Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
         if (o != null && o instanceof String) {
             try {
                 JSONArray a = (JSONArray)JSONValue.parse((String)o);
-                specialization.put("allowedElements", a);
+                specialization.put("allowedElements", new JSONArray());
                 specialization.put("displayedElements", a);
             } catch (Exception ex) {}
+        } else {
+            specialization.put("displayedElements", new JSONArray());
         }
         return specialization;
     }
@@ -998,71 +1195,80 @@ public class ExportUtility {
         JSONObject specialization = spec;
         if (specialization == null)
             specialization = new JSONObject();
-        if (e instanceof Property) {
-        		specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
-            specialization.put("type", "Property");
-            specialization.put("isDerived", ((Property) e).isDerived());
-            specialization.put("isSlot", false);
-            if (value) {
-                ValueSpecification vs = ((Property) e).getDefaultValue();
-                JSONArray singleElementSpecVsArray = new JSONArray();
-                if (vs != null) {
-                    // Create a new JSONObject and a new JSONArray. Fill in
-                    // the values to the new JSONObject and then insert
-                    // that JSONObject into the array (NOTE: there will
-                    // be single element in this array). Finally, insert
-                    // the array into the specialization element as the
-                    // value of the "value" property.
-                    //
-                    
-                    JSONObject newElement = new JSONObject();
-                    fillValueSpecification(vs, newElement);
-                    singleElementSpecVsArray.add(newElement);
-                }
-                specialization.put("value", singleElementSpecVsArray);
-            }
-            //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
-            //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
-            if (ptype) {
-                Type type = ((Property) e).getType();
-                if (type != null) {
-                    specialization.put("propertyType", "" + type.getID());
-                } else
-                    specialization.put("propertyType", null);
-            }
-        } else if (e instanceof Slot) {
-            specialization.put("type", "Property");
-            specialization.put("isDerived", false);
-            specialization.put("isSlot", true);
-            
-
-            // Retrieve a list of ValueSpecification objects.
-            // Loop through these objects, creating a new JSONObject
-            // for each value spec. Fill in the new JSONObject and
-            // insert them into a new JSONArray.
-            // Finally, once you've looped through all the value
-            // specifications, insert the JSONArray into the
-            // new specialization element.
-            //
-            if (value) {
-                List<ValueSpecification> vsl = ((Slot) e).getValue();
-                JSONArray specVsArray = new JSONArray();
-                if (vsl != null && vsl.size() > 0) {
-                    for (ValueSpecification vs : vsl) {
-                        JSONObject newElement = new JSONObject();
-                        fillValueSpecification(vs, newElement);
-                        specVsArray.add(newElement);
-                    }
-                }
-                specialization.put("value", specVsArray);
-            }
-            if (ptype) {
-                Element type = ((Slot) e).getDefiningFeature();
-                if (type != null) {
-                    specialization.put("propertyType", "" + type.getID());
-                }
-            }
-        }
+		if (e instanceof Property) {
+		    specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
+			specialization.put("type", "Property");
+		    specialization.put("isDerived", ((Property) e).isDerived());
+		    specialization.put("isSlot", false);
+		    if (value) {
+		        ValueSpecification vs = ((Property) e).getDefaultValue();
+		        JSONArray singleElementSpecVsArray = new JSONArray();
+		        if (vs != null) {
+		            // Create a new JSONObject and a new JSONArray. Fill in
+		            // the values to the new JSONObject and then insert
+		            // that JSONObject into the array (NOTE: there will
+		            // be single element in this array). Finally, insert
+		            // the array into the specialization element as the
+		            // value of the "value" property.
+		            //
+		            
+		            JSONObject newElement = new JSONObject();
+		            fillValueSpecification(vs, newElement);
+		            singleElementSpecVsArray.add(newElement);
+		        }
+		        specialization.put("value", singleElementSpecVsArray);
+		    }
+		    //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
+		    //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
+		    if (ptype) {
+		        Type type = ((Property) e).getType();
+		        if (type != null) {
+		            specialization.put("propertyType", "" + type.getID());
+		        } else
+		            specialization.put("propertyType", null);
+		    }
+		    specialization.put("multiplicityMin", (long)((Property)e).getLower());
+		    specialization.put("multiplicityMax", (long)((Property)e).getUpper());
+		     
+		    Collection<Property> cps = ((Property)e).getRedefinedProperty();
+		    JSONArray redefinedProperties = new JSONArray();
+		    for (Property cp : cps) 
+		     	redefinedProperties.add(getElementID(cp));
+		    specialization.put("redefines", redefinedProperties);
+		   
+		} else { //if (e instanceof Slot) {
+			specialization.put("type", "Property");
+			specialization.put("isDerived", false);
+		    specialization.put("isSlot", true);
+		    
+		
+		    // Retrieve a list of ValueSpecification objects.
+		    // Loop through these objects, creating a new JSONObject
+		    // for each value spec. Fill in the new JSONObject and
+		    // insert them into a new JSONArray.
+		    // Finally, once you've looped through all the value
+		    // specifications, insert the JSONArray into the
+		    // new specialization element.
+		    //
+		    if (value) {
+		        List<ValueSpecification> vsl = ((Slot) e).getValue();
+		        JSONArray specVsArray = new JSONArray();
+		        if (vsl != null && vsl.size() > 0) {
+		            for (ValueSpecification vs : vsl) {
+		                JSONObject newElement = new JSONObject();
+		                fillValueSpecification(vs, newElement);
+		                specVsArray.add(newElement);
+		            }
+		        }
+		        specialization.put("value", specVsArray);
+		    }
+		    if (ptype) {
+		        Element type = ((Slot) e).getDefiningFeature();
+		        if (type != null) {
+		            specialization.put("propertyType", "" + type.getID());
+		        }
+		    }
+		}
         return specialization;
     }
     
@@ -1616,6 +1822,8 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1633,6 +1841,8 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1650,9 +1860,11 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
-        return ExportUtility.send(projUrl, tosend.toJSONString(), null, false, false);
+        return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);
     }
     
     public static void initializeDurableQueue(String taskId) {

@@ -50,6 +50,7 @@ import org.json.simple.JSONObject;
  * @author dlam
  * 
  */
+@Deprecated
 public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
 
     private JSONObject tablejson;

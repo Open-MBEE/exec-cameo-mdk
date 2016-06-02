@@ -40,6 +40,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 @SuppressWarnings("serial")
+@Deprecated
 public class ViewDocumentComments extends MDAction {
     private NamedElement selectedElement;
 

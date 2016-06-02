@@ -66,6 +66,7 @@ public class DBTable extends DocumentElement {
     private int                         cols;
     private boolean                     transpose;
     private boolean 					hideHeaders;
+    private boolean                     showIfEmpty;
 
     public List<List<DocumentElement>> getBody() {
         return body;
@@ -89,6 +90,14 @@ public class DBTable extends DocumentElement {
 
     public String getStyle() {
         return style;
+    }
+
+    public boolean isShowIfEmpty() {
+        return showIfEmpty;
+    }
+
+    public void setShowIfEmpty(boolean showIfEmpty) {
+        this.showIfEmpty = showIfEmpty;
     }
 
     /**

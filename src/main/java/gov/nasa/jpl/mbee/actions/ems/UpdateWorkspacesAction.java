@@ -4,9 +4,7 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 
 import java.awt.event.ActionEvent;
 
-import com.nomagic.magicdraw.actions.MDAction;
-
-public class UpdateWorkspacesAction extends MDAction {
+public class UpdateWorkspacesAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "UpdateWorkspaces";
 

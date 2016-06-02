@@ -123,7 +123,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
                     de.setId(section.getId());
             }
         }
-        if (sec.getChildren().isEmpty()) {
+        if (sec.getChildren().isEmpty() && !forViewEditor) {
             if (section.getSkipIfEmpty())
                 return;
             if (section.getStringIfEmpty() != null)

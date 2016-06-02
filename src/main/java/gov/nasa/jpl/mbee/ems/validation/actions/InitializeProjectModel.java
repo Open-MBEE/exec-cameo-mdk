@@ -72,6 +72,9 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("mmsVersion", "2.3");
+        tosend.put("source", "magicdraw");
+
         JSONObject result = ExportUtility.getProjectJson();
         array.add(result);
         String url = ExportUtility.getUrlWithWorkspaceAndSite();
@@ -79,7 +82,7 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
             return;
         }
         url += "/projects";
-        String response = ExportUtility.send(url, tosend.toJSONString(), null, false, false);
+        String response = ExportUtility.send(url, tosend.toJSONString()/*, null*/, false, false);
         if (response == null || response.startsWith("<html"))
             return;
         //ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
@@ -89,10 +92,11 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
                 return;
             }
             String[] buttons = {"Background job on server", "Background job on magicdraw","Abort Export"};
-            boolean background = Utils.getUserYesNoAnswerWithButton("Use background export on server? You'll get an email when done.", buttons);
-            if (background)
-                url = url + "?background=true";
-            ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false, url), "Exporting Model", true, 0);
+            //null can returns
+            Boolean background = Utils.getUserYesNoAnswerWithButton("Use background export on server? You'll get an email when done.", buttons, true);
+            if (background == null)
+                return;
+            ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false, url, background), "Exporting Model", true, 0);
    
         }
     }

@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
+@Deprecated
 public class FileCommentRepository implements CommentRepository {
     private final String filename;
     private File         file;

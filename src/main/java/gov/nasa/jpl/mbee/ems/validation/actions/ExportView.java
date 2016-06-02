@@ -67,6 +67,7 @@ import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+@Deprecated
 public class ExportView extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element view;
@@ -186,9 +187,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             elementsArray.addAll(elementsjson.values());
             send.put("elements", elementsArray);
             send.put("source", "magicdraw");
+            send.put("mmsVersion", "2.3");
             if (url == null)
                 return false;
-            if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false, false) == null)
+            if (ExportUtility.send(sendElementsUrl, send.toJSONString()/*, null*/, false, false) == null)
                 return false;
         }
         //send elements first, then view info
@@ -198,6 +200,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         send = new JSONObject();
         send.put("elements", viewsArray);
         send.put("source", "magicdraw");
+        send.put("mmsVersion", "2.3");
         /*if (document) {
             String docId = view.getID();
             JSONObject doc = null;
@@ -217,7 +220,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             }
         }*/
         Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size(), "View"));
+        OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size(), "View", false));
         //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
         //    return false;
         

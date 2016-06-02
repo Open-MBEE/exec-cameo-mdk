@@ -58,6 +58,7 @@ import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -71,6 +72,7 @@ public class ViewEditUtils {
     private static String             password              = "";
     private static boolean            passwordSet           = false;
     private static String             authStringEnc         = "";
+    private static String             ticket = "";
     private static final List<String> servers               = Arrays.asList(
                                                                     "http://docgen.jpl.nasa.gov:8080/editor",
                                                                     // "https://europaems:8443/alfresco/service",
@@ -82,6 +84,7 @@ public class ViewEditUtils {
                                                                     "Europa Old: http://docgen:8080/europa",
                                                                     "Other");
 
+   
     public static String getUrl() {
         return getUrl(true, false);
     }
@@ -142,14 +145,61 @@ public class ViewEditUtils {
         }
         return url; 
     }
+    /**
+     * Modify setCredentials method to constract username and password in json.
+     * @return
+     */
+    public static String getUserNamePasswordInJSON() {
+      
+        if (!passwordSet) {
+            // Pop up one time dialog for logging into Alfresco
+            JPanel userPanel = new JPanel();
+            userPanel.setLayout(new GridLayout(2, 2));
 
+            JLabel usernameLbl = new JLabel("Username:");
+            JLabel passwordLbl = new JLabel("Password:");
+
+            JTextField usernameFld = new JTextField();
+            JPasswordField passwordFld = new JPasswordField();
+
+            userPanel.add(usernameLbl);
+            userPanel.add(usernameFld);
+            userPanel.add(passwordLbl);
+            userPanel.add(passwordFld);
+
+            if (username != null) {
+                usernameFld.setText(username);
+                usernameFld.requestFocus();
+            }
+            if (password != null) {
+                passwordFld.setText(password);
+            }
+            makeSureUserGetsFocus(usernameFld);
+            JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
+                    "Enter your username and password for ViewEditor:", JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
+
+           
+            //passwordSet = true;
+            //username = usernameFld.getText();
+            //password = new String(passwordFld.getPassword());
+            //or shuold call
+            setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);
+        }
+        JSONObject temp = new JSONObject();
+        temp.put("username", username);
+        temp.put("password", password);
+        return  temp.toJSONString();
+      }
+    
     /**
      * Sets credentials for the client based on the actual URL string
      * 
      * @param client
      * @param urlstring
      */
-    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method) {
+    //TODO rewrite
+   public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method) {
         try {
             URL url = new URL(urlstring);
 
@@ -177,7 +227,7 @@ public class ViewEditUtils {
                     passwordFld.setText(password);
                 }
                 makeSureUserGetsFocus(usernameFld);
-                JOptionPane.showConfirmDialog(null, userPanel,
+                JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                         "Enter your username and password for ViewEditor:", JOptionPane.OK_CANCEL_OPTION,
                         JOptionPane.PLAIN_MESSAGE);
 
@@ -196,7 +246,26 @@ public class ViewEditUtils {
         }
 
         // proxy cache needs Authorization header
-        method.addRequestHeader( new Header("Authorization", ViewEditUtils.getAuthStringEnc()) );
+        method.addRequestHeader( new Header("Authorization", getAuthStringEnc()) );
+    }
+    
+    /**
+     * Sets credentials for the client based on the actual URL string and supplied strings.
+     * Intended to bypass the confirmDialog generated in the primary method
+     * 
+     * @param client
+     * @param urlstring
+     * @param method
+     * @param username
+     * @param password
+     */
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method, String username, String password) {
+        if (!passwordSet) 
+        {
+        	// setting the password here will cause us to skip the confirmDialog in the main setCredentials method
+            setUsernameAndPassword(username ,password, true);
+        }
+        setCredentials(client, urlstring, method);
     }
     
     private static void makeSureUserGetsFocus(final JTextField user) {
@@ -235,6 +304,7 @@ public class ViewEditUtils {
 
     public static void clearUsernameAndPassword() {
         setUsernameAndPassword("", "", false);
+        setTicket("");
     }
 
     public static boolean showErrorMessage(int code) {
@@ -257,7 +327,7 @@ public class ViewEditUtils {
     /**
      * utility for setting authorization header encoding at same time as username and password.
      */
-    private static void setUsernameAndPassword(String uname, String pword, boolean isPasswordSet) {
+    public static void setUsernameAndPassword(String uname, String pword, boolean isPasswordSet) {
         passwordSet = isPasswordSet;
         username = uname;
         password = pword;
@@ -268,5 +338,20 @@ public class ViewEditUtils {
     
     public static String getAuthStringEnc() {
         return authStringEnc;
+    }
+    
+    public static String getUsername() {
+        return username;
+    }
+    
+    public static String getPassword() {
+        return password;
+    }
+    
+    public static String getTicket(){
+        return ticket;
+    }
+    public static void setTicket(String _ticket){
+        ticket = _ticket;
     }
 }

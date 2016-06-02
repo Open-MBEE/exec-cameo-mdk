@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -39,10 +38,7 @@ public class Instance2BSTAction extends SRAction {
 	public static final String actionid = "Convert Instance to BST";
 	public List<InstanceSpecification> instances;
 	
-	public Instance2BSTAction(InstanceSpecification instance) {
-		this(Lists.newArrayList(instance));
-	}
-	
+
 	public Instance2BSTAction(List<InstanceSpecification> instances) {
 		super(actionid);
 		this.instances = instances;
@@ -75,10 +71,10 @@ public class Instance2BSTAction extends SRAction {
 		
 		final Classifier classifier = instance.getClassifier().get(0);
 		final Classifier specific  = (Classifier) CopyPasting.copyPasteElement(classifier, instance.getOwner(), true);
-		for (final Generalization generalization : Lists.newArrayList(specific.getGeneralization())) {
+		for (final Generalization generalization : specific.getGeneralization()) {
 			generalization.dispose();
 		}
-		for (final NamedElement ne : Lists.newArrayList(specific.getOwnedMember())) {
+		for (final NamedElement ne : specific.getOwnedMember()) {
 			ne.dispose();
 		}
 		

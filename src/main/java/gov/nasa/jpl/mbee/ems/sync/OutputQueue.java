@@ -1,12 +1,18 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.SwingUtilities;
 
+import org.apache.log4j.Logger;
+
+import gov.nasa.jpl.mbee.lib.Utils;
+
 public class OutputQueue extends LinkedBlockingQueue<Request> {
+    private Logger log = Logger.getLogger(OutputQueue.class);
     private final static OutputQueue instance = new OutputQueue();
-    private Request current = null;
+    private volatile Request current = null;
     private OutputQueue() {
         super();
     }
@@ -34,4 +40,14 @@ public class OutputQueue extends LinkedBlockingQueue<Request> {
     public Request getCurrent() {
         return current;
     }
+    public void remove(int _rowNum ){
+    	//linkedQueue not contain current so the index of removing row is (_rowNum -1)
+        if (this.size() >= _rowNum) {
+            Request toBeRemoved = (Request) this.toArray()[_rowNum-1];
+            if (toBeRemoved != null && toBeRemoved.getJson() != null)
+                log.info("[INFO] Removing  a queue: " + toBeRemoved.getJson());
+            super.remove(toBeRemoved);
+        }
+    }
+    
 }

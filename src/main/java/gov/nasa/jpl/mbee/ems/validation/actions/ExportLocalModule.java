@@ -32,6 +32,8 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             JSONArray array = new JSONArray();
             tosend.put("elements", array);
             tosend.put("source", "magicdraw");
+            tosend.put("mmsVersion", "2.3");
+
             JSONObject ob = ExportUtility.getProjectJsonForProject(module);
             array.add(ob);
             String url = ExportUtility.getUrl();
@@ -39,7 +41,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
                 return;
             String purl = url + "/workspaces/master/sites/" + siteName + "/projects";
             Utils.guilog("Initializing module");
-            if (ExportUtility.send(purl, tosend.toJSONString(), null, false, false) == null)
+            if (ExportUtility.send(purl, tosend.toJSONString()/*, null*/, false, false) == null)
                 return;
             
             ModelExporter me = new ModelExporter(mounts, 0, false, module);

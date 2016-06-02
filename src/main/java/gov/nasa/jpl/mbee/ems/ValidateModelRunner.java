@@ -29,11 +29,14 @@
 package gov.nasa.jpl.mbee.ems;
 
 import java.util.Collection;
+import java.util.Map;
+
+import org.json.simple.JSONObject;
 
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -41,9 +44,20 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 public class ValidateModelRunner implements RunnableWithProgress {
 
     private Collection<Element> start;
+	private Map<String, JSONObject> keyedElements;
+	private ValidationSuite suite;
     
     public ValidateModelRunner(Collection<Element> start) {
         this.start = start;
+    }
+    
+	public Map<String, JSONObject> getKeyed()
+	{
+		return keyedElements;
+	}
+	
+	public ValidationSuite getSuite() {
+    	return suite;
     }
     
     @Override
@@ -54,10 +68,15 @@ public class ValidateModelRunner implements RunnableWithProgress {
                 validator.validate(true, arg0);
                 if (!arg0.isCancel())
                     validator.showWindow();
+                suite = validator.getSuite();
+                keyedElements = validator.getKeyed();
             } catch (ServerException ex) {
             	Utils.guilog("[ERROR] Validate model cannot be completed because of server error.");
             }
-        } else
+        } else {
+        	suite = validator.getSuite();
             validator.showWindow();
+        }
     }
+    
 }

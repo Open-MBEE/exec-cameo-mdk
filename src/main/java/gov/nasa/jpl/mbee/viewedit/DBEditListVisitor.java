@@ -39,7 +39,7 @@ import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
+@Deprecated
 public class DBEditListVisitor extends DBEditDocwebVisitor {
 
     private JSONObject listjson;
