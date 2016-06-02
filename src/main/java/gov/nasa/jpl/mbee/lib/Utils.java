@@ -2099,7 +2099,8 @@ public class Utils {
     public static Property getGeneratedFromElementProperty() {
         return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement");
     }
-    
+
+    // Ivan: Investigate get_constraintOfConstrainedElement for more accurate solution
     public static Constraint getViewConstraint(Element view) {
         if (view == null)
             return null;

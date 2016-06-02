@@ -57,6 +57,8 @@ public class DocGenPlugin extends Plugin {
     protected AutoSyncPlugin            autoSyncPlugin        = null;
     public static ClassLoader           extensionsClassloader = null;
 
+    public static final String VERSION = "2.3";
+
     public DocGenPlugin() {
         super();
         Debug.outln("constructed DocGenPlugin!");

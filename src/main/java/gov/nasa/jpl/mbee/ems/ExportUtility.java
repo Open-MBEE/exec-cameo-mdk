@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
@@ -1823,7 +1824,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1842,7 +1843,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1861,7 +1862,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
         return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);

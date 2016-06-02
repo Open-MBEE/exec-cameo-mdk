@@ -1,12 +1,6 @@
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.systemsreasoner.AspectAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateOntoBehaviorBlocks;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
- import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +96,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		category.addAction(createInstanceMenuAction);
 		category.addAction(instance2BSTAction);
 		category.addAction(aspectAction);
+		category.addAction(new TestAction());
  	 
 	 	category.getActions().clear();
   		category.setUseActionForDisable(true);

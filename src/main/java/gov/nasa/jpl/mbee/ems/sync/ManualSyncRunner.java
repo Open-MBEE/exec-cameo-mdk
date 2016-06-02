@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
@@ -526,7 +527,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             JSONObject toSendUpdates = new JSONObject();
             toSendUpdates.put("elements", toSendElements);
             toSendUpdates.put("source", "magicdraw");
-            toSendUpdates.put("mmsVersion", "2.3");
+            toSendUpdates.put("mmsVersion", DocGenPlugin.VERSION);
             if (toSendElements.size() > 100) {
                 
             }
@@ -549,7 +550,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 }
                 toSendUpdates.put("elements", toDeleteElements);
                 toSendUpdates.put("source", "magicdraw");
-                toSendUpdates.put("mmsVersion", "2.3");
+                toSendUpdates.put("mmsVersion", DocGenPlugin.VERSION);
                 if (!toDeleteElements.isEmpty()) {
                 	Utils.guilog("[INFO] Delete requests are added to queue.");
                     OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));

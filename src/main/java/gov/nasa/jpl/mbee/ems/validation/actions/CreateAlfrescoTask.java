@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -68,7 +69,7 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
         JSONObject tosend = new JSONObject();
         JSONArray news = new JSONArray();
         tosend.put("workspaces", news);
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
 
         JSONObject newws = new JSONObject();
         newws.put("name", branches[branches.length-1]);

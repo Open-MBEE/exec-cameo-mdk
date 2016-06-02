@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ModelExportRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -72,7 +73,7 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         tosend.put("source", "magicdraw");
 
         JSONObject result = ExportUtility.getProjectJson();
