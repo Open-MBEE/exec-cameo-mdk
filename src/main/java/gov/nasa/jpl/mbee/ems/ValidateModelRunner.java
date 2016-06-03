@@ -47,10 +47,16 @@ public class ValidateModelRunner implements RunnableWithProgress {
 	private Map<String, JSONObject> keyedElements;
 	private ValidationSuite suite;
 	private boolean recurse;
+	private int depth;
     
-    public ValidateModelRunner(Collection<Element> start, boolean recurse) {
+    public ValidateModelRunner(Collection<Element> start, boolean recurse, int depth) {
         this.start = start;
         this.recurse = recurse;
+        this.depth = depth;
+    }
+    
+    public ValidateModelRunner(Collection<Element> start, boolean recurse) {
+        this(start, recurse, 1);
     }
     
     public ValidateModelRunner(Collection<Element> start) {
@@ -68,10 +74,13 @@ public class ValidateModelRunner implements RunnableWithProgress {
     
     @Override
     public void run(ProgressStatus arg0) {
-        ModelValidator validator = new ModelValidator(start, null, true, null, false, recurse);
+        ModelValidator validator = new ModelValidator(start, null, true, null, false, recurse, depth);
         if (validator.checkProject(arg0)) {
             try {
-                validator.validate(recurse, arg0);
+                if (recurse) {
+                    depth = -1;
+                }
+                validator.validate(depth, arg0);
                 if (!arg0.isCancel())
                     validator.showWindow();
                 suite = validator.getSuite();
