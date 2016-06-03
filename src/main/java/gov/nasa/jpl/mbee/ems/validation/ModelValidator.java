@@ -160,6 +160,7 @@ public class ModelValidator {
     private Set<Element> elementSet;
     private boolean crippled;
     private boolean recurse;
+    private int depth = -2;
     
 	private Map<String, JSONObject> keyedElements;
         
@@ -172,7 +173,7 @@ public class ModelValidator {
 		return keyedElements;
 	}
 
-    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled, boolean recurse) {
+    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled, boolean recurse, int depth) {
         //result is from web, elementSet is from model
         this.starts = starts;
         suite.addValidationRule(nameDiff);
@@ -201,6 +202,11 @@ public class ModelValidator {
         this.elementSet = elementSet;
         this.crippled = crippled;
         this.recurse = recurse;
+        this.depth = depth;
+    }
+    
+    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled, boolean recurse) {
+        this(starts, result, checkExist, elementSet, crippled, recurse, -2);
     }
     
     public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
@@ -260,7 +266,12 @@ public class ModelValidator {
             if (start == Application.getInstance().getProject().getModel())
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             id = id.replace(".", "%2E");
-            final String url2 = url + "/elements/" + id + "?recurse=" + java.lang.Boolean.toString(recurse) + "&qualified=false";
+            final String url2;
+            if (depth > -1) {
+                url2 = url + "/elements/" + id + "?depth=" + java.lang.Integer.toString(depth) + "&qualified=false";
+            } else {
+                url2 = url + "/elements/" + id + "?recurse=" + java.lang.Boolean.toString(recurse) + "&qualified=false";
+            }
             GUILog log = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Getting elements from server...");
             
@@ -307,18 +318,22 @@ public class ModelValidator {
     }
     
     @SuppressWarnings("unchecked")
-    public void validate(boolean recurse, ProgressStatus ps) throws ServerException {
+    public void validate(int depth, ProgressStatus ps) throws ServerException {
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
         Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
         elementSet = new HashSet<Element>();
         for (Element start: starts) {
-            getAllMissing(start, elementSet, elementsKeyed, recurse);
+            getAllMissing(start, elementSet, elementsKeyed, recurse, depth);
         }
         validateModel(elementsKeyed, elementSet, ps);
         keyedElements = elementsKeyed;
         result.put("elementsKeyed", elementsKeyed);
+    }
+    
+    public void validate(boolean recurse, ProgressStatus ps) throws ServerException {
+        validate(-1, ps);
     }
     
     public static void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
@@ -450,7 +465,7 @@ public class ModelValidator {
         }
     }
     
-    private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed, boolean recurse) {
+    private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed, boolean recurse, int depth) {
         if (ProjectUtilities.isElementInAttachedProject(current))
             return;
         if (!ExportUtility.shouldAdd(current))
@@ -458,10 +473,20 @@ public class ModelValidator {
         if (!elementsKeyed.containsKey(current.getID()))
             if (!(current instanceof Model && ((Model)current).getName().equals("Data")))
                 missing.add(current);
-        if (recurse)
+        if (recurse) {
             for (Element e: current.getOwnedElement()) {
-                getAllMissing(e, missing, elementsKeyed, recurse);            
+                getAllMissing(e, missing, elementsKeyed, true);  
+            }
         }
+        else if (depth > 0) {
+            for (Element e: current.getOwnedElement()) {
+                getAllMissing(e, missing, elementsKeyed, false, depth-1);  
+            }
+        }
+    }
+    
+    private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed, boolean recurse) {
+        getAllMissing(current, missing, elementsKeyed, recurse, 0);
     }
     
     private void checkElement(Element e, JSONObject elementInfo) {
