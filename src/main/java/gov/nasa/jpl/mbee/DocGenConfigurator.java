@@ -44,6 +44,7 @@ import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateOldDocgen;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
+import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.actions.ems.ExportAllDocuments;
 import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
@@ -209,11 +210,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }*/
         }
         else {
+            ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
+            if (manager.getActionFor(EMSLoginAction.actionid) == null)
+                login.addAction(new EMSLoginAction());
         	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
-        	final MDAction mda = new MDAction(null, null, null, "null");
-        	mda.updateState();
-        	mda.setEnabled(false);
-    		modelLoad.addAction(mda);
+        	//final MDAction mda = new MDAction(null, null, null, "null");
+        	//mda.updateState();
+        	//mda.setEnabled(false);
+    		//modelLoad.addAction(mda);
         }
         ActionsStateUpdater.updateActionsState();
         
@@ -306,11 +310,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 }
             }
             else {
+                ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
+                if (manager.getActionFor(EMSLoginAction.actionid) == null)
+                    login.addAction(new EMSLoginAction());
             	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
-            	final MDAction mda = new MDAction(null, null, null, "null");
-            	mda.updateState();
-            	mda.setEnabled(false);
-        		modelLoad2.addAction(mda);
+            	//final MDAction mda = new MDAction(null, null, null, "null");
+            	//mda.updateState();
+            	//mda.setEnabled(false);
+        		//modelLoad2.addAction(mda);
             }
             ActionsStateUpdater.updateActionsState();
             
