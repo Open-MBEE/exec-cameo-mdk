@@ -54,9 +54,11 @@ import gov.nasa.jpl.ocl.OclEvaluator;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Frame;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.rmi.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2100,13 +2102,15 @@ public class Utils {
         return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement");
     }
 
-    // Ivan: Investigate get_constraintOfConstrainedElement for more accurate solution
     public static Constraint getViewConstraint(Element view) {
-        if (view == null)
-            return null;
-        for (Element e: view.getOwnedElement()) {
-            if (e instanceof Constraint && ((Constraint)e).getConstrainedElement().contains(view))
-                return (Constraint)e;
+        if (view != null) {
+            Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
+            for (Constraint constraint : constraints) {
+                if (constraint != null && constraint.getID().endsWith(("_vc"))) {
+                    return constraint;
+                }
+            }
+
         }
         return null;
     }
@@ -3627,7 +3631,7 @@ public class Utils {
         ex.printStackTrace();
     }
     
-    public static boolean jsonArraySetDiff(JSONArray a, JSONArray b) {
+    public static boolean isJSONArrayEqual(JSONArray a, JSONArray b) {
     	if (a != null && b != null) {
     		Set as = new HashSet();
     		Set bs = new HashSet();
@@ -3695,16 +3699,23 @@ public class Utils {
         if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
             return true;
         String user = TeamworkUtils.getLoggedUserName();
-        if (user == null) {
-            Utils.guilog("[ERROR] You must be logged into teamwork first.");
-            return false;
-        }
         ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(prj);
         try {
-            if (TeamworkUtils.getLastVersion(currentProj) == TeamworkService.getInstance(prj).getVersion(prj).getNumber())
+            int lastVersion = TeamworkUtils.getLastVersion(currentProj);
+            if (user == null || lastVersion < 0) {
+                Utils.guilog("[ERROR] You must be logged into Teamwork first.");
+                return false;
+            }
+            if (lastVersion == TeamworkService.getInstance(prj).getVersion(prj).getNumber())
                 return true;
+        } catch (IOException uhe) {
+            Utils.guilog("[ERROR] You must be logged into Teamwork first.");
+            uhe.printStackTrace();
+            return false;
         } catch (Exception ex) {
-            
+            Utils.guilog("[ERROR] Unknown exception occurred when trying to verify Teamwork state.");
+            ex.printStackTrace();
+            return false;
         }
         String[] buttons = {"Continue (May trigger update)", "Cancel"};
         Boolean reply = Utils.getUserYesNoAnswerWithButton("There's a new project version available on teamwork.\nIt's highly recommended that you update from teamwork first,\n"

@@ -1,59 +1,51 @@
 package gov.nasa.jpl.mbee.generator;
 
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.PresentationElement;
-import gov.nasa.jpl.mbee.viewedit.PresentationElement.PEType;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.JSONParser;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.viewedit.PresentationElement;
+import gov.nasa.jpl.mbee.viewedit.PresentationElement.PEType;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
+
+import java.util.*;
 
 public class ViewInstanceUtils {
-    private Classifier paraC = Utils.getOpaqueParaClassifier();
-    private Classifier tparaC = Utils.getParaClassifier();
-    private Classifier tableC = Utils.getOpaqueTableClassifier();
-    private Classifier listC = Utils.getOpaqueListClassifier();
-    private Classifier imageC = Utils.getOpaqueImageClassifier();
-    private Classifier sectionC = Utils.getOpaqueSectionClassifier();
-    private Classifier tsectionC = Utils.getSectionClassifier();
-    private Stereotype presentsS = Utils.getPresentsStereotype();
-    private Stereotype productS = Utils.getProductStereotype();
-    private Stereotype viewS = Utils.getViewClassStereotype();
-    private Property generatedFromView = Utils.getGeneratedFromViewProperty();
-    private Property generatedFromElement = Utils.getGeneratedFromElementProperty();
+    private Classifier paraC = Utils.getOpaqueParaClassifier(),
+            tparaC = Utils.getParaClassifier(),
+            tableC = Utils.getOpaqueTableClassifier(),
+            listC = Utils.getOpaqueListClassifier(),
+            imageC = Utils.getOpaqueImageClassifier(),
+            sectionC = Utils.getOpaqueSectionClassifier(),
+            tsectionC = Utils.getSectionClassifier();
+    private Stereotype presentsS = Utils.getPresentsStereotype(),
+            productS = Utils.getProductStereotype(),
+            viewS = Utils.getViewClassStereotype();
+    private Property generatedFromView = Utils.getGeneratedFromViewProperty(),
+            generatedFromElement = Utils.getGeneratedFromElementProperty();
     
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
 
+    public static Expression getViewOrSectionExpression(Element viewOrSection) {
+        if (viewOrSection instanceof InstanceSpecification) {
+            if (((InstanceSpecification)viewOrSection).getSpecification() instanceof Expression)
+                return (Expression)((InstanceSpecification)viewOrSection).getSpecification();
+        } else if (viewOrSection instanceof Class) {
+            Constraint c = Utils.getViewConstraint(viewOrSection);
+            if (c != null && c.getSpecification() instanceof Expression)
+                return (Expression)c.getSpecification();
+        }
+        return null;
+    }
+    
     public ViewInstanceInfo getCurrentInstances(Element viewOrSection, Element view) {
         List<InstanceSpecification> tables = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> lists = new ArrayList<InstanceSpecification>();
@@ -66,11 +58,10 @@ public class ViewInstanceUtils {
         List<InstanceSpecification> unused = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> opaque = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> extraManualRef = new ArrayList<InstanceSpecification>();
-        
-        Package viewInstancePackage = findViewInstancePackage(view);
+
         ViewInstanceInfo res = new ViewInstanceInfo(all, images, tables, lists, paras, sections, manuals, extraRef, extraManualRef, unused, opaque);
         Expression e = getViewOrSectionExpression(viewOrSection);
-        boolean isView = viewOrSection instanceof InstanceSpecification ? false : true;
+        boolean isView = !(viewOrSection instanceof InstanceSpecification);
         if (e == null) {
             return res;
         }
@@ -82,7 +73,7 @@ public class ViewInstanceUtils {
                 if (!is.getClassifier().isEmpty()) {
                     List<Classifier> iscs = is.getClassifier();
                     boolean viewinstance = false;
-                    if (iscs.contains(paraC) || iscs.contains(tableC) || iscs.contains(listC) || 
+                    if (iscs.contains(paraC) || iscs.contains(tableC) || iscs.contains(listC) ||
                             iscs.contains(imageC) || iscs.contains(sectionC)) {
                         for (Element el: is.getOwnedElement()) {
                             if (el instanceof Slot && ((Slot)el).getDefiningFeature().getName().equals("generatedFromView") &&
@@ -162,18 +153,6 @@ public class ViewInstanceUtils {
             }
         }
         return false;
-    }
-    
-    public static Expression getViewOrSectionExpression(Element viewOrSection) {
-        if (viewOrSection instanceof InstanceSpecification) {
-            if (((InstanceSpecification)viewOrSection).getSpecification() instanceof Expression)
-                return (Expression)((InstanceSpecification)viewOrSection).getSpecification();
-        } else if (viewOrSection instanceof Class) {
-            Constraint c = Utils.getViewConstraint(viewOrSection);
-            if (c != null && c.getSpecification() instanceof Expression)
-                return (Expression)c.getSpecification();
-        }
-        return null;
     }
     
     public Package findViewInstancePackage(Element view) {
@@ -275,6 +254,7 @@ public class ViewInstanceUtils {
             if (!pe.isViewDocHack()) {
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);
+                s.setOwningInstance(is);
                 s.setDefiningFeature(generatedFromView);
                 ElementValue ev = ef.createElementValueInstance();
                 ev.setElement(pe.getView());
@@ -282,6 +262,7 @@ public class ViewInstanceUtils {
                 if (pe.getType() == PEType.SECTION && pe.getLoopElement() != null) {
                     Slot ss = ef.createSlotInstance();
                     ss.setOwner(is);
+                    ss.setOwningInstance(is);
                     ss.setDefiningFeature(generatedFromElement);
                     ElementValue ev2 = ef.createElementValueInstance();
                     ev2.setElement(pe.getLoopElement());
@@ -291,7 +272,7 @@ public class ViewInstanceUtils {
         }
         JSONObject newspec  = pe.getNewspec();
         Classifier classifier = null;
-        String name = "<>";
+        String name;
         if (pe.isViewDocHack()) {
             newspec = new JSONObject();
             newspec.put("source", is.getID());
@@ -359,7 +340,7 @@ public class ViewInstanceUtils {
         }
         return res;
     }
-    
+
     public Constraint getOrCreateViewConstraint(Element view) {
         Constraint c = Utils.getViewConstraint(view);
         if (c != null)
@@ -371,24 +352,30 @@ public class ViewInstanceUtils {
         c.getConstrainedElement().add(view);
         return c;
     }
-    
-    public void updateOrCreateConstraint(Element view, List<PresentationElement> pes) {
+
+    public void updateOrCreateConstraintFromInstanceSpecifications(Element view, List<InstanceSpecification> instanceSpecifications) {
         Constraint c = getOrCreateViewConstraint(view);
-        ValueSpecification expression = c.getSpecification();
-        if (!(expression instanceof Expression))
-            expression = ef.createExpressionInstance();
+        Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : ef.createExpressionInstance();
         expression.setOwner(c);
-        List<InstanceValue> ivs = new ArrayList<InstanceValue>();
-        for (PresentationElement spe: pes) {
+        List<InstanceValue> ivs = new ArrayList<>(instanceSpecifications.size());
+        for (InstanceSpecification instanceSpecification : instanceSpecifications) {
             InstanceValue iv = ef.createInstanceValueInstance();
-            iv.setInstance(spe.getInstance());
+            iv.setInstance(instanceSpecification);
             ivs.add(iv);
         }
-        ((Expression)expression).getOperand().clear();
-        ((Expression)expression).getOperand().addAll(ivs);
+        expression.getOperand().clear();
+        expression.getOperand().addAll(ivs);
     }
     
-    public boolean needLockForEditConstraint(Element view, List<PresentationElement> pes) {
+    public void updateOrCreateConstraintFromPresentationElements(Element view, List<PresentationElement> presentationElements) {
+        List<InstanceSpecification> instanceSpecifications = new ArrayList<>(presentationElements.size());
+        for (PresentationElement presentationElement : presentationElements) {
+            instanceSpecifications.add(presentationElement.getInstance());
+        }
+        updateOrCreateConstraintFromInstanceSpecifications(view, instanceSpecifications);
+    }
+    
+    /*public boolean needLockForEditConstraint(Element view, List<PresentationElement> pes) {
         Constraint c = Utils.getViewConstraint(view);
         if (c == null)
             return false;
@@ -412,7 +399,7 @@ public class ViewInstanceUtils {
             }
         }
         return false;
-    }
+    }*/
     
     public Package getOrCreateUnusedInstancePackage() {
         Package rootPackage = Utils.getRootElement();
