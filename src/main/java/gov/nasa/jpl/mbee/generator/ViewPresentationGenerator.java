@@ -85,11 +85,16 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     }
 
     @Override
-    public void run(ProgressStatus ps) {
+    public void run(ProgressStatus progressStatus) {
+        progressStatus.init("Initializing", 6);
         // Ensure no existing session so we have full control of whether to close/cancel further sessions.
         if (SessionManager.getInstance().isSessionCreated()) {
             SessionManager.getInstance().closeSession();
         }
+
+        // STAGE 1: Calculating view structure
+        progressStatus.setDescription("Calculating view structure");
+        progressStatus.setCurrent(1);
 
         DocumentValidator dv = new DocumentValidator(start);
         dv.validateDocument();
@@ -125,6 +130,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             viewMap.put(view.getID(), viewMapping);
         }
 
+        // TODO Revisit when handling migration
         // Find and delete existing view constraints to prevent ID conflict
         // The idea is that deleting the constraint will allow the legacy instances to remain in the model for as
         // long as the user desires, but views instances can be regenerated. This way the minimum amount of locks are required.
@@ -166,11 +172,20 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
+        // Allowing cancellation right before potentially long server queries
+        if (handleCancel(progressStatus)) {
+            return;
+        }
+
         // Query existing server-side JSONs for views
         if (!viewIDs.isEmpty()) {
+            // STAGE 2: Downloading existing view instances
+            progressStatus.setDescription("Downloading existing view instances");
+            progressStatus.setCurrent(2);
+
             JSONObject viewResponse;
             try {
-                viewResponse = ModelValidator.getManyAlfescoElements(viewIDs, ps);
+                viewResponse = ModelValidator.getManyAlfescoElements(viewIDs, progressStatus);
             } catch (ServerException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -222,11 +237,16 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 List<JSONObject> instanceJSONObjects = new ArrayList<>();
                 List<JSONObject> slotJSONObjects = new ArrayList<>();
                 while (!instanceIDs.isEmpty()) {
+                    // Allow cancellation between every depths' server query.
+                    if (handleCancel(progressStatus)) {
+                        return;
+                    }
+
                     JSONObject response;
                     try {
                         List<String> elementIDs = new ArrayList<>(instanceIDs);
                         elementIDs.addAll(slotIDs);
-                        response = ModelValidator.getManyAlfescoElements(elementIDs, ps);
+                        response = ModelValidator.getManyAlfescoElements(elementIDs, progressStatus);
                     } catch (ServerException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -261,11 +281,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                 }
 
+                // STAGE 3: Importing existing view instances
+                progressStatus.setDescription("Importing existing view instances");
+                progressStatus.setCurrent(3);
+
                 // importing instances in reverse order so that deepest level instances (sections and such) are loaded first
                 ListIterator<JSONObject> instanceJSONsIterator = new ArrayList<>(instanceJSONObjects).listIterator(instanceJSONObjects.size());
                 while (instanceJSONsIterator.hasPrevious()) {
-                    JSONObject elementJSONObject = instanceJSONsIterator.previous();
+                    if (handleCancel(progressStatus)) {
+                        return;
+                    }
 
+                    JSONObject elementJSONObject = instanceJSONsIterator.previous();
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
                         Element element = ImportUtility.createElement(elementJSONObject, false, true);
@@ -284,6 +311,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // The Alfresco service is a nice guy and returns Slots at the end so that when it's loaded in order the slots don't throw errors for missing their instances.
                 // However we're being fancy and loading them backwards so we had to separate them ahead of time and then load the slots after.
                 for (JSONObject slotJSONObject : slotJSONObjects) {
+                    if (handleCancel(progressStatus)) {
+                        return;
+                    }
+
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
                         Element element = ImportUtility.createElement(slotJSONObject, false, false);
@@ -302,6 +333,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // Build view constraints client-side as actual Constraint, Expression, InstanceValue(s), etc.
                 // Note: Doing this one first since what it does is smaller in scope than ImportUtility. Potential order-dependent edge cases require further evaluation.
                 for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
+                    if (handleCancel(progressStatus)) {
+                        return;
+                    }
+
                     List<String> instanceSpecificationIDs;
                     if (viewMap.containsKey(view.getID()) && (instanceSpecificationIDs = viewMap.get(view.getID()).getInstanceIDs()) != null) {
                         final List<InstanceSpecification> instanceSpecifications = new ArrayList<>(instanceSpecificationIDs.size());
@@ -319,6 +354,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // Instances need to be done in reverse order to load the lowest level instances first (sections)
                 ListIterator<Pair<JSONObject, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
                 while (instanceSpecificationMapIterator.hasPrevious()) {
+                    if (handleCancel(progressStatus)) {
+                        return;
+                    }
+
                     Pair<JSONObject, InstanceSpecification> pair = instanceSpecificationMapIterator.previous();
                     try {
                         ImportUtility.createElement(pair.getFirst(), true, true);
@@ -327,10 +366,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;*/
-                        Application.getInstance().getGUILog().log("Failed to import instance specification " + pair.getFirst().get("sysmlid") + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("Failed to update relations for instance specification " + pair.getFirst().get("sysmlid") + ": " + e.getMessage());
                     }
                 }
                 for (Pair<JSONObject, Slot> pair : slotMap.values()) {
+                    if (handleCancel(progressStatus)) {
+                        return;
+                    }
+
                     try {
                         ImportUtility.createElement(pair.getFirst(), true, false);
                     } catch (Exception e) {
@@ -338,11 +381,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;*/
-                        Application.getInstance().getGUILog().log("Failed to import slot " + pair.getFirst().get("sysmlid") + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("Failed to update relations for slot " + pair.getFirst().get("sysmlid") + ": " + e.getMessage());
                     }
                 }
             }
         }
+
+        // STAGE 4: Generating new view instances
+        progressStatus.setDescription("Generating new view instances");
+        progressStatus.setCurrent(4);
 
         DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
         book.accept(dbAlfrescoVisitor);
@@ -378,6 +425,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 handlePes(view2pe.get(view), null);
                 instanceUtils.updateOrCreateConstraintFromPresentationElements(view, view2pe.get(view));
                 handleUnused(view2unused.get(view), unused);
+            }
+
+            if (handleCancel(progressStatus)) {
+                return;
             }
 
             // commit to MMS
@@ -471,7 +522,16 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
 
+            // Last chance to cancel before sending generated views to the server. Point of no return.
+            if (handleCancel(progressStatus)) {
+                return;
+            }
+
             if (!elementsJSONArray.isEmpty()) {
+                // STAGE 5: Queueing upload of generated view instances
+                progressStatus.setDescription("Queueing upload of generated view instances");
+                progressStatus.setCurrent(5);
+
                 JSONObject body = new JSONObject();
                 body.put("elements", elementsJSONArray);
                 body.put("source", "magicdraw");
@@ -481,10 +541,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), body.toJSONString(), "POST", true, elementsJSONArray.size(), "Sync Changes"));
             }
 
+            // STAGE 6: Cleaning up
+            progressStatus.setDescription("Cleaning up");
+            progressStatus.setCurrent(6);
+
             // Cleaning up after myself. While cancelSession *should* undo all elements created, there are certain edge
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
-
             List<Element> elementsToDelete = new ArrayList<>(slotMap.size() + instanceSpecificationMap.size() + views.size());
             for (Pair<JSONObject, Slot> pair : slotMap.values()) {
                 if (pair.getSecond() != null) {
@@ -503,7 +566,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
             for (Element element : elementsToDelete) {
-                if ()
                     try {
                         ModelElementsManager.getInstance().removeElement(element);
                     } catch (ReadOnlyElementException ignored) {
@@ -547,6 +609,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 organizer.moveViewInstance(pe.getInstance(), p);
         }
         */
+    }
+
+    private boolean handleCancel(ProgressStatus progressStatus) {
+        if (progressStatus.isCancel()) {
+            failure = true;
+            if (SessionManager.getInstance().isSessionCreated()) {
+                SessionManager.getInstance().cancelSession();
+            }
+            Application.getInstance().getGUILog().log("View generation cancelled.");
+            return true;
+        }
+        return false;
     }
 
     public List<ValidationSuite> getValidations() {
