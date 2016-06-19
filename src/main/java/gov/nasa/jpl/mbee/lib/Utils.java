@@ -2061,6 +2061,10 @@ public class Utils {
     public static Stereotype get18ExposeStereotype() {
         return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Expose");
     }
+
+    public static Stereotype getElementGroupStereotype() {
+        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::ElementGroup");
+    }
     
     public static Classifier getOpaqueParaClassifier() {
         return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueParagraph");

@@ -96,7 +96,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		category.addAction(createInstanceMenuAction);
 		category.addAction(instance2BSTAction);
 		category.addAction(aspectAction);
-		category.addAction(new TestAction());
+		//category.addAction(new TestAction());
  	 
 	 	category.getActions().clear();
   		category.setUseActionForDisable(true);

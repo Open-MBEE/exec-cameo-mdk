@@ -588,7 +588,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             Utils.guilog("[INFO] Don't forget to save or commit to teamwork and unlock!");
     }
     
-    public boolean getFailure() {
+    public boolean isFailure() {
         return failure;
     }
     

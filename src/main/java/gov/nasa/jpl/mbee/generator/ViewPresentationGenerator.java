@@ -566,10 +566,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
             for (Element element : elementsToDelete) {
-                    try {
-                        ModelElementsManager.getInstance().removeElement(element);
-                    } catch (ReadOnlyElementException ignored) {
-                    }
+                try {
+                    ModelElementsManager.getInstance().removeElement(element);
+                } catch (ReadOnlyElementException ignored) {
+                }
             }
 
         } catch (Exception e) {
@@ -627,7 +627,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         return vss;
     }
 
-    public boolean getFailure() {
+    public boolean isFailure() {
         return failure;
     }
 
