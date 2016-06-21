@@ -3665,8 +3665,15 @@ public class Utils {
                     TeamworkUtils.lockElement(project, owner, recursive);
                 else
                     TeamworkUtils.lockElement(project, owner.getOwner(), recursive);
-            } else
+            } else if (e instanceof InstanceSpecification && recursive) {
+                Element owner = e.getOwner();
+                if (owner instanceof Package || owner instanceof Classifier)
+                    TeamworkUtils.lockElement(project, owner, true);
+                else
+                    TeamworkUtils.lockElement(project, e, true);
+            } else {
                 TeamworkUtils.lockElement(project, e, recursive);
+            }
         } catch (Exception ex) {
             log.info("caught exception when locking:");
             ex.printStackTrace();
