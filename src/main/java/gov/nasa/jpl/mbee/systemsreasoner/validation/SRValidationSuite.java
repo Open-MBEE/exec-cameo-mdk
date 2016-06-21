@@ -161,7 +161,9 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 								}
 							}
 							if (!redefinedInContext) {
-								final ValidationRuleViolation v = new ValidationRuleViolation(classifier,
+                                // Composite tag added, so user can make an educated decision on whether to specialize or not. Non-composite properties are typically not specialized in the context of the Block Specific Type,
+                                // but there could be a number of valid reasons to do so.
+								final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (ne instanceof Property && ((Property) ne).isComposite() ? "[COMPOSITE] " : "") +
 										(redefEl instanceof TypedElement && ((TypedElement) redefEl).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName());
 								for (final Property p : classifier.getAttribute()) {
 									if (p.getName().equals(redefEl.getName()) && !p.hasRedefinedElement()) {
@@ -194,7 +196,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 								if ((redefingTypdEl.getType() == null && redefableTypdEl.getType() != null) || (redefingTypdEl.getType() != null && redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier
 										&& !doesEventuallyGeneralizeTo((Classifier) redefingTypdEl.getType(), (Classifier) redefableTypdEl.getType()))) {
 									if (redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier && ((Classifier) redefingTypdEl.getType()).getGeneral().contains(redefableTypdEl.getType())) {
-										iterator.add(((Classifier) redefingTypdEl.getType()));
+										iterator.add(redefingTypdEl.getType());
 										iterator.previous();
 									} else {
 										final ValidationRuleViolation v = new ValidationRuleViolation(redefingTypdEl,

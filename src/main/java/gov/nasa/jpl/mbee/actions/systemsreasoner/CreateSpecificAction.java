@@ -138,8 +138,7 @@ public class CreateSpecificAction extends SRAction {
                 if (prop.getAssociation() != null && !copyList.contains(prop.getAssociation())) {
                     copyList.add(prop.getAssociation());
                 }
-                //if (prop.isComposite()) { // only composition relations. Why??
-                if (prop.getType() != null) {
+                if (prop.isComposite() && prop.getType() != null) {
                     Type targ = prop.getType();
                     if (targ instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class) {
                         if (!recursionList.contains(targ)) {
@@ -149,7 +148,6 @@ public class CreateSpecificAction extends SRAction {
                         }
                     }
                 }
-                //}
             } else if (feat instanceof Namespace) {
                 copyList.add(feat);
                 for (NamedElement ne : ((Namespace) feat).getOwnedMember()) {
