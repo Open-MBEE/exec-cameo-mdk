@@ -47,6 +47,7 @@ import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
 public class MMSConfigurator implements AMConfigurator {
 
@@ -58,7 +59,7 @@ public class MMSConfigurator implements AMConfigurator {
 
     @Override
     public void configure(ActionsManager manager) {
-        NMAction category = (ActionsCategory)manager.getActionFor("MMSMAIN");
+        NMAction category = manager.getActionFor("MMSMAIN");
         if (category == null) {
             category = new MDActionsCategory("MMSMAIN", "MMS");
             ((ActionsCategory)category).setNested(true);
@@ -70,8 +71,11 @@ public class MMSConfigurator implements AMConfigurator {
             category.addAction(logout);
             category.addAction(login);
             category.addAction(new ValidateMountStructureAction());
-            category.addAction(new StartAutoSyncAction());
-            category.addAction(new CloseAutoSyncAction());
+            MDKOptionsGroup optionsGroup = MDKOptionsGroup.getMDKOptions();
+            if (optionsGroup != null && optionsGroup.isMMSLiveSync()) {
+                category.addAction(new StartAutoSyncAction());
+                category.addAction(new CloseAutoSyncAction());
+            }
             
             MDActionsCategory sync = new MDActionsCategory("MMSMAINSYNC", "Update and Commit");
             sync.setNested(true);
