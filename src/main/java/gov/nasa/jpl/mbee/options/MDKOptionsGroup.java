@@ -13,9 +13,11 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     public static final String ID = "options.mdk";
     public static final String GROUP = "MDK";
     
-    public static final String LOG_JSON_ID = "LOG_JSON";
-    public static final String SAVE_CHANGES_ID = "SAVE_LOCAL_CHANGES_ON_PROJECT_SAVE";
-    public static final String LISTENER_ID = "ENABLE_COMMIT_LISTENER";
+    public static final String LOG_JSON_ID = "LOG_JSON",
+            SAVE_CHANGES_ID = "SAVE_LOCAL_CHANGES_ON_PROJECT_SAVE",
+            LISTENER_ID = "ENABLE_COMMIT_LISTENER",
+            MMS_LIVE_SYNC = "SHOW_MMS_LIVE_SYNC";
+
     
     public MDKOptionsGroup() {
         super(ID);
@@ -61,6 +63,18 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         property.setGroup(GROUP);
         addProperty(property);
     }
+
+    public void setMMSLiveSync(boolean value) {
+        BooleanProperty property = new BooleanProperty(MMS_LIVE_SYNC, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
+        addProperty(property);
+    }
+
+    public boolean isMMSLiveSync() {
+        Property p = getProperty(MMS_LIVE_SYNC);
+        return (Boolean)p.getValue();
+    }
     
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = new PropertyResourceProvider() {
         @Override
@@ -74,6 +88,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setLogJson(true);
         setSaveChanges(true);
         setCommitListener(true);
+        setMMSLiveSync(true);
     }
     
     private static final String MDK_OPTIONS_NAME = "MDK";
