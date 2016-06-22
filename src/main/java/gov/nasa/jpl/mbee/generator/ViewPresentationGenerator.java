@@ -548,6 +548,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), body.toJSONString(), "POST", true, elementsJSONArray.size(), "Sync Changes"));
             }
+            else {
+                Application.getInstance().getGUILog().log("No changes required to generate views.");
+            }
 
             // STAGE 6: Cleaning up
             progressStatus.setDescription("Cleaning up");
