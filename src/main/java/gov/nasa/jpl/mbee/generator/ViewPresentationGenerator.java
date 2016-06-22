@@ -255,6 +255,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         return;
                     }
                     instanceIDs.clear();
+                    slotIDs.clear();
                     if (response != null && response.containsKey("elements") && response.get("elements") instanceof JSONArray) {
                         for (Object instanceObject : (JSONArray) response.get("elements")) {
                             JSONObject elementJSONObject = null, specializationJSONObject = null, instanceSpecificationJSONObject;
@@ -269,7 +270,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                     if (instanceOperandObject instanceof JSONObject) {
                                         JSONObject instanceOperandJSONObject = (JSONObject) instanceOperandObject;
                                         if (instanceOperandJSONObject.containsKey("instance") && instanceOperandJSONObject.get("instance") instanceof String) {
-                                            instanceIDs.add((String) instanceOperandJSONObject.get("instance"));
+                                            String instanceID = (String) instanceOperandJSONObject.get("instance");
+                                            if (generatedFromViewProperty != null) {
+                                                slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
+                                            }
+                                            if (generatedFromElementProperty != null) {
+                                                slotIDs.add(instanceID + "-slot-" + generatedFromElementProperty.getID());
+                                            }
+                                            instanceIDs.add(instanceID);
                                         }
                                     }
                                 }
