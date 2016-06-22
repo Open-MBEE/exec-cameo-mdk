@@ -55,12 +55,8 @@ public class ValidateModelRunner implements RunnableWithProgress {
         this.depth = depth;
     }
     
-    public ValidateModelRunner(Collection<Element> start, boolean recurse) {
-        this(start, recurse, 1);
-    }
-    
     public ValidateModelRunner(Collection<Element> start) {
-        this(start, true);
+        this(start, true, 0);
     }
     
 	public Map<String, JSONObject> getKeyed()
@@ -77,10 +73,7 @@ public class ValidateModelRunner implements RunnableWithProgress {
         ModelValidator validator = new ModelValidator(start, null, true, null, false, recurse, depth);
         if (validator.checkProject(arg0)) {
             try {
-                if (recurse) {
-                    depth = -1;
-                }
-                validator.validate(depth, arg0);
+                validator.validate(true, arg0);
                 if (!arg0.isCancel())
                     validator.showWindow();
                 suite = validator.getSuite();

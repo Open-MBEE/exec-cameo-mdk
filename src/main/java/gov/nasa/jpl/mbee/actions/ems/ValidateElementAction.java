@@ -62,6 +62,6 @@ public class ValidateElementAction extends MDAction {
         if (!ExportUtility.checkBaseline()) {    
             return;
         }
-        ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start, false), "Validating Element", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start, false, 1), "Validating Element", true, 0);
     }
 }

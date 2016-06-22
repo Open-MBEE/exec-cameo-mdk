@@ -205,12 +205,8 @@ public class ModelValidator {
         this.depth = depth;
     }
     
-    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled, boolean recurse) {
-        this(starts, result, checkExist, elementSet, crippled, recurse, -2);
-    }
-    
     public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
-        this(starts, result, checkExist, elementSet, crippled, true);
+        this(starts, result, checkExist, elementSet, crippled, false, -1);
     }
     
     public boolean checkProject(ProgressStatus ps) {
@@ -267,7 +263,7 @@ public class ModelValidator {
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             id = id.replace(".", "%2E");
             final String url2;
-            if (depth > -1) {
+            if (depth > 0) {
                 url2 = url + "/elements/" + id + "?depth=" + java.lang.Integer.toString(depth) + "&qualified=false";
             } else {
                 url2 = url + "/elements/" + id + "?recurse=" + java.lang.Boolean.toString(recurse) + "&qualified=false";
@@ -318,22 +314,22 @@ public class ModelValidator {
     }
     
     @SuppressWarnings("unchecked")
-    public void validate(int depth, ProgressStatus ps) throws ServerException {
+    public void validate(boolean fillContainment, ProgressStatus ps) throws ServerException {
         JSONArray elements = (JSONArray)result.get("elements");
         if (elements == null)
             return;
         Map<String, JSONObject> elementsKeyed = new HashMap<String, JSONObject>();
-        elementSet = new HashSet<Element>();
-        for (Element start: starts) {
-            getAllMissing(start, elementSet, elementsKeyed, recurse, depth);
+        if (fillContainment) {
+            elementSet = new HashSet<Element>();
+            for (Element start: starts) {
+                getAllMissing(start, elementSet, elementsKeyed, recurse, depth);
+            }
+            validateModel(elementsKeyed, elementSet, ps);
+        } else {
+            validateModel(elementsKeyed, elementSet, ps);
         }
-        validateModel(elementsKeyed, elementSet, ps);
         keyedElements = elementsKeyed;
         result.put("elementsKeyed", elementsKeyed);
-    }
-    
-    public void validate(boolean recurse, ProgressStatus ps) throws ServerException {
-        validate(-1, ps);
     }
     
     public static void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
@@ -475,7 +471,7 @@ public class ModelValidator {
                 missing.add(current);
         if (recurse) {
             for (Element e: current.getOwnedElement()) {
-                getAllMissing(e, missing, elementsKeyed, true);  
+                getAllMissing(e, missing, elementsKeyed, true, 0);  
             }
         }
         else if (depth > 0) {
@@ -483,10 +479,6 @@ public class ModelValidator {
                 getAllMissing(e, missing, elementsKeyed, false, depth-1);  
             }
         }
-    }
-    
-    private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed, boolean recurse) {
-        getAllMissing(current, missing, elementsKeyed, recurse, 0);
     }
     
     private void checkElement(Element e, JSONObject elementInfo) {
