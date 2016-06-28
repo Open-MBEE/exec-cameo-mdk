@@ -62,7 +62,7 @@ lazy val genResourceDescriptor = TaskKey[File]("gen-resource-descriptor", "gener
 lazy val zipMdk = TaskKey[File]("zip-mdk", "zip up mdk plugin")
 
 // lib_patches package
-val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp5_lib_patches" % "1.14"
+val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_sp5_lib_patches" % "1.11"
 val lib_patches_packageA = Artifact(lib_patches_packageID.name, "zip", "zip")
 val lib_patches_package_zipID = lib_patches_packageID.artifacts(lib_patches_packageA)
 
