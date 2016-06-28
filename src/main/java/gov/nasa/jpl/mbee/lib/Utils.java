@@ -3651,6 +3651,9 @@ public class Utils {
         if (!isFromTeamwork) {
             return false;
         }
+        String user = TeamworkUtils.getLoggedUserName();
+        if (user == null) 
+            return false;
         AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
         if (listener != null)
             listener.disable(); 
