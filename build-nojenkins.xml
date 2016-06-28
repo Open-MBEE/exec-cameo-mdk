@@ -58,7 +58,9 @@
     <fileset dir="${md}/plugins/com.nomagic.magicdraw.diagramtable" includes="**/*.jar">
          
         </fileset>
-
+  	<fileset dir="${md}/plugins/com.nomagic.magicdraw.merge" includes="**/*.jar">
+  	      
+  	    </fileset>
     <fileset dir="lib" includes="**/*.jar">
        
     </fileset>
