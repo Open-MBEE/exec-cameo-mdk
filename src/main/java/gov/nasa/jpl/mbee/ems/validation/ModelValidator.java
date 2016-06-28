@@ -206,7 +206,7 @@ public class ModelValidator {
     }
     
     public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
-        this(starts, result, checkExist, elementSet, crippled, false, -1);
+        this(starts, result, checkExist, elementSet, crippled, true, 0);
     }
     
     public boolean checkProject(ProgressStatus ps) {
