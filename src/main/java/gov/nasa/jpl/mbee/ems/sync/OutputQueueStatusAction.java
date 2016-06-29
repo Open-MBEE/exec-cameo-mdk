@@ -89,7 +89,14 @@ public class OutputQueueStatusAction extends SRAction {
 			this.setLocationRelativeTo(Application.getInstance().getMainFrame());
 			
 			//tableModel = new OutputQueueTableModel();
-			table = new JTable(data, columns);
+			table = new JTable(data, columns) {
+			    @Override
+			    public boolean isCellEditable(int row, int column) {
+			        if (column == 5)
+			            return true;
+			        return false;
+			    }
+			};
 			table.setFillsViewportHeight(true);
 			
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -108,7 +115,7 @@ public class OutputQueueStatusAction extends SRAction {
 			
 			TableButtonColumn buttonEditor = new TableButtonColumn(table);
 			table.getColumnModel().getColumn(5).setCellRenderer(buttonEditor);
-			table.getColumnModel().getColumn(5).setCellEditor(buttonEditor);
+			//table.getColumnModel().getColumn(5).setCellEditor(buttonEditor);
 			
 			
 			this.setContentPane(panel);

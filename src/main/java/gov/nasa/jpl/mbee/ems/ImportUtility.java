@@ -53,6 +53,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.StructuralFeature;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
@@ -174,6 +175,18 @@ public class ImportUtility {
                     if (newE == null) {
                         Slot newSlot = ef.createSlotInstance();
                         newE = newSlot;
+                        if ( sysmlID.contains("-slot-")){
+                            Project prj = Application.getInstance().getProject();
+                            String[] ids = sysmlID.split("-slot-");
+                            if (ids.length == 2) {
+                                Element definingFeature = (Element) prj.getElementByID(ids[1]);
+                                if (definingFeature instanceof StructuralFeature)
+                                    newSlot.setDefiningFeature((StructuralFeature)definingFeature);
+                                else
+                                    throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                            } else
+                                throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                        }
                     }
                     if (specialization.containsKey("value"))
                         setSlotValues((Slot)newE, vals);
@@ -195,7 +208,8 @@ public class ImportUtility {
                     Dependency newDependency = ef.createDependencyInstance();
                     newE = newDependency;
                 }
-                setRelationshipEnds((Dependency)newE, specialization);
+                if (updateRelations)
+                    setRelationshipEnds((Dependency)newE, specialization);
                 if (elementType.equalsIgnoreCase("Characterizes")) {
                     Stereotype character = Utils.getCharacterizesStereotype();
                     StereotypesHelper.addStereotype((Dependency)newE, character);
@@ -208,7 +222,8 @@ public class ImportUtility {
                     Generalization newGeneralization = ef.createGeneralizationInstance();
                     newE = newGeneralization;
                 }
-                setRelationshipEnds((Generalization)newE, specialization);
+                if (updateRelations)
+                    setRelationshipEnds((Generalization)newE, specialization);
                 if (elementType.equalsIgnoreCase("Conform")) {
                     Stereotype conform = Utils.getSysML14ConformsStereotype();
                     StereotypesHelper.addStereotype((Generalization)newE, conform);
@@ -240,20 +255,15 @@ public class ImportUtility {
                     Association ac = ef.createAssociationInstance();
                     newE = ac;
                 }
-                try {
+                if (updateRelations)
                     setAssociation((Association)newE, specialization);
-                } catch (Exception ex) {
-                    if (newE instanceof AssociationClass && updateRelations) {
-                        newE.dispose();
-                        return null;
-                    }
-                }
             } else if (elementType.equalsIgnoreCase("Connector")) { 
                 if (newE == null) {
                     Connector conn = ef.createConnectorInstance();
                     newE = conn;
                 }
-                setConnectorEnds((Connector)newE, specialization);
+                if (updateRelations)
+                    setConnectorEnds((Connector)newE, specialization);
             } else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
                 if (newE == null) {
                     InstanceSpecification is = ef.createInstanceSpecificationInstance();
@@ -273,6 +283,10 @@ public class ImportUtility {
             setOwnedAttribute(newE, ob);
             newE.setID(sysmlID);
         } catch (ImportException ex) {
+            if (Utils.modelInconsistency(newE)  && updateRelations) {
+                newE.dispose();
+                throw ex;
+            }
             setName(newE, ob);
             if (!(newE.getOwner() != null && ob.get("owner") instanceof String && 
                     ((String)ob.get("owner")).contains("holding_bin")))
@@ -428,7 +442,7 @@ public class ImportUtility {
             JSONArray classifier = (JSONArray)specialization.get("classifier");
             if (classifier == null || classifier.isEmpty()) {
                 log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
-                return;
+                throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
             }
             List<Classifier> newClassifiers = new ArrayList<Classifier>();
             for (Object id: classifier) {
@@ -436,15 +450,17 @@ public class ImportUtility {
                 if (e instanceof Classifier) {
                     newClassifiers.add((Classifier)e);
                 } else {
-                    throw new ImportException(is, specialization, (String)id + " is not a classifier");
+                    //throw new ImportException(is, specialization, (String)id + " is not a classifier");
                 }
             }
+            if (newClassifiers.isEmpty())
+                throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
             is.getClassifier().clear();
             is.getClassifier().addAll(newClassifiers);
         }
     }
     
-    public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) {
+    public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) throws ReferenceException {
         String sourceId = (String) specialization.get("source");
         String targetId = (String) specialization.get("target");
         Element source = ExportUtility.getElementFromID(sourceId);
@@ -454,6 +470,7 @@ public class ImportUtility {
             ModelHelper.setClientElement(dr, source);
         } else {
             log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
+            throw (new ReferenceException(dr, specialization, "Directed relationship has no source or target"));
         }
     }
     
@@ -564,7 +581,7 @@ public class ImportUtility {
         }
     }
     
-    public static void setConnectorEnds(Connector c, JSONObject spec) {
+    public static void setConnectorEnds(Connector c, JSONObject spec) throws ReferenceException{
         JSONArray webSourcePath = (JSONArray)spec.get("sourcePath");
         JSONArray webTargetPath = (JSONArray)spec.get("targetPath");
         String webSource = null;
@@ -580,6 +597,7 @@ public class ImportUtility {
             c.getEnd().get(1).setRole((ConnectableElement)webTargetE);
         } else {
             log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
+            throw (new ReferenceException(c, spec, "Connector doesn't have both connectable roles."));
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
         if (webSourcePath != null && !webSourcePath.isEmpty()) {
@@ -596,7 +614,7 @@ public class ImportUtility {
             c.setType((Association)asso);
     }
     
-    public static void setAssociation(Association a, JSONObject spec) throws ImportException {
+    public static void setAssociation(Association a, JSONObject spec) throws ReferenceException {
         String webSourceId = (String)spec.get("source");
         String webTargetId = (String)spec.get("target");
         Element webSource = ExportUtility.getElementFromID(webSourceId);
@@ -609,7 +627,7 @@ public class ImportUtility {
         int i = 0;
         if (webSource == null || webTarget == null) {
             log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
-            throw new ImportException(a, spec, "Association missing ends");
+            throw new ReferenceException(a, spec, "Association missing ends");
         }
         for (Property end: a.getMemberEnd()) {
             if (end != webSource && end != webTarget)

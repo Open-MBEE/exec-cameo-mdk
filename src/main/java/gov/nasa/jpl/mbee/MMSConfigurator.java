@@ -28,24 +28,16 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.ems.CloseAutoSyncAction;
-import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
-import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
-import gov.nasa.jpl.mbee.actions.ems.MigrationCategory;
-import gov.nasa.jpl.mbee.actions.ems.SendProjectVersionAction;
-import gov.nasa.jpl.mbee.actions.ems.StartAutoSyncAction;
-import gov.nasa.jpl.mbee.actions.ems.UpdateAllDocs;
-import gov.nasa.jpl.mbee.actions.ems.UpdateFromJMS;
-import gov.nasa.jpl.mbee.actions.ems.UpdateFromJMSAndCommitWithDelete;
-import gov.nasa.jpl.mbee.actions.ems.UpdateWorkspacesAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateMountStructureAction;
+import gov.nasa.jpl.mbee.actions.ems.*;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 
 import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
 public class MMSConfigurator implements AMConfigurator {
 
@@ -57,7 +49,7 @@ public class MMSConfigurator implements AMConfigurator {
 
     @Override
     public void configure(ActionsManager manager) {
-        NMAction category = (ActionsCategory)manager.getActionFor("MMSMAIN");
+        NMAction category = manager.getActionFor("MMSMAIN");
         if (category == null) {
             category = new MDActionsCategory("MMSMAIN", "MMS");
             ((ActionsCategory)category).setNested(true);
@@ -68,9 +60,16 @@ public class MMSConfigurator implements AMConfigurator {
             logout.setLoginAction(login);
             category.addAction(logout);
             category.addAction(login);
-            category.addAction(new ValidateMountStructureAction());
-            category.addAction(new StartAutoSyncAction());
-            category.addAction(new CloseAutoSyncAction());
+            MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
+            validateCategory.setNested(true);
+            category.addAction(validateCategory);
+            validateCategory.addAction(new ValidateModulesAction());
+            validateCategory.addAction(new ValidateBranchesAction());
+            MDKOptionsGroup optionsGroup = MDKOptionsGroup.getMDKOptions();
+            if (optionsGroup != null && optionsGroup.isMMSLiveSync()) {
+                category.addAction(new StartAutoSyncAction());
+                category.addAction(new CloseAutoSyncAction());
+            }
             
             MDActionsCategory sync = new MDActionsCategory("MMSMAINSYNC", "Update and Commit");
             sync.setNested(true);
@@ -86,5 +85,6 @@ public class MMSConfigurator implements AMConfigurator {
                 category.addAction(new UpdateWorkspacesAction());
             }
         }
+        ActionsStateUpdater.updateActionsState();
     }
 }

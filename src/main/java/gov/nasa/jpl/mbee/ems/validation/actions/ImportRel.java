@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ReferenceException;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -43,6 +44,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class ImportRel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -71,17 +73,33 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
             Element e = (Element)anno.getTarget();
+            String name = e.get_representationText();
+            if (e instanceof NamedElement)
+                name = ((NamedElement)e).getQualifiedName();
             if (!e.isEditable()) {
-                Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
+                Utils.guilog("[ERROR] " + name + " isn't editable");
                 return false;
             }
             JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
             JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-            ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
+            try {
+                ImportUtility.setRelationshipEnds((DirectedRelationship)e, specialization);
+            } catch (ReferenceException ex) {
+                Utils.guilog("[ERROR] " + name + " cannot be imported because it would create a model inconsistency due to one or both ends missing.");
+                return false;
+            }
         } else {
+            String name = element.get_representationText();
+            if (element instanceof NamedElement)
+                name = ((NamedElement)element).getQualifiedName();
             JSONObject tmpObj = ((Map<String, JSONObject>)result.get("elementsKeyed")).get(element.getID());
             JSONObject specialization = (JSONObject)tmpObj.get("specialization");
-            ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
+            try {
+                ImportUtility.setRelationshipEnds((DirectedRelationship)element, specialization);
+            } catch (ReferenceException ex) {
+                Utils.guilog("[ERROR] " + name + " cannot be imported because it would create a model inconsistency due to one or both roles missing.");
+                return false;
+            }
         }
         return true;
     }

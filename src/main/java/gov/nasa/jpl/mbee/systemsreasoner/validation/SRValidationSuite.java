@@ -118,7 +118,6 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 												} else {
 													v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
 													associationInheritanceRule.addViolation(v);
-													System.out.println("Yes");
 												}
 											}
 										} else if (partType instanceof Classifier) {
@@ -139,14 +138,14 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 					checkForAspects(classifier, general);
 				}
 
-				for (final NamedElement ne : classifier.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?  
+				for (final NamedElement ne : classifier.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
 					if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
 						final RedefinableElement redefEl = (RedefinableElement) ne;
 						RedefinableElement redefingEl = null;
 
 						for (Element p : classifier.getOwnedElement()) {
 							if (p instanceof RedefinableElement) {
-								if (doesEventuallyRedefine((RedefinableElement) p, (RedefinableElement) redefEl)) {
+								if (doesEventuallyRedefine((RedefinableElement) p, redefEl)) {
 									// if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
 									redefingEl = (RedefinableElement) p;
 									break;
@@ -162,7 +161,9 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 								}
 							}
 							if (!redefinedInContext) {
-								final ValidationRuleViolation v = new ValidationRuleViolation(classifier,
+                                // Composite tag added, so user can make an educated decision on whether to specialize or not. Non-composite properties are typically not specialized in the context of the Block Specific Type,
+                                // but there could be a number of valid reasons to do so.
+								final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (ne instanceof Property && ((Property) ne).isComposite() ? "[COMPOSITE] " : "") +
 										(redefEl instanceof TypedElement && ((TypedElement) redefEl).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName());
 								for (final Property p : classifier.getAttribute()) {
 									if (p.getName().equals(redefEl.getName()) && !p.hasRedefinedElement()) {
@@ -170,13 +171,13 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 									}
 								}
 								if (ne instanceof Property) {
-									if (!((Property) ne).isComposite()) {
+									// why was this a requirement? One should be able to redefine any property regardless of aggregation, by my understanding.
+									//if (!((Property) ne).isComposite()) {
 										v.addAction(new RedefineAttributeAction(classifier, redefEl));
-									}
-									if (redefEl instanceof TypedElement && ((TypedElement) redefEl).getType() != null) {
+									if (redefEl instanceof TypedElement) { // && ((TypedElement) redefEl).getType() != null
 										// intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
 										// grouping them separately to validate. It will just ignore and log if a type isn't specializable.
-										v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively"));
+										v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively (if applicable)"));
 									}
 								}
 								attributeMissingRule.addViolation(v);
@@ -195,7 +196,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 								if ((redefingTypdEl.getType() == null && redefableTypdEl.getType() != null) || (redefingTypdEl.getType() != null && redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier
 										&& !doesEventuallyGeneralizeTo((Classifier) redefingTypdEl.getType(), (Classifier) redefableTypdEl.getType()))) {
 									if (redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier && ((Classifier) redefingTypdEl.getType()).getGeneral().contains(redefableTypdEl.getType())) {
-										iterator.add(((Classifier) redefingTypdEl.getType()));
+										iterator.add(redefingTypdEl.getType());
 										iterator.previous();
 									} else {
 										final ValidationRuleViolation v = new ValidationRuleViolation(redefingTypdEl,
@@ -233,7 +234,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 				}
 
 				// boolean needsReslotting = false;
-				final List<Property> missingProperties = new ArrayList<Property>();
+				final List<Property> missingProperties = new ArrayList<>();
 				for (final Classifier classifier : instance.getClassifier()) {
 					for (final Property property : CreateSlotsAction.collectSlottableProperties(classifier)) {
 						boolean isDefined = false;

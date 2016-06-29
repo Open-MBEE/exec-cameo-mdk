@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.ems;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
@@ -40,6 +41,7 @@ import gov.nasa.jpl.mbee.web.JsonRequestEntity;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,13 +60,16 @@ import javax.jms.Session;
 import javax.jms.Topic;
 import javax.swing.JOptionPane;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -527,6 +532,8 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         DeleteMethod gm = new DeleteMethod(url);
         try {
             HttpClient client = new HttpClient();
@@ -559,6 +566,8 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         try {
             //GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
@@ -589,7 +598,8 @@ public class ExportUtility {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
-
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         EntityEnclosingMethod pm = null;
         //if (method == null)
             pm = new PostMethod(url);
@@ -654,10 +664,12 @@ public class ExportUtility {
         //return send(url, json, null); //method == null means POST
     	return send(url, json/*, method*/, true, false);
     }
-
+    
     public static String deleteWithBody(String url, String json, boolean feedback) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        checkAndResetTicket();
         EntityEnclosingMethod pm = null;
+        url = addTicketToUrl(url);
         pm = new DeleteMethodWithEntity(url);
         try {
             if (print)
@@ -688,6 +700,8 @@ public class ExportUtility {
     public static String getWithBody(String url, String json) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         pm = new GetMethodWithEntity(url);
         try {
             if (print)
@@ -701,7 +715,7 @@ public class ExportUtility {
             String response = pm.getResponseBodyAsString();
             if (print)
                 log.info("getWithBody Response: " + code + " " + response);
-            if (showErrors(code, json, false)) {
+            if (showErrors(code, response, false)) {
                 throw new ServerException(json, code);
             }
             if (code == 400)
@@ -763,19 +777,137 @@ public class ExportUtility {
     public static String get(String url, String username, String password) throws ServerException {
     	return get(url, username, password, true);
     }
+
+    public static boolean checkAndResetTicket() {
+        String baseUrl = getUrl();
+        try {
+            boolean validTicket = checkTicket(baseUrl);
+            if (!validTicket) {
+                String loggedIn = getTicket(baseUrl + "/api/login", ViewEditUtils.getUsername(), ViewEditUtils.getPassword(), false);
+            }
+            return true;
+        } catch (ServerException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return false;
+        }
+    }
     
+    public static boolean checkTicket(String baseUrl) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        String ticket = ViewEditUtils.getTicket();
+        if (ticket == null || ticket.equals(""))
+            return false;
+        String url = baseUrl + "/mms/login/ticket/" + ViewEditUtils.getTicket();
+        GetMethod gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            if (print)
+                log.info("checkTicket: " + url);
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            if (print)
+                log.info("checkTicket response: " + code + " " + json);
+            if (code != 404 && code != 200)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            if (code == 404)
+                return false;
+            return true;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+            Utils.showPopupMessage("URL is malformed");
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } finally {
+            gm.releaseConnection();
+        }
+    }
+    // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
+    public static String getTicket(String url, String username, String password, boolean showPopupErrors) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        
+        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
+      
+        HttpClient client = new HttpClient();
+        if (url == null)
+            return null;
+       // url = "https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login";
+        PostMethod postMethod = new PostMethod(url);
+        String userpasswordJsonString = "";
+        try {
+            
+            if (username != null && !username.equals(""))
+                ViewEditUtils.setUsernameAndPassword(username, password, true);
+            
+            userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
+            
+           // String JSON_STRING = "{\"username\":\"username\", \"password\":\"password\"}";
+            
+            StringRequestEntity requestEntity = new StringRequestEntity(
+                    userpasswordJsonString,
+                    "application/json",
+                    "UTF-8");
+
+            
+            postMethod.setRequestEntity(requestEntity);
+            int code = client.executeMethod(postMethod);
+            String json = postMethod.getResponseBodyAsString();
+            if (print)
+                log.info("get ticket response: " + code + " " + json);
+            if (showErrors(code, json, showPopupErrors)) {
+                throw new ServerException(json, code);
+            }
+            if (code == 400)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            
+            JSONObject ob =  (JSONObject) JSONValue.parse(json);
+            if (ob != null) {
+                JSONObject d = (JSONObject)ob.get("data");
+                if (d != null && !d.isEmpty()) {
+                    String ticket = (String)d.get("ticket");
+                    ViewEditUtils.setTicket(ticket);
+                } else
+                    return null;
+            } else
+                return null;
+            return json;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+            Utils.showPopupMessage("URL is malformed");
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } finally {
+            postMethod.releaseConnection();
+        }
+    }
     // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
     public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
             return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
             if (username == null || username.equals(""))
-            	ViewEditUtils.setCredentials(client, url, gm);
+                ViewEditUtils.setCredentials(client, url, gm);
             else
-            	ViewEditUtils.setCredentials(client, url, gm, username, password);
+                ViewEditUtils.setCredentials(client, url, gm, username, password);
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
             if (print)
@@ -798,12 +930,24 @@ public class ExportUtility {
             Utils.printException(ex);
             throw new ServerException("", 500);
         } catch (IllegalArgumentException ex) {
-        		Utils.showPopupMessage("URL is malformed");
-        		Utils.printException(ex);
-        		throw new ServerException("", 500);
+                Utils.showPopupMessage("URL is malformed");
+                Utils.printException(ex);
+                throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
         }
+    }
+    
+    public static String addTicketToUrl(String r) {
+        String ticket = ViewEditUtils.getTicket();
+        if (ticket == null || ticket.equals(""))
+            return r;
+        String url = r;
+        if (url.contains("?"))
+            url += "&alf_ticket=" + ticket;
+        else
+            url +="?alf_ticket=" + ticket;
+        return url;
     }
     
     //check if comment is actually the documentation of its owner
@@ -1750,6 +1894,8 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1767,6 +1913,8 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1784,6 +1932,8 @@ public class ExportUtility {
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
         return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);

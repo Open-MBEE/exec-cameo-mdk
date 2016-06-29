@@ -54,8 +54,10 @@ import gov.nasa.jpl.ocl.OclEvaluator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import com.nomagic.magicdraw.core.Application;
@@ -233,6 +235,7 @@ public class TableStructure extends Table {
     }
     
     private void buildTableReferences(boolean forViewEditor, String outputDir) {
+        Set<Object> warnedError = new HashSet<Object>();
         for (Object e: targets) {
             List<List<Reference>> row = new ArrayList<List<Reference>>();
             List<Object> startElements = new ArrayList<Object>();
@@ -323,49 +326,15 @@ public class TableStructure extends Table {
    
                             }
                         } else if (tc instanceof TableStructuredColumn) {
-                        	//final Container container = new Section();
-                        	//Application.getInstance().getGUILog().log("Activity Node: " + tc.activityNode);
-                        	/*DocumentValidator dv = new DocumentValidator(tc.activityNode);
-                            DocumentGenerator dg = new DocumentGenerator(tc.activityNode, dv, null);
-                            dg.getContext().pushTargets(Lists.newArrayList((Object) re));
-                            Object result = dg.parseQuery(tc.activityNode, dg.getDocument());
-                            if (!(result instanceof Query)) {
-                            	return;
-                            }
-                            final Query query = (Query) result;
-                        	final List<DocumentElement> documentElements = query.visit(true, "");
-                        	
-                        	final DBBook book = new DBBook();
-                        	book.setFrom(tc.activityNode);
-                        	
-                        	final DBSection section = new DBSection();
-                        	section.setFrom(tc.activityNode);
-                        	section.setView(true);
-                        	
-                        	book.getChildren().add(section);
-                        	section.getChildren().addAll(documentElements);
-                        	
-                        	DBAlfrescoVisitor visitor = new DBAlfrescoVisitor(true, true);
-                        	book.accept(visitor);
-                        	if (!visitor.getView2Pe().containsKey(tc.activityNode)) {
-                        		Application.getInstance().getGUILog().log("Unexpected error during table nesting.");
-                        		return;
-                        	}
-                        	
-                        	final InstanceSpecification placeholder = Application.getInstance().getProject().getElementsFactory().createInstanceSpecificationInstance();
-                        	
-                        	final ViewPresentationGenerator generator = new ViewPresentationGenerator(tc.activityNode, true);
-                        	generator.handleViewOrSection(tc.activityNode, placeholder, visitor.getView2Pe().get(tc.activityNode));
-                        	
-                        	for (final PresentationElement pe : visitor.getView2Pe().get(tc.activityNode)) {
-                        		//cell.add(new Reference(pe.getInstance(), From.DVALUE, pe.getInstance().getSpecification() instanceof LiteralString ? ((LiteralString) pe.getInstance().getSpecification()).getValue() : pe.getInstance().getSpecification()));
-                        		//cell.add(new Reference(pe.getInstance().getSpecification() instanceof LiteralString ? ((LiteralString) pe.getInstance().getSpecification()).getValue() : pe.getInstance().getSpecification()));
-                        		cell.add(new Reference(pe));
-                        		pe.getInstance().dispose();
-                        	}*/
-                        	
                         	final Container con = new Section();
                         	final DocumentGenerator dg = new DocumentGenerator(tc.activityNode, getValidator(), null);
+                        	if (tc.bnode == null) {
+                        	    if (tc.activityNode != null && !warnedError.contains(tc)) {
+                        	        Utils.guilog("[WARN] Table structure column is missing initial node, skipping: " + tc.activityNode.getQualifiedName());
+                        	        warnedError.add(tc);
+                        	    }
+                        	    break;
+                        	}
                         	final Element a = tc.bnode.getOwner();
                         	
                         	final GenerationContext nestedContext = new GenerationContext(new Stack<List<Object>>(), tc.activityNode, getValidator(), Application.getInstance().getGUILog());
@@ -381,24 +350,6 @@ public class TableStructure extends Table {
                         	for (DocGenElement dge: con.getChildren()) {
                         	    cell.add(new Reference(dge));
                         	}
-                        	
-                            //Application.getInstance().getGUILog().log("RESULT: " + result);
-                            //Application.getInstance().getGUILog().log("THIS?: " + dg.getDocument().getChildren());
-                            //return result;
-                			//final Object node = DocumentGenerator.parseActivityOrStructuredNode(tc.activityNode, container);
-                        	//Application.getInstance().getGUILog().log("AT LEAST HERE");
-                        	
-                            //Application.getInstance().getGUILog().log("LOOK AT ME!!!");
-                            /*if (result instanceof Collection) {
-	                        	//final List<DocumentElement> documentElements = ((Generatable) tc.activityNode).visit(forViewEditor, outputDir);
-	                        	for (final Object r : (Collection<Object>) result) {
-	                        		//Application.getInstance().getGUILog().log("DE: " + de);
-	                        		cell.add(new Reference(r));
-	                        	}
-                            }
-                            else {
-                            	cell.add(new Reference(result));
-                            }*/
                         }
                     }
                 }

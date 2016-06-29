@@ -36,10 +36,11 @@ import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
 
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 
-public class EMSLoginAction extends MDAction {
+public class EMSLoginAction extends MDAction {                       
     private static final long serialVersionUID = 1L;
     public static final String actionid = "Login";
 
@@ -52,25 +53,20 @@ public class EMSLoginAction extends MDAction {
     public void setLogoutAction(EMSLogoutAction logout) {
         this.logout = logout;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         // passing in "" as the username will trigger the login dialogue popup
-    	boolean ok = loginAction("", "");
-        
-        if (ok) {
-            Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
-            if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
-                Application.getInstance().getGUILog().log("Finished.");
-            this.setEnabled(false);
-            this.updateState();
-            logout.setEnabled(true);
-            logout.updateState(); //doesn't work
-        }
+    	loginAction("", "");
+    	ActionsStateUpdater.updateActionsState();
     }
     
     public boolean loginAction(String username, String password)
     {
+        return loginAction(username, password, true);
+    }
+    
+    public static boolean loginAction(String username, String password, boolean initJms) {
         ViewEditUtils.clearUsernameAndPassword();
         if (Application.getInstance().getProject() == null) {
             Utils.showPopupMessage("You need to have a project open first!");
@@ -81,11 +77,20 @@ public class EMSLoginAction extends MDAction {
             return false;
         String response = null;
         try {
-            response = ExportUtility.get(url + "/checklogin", username, password);
-        } catch (ServerException ex) {}
-        if (response ==  null)
+            response = ExportUtility.getTicket(url + "/api/login", username, password, true); //used to be /checklogin
+        } catch (ServerException ex) {
+            ViewEditUtils.clearUsernameAndPassword();
+        }
+        if (response == null) {
+            ViewEditUtils.clearUsernameAndPassword();
             return false;
-		return true;
+        }
+        if (initJms) {
+            Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
+            if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
+                Application.getInstance().getGUILog().log("Finished.");
+        }
+        return true;
     }
 
 }

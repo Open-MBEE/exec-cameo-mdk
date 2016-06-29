@@ -160,6 +160,7 @@ AnnotationAction, IRuleViolationAction {
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
         tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
         String url = ExportUtility.getPostElementsUrl();
         if (!changes.isEmpty()) {
             Request r = new Request(url, tosend.toJSONString(), "POST", false, changes.size(), "Hierarchy Property Changes");
@@ -171,6 +172,7 @@ AnnotationAction, IRuleViolationAction {
             JSONArray elements = new JSONArray();
             send.put("elements", elements);
             send.put("source", "magicdraw");
+            send.put("mmsVersion", "2.3");
             for (String e: deletedIds) {
                 JSONObject eo = new JSONObject();
                 eo.put("sysmlid", e);
@@ -304,7 +306,13 @@ AnnotationAction, IRuleViolationAction {
         Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(newviews);
         List<JSONObject> sortedNewviews = toCreate.get("create");
         if (!toCreate.get("fail").isEmpty()) {
-            Utils.guilog("[ERROR] Creating new view(s) failed.");
+            Utils.guilog("[ERROR] Creating new view(s) failed. Owner(s) not found.");
+            Utils.guilog("[ERROR] List of views failed: ");
+            for (JSONObject fail: toCreate.get("fail")) {
+                String id = (String)fail.get("sysmlid");
+                if (id != null)
+                    Utils.guilog("[ERROR]      " + id);
+            }
             retval.put("success", false);
             return retval;
         }
@@ -316,12 +324,12 @@ AnnotationAction, IRuleViolationAction {
                     List<Property> viewprops = new ArrayList<Property>();
                     viewId2props.put(newview.getID(), viewprops);
                 } else {
-                    Utils.guilog("[ERROR] Creating new view(s) failed.");
+                    Utils.guilog("[ERROR] Creating new view(s) failed for view " + ob.get("sysmlid"));
                     retval.put("success", false);
                     return retval;
                 }
             } catch (ImportException ex) {
-                Utils.guilog("[ERROR] Creating new view(s) failed.");
+                Utils.guilog("[ERROR] Creating new view(s) failed for view " + ob.get("sysmlid") + ": " + ex.getMessage());
                 retval.put("success", false);
                 return retval;
             }
