@@ -129,6 +129,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class ExportUtility {
+    public static boolean justPostconditionIds = true;  // don't embed conditions
+    
     public static Logger log = Logger.getLogger(ExportUtility.class);
     public static Map<String, Integer> mountedVersions;
     private static String developerUrl = "https://sheldon.jpl.nasa.gov";
@@ -1459,23 +1461,27 @@ public class ExportUtility {
         }
         //Find the postcondition constraint representing the operation's implementation.
         if ( e.getPostcondition() != null && e.getPostcondition().size() > 1 ) {
-            // TODO -- WARNING!
+            log.warn( "The operation has multiple postconditions!  Will only export the first." );
         }
         if ( e.getPostcondition() != null ) {
-            for ( Constraint child : e.getPostcondition() ) {
-                // See if the constraint expression is of the form, Equals(result, <valueSpec>).
-                // If so, just get the valueSpec instead of the whole expression.
-                ValueSpecification valueSpec = child.getSpecification();
-                if ( valueSpec != null ) {
-                    valueSpec = getOperationMethodValueSpec( valueSpec );
-                    // Add the method value spec json.
-                    JSONObject methodJson = new JSONObject(); 
-                    fillValueSpecification( valueSpec, methodJson );
-                    specialization.put( "method", methodJson );
+            if ( justPostconditionIds ) {
+                specialization.put("postconditions", makeJsonArrayOfIDs(e.getPostcondition()));
+            } else {
+                for ( Constraint child : e.getPostcondition() ) {
+                    // See if the constraint expression is of the form, Equals(result, <valueSpec>).
+                    // If so, just get the valueSpec instead of the whole expression.
+                    ValueSpecification valueSpec = child.getSpecification();
+                    if ( valueSpec != null ) {
+                        valueSpec = getOperationMethodValueSpec( valueSpec );
+                        // Add the method value spec json.
+                        JSONObject methodJson = new JSONObject(); 
+                        fillValueSpecification( valueSpec, methodJson );
+                        specialization.put( "method", methodJson );
+                    }
+                    // There should only be one postcondition, but in case there are
+                    // more, just break after the first.
+                    break;
                 }
-                // There should only be one postcondition, but in case there are
-                // more, just break after the first.
-                break;
             }
         }
         return specialization;

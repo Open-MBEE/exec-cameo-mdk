@@ -15,6 +15,8 @@ import gov.nasa.jpl.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
+
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -584,52 +586,191 @@ public class ImportUtility {
             }
         }
     }
+
+    /**
+     * Get the "postconditions" array of constraint ids from the specialization
+     * json and set the postconditions of the input Operation to the corresponding
+     * list of constraints. If there is no "postconditions" key in the json, do 
+     * not change the existing postconditions.
+     * 
+     * @param operation
+     * @param specialization
+     * @return
+     */
+    protected static boolean setPostconditions(Operation operation,
+                                               JSONObject specialization) {
+        boolean changed = false;
+        JSONArray arr = (JSONArray)specialization.get("postconditions");
+        if ( arr == null ) return changed;
+        if ( operation.getPostcondition() == null ) {
+            log.error("Trying to set Postconditions of Operation, " + operation
+                      + ", but it is null!");
+            return changed;
+        }
+        HashSet<Constraint> oldPostconds = new HashSet<Constraint>(operation.getPostcondition());
+        operation.getPostcondition().clear();
+        for ( int i = 0; i < arr.size(); ++i) {
+            String id = (String) arr.get(i);
+            Element o = ExportUtility.getElementFromID(id);
+            if ( o instanceof Constraint ) {
+                Constraint c = (Constraint)o;
+                operation.getPostcondition().add(c);
+                if ( !changed && !oldPostconds.contains(c) ) {
+                    changed = true;
+                }
+            } else {
+                log.error("Trying to add something (" + o 
+                          + ") that is not a Constraint to Postconditions of Operation, "
+                          + operation);
+            }
+        }
+        // The statement below assumes that the set of Postconditions does not contain duplicates.
+        changed = changed || (oldPostconds.size() != operation.getPostcondition().size());
+        return changed;
+    }
     
+    /**
+     * Set the Parameters of the Operation as well as its owned Postcondition as 
+     * the specification of the Operation.
+     * 
+     * @param operation
+     * @param spec
+     * @throws ImportException
+     */
     protected static void setOperationSpecification(Operation operation,
                                                     JSONObject spec) throws ImportException {
+        // update parameters from expression
+        Object params = spec.get("parameters");
+        JSONArray jarr = (JSONArray)(params instanceof JSONArray ? params : null);
+        setOperationParameters(operation, jarr);
+
         if (!spec.containsKey("specification"))
             return;
-        JSONObject sp = (JSONObject)spec.get("specification");
+        // If the expression for the operation is not embedded in the
+        // specialization json (spec), set the postconditions to the array in
+        // the input json.
+        if ( spec.containsKey( "postconditions" ) ) {
+            setPostconditions(operation, spec);
+            if (ExportUtility.justPostconditionIds) {
+                return;
+            }
+        }
+        // If the expression is embedded, set the Operation's postconditions to
+        // a constraint that the result parameter is equal to the expression.
+        JSONObject sp = null;
+        Object o = null;
+        try {
+            // not sure what the agreed-upon key was for the expression
+            o = spec.get("specification");
+            sp = (JSONObject)o;
+            if (sp == null) {
+                o = spec.get("method");
+                sp = (JSONObject)o;
+                if (sp == null) {
+                    o = spec.get("expression");
+                    sp = (JSONObject)o;
+                }
+            }
+        } catch ( ClassCastException e ) {
+            log.error("Operation json's specification or method is not a JSON Object: " + o);
+        }
         if (sp != null) {
             // set postconditions
             Constraint postcondition = getOrCreatePostcondition( operation );
-           //c.getPostcondition()
-            JSONObject methodJson = (JSONObject)spec.get("method");
-            if ( methodJson != null ) {                    
+            //JSONObject methodJson = (JSONObject)spec.get("method");
+            //if ( methodJson != null ) {
                 try {
                     ValueSpecification vs = null;
-                    vs = createValueSpec(methodJson, null);
+                    vs = createValueSpec(sp, null);
                     if ( vs != null ) {
                         ValueSpecification pcSpec = 
                                 postcondition.getSpecification();
                         if ( pcSpec != null && pcSpec instanceof Expression ) {
                             List<ValueSpecification> operands =
                                     ((Expression)pcSpec).getOperand();
-                            if ( operands.size() == 2 ) {
+                            if ( operands == null ) {
+                                log.error("Operands in Operation method expression is null!");
+                            } else if ( operands.size() == 2 ) {
                                 operands.add( vs );
                             } else if ( operands.size() == 3 ) {
                                 operands.set( 2, vs );
                             } else {
-                                // TODO -- ERROR!
+                                log.error("Unexpected number of operands in Operation method expression: "
+                                          + operands.size());
+                            }
+                            
+                            // Add the result parameter to operation's owned Parameters
+                            if ( operands != null && operands.size() > 2 ) {
+                                Parameter resultParam = null;
+                                ValueSpecification resultOperand = operands.get( 1 );
+                                if ( resultOperand instanceof ElementValue ) {
+                                    Element e = ((ElementValue)resultOperand).getElement();
+                                    if ( e instanceof Parameter ) {
+                                        resultParam = (Parameter)e;
+                                    }
+                                }
+                                if ( resultParam != null && !operation.getOwnedParameter().contains( resultOperand ) ) {
+                                    operation.getOwnedParameter().add( resultParam );
+                                }
                             }
                         }
                     }
+                    
+                    
                 } catch (ReferenceException ex) {
                     throw new ImportException(operation, spec,
                                               "Operation Specification: " 
                                               + ex.getMessage());
                 }
             }
-            // update parameters from expression
-            Object params = spec.get("parameters");
-            JSONArray jarr = (JSONArray)(params instanceof JSONArray ? params : null);
-            setOperationParameters(operation, jarr);
-        }
+        //}
     }
 
     
-    protected static void setOperationParameters( Operation operation,
-                                                  JSONArray parameters ) {
+    /**
+     * Set the Parameters of the Operation to the elements for the ids in the
+     * array value for the "parameters" key.
+     * 
+     * @param operation
+     * @param parameters
+     */
+    protected static boolean setOperationParameters( Operation operation,
+                                                     JSONArray parameters ) {
+        boolean changed = false;
+        if ( parameters == null ) return changed;
+        if ( operation.getOwnedParameter() == null ) {
+            log.error("Trying to set Parameters of Operation, " + operation
+                      + ", but it is null!");
+            return changed;
+        }
+        ArrayList<Parameter> oldParams = new ArrayList<Parameter>(operation.getOwnedParameter());
+        operation.getOwnedParameter().clear();
+        for ( int i = 0; i < parameters.size(); ++i) {
+            String id = (String) parameters.get(i);
+            Element o = ExportUtility.getElementFromID(id);
+            if ( o instanceof Parameter ) {
+                Parameter c = (Parameter)o;
+                operation.getOwnedParameter().add(c);
+                if ( !changed && !oldParams.contains(c) ) {
+                    changed = true;
+                }
+            } else {
+                log.error("Trying to add something (" + o 
+                          + ") that is not a Parameter to owned Parameters of Operation, "
+                          + operation);
+            }
+        }
+        // The statement below assumes that the set of owned Parameters does not contain duplicates.
+        changed = changed || (oldParams.size() != operation.getOwnedParameter().size());
+        return changed;
+    }
+    
+    /**
+     * Set the owned Parameters of the Operation by extracting them from the Postconditions.
+     * 
+     * @param operation
+     */
+    protected static void computeAndSetOperationParameters( Operation operation ) {
         if ( operation == null ) return;
         List<Parameter> params = operation.getOwnedParameter();
         if ( params == null ) return;
@@ -688,7 +829,7 @@ public class ImportUtility {
                 
                 Parameter result = ef.createParameterInstance();
                 result.setName("result");
-                result.setDirection(ParameterDirectionKindEnum.IN);
+                result.setDirection(ParameterDirectionKindEnum.RETURN); // unclear what this should be
                 ElementValue ev = ef.createElementValueInstance();
                 ev.setElement(result);
                 operands.add(ev);
