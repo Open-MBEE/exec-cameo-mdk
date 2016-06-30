@@ -159,6 +159,8 @@ public class ModelValidator {
 	private boolean checkExist;
     private Set<Element> elementSet;
     private boolean crippled;
+    private boolean recurse;
+    private int depth = -2;
     
 	private Map<String, JSONObject> keyedElements;
         
@@ -171,7 +173,7 @@ public class ModelValidator {
 		return keyedElements;
 	}
 
-    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
+    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled, boolean recurse, int depth) {
         //result is from web, elementSet is from model
         this.starts = starts;
         suite.addValidationRule(nameDiff);
@@ -199,6 +201,12 @@ public class ModelValidator {
         prj = Application.getInstance().getProject();
         this.elementSet = elementSet;
         this.crippled = crippled;
+        this.recurse = recurse;
+        this.depth = depth;
+    }
+    
+    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
+        this(starts, result, checkExist, elementSet, crippled, true, 0);
     }
     
     public boolean checkProject(ProgressStatus ps) {
@@ -254,7 +262,12 @@ public class ModelValidator {
             if (start == Application.getInstance().getProject().getModel())
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             id = id.replace(".", "%2E");
-            final String url2 = url + "/elements/" + id + "?recurse=true&qualified=false";
+            final String url2;
+            if (depth > 0) {
+                url2 = url + "/elements/" + id + "?depth=" + java.lang.Integer.toString(depth) + "&qualified=false";
+            } else {
+                url2 = url + "/elements/" + id + "?recurse=" + java.lang.Boolean.toString(recurse) + "&qualified=false";
+            }
             GUILog log = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Getting elements from server...");
             
@@ -309,7 +322,7 @@ public class ModelValidator {
         if (fillContainment) {
             elementSet = new HashSet<Element>();
             for (Element start: starts) {
-                getAllMissing(start, elementSet, elementsKeyed);
+                getAllMissing(start, elementSet, elementsKeyed, recurse, depth);
             }
             validateModel(elementsKeyed, elementSet, ps);
         } else {
@@ -448,7 +461,7 @@ public class ModelValidator {
         }
     }
     
-    private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed) {
+    private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed, boolean recurse, int depth) {
         if (ProjectUtilities.isElementInAttachedProject(current))
             return;
         if (!ExportUtility.shouldAdd(current))
@@ -456,8 +469,15 @@ public class ModelValidator {
         if (!elementsKeyed.containsKey(current.getID()))
             if (!(current instanceof Model && ((Model)current).getName().equals("Data")))
                 missing.add(current);
-        for (Element e: current.getOwnedElement()) {
-            getAllMissing(e, missing, elementsKeyed);            
+        if (recurse) {
+            for (Element e: current.getOwnedElement()) {
+                getAllMissing(e, missing, elementsKeyed, true, 0);  
+            }
+        }
+        else if (depth > 0) {
+            for (Element e: current.getOwnedElement()) {
+                getAllMissing(e, missing, elementsKeyed, false, depth-1);  
+            }
         }
     }
     

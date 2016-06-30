@@ -18,5 +18,3 @@
 - gov.nasa.jpl.ocl - Ocl evaluation related things.
 
 ## Classes
-
-![Class Diagram](https://cae-ems.jpl.nasa.gov/alfresco/service/api/node/content/workspace/SpacesStore/1a40dc60-2b0e-4a24-9d28-ad0fc33d35db/_18_0_2_bec02f9_1444944950381_908324_74391.svg)

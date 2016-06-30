@@ -13,12 +13,14 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.core.Application;
@@ -62,9 +64,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     private Set<Element> needEdit = new HashSet<Element>();
     private Set<Element> shouldMove = new HashSet<Element>();
+    private Map<String, JSONObject> images;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu) {
+    public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images) {
         this.start = start;
+        this.images = images;
+        if (images == null)
+            this.images = new HashMap<String, JSONObject>();
         this.recurse = recurse;
         this.cannotChange = cannotChange; //from one click doc gen, if update has unchangeable elements, check if those are things the view generation touches
         this.showValidation = showValidation;
@@ -81,7 +87,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         suite.addValidationRule(updateFailed);
         suite.addValidationRule(uneditableElements);
         vss.add(suite);
-        vss.add(this.organizer.getValidations());
+        vss.add(this.organizer.getSuite());
     }
     
     @Override
@@ -132,7 +138,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 } catch (Exception e) {}
             }
             if (needChange) {
-                if (!Utils.tryToLock(project, view, isFromTeamwork)) {
+                if (!Utils.tryToLock(project, view, isFromTeamwork, true)) {
                     ValidationRuleViolation violation = new ValidationRuleViolation(view, "[NOT EDITABLE (view displayed elements)] The list of view displayed elements cannot be updated.");
                     uneditableElements.addViolation(violation);
                 }
@@ -145,7 +151,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 Constraint c = Utils.getViewConstraint(view);
                 if (c != null) {
-                    if (!Utils.tryToLock(project, c, isFromTeamwork)) {
+                    if (!Utils.tryToLock(project, c, isFromTeamwork, true)) {
                         ValidationRuleViolation vrv = new ValidationRuleViolation(c, "[NOT EDITABLE (VIEW CONTENT)] This view constraint can't be updated.");
                         uneditableContent.addViolation(vrv);
                         failure = true;
@@ -156,7 +162,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             Package viewPackage = instanceUtils.findViewInstancePackage(view);
             List<Package> parents = instanceUtils.findCorrectViewInstancePackageOwners(view);
             if (viewPackage != null && !parents.contains(viewPackage.getOwner())) {
-                Utils.tryToLock(project, viewPackage, isFromTeamwork); //package needs moving
+                Utils.tryToLock(project, viewPackage, isFromTeamwork, true); //package needs moving
                 shouldMove.add(viewPackage);
             }
             lockInstances(view2pe.get(view), viewPackage);
@@ -199,13 +205,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             failure = true;
             Utils.printException(ex);
         }
-
-        ImageValidator iv = new ImageValidator(visitor2.getImages());
+        ImageValidator iv = new ImageValidator(visitor2.getImages(), images);
         // this checks images generated from the local generation against what's on the web based on checksum
         iv.validate();
         vss.add(iv.getSuite());
         if (showValidation) {
-            if (suite.hasErrors() || iv.getSuite().hasErrors() || organizer.getValidations().hasErrors())
+            if (suite.hasErrors() || iv.getSuite().hasErrors() || organizer.getSuite().hasErrors())
                 Utils.displayValidationWindow(vss, "View Generation and Images Validation");
             else
                 Utils.guilog("[INFO] View Generation finished.");
@@ -222,7 +227,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     updateFailed.addViolation(new ValidationRuleViolation(pe.getInstance(), "[UPDATE FAILED] This instance failed to update from MMS and will not be changed to prevent conflicts."));
                     failure = true;
                 }
-                if (!Utils.tryToLock(project, pe.getInstance(), isFromTeamwork)) {
+                if (!Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true)) {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(pe.getInstance(), "[NOT EDITABLE (CONTENT)] This presentation element instance can't be updated.");
                     uneditableContent.addViolation(vrv);
                     failure = true;
@@ -233,7 +238,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if ((pe.isManual() && !instanceUtils.isInSomeViewPackage(pe.getInstance())
                         || (!pe.isManual() && pe.getInstance().getOwner() != viewPackage))) {
                     shouldMove.add(pe.getInstance());
-                    Utils.tryToLock(project, pe.getInstance(), isFromTeamwork);
+                    Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true);
                 }
             }
         }
@@ -242,7 +247,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private void lockUnused(List<PresentationElement> pes) {
         for (PresentationElement pe: pes) {
             if (pe.getInstance() != null) {
-                Utils.tryToLock(project, pe.getInstance(), isFromTeamwork);
+                Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true);
             }
         }
     }

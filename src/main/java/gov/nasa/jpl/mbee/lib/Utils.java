@@ -77,6 +77,7 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -106,9 +107,12 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallOperationAction;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ActivityPartition;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
@@ -129,10 +133,14 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.StructuralFeature;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectableElement;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
@@ -154,10 +162,15 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam 
  */
 public class Utils {
-	
+    public static Logger log = Logger.getLogger(Utils.class);
     public static final int[] TABBED_PANE_INDICES = { 1, 0, 0, 0, 1, 0, 0, 1, 1 };
     // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);
 	
+    private static boolean forceDialogFalse = false;
+    private static boolean forceDialogTrue = false;
+    private static boolean forceDialogCancel = false;
+    private static boolean skipDialog = false;
+    
     private Utils() {
     }
 
@@ -182,6 +195,7 @@ public class Utils {
         }
         return res;
     }
+    
 
     /**
      * returns collection of model elements that's on the diagram
@@ -2275,11 +2289,27 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
+        if (skipDialog) {
+            skipDialog = false;
+            return;
+        }
         JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
     }
 
     public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons, boolean includeCancel) {
-    	int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
+        if (forceDialogFalse) {
+        	forceDialogFalse = false;
+        	return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+        if (forceDialogCancel) {
+        	forceDialogCancel = false;
+            return null;
+        }
+        int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
         int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", option, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION)
             return true;
@@ -2293,6 +2323,18 @@ public class Utils {
      * @return null if user hits cancel
      */
     public static Boolean getUserYesNoAnswer(String question) {
+    	if (forceDialogFalse) {
+        	forceDialogFalse = false;
+        	return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+        if (forceDialogCancel) {
+        	forceDialogCancel = false;
+            return null;
+        }
         int res = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), question);
         if (res == JOptionPane.YES_OPTION)
             return true;
@@ -3600,26 +3642,45 @@ public class Utils {
     }
 
     public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork) {
+        return tryToLock(project, e, isFromTeamwork, false);
+    }
+    
+    public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork, boolean recursive) {
         if (e.isEditable())
             return true;
         if (!isFromTeamwork) {
             return false;
         }
+        String user = TeamworkUtils.getLoggedUserName();
+        if (user == null) 
+            return false;
         AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
         if (listener != null)
             listener.disable(); 
         //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
-        if (e instanceof Property)
-            TeamworkUtils.lockElement(project, e.getOwner(), false);
-        else if (e instanceof Slot) {
-            Element owner = e.getOwner();
-            if (owner != null && owner.getOwner() instanceof Package)
-                TeamworkUtils.lockElement(project, owner, false);
-            else
-                TeamworkUtils.lockElement(project, owner.getOwner(), false);
-        } else
-            TeamworkUtils.lockElement(project, e, false);
+        try {
+            if (e instanceof Property)
+                TeamworkUtils.lockElement(project, e.getOwner(), recursive);
+            else if (e instanceof Slot) {
+                Element owner = e.getOwner();
+                if (owner != null && owner.getOwner() instanceof Package)
+                    TeamworkUtils.lockElement(project, owner, recursive);
+                else
+                    TeamworkUtils.lockElement(project, owner.getOwner(), recursive);
+            } else if (e instanceof InstanceSpecification && recursive) {
+                Element owner = e.getOwner();
+                if (owner instanceof Package || owner instanceof Classifier)
+                    TeamworkUtils.lockElement(project, owner, true);
+                else
+                    TeamworkUtils.lockElement(project, e, true);
+            } else {
+                TeamworkUtils.lockElement(project, e, recursive);
+            }
+        } catch (Exception ex) {
+            log.info("caught exception when locking:");
+            ex.printStackTrace();
+        }
         if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
             SessionManager.getInstance().createSession("session after lock"); 
         if (listener != null)
@@ -3631,7 +3692,19 @@ public class Utils {
     }
     
     public static boolean recommendUpdateFromTeamwork() {
-        Project prj = Application.getInstance().getProject();
+        return recommendUpdateFromTeamwork("");
+    }
+    
+    public static boolean recommendUpdateFromTeamwork(String add) {
+        if (forceDialogFalse) {
+        	forceDialogFalse = false;
+            return false;
+        }
+        if (forceDialogTrue) {
+        	forceDialogTrue = false;
+            return true;
+        }
+    	Project prj = Application.getInstance().getProject();
         if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
             return true;
         String user = TeamworkUtils.getLoggedUserName();
@@ -3649,9 +3722,77 @@ public class Utils {
         String[] buttons = {"Continue (May trigger update)", "Cancel"};
         Boolean reply = Utils.getUserYesNoAnswerWithButton("There's a new project version available on teamwork.\nIt's highly recommended that you update from teamwork first,\n"
                 + "and commit to teamwork immediately after this action.\n"
-                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?", buttons, false);
+                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?\n" + add, buttons, false);
         if (reply == null || !reply)
             return false;
+        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(prj);
+        if (listener != null)
+            listener.disable(); 
+        TeamworkUtils.updateProject(prj);
+        if (listener != null)
+            listener.enable();
         return true;
     }
+    
+    //check if the given element would have a model inconsistency in the current state
+    public static boolean modelInconsistency(Element e) {
+        if (e instanceof DirectedRelationship) {
+            if (((DirectedRelationship)e).getSource().isEmpty() || ((DirectedRelationship)e).getTarget().isEmpty())
+                return true;
+        }
+        if (e instanceof Association) {
+            List<Property> memberEnds = ((Association)e).getMemberEnd();
+            if (memberEnds.size() != 2)
+                return true;
+            if (!(memberEnds.get(0) instanceof Property) || !(memberEnds.get(1) instanceof Property))
+                return true;
+        }
+        if (e instanceof Connector) {
+            List<ConnectorEnd> ends = ((Connector)e).getEnd();
+            if (ends.size() != 2 || !(ends.get(1).getRole() instanceof ConnectableElement) || !(ends.get(0).getRole() instanceof ConnectableElement))
+                return true;
+        }
+        if (e instanceof ActivityEdge) {
+            if (!(((ActivityEdge)e).getSource() instanceof ActivityNode) || !(((ActivityEdge)e).getSource() instanceof ActivityNode))
+                return true;
+        }
+        if (e instanceof InstanceSpecification) {
+            if (((InstanceSpecification)e).getClassifier().isEmpty())
+                return true;
+        }
+        if (e instanceof Slot) {
+            if (!(((Slot)e).getDefiningFeature() instanceof StructuralFeature))
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Cause the next call of a user dialog generating method to return the indicated value
+     * The called method should then reset these values, so they don't accidentally get used again
+     */
+    
+    public static void forceDialogReturnTrue() {
+    	forceDialogTrue = true;
+    }
+
+    public static void forceDialogReturnFalse() {
+    	forceDialogFalse = true;
+    }
+
+    public static void forceDialogReturnCancel() {
+    	forceDialogCancel = true;
+    }
+    
+    public static void forceSkipDialog() {
+    	skipDialog = true;
+    }
+    
+    public static void resetForcedReturns() {
+    	forceDialogTrue = false;
+    	forceDialogFalse = false;
+    	forceDialogCancel = false;
+    	skipDialog = false;
+    }
+
 }

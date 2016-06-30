@@ -232,7 +232,7 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
         unused = p;
     }
     
-    public ValidationSuite getValidations() {
+    public ValidationSuite getSuite() {
         return suite;
     }
 }

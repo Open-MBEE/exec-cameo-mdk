@@ -4,11 +4,7 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 
 import java.awt.event.ActionEvent;
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-
-public class SendProjectVersionAction extends MDAction {
+public class SendProjectVersionAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "SendProjectVersion";
 

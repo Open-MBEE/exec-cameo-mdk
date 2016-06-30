@@ -1,16 +1,13 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.MigrationRunner;
-import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 import gov.nasa.jpl.mbee.ems.migrate.MigrationKind;
 
 import java.awt.event.ActionEvent;
 
-import com.nomagic.actions.NMAction;
 import com.nomagic.ui.ProgressStatusRunner;
 
-public class MigrationAction extends NMAction {
+public class MigrationAction extends MMSAction {
 	
 	private static final String actionid = "Migrate";
 	private MigrationKind mk;
