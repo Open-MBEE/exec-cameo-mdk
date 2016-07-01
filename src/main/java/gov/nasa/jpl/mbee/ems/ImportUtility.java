@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.nomagic.diagramtable.actions.TableAddNewAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -50,6 +51,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ParameterDirectionKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ParameterDirectionKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
@@ -239,6 +241,12 @@ public class ImportUtility {
                     newE = c;
                 }
                 setConstraintSpecification((Constraint)newE, specialization);
+            } else if (elementType.equalsIgnoreCase("Parameter")) {
+                if ( newE == null) {
+                    Parameter p = ef.createParameterInstance();
+                    newE = p;
+                }
+                setParameter((Parameter)newE, specialization);
             } else if (elementType.equalsIgnoreCase("Operation")) {
                 if (newE == null) {
                     Operation c = ef.createOperationInstance();
@@ -305,6 +313,31 @@ public class ImportUtility {
         return newE;
     }
     
+    public static void setParameter( Parameter param,
+                                     JSONObject specialization ) {
+        Object o = specialization.get( "direction" );
+        String direction = null;
+        if ( o instanceof String ) {
+            direction = (String)o;
+        }
+        param.setDirection( ParameterDirectionKindEnum.get(direction) );
+        
+        o = specialization.get( "parameterType" );
+        String ptype = null;
+        if ( o instanceof String ) {
+            ptype = (String)o;
+        }
+        
+        if (ptype != null) {
+            Type t = (Type)ExportUtility.getElementFromID(ptype);
+            if (t != null)
+                param.setType(t);
+            else
+                log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
+                //something bad happened
+        }
+    }
+
     public static void updateElement(Element e, JSONObject o) throws ImportException {
         setName(e, o);
         setDocumentation(e, o);

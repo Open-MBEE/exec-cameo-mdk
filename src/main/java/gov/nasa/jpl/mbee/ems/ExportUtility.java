@@ -1476,7 +1476,7 @@ public class ExportUtility {
                         // Add the method value spec json.
                         JSONObject methodJson = new JSONObject(); 
                         fillValueSpecification( valueSpec, methodJson );
-                        specialization.put( "method", methodJson );
+                        specialization.put( "expression", methodJson );
                     }
                     // There should only be one postcondition, but in case there are
                     // more, just break after the first.
