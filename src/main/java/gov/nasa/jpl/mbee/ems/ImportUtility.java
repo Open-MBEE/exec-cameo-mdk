@@ -15,18 +15,14 @@ import gov.nasa.jpl.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
 import gov.nasa.jpl.mbee.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
-
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.nomagic.diagramtable.actions.TableAddNewAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdassociationclasses.AssociationClass;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
@@ -51,7 +47,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ParameterDirectionKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ParameterDirectionKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
@@ -329,7 +324,11 @@ public class ImportUtility {
         }
         
         if (ptype != null) {
-            Type t = (Type)ExportUtility.getElementFromID(ptype);
+            Object obj = ExportUtility.getElementFromID(ptype);
+            Type t = null;
+            if ( obj instanceof Type ) {
+                t = (Type)obj;
+            }
             if (t != null)
                 param.setType(t);
             else
@@ -359,6 +358,10 @@ public class ImportUtility {
                     setRelationshipEnds((DirectedRelationship)e, spec);
                 if (type != null && e instanceof Constraint && type.equals("Constraint"))
                     setConstraintSpecification((Constraint)e, spec);
+                if (type != null && e instanceof Constraint && type.equals("Operation"))
+                    setOperationSpecification((Operation)e, spec);
+                if (type != null && e instanceof Constraint && type.equals("Parameter"))
+                    setParameter((Parameter)e, spec);
                 if (type != null && e instanceof Connector && type.equals("Connector"))
                     setConnectorEnds((Connector)e, spec);
                 if (type != null && e instanceof Association && type.equals("Association")) {
@@ -670,15 +673,13 @@ public class ImportUtility {
      * @param spec
      * @throws ImportException
      */
-    protected static void setOperationSpecification(Operation operation,
+    public static void setOperationSpecification(Operation operation,
                                                     JSONObject spec) throws ImportException {
         // update parameters from expression
         Object params = spec.get("parameters");
         JSONArray jarr = (JSONArray)(params instanceof JSONArray ? params : null);
         setOperationParameters(operation, jarr);
 
-        if (!spec.containsKey("specification"))
-            return;
         // If the expression for the operation is not embedded in the
         // specialization json (spec), set the postconditions to the array in
         // the input json.
@@ -694,13 +695,13 @@ public class ImportUtility {
         Object o = null;
         try {
             // not sure what the agreed-upon key was for the expression
-            o = spec.get("specification");
+            o = spec.get("expression");
             sp = (JSONObject)o;
             if (sp == null) {
                 o = spec.get("method");
                 sp = (JSONObject)o;
                 if (sp == null) {
-                    o = spec.get("expression");
+                    o = spec.get("specification");
                     sp = (JSONObject)o;
                 }
             }
