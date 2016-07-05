@@ -3651,11 +3651,18 @@ public class Utils {
     }
 
     public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork) {
+        return tryToLock(project, e, isFromTeamwork, false);
+    }
+    
+    public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork, boolean recursive) {
         if (e.isEditable())
             return true;
         if (!isFromTeamwork) {
             return false;
         }
+        String user = TeamworkUtils.getLoggedUserName();
+        if (user == null) 
+            return false;
         AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
         if (listener != null)
             listener.disable(); 
@@ -3663,15 +3670,22 @@ public class Utils {
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
         try {
             if (e instanceof Property)
-                TeamworkUtils.lockElement(project, e.getOwner(), false);
+                TeamworkUtils.lockElement(project, e.getOwner(), recursive);
             else if (e instanceof Slot) {
                 Element owner = e.getOwner();
                 if (owner != null && owner.getOwner() instanceof Package)
-                    TeamworkUtils.lockElement(project, owner, false);
+                    TeamworkUtils.lockElement(project, owner, recursive);
                 else
-                    TeamworkUtils.lockElement(project, owner.getOwner(), false);
-            } else
-                TeamworkUtils.lockElement(project, e, false);
+                    TeamworkUtils.lockElement(project, owner.getOwner(), recursive);
+            } else if (e instanceof InstanceSpecification && recursive) {
+                Element owner = e.getOwner();
+                if (owner instanceof Package || owner instanceof Classifier)
+                    TeamworkUtils.lockElement(project, owner, true);
+                else
+                    TeamworkUtils.lockElement(project, e, true);
+            } else {
+                TeamworkUtils.lockElement(project, e, recursive);
+            }
         } catch (Exception ex) {
             log.info("caught exception when locking:");
             ex.printStackTrace();

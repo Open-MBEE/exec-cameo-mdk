@@ -50,6 +50,8 @@ import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.ems.OneClickUpdateDoc;
 import gov.nasa.jpl.mbee.actions.ems.OrganizeViewInstancesAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateElementAction;
+import gov.nasa.jpl.mbee.actions.ems.ValidateElementDepthAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
@@ -195,6 +197,11 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
             if (manager.getActionFor(ValidateModelAction.actionid) == null)
                 models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models": "Validate Models"));
+            if (manager.getActionFor(ValidateElementAction.actionid) == null)
+                models.addAction(new ValidateElementAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Element": "Validate Element"));
+            if (manager.getActionFor(ValidateElementDepthAction.actionid) == null)
+                models.addAction(new ValidateElementDepthAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models (specified depth)": "Validate Models (specified depth)"));
+
             /*if (e instanceof Package) {
                 if (manager.getActionFor(ExportAllDocuments.actionid) == null)
                     models.addAction(new ExportAllDocuments(e));

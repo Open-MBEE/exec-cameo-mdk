@@ -205,15 +205,18 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 return; 
             }
             Map<String, JSONObject> webElements = new HashMap<String, JSONObject>();
-            JSONObject webObject = (JSONObject)JSONValue.parse(response);
-            JSONArray webArray = (JSONArray)webObject.get("elements");
-            for (Object o: webArray) {
-                String webId = (String)((JSONObject)o).get("sysmlid");
-                webElements.put(webId, (JSONObject)o);
+            try {
+                JSONObject webObject = (JSONObject)JSONValue.parse(response);
+                JSONArray webArray = (JSONArray)webObject.get("elements");
+                for (Object o: webArray) {
+                    String webId = (String)((JSONObject)o).get("sysmlid");
+                    webElements.put(webId, (JSONObject)o);
+                }
+                //if (webElements.size() != toGet.size())
+                //    return; //??
+            } catch (Exception ex) {
+                log.error("", ex);
             }
-            //if (webElements.size() != toGet.size())
-            //    return; //??
-                
             //calculate order to create web added elements
             List<JSONObject> webAddedObjects = new ArrayList<JSONObject>();
             for (String webAdd: webAdded) {

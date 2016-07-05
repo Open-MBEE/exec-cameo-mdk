@@ -663,7 +663,7 @@ public class ExportUtility {
             String response = pm.getResponseBodyAsString();
             if (print)
                 log.info("getWithBody Response: " + code + " " + response);
-            if (showErrors(code, json, false)) {
+            if (showErrors(code, response, false)) {
                 throw new ServerException(json, code);
             }
             if (code == 400)
