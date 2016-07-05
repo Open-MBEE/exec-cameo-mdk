@@ -122,18 +122,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<String, Pair<JSONObject, Slot>> slotMap = new LinkedHashMap<>();
         Map<String, ViewMapping> viewMap = new LinkedHashMap<>(viewHierarchyVisitor.getView2ViewElements().size());
 
-        List<String> viewIDs = new ArrayList<>(viewHierarchyVisitor.getView2ViewElements().size());
         for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
-            viewIDs.add(view.getID());
+            if (processedElements.contains(view)) {
+                Application.getInstance().getGUILog().log("Detected duplicate view reference. Skipping generation for " + view.getID() + ".");
+                continue;
+            }
             ViewMapping viewMapping = viewMap.containsKey(view.getID()) ? viewMap.get(view.getID()) : new ViewMapping();
             viewMapping.setElement(view);
             viewMap.put(view.getID(), viewMapping);
         }
 
-        // TODO Revisit when handling migration
-        // Find and delete existing view constraints to prevent ID conflict
-        // The idea is that deleting the constraint will allow the legacy instances to remain in the model for as
-        // long as the user desires, but views instances can be regenerated. This way the minimum amount of locks are required.
+        // Find and delete existing view constraints to prevent ID conflict when importing. Migration should handle this,
+        // but best to not let the user corrupt their model. Have also noticed an MD bug where the constraint just sticks around
+        // after a session cancellation.
         List<Constraint> constraintsToBeDeleted = new ArrayList<>(viewMap.size());
         for (ViewMapping viewMapping : viewMap.values()) {
             Element view = viewMapping.getElement();
@@ -178,14 +179,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         // Query existing server-side JSONs for views
-        if (!viewIDs.isEmpty()) {
+        if (!viewMap.isEmpty()) {
             // STAGE 2: Downloading existing view instances
             progressStatus.setDescription("Downloading existing view instances");
             progressStatus.setCurrent(2);
 
             JSONObject viewResponse;
             try {
-                viewResponse = ModelValidator.getManyAlfescoElements(viewIDs, progressStatus);
+                viewResponse = ModelValidator.getManyAlfescoElements(viewMap.keySet(), progressStatus);
             } catch (ServerException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -340,7 +341,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Build view constraints client-side as actual Constraint, Expression, InstanceValue(s), etc.
                 // Note: Doing this one first since what it does is smaller in scope than ImportUtility. Potential order-dependent edge cases require further evaluation.
-                for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
+                for (ViewMapping viewMapping : viewMap.values()) {
+                    Element view = viewMapping.getElement();
                     if (handleCancel(progressStatus)) {
                         return;
                     }
@@ -405,6 +407,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<Element, List<PresentationElement>> view2unused = dbAlfrescoVisitor.getView2Unused();
         Map<Element, JSONArray> view2elements = dbAlfrescoVisitor.getView2Elements();
         List<Element> views = instanceUtils.getViewProcessOrder(start, dbAlfrescoVisitor.getHierarchyElements());
+        views.removeAll(processedElements);
         Set<Element> skippedViews = new HashSet<>();
 
         for (Element view : views) {
