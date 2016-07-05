@@ -461,6 +461,8 @@ public class ModelValidator {
             if (e == null || e == prj.getModel()){
                 if (elementsKeyedId.startsWith("PROJECT"))
                     continue;
+                if (elementsKeyedId.endsWith("_pei"))
+                    continue;
                 // Alfresco sysml element is not in MagicDraw
                 JSONObject jSONobject = (JSONObject)elementsKeyed.get(elementsKeyedId);
                 String type = null;
@@ -643,7 +645,8 @@ public class ModelValidator {
             }
         }
 
-
+        // Server-side only PEI means no more need to validate them with the model
+        /*
         Stereotype view = Utils.getViewStereotype();
         if (StereotypesHelper.hasStereotypeOrDerived(e, view)) {
             ValidationRuleViolation v = viewContentDiff(e, elementInfo);
@@ -654,6 +657,7 @@ public class ModelValidator {
                 differentElements.add(e); //should this be here
             }
         }
+        */
         if (e instanceof Class) {
         	ValidationRuleViolation v = ownedAttributeDiff((Class)e, elementInfo);
             if (v != null) {

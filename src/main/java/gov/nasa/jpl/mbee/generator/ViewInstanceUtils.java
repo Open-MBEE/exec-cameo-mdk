@@ -251,6 +251,8 @@ public class ViewInstanceUtils {
             return is;
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
+            Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+            is.setID(is.getID() + "_pei");
             if (!pe.isViewDocHack()) {
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);

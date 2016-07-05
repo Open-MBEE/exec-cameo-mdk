@@ -49,6 +49,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import org.python.google.common.collect.Lists;
 
 /**
  * This class exposes MDK operations for use in external programs.
@@ -173,7 +174,7 @@ public class MDKHelper {
 	 * 
 	 */
 	public static void generateViews(Element doc, Boolean recurse) {
-		GenerateViewPresentationAction gvpa = new GenerateViewPresentationAction(doc, recurse);
+		GenerateViewPresentationAction gvpa = new GenerateViewPresentationAction(Lists.newArrayList(doc), recurse);
 		validationWindow = new MDKValidationWindow(gvpa.updateAction());
 	}
 
@@ -185,7 +186,7 @@ public class MDKHelper {
 	 *            Selected Document Element.
 	 */
 	public static void generateViewsAndCommitToMMS(Element doc) {
-		OneClickUpdateDoc ocud = new OneClickUpdateDoc(doc);
+		OneClickUpdateDoc ocud = new OneClickUpdateDoc(Lists.newArrayList(doc));
 		validationWindow = new MDKValidationWindow(ocud.updateAction());
 	}
 
