@@ -76,7 +76,7 @@ public class RealTimeSyncProjectEventListenerAdapter extends ProjectEventListene
         projectMappings.remove(project.getID());
         Utils.guilog("[INFO] Sync stopped for project " + project.getName());
         // TODO REVIEW ME @Ivan
-        AutoSyncStatusConfigurator.getInstance().update(false);
+        AutoSyncStatusConfigurator.getStatusAction().update(false);
     }
 
     @Override

@@ -7,12 +7,15 @@ import gov.nasa.jpl.mbee.actions.sync.AutoSyncStatusAction;
 
 public class AutoSyncStatusConfigurator implements AMConfigurator {
 	
-	private static final AutoSyncStatusAction AUTO_SYNC_STATUS_ACTION = new AutoSyncStatusAction();
+	private static AutoSyncStatusAction statusAction;
 	
 	public static final String SYNC_STATUS = "Autosync Status";
 
-	public static AutoSyncStatusAction getInstance() {
-		return AUTO_SYNC_STATUS_ACTION;
+	public static AutoSyncStatusAction getStatusAction() {
+		if (statusAction == null) {
+			statusAction = new AutoSyncStatusAction();
+		}
+		return statusAction;
 	}
 	
 	@Override
@@ -23,7 +26,7 @@ public class AutoSyncStatusConfigurator implements AMConfigurator {
 	@Override
 	public void configure(ActionsManager mngr) {
 		final ActionsCategory category = new ActionsCategory(SYNC_STATUS, SYNC_STATUS);
-		category.addAction(AUTO_SYNC_STATUS_ACTION);
+		category.addAction(statusAction);
 		mngr.addCategory(category);
 	}
 }
