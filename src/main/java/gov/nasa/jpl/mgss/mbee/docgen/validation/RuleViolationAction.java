@@ -29,15 +29,14 @@
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 
 import javax.swing.KeyStroke;
 
@@ -48,7 +47,6 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationManager;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
@@ -113,11 +111,9 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     protected void doAfterSuccess(){};
     
     protected void executeMany(Collection<Annotation> annos, String sessionName) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
         if (listener != null)
-            listener.disable();
+            listener.setDisabled(true);
         SessionManager.getInstance().createSession(sessionName);
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
@@ -141,15 +137,13 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
             Utils.printException(ex);
         }
         if (listener != null)
-            listener.enable();
+            listener.setDisabled(false);
     }
     
     protected void execute(String sessionName) {
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
         if (listener != null)
-            listener.disable();
+            listener.setDisabled(true);
         SessionManager.getInstance().createSession("Change Rel");
         try {
             if (doAction(null)) {
@@ -166,7 +160,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
             Utils.printException(ex);
         }
         if (listener != null)
-            listener.enable();
+            listener.setDisabled(false);
     }
     
     @SuppressWarnings("unchecked")

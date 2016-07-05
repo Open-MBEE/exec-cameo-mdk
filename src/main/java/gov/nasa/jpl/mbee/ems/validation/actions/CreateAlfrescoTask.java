@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.core.Application;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -60,7 +61,7 @@ public class CreateAlfrescoTask extends RuleViolationAction implements Annotatio
             Utils.guilog("The parent branch doesn't have a corresponding alfresco task yet, cannot create this task");
             return;
         }
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrl(Application.getInstance().getProject());
         DateTime current = new DateTime();
         String now = current.toString();
         url += "/workspaces";// + branches[branches.length-1] + "?sourceWorkspace=" + parentId + "&copyTime=" + now;

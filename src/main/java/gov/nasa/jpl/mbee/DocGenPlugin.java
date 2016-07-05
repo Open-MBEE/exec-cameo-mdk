@@ -1,40 +1,39 @@
 /*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
- * 
+ * <p>
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * <p>
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- * 
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * <p>
+ * - Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list
+ * of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution.
+ * - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ * nor the names of its contributors may be used to endorse or promote products derived
+ * from this software without specific prior written permission.
+ * <p>
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.ems.sync.AutosyncStatusConfigurator;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueueStatusConfigurator;
-import gov.nasa.jpl.mbee.ems.sync.OutputSyncRunner;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncStatusConfigurator;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueStatusConfigurator;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
-import gov.nasa.jpl.mbee.web.sync.ApplicationSyncEventSubscriber;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,10 +51,9 @@ import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 
 public class DocGenPlugin extends Plugin {
-    protected OclEvaluatorPlugin        oclPlugin             = null;
-    protected ValidateConstraintsPlugin vcPlugin              = null;
-    protected AutoSyncPlugin            autoSyncPlugin        = null;
-    public static ClassLoader           extensionsClassloader = null;
+    private OclEvaluatorPlugin oclPlugin = null;
+    private ValidateConstraintsPlugin vcPlugin = null;
+    public static ClassLoader extensionsClassloader = null;
 
     public DocGenPlugin() {
         super();
@@ -70,7 +68,7 @@ public class DocGenPlugin extends Plugin {
     @Override
     public void init() {
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
-        System.setProperty ("jsse.enableSNIExtension", "false");
+        System.setProperty("jsse.enableSNIExtension", "false");
         DocGenConfigurator dgc = new DocGenConfigurator();
         acm.addContainmentBrowserContextConfigurator(dgc);
         acm.addSearchBrowserContextConfigurator(dgc);
@@ -83,23 +81,24 @@ public class DocGenPlugin extends Plugin {
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, plc);
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(DocGenPlugin.class.getClassLoader());
-        
+
         SRConfigurator srconfig = new SRConfigurator();
         acm.addSearchBrowserContextConfigurator(srconfig);
         acm.addContainmentBrowserContextConfigurator(srconfig);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srconfig);
-        
+
         acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
-        acm.addMainToolbarConfigurator(new AutosyncStatusConfigurator());
+        acm.addMainToolbarConfigurator(new AutoSyncStatusConfigurator());
 
         getOclPlugin().init();
         getVcPlugin().init();
-        getAutoSyncPlugin().init();
+        MMSSyncPlugin.getInstance().init();
+        RealTimeSyncPlugin.getInstance().init();
         (new Thread(new OutputSyncRunner())).start();
         //ApplicationSyncEventSubscriber.subscribe(); //really old docweb sync, should remove related code
 
-        loadExtensionJars(); // people can actaully just create a new plugin and
-        
+        loadExtensionJars(); // people can actually just create a new plugin and
+
         Application.getInstance().getEnvironmentOptions().addGroup(new MDKOptionsGroup());
     }
 
@@ -117,13 +116,6 @@ public class DocGenPlugin extends Plugin {
         return vcPlugin;
     }
 
-    public AutoSyncPlugin getAutoSyncPlugin() {
-        if (autoSyncPlugin == null) {
-            autoSyncPlugin = new AutoSyncPlugin();
-        }
-        return autoSyncPlugin;
-    }
-    
     @Override
     public boolean isSupported() {
         return true;
@@ -142,7 +134,7 @@ public class DocGenPlugin extends Plugin {
             // TODO Auto-generated catch block
             e1.printStackTrace();
         }
-        for (File file: extensionDir.listFiles()) {
+        for (File file : extensionDir.listFiles()) {
             try {
                 @SuppressWarnings("unused")
                 JarFile jarFile = new JarFile(file);
@@ -154,7 +146,7 @@ public class DocGenPlugin extends Plugin {
                 e.printStackTrace();
             }
         }
-        extensionsClassloader = new URLClassLoader(extensions.toArray(new URL[] {}),
+        extensionsClassloader = new URLClassLoader(extensions.toArray(new URL[]{}),
                 DocGenPlugin.class.getClassLoader());
     }
 }

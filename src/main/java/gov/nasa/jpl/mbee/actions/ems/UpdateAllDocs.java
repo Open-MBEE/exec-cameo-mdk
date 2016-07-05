@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
-import gov.nasa.jpl.mbee.ems.sync.ManualSyncRunner;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.generator.ViewInstanceUtils;
 import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -47,7 +47,7 @@ public class UpdateAllDocs extends MMSAction {
     }
     
     public List<ValidationSuite> updateAction() {
-        ManualSyncRunner msr = new ManualSyncRunner(false, false);
+        DeltaSyncRunner msr = new DeltaSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         vss.addAll(msr.getValidations());
         if (msr.getFailure()) {
@@ -78,7 +78,7 @@ public class UpdateAllDocs extends MMSAction {
         
         if (!Utils.recommendUpdateFromTeamwork("(MMS Update and Document Generations have finished.)"))
             return vss;
-        ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
+        DeltaSyncRunner msr2 = new DeltaSyncRunner(true, false);
         ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
         vss.addAll(msr2.getValidations());
         return vss;

@@ -3,6 +3,8 @@ package gov.nasa.jpl.mbee.ems.sync;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.validation.ViewValidator;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportHierarchy;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
@@ -26,14 +28,11 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class JMSMessageListener implements MessageListener {
@@ -48,9 +47,9 @@ public class JMSMessageListener implements MessageListener {
         this.project = project;
     }
 
-    private Set<String> cannotAdd = new HashSet<String>();
-    private Set<String> cannotChange = new HashSet<String>();
-    private Set<String> cannotDelete = new HashSet<String>();
+    private Set<String> cannotAdd = new HashSet<>();
+    private Set<String> cannotChange = new HashSet<>();
+    private Set<String> cannotDelete = new HashSet<>();
     
     public Set<String> getCannotAdd() {
         return cannotAdd;
@@ -93,11 +92,8 @@ public class JMSMessageListener implements MessageListener {
             final JSONArray moved = (JSONArray) ws2.get("movedElements");
 
             Runnable runnable = new Runnable() {
-                private GUILog guilog = Application.getInstance().getGUILog();
                 public void run() {
-                    Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-                    AutoSyncCommitListener listener = (AutoSyncCommitListener) projectInstances
-                            .get(AutoSyncProjectListener.LISTENER);
+                    CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener();
 
                     // Disable the listener so we do not react to the
                     // changes we are importing from MMS.
@@ -108,7 +104,7 @@ public class JMSMessageListener implements MessageListener {
                     SessionManager sm = SessionManager.getInstance();
                     sm.createSession("mms sync change");
                     try {
-                        List<Map<String, Object>> toChange = new ArrayList<Map<String, Object>>();
+                        List<Map<String, Object>> toChange = new ArrayList<>();
                         // Loop through each specified element.
                         //
                         Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder((List<JSONObject>)added);
@@ -123,7 +119,7 @@ public class JMSMessageListener implements MessageListener {
                             }
                         } 
                         for (JSONObject element: fail) {
-                            cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                            cannotAdd.add((String) element.get("sysmlid"));
                         }
                         
                         for (Object element : moved) {
@@ -139,7 +135,7 @@ public class JMSMessageListener implements MessageListener {
                         }
                         
                         if (listener != null)
-                            listener.disable();
+                            listener.setDisabled(true);
 
                         sm.closeSession();
                         for (Map<String, Object> r: toChange) {
@@ -147,21 +143,21 @@ public class JMSMessageListener implements MessageListener {
                             //OutputQueue.getInstance().offer(r);
                         }
                         if (listener != null)
-                            listener.enable();
+                            listener.setDisabled(false);
                     }
                     catch (Exception e) {
                         if (SessionManager.getInstance().isSessionCreated())
                             sm.cancelSession();
                         log.error(e, e);
                         if (listener != null)
-                            listener.enable();
+                            listener.setDisabled(false);
                     }
 
                     // Once we've completed make all the
                     // changes, enable the listener, duplicated everywhere seems like some timing issue/bug isn't always reenabling it
                     //
                     if (listener != null)
-                        listener.enable();
+                        listener.setDisabled(false);
                 }
 
                 private Map<String, Object> makeChange(JSONObject ob) {

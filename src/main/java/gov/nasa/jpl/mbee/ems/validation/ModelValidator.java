@@ -31,8 +31,9 @@ package gov.nasa.jpl.mbee.ems.validation;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
@@ -70,6 +71,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
+import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -102,7 +104,6 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
@@ -123,7 +124,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -207,7 +207,7 @@ public class ModelValidator {
         String projectUrl = ExportUtility.getUrlForProject();
         if (projectUrl == null)
             return false;
-        String globalUrl = ExportUtility.getUrl();
+        String globalUrl = ExportUtility.getUrl(Application.getInstance().getProject());
         globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         String globalResponse = null;
         try {
@@ -365,7 +365,7 @@ public class ModelValidator {
         }
         JSONObject missingResult = getManyAlfrescoElements(missing, ps);
         updateElementsKeyed(missingResult, elementsKeyed);
-        JSONObject failed = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
+        JSONObject failed = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
         JSONArray deletedOnMMS = null;
         if (failed == null)
             deletedOnMMS = new JSONArray();
@@ -395,14 +395,15 @@ public class ModelValidator {
         Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
         
-        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
-        JSONObject updated = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "update"); 
+        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
+        JSONObject updated = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
         JSONArray deletedLocally = null;
         if (updated == null)
             deletedLocally = new JSONArray();
         else
             deletedLocally = (JSONArray)updated.get("deleted");
-        // 2nd loop: unchecked Alfresco elements with sysml ID are now processed 
+        // 2nd loop: unchecked Alfresco elements with sysml ID are now processed
+        Set<String> inMemoryDeletedElements = listener != null ? listener.getInMemoryChangelog().get(Changelog.ChangeType.DELETED).keySet() : null;
         for (String elementsKeyedId: elementsKeyedIds) {
             // MagicDraw element that has not been compared to Alfresco
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
@@ -426,7 +427,7 @@ public class ModelValidator {
                 if (existname ==  null)
                     existname = "(no name)";
                 existname.replace('`', '\'');
-                if (listener == null || (!listener.getDeletedElements().containsKey(elementsKeyedId) && !deletedLocally.contains(elementsKeyedId)))
+                if (inMemoryDeletedElements == null || (!inMemoryDeletedElements.contains(elementsKeyedId) && !deletedLocally.contains(elementsKeyedId)))
                     v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but not in Magicdraw");
                 else
                     v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted from magicdraw");
@@ -444,7 +445,6 @@ public class ModelValidator {
                 if (!(e instanceof ValueSpecification))
                     checkElement(e, elementsKeyed.get(elementsKeyedId));
             }
-            
         }
     }
     

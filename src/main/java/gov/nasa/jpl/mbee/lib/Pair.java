@@ -49,6 +49,14 @@ public class Pair<A, B> implements Comparable<Pair<A, B>>, Cloneable {
         second = p.second;
     }
 
+    public A getFirst() {
+        return first;
+    }
+
+    public B getSecond() {
+        return second;
+    }
+
     /**
      * Create a shallow copy of the Pair.
      */

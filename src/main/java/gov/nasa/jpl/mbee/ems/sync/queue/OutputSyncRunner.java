@@ -1,7 +1,10 @@
-package gov.nasa.jpl.mbee.ems.sync;
+package gov.nasa.jpl.mbee.ems.sync.queue;
 
 import javax.swing.SwingUtilities;
 
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import org.apache.log4j.Logger;
 
 import com.nomagic.magicdraw.core.Application;
@@ -34,11 +37,11 @@ public class OutputSyncRunner implements Runnable {
     
     @Override    public void run() {
         log.info("sync runner started");
-        OutputQueue q = OutputQueue.getInstance();
+        gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue q = gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue.getInstance();
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+                gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
             }
         });
         while (true) {
@@ -47,7 +50,7 @@ public class OutputSyncRunner implements Runnable {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+                            gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
                         }
                     });
                 }
@@ -87,8 +90,9 @@ public class OutputSyncRunner implements Runnable {
                 log.error("", e);
             }
             if (q.isEmpty()) {
-                AutoSyncCommitListener lis = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
-                if (lis != null && lis.isAuto())
+                CommonSyncTransactionCommitListener lis = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
+                // TODO REIMPLEMENT ME @Ivan
+                if (lis != null/* && lis.isAuto()*/)
                     continue; //prevent ui focus steal
                 Utils.guilog("[INFO] Finished processing queued requests.");
             }

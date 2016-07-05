@@ -1,11 +1,10 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
-
-import java.awt.event.ActionEvent;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.ems.sync.realtime.RealTimeSyncProjectEventListenerAdapter;
+
+import java.awt.event.ActionEvent;
 
 public class StartAutoSyncAction extends MMSAction {
 	private static final long serialVersionUID = 1L;
@@ -18,7 +17,10 @@ public class StartAutoSyncAction extends MMSAction {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Project project = Application.getInstance().getProject();
-		AutoSyncProjectListener.initDurable(project);
+		if (project == null) {
+			return;
+		}
+		RealTimeSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(false);
 	}
 
 }

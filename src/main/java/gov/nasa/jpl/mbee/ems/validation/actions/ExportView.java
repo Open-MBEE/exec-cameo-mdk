@@ -30,7 +30,7 @@ package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ViewExportRunner;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;

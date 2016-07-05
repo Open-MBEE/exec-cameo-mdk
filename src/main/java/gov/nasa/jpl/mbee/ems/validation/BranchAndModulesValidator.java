@@ -62,7 +62,7 @@ public class BranchAndModulesValidator {
         Project proj = Application.getInstance().getProject();
         IPrimaryProject prj = proj.getPrimaryProject();
         Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(prj);
-        String baseUrl = ExportUtility.getUrl();
+        String baseUrl = ExportUtility.getUrl(Application.getInstance().getProject());
         String projectSite = ExportUtility.getSite();
         ExportUtility.updateMasterSites();
         Set<IMountPoint> mounts = ProjectUtilities.getAllMountPoints(prj);

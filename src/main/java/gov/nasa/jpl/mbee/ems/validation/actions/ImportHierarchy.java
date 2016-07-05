@@ -32,9 +32,9 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -108,11 +108,9 @@ AnnotationAction, IRuleViolationAction {
         if (anno != null) {
             
         } else {
-            Project project = Application.getInstance().getProject();
-            Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-            AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+            CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
             if (listener != null)
-                listener.enable();
+                listener.setDisabled(false);
             Map<String, Object> result = importHierarchy(view, md, keyed);
             
             if ((Boolean)result.get("success")) {

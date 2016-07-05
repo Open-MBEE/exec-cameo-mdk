@@ -1,13 +1,11 @@
-package gov.nasa.jpl.mbee.ems.sync;
+package gov.nasa.jpl.mbee.ems.sync.queue;
 
-import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.SwingUtilities;
 
+import gov.nasa.jpl.mbee.ems.sync.Request;
 import org.apache.log4j.Logger;
-
-import gov.nasa.jpl.mbee.lib.Utils;
 
 public class OutputQueue extends LinkedBlockingQueue<Request> {
     private Logger log = Logger.getLogger(OutputQueue.class);

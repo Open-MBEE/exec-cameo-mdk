@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.ems.sync;
+package gov.nasa.jpl.mbee.ems.sync.queue;
 
 import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;

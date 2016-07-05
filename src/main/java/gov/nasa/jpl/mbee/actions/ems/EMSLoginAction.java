@@ -28,9 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
+import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.realtime.RealTimeSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
@@ -67,12 +70,13 @@ public class EMSLoginAction extends MDAction {
     }
     
     public static boolean loginAction(String username, String password, boolean initJms) {
+        Project project = Application.getInstance().getProject();
         ViewEditUtils.clearUsernameAndPassword();
-        if (Application.getInstance().getProject() == null) {
+        if (project == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
         }
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrl(project);
         if (url == null)
             return false;
         String response = null;
@@ -85,11 +89,12 @@ public class EMSLoginAction extends MDAction {
             ViewEditUtils.clearUsernameAndPassword();
             return false;
         }
-        if (initJms) {
-            Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
-            if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
-                Application.getInstance().getGUILog().log("Finished.");
+        if (initJms && !RealTimeSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
+            Application.getInstance().getGUILog().log("Initializing MMS message queue...");
+            if (JMSUtils.initializeJms(Application.getInstance().getProject()))
+                Application.getInstance().getGUILog().log("MMS message queue initialized.");
         }
+        Application.getInstance().getGUILog().log("Login complete.");
         return true;
     }
 

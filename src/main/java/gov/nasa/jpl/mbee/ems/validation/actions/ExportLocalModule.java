@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.core.Application;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ModelExporter;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -36,7 +37,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
 
             JSONObject ob = ExportUtility.getProjectJsonForProject(module);
             array.add(ob);
-            String url = ExportUtility.getUrl();
+            String url = ExportUtility.getUrl(Application.getInstance().getProject());
             if (url == null)
                 return;
             String purl = url + "/workspaces/master/sites/" + siteName + "/projects";
