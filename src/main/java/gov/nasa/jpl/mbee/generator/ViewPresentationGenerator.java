@@ -57,15 +57,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private Project project = Application.getInstance().getProject();
     private boolean showValidation;
 
-    private List<ValidationSuite> vss = new ArrayList<>();
-    private Map<String, JSONObject> images;
+    private final List<ValidationSuite> vss = new ArrayList<>();
+    private final Map<String, JSONObject> images;
+    private final Set<Element> processedElements;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images) {
+    public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
         this.start = start;
-        this.images = images;
-        if (images == null) {
-            this.images = new HashMap<>();
-        }
+        this.images = images != null ? images : new HashMap<String, JSONObject>();
+        this.processedElements = processedElements != null ? processedElements : new HashSet<Element>();
         this.recurse = recurse;
         // cannotChange is obsoleted by server-side only instance specifications
         //this.cannotChange = cannotChange; //from one click doc gen, if update has unchangeable elements, check if those are things the view generation touches
@@ -88,6 +87,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     public void run(ProgressStatus progressStatus) {
         progressStatus.init("Initializing", 6);
         // Ensure no existing session so we have full control of whether to close/cancel further sessions.
+        // no wild sessions spotted as of 06/05/16
         if (SessionManager.getInstance().isSessionCreated()) {
             SessionManager.getInstance().closeSession();
         }
@@ -149,7 +149,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         if (!constraintsToBeDeleted.isEmpty()) {
             SessionManager.getInstance().createSession("Legacy View Constraint Purge");
             for (Constraint constraint : constraintsToBeDeleted) {
-                if (constraint.isEditable() || Utils.tryToLock(project, constraint, isFromTeamwork)) {
+                if (constraint.isEditable()) {
                     Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + constraint.getID());
                     try {
                         ModelElementsManager.getInstance().removeElement(constraint);
@@ -582,7 +582,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 } catch (ReadOnlyElementException ignored) {
                 }
             }
-
+            // used to skip redundant view generation attempts when using multi-select or ElementGroups; see GenerateViewPresentationAction
+            processedElements.addAll(views);
         } catch (Exception e) {
             failure = true;
             Utils.printException(e);

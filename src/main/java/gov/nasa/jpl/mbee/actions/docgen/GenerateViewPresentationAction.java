@@ -43,17 +43,17 @@ public class GenerateViewPresentationAction extends MDAction {
                 elementGroupStereotype = Utils.getElementGroupStereotype();
 
 
-        Set<Element> processedSet = new HashSet<>(elements.size());
-        Queue<Element> processQueue = new LinkedList<>(elements);
+        Set<Element> processedElements = new HashSet<>(elements.size());
+        Queue<Element> queuedElements = new LinkedList<>(elements);
 
-        while (!processQueue.isEmpty()) {
-            Element element = processQueue.remove();
-            if (processedSet.contains(element)) {
-                Application.getInstance().getGUILog().log("Detected circular reference. Skipping " + element.getID() + ".");
+        while (!queuedElements.isEmpty()) {
+            Element element = queuedElements.remove();
+            if (processedElements.contains(element)) {
+                Application.getInstance().getGUILog().log("Detected duplicate element reference. Skipping generation for " + element.getID() + ".");
                 continue;
             }
             if (StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
-                ViewPresentationGenerator vg = new ViewPresentationGenerator(element, recurse, null, true, null, null);
+                ViewPresentationGenerator vg = new ViewPresentationGenerator(element, recurse, null, true, null, null, processedElements);
                 ProgressStatusRunner.runWithProgressStatus(vg, "Generating View" + (recurse ? "s" : "") + " - " + ((element instanceof NamedElement && ((NamedElement) element).getName() != null) ? ((NamedElement) element).getName() : "<>"), true, 0);
                 if (vg.isFailure()) {
                     break;
@@ -63,12 +63,11 @@ public class GenerateViewPresentationAction extends MDAction {
                 List members = StereotypesHelper.getStereotypePropertyValue(element, elementGroupStereotype, "member", true);
                 for (Object o : members) {
                     if (o instanceof Element) {
-                        processQueue.add((Element) o);
+                        queuedElements.add((Element) o);
                     }
                 }
+                processedElements.add(element);
             }
-
-            processedSet.add(element);
         }
         return vss;
     }

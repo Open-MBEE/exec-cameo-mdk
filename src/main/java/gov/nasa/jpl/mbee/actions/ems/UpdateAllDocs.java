@@ -61,7 +61,7 @@ public class UpdateAllDocs extends MMSAction {
         for (Element doc: docs) {
             if (!Utils.recommendUpdateFromTeamwork())
                 return vss;
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu, images);
+            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu, images, null);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.isFailure()) {
