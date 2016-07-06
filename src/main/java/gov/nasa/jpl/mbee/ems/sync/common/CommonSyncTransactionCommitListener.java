@@ -21,11 +21,13 @@ import java.util.List;
  * This class responds to commits done in the document.
  *
  * @author jsalcedo
+ * @author igomes
  */
 public class CommonSyncTransactionCommitListener implements TransactionCommitListener {
     private static final List<String> IGNORED_PROPERTY_CHANGE_EVENT_NAMES = Arrays.asList(
             PropertyNames.PACKAGED_ELEMENT,
-            UML2MetamodelConstants.ID
+            UML2MetamodelConstants.ID,
+            PropertyNames.NESTED_CLASSIFIER
     );
     /**
      * Allow listener to be disabled during imports.
@@ -37,22 +39,21 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
         return inMemoryChangelog;
     }
 
-    /*private Map<String, Element> locallyChangedElementsInMemory = new ConcurrentHashMap<>(),
-            locallyAddedElementsInMemory = new ConcurrentHashMap<>();
-    // effectively equivalent to ConcurrentHashSet without library dependencies
-    private Set<String> locallyDeletedElementsInMemory = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-
-    public Map<String, Element> getLocallyChangedElementsInMemory() {
-        return locallyChangedElementsInMemory;
+    public boolean isDisabled() {
+        return disabled;
     }
 
-    public Set<String> getLocallyDeletedElementsInMemory() {
-        return locallyDeletedElementsInMemory;
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 
-    public Map<String, Element> getLocallyAddedElementsInMemory() {
-        return locallyAddedElementsInMemory;
-    }*/
+    @Override
+    public Runnable transactionCommited(Collection<PropertyChangeEvent> events) {
+        if (isDisabled() || !MDKOptionsGroup.getMDKOptions().isCommitListener()) {
+            return null;
+        }
+        return new TransactionCommitHandler(events, Application.getInstance().getProject().getModel());
+    }
 
     /**
      * Adapter to call handleChangeEvent() from the TransactionCommitListener
@@ -83,14 +84,13 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                     if ((event.getNewValue() == null && event.getOldValue() == null) || (event.getNewValue() != null && event.getNewValue().equals(event.getOldValue()))) {
                         continue;
                     }
-                    if (!changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED) && !changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
-                        Element root = sourceElement;
-                        while (root.getOwner() != null) {
-                            root = root.getOwner();
-                        }
-                        if (!root.equals(model)) {
-                            continue;
-                        }
+
+                    Element root = sourceElement;
+                    while (root.getOwner() != null) {
+                        root = root.getOwner();
+                    }
+                    if (!root.equals(model)) {
+                        continue;
                     }
 
                     // START PRE-PROCESSING
@@ -126,21 +126,22 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                         inMemoryChangelog.get(Changelog.ChangeType.CREATED).remove(elementID);
                         inMemoryChangelog.get(Changelog.ChangeType.UPDATED).remove(elementID);
                         inMemoryChangelog.get(Changelog.ChangeType.DELETED).put(elementID, sourceElement);
-                        Application.getInstance().getGUILog().log("Deleted: " + elementID);
+                        Application.getInstance().getGUILog().log("Deleted: " + elementID + " - " + (sourceElement instanceof NamedElement ? ((NamedElement) sourceElement).getName() : "<>"));
                     }
                     else if (changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)) {
                         inMemoryChangelog.get(Changelog.ChangeType.CREATED).put(elementID, sourceElement);
                         inMemoryChangelog.get(Changelog.ChangeType.UPDATED).remove(elementID);
                         inMemoryChangelog.get(Changelog.ChangeType.DELETED).remove(elementID);
-                        Application.getInstance().getGUILog().log("Created: " + elementID);
+                        Application.getInstance().getGUILog().log("Created: " + elementID + " - " + (sourceElement instanceof NamedElement ? " " + ((NamedElement) sourceElement).getName() : "<>"));
                     }
                     else if (!inMemoryChangelog.get(Changelog.ChangeType.CREATED).containsKey(elementID) && !inMemoryChangelog.get(Changelog.ChangeType.DELETED).containsKey(elementID)) {
                         inMemoryChangelog.get(Changelog.ChangeType.UPDATED).put(elementID, sourceElement);
-                        Application.getInstance().getGUILog().log("Updated: " + elementID);
+                        Application.getInstance().getGUILog().log("Updated: " + elementID + " - " + (sourceElement instanceof NamedElement ? " " + ((NamedElement) sourceElement).getName() : "<>"));
                     }
+                    System.out.println(event.getPropertyName() + ": " + sourceElement.getID() + " - " + (sourceElement instanceof NamedElement ? ((NamedElement) sourceElement).getName() : "<>"));
                 }
             } catch (Exception e) {
-                Application.getInstance().getGUILog().log("Sync commit listener had an unexpected error.");
+                Application.getInstance().getGUILog().log("CommonSyncTransactionCommitListener had an unexpected error.");
                 Utils.printException(e);
                 throw e;
             }
@@ -436,21 +437,5 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                 }
             }
         }*/
-    }
-
-    public boolean isDisabled() {
-        return disabled;
-    }
-
-    public void setDisabled(boolean disabled) {
-        this.disabled = disabled;
-    }
-
-    @Override
-    public Runnable transactionCommited(Collection<PropertyChangeEvent> events) {
-        if (isDisabled() || !MDKOptionsGroup.getMDKOptions().isCommitListener()) {
-            return null;
-        }
-        return new TransactionCommitHandler(events, Application.getInstance().getProject().getModel());
     }
 }

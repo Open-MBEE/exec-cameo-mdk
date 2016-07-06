@@ -1,5 +1,15 @@
 package gov.nasa.jpl.mbee.ems.sync.delta;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
@@ -16,24 +26,12 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
-
-import java.util.*;
-
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import java.util.*;
 
 public class DeltaSyncRunner implements RunnableWithProgress {
     private boolean delete = false;
@@ -327,12 +325,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     ImportUtility.outputError = false;
                     for (JSONObject element : webAddedSorted) {
                         try {
-                            Element e = mapping.get((String) element.get("sysmlid"));
+                            Element e = mapping.get(element.get("sysmlid"));
                             if (e != null && !e.isEditable()) {
                                 //existing element and not editable
                                 continue;
                             }
-                            ImportUtility.createElement((JSONObject) element, false);
+                            ImportUtility.createElement(element, false);
                         } catch (ImportException ex) {
 
                         }
@@ -340,20 +338,20 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     ImportUtility.outputError = true;
                     for (JSONObject element : webAddedSorted) {
                         try {
-                            Element e = mapping.get((String) element.get("sysmlid"));
+                            Element e = mapping.get(element.get("sysmlid"));
                             if (e != null && !e.isEditable()) {
                                 continue; //TODO log this? this is an element that's already been created and 
                                 //currently not editable, most likely already processed by someone else,
                                 //should be taken off the to be created list
                             }
-                            Element newe = ImportUtility.createElement((JSONObject) element, true);
+                            Element newe = ImportUtility.createElement(element, true);
                             //Utils.guilog("[SYNC ADD] " + newe.getHumanName() + " created.");
                             updated.addViolation(new ValidationRuleViolation(newe, "[CREATED]"));
                         } catch (Exception ex) {
                             log.error("", ex);
-                            cannotAdd.add((String) ((JSONObject) element).get("sysmlid"));
+                            cannotAdd.add((String) element.get("sysmlid"));
                             ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ex.getMessage());
-                            vrv.addAction(new DetailDiff(new JSONObject(), (JSONObject) element));
+                            vrv.addAction(new DetailDiff(new JSONObject(), element));
                             cannotCreate.addViolation(vrv);
                         }
                     }
