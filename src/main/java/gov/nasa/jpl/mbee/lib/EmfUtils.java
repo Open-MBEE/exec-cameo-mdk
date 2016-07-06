@@ -738,8 +738,6 @@ public final class EmfUtils {
      * Find the "value" of this object hidden in the contents by looking for
      * structural features that look like synonyms of "value."
      * 
-     * @see gov.nasa.jpl.ae.magicdrawPlugin.modelQuery.ModelReference#getValue()
-     * 
      * @param eObj
      * @return
      */
@@ -750,8 +748,6 @@ public final class EmfUtils {
     /**
      * Find the "value" of the object hidden in the contents by looking for
      * structural features that look like synonyms of "value."
-     * 
-     * @see gov.nasa.jpl.ae.magicdrawPlugin.modelQuery.ModelReference#getValue()
      * 
      * @param eObj
      * @param cls
