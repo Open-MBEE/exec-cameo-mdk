@@ -50,7 +50,7 @@ public class UpdateAllDocs extends MMSAction {
         DeltaSyncRunner msr = new DeltaSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         vss.addAll(msr.getValidations());
-        if (msr.getFailure()) {
+        if (msr.isFailure()) {
             Utils.guilog("[ERROR] Update from MMS was not completed");
             return vss;
         }
@@ -61,10 +61,10 @@ public class UpdateAllDocs extends MMSAction {
         for (Element doc: docs) {
             if (!Utils.recommendUpdateFromTeamwork())
                 return vss;
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu, images);
+            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu, images, null);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
-            if (vg.getFailure()) {
+            if (vg.isFailure()) {
                 Utils.guilog("[ERROR] Document generation was not completed");
                 Utils.displayValidationWindow(vss, "View Generation and Images Validation");
                 return vss;

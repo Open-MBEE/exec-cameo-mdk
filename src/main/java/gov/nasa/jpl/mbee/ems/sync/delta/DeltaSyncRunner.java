@@ -10,6 +10,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
@@ -592,7 +593,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             JSONObject toSendUpdates = new JSONObject();
             toSendUpdates.put("elements", toSendElements);
             toSendUpdates.put("source", "magicdraw");
-            toSendUpdates.put("mmsVersion", "2.3");
+            toSendUpdates.put("mmsVersion", DocGenPlugin.VERSION);
             if (toSendElements.size() > 100) {
 
             }
@@ -617,7 +618,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
                 toSendUpdates.put("elements", toDeleteElements);
                 toSendUpdates.put("source", "magicdraw");
-                toSendUpdates.put("mmsVersion", "2.3");
+                toSendUpdates.put("mmsVersion", DocGenPlugin.VERSION);
                 if (!toDeleteElements.isEmpty()) {
                     Utils.guilog("[INFO] Delete requests are added to queue.");
                     gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));
@@ -659,7 +660,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
     }
 
-    public boolean getFailure() {
+    public boolean isFailure() {
         return failure;
     }
 

@@ -54,6 +54,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.ems.sync.Request;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
@@ -174,7 +175,7 @@ public class ExportUtility {
         }
     }
 
-    public static Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
+    public static final Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", // stylesaver
             "_17_0_2_2_ff3038a_1358222938684_513628_2513", // integrity
             "_17_0_2_2_ff3038a_1358666613056_344763_2540", // integrity
@@ -266,7 +267,7 @@ public class ExportUtility {
             "_18_0_2_407019f_1433361787467_278914_14410" //view elements dummy slot
     ));
 
-    public static Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
+    public static final Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
             "_11_5EAPbeta_be00301_1147431307463_773225_1455", //nested connector end
             "_16_5beta1_8ba0276_1232443673758_573873_267", //diagram table
             "_9_0_be00301_1108044380615_150487_0", //diagram info
@@ -284,13 +285,12 @@ public class ExportUtility {
             return null;
         }
         if (e instanceof Slot) {
-            if (e.getOwner() == null || ((Slot) e).getDefiningFeature() == null) {
+            Slot slot = (Slot) e;
+            if (slot.getOwningInstance() == null || slot.getDefiningFeature() == null) {
                 return null;
             }
-            return e.getOwner().getID() + "-slot-"
-                    + ((Slot) e).getDefiningFeature().getID();
-        }
-        else if (e instanceof Model && e == Application.getInstance().getProject().getModel()) {
+            return slot.getOwningInstance().getID() + "-slot-" + slot.getDefiningFeature().getID();
+        } else if (e instanceof Model && e == Application.getInstance().getProject().getModel()) {
             return Application.getInstance().getProject().getPrimaryProject().getProjectID();
         }
         return e.getID();
@@ -311,14 +311,10 @@ public class ExportUtility {
         else {
             Element instancespec = (Element) prj.getElementByID(ids[0]);
             Element definingFeature = (Element) prj.getElementByID(ids[1]);
-            if (instancespec != null && definingFeature != null
-                    && instancespec instanceof InstanceSpecification) {
-                for (Element e : ((InstanceSpecification) instancespec)
-                        .getOwnedElement()) {
-                    if (e instanceof Slot
-                            && ((Slot) e).getDefiningFeature() == definingFeature) {
-                        return e;
-                    }
+            if (instancespec != null && definingFeature != null && instancespec instanceof InstanceSpecification) {
+                for (Slot slot : ((InstanceSpecification) instancespec).getSlot()) {
+                    if (slot.getDefiningFeature() == definingFeature)
+                        return slot;
                 }
             }
             else {
@@ -617,8 +613,8 @@ public class ExportUtility {
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            
-            
+
+
             /*int timeout = 120; // seconds
             HttpParams httpParams = client.getParams();
             httpParams.setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, timeout * 1000); //cause ConnectionTimeoutException
@@ -773,7 +769,7 @@ public class ExportUtility {
         return response;
     }
 
-    // helper method for long for get() method. will trigger a login dialogue    
+    // helper method for long for get() method. will trigger a login dialogue
     public static String get(String url) throws ServerException {
         return get(url, null, null, true);
     }
@@ -858,11 +854,9 @@ public class ExportUtility {
         PostMethod postMethod = new PostMethod(url);
         String userpasswordJsonString = "";
         try {
-
             if (username != null && !username.equals("")) {
                 ViewEditUtils.setUsernameAndPassword(username, password, true);
             }
-
             userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
@@ -1250,11 +1244,12 @@ public class ExportUtility {
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
             if (cob.containsKey("specification")) {
-                specialization.put("contents", (JSONObject) cob.get("specification"));
+                specialization.put("contents", cob.get("specification"));
                 specialization.put("contains", new JSONArray());
             }
         }
-        Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
+        // Moved from stereotype to memory to not need a lock; see ViewPresentationGenerator
+        /*Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
         if (o != null && o instanceof String) {
             try {
                 JSONArray a = (JSONArray) JSONValue.parse((String) o);
@@ -1265,7 +1260,7 @@ public class ExportUtility {
         }
         else {
             specialization.put("displayedElements", new JSONArray());
-        }
+        }*/
         return specialization;
     }
 
@@ -1433,7 +1428,7 @@ public class ExportUtility {
             specialization = new JSONObject();
         }
         specialization.put("type", "Constraint");
-        ValueSpecification vspec = ((Constraint) e).getSpecification();
+        ValueSpecification vspec = e.getSpecification();
         if (vspec != null) {
             JSONObject cspec = new JSONObject();
             fillValueSpecification(vspec, cspec);
@@ -1950,7 +1945,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master")) {
@@ -1971,7 +1966,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master")) {
@@ -1991,7 +1986,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
         return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);

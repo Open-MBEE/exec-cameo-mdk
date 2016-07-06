@@ -55,6 +55,8 @@ public class DocGenPlugin extends Plugin {
     private ValidateConstraintsPlugin vcPlugin = null;
     public static ClassLoader extensionsClassloader = null;
 
+    public static final String VERSION = "2.3";
+
     public DocGenPlugin() {
         super();
         Debug.outln("constructed DocGenPlugin!");

@@ -26,65 +26,42 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.ems;
+package gov.nasa.jpl.mbee.actions.ems;
 
-import java.util.Collection;
-import java.util.Map;
-
-import org.json.simple.JSONObject;
-
-import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
-import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class ValidateModelRunner implements RunnableWithProgress {
+public class ValidateElementAction extends MDAction {
 
+    private static final long serialVersionUID = 1L;
     private Collection<Element> start;
-	private Map<String, JSONObject> keyedElements;
-	private ValidationSuite suite;
-	private boolean recurse;
-	private int depth;
+    public static final String actionid = "ValidateElement";
     
-    public ValidateModelRunner(Collection<Element> start, boolean recurse, int depth) {
-        this.start = start;
-        this.recurse = recurse;
-        this.depth = depth;
+    public ValidateElementAction(Element e, String name) {
+        super(actionid, name, null, null);
+        start = new ArrayList<Element>();
+        start.add(e);
     }
     
-    public ValidateModelRunner(Collection<Element> start) {
-        this(start, true, 0);
+    public ValidateElementAction(Collection<Element> e, String name) {
+        super(actionid, name, null, null);
+        start = e;
     }
-    
-	public Map<String, JSONObject> getKeyed()
-	{
-		return keyedElements;
-	}
-	
-	public ValidationSuite getSuite() {
-    	return suite;
-    }
-    
     @Override
-    public void run(ProgressStatus arg0) {
-        ModelValidator validator = new ModelValidator(start, null, true, null, false, recurse, depth);
-        if (validator.checkProject(arg0)) {
-            try {
-                validator.validate(true, arg0);
-                if (!arg0.isCancel())
-                    validator.showWindow();
-                suite = validator.getSuite();
-                keyedElements = validator.getKeyed();
-            } catch (ServerException ex) {
-            	Utils.guilog("[ERROR] Validate model cannot be completed because of server error.");
-            }
-        } else {
-        	suite = validator.getSuite();
-            validator.showWindow();
+    public void actionPerformed(ActionEvent e) {
+        if (!ExportUtility.checkBaseline()) {    
+            return;
         }
+        ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start, false, -1), "Validating Element", true, 0);
     }
-    
 }

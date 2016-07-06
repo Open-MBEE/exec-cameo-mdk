@@ -28,71 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
-import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
-import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
-import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
-import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
-import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
-import gov.nasa.jpl.mbee.ems.validation.actions.ElementDetail;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportAssociation;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportConnector;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportConstraint;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportInstanceSpec;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwnedAttribute;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportProperty;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportSite;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
-import gov.nasa.jpl.mbee.ems.validation.actions.ExportViewConstraint;
-import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportAssociation;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportComment;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportConnector;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportConstraint;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportInstanceSpec;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportOwnedAttribute;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportProperty;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
-import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
-import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
-import gov.nasa.jpl.mbee.lib.Changelog;
-import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.JSONUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -104,29 +39,31 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.validation.actions.*;
+import gov.nasa.jpl.mbee.lib.Changelog;
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.JSONUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ModelValidator {
 
@@ -159,19 +96,12 @@ public class ModelValidator {
 	private boolean checkExist;
     private Set<Element> elementSet;
     private boolean crippled;
+    private boolean recurse;
+    private int depth = -2;
     
 	private Map<String, JSONObject> keyedElements;
-        
-    public Set<Element> getDifferentElements() {
-        return differentElements;
-    }
-    
-	public Map<String, JSONObject> getKeyed()
-	{
-		return keyedElements;
-	}
 
-    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
+    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled, boolean recurse, int depth) {
         //result is from web, elementSet is from model
         this.starts = starts;
         suite.addValidationRule(nameDiff);
@@ -199,7 +129,146 @@ public class ModelValidator {
         prj = Application.getInstance().getProject();
         this.elementSet = elementSet;
         this.crippled = crippled;
+        this.recurse = recurse;
+        this.depth = depth;
     }
+    
+    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
+        this(starts, result, checkExist, elementSet, crippled, true, 0);
+    }
+    
+    public static void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
+        if (result == null)
+            return;
+        JSONArray elements = (JSONArray)result.get("elements");
+        if (elements == null)
+            return;
+        for (JSONObject elementInfo: (List<JSONObject>)elements) {
+            String elementId = (String)elementInfo.get("sysmlid");
+            if (elementId == null)
+                continue;
+            if (elementId.contains("-slot-")) {
+                Element e = ExportUtility.getElementFromID(elementId);
+                if (e != null)
+                    elementId = e.getID();
+                else
+                    continue; //this is ignoring slots on the server that're not in magicdraw
+            }
+            elementsKeyed.put(elementId, elementInfo);
+        }
+    }
+
+    public static ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
+        JSONObject model = ExportUtility.fillPackage(e, null);
+        Boolean serverSite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("isSite");
+        boolean serversite = false;
+        if (serverSite != null && serverSite)
+            serversite = true;
+        boolean modelsite = (Boolean)model.get("isSite");
+        if (!serversite && modelsite || serversite && !modelsite) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE CHAR] model: " + modelsite + ", web: " + serversite);
+            v.addAction(new ExportSite(e));
+            return v;
+        }
+        return null;
+    }
+    
+    private static String truncate(String s) {
+        if (s == null)
+            return null;
+        if (s.length() > 50)
+            return s.substring(0, 49) + "...";
+        return s;
+    }
+    
+    public static JSONObject getManyAlfescoElements(Collection<String> ids, ProgressStatus ps) throws ServerException {
+        if (ids.isEmpty()) {
+            return null;
+        }
+        JSONArray idsJSONArray = new JSONArray();
+        for (String id : ids) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("sysmlid", id);
+            idsJSONArray.add(jsonObject);
+        }
+        final JSONObject body = new JSONObject();
+        body.put("elements", idsJSONArray);
+        final String url = ExportUtility.getUrlWithWorkspace() + "/elements";
+        Utils.guilog("[INFO] Searching for " + ids.size() + " elements from server...");
+
+        final AtomicReference<String> res = new AtomicReference<>();
+        final AtomicReference<Integer> code = new AtomicReference<>();
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String tres;
+                try {
+                    tres = ExportUtility.getWithBody(url, body.toJSONString());
+                    res.set(tres);
+                    code.set(200);
+                } catch(ServerException ex) {
+                    code.set(ex.getCode());
+                    if (ex.getCode() != 404)
+                        res.set(ex.getResponse());
+                }
+            }
+        });
+        t.start();
+        try {
+            t.join(10000);
+            while(t.isAlive()) {
+                if (ps.isCancel()) {
+                    //clean up thread?
+                    Utils.guilog("[INFO] Search for elements canceled.");
+                    code.set(500);
+                    break;
+                }
+                t.join(10000);
+            }
+        } catch (Exception ignored) {}
+
+        String response = res.get();
+        if (code.get() != 404 && code.get() != 200) {
+            throw new ServerException(response, code.get());
+        }
+        Utils.guilog("[INFO] Finished getting elements.");
+        if (response == null) {
+            JSONObject reso = new JSONObject();
+            reso.put("elements", new JSONArray());
+            return reso;
+        }
+        return (JSONObject) JSONValue.parse(response);
+    }
+    
+    public static JSONObject getManyAlfrescoElements(Collection<Element> elements, ProgressStatus ps) throws ServerException {
+        if (elements.isEmpty()) {
+            return null;
+        }
+        final List<String> ids = new ArrayList<>(elements.size());
+        for (Element element : elements) {
+            ids.add(element.getID());
+        }
+        return getManyAlfescoElements(ids, ps);
+    }
+    
+    @Deprecated
+    private static NMAction getPaddingAction() {
+    	return new MDAction(null, null, null, null) {
+        	@Override
+        	public boolean isEnabled() {
+        		return false;
+        	}
+        };
+    }
+    
+    public Set<Element> getDifferentElements() {
+        return differentElements;
+    }
+    
+	public Map<String, JSONObject> getKeyed()
+	{
+		return keyedElements;
+	}
     
     public boolean checkProject(ProgressStatus ps) {
         //if (ExportUtility.baselineNotSet)
@@ -213,7 +282,7 @@ public class ModelValidator {
         try {
             globalResponse = ExportUtility.get(globalUrl, false);
         } catch (ServerException ex) {
-            
+
         }
         String url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
@@ -232,14 +301,14 @@ public class ModelValidator {
         try {
             response = ExportUtility.get(projectUrl, false);
         } catch (ServerException ex) {
-            
+
         }
         if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
-            
+
             ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
                 //v.addAction(new InitializeProjectModel(false));
             projectExist.addViolation(v);
-            
+
             return false;
         }
         for (Element start: starts ) {
@@ -254,10 +323,15 @@ public class ModelValidator {
             if (start == Application.getInstance().getProject().getModel())
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             id = id.replace(".", "%2E");
-            final String url2 = url + "/elements/" + id + "?recurse=true&qualified=false";
+            final String url2;
+            if (depth > 0) {
+                url2 = url + "/elements/" + id + "?depth=" + java.lang.Integer.toString(depth) + "&qualified=false";
+            } else {
+                url2 = url + "/elements/" + id + "?recurse=" + java.lang.Boolean.toString(recurse) + "&qualified=false";
+            }
             GUILog log = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Getting elements from server...");
-            
+
             final AtomicReference<String> res = new AtomicReference<String>();
             Thread t = new Thread(new Runnable() {
                 @Override
@@ -281,10 +355,10 @@ public class ModelValidator {
                     t.join(10000);
                 }
             } catch (Exception e) {
-                
+
             }
             //response = ExportUtility.get(url2, false);
-            
+
             response = res.get();
             Utils.guilog("[INFO] Finished getting elements");
             if (response == null) {
@@ -299,7 +373,7 @@ public class ModelValidator {
         ResultHolder.lastResults = result;
         return true;
     }
-    
+
     @SuppressWarnings("unchecked")
     public void validate(boolean fillContainment, ProgressStatus ps) throws ServerException {
         JSONArray elements = (JSONArray)result.get("elements");
@@ -309,7 +383,7 @@ public class ModelValidator {
         if (fillContainment) {
             elementSet = new HashSet<Element>();
             for (Element start: starts) {
-                getAllMissing(start, elementSet, elementsKeyed);
+                getAllMissing(start, elementSet, elementsKeyed, recurse, depth);
             }
             validateModel(elementsKeyed, elementSet, ps);
         } else {
@@ -317,27 +391,6 @@ public class ModelValidator {
         }
         keyedElements = elementsKeyed;
         result.put("elementsKeyed", elementsKeyed);
-    }
-    
-    public static void updateElementsKeyed(JSONObject result, Map<String, JSONObject> elementsKeyed) {
-        if (result == null)
-            return;
-        JSONArray elements = (JSONArray)result.get("elements");
-        if (elements == null)
-            return;
-        for (JSONObject elementInfo: (List<JSONObject>)elements) {
-            String elementId = (String)elementInfo.get("sysmlid");
-            if (elementId == null)
-                continue;
-            if (elementId.contains("-slot-")) {
-                Element e = ExportUtility.getElementFromID(elementId);
-                if (e != null)
-                    elementId = e.getID();
-                else
-                    continue; //this is ignoring slots on the server that're not in magicdraw
-            }
-            elementsKeyed.put(elementId, elementInfo);
-        }
     }
     
     @SuppressWarnings("unchecked")
@@ -350,7 +403,7 @@ public class ModelValidator {
         updateElementsKeyed(result, elementsKeyed);
         // elementsKeyed.keySet() refers to all MagicDraw element IDs on Alfresco
         // all refers to MagicDraw view element and owned elements
-        // 1st loop: MagicDraw elements get compared with Alfresco elements 
+        // 1st loop: MagicDraw elements get compared with Alfresco elements
         Set<Element> missing = new HashSet<Element>();
         for (Element e: all) {
             if (ps != null && ps.isCancel())
@@ -369,7 +422,7 @@ public class ModelValidator {
         JSONArray deletedOnMMS = null;
         if (failed == null)
             deletedOnMMS = new JSONArray();
-        else 
+        else
             deletedOnMMS = (JSONArray)failed.get("deleted");
         for (Element e: all) {
             if (ps != null && ps.isCancel())
@@ -391,10 +444,9 @@ public class ModelValidator {
             checkElement(e, elementInfo);
             checked.add(e.getID());
         }
-        
+
         Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
-        
         CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
         JSONObject updated = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
         JSONArray deletedLocally = null;
@@ -410,7 +462,9 @@ public class ModelValidator {
             if (e == null || e == prj.getModel()){
                 if (elementsKeyedId.startsWith("PROJECT"))
                     continue;
-                // Alfresco sysml element is not in MagicDraw 
+                if (elementsKeyedId.endsWith("_pei"))
+                    continue;
+                // Alfresco sysml element is not in MagicDraw
                 JSONObject jSONobject = (JSONObject)elementsKeyed.get(elementsKeyedId);
                 String type = null;
                 if (jSONobject.containsKey("specialization")) {
@@ -440,7 +494,7 @@ public class ModelValidator {
                 	v.addAction(new ElementDetail(jSONobject));
                 }
                 exist.addViolation(v);
-            }  
+            }
             else {
                 if (!(e instanceof ValueSpecification))
                     checkElement(e, elementsKeyed.get(elementsKeyedId));
@@ -448,7 +502,7 @@ public class ModelValidator {
         }
     }
     
-    private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed) {
+    private void getAllMissing(Element current, Set<Element> missing, Map<String, JSONObject> elementsKeyed, boolean recurse, int depth) {
         if (ProjectUtilities.isElementInAttachedProject(current))
             return;
         if (!ExportUtility.shouldAdd(current))
@@ -456,8 +510,15 @@ public class ModelValidator {
         if (!elementsKeyed.containsKey(current.getID()))
             if (!(current instanceof Model && ((Model)current).getName().equals("Data")))
                 missing.add(current);
-        for (Element e: current.getOwnedElement()) {
-            getAllMissing(e, missing, elementsKeyed);            
+        if (recurse) {
+            for (Element e: current.getOwnedElement()) {
+                getAllMissing(e, missing, elementsKeyed, true, 0);  
+            }
+        }
+        else if (depth > 0) {
+            for (Element e: current.getOwnedElement()) {
+                getAllMissing(e, missing, elementsKeyed, false, depth-1);  
+            }
         }
     }
     
@@ -584,7 +645,8 @@ public class ModelValidator {
             }
         }
 
-
+        // Server-side only PEI means no more need to validate them with the model
+        /*
         Stereotype view = Utils.getViewStereotype();
         if (StereotypesHelper.hasStereotypeOrDerived(e, view)) {
             ValidationRuleViolation v = viewContentDiff(e, elementInfo);
@@ -595,6 +657,7 @@ public class ModelValidator {
                 differentElements.add(e); //should this be here
             }
         }
+        */
         if (e instanceof Class) {
         	ValidationRuleViolation v = ownedAttributeDiff((Class)e, elementInfo);
             if (v != null) {
@@ -619,37 +682,57 @@ public class ModelValidator {
         }
         docDiff(e, elementInfo);
     }
-    
-    private ValidationRuleViolation viewContentDiff(Element e, JSONObject elementInfo) {
-        JSONObject webViewSpec = (JSONObject)elementInfo.get("specialization");
-        if (webViewSpec == null)
-            return null;
-        JSONObject webContents = null;
-        JSONObject modelContents = null;
-        if (webViewSpec.containsKey("contents"))
-            webContents = (JSONObject)webViewSpec.get("contents");
-        JSONObject modelview = ExportUtility.fillViewContent(e, null);
-        if (modelview.containsKey("contents"))
-            modelContents = (JSONObject)modelview.get("contents");
-        // replaced this thing here v
-        //    if (!modelContents.equals(webContents)) {
-        JSONArray webDisplayed = (JSONArray)webViewSpec.get("displayedElements");
-        JSONArray modelDisplayed = (JSONArray)modelview.get("displayedElements");
+
+    public static boolean isViewSpecializationDiff(JSONObject firstSpecialization, JSONObject secondSpecialization) {
+        if (firstSpecialization == null && secondSpecialization == null) {
+            return false;
+        }
+        if (firstSpecialization == null || secondSpecialization == null) {
+            return true;
+        }
+        Object o;
+
+        JSONObject firstContents = null, secondContents = null;
+        if ((o = firstSpecialization.get("contents")) instanceof JSONObject) {
+            firstContents = (JSONObject) o;
+        }
+        if ((o = secondSpecialization.get("contents")) instanceof JSONObject) {
+            secondContents = (JSONObject) o;
+        }
+
+        JSONArray firstDisplayedElements = null, secondDisplayedElements = null;
+        if ((o = firstSpecialization.get("displayedElements")) instanceof JSONArray) {
+            firstDisplayedElements = (JSONArray) o;
+        }
+        if ((o = secondSpecialization.get("displayedElements")) instanceof JSONArray) {
+            secondDisplayedElements = (JSONArray) o;
+        }
+
+        return !JSONUtils.compare(firstContents, secondContents) || !Utils.isJSONArrayEqual(firstDisplayedElements, secondDisplayedElements);
+    }
         
-        if (!JSONUtils.compare(modelContents, webContents) || !Utils.jsonArraySetDiff(webDisplayed, modelDisplayed)) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint or displayed elements are different");
-                v.addAction(new ExportViewConstraint((NamedElement)e));
-                v.addAction(new ImportViewConstraint((NamedElement)e, webViewSpec, result));
-                return v;
+    private ValidationRuleViolation viewContentDiff(Element e, JSONObject elementInfo) {
+        Object o;
+
+        JSONObject webViewSpec;
+        if (!((o = elementInfo.get("specialization")) instanceof JSONObject)) {
+            return null;
+        }
+        webViewSpec = (JSONObject) o;
+        if (isViewSpecializationDiff(webViewSpec, ExportUtility.fillViewContent(e, null))) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint or displayed elements are different");
+            v.addAction(new ExportViewConstraint((NamedElement) e));
+            v.addAction(new ImportViewConstraint((NamedElement) e, webViewSpec, result));
+            return v;
         }
         return null;
     }
-
+    
     private ValidationRuleViolation docDiff(Element e, JSONObject elementInfo) {
         JSONObject webViewSpec = (JSONObject)elementInfo.get("specialization");
         if (webViewSpec == null)
             return null;
-        if (webViewSpec.get("type") instanceof String && ((String)webViewSpec.get("type")).equals("Product") && 
+        if (webViewSpec.get("type") instanceof String && ((String)webViewSpec.get("type")).equals("Product") &&
                 !StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype())) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOCUMENT] This is no longer a product/document.");
             v.addAction(new Downgrade(e, elementInfo));
@@ -664,14 +747,14 @@ public class ModelValidator {
     	JSONObject model = ExportUtility.fillOwnedAttribute(e, null);
     	JSONArray modelArray = (JSONArray)model.get("ownedAttribute");
     	JSONArray webArray = (JSONArray)elementInfo.get("ownedAttribute");
-    	if (JSONUtils.compare(modelArray, webArray))	
+    	if (JSONUtils.compare(modelArray, webArray))
     		return null;
     	ValidationRuleViolation v = new ValidationRuleViolation(e, "[ATTRIBUTE] Owned attribute ordering is different.");
         if (editable)
             v.addAction(new ExportOwnedAttribute(e));
-        v.addAction(new ImportOwnedAttribute(e, elementInfo, result)); 
+        v.addAction(new ImportOwnedAttribute(e, elementInfo, result));
         return v;
-        
+
     }
     
     private ValidationRuleViolation ownerDiff(Element e, JSONObject elementInfo) {
@@ -688,7 +771,7 @@ public class ModelValidator {
                     else
                         webOwnerID = null;
                 }
-                    
+
             }
             if (!ownerID.equals(webOwnerID)) {
                 Element owner = null;
@@ -700,7 +783,7 @@ public class ModelValidator {
                 if (!crippled) {
                     if (editable)
                         v.addAction(new ExportOwner(e));
-                    v.addAction(new FixModelOwner(e, owner, result)); 
+                    v.addAction(new FixModelOwner(e, owner, result));
                 }
                 return v;
             }
@@ -711,7 +794,7 @@ public class ModelValidator {
     private ValidationRuleViolation propertyDiff(Property e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject specialization = (JSONObject)info.get("specialization");
-        
+
         JSONObject webcopy  = (JSONObject)specialization.clone();
         if (webcopy.containsKey("value"))
             webcopy.remove("value");
@@ -731,7 +814,7 @@ public class ModelValidator {
         if (specialization != null && specialization.containsKey("aggregation")) {
         		webAggr = (specialization.get("aggregation")).toString().toUpperCase();
         }
-        
+
         // diff the prop type
         Type modelType = e.getType();
         String modelTypeId = null;
@@ -742,8 +825,8 @@ public class ModelValidator {
             webTypeId = (String)specialization.get("propertyType");
         Element webTypeElement = null;
         if (webTypeId != null)
-            webTypeElement = ExportUtility.getElementFromID(webTypeId);   
-        
+            webTypeElement = ExportUtility.getElementFromID(webTypeId);
+
         // build that validation violation if it's necessary
         if ((modelTypeId != null && !modelTypeId.equals(webTypeId)) || (webTypeId != null && !webTypeId.equals(modelTypeId))
         		|| (modelAggr != null && !modelAggr.equals(webAggr)) || (webAggr != null && !webAggr.equals(modelAggr))) {
@@ -755,7 +838,7 @@ public class ModelValidator {
         }
         return null;*/
     }
-        
+    
     private ValidationRuleViolation slotTypeDiff(Slot e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject specialization = (JSONObject)info.get("specialization");
@@ -774,21 +857,6 @@ public class ModelValidator {
             if (editable)
                 v.addAction(new ExportProperty(e));
             //v.addAction(new ImportPropertyType(e, (Type)webTypeElement, result));
-            return v;
-        }
-        return null;
-    }
-    
-    public static ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
-        JSONObject model = ExportUtility.fillPackage(e, null);
-        Boolean serverSite = (Boolean)((JSONObject)elementInfo.get("specialization")).get("isSite");
-        boolean serversite = false;
-        if (serverSite != null && serverSite)
-            serversite = true;
-        boolean modelsite = (Boolean)model.get("isSite");
-        if (!serversite && modelsite || serversite && !modelsite) {
-            ValidationRuleViolation v = new ValidationRuleViolation(e, "[SITE CHAR] model: " + modelsite + ", web: " + serversite);
-            v.addAction(new ExportSite(e));
             return v;
         }
         return null;
@@ -828,7 +896,7 @@ public class ModelValidator {
 
         ValueSpecification vs = e.getDefaultValue();
         JSONArray value = (JSONArray)specialization.get("value");
-        
+
         /*JSONObject modelSpec = ExportUtility.fillPropertySpecialization(e, null, false);
         JSONArray modelValue = (JSONArray)modelSpec.get("value");
         if (!modelValue.equals(value)) {
@@ -839,7 +907,7 @@ public class ModelValidator {
             return v;
         }
         return null;*/ //above is much simpler, but the return json from server can fool the json parser into using a long instead of double if it's a whole integer, so doesn't always work
-        
+
         String valueTypes;
         JSONObject firstObject = null;
         if ((value == null) || (value.isEmpty()))
@@ -851,12 +919,12 @@ public class ModelValidator {
         	firstObject = (JSONObject)value.get(0);
         	valueTypes = (String)firstObject.get("type");
         }
-        
-        if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
+
+        if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) ||
                 (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null))
                 && (valueTypes == null || valueTypes.equals("ElementValue") && firstObject.get("element") == null || valueTypes.equals("InstanceValue") && firstObject.get("instance") == null))
             return null;
-        if ((vs != null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) || 
+        if ((vs != null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() != null) ||
                 (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() != null))
                 && (valueTypes == null || valueTypes.equals("ElementValue") && firstObject.get("element") == null || valueTypes.equals("InstanceValue") && firstObject.get("instance") == null)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: not null, web: null");
@@ -865,8 +933,8 @@ public class ModelValidator {
             v.addAction(new ImportValue(e, null, result));
             return v;
         }
-        if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) || 
-                (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null)) 
+        if ((vs == null || (vs instanceof ElementValue && ((ElementValue)vs).getElement() == null) ||
+                (vs instanceof InstanceValue && ((InstanceValue)vs).getInstance() == null))
                 && value != null && value.size() > 0 && valueTypes != null) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VALUE] model: null, web: " + truncate(value.toString()));
             if (editable)
@@ -891,7 +959,7 @@ public class ModelValidator {
         }
         return null;
     }
-    
+
     private ValidationRuleViolation valueDiff(Slot e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject specialization = (JSONObject)info.get("specialization");
@@ -906,12 +974,12 @@ public class ModelValidator {
             return v;
         }
         return null;*/
-        
+
         String valueTypes;
         JSONObject firstObject = null;
-        
+
         List<ValueSpecification> vss = e.getValue();
-        
+
         if ((value == null) || (value.isEmpty()))
             valueTypes = null;
         else {
@@ -971,8 +1039,8 @@ public class ModelValidator {
                 v.addAction(new ImportValue(e, value, result));
                 return v;
             }
-        }        
-        return null;   
+        }
+        return null;
     }
     
     private ValidationRuleViolation connectorDiff(Connector e, JSONObject info) {
@@ -985,7 +1053,7 @@ public class ModelValidator {
         JSONArray modelSourcePropPath = (JSONArray)modelspec.get("sourcePath");
         JSONArray modelTargetPropPath = (JSONArray)modelspec.get("targetPath");
         String modeltype = (String)modelspec.get("connectorType");
-        if (!modelSourcePropPath.equals(webSourcePropPath) || !modelTargetPropPath.equals(webTargetPropPath) || 
+        if (!modelSourcePropPath.equals(webSourcePropPath) || !modelTargetPropPath.equals(webTargetPropPath) ||
                 (modeltype != null && !modeltype.equals(webtype) || webtype != null && !webtype.equals(modeltype))) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[CONNECTOR] connector roles/paths/types doesn't match");
             if (editable)
@@ -1036,8 +1104,8 @@ public class ModelValidator {
 //        String webSourceAggr = (String)webspec.get("sourceAggregation");
 //        String webTargetAggr = (String)webspec.get("targetAggregation");
         JSONArray webOwned = (JSONArray)webspec.get("ownedEnd");
-        if (!modelSource.equals(webSource) || !modelTarget.equals(webTarget) || 
-//                !modelSourceAggr.equals(webSourceAggr) || !modelTargetAggr.equals(webTargetAggr) || 
+        if (!modelSource.equals(webSource) || !modelTarget.equals(webTarget) ||
+//                !modelSourceAggr.equals(webSourceAggr) || !modelTargetAggr.equals(webTargetAggr) ||
                 !modelOwned.equals(webOwned)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[ASSOC] Association roles/aggregation/navigability are different");
             if (editable)
@@ -1047,7 +1115,7 @@ public class ModelValidator {
         }
         return null;
     }
-
+    
     private ValidationRuleViolation metatypeDiff(Element e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         Boolean webIsMetatype = (Boolean)info.get("isMetatype");
@@ -1057,9 +1125,9 @@ public class ModelValidator {
         Boolean modelIsMetatype = (Boolean)model.get("isMetatype");
         JSONArray modelMetatypes = (JSONArray)model.get("metatypes");
         JSONArray modelAppliedMetatypes = (JSONArray)model.get("appliedMetatypes");
-        if (webIsMetatype != modelIsMetatype 
-        		|| !Utils.jsonArraySetDiff(modelAppliedMetatypes, webAppliedMetatypes) 
-        		|| (modelIsMetatype && !Utils.jsonArraySetDiff(modelMetatypes, webMetatypes))) {
+        if (webIsMetatype != modelIsMetatype
+        		|| !Utils.isJSONArrayEqual(modelAppliedMetatypes, webAppliedMetatypes)
+        		|| (modelIsMetatype && !Utils.isJSONArrayEqual(modelMetatypes, webMetatypes))) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[METATYPE] Metatype/Stereotype application are different.");
             if (editable)
                 v.addAction(new ExportMetatypes(e));
@@ -1219,7 +1287,7 @@ public class ModelValidator {
             } else {
                 message = typeMismatchMessage;
             }
-        } else if (valueType == PropertyValueType.OpaqueExpression) { 
+        } else if (valueType == PropertyValueType.OpaqueExpression) {
             if (vs instanceof OpaqueExpression) {
                 JSONObject model = ExportUtility.fillValueSpecification(vs, null);
                 if (!model.equals(firstObject))
@@ -1228,8 +1296,8 @@ public class ModelValidator {
                 message = typeMismatchMessage;
             }
         } else { //type of value in model and alfresco don't match or unknown type
-            
-        }   
+
+        }
         result.put("message", message);
         result.put("webString", webString);
         result.put("modelString", modelString);
@@ -1268,36 +1336,28 @@ public class ModelValidator {
         }
         return v;
     }
-    
+
     public void showWindow() {
         List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
         vss.add(suite);
         Utils.guilog("[INFO] Showing validations...");
         Utils.displayValidationWindow(vss, "Model Web Difference Validation");
     }
-    
+
     public ValidationSuite getSuite() {
         return suite;
     }
     
     private boolean areNullElementValues(List<ValueSpecification> vs) {
         for (ValueSpecification v: vs) {
-            if (!(v instanceof ElementValue || v instanceof InstanceValue) || 
-                    (v instanceof ElementValue && ((ElementValue)v).getElement() != null) || 
+            if (!(v instanceof ElementValue || v instanceof InstanceValue) ||
+                    (v instanceof ElementValue && ((ElementValue)v).getElement() != null) ||
                     (v instanceof InstanceValue && ((InstanceValue)v).getInstance() != null))
                 return false;
         }
         return true;
     }
     
-    private static String truncate(String s) {
-        if (s == null)
-            return null;
-        if (s.length() > 50)
-            return s.substring(0, 49) + "...";
-        return s;
-    }
-
     private JSONObject getAlfrescoElement(Element e) {
         String url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
@@ -1309,7 +1369,7 @@ public class ModelValidator {
         try {
             response = ExportUtility.get(url, false);
         } catch (ServerException ex) {
-            
+
         }
         if (response == null)
             return null;
@@ -1318,77 +1378,5 @@ public class ModelValidator {
         if (elements == null || elements.isEmpty())
             return null;
         return (JSONObject)elements.get(0);
-    }
-    
-    public static JSONObject getManyAlfrescoElements(Set<Element> es, ProgressStatus ps) throws ServerException {
-        if (es.isEmpty())
-            return null;
-        JSONArray elements = new JSONArray();
-        for (Element e: es) {
-            JSONObject ob = new JSONObject();
-            ob.put("sysmlid", ExportUtility.getElementID(e));
-            elements.add(ob);
-        }
-        final JSONObject tosend = new JSONObject();
-        tosend.put("elements", elements);
-        final String url = ExportUtility.getUrlWithWorkspace() + "/elements";
-        //url += "/elements";
-        Utils.guilog("[INFO] Searching for " + es.size() + " elements from server...");
-        
-        final AtomicReference<String> res = new AtomicReference<String>();
-        final AtomicReference<Integer> code = new AtomicReference<Integer>();
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String tres = null;
-                try {
-                    tres = ExportUtility.getWithBody(url, tosend.toJSONString());
-                    res.set(tres);
-                    code.set(200);
-                } catch(ServerException ex) {
-                    code.set(ex.getCode());
-                    if (ex.getCode() != 404)
-                        res.set(ex.getResponse());
-                }
-                
-            }
-        });
-        t.start();
-        try {
-            t.join(10000);
-            while(t.isAlive()) {
-                if (ps.isCancel()) {
-                    //clean up thread?
-                    Utils.guilog("[INFO] Search for elements canceled.");
-                    code.set(500);
-                    break;
-                }
-                t.join(10000);
-            }
-        } catch (Exception e) {
-            
-        }
-        
-        String response = res.get();
-        if (code.get() != 404 && code.get() != 200) {
-            throw new ServerException(response, code.get());
-        }
-        Utils.guilog("[INFO] Finished getting elements.");
-        if (response == null) {
-            JSONObject reso = new JSONObject();
-            reso.put("elements", new JSONArray());
-            return reso;
-        }
-        return (JSONObject)JSONValue.parse(response);
-    }
-    
-    @Deprecated
-    private static NMAction getPaddingAction() {
-    	return new MDAction(null, null, null, null) {
-        	@Override
-        	public boolean isEnabled() {
-        		return false;
-        	}
-        };
     }
 }

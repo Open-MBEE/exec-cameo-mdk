@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ViewExportRunner;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
@@ -187,7 +188,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             elementsArray.addAll(elementsjson.values());
             send.put("elements", elementsArray);
             send.put("source", "magicdraw");
-            send.put("mmsVersion", "2.3");
+            send.put("mmsVersion", DocGenPlugin.VERSION);
             if (url == null)
                 return false;
             if (ExportUtility.send(sendElementsUrl, send.toJSONString()/*, null*/, false, false) == null)
@@ -200,7 +201,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         send = new JSONObject();
         send.put("elements", viewsArray);
         send.put("source", "magicdraw");
-        send.put("mmsVersion", "2.3");
+        send.put("mmsVersion", DocGenPlugin.VERSION);
         /*if (document) {
             String docId = view.getID();
             JSONObject doc = null;

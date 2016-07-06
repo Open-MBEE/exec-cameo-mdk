@@ -1,9 +1,11 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -12,12 +14,12 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 public class ValidateHierarchyAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element view;
+    private List<Element> views;
     public static final String actionid = "ValidateHierarchy";
     
-    public ValidateHierarchyAction(Element e) {
+    public ValidateHierarchyAction(List<Element> elements) {
         super(actionid, "Validate View Hierarchy", null, null);
-        view = e;
+        views = elements;
     }
     
     @Override
@@ -25,7 +27,9 @@ public class ValidateHierarchyAction extends MDAction {
         if (!ExportUtility.checkBaseline()) {    
             return;
         }
-        ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false, true, true), "Validating View Hierarchy", true, 0);
+        for (Element view : views) {
+            ProgressStatusRunner.runWithProgressStatus(new ValidateViewRunner(view, false, true, true), "Validating View Hierarchy - " + (view instanceof NamedElement && ((NamedElement) view).getName() != null ? ((NamedElement) view).getName() : "<>"), true, 0);
+        }
     }
 }
 
