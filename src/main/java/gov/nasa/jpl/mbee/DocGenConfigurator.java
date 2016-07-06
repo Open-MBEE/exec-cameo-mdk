@@ -44,6 +44,7 @@ import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateOldDocgen;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
+import gov.nasa.jpl.mbee.actions.ems.DebugExportImportModels;
 import gov.nasa.jpl.mbee.actions.ems.ExportAllDocuments;
 import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
 import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
@@ -191,6 +192,8 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (ViewEditUtils.isPasswordSet()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
+                if (manager.getActionFor(DebugExportImportModels.actionid) == null)
+                    models.addAction(new DebugExportImportModels(e));
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
                     models.addAction(new ExportModelAction(e));
                 if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
