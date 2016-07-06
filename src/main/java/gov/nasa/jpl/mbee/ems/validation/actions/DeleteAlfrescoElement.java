@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -69,7 +70,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
         JSONArray elements = new JSONArray();
         send.put("elements", elements);
         send.put("source", "magicdraw");
-        send.put("mmsVersion", "2.3");
+        send.put("mmsVersion", DocGenPlugin.VERSION);
         for (Annotation anno: annos) {
             String message = anno.getText();
             String[] mes = message.split("`");

@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
@@ -174,7 +175,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
         JSONObject send = new JSONObject();
         send.put("elements", elements);
         send.put("source", "magicdraw");
-        send.put("mmsVersion", "2.3");
+        send.put("mmsVersion", DocGenPlugin.VERSION);
         
         String url = ExportUtility.getPostElementsUrl();
         if (url == null) {

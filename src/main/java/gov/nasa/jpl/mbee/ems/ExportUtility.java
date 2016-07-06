@@ -28,54 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
-import gov.nasa.jpl.mbee.lib.MDUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mbee.web.JsonRequestEntity;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.MessageConsumer;
-import javax.jms.Session;
-import javax.jms.Topic;
-import javax.swing.JOptionPane;
-
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.compress.utils.IOUtils;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
 import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
@@ -89,35 +41,9 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralNull;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
@@ -127,6 +53,30 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.DocGenPlugin;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.lib.MDUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.web.JsonRequestEntity;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.*;
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.log4j.Logger;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
+import javax.jms.*;
+import javax.swing.*;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class ExportUtility {
     public static boolean justPostconditionIds = true;  // don't embed conditions
@@ -139,7 +89,7 @@ public class ExportUtility {
     public static boolean baselineNotSet = false;
     public static Map<String, Map<String, String>> wsIdMapping = new HashMap<String, Map<String, String>>();
     public static Map<String, Map<String, String>> sites = new HashMap<String, Map<String, String>>();
-    
+
     public static void updateWorkspaceIdMapping() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> idmapping = null;
@@ -149,7 +99,7 @@ public class ExportUtility {
             idmapping = new HashMap<String, String>();
             wsIdMapping.put(projId, idmapping);
         }
-        
+
         String url = getUrl();
         if (url == null)
             return;
@@ -158,7 +108,7 @@ public class ExportUtility {
         try {
             result = get(url, false);
         } catch (ServerException ex) {
-            
+
         }
         if (result != null) {
             idmapping.clear();
@@ -172,7 +122,7 @@ public class ExportUtility {
             }
         }
     }
-    
+
     public static void updateMasterSites() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> idmapping = null;
@@ -182,7 +132,7 @@ public class ExportUtility {
             idmapping = new HashMap<String, String>();
             sites.put(projId, idmapping);
         }
-        
+
         String url = getUrl();
         if (url == null)
             return;
@@ -191,7 +141,7 @@ public class ExportUtility {
         try {
             result = get(url, false);
         } catch (ServerException ex) {
-            
+
         }
         if (result != null) {
             idmapping.clear();
@@ -204,7 +154,7 @@ public class ExportUtility {
             }
         }
     }
-    
+
     public static boolean siteExists(String site, boolean human) {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> idmapping = null;
@@ -219,8 +169,8 @@ public class ExportUtility {
         else
             return idmapping.values().contains(site);
     }
-    
-    public static Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
+
+    public static final Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
             "_17_0_2_3_e9f034d_1375396269655_665865_29411", // stylesaver
             "_17_0_2_2_ff3038a_1358222938684_513628_2513", // integrity
             "_17_0_2_2_ff3038a_1358666613056_344763_2540", // integrity
@@ -312,7 +262,7 @@ public class ExportUtility {
             "_18_0_2_407019f_1433361787467_278914_14410" //view elements dummy slot
             ));
 
-    public static Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
+    public static final Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
             "_11_5EAPbeta_be00301_1147431307463_773225_1455", //nested connector end
             "_16_5beta1_8ba0276_1232443673758_573873_267", //diagram table
             "_9_0_be00301_1108044380615_150487_0", //diagram info
@@ -323,17 +273,18 @@ public class ExportUtility {
             "_17_0_2_3_407019f_1383165357327_898985_29071", //mms
             "_17_0_3_85f027d_1362349793845_681432_2986" //specification table
             ));
-    
+
 
     public static String getElementID(Element e) {
     	if (e == null) {
     		return null;
     	}
         if (e instanceof Slot) {
-            if (e.getOwner() == null || ((Slot)e).getDefiningFeature() == null)
+            Slot slot = (Slot) e;
+            if (slot.getOwningInstance() == null || slot.getDefiningFeature() == null) {
                 return null;
-            return e.getOwner().getID() + "-slot-"
-                    + ((Slot) e).getDefiningFeature().getID();
+            }
+            return slot.getOwningInstance().getID() + "-slot-" + slot.getDefiningFeature().getID();
         } else if (e instanceof Model && e == Application.getInstance().getProject().getModel()) {
             return Application.getInstance().getProject().getPrimaryProject().getProjectID();
         }
@@ -353,13 +304,10 @@ public class ExportUtility {
         } else {
             Element instancespec = (Element) prj.getElementByID(ids[0]);
             Element definingFeature = (Element) prj.getElementByID(ids[1]);
-            if (instancespec != null && definingFeature != null
-                    && instancespec instanceof InstanceSpecification) {
-                for (Element e : ((InstanceSpecification) instancespec)
-                        .getOwnedElement()) {
-                    if (e instanceof Slot
-                            && ((Slot) e).getDefiningFeature() == definingFeature)
-                        return e;
+            if (instancespec != null && definingFeature != null && instancespec instanceof InstanceSpecification) {
+                for (Slot slot : ((InstanceSpecification) instancespec).getSlot()) {
+                    if (slot.getDefiningFeature() == definingFeature)
+                        return slot;
                 }
             } else
                 return null;
@@ -408,16 +356,16 @@ public class ExportUtility {
         // do switch here
         return site;
     }
-    
+
     public static String getSiteForProject(IProject prj) {
         String human = getHumanSiteForProject(prj);
         return sites.get(Application.getInstance().getProject().getPrimaryProject().getProjectID()).get(human);
     }
-    
+
     public static String getHumanSiteForProject(IProject prj) {
         return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace('.', '-');
     }
-    
+
     public static String getWorkspace() {
         Project project = Application.getInstance().getProject();
         String twbranch = getTeamworkBranch(project);
@@ -442,7 +390,7 @@ public class ExportUtility {
         Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
         return null;
     }
-    
+
     public static String getUrlWithWorkspace() {
         String url = getUrl();
         String workspace = getWorkspace();
@@ -450,7 +398,7 @@ public class ExportUtility {
             return url + "/workspaces/" + workspace;
         return null;
     }
-    
+
     public static String getUrlWithWorkspaceAndSite() {
         String url = getUrl();
         String workspace = getWorkspace();
@@ -479,7 +427,7 @@ public class ExportUtility {
             return url + "/workspaces/master/sites/" + site + "/projects/" + prj.getProjectID();
         return null;
     }
-    
+
     public static String getPostElementsUrl() {
         String url = getUrlWithWorkspaceAndSite();
         if (url == null)
@@ -517,15 +465,15 @@ public class ExportUtility {
                 }
                 if (code == 400)
                     return false;
-            } 
+            }
             return true;
-        } 
+        }
         try {
             Object o = JSONValue.parse(response);
             if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
                 Utils.guilog("Server message: 200 " + ((JSONObject)o).get("message"));
         } catch (Exception c) {
-                
+
         }
         return false;
     }
@@ -560,10 +508,10 @@ public class ExportUtility {
             gm.releaseConnection();
         }
         return null;
-        
+
     }
-    
-   
+
+
     public static String send(String url, PostMethod pm) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null)
@@ -620,14 +568,14 @@ public class ExportUtility {
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            
-            
+
+
             /*int timeout = 120; // seconds
             HttpParams httpParams = client.getParams();
             httpParams.setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, timeout * 1000); //cause ConnectionTimeoutException
             httpParams.setParameter(HttpConnectionParams.SO_TIMEOUT, timeout * 1000); //casue SockteTimeoutException
             */
-            
+
             ViewEditUtils.setCredentials(client, url, pm);
             if (print)
                 log.info(_threadName + " executing....");
@@ -666,7 +614,7 @@ public class ExportUtility {
         //return send(url, json, null); //method == null means POST
     	return send(url, json/*, method*/, true, false);
     }
-    
+
     public static String deleteWithBody(String url, String json, boolean feedback) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         checkAndResetTicket();
@@ -698,7 +646,7 @@ public class ExportUtility {
             pm.releaseConnection();
         }
     }
-    
+
     public static String getWithBody(String url, String json) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
@@ -733,7 +681,7 @@ public class ExportUtility {
             pm.releaseConnection();
         }
     }
-    
+
     //convert the view2view json object given by alfresco visitor to json server expects
     @SuppressWarnings("unchecked")
     public static JSONArray formatView2View(JSONObject vv) {
@@ -765,16 +713,16 @@ public class ExportUtility {
         return response;
     }
 
-    // helper method for long for get() method. will trigger a login dialogue    
+    // helper method for long for get() method. will trigger a login dialogue
     public static String get(String url) throws ServerException {
         return get(url, null, null, true);
     }
-    
+
     // helper method for long for get() method. will trigger a login dialogue
     public static String get(String url, boolean showPopupErrors) throws ServerException {
     	return get(url, null, null, showPopupErrors);
     }
-    
+
     // helper method for long for get() method. will bypass the login dialogue if username is not null or empty ""
     public static String get(String url, String username, String password) throws ServerException {
     	return get(url, username, password, true);
@@ -794,7 +742,7 @@ public class ExportUtility {
             return false;
         }
     }
-    
+
     public static boolean checkTicket(String baseUrl) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         String ticket = ViewEditUtils.getTicket();
@@ -833,9 +781,9 @@ public class ExportUtility {
     // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
     public static String getTicket(String url, String username, String password, boolean showPopupErrors) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-        
+
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
-      
+
         HttpClient client = new HttpClient();
         if (url == null)
             return null;
@@ -843,22 +791,22 @@ public class ExportUtility {
         PostMethod postMethod = new PostMethod(url);
         String userpasswordJsonString = "";
         try {
-            
+
             if (username != null && !username.equals(""))
                 ViewEditUtils.setUsernameAndPassword(username, password, true);
-            
+
             userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
-            
+
            // String JSON_STRING = "{\"username\":\"username\", \"password\":\"password\"}";
-            
+
             StringRequestEntity requestEntity = new StringRequestEntity(
                     userpasswordJsonString,
                     "application/json",
                     "UTF-8");
 
-            
+
             postMethod.setRequestEntity(requestEntity);
             int code = client.executeMethod(postMethod);
             String json = postMethod.getResponseBodyAsString();
@@ -870,7 +818,7 @@ public class ExportUtility {
             if (code == 400)
                 throw new ServerException(json, code); //?
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
-            
+
             JSONObject ob =  (JSONObject) JSONValue.parse(json);
             if (ob != null) {
                 JSONObject d = (JSONObject)ob.get("data");
@@ -939,7 +887,7 @@ public class ExportUtility {
             gm.releaseConnection();
         }
     }
-    
+
     public static String addTicketToUrl(String r) {
         String ticket = ViewEditUtils.getTicket();
         if (ticket == null || ticket.equals(""))
@@ -951,7 +899,7 @@ public class ExportUtility {
             url +="?alf_ticket=" + ticket;
         return url;
     }
-    
+
     //check if comment is actually the documentation of its owner
     public static boolean isElementDocumentation(Comment c) {
         if (c.getAnnotatedElement().size() > 1
@@ -966,8 +914,8 @@ public class ExportUtility {
             JSONObject einfo) {
         return fillValueSpecification(vs, einfo, false);
     }
-    
-    
+
+
     //given value spec and value object, fill in stuff
     @SuppressWarnings("unchecked")
     public static JSONObject fillValueSpecification(ValueSpecification vs,
@@ -1043,7 +991,7 @@ public class ExportUtility {
                     try {
                         elementInfo.put("double", (long)real);
                     } catch (Exception ex) {
-                        
+
                     }
                 }
             } else if (vs instanceof LiteralString) {
@@ -1175,11 +1123,12 @@ public class ExportUtility {
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
             if (cob.containsKey("specification")) {
-                specialization.put("contents", (JSONObject)cob.get("specification"));
+                specialization.put("contents", cob.get("specification"));
                 specialization.put("contains", new JSONArray());
             }
         }
-        Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
+        // Moved from stereotype to memory to not need a lock; see ViewPresentationGenerator
+        /*Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
         if (o != null && o instanceof String) {
             try {
                 JSONArray a = (JSONArray)JSONValue.parse((String)o);
@@ -1188,10 +1137,10 @@ public class ExportUtility {
             } catch (Exception ex) {}
         } else {
             specialization.put("displayedElements", new JSONArray());
-        }
+        }*/
         return specialization;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillPropertySpecialization(Element e, JSONObject spec, boolean value, boolean ptype) {
         JSONObject specialization = spec;
@@ -1213,7 +1162,7 @@ public class ExportUtility {
 		            // the array into the specialization element as the
 		            // value of the "value" property.
 		            //
-		            
+
 		            JSONObject newElement = new JSONObject();
 		            fillValueSpecification(vs, newElement);
 		            singleElementSpecVsArray.add(newElement);
@@ -1231,19 +1180,19 @@ public class ExportUtility {
 		    }
 		    specialization.put("multiplicityMin", (long)((Property)e).getLower());
 		    specialization.put("multiplicityMax", (long)((Property)e).getUpper());
-		     
+
 		    Collection<Property> cps = ((Property)e).getRedefinedProperty();
 		    JSONArray redefinedProperties = new JSONArray();
-		    for (Property cp : cps) 
+		    for (Property cp : cps)
 		     	redefinedProperties.add(getElementID(cp));
 		    specialization.put("redefines", redefinedProperties);
-		   
+
 		} else { //if (e instanceof Slot) {
 			specialization.put("type", "Property");
 			specialization.put("isDerived", false);
 		    specialization.put("isSlot", true);
-		    
-		
+
+
 		    // Retrieve a list of ValueSpecification objects.
 		    // Loop through these objects, creating a new JSONObject
 		    // for each value spec. Fill in the new JSONObject and
@@ -1273,7 +1222,7 @@ public class ExportUtility {
 		}
         return specialization;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillInstanceSpecificationSpecialization(InstanceSpecification e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1289,7 +1238,7 @@ public class ExportUtility {
         specialization.put("type", "InstanceSpecification");
         return specialization;
     }
-    
+
 	public static JSONObject sanitizeJSON(JSONObject spec) {
 		List<Object> remKeys = new ArrayList<Object>();
 		for (Object key: spec.keySet()) {
@@ -1303,7 +1252,7 @@ public class ExportUtility {
 		}
 		return spec;
 	}
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1328,7 +1277,7 @@ public class ExportUtility {
         specialization.put("type", "Association");
         return specialization;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillPackage(Package e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1338,14 +1287,14 @@ public class ExportUtility {
         specialization.put("isSite", Utils.isSiteChar(e));
         return specialization;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject spec) {
         JSONObject specialization = spec;
         if (specialization == null)
             specialization = new JSONObject();
         specialization.put("type", "Constraint");
-        ValueSpecification vspec = ((Constraint) e).getSpecification();
+        ValueSpecification vspec = e.getSpecification();
         if (vspec != null) {
             JSONObject cspec = new JSONObject();
             fillValueSpecification(vspec, cspec);
@@ -1353,7 +1302,7 @@ public class ExportUtility {
         }
         return specialization;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillConnectorSpecialization(Connector e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1448,7 +1397,7 @@ public class ExportUtility {
         }
         return valueSpec;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillOperationSpecialization(Operation e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1486,7 +1435,7 @@ public class ExportUtility {
         }
         return specialization;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillParameterSpecialization(Parameter e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1504,7 +1453,7 @@ public class ExportUtility {
         // }
         return specialization;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillDirectedRelationshipSpecialization(DirectedRelationship e, JSONObject spec) {
         JSONObject specialization = spec;
@@ -1543,13 +1492,13 @@ public class ExportUtility {
             info = new JSONObject();
             info.put("sysmlid", getElementID(e));
         }
-        if (e instanceof NamedElement) 
+        if (e instanceof NamedElement)
             info.put("name", ((NamedElement)e).getName());
         else
             info.put("name", "");
         return info;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillDoc(Element e, JSONObject einfo) {
         JSONObject info = einfo;
@@ -1560,7 +1509,7 @@ public class ExportUtility {
         info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
         return info;
     }
-    
+
 	@SuppressWarnings("unchecked")
 	public static JSONObject fillOwnedAttribute(Element e, JSONObject einfo) {
 		JSONObject info = einfo;
@@ -1568,7 +1517,7 @@ public class ExportUtility {
 			info = new JSONObject();
 			info.put("sysmlid", getElementID(e));
 		}
-		
+
 		JSONArray propIDs = new JSONArray();
 		if (e instanceof Class) {
 			for (Property prop: ((Class)e).getOwnedAttribute()) {
@@ -1578,7 +1527,7 @@ public class ExportUtility {
 		}
 		return info;
 	}
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillOwner(Element e, JSONObject einfo) {
         JSONObject info = einfo;
@@ -1592,7 +1541,7 @@ public class ExportUtility {
             info.put("owner", "" + getElementID(e.getOwner()));
         return info;
     }
-    
+
     public static JSONObject fillId(Element e, JSONObject einfo) {
         JSONObject info = einfo;
         if (info == null) {
@@ -1601,7 +1550,7 @@ public class ExportUtility {
         info.put("sysmlid", getElementID(e));
         return info;
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject fillMetatype(Element e, JSONObject einfo) {
         JSONObject info = einfo;
@@ -1643,7 +1592,7 @@ public class ExportUtility {
         info.put("appliedMetatypes", applied);
         return info;
     }
-    
+
   //no one's using this, should consider removing it
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
@@ -1668,7 +1617,7 @@ public class ExportUtility {
         baselineNotSet = false;
         return tag;
     }
-    
+
     //no one uses this, should remove
     public static boolean checkBaselineMount() {
         Project prj = Application.getInstance().getProject();
@@ -1714,20 +1663,20 @@ public class ExportUtility {
         String checkProjUrl = baseUrl + "/projects/" + projectId;
         return getAlfrescoProjectVersionWithUrl(checkProjUrl);
     }
-    
+
     public static Integer getAlfrescoProjectVersion(String projectId, String wsId) {
         String baseUrl = getUrl();//WithWorkspace();
         baseUrl += "/workspaces/" + wsId;
         String checkProjUrl = baseUrl + "/projects/" + projectId;
         return getAlfrescoProjectVersionWithUrl(checkProjUrl);
     }
-    
+
     private static Integer getAlfrescoProjectVersionWithUrl(String url) {
         String json = null;
         try {
             json = get(url, false);
         } catch (ServerException ex) {
-            
+
         }
         if (json == null)
             return null; // ??
@@ -1903,7 +1852,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1912,7 +1861,7 @@ public class ExportUtility {
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
     }
-    
+
     public static void sendProjectVersion(String projId, Integer version) {
         String baseurl = getUrlWithWorkspaceAndSite();
         if (baseurl == null)
@@ -1922,7 +1871,7 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(result);
         String url = baseurl + "/projects";
         if (!url.contains("master"))
@@ -1941,12 +1890,12 @@ public class ExportUtility {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(moduleJson);
         //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
         return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);
     }
-    
+
     public static void initializeDurableQueue(String taskId) {
         String projectId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Connection connection = null;
@@ -1985,7 +1934,7 @@ public class ExportUtility {
             }
         }
     }
-    
+
     public static void sendProjectVersions() {
         for (String projid : mountedVersions.keySet()) {
             sendProjectVersion(projid, mountedVersions.get(projid));
@@ -2015,7 +1964,7 @@ public class ExportUtility {
             if (!shouldIgnore && !e.getOwnedElement().isEmpty())
                 return true;
             return false;
-            /*if (((InstanceSpecification)e).getClassifier().size() == 1 && 
+            /*if (((InstanceSpecification)e).getClassifier().size() == 1 &&
                     IGNORE_INSTANCE_CLASSIFIERS.contains(((InstanceSpecification)e).getClassifier().get(0).getID()))
                 return false;*/
         }
@@ -2044,7 +1993,7 @@ public class ExportUtility {
             return true; //view constraint, get from view itself
         return false;
     }
-    
+
     public static final Pattern HTML_WHITESPACE_END = Pattern.compile(
             "\\s*</p>", Pattern.DOTALL);
     public static final Pattern HTML_WHITESPACE_START = Pattern.compile(
@@ -2056,17 +2005,17 @@ public class ExportUtility {
         // inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
         // return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
     }
-    
+
     public static JSONObject getProjectJson() {
         Project prj = Application.getInstance().getProject();
         Integer ver = getProjectVersion(prj);
         return getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), ver);
     }
-    
+
     public static JSONObject getProjectJsonForProject(IProject prj) {
         return getProjectJSON(prj.getName(), prj.getProjectID(), null);
     }
-    
+
     @SuppressWarnings("unchecked")
     public static JSONObject getProjectJSON(String name, String projId, Integer version) {
         JSONObject result = new JSONObject();
@@ -2080,18 +2029,18 @@ public class ExportUtility {
         result.put("specialization", spec);
         return result;
     }
-    
+
     public static String getProjectId(Project proj) {
         return proj.getPrimaryProject().getProjectID();
     }
-    
+
     public static Integer getProjectVersion(Project proj) {
         Integer ver = null;
         if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject()))
             ver = TeamworkService.getInstance(proj).getVersion(proj).getNumber();
         return ver;
     }
-    
+
     public static String getTeamworkBranch(Project proj) {
         String branch = null;
         if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
@@ -2110,8 +2059,8 @@ public class ExportUtility {
         try {
             jsonString = get(url, false);
         } catch (ServerException ex) {}
-        if (jsonString == null) return null; 
-        
+        if (jsonString == null) return null;
+
         return (JSONObject)JSONValue.parse( jsonString );
     }
 

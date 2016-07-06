@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
@@ -160,7 +161,7 @@ AnnotationAction, IRuleViolationAction {
         JSONObject tosend = new JSONObject();
         tosend.put("elements", changes);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         String url = ExportUtility.getPostElementsUrl();
         if (!changes.isEmpty()) {
             Request r = new Request(url, tosend.toJSONString(), "POST", false, changes.size(), "Hierarchy Property Changes");
@@ -172,7 +173,7 @@ AnnotationAction, IRuleViolationAction {
             JSONArray elements = new JSONArray();
             send.put("elements", elements);
             send.put("source", "magicdraw");
-            send.put("mmsVersion", "2.3");
+            send.put("mmsVersion", DocGenPlugin.VERSION);
             for (String e: deletedIds) {
                 JSONObject eo = new JSONObject();
                 eo.put("sysmlid", e);

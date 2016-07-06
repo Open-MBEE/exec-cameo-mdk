@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.sync;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
@@ -144,7 +145,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             eles.addAll(elements.values());
             toSend.put("elements", eles);
             toSend.put("source", "magicdraw");
-            toSend.put("mmsVersion", "2.3");
+            toSend.put("mmsVersion", DocGenPlugin.VERSION);
             if (!eles.isEmpty()) {
                 String url = ExportUtility.getPostElementsUrl();
                 if (url != null) {
@@ -158,7 +159,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 JSONArray elements = new JSONArray();
                 send.put("elements", elements);
                 send.put("source", "magicdraw");
-                send.put("mmsVersion", "2.3");
+                send.put("mmsVersion", DocGenPlugin.VERSION);
                 for (String id: deletes) {
                     JSONObject eo = new JSONObject();
                     eo.put("sysmlid", id);
