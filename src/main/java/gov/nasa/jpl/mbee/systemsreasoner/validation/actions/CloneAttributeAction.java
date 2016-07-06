@@ -226,7 +226,6 @@ public class CloneAttributeAction extends MDAction {
 					mIndexesField.set(clonedMHolder, clone(mIndexes));
 				}
 				if ((mValuesField = getModifiableField(mHolder, "mValues")) != null) {
-					//System.out.println("ASDFSDFSDFSDFSDFSDFBOO");
 					mValuesField.setAccessible(true);
 					mValues = (Object[]) mValuesField.get(mHolder);
 					/*if (false && element instanceof Stereotype) {

@@ -62,8 +62,9 @@ public class JSONUtils {
 		for (Object key : keys) {
 			Object modVal = mod.get(key);
 			Object webVal = web.get(key);
-			if (!compare(modVal, webVal)) 
+			if (!compare(modVal, webVal)) {
 				return false;
+			}
 		}
 		return true;
 	}

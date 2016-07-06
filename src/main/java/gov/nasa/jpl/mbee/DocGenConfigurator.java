@@ -130,18 +130,16 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
     public void configure(ActionsManager manager, DiagramPresentationElement diagram,
             PresentationElement[] selected, PresentationElement requestor) {
         if ( repainting() ) return;
-        if (requestor != null) {
-            Collection<Element> es = new ArrayList<Element>();
-            for (PresentationElement pe: selected) {
-                if (pe.getElement() != null)
-                    es.add(pe.getElement());
-            }
-            Element e = requestor.getElement();
-            if (e != null)
-                addElementActions(manager, e, es);
-        } else {
-            addDiagramActions(manager, diagram);
+
+        List<Element> es = new ArrayList<>();
+        for (PresentationElement pe: selected) {
+            if (pe.getElement() != null)
+                es.add(pe.getElement());
         }
+        if (!es.isEmpty()) {
+            addElementActions(manager, es.get(0), es);
+        }
+        addDiagramActions(manager, diagram);
     }
 
     public static boolean repainting() {
@@ -164,7 +162,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         return false;
     }
 
-    private void addElementActions(ActionsManager manager, Element e, Collection<Element> es) {
+    private void addElementActions(ActionsManager manager, Element e, List<Element> es) {
         Project prj = Project.getProject(e);
         if (prj == null)
             return;
@@ -172,6 +170,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
         Stereotype documentView = Utils.getProductStereotype();
         Stereotype classview = Utils.getViewClassStereotype();
+        Stereotype elementGroupStereotype = Utils.getElementGroupStereotype();
         if (e == null)
             return;
 
@@ -242,26 +241,34 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             if (manager.getActionFor(RunUserScriptAction.actionid) == null)
                 c.addAction(new RunUserScriptAction(us, true));
         }
-        if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
+        boolean canShowGeneration = true;
+        for (Element element : es) {
+            if (!StereotypesHelper.hasStereotypeOrDerived(element, sysmlview) && !StereotypesHelper.hasStereotypeOrDerived(element, elementGroupStereotype)) {
+                canShowGeneration = false;
+                break;
+            }
+        }
+        if (canShowGeneration) {
             // There may be no view query actions to add, in which case we need
             // to avoid adding an empty menu category, so the category is
             // removed in this case.
-            if (classview != null) {
-            Boolean collectActions = (Boolean)StereotypesHelper.getStereotypePropertyFirst(e, classview, "collectViewActions");
-            if (collectActions != null && collectActions) {
-                ActionsCategory category = (ActionsCategory)manager.getActionFor("ViewInteraction");
-                if (category == null) {
-                    category = new MDActionsCategory("ViewInteraction", "View Interaction");
-                    category.setNested(true);
-                    boolean added = addViewQueryActions(manager, category, (NamedElement)e);
-                    if (added)
-                        manager.addCategory(0, category);
+            // Not worth implementing multi-selection for this legacy feature. Would require refactoring and testing.
+            if (classview != null && es.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
+                Boolean collectActions = (Boolean) StereotypesHelper.getStereotypePropertyFirst(e, classview, "collectViewActions");
+                if (collectActions != null && collectActions) {
+                    ActionsCategory category = (ActionsCategory) manager.getActionFor("ViewInteraction");
+                    if (category == null) {
+                        category = new MDActionsCategory("ViewInteraction", "View Interaction");
+                        category.setNested(true);
+                        boolean added = addViewQueryActions(manager, category, (NamedElement) e);
+                        if (added)
+                            manager.addCategory(0, category);
+                    }
                 }
-            }
             }
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
             if (ViewEditUtils.isPasswordSet()) {
-                ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
+                //ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
                 /*NMAction action = manager.getActionFor(ValidateViewAction.actionid);
                 if (action == null)
@@ -269,10 +276,17 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
                 if (action == null)
                     views.addAction(new ValidateViewRecursiveAction(e));*/
-                if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
+                boolean areAllDocuments = true;
+                for (Element element : es) {
+                    if (!StereotypesHelper.hasStereotypeOrDerived(element, documentView)) {
+                        areAllDocuments = false;
+                        break;
+                    }
+                }
+                if (areAllDocuments) {
                     NMAction action = manager.getActionFor(ValidateHierarchyAction.actionid);
                     if (action == null)
-                        modelLoad2.addAction(new ValidateHierarchyAction(e));
+                        modelLoad2.addAction(new ValidateHierarchyAction(es));
                 }
                 /*ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
 
@@ -286,24 +300,24 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
                 NMAction action = manager.getActionFor(GenerateViewPresentationAction.actionid);
                 if (action == null) {
-                    viewInstances.addAction(new GenerateViewPresentationAction(e, false));
+                    viewInstances.addAction(new GenerateViewPresentationAction(es, false));
                 }
                 action = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
                 if (action == null) {
-                    viewInstances.addAction(new GenerateViewPresentationAction(e, true));
+                    viewInstances.addAction(new GenerateViewPresentationAction(es, true));
                 }
-                action = manager.getActionFor(OrganizeViewInstancesAction.actionid);
+                /*action = manager.getActionFor(OrganizeViewInstancesAction.actionid);
                 if (action == null) {
-                    viewInstances.addAction(new OrganizeViewInstancesAction(e, false));
+                    viewInstances.addAction(new OrganizeViewInstancesAction(es, false));
                 }
                 action = manager.getActionFor(OrganizeViewInstancesAction.recurseActionid);
                 if (action == null) {
-                    viewInstances.addAction(new OrganizeViewInstancesAction(e, true));
+                    viewInstances.addAction(new OrganizeViewInstancesAction(es, true));
                 }
                 action = manager.getActionFor(OneClickUpdateDoc.actionid);
                 if (action == null) {
-                    viewInstances.addAction(new OneClickUpdateDoc(e));
-                }
+                    viewInstances.addAction(new OneClickUpdateDoc(es));
+                }*/
             }
             else {
             	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable

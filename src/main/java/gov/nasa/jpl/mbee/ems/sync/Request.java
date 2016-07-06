@@ -14,7 +14,7 @@ public class Request {
     private String type = "Element";
     private int numElements = 1;
     private boolean background = false;
-    
+
     public Request(String url, String json, String method, boolean feedback) {
         this.url = url;
         this.json = json;
@@ -22,62 +22,69 @@ public class Request {
         this.feedback = feedback;
         this.suppressGui = !feedback;
     }
-    
+
     public Request(String url, String json, String method, boolean feedback, int wait, String type) {
         this.url = url;
         this.json = json;
         this.method = method;
         this.feedback = feedback;
         this.suppressGui = !feedback;
-        this.wait = wait*1000 + 120000;
+        this.wait = wait * 1000 + 120000;
         this.type = type;
         this.numElements = wait;
     }
-    
+
     public Request(String url, String json, String type) {
         this.url = url;
         this.json = json;
         this.type = type;
     }
-    
+
     public Request(String url, String json, int wait, String type, Boolean background) {
-    	this.url = url;
-    	if (background != null && background)
-        	this.url += "?background=true";
-    	    		
+        this.url = url;
+        if (background != null && background)
+            this.url += "?background=true";
+
         this.json = json;
-        this.wait = wait*1000 + 120000;
+        this.wait = wait * 1000 + 120000;
         this.type = type;
         this.numElements = wait;
         this.background = (background == null) ? false : background;
     }
-    
+
     public Request(String url, PostMethod pm, String type) {
         this.pm = pm;
         this.url = url;
         this.type = type;
     }
-    
-    public Request() {}
-    
-    public boolean isBackgournd(){
-    	return background;
+
+    public Request() {
     }
+
+    public boolean isBackground() {
+        return background;
+    }
+
     public String getJson() {
         return json;
     }
+
     public void setJson(String json) {
         this.json = json;
     }
+
     public String getUrl() {
         return url;
     }
+
     public void setUrl(String url) {
         this.url = url;
     }
+
     public void setMethod(String method) {
         this.method = method;
     }
+
     public String getMethod() {
         return method;
     }
@@ -105,15 +112,15 @@ public class Request {
     public void setSuppressGui(boolean suppressGui) {
         this.suppressGui = suppressGui;
     }
-    
+
     public int getWait() {
         return wait;
     }
-    
+
     public void setWait(int wait) {
         this.wait = wait;
     }
-    
+
     public String getType() {
         return type;
     }

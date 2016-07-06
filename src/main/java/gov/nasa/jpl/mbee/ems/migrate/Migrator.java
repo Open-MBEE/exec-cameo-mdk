@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.migrate;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
@@ -37,7 +38,7 @@ public abstract class Migrator {
 		JSONObject send = new JSONObject();
 		send.put("elements", elements);
 		send.put("source", "magicdraw");
-        send.put("mmsVersion", "2.3");
+        send.put("mmsVersion", DocGenPlugin.VERSION);
 
 
 		String url = ExportUtility.getPostElementsUrl();
