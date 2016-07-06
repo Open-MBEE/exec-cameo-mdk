@@ -86,6 +86,12 @@ import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityParameterNode;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ControlFlow;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ObjectFlow;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
@@ -118,6 +124,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.OpaqueBehavior;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
@@ -996,9 +1004,9 @@ public class ExportUtility {
             elementInfo.put("type", "ElementValue");
             Element elem = ((ElementValue) vs).getElement();
             if (elem != null) {
-                elementInfo.put("element", ExportUtility.getElementID(elem));
+                elementInfo.put("element_id", ExportUtility.getElementID(elem));
             } else {
-                elementInfo.put("element", null);
+                elementInfo.put("element_id", null);
             }
         } else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
@@ -1077,7 +1085,7 @@ public class ExportUtility {
         }
         return elementInfo;
     }
-
+   
     @SuppressWarnings("unchecked")
     protected static <T extends MDObject> JSONArray makeJsonArrayOfIDs(
             Collection<T> collection) {
@@ -1133,6 +1141,7 @@ public class ExportUtility {
             specialization.put("type", "Comment");
         } else if (e instanceof Association) {
             fillAssociationSpecialization((Association)e, specialization);
+       
         } else if (e.getClass().getSimpleName().equals("ClassImpl")) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
             Stereotype view = Utils.getViewStereotype();
@@ -1148,10 +1157,27 @@ public class ExportUtility {
                 fillViewContent(e, specialization);
             } else
                 specialization.put("type", "Element");
-        } else {
-            specialization.put("type", "Untyped");
+        } else if (e instanceof CallBehaviorAction){
+            fillCallBehaviorActionSpecialization((CallBehaviorAction)e, specialization);
+        } else if (e instanceof ActivityEdge){ //ControlFlow ObjectFlow
+            Class baseClass = StereotypesHelper.getBaseClass(e);
+            specialization.put("type",baseClass.getName());
+            fillActivityEdgeSpecialization((ActivityEdge)e, specialization);
+        } else if (e instanceof OpaqueBehavior){ //OpaqueBehavior,  FunctionBehavior
+            Class baseClass = StereotypesHelper.getBaseClass(e);
+            specialization.put("type",baseClass.getName());
+            fillOpaqueBehaviorSpecialization((OpaqueBehavior) e, specialization);
+        } else if (e instanceof ActivityParameterNode){
+            specialization.put("type", "ActivityParameterNode");
+            fillActivityParameterNodeSpecialization((ActivityParameterNode) e, specialization);
+        } else { //InitialNode, ActivityFinalNode
+            String typeName = "Untyped"; //default
+            Class baseClass = StereotypesHelper.getBaseClass(e);
+            if (baseClass != null)
+                typeName = baseClass.getName();
+            specialization.put("type", typeName);
         }
-        fillOwnedAttribute(e, elementInfo);
+        fillOwnedAttribute(e, specialization);
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
@@ -1159,7 +1185,48 @@ public class ExportUtility {
         elementInfo.put("sysmlid", getElementID(e));
         return elementInfo;
     }
-
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillActivityParameterNodeSpecialization(ActivityParameterNode e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        Parameter s;
+        specialization.put("parameter_id", ((s = e.getParameter()) == null) ? null : s.getID());
+        return specialization;
+    }
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillOpaqueBehaviorSpecialization(OpaqueBehavior e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+       
+        specialization.put("body", makeJsonArray(e.getBody()));
+        specialization.put("language", makeJsonArray(e.getLanguage()));
+        return specialization;
+    }
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillActivityEdgeSpecialization(ActivityEdge e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        Element s;
+        specialization.put("source_id", ((s = e.getSource()) == null) ? null : s.getID());
+        specialization.put("target_id", ((s = e.getTarget()) == null) ? null : s.getID());
+        specialization.put("guard_id",  ((s = e.getGuard()) == null) ? null : s.getID());
+        return specialization;
+    }
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillCallBehaviorActionSpecialization(CallBehaviorAction e, JSONObject spec) {
+        JSONObject specialization = spec;
+        if (specialization == null)
+            specialization = new JSONObject();
+        specialization.put("type", "CallBehaviorAction");
+        
+        Element s;
+        specialization.put("behavior_id", ((s = e.getBehavior()) == null) ? null : s.getID());
+        return specialization;
+    }
 	public static JSONObject fillViewContent(Element e, JSONObject spec) {
         Stereotype doc = Utils.getProductStereotype();
         JSONObject specialization = spec;
@@ -1223,9 +1290,9 @@ public class ExportUtility {
 		    if (ptype) {
 		        Type type = ((Property) e).getType();
 		        if (type != null) {
-		            specialization.put("propertyType", "" + type.getID());
+		            specialization.put("propertyType_id", "" + type.getID());
 		        } else
-		            specialization.put("propertyType", null);
+		            specialization.put("propertyType_id", null);
 		    }
 		    specialization.put("multiplicityMin", (long)((Property)e).getLower());
 		    specialization.put("multiplicityMax", (long)((Property)e).getUpper());
@@ -1234,7 +1301,7 @@ public class ExportUtility {
 		    JSONArray redefinedProperties = new JSONArray();
 		    for (Property cp : cps) 
 		     	redefinedProperties.add(getElementID(cp));
-		    specialization.put("redefines", redefinedProperties);
+		    specialization.put("redefines_id", redefinedProperties);
 		   
 		} else { //if (e instanceof Slot) {
 			specialization.put("type", "Property");
@@ -1265,7 +1332,7 @@ public class ExportUtility {
 		    if (ptype) {
 		        Element type = ((Slot) e).getDefiningFeature();
 		        if (type != null) {
-		            specialization.put("propertyType", "" + type.getID());
+		            specialization.put("propertyType_id", "" + type.getID());
 		        }
 		    }
 		}
@@ -1283,7 +1350,7 @@ public class ExportUtility {
         for (Classifier c: e.getClassifier()) {
             classifiers.add(c.getID());
         }
-        specialization.put("classifier", classifiers);
+        specialization.put("classifier_id", classifiers);
         specialization.put("type", "InstanceSpecification");
         return specialization;
     }
@@ -1310,10 +1377,10 @@ public class ExportUtility {
         int i = 0;
         for (Property p: e.getMemberEnd()) {
             if (i == 0) {
-                specialization.put("source", p.getID());
+                specialization.put("source_id", p.getID());
                 // specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
             } else {
-                specialization.put("target", p.getID());
+                specialization.put("target_id", p.getID());
                 // specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
@@ -1378,18 +1445,18 @@ public class ExportUtility {
             if (i == 0) {
                 //specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
                 //specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
-                specialization.put("sourcePath", propertyPath);
+                specialization.put("sourcePath_id", propertyPath);
             } else {
                 //specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
                 //specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
-                specialization.put("targetPath", propertyPath);
+                specialization.put("targetPath_id", propertyPath);
             }
             i++;
         }
         if (e.getType() == null)
-            specialization.put("connectorType", null);
+            specialization.put("connectorType_id", null);
         else
-            specialization.put("connectorType", e.getType().getID());
+            specialization.put("connectorType_id", e.getType().getID());
         specialization.put("connectorKind", "NONE");
         return specialization;
     }
@@ -1402,7 +1469,7 @@ public class ExportUtility {
         specialization.put("type", "Operation");
         List<Parameter> vsl = ((Operation) e).getOwnedParameter();
         if (vsl != null && vsl.size() > 0) {
-            specialization.put("parameters", makeJsonArrayOfIDs(vsl));
+            specialization.put("parameters_id", makeJsonArrayOfIDs(vsl));
         }
         return specialization;
     }
@@ -1416,7 +1483,7 @@ public class ExportUtility {
         if (e.getDirection() != null)
             specialization.put("direction", e.getDirection().toString());
         if (e.getType() != null)
-            specialization.put("parameterType", e.getType().getID());
+            specialization.put("parameterType_id", e.getType().getID());
         //ValueSpecification defaultValue = p.getDefaultValue();
         //if (defaultValue != null) {
         //    specialization.put("parameterDefaultValue",
@@ -1450,9 +1517,9 @@ public class ExportUtility {
         Element client = ModelHelper.getClientElement(e);
         Element supplier = ModelHelper.getSupplierElement(e);
         if (client != null) //this shouldn't happen
-            specialization.put("source", getElementID(client));
+            specialization.put("source_id", getElementID(client));
         if (supplier != null) //this shouldn't happen
-            specialization.put("target", getElementID(supplier));
+            specialization.put("target_id", getElementID(supplier));
         return specialization;
     }
 
@@ -1494,7 +1561,7 @@ public class ExportUtility {
 			for (Property prop: ((Class)e).getOwnedAttribute()) {
 				propIDs.add(getElementID(prop));
 			}
-			info.put("ownedAttribute", propIDs);
+			info.put("ownedAttribute_id", propIDs);
 		}
 		return info;
 	}
@@ -1507,9 +1574,9 @@ public class ExportUtility {
             info.put("sysmlid", getElementID(e));
         }
         if (e.getOwner() == null)
-            info.put("owner", null);
+            info.put("owner_id", null);
         else
-            info.put("owner", "" + getElementID(e.getOwner()));
+            info.put("owner_id", "" + getElementID(e.getOwner()));
         return info;
     }
     
@@ -1541,7 +1608,7 @@ public class ExportUtility {
             for (Class c: StereotypesHelper.getBaseClasses((Stereotype)e)) {
                 metatypes.add(c.getID());
             }
-            info.put("metatypes", metatypes);
+            info.put("metatypes_id", metatypes);
         }
         if (e instanceof Class) {
             try {
@@ -1558,9 +1625,11 @@ public class ExportUtility {
             applied.add(s.getID());
         }
         Class baseClass = StereotypesHelper.getBaseClass(e);
-        if (baseClass != null)
+        if (baseClass != null){
             applied.add(baseClass.getID());
-        info.put("appliedMetatypes", applied);
+            System.out.println( "!!!!!!!baseclass!!!!!!!: " + baseClass.getName());
+        }
+        info.put("appliedMetatypes_id", applied);
         return info;
     }
     
