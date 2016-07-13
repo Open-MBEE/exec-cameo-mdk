@@ -1004,7 +1004,7 @@ public class ExportUtility {
         } else if (vs instanceof ElementValue) {
             elementInfo.put("type", "ElementValue");
             Element elem = ((ElementValue) vs).getElement();
-            elementInfo.put("element_id", ((elem != null) ? ExportUtility.getElementID(elem) : null));
+            elementInfo.put("elementId", ((elem != null) ? ExportUtility.getElementID(elem) : null));
         } else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
             //if (((Expression) vs).getSymbol() != null) {
@@ -1181,7 +1181,7 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         Parameter s;
-        specialization.put("parameter_id", ((s = e.getParameter()) == null) ? null : s.getID());
+        specialization.put("parameterId", ((s = e.getParameter()) == null) ? null : s.getID());
         return specialization;
     }
     @SuppressWarnings("unchecked")
@@ -1200,8 +1200,8 @@ public class ExportUtility {
         if (specialization == null)
             specialization = new JSONObject();
         Element s;
-        specialization.put("source_id", ((s = e.getSource()) == null) ? null : s.getID());
-        specialization.put("target_id", ((s = e.getTarget()) == null) ? null : s.getID());
+        specialization.put("sourceId", ((s = e.getSource()) == null) ? null : s.getID());
+        specialization.put("targetId", ((s = e.getTarget()) == null) ? null : s.getID());
         
         ValueSpecification gurad = e.getGuard();
         if ( gurad == null)
@@ -1221,7 +1221,7 @@ public class ExportUtility {
         specialization.put("type", "CallBehaviorAction");
         
         Element s;
-        specialization.put("behavior_id", ((s = e.getBehavior()) == null) ? null : s.getID());
+        specialization.put("behaviorId", ((s = e.getBehavior()) == null) ? null : s.getID());
         return specialization;
     }
 	public static JSONObject fillViewContent(Element e, JSONObject spec) {
@@ -1286,7 +1286,7 @@ public class ExportUtility {
 		    //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
 		    if (ptype) {
 		        Type type = ((Property) e).getType();
-		        specialization.put("propertyType_id", (type == null) ? null : type.getID());
+		        specialization.put("propertyTypeId", (type == null) ? null : type.getID());
 		        
 		    }
 		    specialization.put("multiplicityMin", (long)((Property)e).getLower());
@@ -1296,7 +1296,7 @@ public class ExportUtility {
 		    JSONArray redefinedProperties = new JSONArray();
 		    for (Property cp : cps) 
 		     	redefinedProperties.add(getElementID(cp));
-		    specialization.put("redefines_id", redefinedProperties);
+		    specialization.put("redefinesId", redefinedProperties);
 		   
 		} else { //if (e instanceof Slot) {
 			specialization.put("type", "Property");
@@ -1326,7 +1326,7 @@ public class ExportUtility {
 		    }
 		    if (ptype) {
 		        Element type = ((Slot) e).getDefiningFeature();
-		        specialization.put("propertyType_id", (type == null) ? null : type.getID());
+		        specialization.put("propertyTypeId", (type == null) ? null : type.getID());
 		    }
 		}
         return specialization;
@@ -1343,7 +1343,7 @@ public class ExportUtility {
         for (Classifier c: e.getClassifier()) {
             classifiers.add(c.getID());
         }
-        specialization.put("classifier_id", classifiers);
+        specialization.put("classifierId", classifiers);
         specialization.put("type", "InstanceSpecification");
         return specialization;
     }
@@ -1370,10 +1370,10 @@ public class ExportUtility {
         int i = 0;
         for (Property p: e.getMemberEnd()) {
             if (i == 0) {
-                specialization.put("source_id", p.getID());
+                specialization.put("sourceId", p.getID());
                 // specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
             } else {
-                specialization.put("target_id", p.getID());
+                specialization.put("targetId", p.getID());
                 // specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
@@ -1438,16 +1438,16 @@ public class ExportUtility {
             if (i == 0) {
                 //specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
                 //specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
-                specialization.put("sourcePath_id", propertyPath);
+                specialization.put("sourcePathId", propertyPath);
             } else {
                 //specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
                 //specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
-                specialization.put("targetPath_id", propertyPath);
+                specialization.put("targetPathId", propertyPath);
             }
             i++;
         }
         Association type = e.getType();
-        specialization.put("connectorType_id", (type == null) ? null : type.getID());
+        specialization.put("connectorTypeId", (type == null) ? null : type.getID());
         specialization.put("connectorKind", "NONE");
         return specialization;
     }
@@ -1460,9 +1460,9 @@ public class ExportUtility {
         specialization.put("type", "Operation");
         List<Parameter> vsl = ((Operation) e).getOwnedParameter();
         if (vsl != null && vsl.size() > 0) 
-            specialization.put("parameters_id", makeJsonArrayOfIDs(vsl));
+            specialization.put("parametersId", makeJsonArrayOfIDs(vsl));
         else
-            specialization.put("parameters_id", new JSONArray());
+            specialization.put("parametersId", new JSONArray());
         return specialization;
     }
     
@@ -1477,7 +1477,7 @@ public class ExportUtility {
         specialization.put("direction", (dir == null) ? null :dir.toString());
         
         Type type = e.getType();
-        specialization.put("parameterType_id", (type == null) ? null : type.getID());
+        specialization.put("parameterTypeId", (type == null) ? null : type.getID());
             
         
         //ValueSpecification defaultValue = p.getDefaultValue();
@@ -1513,9 +1513,9 @@ public class ExportUtility {
         Element client = ModelHelper.getClientElement(e);
         Element supplier = ModelHelper.getSupplierElement(e);
         // (client != null) //this shouldn't happen
-        specialization.put("source_id", (client == null) ? null : getElementID(client));
+        specialization.put("sourceId", (client == null) ? null : getElementID(client));
         //(supplier != null) //this shouldn't happen
-        specialization.put("target_id", (supplier == null) ? null : getElementID(supplier));
+        specialization.put("targetId", (supplier == null) ? null : getElementID(supplier));
         return specialization;
     }
 
@@ -1555,7 +1555,7 @@ public class ExportUtility {
 			for (Property prop: ((Class)e).getOwnedAttribute()) {
 				propIDs.add(getElementID(prop));
 			}
-			info.put("ownedAttribute_id", propIDs);
+			info.put("ownedAttributeId", propIDs);
 		}
 		return info;
 	}
@@ -1568,7 +1568,7 @@ public class ExportUtility {
             info.put("sysmlid", getElementID(e));
         }
         
-        info.put("owner_id", (e.getOwner() == null) ? null :  getElementID(e.getOwner()));
+        info.put("ownerId", (e.getOwner() == null) ? null :  getElementID(e.getOwner()));
         return info;
     }
     
@@ -1600,7 +1600,7 @@ public class ExportUtility {
             for (Class c: StereotypesHelper.getBaseClasses((Stereotype)e)) {
                 metatypes.add(c.getID());
             }
-            info.put("metatypes_id", metatypes);
+            info.put("metatypesId", metatypes);
         }
         if (e instanceof Class) {
             try {
@@ -1620,7 +1620,7 @@ public class ExportUtility {
         if (baseClass != null)
             applied.add(baseClass.getID());
            
-        info.put("appliedMetatypes_id", applied);
+        info.put("appliedMetatypesId", applied);
         return info;
     }
     
