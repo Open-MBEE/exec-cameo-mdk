@@ -59,7 +59,7 @@ public class Crushinator21To22Migrator extends Migrator {
 		for (Element elem : missing) {
 			// assign the id so we can update the correct element
 			JSONObject einfo = new JSONObject();
-			einfo.put("sysmlid", ExportUtility.getElementID(elem));
+			einfo.put("sysmlId", ExportUtility.getElementID(elem));
 
 			// export owner
 			einfo = ExportUtility.fillOwner(elem, einfo);
@@ -75,8 +75,7 @@ public class Crushinator21To22Migrator extends Migrator {
 
 			// switch the aggregation from Association spec to Property spec
 			if (elem instanceof Property) {
-			    JSONObject spec = ExportUtility.fillPropertySpecialization(elem, null, false, false);
-				einfo.put("specialization", spec);
+			    ExportUtility.fillPropertySpecialization(elem, einfo, false, false);
 				//spec.put("type", "Property");
 				//spec.put("aggregation", ((Property)elem).getAggregation().toString().toUpperCase());*/
 			}
@@ -88,7 +87,7 @@ public class Crushinator21To22Migrator extends Migrator {
 		JSONObject vi = new JSONObject();
 		String projectId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
 		vi.put("owner", projectId);
-		vi.put("sysmlid", projectId.replace("PROJECT", "View_Instances"));
+		vi.put("sysmlId", projectId.replace("PROJECT", "View_Instances"));
 		vi.put("name", "View Instances");
 		vi.put("documentation", "");
 		JSONObject spec = new JSONObject();

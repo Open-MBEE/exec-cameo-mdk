@@ -161,7 +161,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 send.put("mmsVersion", "2.3");
                 for (String id: deletes) {
                     JSONObject eo = new JSONObject();
-                    eo.put("sysmlid", id);
+                    eo.put("sysmlId", id);
                     elements.add(eo);
                 }
                 OutputQueue.getInstance().offer(new Request(deleteUrl + "/elements", send.toJSONString(), "DELETEALL", false, elements.size(), "Autosync Deletes"));
@@ -272,16 +272,14 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                         if (actual instanceof Slot)
                             viewOb = viewOb.getOwner();
                         elementOb = getElementObject(viewOb);
-                        JSONObject specialization = ExportUtility.fillViewContent(viewOb, null);
-                        elementOb.put("specialization", specialization);
+                        ExportUtility.fillViewContent(viewOb, elementOb);
                         ExportUtility.fillOwner(viewOb, elementOb);
                     }
                     return;
                 }
                 elementOb = getElementObject(actual);
                 if (actual instanceof Slot || actual instanceof Property) {
-                    JSONObject specialization = ExportUtility.fillPropertySpecialization(actual, null, true, true);
-                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillPropertySpecialization(actual, elementOb, true, true);
                     if (actual instanceof Slot && actual.getOwner() != null) { //catch instanceSpec if it wasn't caught before
                         elementOb = getElementObject(actual.getOwner(), false);
                         ExportUtility.fillElement(actual.getOwner(), elementOb);
@@ -290,8 +288,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                     JSONObject specialization = ExportUtility.fillConstraintSpecialization((Constraint)actual, null);
                     elementOb.put("specialization", specialization);
                 } else if (actual instanceof InstanceSpecification) {
-                    JSONObject specialization = ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)actual, null);
-                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)actual, elementOb);
                 }
                 ExportUtility.fillOwner(actual, elementOb);
             }
@@ -302,16 +299,14 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
             else if ((sourceElement instanceof Property) && (propertyName.equals(PropertyNames.DEFAULT_VALUE) || propertyName.equals(PropertyNames.TYPE) || 
                     propertyName.equals(PropertyNames.LOWER_VALUE) || propertyName.equals(PropertyNames.UPPER_VALUE) || propertyName.equals("multiplicity") ||
                     propertyName.equals(PropertyNames.REDEFINED_PROPERTY))) {
-                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
                 elementOb = getElementObject(sourceElement);
-                elementOb.put("specialization", specialization);
+                ExportUtility.fillPropertySpecialization(sourceElement, elementOb, true, true);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             }
             else if ((sourceElement instanceof Slot) && propertyName.equals(PropertyNames.VALUE) && ExportUtility.shouldAdd(sourceElement)) {
                 elementOb = getElementObject(sourceElement);
-                JSONObject specialization = ExportUtility.fillPropertySpecialization(sourceElement, null, true, true);
-                elementOb.put("specialization", specialization);
-                ExportUtility.fillOwner(sourceElement, elementOb);
+                 ExportUtility.fillPropertySpecialization(sourceElement, elementOb, true, true);
+                 ExportUtility.fillOwner(sourceElement, elementOb);
                 if (sourceElement instanceof Slot && sourceElement.getOwner() != null) { //catch instanceSpec if it wasn't caught before
                     elementOb = getElementObject(sourceElement.getOwner(), false);
                     ExportUtility.fillElement(sourceElement.getOwner(), elementOb);
@@ -387,9 +382,8 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 // the events associated with the element B.
                 //
                 if ((newValue != null) && (oldValue == null)) {
-                    JSONObject specialization = ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)sourceElement, null);
                     elementOb = getElementObject(sourceElement);
-                    elementOb.put("specialization", specialization);
+                    ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)sourceElement, elementOb);
                     ExportUtility.fillOwner(sourceElement, elementOb);
                 }
             }
@@ -412,13 +406,11 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 if (conn == null)
                     return;
                 elementOb = getElementObject(conn);
-                JSONObject specialization = ExportUtility.fillConnectorSpecialization(conn, null);
-                elementOb.put("specialization", specialization);
+                ExportUtility.fillConnectorSpecialization(conn, elementOb);
                 ExportUtility.fillOwner(conn, elementOb);
             } else if (sourceElement instanceof Association && propertyName.equals(PropertyNames.OWNED_END)) {
                 elementOb = getElementObject(sourceElement);
-                JSONObject specialization = ExportUtility.fillAssociationSpecialization((Association)sourceElement, null);
-                elementOb.put("specialization", specialization);
+                ExportUtility.fillAssociationSpecialization((Association)sourceElement, elementOb);
                 ExportUtility.fillOwner(sourceElement, elementOb);
             } else if (sourceElement instanceof Property && propertyName.equals(PropertyNames.AGGREGATION)) {
                 //Association a = ((Property)sourceElement).getAssociation();

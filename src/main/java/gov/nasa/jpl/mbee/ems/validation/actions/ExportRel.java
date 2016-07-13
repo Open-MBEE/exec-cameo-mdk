@@ -70,8 +70,8 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
             Element e = (Element)anno.getTarget();
             set.add(e);
             JSONObject info = new JSONObject();
-            info.put("specialization", ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)e, null));
-            info.put("sysmlid", e.getID());
+            ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)e, info);
+            info.put("sysmlId", e.getID());
             infos.add(info);
         }
         commit(infos, "Relationship");
@@ -84,8 +84,8 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
             return;
         JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
-        info.put("specialization", ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)element, null));
-        info.put("sysmlid", element.getID());
+        ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)element, info);
+        info.put("sysmlId", element.getID());
         elements.add(info);
         commit(elements, "Relationship");
     }
