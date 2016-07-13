@@ -66,7 +66,7 @@ public class ExportInstanceSpec extends RuleViolationAction implements Annotatio
             Element e = (Element)anno.getTarget();
             if (e instanceof InstanceSpecification) {
                 JSONObject ob = ExportUtility.fillId(e, null);
-                ob.put("specialization", ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)e, null));
+                ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)e, ob);
                 infos.add(ob);
             }
         }
@@ -78,7 +78,7 @@ public class ExportInstanceSpec extends RuleViolationAction implements Annotatio
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
         JSONObject ob = ExportUtility.fillId(element, null);
-        ob.put("specialization", ExportUtility.fillInstanceSpecificationSpecialization(element, null));
+        ExportUtility.fillInstanceSpecificationSpecialization(element, ob);
         elements.add(ob);
         commit(elements, "Instance Specification");
     }

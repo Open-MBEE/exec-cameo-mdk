@@ -64,9 +64,8 @@ public class ExportViewConstraint extends RuleViolationAction implements Annotat
         JSONArray infos = new JSONArray();
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
-            JSONObject spec = ExportUtility.fillViewContent(e, null);
             JSONObject eo = ExportUtility.fillId(e, null);
-            eo.put("specialization", spec);
+            ExportUtility.fillViewContent(e, eo);
             infos.add(eo);
         }
         commit(infos, "View Constraint");
@@ -78,9 +77,8 @@ public class ExportViewConstraint extends RuleViolationAction implements Annotat
         if (!ExportUtility.okToExport(element))
             return;
         JSONArray elements = new JSONArray();
-        JSONObject spec = ExportUtility.fillViewContent(element, null);
         JSONObject eo = ExportUtility.fillId(element, null);
-        eo.put("specialization", spec);
+        ExportUtility.fillViewContent(element, eo);
         elements.add(eo);
         commit(elements, "View Constraint");
     }
