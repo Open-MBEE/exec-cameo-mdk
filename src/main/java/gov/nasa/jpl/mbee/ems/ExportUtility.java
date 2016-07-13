@@ -38,6 +38,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
+import javassist.bytecode.Descriptor.Iterator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -127,6 +128,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.OpaqueBehavior;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.CallEvent;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.Event;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.Trigger;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
@@ -136,6 +140,12 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.FinalState;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.Pseudostate;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.PseudostateKind;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.State;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.Transition;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdprotocolstatemachines.ProtocolConformance;
 
 public class ExportUtility {
     public static Logger log = Logger.getLogger(ExportUtility.class);
@@ -206,7 +216,7 @@ public class ExportUtility {
             JSONArray array = (JSONArray)ob.get("sites");
             for (Object ws: array) {
                 JSONObject site = (JSONObject)ws;
-                String id = (String)site.get("sysmlid");
+                String id = (String)site.get("sysmlId");
                 idmapping.put((String)site.get("name"), id);
             }
         }
@@ -1101,35 +1111,35 @@ public class ExportUtility {
         JSONObject elementInfo = eInfo;
         if (elementInfo == null)
             elementInfo = new JSONObject();
-        JSONObject specialization = new JSONObject();
-        elementInfo.put("specialization", specialization);
+        //JSONObject specialization = new JSONObject();
+        //elementInfo.put("specialization", specialization);
         Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
-            fillPackage((Package)e, specialization);
+            fillPackage((Package)e, elementInfo);
         } else if (e instanceof Property || e instanceof Slot) {
-        		fillPropertySpecialization(e, specialization, true, true);
+        		fillPropertySpecialization(e, elementInfo, true, true);
         } else if (e instanceof DirectedRelationship) {
-            fillDirectedRelationshipSpecialization((DirectedRelationship)e, specialization);
+            fillDirectedRelationshipSpecialization((DirectedRelationship)e, elementInfo);
         } else if (e instanceof Connector) {
-            fillConnectorSpecialization((Connector)e, specialization);
+            fillConnectorSpecialization((Connector)e, elementInfo);
         } else if (e instanceof Operation) {
-            fillOperationSpecialization((Operation)e, specialization);
+            fillOperationSpecialization((Operation)e, elementInfo);
         } else if (e instanceof Constraint) {
-            fillConstraintSpecialization((Constraint)e, specialization);
+            fillConstraintSpecialization((Constraint)e, elementInfo);
         } else if (e instanceof InstanceSpecification) {
-            specialization.put("type", "InstanceSpecification");
-            fillInstanceSpecificationSpecialization((InstanceSpecification)e, specialization);
+            elementInfo.put("type", "InstanceSpecification");
+            fillInstanceSpecificationSpecialization((InstanceSpecification)e, elementInfo);
             /*ValueSpecification spec = ((InstanceSpecification) e)
                     .getSpecification();
             if (spec != null)
                 specialization.put("instanceSpecificationSpecification",
                         spec.getID());*/
         } else if (e instanceof Parameter) {
-            fillParameterSpecialization((Parameter)e, specialization);
+            fillParameterSpecialization((Parameter)e, elementInfo);
         } else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
-            specialization.put("type", "Comment");
+            elementInfo.put("type", "Comment");
         } else if (e instanceof Association) {
-            fillAssociationSpecialization((Association)e, specialization);
+            fillAssociationSpecialization((Association)e, elementInfo);
        
         } else if (e.getClass().getSimpleName().equals("ClassImpl")) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
@@ -1137,133 +1147,160 @@ public class ExportUtility {
             Stereotype doc = Utils.getProductStereotype();
             //Stereotype view = Utils.getViewStereotype();
             if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
-                specialization.put("type", "Viewpoint");
+                elementInfo.put("type", "Viewpoint");
             else if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view)) {
                 if (StereotypesHelper.hasStereotypeOrDerived(e, doc))
-                    specialization.put("type", "Product");
+                    elementInfo.put("type", "Product");
                 else
-                    specialization.put("type", "View");
-                fillViewContent(e, specialization);
+                    elementInfo.put("type", "View");
+                fillViewContent(e, elementInfo);
             } else
-                specialization.put("type", "Element");
-        } else if (e instanceof CallBehaviorAction){
-            fillCallBehaviorActionSpecialization((CallBehaviorAction)e, specialization);
-        } else if (e instanceof ActivityEdge){ //ControlFlow ObjectFlow
-            Class baseClass = StereotypesHelper.getBaseClass(e);
-            specialization.put("type",baseClass.getName());
-            fillActivityEdgeSpecialization((ActivityEdge)e, specialization);
-        } else if (e instanceof OpaqueBehavior){ //OpaqueBehavior,  FunctionBehavior
-            Class baseClass = StereotypesHelper.getBaseClass(e);
-            specialization.put("type",baseClass.getName());
-            fillOpaqueBehaviorSpecialization((OpaqueBehavior) e, specialization);
-        } else if (e instanceof ActivityParameterNode){
-            specialization.put("type", "ActivityParameterNode");
-            fillActivityParameterNodeSpecialization((ActivityParameterNode) e, specialization);
-        } else { //InitialNode, ActivityFinalNode
+                elementInfo.put("type", "Element");
+        
+        } else { 
             String typeName = "Untyped"; //default
+            
             Class baseClass = StereotypesHelper.getBaseClass(e);
             if (baseClass != null)
                 typeName = baseClass.getName();
-            specialization.put("type", typeName);
+            elementInfo.put("type", typeName);
+           
+            if (e instanceof ActivityParameterNode)
+                fillActivityParameterNode((ActivityParameterNode) e, elementInfo); 
+            else if (e instanceof Event)
+                fillEvent((Event) e, elementInfo);
+            else if (e instanceof Transition )
+                fillTransition((Transition) e, elementInfo);
+            else if (e instanceof ActivityEdge) //ControlFlow ObjectFlow
+                fillActivityEdge((ActivityEdge)e, elementInfo);
+            else if (e instanceof OpaqueBehavior) //OpaqueBehavior,  FunctionBehavior
+                fillOpaqueBehavior((OpaqueBehavior) e, elementInfo);
+            else if (e instanceof CallBehaviorAction)
+                fillCallBehaviorAction((CallBehaviorAction)e, elementInfo);
+            else if (e instanceof Trigger)
+                fillTrigger((Trigger)e, elementInfo);
+            else if (e instanceof State)
+                fillState((State)e, elementInfo);
+            else if (e instanceof Pseudostate)
+                fillPseudostate((Pseudostate)e, elementInfo);
         }
-        fillOwnedAttribute(e, specialization);
+        fillOwnedAttribute(e, elementInfo);
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
         fillMetatype(e, elementInfo);
-        elementInfo.put("sysmlid", getElementID(e));
+        elementInfo.put("sysmlId", getElementID(e));
         return elementInfo;
     }
-    
     @SuppressWarnings("unchecked")
-    public static JSONObject fillActivityParameterNodeSpecialization(ActivityParameterNode e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
-        Parameter s;
-        specialization.put("parameterId", ((s = e.getParameter()) == null) ? null : s.getID());
-        return specialization;
+    public static void fillPseudostate(Pseudostate e, JSONObject elementInfo) {
+        PseudostateKind s;
+        elementInfo.put("kind", ((s = e.getKind()) == null) ? null : s.toString());
     }
     @SuppressWarnings("unchecked")
-    public static JSONObject fillOpaqueBehaviorSpecialization(OpaqueBehavior e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
-       
-        specialization.put("body", makeJsonArray(e.getBody()));
-        specialization.put("language", makeJsonArray(e.getLanguage()));
-        return specialization;
-    }
-    @SuppressWarnings("unchecked")
-    public static JSONObject fillActivityEdgeSpecialization(ActivityEdge e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
+    public static void fillState(State e, JSONObject elementInfo) {
         Element s;
-        specialization.put("sourceId", ((s = e.getSource()) == null) ? null : s.getID());
-        specialization.put("targetId", ((s = e.getTarget()) == null) ? null : s.getID());
+        if (!(e instanceof FinalState)){
+            elementInfo.put("doActivityId", ((s = e.getDoActivity()) == null) ? null : s.getID());
+            elementInfo.put("entryId", ((s = e.getEntry()) == null) ? null : s.getID());
+            elementInfo.put("exitId", ((s = e.getExit()) == null) ? null : s.getID());
+        }
+    }
+    @SuppressWarnings("unchecked")
+    public static void fillEvent(Event e, JSONObject elementInfo) {
+        Element s;
+        elementInfo.put("behaviorId", ((s = e.getBehavior()) == null) ? null : s.getID());
+        if ( e instanceof CallEvent)
+            elementInfo.put("operationId", ((s = ((CallEvent)e).getOperation()) == null) ? null : s.getID());
+    }
+    @SuppressWarnings("unchecked")
+    public static void fillTrigger(Trigger e, JSONObject elementInfo) {
+        Element s;
+        elementInfo.put("eventId", ((s = e.getEvent()) == null) ? null : s.getID());
+    }
+    @SuppressWarnings("unchecked")
+    public static void fillTransition(Transition e, JSONObject elementInfo) {
+        Element s;
+        elementInfo.put("clientId", ((s = ModelHelper.getClientElement(e)) == null) ? null : s.getID());
+        elementInfo.put("supplierId", ((s = ModelHelper.getSupplierElement(e)) == null) ? null : s.getID());
+        elementInfo.put("effectId", ((s = e.getEffect()) == null) ? null : s.getID());
+        if ( e.hasTrigger()){
+            for (Trigger t: e.getTrigger()) {//only one is allow to define in MD
+                elementInfo.put("triggerId", t.getID());
+            }
+        }
+        else
+            elementInfo.put("triggerId", null);  
+    }
+    @SuppressWarnings("unchecked")
+    public static void fillActivityParameterNode(ActivityParameterNode e, JSONObject elementInfo) {
+        Parameter s;
+        elementInfo.put("parameterId", ((s = e.getParameter()) == null) ? null : s.getID());
+    }
+    @SuppressWarnings("unchecked")
+    public static void fillOpaqueBehavior(OpaqueBehavior e, JSONObject elementInfo) {
+        elementInfo.put("body", makeJsonArray(e.getBody()));
+        elementInfo.put("language", makeJsonArray(e.getLanguage()));
+    }
+    @SuppressWarnings("unchecked")
+    public static void fillActivityEdge(ActivityEdge e, JSONObject elementInfo) {
+      
+        Element s;
+        elementInfo.put("sourceId", ((s = e.getSource()) == null) ? null : s.getID());
+        elementInfo.put("targetId", ((s = e.getTarget()) == null) ? null : s.getID());
         
         ValueSpecification gurad = e.getGuard();
         if ( gurad == null)
-            specialization.put("guard", null);
+            elementInfo.put("guard", null);
         else {
             JSONObject vs = new JSONObject();
             fillValueSpecification(gurad, vs);
-            specialization.put("guard", vs);
+            elementInfo.put("guard", vs);
         }
-        return specialization;
     }
     @SuppressWarnings("unchecked")
-    public static JSONObject fillCallBehaviorActionSpecialization(CallBehaviorAction e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
-        specialization.put("type", "CallBehaviorAction");
-        
+    public static void fillCallBehaviorAction(CallBehaviorAction e, JSONObject elementInfo) {
         Element s;
-        specialization.put("behaviorId", ((s = e.getBehavior()) == null) ? null : s.getID());
-        return specialization;
+        elementInfo.put("behaviorId", ((s = e.getBehavior()) == null) ? null : s.getID());
     }
-	public static JSONObject fillViewContent(Element e, JSONObject spec) {
+	public static JSONObject fillViewContent(Element e, JSONObject elementInfo) {
         Stereotype doc = Utils.getProductStereotype();
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
         if (StereotypesHelper.hasStereotypeOrDerived(e, doc))
-            specialization.put("type", "Product");
+            elementInfo.put("type", "Product");
         else
-            specialization.put("type", "View");
+            elementInfo.put("type", "View");
         Constraint c = Utils.getViewConstraint(e);
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
             if (cob.containsKey("specification")) {
-                specialization.put("contents", (JSONObject)cob.get("specification"));
-                specialization.put("contains", new JSONArray());
+                elementInfo.put("contents", (JSONObject)cob.get("specification"));
+                elementInfo.put("contains", new JSONArray());
             }
         }
         Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
         if (o != null && o instanceof String) {
             try {
                 JSONArray a = (JSONArray)JSONValue.parse((String)o);
-                specialization.put("allowedElements", new JSONArray());
-                specialization.put("displayedElements", a);
+                elementInfo.put("allowedElements", new JSONArray());
+                elementInfo.put("displayedElements", a);
             } catch (Exception ex) {}
         } else {
-            specialization.put("displayedElements", new JSONArray());
+            elementInfo.put("displayedElements", new JSONArray());
         }
-        return specialization;
+        return elementInfo;
     }
     
     @SuppressWarnings("unchecked")
-    public static JSONObject fillPropertySpecialization(Element e, JSONObject spec, boolean value, boolean ptype) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
+    public static JSONObject fillPropertySpecialization(Element e, JSONObject elementInfo, boolean value, boolean ptype) {
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
 		if (e instanceof Property) {
-		    specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
-			specialization.put("type", "Property");
-		    specialization.put("isDerived", ((Property) e).isDerived());
-		    specialization.put("isSlot", false);
+		    elementInfo.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
+		    elementInfo.put("type", "Property");
+		    elementInfo.put("isDerived", ((Property) e).isDerived());
+		    elementInfo.put("isSlot", false);
 		    if (value) {
 		        ValueSpecification vs = ((Property) e).getDefaultValue();
 		        JSONArray singleElementSpecVsArray = new JSONArray();
@@ -1280,28 +1317,28 @@ public class ExportUtility {
 		            fillValueSpecification(vs, newElement);
 		            singleElementSpecVsArray.add(newElement);
 		        }
-		        specialization.put("value", singleElementSpecVsArray);
+		        elementInfo.put("value", singleElementSpecVsArray);
 		    }
 		    //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
 		    //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
 		    if (ptype) {
 		        Type type = ((Property) e).getType();
-		        specialization.put("propertyTypeId", (type == null) ? null : type.getID());
+		        elementInfo.put("propertyTypeId", (type == null) ? null : type.getID());
 		        
 		    }
-		    specialization.put("multiplicityMin", (long)((Property)e).getLower());
-		    specialization.put("multiplicityMax", (long)((Property)e).getUpper());
+		    elementInfo.put("multiplicityMin", (long)((Property)e).getLower());
+		    elementInfo.put("multiplicityMax", (long)((Property)e).getUpper());
 		     
 		    Collection<Property> cps = ((Property)e).getRedefinedProperty();
 		    JSONArray redefinedProperties = new JSONArray();
 		    for (Property cp : cps) 
 		     	redefinedProperties.add(getElementID(cp));
-		    specialization.put("redefinesId", redefinedProperties);
+		    elementInfo.put("redefinesId", redefinedProperties);
 		   
 		} else { //if (e instanceof Slot) {
-			specialization.put("type", "Property");
-			specialization.put("isDerived", false);
-		    specialization.put("isSlot", true);
+		    elementInfo.put("type", "Property");
+		    elementInfo.put("isDerived", false);
+		    elementInfo.put("isSlot", true);
 		    
 		
 		    // Retrieve a list of ValueSpecification objects.
@@ -1322,30 +1359,29 @@ public class ExportUtility {
 		                specVsArray.add(newElement);
 		            }
 		        }
-		        specialization.put("value", specVsArray);
+		        elementInfo.put("value", specVsArray);
 		    }
 		    if (ptype) {
 		        Element type = ((Slot) e).getDefiningFeature();
-		        specialization.put("propertyTypeId", (type == null) ? null : type.getID());
+		        elementInfo.put("propertyTypeId", (type == null) ? null : type.getID());
 		    }
 		}
-        return specialization;
+        return elementInfo;
     }
     
     @SuppressWarnings("unchecked")
-    public static JSONObject fillInstanceSpecificationSpecialization(InstanceSpecification e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
+    public static JSONObject fillInstanceSpecificationSpecialization(InstanceSpecification e, JSONObject elementInfo) {
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
         if (e.getSpecification() != null)
-            specialization.put("instanceSpecificationSpecification", fillValueSpecification(e.getSpecification(), null));
+            elementInfo.put("instanceSpecificationSpecification", fillValueSpecification(e.getSpecification(), null));
         JSONArray classifiers = new JSONArray();
         for (Classifier c: e.getClassifier()) {
             classifiers.add(c.getID());
         }
-        specialization.put("classifierId", classifiers);
-        specialization.put("type", "InstanceSpecification");
-        return specialization;
+        elementInfo.put("classifierId", classifiers);
+        elementInfo.put("type", "InstanceSpecification");
+        return elementInfo;
     }
     
 	public static JSONObject sanitizeJSON(JSONObject spec) {
@@ -1363,17 +1399,16 @@ public class ExportUtility {
 	}
     
     @SuppressWarnings("unchecked")
-    public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
+    public static JSONObject fillAssociationSpecialization(Association e, JSONObject elementInfo) {
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
         int i = 0;
         for (Property p: e.getMemberEnd()) {
             if (i == 0) {
-                specialization.put("sourceId", p.getID());
+                elementInfo.put("sourceId", p.getID());
                 // specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
             } else {
-                specialization.put("targetId", p.getID());
+                elementInfo.put("targetId", p.getID());
                 // specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
@@ -1382,45 +1417,40 @@ public class ExportUtility {
         for (Property p: e.getOwnedEnd()) {
             owned.add(p.getID());
         }
-        specialization.put("ownedEnd", owned);
-        specialization.put("type", "Association");
-        return specialization;
+        elementInfo.put("ownedEnd", owned);
+        elementInfo.put("type", "Association");
+        return elementInfo;
     }
     
     @SuppressWarnings("unchecked")
-    public static JSONObject fillPackage(Package e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
-        specialization.put("type", "Package");
-        specialization.put("isSite", Utils.isSiteChar(e));
-        return specialization;
+    public static JSONObject fillPackage(Package e, JSONObject elementInfo) {
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
+        elementInfo.put("type", "Package");
+        elementInfo.put("isSite", Utils.isSiteChar(e));
+        return elementInfo;
     }
-    
+ 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
-        specialization.put("type", "Constraint");
+    public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject elementInfo) {
+        elementInfo.put("type", "Constraint");
         ValueSpecification vspec = ((Constraint) e).getSpecification();
         if (vspec != null) {
             JSONObject cspec = new JSONObject();
             fillValueSpecification(vspec, cspec);
-            specialization.put("specification", cspec);
+            elementInfo.put("specification", cspec);
         }
-        return specialization;
+        return elementInfo;
     }
     
     @SuppressWarnings("unchecked")
-    public static JSONObject fillConnectorSpecialization(Connector e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
-        specialization.put("type", "Connector");
+    public static JSONObject fillConnectorSpecialization(Connector e, JSONObject elementInfo) {
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
+        elementInfo.put("type", "Connector");
         int i = 0;
         if (e.getEnd() == null)
-            return spec;
+            return elementInfo;
         for ( ConnectorEnd end : e.getEnd()) {
             JSONArray propertyPath = new JSONArray();
             if ( end.getRole() != null ) {
@@ -1438,46 +1468,44 @@ public class ExportUtility {
             if (i == 0) {
                 //specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
                 //specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
-                specialization.put("sourcePathId", propertyPath);
+                elementInfo.put("sourcePathId", propertyPath);
             } else {
                 //specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
                 //specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
-                specialization.put("targetPathId", propertyPath);
+                elementInfo.put("targetPathId", propertyPath);
             }
             i++;
         }
         Association type = e.getType();
-        specialization.put("connectorTypeId", (type == null) ? null : type.getID());
-        specialization.put("connectorKind", "NONE");
-        return specialization;
+        elementInfo.put("connectorTypeId", (type == null) ? null : type.getID());
+        elementInfo.put("connectorKind", (e.getKind() == null) ? null : e.getKind().toString());
+        return elementInfo;
     }
     
     @SuppressWarnings("unchecked")
-    public static JSONObject fillOperationSpecialization(Operation e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
-        specialization.put("type", "Operation");
+    public static JSONObject fillOperationSpecialization(Operation e, JSONObject elementInfo) {
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
+        elementInfo.put("type", "Operation");
         List<Parameter> vsl = ((Operation) e).getOwnedParameter();
         if (vsl != null && vsl.size() > 0) 
-            specialization.put("parametersId", makeJsonArrayOfIDs(vsl));
+            elementInfo.put("parametersId", makeJsonArrayOfIDs(vsl));
         else
-            specialization.put("parametersId", new JSONArray());
-        return specialization;
+            elementInfo.put("parametersId", new JSONArray());
+        return elementInfo;
     }
     
     @SuppressWarnings("unchecked")
-    public static JSONObject fillParameterSpecialization(Parameter e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
-        specialization.put("type", "Parameter");
+    public static JSONObject fillParameterSpecialization(Parameter e, JSONObject elementInfo) {
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
+        elementInfo.put("type", "Parameter");
                
         ParameterDirectionKind dir = e.getDirection() ;
-        specialization.put("direction", (dir == null) ? null :dir.toString());
+        elementInfo.put("direction", (dir == null) ? null :dir.toString());
         
         Type type = e.getType();
-        specialization.put("parameterTypeId", (type == null) ? null : type.getID());
+        elementInfo.put("parameterTypeId", (type == null) ? null : type.getID());
             
         
         //ValueSpecification defaultValue = p.getDefaultValue();
@@ -1485,38 +1513,39 @@ public class ExportUtility {
         //    specialization.put("parameterDefaultValue",
          //           defaultValue.getID());
         // }
-        return specialization;
+        return elementInfo;
     }
     
     @SuppressWarnings("unchecked")
-    public static JSONObject fillDirectedRelationshipSpecialization(DirectedRelationship e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null)
-            specialization = new JSONObject();
+    public static JSONObject fillDirectedRelationshipSpecialization(DirectedRelationship e, JSONObject elementInfo) {
+        if (elementInfo == null)
+            elementInfo = new JSONObject();
         if (e instanceof Dependency) {
             if (StereotypesHelper.hasStereotype(e, "characterizes"))
-                specialization.put("type", "Characterizes");
+                elementInfo.put("type", "Characterizes");
             else if (StereotypesHelper.hasStereotypeOrDerived(e,
                     DocGen3Profile.queriesStereotype))
-                specialization.put("type", "Expose");
+                elementInfo.put("type", "Expose");
             else
-                specialization.put("type", "Dependency");
+                elementInfo.put("type", "Dependency");
         } else if (e instanceof Generalization) {
             Stereotype conforms = Utils.getSysML14ConformsStereotype();
             if (conforms != null && StereotypesHelper.hasStereotypeOrDerived(e, conforms))
-                specialization.put("type", "Conform");
+                elementInfo.put("type", "Conform");
             else
-                specialization.put("type", "Generalization");
+                elementInfo.put("type", "Generalization");
+        } else if ( e instanceof ProtocolConformance){ //StateMachine
+            elementInfo.put("type", "ProtocolConformance");  
         } else {
-            specialization.put("type", "DirectedRelationship");
+            elementInfo.put("type", "DirectedRelationship");
         }
         Element client = ModelHelper.getClientElement(e);
         Element supplier = ModelHelper.getSupplierElement(e);
         // (client != null) //this shouldn't happen
-        specialization.put("sourceId", (client == null) ? null : getElementID(client));
+        elementInfo.put("sourceId", (client == null) ? null : getElementID(client));
         //(supplier != null) //this shouldn't happen
-        specialization.put("targetId", (supplier == null) ? null : getElementID(supplier));
-        return specialization;
+        elementInfo.put("targetId", (supplier == null) ? null : getElementID(supplier));
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
@@ -1524,7 +1553,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
         
         info.put("name", (e instanceof NamedElement) ? ((NamedElement)e).getName() : "");
@@ -1536,7 +1565,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
         info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
         return info;
@@ -1547,7 +1576,7 @@ public class ExportUtility {
 		JSONObject info = einfo;
 		if (info == null) {
 			info = new JSONObject();
-			info.put("sysmlid", getElementID(e));
+			info.put("sysmlId", getElementID(e));
 		}
 		
 		JSONArray propIDs = new JSONArray();
@@ -1565,7 +1594,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
         
         info.put("ownerId", (e.getOwner() == null) ? null :  getElementID(e.getOwner()));
@@ -1577,7 +1606,7 @@ public class ExportUtility {
         if (info == null) {
             info = new JSONObject();
         }
-        info.put("sysmlid", getElementID(e));
+        info.put("sysmlId", getElementID(e));
         return info;
     }
     
@@ -1586,7 +1615,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
         info.put("isMetatype", false);
         if (e instanceof Stereotype) {
@@ -2052,7 +2081,7 @@ public class ExportUtility {
         JSONObject result = new JSONObject();
         if (name != null)
             result.put("name", name);
-        result.put("sysmlid", projId);
+        result.put("sysmlId", projId);
         JSONObject spec = new JSONObject();
         spec.put("type", "Project");
         if (version != null)
