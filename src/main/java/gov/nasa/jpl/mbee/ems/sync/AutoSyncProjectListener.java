@@ -488,25 +488,25 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
                 final JSONArray deleted = (JSONArray) ws2.get("deletedElements");
                 final JSONArray moved = (JSONArray) ws2.get("movedElements");
                 for (Object e: updated) {
-                    String id = (String)((JSONObject)e).get("sysmlid");
+                    String id = (String)((JSONObject)e).get("sysmlId");
                     if (!magicdraw) 
                         changedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: added) {
-                    String id = (String)((JSONObject)e).get("sysmlid");
+                    String id = (String)((JSONObject)e).get("sysmlId");
                     if (!magicdraw) 
                         addedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: moved) {
-                    String id = (String)((JSONObject)e).get("sysmlid");
+                    String id = (String)((JSONObject)e).get("sysmlId");
                     if (!magicdraw) 
                         changedIds.add(id);
                     deletedIds.remove(id);
                 }
                 for (Object e: deleted) {
-                    String id = (String)((JSONObject)e).get("sysmlid");
+                    String id = (String)((JSONObject)e).get("sysmlId");
                     if (!magicdraw)
                         deletedIds.add(id);
                     addedIds.remove(id);

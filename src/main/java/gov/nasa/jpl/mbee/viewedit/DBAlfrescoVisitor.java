@@ -234,7 +234,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //MDEV #674 -- Update the type and id: was hard coded.
         //
         entry.put("type", "Image");
-        entry.put("sysmlid", image.getImage().getID());
+        entry.put("sysmlId", image.getImage().getID());
         entry.put("title", image.getTitle());
         curContains.peek().add(entry);
         
@@ -427,7 +427,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             specialization.put("type", "View");
         view.put("specialization", specialization);
         String id = e.getID();
-        view.put("sysmlid", id);
+        view.put("sysmlId", id);
         views.put(id, view);
         Set<String> viewE = new HashSet<String>();
         viewElements.push(viewE);

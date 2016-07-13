@@ -175,7 +175,7 @@ AnnotationAction, IRuleViolationAction {
             send.put("mmsVersion", "2.3");
             for (String e: deletedIds) {
                 JSONObject eo = new JSONObject();
-                eo.put("sysmlid", e);
+                eo.put("sysmlId", e);
                 elements.add(eo);
             }
             OutputQueue.getInstance().offer(new Request(url + "/elements", send.toJSONString(), "DELETEALL", false, elements.size(), "Hierarchy Property Changes"));
@@ -309,7 +309,7 @@ AnnotationAction, IRuleViolationAction {
             Utils.guilog("[ERROR] Creating new view(s) failed. Owner(s) not found.");
             Utils.guilog("[ERROR] List of views failed: ");
             for (JSONObject fail: toCreate.get("fail")) {
-                String id = (String)fail.get("sysmlid");
+                String id = (String)fail.get("sysmlId");
                 if (id != null)
                     Utils.guilog("[ERROR]      " + id);
             }
@@ -324,12 +324,12 @@ AnnotationAction, IRuleViolationAction {
                     List<Property> viewprops = new ArrayList<Property>();
                     viewId2props.put(newview.getID(), viewprops);
                 } else {
-                    Utils.guilog("[ERROR] Creating new view(s) failed for view " + ob.get("sysmlid"));
+                    Utils.guilog("[ERROR] Creating new view(s) failed for view " + ob.get("sysmlId"));
                     retval.put("success", false);
                     return retval;
                 }
             } catch (ImportException ex) {
-                Utils.guilog("[ERROR] Creating new view(s) failed for view " + ob.get("sysmlid") + ": " + ex.getMessage());
+                Utils.guilog("[ERROR] Creating new view(s) failed for view " + ob.get("sysmlId") + ": " + ex.getMessage());
                 retval.put("success", false);
                 return retval;
             }
@@ -381,7 +381,7 @@ AnnotationAction, IRuleViolationAction {
                             if (opposite != null) {
                                 opposite.setType((Type)view);
                                 JSONObject ptype = new JSONObject();
-                                ptype.put("sysmlid", opposite.getID());
+                                ptype.put("sysmlId", opposite.getID());
                                 JSONObject spec = new JSONObject();
                                 spec.put("type", "Property");
                                 spec.put("propertyType", view.getID());

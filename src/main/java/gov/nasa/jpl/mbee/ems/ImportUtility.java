@@ -81,7 +81,7 @@ public class ImportUtility {
         DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>> graph = new DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>>();
         Map<String, JSONObject> id2ob = new HashMap<String, JSONObject>();
         for (JSONObject ob: newElements) {
-            String sysmlid = (String)ob.get("sysmlid");
+            String sysmlid = (String)ob.get("sysmlId");
             if (sysmlid == null)
                 continue;
             id2ob.put(sysmlid, ob);
@@ -89,7 +89,7 @@ public class ImportUtility {
         }
         Map<String, JSONObject> fail = new HashMap<String, JSONObject>();
         for (JSONObject ob: newElements) {
-            String sysmlid = (String)ob.get("sysmlid");
+            String sysmlid = (String)ob.get("sysmlId");
             String ownerid = (String)ob.get("owner");
             Element newE = ExportUtility.getElementFromID(sysmlid);
             Element ownerE = ExportUtility.getElementFromID(ownerid);
@@ -136,7 +136,7 @@ public class ImportUtility {
         // For all new elements the should be the following fields
         // should be present: name, owner, and documentation
         //
-        String sysmlID = (String) ob.get("sysmlid");
+        String sysmlID = (String) ob.get("sysmlId");
         Element existing = ExportUtility.getElementFromID(sysmlID);
         if (existing != null && !updateRelations)
             return existing; //maybe jms feedback

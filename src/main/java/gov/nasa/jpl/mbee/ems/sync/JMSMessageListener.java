@@ -123,7 +123,7 @@ public class JMSMessageListener implements MessageListener {
                             }
                         } 
                         for (JSONObject element: fail) {
-                            cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                            cannotAdd.add((String)((JSONObject)element).get("sysmlId"));
                         }
                         
                         for (Object element : moved) {
@@ -165,7 +165,7 @@ public class JMSMessageListener implements MessageListener {
                 }
 
                 private Map<String, Object> makeChange(JSONObject ob) {
-                    String sysmlid = (String) ob.get("sysmlid");
+                    String sysmlid = (String) ob.get("sysmlId");
                     try {
                         Element changedElement = ExportUtility.getElementFromID(sysmlid);
                         if (changedElement == null) {
@@ -217,7 +217,7 @@ public class JMSMessageListener implements MessageListener {
                         Element e = ImportUtility.createElement(ob, updateRelations);
                         if (e == null && updateRelations) {
                             Utils.guilog("[ERROR -- Autosync] create element failed (most likely owner not found");
-                            cannotAdd.add((String)ob.get("sysmlid"));
+                            cannotAdd.add((String)ob.get("sysmlId"));
                         }
                         else if (e != null && updateRelations)
                             Utils.guilog("[Autosync] " + e.getHumanName() + " created");
@@ -225,12 +225,12 @@ public class JMSMessageListener implements MessageListener {
                         log.error("", ex);
                         if (ex instanceof ImportException)
                             Utils.guilog("[ERROR -- Autosync] " + ex.getMessage());
-                        cannotAdd.add((String)ob.get("sysmlid"));
+                        cannotAdd.add((String)ob.get("sysmlId"));
                     }
                 }
 
                 private void deleteElement(JSONObject ob) {
-                    String sysmlid = (String) ob.get("sysmlid");
+                    String sysmlid = (String) ob.get("sysmlId");
                     Element changedElement = ExportUtility.getElementFromID(sysmlid);
                     if (changedElement == null) {
                         //Application.getInstance().getGUILog().log("[ERROR - Autosync] element " + sysmlid + " not found for autosync delete");
@@ -244,12 +244,12 @@ public class JMSMessageListener implements MessageListener {
                     } catch (ReadOnlyElementException e) {
                         Utils.guilog("[ERROR - Autosync] Sync: " + changedElement.getHumanName() + " cannot be deleted!");
                         log.error("", e);
-                        cannotDelete.add((String)ob.get("sysmlid"));
+                        cannotDelete.add((String)ob.get("sysmlId"));
                     }
                 }
 
                 private void moveElement(JSONObject ob) {
-                    String sysmlid = (String) ob.get("sysmlid");
+                    String sysmlid = (String) ob.get("sysmlId");
                     try {
                         Element changedElement = ExportUtility.getElementFromID(sysmlid);
                         if (changedElement == null) {
