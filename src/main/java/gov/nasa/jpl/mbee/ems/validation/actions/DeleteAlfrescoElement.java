@@ -78,7 +78,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
                 eid = mes[1];
             if (eid != null) {
                 JSONObject eo = new JSONObject();
-                eo.put("sysmlid", eid);
+                eo.put("sysmlId", eid);
                 elements.add(eo);
                 //String eurl = url + "/elements/" + eid;
                 //OutputQueue.getInstance().offer(new Request(eurl, "{}", "DELETE", true));

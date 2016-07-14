@@ -117,7 +117,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             doc.put("specialization", specialization);
             specialization.put("view2view", ExportUtility.formatView2View(view2view));
             specialization.put("noSections", vhv.getNosections());
-            doc.put("sysmlid", view.getID());
+            doc.put("sysmlId", view.getID());
             documents.add(doc);
             send.put("elements", documents);
             send.put("source", "magicdraw");
@@ -131,7 +131,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             for (Object viewid: view2view.keySet()) {
                 JSONObject viewinfo = new JSONObject();
                 JSONObject specialization = new JSONObject();
-                viewinfo.put("sysmlid", viewid);
+                viewinfo.put("sysmlId", viewid);
                 specialization.put("childrenViews", view2view.get(viewid));
                 viewinfo.put("specialization", specialization);
                 views.add(viewinfo);

@@ -302,9 +302,9 @@ public class ViewValidator {
                         }
                         for (Object reselement: (JSONArray)viewresults.get("elements")) {
                             // add view referenced elements to a cache to later get validated by ModelValidator
-                            if (cachedResultElements.containsKey(((JSONObject) reselement).get("sysmlid")))
+                            if (cachedResultElements.containsKey(((JSONObject) reselement).get("sysmlId")))
                                 continue;
-                            cachedResultElements.put((String)((JSONObject)reselement).get("sysmlid"), (JSONObject) reselement);
+                            cachedResultElements.put((String)((JSONObject)reselement).get("sysmlId"), (JSONObject) reselement);
                         }
                     }
                 }
@@ -388,7 +388,7 @@ public class ViewValidator {
         Set<String> localElements = new HashSet<String>(viewDisplayedElements); 
         Set<String> webElements = new HashSet<String>(); 
         for (Object o: (JSONArray)veResults.get("elements")) {
-            webElements.add((String)((JSONObject)o).get("sysmlid")); 
+            webElements.add((String)((JSONObject)o).get("sysmlId")); 
         }
         if (webElements.containsAll(localElements) && localElements.containsAll(webElements)) 
             return true; 
@@ -426,7 +426,7 @@ public class ViewValidator {
             /*JSONObject viewresponse = (JSONObject)JSONValue.parse(response);
             JSONArray views = (JSONArray)viewresponse.get("elements");
             for (Object viewresult: views) {
-                if (((JSONObject)viewresult).get("sysmlid").equals(view.getID())) {
+                if (((JSONObject)viewresult).get("sysmlId").equals(view.getID())) {
                     JSONArray childrenViews = (JSONArray)((JSONObject)((JSONObject)viewresult).get("specialization")).get("childrenViews");
                     if (childrenViews == null)
                         return false;
@@ -503,7 +503,7 @@ public class ViewValidator {
                     return false;
             }
         } else if (a.get("type").equals("Image")) {
-            if (!a.get("sysmlid").equals(b.get("sysmlid")))
+            if (!a.get("sysmlId").equals(b.get("sysmlId")))
                 return false;
         }
         return true;
