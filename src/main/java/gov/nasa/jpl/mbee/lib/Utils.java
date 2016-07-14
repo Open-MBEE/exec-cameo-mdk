@@ -92,6 +92,8 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
+import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
+import com.nomagic.magicdraw.teamwork2.locks.LockService;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
@@ -3641,6 +3643,57 @@ public class Utils {
     	return false;
     }
 
+    public static boolean tryToLockMany(Project project, Collection<Element> es, boolean isFromTeamwork, boolean recursive) {
+        Collection<Element> uneditable = new HashSet<Element>();
+        Collection<Element> toLock = new HashSet<Element>();
+        for (Element e: es) {
+            if (e.isEditable())
+                continue;
+            if (e instanceof Property || e instanceof Slot) {
+                toLock.add(e.getOwner());
+            } 
+            if ((e instanceof Slot) && !(e.getOwner().getOwner() instanceof Package))
+                toLock.add(e.getOwner().getOwner());
+            toLock.add(e);
+            uneditable.add(e);
+        }
+        if (uneditable.isEmpty())
+            return true;
+        if (!isFromTeamwork)
+            return false;
+        String user = TeamworkUtils.getLoggedUserName();
+        if (user == null) 
+            return false;
+        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
+        if (listener != null)
+            listener.disable(); 
+      //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
+        boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
+        ILockProjectService lockService = LockService.getLockService(project);
+        try {
+            if (lockService != null){
+                lockService.lockElements(toLock, recursive, null);
+            }
+        } catch (Exception ex) {
+            log.info("caught exception when locking:");
+            ex.printStackTrace();
+        }
+        if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
+            SessionManager.getInstance().createSession("session after lock"); 
+        if (listener != null)
+            listener.enable();
+        //if a session was open and lock triggered a teamwork update, session would be closed
+        uneditable.clear();
+        for (Element e: es) {
+            if (e.isEditable())
+                continue;
+            uneditable.add(e);
+        }
+        if (uneditable.isEmpty())
+            return true;
+        return false;
+    }
+    
     public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork) {
         return tryToLock(project, e, isFromTeamwork, false);
     }

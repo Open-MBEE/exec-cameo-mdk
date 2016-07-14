@@ -11,6 +11,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +64,7 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
     private Map<Element, ViewInstanceInfo> infos = new HashMap<Element, ViewInstanceInfo>();
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     private Package unused = null;
+    private Collection<Element> toLockOptional = new HashSet<Element>();
     
     private Map<Element, List<InstanceSpecification>> all = new HashMap<Element, List<InstanceSpecification>>();
     private Map<Element, List<InstanceSpecification>> allManual = new HashMap<Element, List<InstanceSpecification>>();
@@ -103,11 +105,13 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             Package viewPackage = instanceUtils.findViewInstancePackage(view);
             List<Package> parents = instanceUtils.findCorrectViewInstancePackageOwners(view);
             if (viewPackage != null && !parents.contains(viewPackage.getOwner())) {
-                Utils.tryToLock(project, viewPackage, isFromTeamwork); //package needs moving
+                toLockOptional.add(viewPackage);
+                //Utils.tryToLock(project, viewPackage, isFromTeamwork); //package needs moving
                 shouldMove.add(viewPackage);
             }
             lockElements(view, view, viewPackage);
         }
+        Utils.tryToLockMany(project, toLockOptional, isFromTeamwork, false);
         boolean sessionCreated = false;
         try {
             if (!SessionManager.getInstance().isSessionCreated()) {
@@ -145,7 +149,8 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
         }
         for (InstanceSpecification is: info.getOpaque()) {
             if (is.getOwner() != viewPackage) { //check sections
-                Utils.tryToLock(project, is, isFromTeamwork); //instance needs moving
+                //Utils.tryToLock(project, is, isFromTeamwork); //instance needs moving
+                toLockOptional.add(is);
                 shouldMove.add(is);
             }
         }
@@ -153,7 +158,8 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             if (instanceUtils.isSection(is))
                 lockElements(is, view, viewPackage);
             if (!instanceUtils.isInSomeViewPackage(is)) {
-                Utils.tryToLock(project, is, isFromTeamwork); //manual instance needs moving
+                //Utils.tryToLock(project, is, isFromTeamwork); //manual instance needs moving
+                toLockOptional.add(is);
                 shouldMove.add(is);
             }
         }
@@ -169,7 +175,8 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             instanceRef.addViolation(vrv);
         }
         for (InstanceSpecification is: info.getUnused()) {
-            Utils.tryToLock(project, is, isFromTeamwork);
+            //Utils.tryToLock(project, is, isFromTeamwork);
+            toLockOptional.add(is);
         }
         infos.put(viewOrSection, info);
     }

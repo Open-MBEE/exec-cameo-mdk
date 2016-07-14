@@ -13,6 +13,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,8 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
@@ -65,6 +68,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private Set<Element> needEdit = new HashSet<Element>();
     private Set<Element> shouldMove = new HashSet<Element>();
     private Map<String, JSONObject> images;
+    private Collection<Element> toLock = new HashSet<Element>();
+    private Collection<Element> toLockOptional = new HashSet<Element>();
 
     public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images) {
         this.start = start;
@@ -138,10 +143,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 } catch (Exception e) {}
             }
             if (needChange) {
-                if (!Utils.tryToLock(project, view, isFromTeamwork, true)) {
+                toLock.add(view);
+                /*if (!Utils.tryToLock(project, view, isFromTeamwork, true)) {
                     ValidationRuleViolation violation = new ValidationRuleViolation(view, "[NOT EDITABLE (view displayed elements)] The list of view displayed elements cannot be updated.");
                     uneditableElements.addViolation(violation);
-                }
+                }*/
                 needEdit.add(view);
             }
             if (instanceUtils.needLockForEditConstraint(view, view2pe.get(view))) {
@@ -151,22 +157,45 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 Constraint c = Utils.getViewConstraint(view);
                 if (c != null) {
-                    if (!Utils.tryToLock(project, c, isFromTeamwork, true)) {
+                    toLock.add(c);
+                    /*if (!Utils.tryToLock(project, c, isFromTeamwork, true)) {
                         ValidationRuleViolation vrv = new ValidationRuleViolation(c, "[NOT EDITABLE (VIEW CONTENT)] This view constraint can't be updated.");
                         uneditableContent.addViolation(vrv);
                         failure = true;
-                    }
+                    }*/
                     needEdit.add(c);
                 }
             }
             Package viewPackage = instanceUtils.findViewInstancePackage(view);
             List<Package> parents = instanceUtils.findCorrectViewInstancePackageOwners(view);
             if (viewPackage != null && !parents.contains(viewPackage.getOwner())) {
-                Utils.tryToLock(project, viewPackage, isFromTeamwork, true); //package needs moving
+                toLockOptional.add(viewPackage);
+                //Utils.tryToLock(project, viewPackage, isFromTeamwork, true); //package needs moving
                 shouldMove.add(viewPackage);
             }
             lockInstances(view2pe.get(view), viewPackage);
             lockUnused(view2unused.get(view));
+            boolean tryToLockResult = Utils.tryToLockMany(project, toLock, isFromTeamwork, false);
+            Utils.tryToLockMany(project, toLockOptional, isFromTeamwork, false);
+            if (!tryToLockResult) {
+                for (Element e: toLock) {
+                    if (e instanceof Constraint && !e.isEditable()) {
+                        ValidationRuleViolation vrv = new ValidationRuleViolation(e, "[NOT EDITABLE (VIEW CONTENT)] This view constraint can't be updated.");
+                        uneditableContent.addViolation(vrv);
+                        failure = true;
+                    }
+                    if (e instanceof Class && !e.isEditable()) {
+                        ValidationRuleViolation violation = new ValidationRuleViolation(e, "[NOT EDITABLE (view displayed elements)] The list of view displayed elements cannot be updated.");
+                        uneditableElements.addViolation(violation);
+                        failure = true;
+                    }
+                    if (e instanceof InstanceSpecification && !e.isEditable()) {
+                        ValidationRuleViolation vrv = new ValidationRuleViolation(e, "[NOT EDITABLE (CONTENT)] This presentation element instance can't be updated.");
+                        uneditableContent.addViolation(vrv);
+                        failure = true;
+                    }
+                }
+            }
         }
         
         if (failure) {
@@ -227,18 +256,20 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     updateFailed.addViolation(new ValidationRuleViolation(pe.getInstance(), "[UPDATE FAILED] This instance failed to update from MMS and will not be changed to prevent conflicts."));
                     failure = true;
                 }
-                if (!Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true)) {
+                toLock.add(pe.getInstance());
+                /*if (!Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true)) {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(pe.getInstance(), "[NOT EDITABLE (CONTENT)] This presentation element instance can't be updated.");
                     uneditableContent.addViolation(vrv);
                     failure = true;
-                }
+                }*/
                 needEdit.add(pe.getInstance());
             }
             if (pe.getInstance() != null) {
                 if ((pe.isManual() && !instanceUtils.isInSomeViewPackage(pe.getInstance())
                         || (!pe.isManual() && pe.getInstance().getOwner() != viewPackage))) {
                     shouldMove.add(pe.getInstance());
-                    Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true);
+                    toLockOptional.add(pe.getInstance());
+                    //Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true);
                 }
             }
         }
@@ -247,7 +278,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private void lockUnused(List<PresentationElement> pes) {
         for (PresentationElement pe: pes) {
             if (pe.getInstance() != null) {
-                Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true);
+                toLockOptional.add(pe.getInstance());
+                //Utils.tryToLock(project, pe.getInstance(), isFromTeamwork, true);
             }
         }
     }

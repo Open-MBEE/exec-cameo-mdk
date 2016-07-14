@@ -251,18 +251,21 @@ public class ManualSyncRunner implements RunnableWithProgress {
             Set<String> toLockIds = new HashSet<String>(webChanged);
             toLockIds.addAll(webAdded);
             toLockIds.addAll(webDeleted);
+            Set<Element> toLock = new HashSet<Element>();
             for (String id: toLockIds) {
                 Element e = ExportUtility.getElementFromID(id);
                 if (e != null) {
-                    Utils.tryToLock(project, e, isFromTeamwork);
+                    toLock.add(e);
+                    //Utils.tryToLock(project, e, isFromTeamwork);
                     mapping.put(id, e);
                 } else
                     continue;
                 Constraint c = Utils.getViewConstraint(e);
                 if (c != null)
-                    Utils.tryToLock(project, c, isFromTeamwork);
+                    toLock.add(c);
+                    //Utils.tryToLock(project, c, isFromTeamwork);
             }
-            
+            Utils.tryToLockMany(project, toLock, isFromTeamwork, false);
             Utils.guilog("[INFO] Applying changes...");
             sm.createSession("mms delayed sync change");
             listener.disable();

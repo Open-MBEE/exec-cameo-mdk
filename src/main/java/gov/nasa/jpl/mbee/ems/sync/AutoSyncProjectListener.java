@@ -125,10 +125,13 @@ public class AutoSyncProjectListener extends ProjectEventListenerAdapter {
             if (folder == null)
                 return;
             try {
+                Set<Element> toLock = new HashSet<Element>();
                 for (Element e: folder.getOwnedElement()) {
                     if (e instanceof Class)
-                        Utils.tryToLock(project, e, true);
+                        toLock.add(e);
+                        //Utils.tryToLock(project, e, true);
                 }
+                Utils.tryToLockMany(project, toLock, true, false);
             } catch (Exception e) {
                 log.info("exception caught");
                 e.printStackTrace();
