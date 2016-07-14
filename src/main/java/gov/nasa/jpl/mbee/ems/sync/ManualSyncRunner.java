@@ -164,7 +164,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             getJson.put("elements", getElements);
             for (String e: toGet) {
                 JSONObject el = new JSONObject();
-                el.put("sysmlid", e);
+                el.put("sysmlId", e);
                 getElements.add(el);
             }
             String url = ExportUtility.getUrlWithWorkspace();
@@ -208,7 +208,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 JSONObject webObject = (JSONObject)JSONValue.parse(response);
                 JSONArray webArray = (JSONArray)webObject.get("elements");
                 for (Object o: webArray) {
-                    String webId = (String)((JSONObject)o).get("sysmlid");
+                    String webId = (String)((JSONObject)o).get("sysmlId");
                     webElements.put(webId, (JSONObject)o);
                 }
                 //if (webElements.size() != toGet.size())
@@ -277,7 +277,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     ImportUtility.outputError = false;
                     for (JSONObject element : webAddedSorted) {
                         try {
-                            Element e = mapping.get((String)element.get("sysmlid"));
+                            Element e = mapping.get((String)element.get("sysmlId"));
                             if (e != null && !e.isEditable()) {
                                 //existing element and not editable
                                 continue;
@@ -290,7 +290,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     ImportUtility.outputError = true;
                     for (JSONObject element : webAddedSorted) { 
                         try {
-                            Element e = mapping.get((String)element.get("sysmlid"));
+                            Element e = mapping.get((String)element.get("sysmlId"));
                             if (e != null && !e.isEditable()) {
                                 continue; //TODO log this? this is an element that's already been created and 
                                 //currently not editable, most likely already processed by someone else,
@@ -301,7 +301,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                             updated.addViolation(new ValidationRuleViolation(newe, "[CREATED]"));
                         } catch (Exception ex) {
                             log.error("", ex);
-                            cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                            cannotAdd.add((String)((JSONObject)element).get("sysmlId"));
                             ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ex.getMessage());
                             vrv.addAction(new DetailDiff(new JSONObject(), (JSONObject)element));
                             cannotCreate.addViolation(vrv);
@@ -309,7 +309,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                 } 
                 for (JSONObject element: fails) {
-                    cannotAdd.add((String)element.get("sysmlid"));
+                    cannotAdd.add((String)element.get("sysmlId"));
                     ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] Owner or chain of owners not found");
                     vrv.addAction(new DetailDiff(new JSONObject(), element));
                     cannotCreate.addViolation(vrv);
@@ -318,7 +318,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             
                 //take care of updated
                 for (JSONObject webUpdated: webChangedObjects) {
-                    Element e = ExportUtility.getElementFromID((String)webUpdated.get("sysmlid"));
+                    Element e = ExportUtility.getElementFromID((String)webUpdated.get("sysmlId"));
                     if (e == null) {
                         //TODO bad? maybe it was supposed to have been added?
                         continue;
@@ -417,10 +417,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     cannotDelete.add(e);
                 }
                 for (JSONObject element: webAddedObjects) {
-                    cannotAdd.add((String)((JSONObject)element).get("sysmlid"));
+                    cannotAdd.add((String)((JSONObject)element).get("sysmlId"));
                 }
                 for (JSONObject element: webChangedObjects) {
-                    cannotChange.add((String)element.get("sysmlid"));
+                    cannotChange.add((String)element.get("sysmlId"));
                 }
                 Utils.guilog("[ERROR] Unexpected exception happened, all changes will be reattempted at next update.");
                 
@@ -547,7 +547,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     if (ExportUtility.getElementFromID(e) != null) //somehow the model has it, don't delete on server
                         continue;
                     JSONObject toDelete = new JSONObject();
-                    toDelete.put("sysmlid", e);
+                    toDelete.put("sysmlId", e);
                     toDeleteElements.add(toDelete);
                 }
                 toSendUpdates.put("elements", toDeleteElements);

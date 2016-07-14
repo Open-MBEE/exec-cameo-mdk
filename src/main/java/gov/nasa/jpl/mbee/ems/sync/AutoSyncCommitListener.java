@@ -180,7 +180,7 @@ public class AutoSyncCommitListener implements TransactionCommitListener {
                 elementOb = elements.get(elementID);
             } else {
                 elementOb = new JSONObject();
-                elementOb.put("sysmlid", elementID);
+                elementOb.put("sysmlId", elementID);
                 elements.put(elementID, elementOb);
             }
             if (deletedElements.containsKey(elementID) && !auto)
