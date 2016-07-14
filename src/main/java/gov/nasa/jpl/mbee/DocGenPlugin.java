@@ -52,6 +52,7 @@ import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 
 public class DocGenPlugin extends Plugin {
+    protected DebugExportImportModelPlugin debugExportImportModelPlugin = null;
     protected OclEvaluatorPlugin        oclPlugin             = null;
     protected ValidateConstraintsPlugin vcPlugin              = null;
     protected AutoSyncPlugin            autoSyncPlugin        = null;
@@ -92,6 +93,7 @@ public class DocGenPlugin extends Plugin {
         acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new AutosyncStatusConfigurator());
 
+        getDebugExportImportPlugin().init();
         getOclPlugin().init();
         getVcPlugin().init();
         getAutoSyncPlugin().init();
@@ -103,6 +105,13 @@ public class DocGenPlugin extends Plugin {
         Application.getInstance().getEnvironmentOptions().addGroup(new MDKOptionsGroup());
     }
 
+    
+    public DebugExportImportModelPlugin getDebugExportImportPlugin() {
+        if (debugExportImportModelPlugin == null) {
+            debugExportImportModelPlugin = new DebugExportImportModelPlugin();
+        }
+        return debugExportImportModelPlugin;
+    }
     public OclEvaluatorPlugin getOclPlugin() {
         if (oclPlugin == null) {
             oclPlugin = new OclEvaluatorPlugin();

@@ -30,7 +30,6 @@ package gov.nasa.jpl.mbee;
 
 import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
-import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
 import gov.nasa.jpl.mbee.actions.docgen.CreateRestrictedValueAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
@@ -44,10 +43,7 @@ import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateOldDocgen;
 import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
 import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
-import gov.nasa.jpl.mbee.actions.ems.DebugExportImportModels;
-import gov.nasa.jpl.mbee.actions.ems.ExportAllDocuments;
 import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
-import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
 import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
 import gov.nasa.jpl.mbee.actions.ems.OneClickUpdateDoc;
 import gov.nasa.jpl.mbee.actions.ems.OrganizeViewInstancesAction;
@@ -55,8 +51,6 @@ import gov.nasa.jpl.mbee.actions.ems.ValidateElementAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateElementDepthAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
 import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -192,8 +186,6 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (ViewEditUtils.isPasswordSet()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
-                if (manager.getActionFor(DebugExportImportModels.actionid) == null)
-                    models.addAction(new DebugExportImportModels(e));
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
                     models.addAction(new ExportModelAction(e));
                 if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)

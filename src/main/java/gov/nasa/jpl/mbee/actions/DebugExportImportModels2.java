@@ -26,23 +26,23 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.actions.ems;
+package gov.nasa.jpl.mbee.actions;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.ModelExportRunner;
+import gov.nasa.jpl.mbee.Configurator;
 import gov.nasa.jpl.mbee.ems.ModelExporter;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 
 import java.awt.event.ActionEvent;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-public class DebugExportImportModels extends MDAction {
+public class DebugExportImportModels2 extends MDAction {
 
     private static final long serialVersionUID = 1L;
 
@@ -50,23 +50,17 @@ public class DebugExportImportModels extends MDAction {
     
     public static final String actionid = "Debug";
     
-    public DebugExportImportModels(Element e) {
-    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
-    	//
+    public DebugExportImportModels2() {
         super(actionid, "(Debug Export)", null, null);
-        start = e;
     }
     
     @Override
     public void actionPerformed(ActionEvent e) {
         
-       /* HashSet elementSet = new HashSet<Element>();
-        for (Element start: starts) {
-            getAllMissing(start, elementSet, elementsKeyed, recurse, depth);
-        }
-        */
-        //final JSONObject json = ExportUtility.fillElement(start, new JSONObject());
-        //System.out.println(json.toJSONString());
+        Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.isLastContextDiagram());
+
+        if (  selectedElements.toArray()[0] instanceof Element)
+            start = (Element)selectedElements.toArray()[0];
         int depth = 0;
         boolean packageOnly = false;
         
@@ -75,7 +69,9 @@ public class DebugExportImportModels extends MDAction {
         
         if (start == Application.getInstance().getProject().getModel()) {
             me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
+            System.out.println(start);
         } else {
+            System.out.println(start);
             Set<Element> root = new HashSet<Element>();
             root.add(start);
             me = new ModelExporter(root, depth, packageOnly, Application.getInstance().getProject().getPrimaryProject());
