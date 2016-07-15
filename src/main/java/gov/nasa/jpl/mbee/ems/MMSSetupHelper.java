@@ -1,0 +1,1288 @@
+/*******************************************************************************
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * U.S. Government sponsorship acknowledged.
+ * 
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, are 
+ * permitted provided that the following conditions are met:
+ * 
+ *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *    conditions and the following disclaimer.
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list 
+ *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *    provided with the distribution.
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
+ *    nor the names of its contributors may be used to endorse or promote products derived 
+ *    from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+package gov.nasa.jpl.mbee.ems;
+
+import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.lib.MDUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.web.JsonRequestEntity;
+import javassist.bytecode.Descriptor.Iterator;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.MessageConsumer;
+import javax.jms.Session;
+import javax.jms.Topic;
+import javax.swing.JOptionPane;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.DeleteMethod;
+import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.log4j.Logger;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
+import com.nomagic.ci.persistence.IAttachedProject;
+import com.nomagic.ci.persistence.IProject;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
+import com.nomagic.magicdraw.foundation.MDObject;
+import com.nomagic.magicdraw.teamwork2.TeamworkService;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityParameterNode;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ControlFlow;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ObjectFlow;
+import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
+import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralNull;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ParameterDirectionKind;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.OpaqueBehavior;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.CallEvent;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.Event;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.Trigger;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.FinalState;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.Pseudostate;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.PseudostateKind;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.State;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.Transition;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdprotocolstatemachines.ProtocolConformance;
+
+public class MMSSetupHelper {
+    public static Logger log = Logger.getLogger(MMSSetupHelper.class);
+    public static Map<String, Integer> mountedVersions;
+    private static String developerUrl = "https://sheldon.jpl.nasa.gov";
+    private static String developerSite = "europa";
+    private static String developerWs = "master";
+    public static boolean baselineNotSet = false;
+    public static Map<String, Map<String, String>> wsIdMapping = new HashMap<String, Map<String, String>>();
+    public static Map<String, Map<String, String>> sites = new HashMap<String, Map<String, String>>();
+    
+    public static void updateWorkspaceIdMapping() {
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Map<String, String> idmapping = null;
+        if (wsIdMapping.containsKey(projId))
+            idmapping = wsIdMapping.get(projId);
+        else {
+            idmapping = new HashMap<String, String>();
+            wsIdMapping.put(projId, idmapping);
+        }
+        
+        String url = getUrl();
+        if (url == null)
+            return;
+        url += "/workspaces";
+        String result = null;
+        try {
+            result = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
+        if (result != null) {
+            idmapping.clear();
+            JSONObject ob =  (JSONObject) JSONValue.parse(result);
+            JSONArray array = (JSONArray)ob.get("workspaces");
+            for (Object ws: array) {
+                JSONObject workspace = (JSONObject)ws;
+                String id = (String)workspace.get("id");
+                String qname = (String)workspace.get("qualifiedName");
+                idmapping.put(qname, id);
+            }
+        }
+    }
+    
+    public static void updateMasterSites() {
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Map<String, String> idmapping = null;
+        if (sites.containsKey(projId))
+            idmapping = sites.get(projId);
+        else {
+            idmapping = new HashMap<String, String>();
+            sites.put(projId, idmapping);
+        }
+        
+        String url = getUrl();
+        if (url == null)
+            return;
+        url += "/workspaces/master/sites";
+        String result = null;
+        try {
+            result = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
+        if (result != null) {
+            idmapping.clear();
+            JSONObject ob =  (JSONObject) JSONValue.parse(result);
+            JSONArray array = (JSONArray)ob.get("sites");
+            for (Object ws: array) {
+                JSONObject site = (JSONObject)ws;
+                String id = (String)site.get("sysmlId");
+                idmapping.put((String)site.get("name"), id);
+            }
+        }
+    }
+    
+    public static boolean siteExists(String site, boolean human) {
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Map<String, String> idmapping = null;
+        if (sites.containsKey(projId))
+            idmapping = sites.get(projId);
+        else {
+            idmapping = new HashMap<String, String>();
+            sites.put(projId, idmapping);
+        }
+        if (human)
+            return idmapping.keySet().contains(site);
+        else
+            return idmapping.values().contains(site);
+    }
+    
+    public static Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
+            "_17_0_2_3_e9f034d_1375396269655_665865_29411", // stylesaver
+            "_17_0_2_2_ff3038a_1358222938684_513628_2513", // integrity
+            "_17_0_2_2_ff3038a_1358666613056_344763_2540", // integrity
+            "_17_0_2_3_407019f_1383165366792_59388_29094", // mms
+            "_17_0_2_3_407019f_1389652520710_658839_29078", // mms
+            "_17_0_2_3_407019f_1391466672868_698092_29164", // mms
+            "_be00301_1073306188629_537791_2", // diagraminfo
+            "_be00301_1077726770128_871366_1", // diagraminfo
+            "_be00301_1073394345322_922552_1", // diagraminfo
+            "_16_8beta_8ca0285_1257244649124_794756_344", //diagraminfo
+            "_11_5EAPbeta_be00301_1147431377925_245593_1615", //propertyPath
+            "_16_5beta1_8ba0276_1232443673774_531258_269", //diagramTable
+            "_16_5beta1_8ba0276_1232443673774_745303_270",
+            "_16_5beta1_8ba0276_1232443673774_935617_271",
+            "_16_5beta1_8ba0276_1232443673774_678788_272",
+            "_16_6beta_8ba0276_1244211637437_237626_366",
+            "_16_6beta_9020291_1246357739330_848040_336",
+            "_16_6_8e8028e_1254469858416_898766_344",
+            "_16_8beta_8e8028e_1257349277183_113594_375",
+            "_16_8beta_8ba0276_1257943223236_390587_970",
+            "_16_9beta_8ba0276_1273470566124_805209_1268",
+            "_17_0beta_641020e_1283429856637_842592_1509",
+            "_17_0beta_641020e_1283429914629_129769_1512",
+            "_17_0beta_8ba0276_1284990422899_274631_1524",
+            "_17_0beta_641020e_1285323269972_481272_1555",
+            "_18_0beta_8e10289_1385041001405_147345_3249",
+            "_18_0beta_8e10289_1385043703949_249972_3255",
+            "_18_0beta_8e10289_1386323880115_217238_3252",
+            "_18_0beta_8e10289_1387266836276_325174_3258",
+            "_17_0beta_641020e_1285584942604_770258_1555",
+            "_18_0beta_8e8028e_1384177586257_166109_3250", //instance table
+            "_17_0_3beta_8e10289_1348753189250_976469_2933", //dependency matrix
+            "_17_0_3beta_8e10289_1348753189288_719322_3041",
+            "_17_0_3beta_8e10289_1348753189308_306094_3073",
+            "_17_0_3beta_8e10289_1348753189316_438832_3087",
+            "_17_0_3beta_8e10289_1348753189264_979131_2971",
+            "_17_0_3beta_8e10289_1348753189264_72200_2968",
+            "_17_0_3beta_8e10289_1348753189283_64144_3030",
+            "_17_0_4beta_8e10289_1359443478322_371106_3007",
+            "_17_0_4beta_8e10289_1359443708558_424258_3014",
+            "_17_0_4beta_8ca0285_1361197666671_94490_3026",
+            "_17_0_4beta_8f90291_1361803516746_297162_3018",
+            "_17_0_4beta_8f90291_1361805357951_82494_3264",
+            "_17_0_4beta_8f90291_1361805429858_801243_3284",
+            "_17_0_4beta_8f90291_1361805612723_667253_3304",
+            "_17_0_4beta_8f90291_1361805739775_551814_3329",
+            "_17_0_4beta_8f90291_1361805778266_117541_3346",
+            "_17_0_4beta_8f90291_1361806174665_674570_3425",
+            "_17_0_4beta_8f90291_1361806780185_829302_3479",
+            "_17_0_4beta_8e10289_1361896019117_533508_3014",
+            "_17_0_4beta_8e10289_1362067034050_524960_3347",
+            "_17_0_5beta_8e10289_1370856956242_284758_3129",
+            "_17_0_5beta_8e10289_1370857054963_105141_3132",
+            "_17_0_3beta_8e10289_1348753189250_698438_2944", //matrix filter
+            "_17_0_3beta_8e10289_1348753189269_689567_2994",
+            "_17_0_3beta_8e10289_1348753189234_132241_2888",
+            "_17_0_3beta_8e10289_1348753189236_123477_2907",
+            "_17_0_3beta_8e10289_1348753189264_179517_2974",
+            "_17_0_3beta_8e10289_1348753189250_349424_2939",
+            "_17_0_3beta_8e10289_1348753189284_755266_3033",
+            "_17_0_3beta_8e10289_1348753189235_302185_2895",
+            "_17_0_3beta_8e10289_1348753189320_16317_3090",
+            "_17_0_3beta_8e10289_1348753189269_548324_2992",
+            "_16_8beta_9020291_1260453954350_740392_1196", //relation map
+            "_16_8beta_9020291_1260453966240_198881_1206",
+            "_16_8beta_9020291_1260453967146_76281_1208",
+            "_16_8beta_9020291_1260453968333_553037_1212",
+            "_16_8beta_9020291_1260453968865_442280_1214",
+            "_16_8beta_9020291_1260453970130_871899_1216",
+            "_16_8beta_9020291_1260453970505_464947_1218",
+            "_16_8beta_9020291_1260453971021_882247_1220",
+            "_16_8beta_9020291_1260453972114_74547_1226",
+            "_16_8beta_9020291_1260453972411_254735_1228",
+            "_16_8beta_9020291_1261404200708_645145_1058",
+            "_16_8beta_9020291_1261404274486_811759_1095",
+            "_16_8beta_9020291_1261404325436_538645_1109",
+            "_16_8beta_9020291_1261404349386_293128_1122",
+            "_16_8beta_9020291_1262175442698_661575_1141",
+            "_16_8beta_9020291_1262175474107_293557_1151",
+            "_16_8beta_9020291_1262778651547_617085_1106",
+            "_16_8beta_9020291_1265099984697_425850_1246",
+            "_17_0_4beta_8850271_1363160735759_359423_3337",
+            "_17_0_4beta_8850271_1363684316441_131742_3334",
+            "_17_0_5beta_8850271_1378111695683_872709_3379",
+            "_17_0_3_85f027d_1362349793876_101885_3031", //specification table
+            "_17_0_3_85f027d_1362349793876_376001_3032",
+            "_17_0_3_85f027d_1362349793876_780075_3033",
+            "_17_0_4beta_85f027d_1366953341699_324867_3761",
+            "_18_0_2_407019f_1433361787467_278914_14410" //view elements dummy slot
+            ));
+
+    public static Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
+            "_11_5EAPbeta_be00301_1147431307463_773225_1455", //nested connector end
+            "_16_5beta1_8ba0276_1232443673758_573873_267", //diagram table
+            "_9_0_be00301_1108044380615_150487_0", //diagram info
+            "_18_0beta_8e8028e_1384177586203_506524_3245", //instance table
+            "_17_0_3beta_8e10289_1348753189236_873942_2915", //dependency matrix
+            "_17_0_3beta_8e10289_1348753189306_38038_3061", //matrix filter
+            "_16_8beta_9020291_1260453936960_387965_1187", //relation map
+            "_17_0_2_3_407019f_1383165357327_898985_29071", //mms
+            "_17_0_3_85f027d_1362349793845_681432_2986" //specification table
+            ));
+    
+
+
+    public static Element getElementFromID(String id) {
+        if (id == null)
+            return null;
+        Project prj = Application.getInstance().getProject();
+        String[] ids = id.split("-slot-");
+        if (ids.length < 2) {
+            if (id.equals(prj.getPrimaryProject().getProjectID())) {
+                return prj.getModel();
+            }
+            return (Element) prj.getElementByID(ids[0]);
+        } else {
+            Element instancespec = (Element) prj.getElementByID(ids[0]);
+            Element definingFeature = (Element) prj.getElementByID(ids[1]);
+            if (instancespec != null && definingFeature != null
+                    && instancespec instanceof InstanceSpecification) {
+                for (Element e : ((InstanceSpecification) instancespec)
+                        .getOwnedElement()) {
+                    if (e instanceof Slot
+                            && ((Slot) e).getDefiningFeature() == definingFeature)
+                        return e;
+                }
+            } else
+                return null;
+        }
+        return null;
+    }
+
+    public static String getUrl() {
+        String url = null;
+        Element model = Application.getInstance().getProject().getModel();
+        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
+            url = (String) StereotypesHelper.getStereotypePropertyFirst(model,
+                    "ModelManagementSystem", "MMS URL");
+            if (url == null || url.equals("")) {
+                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+                url = null;
+            }
+        } else {
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+            url = null;
+        }
+        if (url == null && MDUtils.isDeveloperMode()) {
+            url = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the editor URL:", developerUrl);
+        }
+        if (url == null || url.equals(""))
+            return null;
+        developerUrl = url;
+        url += "/alfresco/service";
+        return url;
+    }
+
+    public static String getSite() {
+        Element model = Application.getInstance().getProject().getModel();
+        String site = (String) StereotypesHelper.getStereotypePropertyFirst(
+                model, "ModelManagementSystem", "MMS Site");
+        if (site == null || site.equals("")) {
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
+            site = null;
+        }
+        if (site == null && MDUtils.isDeveloperMode()) {
+            site = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
+        }
+        if (site == null || site.equals(""))
+            return null;
+        developerSite = site;
+        // do switch here
+        return site;
+    }
+    
+    public static String getSiteForProject(IProject prj) {
+        String human = getHumanSiteForProject(prj);
+        return sites.get(Application.getInstance().getProject().getPrimaryProject().getProjectID()).get(human);
+    }
+    
+    public static String getHumanSiteForProject(IProject prj) {
+        return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace('.', '-');
+    }
+    
+    public static String getWorkspace() {
+        Project project = Application.getInstance().getProject();
+        String twbranch = getTeamworkBranch(project);
+        if (twbranch == null)
+            return "master";
+        twbranch = "master/" + twbranch;
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Map<String, String> wsmap = wsIdMapping.get(projId);
+        if (wsmap == null) {
+            updateWorkspaceIdMapping();
+            wsmap = wsIdMapping.get(projId);
+        }
+        if (wsmap != null) {
+            String id = wsmap.get(twbranch);
+            if (id == null) {
+                updateWorkspaceIdMapping();
+                id = wsmap.get(twbranch);
+            }
+            if (id != null)
+                return id;
+        }
+        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
+        return null;
+    }
+    
+    public static String getUrlWithWorkspace() {
+        String url = getUrl();
+        String workspace = getWorkspace();
+        if (url != null && workspace != null)
+            return url + "/workspaces/" + workspace;
+        return null;
+    }
+    
+    public static String getUrlWithWorkspaceAndSite() {
+        String url = getUrl();
+        String workspace = getWorkspace();
+        String site = getSite();
+        if (url != null && workspace != null && site != null)
+            return url + "/workspaces/" + workspace + "/sites/" + site;
+        return null;
+    }
+
+    public static String getUrlForProject() {
+        String url = getUrl();
+        String site = getSite();
+        if (url == null || site == null)
+            return null;
+        return url + "/workspaces/master/sites/" +  site + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        /*String url = getUrlWithWorkspaceAndSite();
+        if (url != null)
+            return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        return null;*/
+    }
+
+    public static String getUrlForProject(IProject prj) {
+        String url = getUrl();
+        String site = getSiteForProject(prj);
+        if (url != null && site != null)
+            return url + "/workspaces/master/sites/" + site + "/projects/" + prj.getProjectID();
+        return null;
+    }
+    
+    public static String getPostElementsUrl() {
+        String url = getUrlWithWorkspaceAndSite();
+        if (url == null)
+            return null;
+        return url + "/elements";
+    }
+
+    public static boolean showErrors(int code, String response,
+            boolean showPopupErrors) {
+        if (code != 200) {
+            if (code >= 500) {
+                if (showPopupErrors)
+                    Utils.showPopupMessage("Server Error, see message window for details");
+                Utils.guilog(response);
+            } else if (code == 401) {
+                if (showPopupErrors)
+                    Utils.showPopupMessage("You are not authorized or don't have permission, (you can login and try again).");
+                else
+                    Utils.guilog("You are not authorized or don't have permission, (you can login and try again).");
+                ViewEditUtils.clearUsernameAndPassword();
+            } else if (code == 403) {
+                if (showPopupErrors)
+                    Utils.showPopupMessage("You do not have permission to do this");
+                else
+                    Utils.guilog("You do not have permission to do this");
+            } else {
+                try {
+                    Object o = JSONValue.parse(response);
+                    if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                        Utils.guilog("Server message: " + code + " " + ((JSONObject)o).get("message"));
+                    else
+                        Utils.guilog("Server response: " + code + " "  + response);
+                } catch (Exception c) {
+                    Utils.guilog("Server response: " + code + " "  + response);
+                }
+                if (code == 400)
+                    return false;
+            } 
+            return true;
+        } 
+        try {
+            Object o = JSONValue.parse(response);
+            if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
+                Utils.guilog("Server message: 200 " + ((JSONObject)o).get("message"));
+        } catch (Exception c) {
+                
+        }
+        return false;
+    }
+
+    public static String delete(String url, boolean feedback) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        if (url == null)
+            return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
+        DeleteMethod gm = new DeleteMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url, gm);
+            if (print)
+                log.info("delete: " + url);
+            if (feedback)
+                Utils.guilog("[INFO] Deleting...");
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            if (print)
+                log.info("delete response: " + json);
+            if (showErrors(code, json, false)) {
+                return null;
+            }
+            if (feedback)
+                Utils.guilog("[INFO] Delete Successful");
+            return json;
+        } catch (Exception ex) {
+            Utils.printException(ex);
+        } finally {
+            gm.releaseConnection();
+        }
+        return null;
+        
+    }
+    
+   
+    public static String send(String url, PostMethod pm) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        if (url == null)
+            return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
+        try {
+            //GUILog gl = Application.getInstance().getGUILog();
+            Utils.guilog("[INFO] Sending file...");
+            if (print)
+                log.info("send file: " + url);
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url, pm);
+            int code = client.executeMethod(pm);
+            String response = pm.getResponseBodyAsString();
+            if (print)
+                log.info("send file response: " + code + " " + response);
+            if (showErrors(code, response, false)) {
+                return null;
+            }
+            Utils.guilog("[INFO] Send File Successful.");
+            return response;
+        } catch (Exception ex) {
+            Utils.printException(ex);
+            return null;
+        } finally {
+            pm.releaseConnection();
+        }
+    }
+    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog) {
+    	return send(url, json, showPopupErrors, suppressGuiLog, "Send#?");
+    }
+    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog, String _threadName) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        if (url == null)
+            return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
+        EntityEnclosingMethod pm = null;
+        //if (method == null)
+            pm = new PostMethod(url);
+        //else
+            //pm = new PutMethod(url);
+        //GUILog gl = Application.getInstance().getGUILog();
+        try {
+            if (!suppressGuiLog)
+                Utils.guilog("[INFO] Sending...");
+           // if (json.length() > 3000) {
+                // System.out.println(json);
+             //   log.info(_id + " send: " + url + ": " + json);
+                //gl.log("(see md.log for what got sent - too big to show)");
+            //} else
+                log.info(_threadName + " send: " + url + ": " + json);// gl.log(json);
+            pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
+            pm.setRequestEntity(JsonRequestEntity.create(json));
+            HttpClient client = new HttpClient();
+            
+              
+            ViewEditUtils.setCredentials(client, url, pm);
+            if (print)
+                log.info(_threadName + " executing....");
+            int code = client.executeMethod(pm);
+            if (print)
+                log.info(_threadName + " server returned: " + code);
+            String response = pm.getResponseBodyAsString();
+            if (print)
+                log.info(_threadName + " response: " + code + " " + response);
+            if (showErrors(code, response, showPopupErrors)) {
+                return null;
+            }
+            if (print)
+                log.info(_threadName + " Send Successful.");
+            if (!suppressGuiLog)
+                Utils.guilog("[INFO] Send Successful.");
+            return response;
+        } catch( org.apache.commons.httpclient.ConnectTimeoutException ex){ //the time to establish the connection with the remote host
+        	Utils.printException(ex);
+        	return null;
+        } catch(  java.net.SocketTimeoutException ex){ //the time waiting for data after the connection was established; maximum time of inactivity between two data packets
+        	Utils.printException(ex);
+        	return null;
+        } catch (Exception ex) { //java.net.SocketException: Software caused connection abort: recv failed
+            Utils.printException(ex);
+            return null;
+        } finally {
+            pm.releaseConnection();
+        }
+    }
+     public static String send(String url, String json) {
+        //return send(url, json, null); //method == null means POST
+    	return send(url, json/*, method*/, true, false);
+    }
+    
+    public static String deleteWithBody(String url, String json, boolean feedback) {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        checkAndResetTicket();
+        EntityEnclosingMethod pm = null;
+        url = addTicketToUrl(url);
+        pm = new DeleteMethodWithEntity(url);
+        try {
+            if (print)
+                log.info("deleteWithBody: " + url + ": " + json);// gl.log(json);
+            pm.setRequestHeader("Content-Type",
+                    "application/json;charset=utf-8");
+            pm.setRequestEntity(JsonRequestEntity.create(json));
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url, pm);
+            int code = client.executeMethod(pm);
+            String response = pm.getResponseBodyAsString();
+            if (print)
+                log.info("deleteWithBody Response: " + code + " " + response);
+            if (showErrors(code, response, false)) {
+                return null;
+            }
+            if (feedback)
+                Utils.guilog("[INFO] Delete Successful");
+            return response;
+        } catch (Exception ex) {
+            Utils.printException(ex);
+            return null;
+        } finally {
+            pm.releaseConnection();
+        }
+    }
+    
+    public static String getWithBody(String url, String json) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        EntityEnclosingMethod pm = null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
+        pm = new GetMethodWithEntity(url);
+        try {
+            if (print)
+                log.info("getWithBody: " + url + ": " + json);// gl.log(json);
+            pm.setRequestHeader("Content-Type",
+                    "application/json;charset=utf-8");
+            pm.setRequestEntity(JsonRequestEntity.create(json));
+            HttpClient client = new HttpClient();
+            ViewEditUtils.setCredentials(client, url, pm);
+            int code = client.executeMethod(pm);
+            String response = pm.getResponseBodyAsString();
+            if (print)
+                log.info("getWithBody Response: " + code + " " + response);
+            if (showErrors(code, response, false)) {
+                throw new ServerException(json, code);
+            }
+            if (code == 400)
+                throw new ServerException(json, code);
+            return response;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } finally {
+            pm.releaseConnection();
+        }
+    }
+    
+    //convert the view2view json object given by alfresco visitor to json server expects
+    @SuppressWarnings("unchecked")
+    public static JSONArray formatView2View(JSONObject vv) {
+        JSONArray response = new JSONArray();
+        for (Object viewid : vv.keySet()) {
+            JSONArray children = (JSONArray) vv.get(viewid);
+            JSONObject viewinfo = new JSONObject();
+            viewinfo.put("id", viewid);
+            viewinfo.put("childrenViews", children);
+            response.add(viewinfo);
+        }
+        return response;
+    }
+
+    //convert view2view json array given by alfresco server to format created by alfresco visitor
+    @SuppressWarnings("unchecked")
+    public static JSONObject keyView2View(JSONArray vv) {
+        JSONObject response = new JSONObject();
+        for (Object viewinfo : vv) {
+            String id = (String) ((JSONObject) viewinfo).get("id");
+            JSONArray children = (JSONArray) ((JSONObject) viewinfo)
+                    .get("childrenViews");
+            if (response.containsKey(id) && !((JSONArray)response.get(id)).equals(children)) {
+                //something is messed up
+                Utils.log("[WARNING] Document hierarchy from MMS is inconsistent and will interfere with validation, please file a CAE Support jira at https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary with component MD.MDK to request help to resolve.");
+            }
+            response.put(id, children);
+        }
+        return response;
+    }
+
+    // helper method for long for get() method. will trigger a login dialogue    
+    public static String get(String url) throws ServerException {
+        return get(url, null, null, true);
+    }
+    
+    // helper method for long for get() method. will trigger a login dialogue
+    public static String get(String url, boolean showPopupErrors) throws ServerException {
+    	return get(url, null, null, showPopupErrors);
+    }
+    
+    // helper method for long for get() method. will bypass the login dialogue if username is not null or empty ""
+    public static String get(String url, String username, String password) throws ServerException {
+    	return get(url, username, password, true);
+    }
+
+    public static boolean checkAndResetTicket() {
+        String baseUrl = getUrl();
+        try {
+            boolean validTicket = checkTicket(baseUrl);
+            if (!validTicket) {
+                String loggedIn = getTicket(baseUrl + "/api/login", ViewEditUtils.getUsername(), ViewEditUtils.getPassword(), false);
+            }
+            return true;
+        } catch (ServerException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public static boolean checkTicket(String baseUrl) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        String ticket = ViewEditUtils.getTicket();
+        if (ticket == null || ticket.equals(""))
+            return false;
+        String url = baseUrl + "/mms/login/ticket/" + ViewEditUtils.getTicket();
+        GetMethod gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            if (print)
+                log.info("checkTicket: " + url);
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            if (print)
+                log.info("checkTicket response: " + code + " " + json);
+            if (code != 404 && code != 200)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            if (code == 404)
+                return false;
+            return true;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+            Utils.showPopupMessage("URL is malformed");
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } finally {
+            gm.releaseConnection();
+        }
+    }
+    // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
+    public static String getTicket(String url, String username, String password, boolean showPopupErrors) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        
+        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
+      
+        HttpClient client = new HttpClient();
+        if (url == null)
+            return null;
+       // url = "https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login";
+        PostMethod postMethod = new PostMethod(url);
+        String userpasswordJsonString = "";
+        try {
+            
+            if (username != null && !username.equals(""))
+                ViewEditUtils.setUsernameAndPassword(username, password, true);
+            
+            userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
+            
+           // String JSON_STRING = "{\"username\":\"username\", \"password\":\"password\"}";
+            
+            StringRequestEntity requestEntity = new StringRequestEntity(
+                    userpasswordJsonString,
+                    "application/json",
+                    "UTF-8");
+
+            
+            postMethod.setRequestEntity(requestEntity);
+            int code = client.executeMethod(postMethod);
+            String json = postMethod.getResponseBodyAsString();
+            if (print)
+                log.info("get ticket response: " + code + " " + json);
+            if (showErrors(code, json, showPopupErrors)) {
+                throw new ServerException(json, code);
+            }
+            if (code == 400)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            
+            JSONObject ob =  (JSONObject) JSONValue.parse(json);
+            if (ob != null) {
+                JSONObject d = (JSONObject)ob.get("data");
+                if (d != null && !d.isEmpty()) {
+                    String ticket = (String)d.get("ticket");
+                    ViewEditUtils.setTicket(ticket);
+                } else
+                    return null;
+            } else
+                return null;
+            return json;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+            Utils.showPopupMessage("URL is malformed");
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } finally {
+            postMethod.releaseConnection();
+        }
+    }
+    // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
+    public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        if (url == null)
+            return null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
+        GetMethod gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            if (username == null || username.equals(""))
+                ViewEditUtils.setCredentials(client, url, gm);
+            else
+                ViewEditUtils.setCredentials(client, url, gm, username, password);
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
+            if (print)
+                log.info("get: " + url);
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            if (print)
+                log.info("get response: " + code + " " + json);
+            if (showErrors(code, json, showPopupErrors)) {
+                throw new ServerException(json, code);
+            }
+            if (code == 400)
+                throw new ServerException(json, code); //?
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
+            return json;
+        } catch (HttpException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IOException ex) {
+            Utils.printException(ex);
+            throw new ServerException("", 500);
+        } catch (IllegalArgumentException ex) {
+                Utils.showPopupMessage("URL is malformed");
+                Utils.printException(ex);
+                throw new ServerException("", 500);
+        } finally {
+            gm.releaseConnection();
+        }
+    }
+    
+    public static String addTicketToUrl(String r) {
+        String ticket = ViewEditUtils.getTicket();
+        if (ticket == null || ticket.equals(""))
+            return r;
+        String url = r;
+        if (url.contains("?"))
+            url += "&alf_ticket=" + ticket;
+        else
+            url +="?alf_ticket=" + ticket;
+        return url;
+    }
+    
+    //check if comment is actually the documentation of its owner
+    public static boolean isElementDocumentation(Comment c) {
+        if (c.getAnnotatedElement().size() > 1
+                || c.getAnnotatedElement().isEmpty())
+            return false;
+        if (c.getAnnotatedElement().iterator().next() == c.getOwner())
+            return true;
+        return false;
+    }
+
+    
+    
+    
+    
+     
+    
+  //no one's using this, should consider removing it
+    public static String getBaselineTag() {
+        Element model = Application.getInstance().getProject().getModel();
+        String tag = null;
+        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
+            tag = (String) StereotypesHelper.getStereotypePropertyFirst(model,
+                    "ModelManagementSystem", "baselineTag");
+            if (tag == null || tag.equals("")) {
+                baselineNotSet = true;
+                // JOptionPane
+                // .showMessageDialog(null,
+                // "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+                return null;
+            }
+        } else {
+            // JOptionPane
+            // .showMessageDialog(null,
+            // "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
+            baselineNotSet = true;
+            return null;
+        }
+        baselineNotSet = false;
+        return tag;
+    }
+    
+    //no one uses this, should remove
+    public static boolean checkBaselineMount() {
+        Project prj = Application.getInstance().getProject();
+        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
+            String baselineTag = getBaselineTag();
+            if (baselineTag == null)
+                return true;
+            List<String> tags = ProjectUtilities.getVersionTags(prj
+                    .getPrimaryProject());
+            if (!tags.contains(baselineTag)) {
+                Utils.guilog("The current project is not an approved baseline version!");
+                return false;
+            }
+
+            for (IAttachedProject proj : ProjectUtilities
+                    .getAllAttachedProjects(prj)) {
+                if (ProjectUtilities.isFromTeamworkServer(proj)) {
+                    List<String> tags2 = ProjectUtilities.getVersionTags(proj);
+                    if (!tags2.contains(baselineTag)) {
+                        Utils.guilog(proj.getName() + " is not an approved baseline module version!");
+                        return false;
+                    }
+                }
+            }
+        } else
+            baselineNotSet = false;
+        return true;
+    }
+    //no one uses this, should remove
+    public static boolean checkBaseline() {
+        /*if (!ExportUtility.checkBaselineMount()) {
+            Boolean con = Utils
+                    .getUserYesNoAnswer("Mount structure check did not pass (your project or mounts are not baseline versions)! Do you want to continue?");
+            // Utils.showPopupMessage("Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed");
+            if (con == null || !con)
+                return false;
+        }*/
+        return true;
+    }
+
+    public static Integer getAlfrescoProjectVersion(String projectId) {
+        String baseUrl = getUrlWithWorkspace();
+        String checkProjUrl = baseUrl + "/projects/" + projectId;
+        return getAlfrescoProjectVersionWithUrl(checkProjUrl);
+    }
+    
+    public static Integer getAlfrescoProjectVersion(String projectId, String wsId) {
+        String baseUrl = getUrl();//WithWorkspace();
+        baseUrl += "/workspaces/" + wsId;
+        String checkProjUrl = baseUrl + "/projects/" + projectId;
+        return getAlfrescoProjectVersionWithUrl(checkProjUrl);
+    }
+    
+    private static Integer getAlfrescoProjectVersionWithUrl(String url) {
+        String json = null;
+        try {
+            json = get(url, false);
+        } catch (ServerException ex) {
+            
+        }
+        if (json == null)
+            return null; // ??
+        JSONObject result = (JSONObject) JSONValue.parse(json);
+        if (result.containsKey("elements")) {
+            JSONArray elements = (JSONArray)result.get("elements");
+            if (!elements.isEmpty() && ((JSONObject)elements.get(0)).containsKey("specialization")) {
+                JSONObject spec = (JSONObject)((JSONObject)elements.get(0)).get("specialization");
+                if (spec.containsKey("projectVersion") && spec.get("projectVersion") != null)
+                    return Integer.valueOf(spec.get("projectVersion").toString());
+            }
+        }
+        return null;
+    }
+
+   
+
+    public static void sendProjectVersion() {
+        String baseurl = getUrlWithWorkspaceAndSite();
+        if (baseurl == null)
+            return;
+        JSONObject result = MMSSetupHelper.getProjectJson();
+        JSONObject tosend = new JSONObject();
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
+        array.add(result);
+        String url = baseurl + "/projects";
+        if (!url.contains("master"))
+            url += "?createSite=true";
+        Utils.guilog("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
+        //send(url, tosend.toJSONString(), null, false);
+    }
+    
+    public static void sendProjectVersion(String projId, Integer version) {
+        String baseurl = getUrlWithWorkspaceAndSite();
+        if (baseurl == null)
+            return;
+        JSONObject result = MMSSetupHelper.getProjectJSON(null, projId, version);
+        JSONObject tosend = new JSONObject();
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
+        array.add(result);
+        String url = baseurl + "/projects";
+        if (!url.contains("master"))
+            url += "?createSite=true";
+        Utils.guilog("[INFO] Request is added to queue.");
+        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
+        //send(url, tosend.toJSONString(), null, false);
+    }
+
+    public static String initializeBranchVersion(String taskId) {
+        String baseUrl = MMSSetupHelper.getUrl();
+        String site = MMSSetupHelper.getSite();
+        String projUrl = baseUrl + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true";
+        JSONObject moduleJson = MMSSetupHelper.getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), 0);
+        JSONObject tosend = new JSONObject();
+        JSONArray array = new JSONArray();
+        tosend.put("elements", array);
+        tosend.put("source", "magicdraw");
+        tosend.put("mmsVersion", "2.3");
+        array.add(moduleJson);
+        //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
+        return MMSSetupHelper.send(projUrl, tosend.toJSONString()/*, null*/, false, false);
+    }
+    
+    public static void initializeDurableQueue(String taskId) {
+        String projectId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        Connection connection = null;
+        Session session = null;
+        MessageConsumer consumer = null;
+        try {
+            Map<String, String> urlInfo = new HashMap<String, String>();
+            AutoSyncProjectListener.getJMSUrl(urlInfo);
+            String url = urlInfo.get( "url" );
+            if (url == null) {
+                return;
+            }
+            ConnectionFactory connectionFactory = AutoSyncProjectListener.createConnectionFactory( urlInfo );
+            connection = connectionFactory.createConnection();
+            String subscriberId = projectId + "/" + taskId;
+            connection.setClientID(subscriberId);
+            // connection.setExceptionListener(this);
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+            String messageSelector = AutoSyncProjectListener.constructSelectorString(projectId, taskId);
+            Topic topic = session.createTopic("master");
+            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
+            connection.start();
+        } catch (JMSException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } finally {
+            try {
+                if (consumer != null)
+                    consumer.close();
+                if (session != null)
+                    session.close();
+                if (connection != null)
+                    connection.close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public static void sendProjectVersions() {
+        for (String projid : mountedVersions.keySet()) {
+            sendProjectVersion(projid, mountedVersions.get(projid));
+        }
+    }
+
+    public static String unescapeHtml(String s) {
+        return StringEscapeUtils.unescapeHtml(s);
+    }
+
+    //whether something should be sent to alfresco - ignore specific slots, documentation comment elements, value specs, empty instance specs (most likely from just stereotype application)
+    public static boolean shouldAdd(Element e) {
+        if (e == null || e instanceof ValueSpecification || e instanceof Extension
+                || e instanceof ProfileApplication)
+            return false;
+        if (e instanceof Comment
+                && MMSSetupHelper.isElementDocumentation((Comment) e))
+            return false;
+        if (e instanceof InstanceSpecification && !(e instanceof EnumerationLiteral)) {
+            boolean shouldIgnore = true;
+            for (Classifier c: ((InstanceSpecification)e).getClassifier()) {
+                if (!(c instanceof Stereotype))
+                    return true;
+                if (!IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
+                    shouldIgnore = false;
+            }
+            if (!shouldIgnore && !e.getOwnedElement().isEmpty())
+                return true;
+            return false;
+            /*if (((InstanceSpecification)e).getClassifier().size() == 1 && 
+                    IGNORE_INSTANCE_CLASSIFIERS.contains(((InstanceSpecification)e).getClassifier().get(0).getID()))
+                return false;*/
+        }
+        if (e instanceof ConnectorEnd)
+            return false;
+        if (e instanceof Slot && ((Slot)e).getDefiningFeature() != null
+                && MMSSetupHelper.IGNORE_SLOT_FEATURES.contains(((Slot) e)
+                        .getDefiningFeature().getID()))
+            return false;
+        if (e instanceof Slot && (e.getOwner() == null || ((Slot)e).getDefiningFeature() == null)) //model is messed up
+                return false;
+        if (e.getID().endsWith("sync") || (e.getOwner() != null && e.getOwner().getID().endsWith("sync"))) //delayed sync stuff
+            return false;
+        if (e instanceof Constraint) {
+            if (isViewConstraint((Constraint)e))
+                return false;
+        }
+        return true;
+    }
+
+    public static boolean isViewConstraint(Constraint e) {
+        Element maybeView = e.getOwner();
+        Stereotype v = Utils.getViewStereotype();
+        List<Element> constrained = ((Constraint)e).getConstrainedElement();
+        if (maybeView != null && v != null && StereotypesHelper.hasStereotypeOrDerived(maybeView, v) && constrained.size() == 1 && constrained.get(0) == maybeView)
+            return true; //view constraint, get from view itself
+        return false;
+    }
+    
+    public static final Pattern HTML_WHITESPACE_END = Pattern.compile(
+            "\\s*</p>", Pattern.DOTALL);
+    public static final Pattern HTML_WHITESPACE_START = Pattern.compile(
+            "<p>\\s*", Pattern.DOTALL);
+
+    public static String cleanHtml(String s) {
+        return Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "")
+                .replace("<br>", "").replace("</br>", "");// .replace("\n", "");
+        // inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
+        // return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
+    }
+    
+    public static JSONObject getProjectJson() {
+        Project prj = Application.getInstance().getProject();
+        Integer ver = getProjectVersion(prj);
+        return getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), ver);
+    }
+    
+    public static JSONObject getProjectJsonForProject(IProject prj) {
+        return getProjectJSON(prj.getName(), prj.getProjectID(), null);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static JSONObject getProjectJSON(String name, String projId, Integer version) {
+        JSONObject result = new JSONObject();
+        if (name != null)
+            result.put("name", name);
+        result.put("sysmlId", projId);
+        JSONObject spec = new JSONObject();
+        spec.put("type", "Project");
+        if (version != null)
+            spec.put("projectVersion", version.toString());
+        result.put("specialization", spec);
+        return result;
+    }
+    
+    public static String getProjectId(Project proj) {
+        return proj.getPrimaryProject().getProjectID();
+    }
+    
+    public static Integer getProjectVersion(Project proj) {
+        Integer ver = null;
+        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject()))
+            ver = TeamworkService.getInstance(proj).getVersion(proj).getNumber();
+        return ver;
+    }
+    
+    public static String getTeamworkBranch(Project proj) {
+        String branch = null;
+        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
+            branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(proj).getURI());
+        }
+        return branch;
+    }
+
+    /**
+     * Gets JMS JNDI connection details from the MMS server
+     * @return  JSONObject of the connection details
+     */
+    public static JSONObject getJmsConnectionDetails() {
+        String url = getUrl() + "/connection/jms";
+        String jsonString = null;
+        try {
+            jsonString = get(url, false);
+        } catch (ServerException ex) {}
+        if (jsonString == null) return null; 
+        
+        return (JSONObject)JSONValue.parse( jsonString );
+    }
+
+
+
+}

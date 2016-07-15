@@ -124,7 +124,7 @@ public class ModelExporter {
         if (!ExportUtility.shouldAdd(e))
             return false;
         JSONObject elementInfo = new JSONObject();
-        ExportUtility.fillElement(e, elementInfo);
+        EMFExporter.fillElement(e, elementInfo);
         elements.put(e.getID(), elementInfo);
         
         if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e))
