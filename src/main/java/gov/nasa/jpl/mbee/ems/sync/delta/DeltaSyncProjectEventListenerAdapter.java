@@ -14,11 +14,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.function.Function;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
-import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -39,8 +39,6 @@ import java.util.*;
  *   
  */
 public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    public static Logger log = Logger.getLogger(DeltaSyncProjectEventListenerAdapter.class);
-
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
     private static DateFormat dfserver = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
@@ -49,15 +47,16 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             String folderId = project.getPrimaryProject().getProjectID();
             folderId += "_sync";
             Element folder = ExportUtility.getElementFromID(folderId);
-            if (folder == null)
+            if (folder == null) {
                 return;
+            }
             try {
                 for (Element e : folder.getOwnedElement()) {
-                    if (e instanceof Class)
+                    if (e instanceof Class) {
                         Utils.tryToLock(project, e, true);
+                    }
                 }
             } catch (Exception e) {
-                log.info("exception caught");
                 e.printStackTrace();
             }
         }
@@ -77,8 +76,9 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         folderId += "_sync";
         Element folder = ExportUtility.getElementFromID(folderId);
         if (folder == null) {
-            if (!create)
+            if (!create) {
                 return elements;
+            }
             project.getCounter().setCanResetIDForObject(true);
             folder = project.getElementsFactory().createPackageInstance();
             folder.setOwner(project.getModel());
@@ -91,8 +91,9 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
                 String name = ((Class) e).getName();
                 if (name.startsWith(prefix)) {
                     nameMapping.put(name, (NamedElement) e);
-                    if (name.contains("clear"))
+                    if (name.contains("clear")) {
                         continue;
+                    }
                     elements.add((NamedElement) e);
                 }
             }
@@ -107,8 +108,9 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
                 elements.remove(e); //block has been processed
                 if (e.isEditable()) {
                     canDelete.add(e);
-                    if (clear.isEditable())
+                    if (clear.isEditable()) {
                         canDelete.add(clear);
+                    }
                 }
                 continue;
             }
@@ -117,7 +119,8 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
                 if (e.isEditable()) { //delete it
                     canDelete.add(e);
                     elements.remove(e);
-                } else {            //cannot be deleted, add a clear block to indicate it's been processed
+                }
+                else {            //cannot be deleted, add a clear block to indicate it's been processed
                     elements.remove(e);
                     NamedElement newClear = project.getElementsFactory().createClassInstance();
                     newClear.setName(e.getName() + "_clear");
@@ -130,8 +133,9 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             if (name.contains("_clear")) {
                 String block = name.replace("_clear", "");
                 if (nameMapping.get(block) == null) { //clear block is dangling
-                    if (nameMapping.get(name).isEditable())
+                    if (nameMapping.get(name).isEditable()) {
                         canDelete.add(nameMapping.get(name));
+                    }
                 }
             }
         }
@@ -174,8 +178,9 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             String name = e.getName();
             try {
                 Date maybe = df.parse(name.substring(8));
-                if (maybe.after(res))
+                if (maybe.after(res)) {
                     res = maybe;
+                }
             } catch (ParseException ex) {
             }
         }
@@ -185,29 +190,30 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public static void setUpdatesOrFailed(Project project, JSONObject o, String type, boolean clearAll) {
         List<NamedElement> es = getSyncElement(project, true, clearAll, type);
         es.get(0).setName(type + "_" + df.format(new Date()));
-        ModelHelper.setComment(es.get(0), (o == null) ? "{\"deleted\":[], \"changed\":[], \"added\":[]}" : o.toJSONString());
+        ModelHelper.setComment(es.get(0), (o != null) ? o.toJSONString() : "{\"deleted\":[], \"changed\":[], \"added\":[]}");
     }
 
     @SuppressWarnings("unchecked")
     public static JSONObject getUpdatesOrFailed(Project project, String type) {
-        List<NamedElement> es = getSyncElement(project, false, false, type);
-        if (es.isEmpty())
+        List<NamedElement> elements = getSyncElement(project, false, false, type);
+        if (elements.isEmpty()) {
             return null;
+        }
         JSONObject update = new JSONObject();
         update.put("deleted", new JSONArray());
         update.put("changed", new JSONArray());
         update.put("added", new JSONArray());
-        Set<String> deleted = new HashSet<String>();
-        Set<String> changed = new HashSet<String>();
-        Set<String> added = new HashSet<String>();
-        for (Element e : es) {
+        Set<String> deleted = new HashSet<>();
+        Set<String> changed = new HashSet<>();
+        Set<String> added = new HashSet<>();
+        for (Element element : elements) {
             try {
-                JSONObject updates = (JSONObject) JSONValue.parse(ModelHelper.getComment(e));
+                JSONObject updates = (JSONObject) JSONValue.parse(ModelHelper.getComment(element));
                 deleted.addAll((JSONArray) updates.get("deleted"));
                 changed.addAll((JSONArray) updates.get("changed"));
                 added.addAll((JSONArray) updates.get("added"));
-            } catch (Exception ex) {
-                log.error("", ex);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         ((JSONArray) update.get("deleted")).addAll(deleted);
@@ -219,25 +225,26 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public static void setConflicts(Project project, JSONObject o) {
         List<NamedElement> es = getSyncElement(project, true, true, "conflict");
         es.get(0).setName("conflict_" + df.format(new Date()));
-        ModelHelper.setComment(es.get(0), (o == null) ? "{\"elements\":[]}" : o.toJSONString());
+        ModelHelper.setComment(es.get(0), (o != null) ? o.toJSONString() : "{\"elements\":[]}");
     }
 
     public static JSONObject getConflicts(Project project) {
-        List<NamedElement> es = getSyncElement(project, false, false, "conflict");
-        if (es.isEmpty())
+        List<NamedElement> elements = getSyncElement(project, false, false, "conflict");
+        if (elements.isEmpty()) {
             return null;
+        }
         JSONObject update = new JSONObject();
         update.put("elements", new JSONArray());
-        Set<String> elements = new HashSet<String>();
-        for (Element e : es) {
+        Set<String> elementSet = new HashSet<>();
+        for (Element element : elements) {
             try {
-                JSONObject updates = (JSONObject) JSONValue.parse(ModelHelper.getComment(e));
-                elements.addAll((JSONArray) updates.get("elements"));
-            } catch (Exception ex) {
-                log.error("", ex);
+                JSONObject updates = (JSONObject) JSONValue.parse(ModelHelper.getComment(element));
+                elementSet.addAll((JSONArray) updates.get("elements"));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-        ((JSONArray) update.get("elements")).addAll(elements);
+        ((JSONArray) update.get("elements")).addAll(elementSet);
         return update;
     }
 
@@ -346,7 +353,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             String messageSelector = constructSelectorString(projectID, wsID);
 
             MessageConsumer consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
-            JMSMessageListener jmslistener = new JMSMessageListener(project);
+            LegacyJMSMessageListener jmslistener = new LegacyJMSMessageListener(project);
             consumer.setMessageListener(jmslistener);
             connection.start();
 
@@ -374,7 +381,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         /*DeltaSyncProjectMapping deltaSyncProjectMapping = getProjectMapping(project);
         if (deltaSyncProjectMapping.getConnection() != null || deltaSyncProjectMapping.getSession() != null || deltaSyncProjectMapping.getMessageConsumer() != null || deltaSyncProjectMapping.getJmsMessageListener() != null) {
             //autosync is on
-            JMSMessageListener jmsMessageListener = deltaSyncProjectMapping.getJmsMessageListener();
+            LegacyJMSMessageListener jmsMessageListener = deltaSyncProjectMapping.getJmsMessageListener();
             if (jmsMessageListener != null) {
                 Set<String> cannotAdd = new HashSet<String>(jmsMessageListener.getCannotAdd());
                 Set<String> cannotChange = new HashSet<String>(jmsMessageListener.getCannotChange());
@@ -407,58 +414,73 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         }*/
     }
 
+    private static final Map<String, Function<Project, Changelog<String, ?>>> PERSISTENT_CHANGELOGS = new HashMap<>(2);
 
-    @SuppressWarnings("unchecked")
-    public void saveLocalUpdates(Project project) {
-        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener();
-        final Set<String> newCreated = listener.getInMemoryChangelog().get(Changelog.ChangeType.CREATED).keySet(),
-                newUpdated = listener.getInMemoryChangelog().get(Changelog.ChangeType.UPDATED).keySet(),
-                newDeleted = listener.getInMemoryChangelog().get(Changelog.ChangeType.DELETED).keySet();
-        if (newCreated.isEmpty() && newUpdated.isEmpty() && newDeleted.isEmpty())
-            return; //no need to save if nothing to save
-        JSONObject notSaved = new JSONObject();
-        JSONArray addeda = new JSONArray();
-        JSONArray updateda = new JSONArray();
-        JSONArray deleteda = new JSONArray();
-
-        addeda.addAll(newCreated);
-        updateda.addAll(newUpdated);
-        deleteda.addAll(newDeleted);
-
-        notSaved.put("added", addeda);
-        notSaved.put("changed", updateda);
-        notSaved.put("deleted", deleteda);
-
-        SessionManager sm = SessionManager.getInstance();
-        sm.createSession("mms delayed sync change logs");
-        try {
-            setUpdatesOrFailed(project, notSaved, "update", false);
-            sm.closeSession();
-
-            // clear to prevent memory usage from going to infinity (and beyond); should solve "memory leak"
-            // never gets here upon exception
-            // prevents (or at least minimized) duplication of elements existing in memory and in the persistent history
-            // checked DeltaSyncRunner to ensure that this should not cause an issue as it checks for both memory and historical changes
-            listener.getInMemoryChangelog().clear();
-        } catch (Exception e) {
-            log.error("", e);
-            sm.cancelSession();
-        }
+    static {
+        PERSISTENT_CHANGELOGS.put("update", new Function<Project, Changelog<String, ?>>() {
+            @Override
+            public Changelog<String, ?> apply(Project project) {
+                return CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener().getInMemoryLocalChangelog();
+            }
+        });
+        PERSISTENT_CHANGELOGS.put("jms", new Function<Project, Changelog<String, ?>>() {
+            @Override
+            public Changelog<String, ?> apply(Project project) {
+                return JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().getInMemoryJMSChangelog();
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
+    public static void persistChanges(Project project) {
+        for (Map.Entry<String, Function<Project, Changelog<String, ?>>> entry : PERSISTENT_CHANGELOGS.entrySet()) {
+            Changelog<String, ?> changelog = entry.getValue().apply(project);
+            final Set<String> newCreated = changelog.get(Changelog.ChangeType.CREATED).keySet(),
+                    newUpdated = changelog.get(Changelog.ChangeType.UPDATED).keySet(),
+                    newDeleted = changelog.get(Changelog.ChangeType.DELETED).keySet();
+            if (newCreated.isEmpty() && newUpdated.isEmpty() && newDeleted.isEmpty()) {
+                continue; //no need to save if there's nothing to save
+            }
+            JSONObject notSaved = new JSONObject();
+            JSONArray addedArray = new JSONArray();
+            JSONArray updatedArray = new JSONArray();
+            JSONArray deletedArray = new JSONArray();
+
+            addedArray.addAll(newCreated);
+            updatedArray.addAll(newUpdated);
+            deletedArray.addAll(newDeleted);
+
+            notSaved.put("added", addedArray);
+            notSaved.put("changed", updatedArray);
+            notSaved.put("deleted", deletedArray);
+            if (!SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().createSession(project, "Persisting Delta Sync Changelog(s)");
+            }
+            setUpdatesOrFailed(project, notSaved, entry.getKey(), false);
+        }
+        if (SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().closeSession();
+        }
+    }
+
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
         boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
-        if (!save)
+        if (!save) {
             return;
-        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"))
+        }
+        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
             return;
+        }
         try {
-            saveLocalUpdates(project);
+            persistChanges(project);
             saveAutoSyncErrors(project);
         } catch (Exception e) {
-            log.error("", e); //potential session isn't created error if need to update from tw while commiting
+            // potential session isn't created error if need to update from tw while committing
+            e.printStackTrace();
+            if (SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().cancelSession();
+            }
         }
     }
 

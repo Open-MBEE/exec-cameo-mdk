@@ -16,6 +16,7 @@ import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class responds to commits done in the document.
@@ -33,10 +34,10 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
      * Allow listener to be disabled during imports.
      */
     private volatile boolean disabled = false;
-    private Changelog<String, Element> inMemoryChangelog = new Changelog<>();
+    private Changelog<String, Element> inMemoryLocalChangelog = new Changelog<>();
 
-    public Changelog<String, Element> getInMemoryChangelog() {
-        return inMemoryChangelog;
+    public Changelog<String, Element> getInMemoryLocalChangelog() {
+        return inMemoryLocalChangelog;
     }
 
     public boolean isDisabled() {
@@ -77,21 +78,26 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                         continue;
                     }
                     Element sourceElement = (Element) source;
+                    System.out.println(event.getPropertyName() + ": " + sourceElement.getID() + " - " + (sourceElement instanceof NamedElement ? ((NamedElement) sourceElement).getName() : "<>"));
                     String changedPropertyName = event.getPropertyName();
-                    if (changedPropertyName == null || IGNORED_PROPERTY_CHANGE_EVENT_NAMES.contains(changedPropertyName)) {
+                    if (changedPropertyName == null || changedPropertyName.startsWith("_") || IGNORED_PROPERTY_CHANGE_EVENT_NAMES.contains(changedPropertyName)) {
                         continue;
                     }
                     if ((event.getNewValue() == null && event.getOldValue() == null) || (event.getNewValue() != null && event.getNewValue().equals(event.getOldValue()))) {
                         continue;
                     }
+                    System.out.println("1");
 
-                    Element root = sourceElement;
-                    while (root.getOwner() != null) {
-                        root = root.getOwner();
+                    if (!changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
+                        Element root = sourceElement;
+                        while (root.getOwner() != null) {
+                            root = root.getOwner();
+                        }
+                        if (!root.equals(model)) {
+                            continue;
+                        }
                     }
-                    if (!root.equals(model)) {
-                        continue;
-                    }
+                    System.out.println("2");
 
                     // START PRE-PROCESSING
                     Element e;
@@ -117,28 +123,23 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                     if (!ExportUtility.shouldAdd(sourceElement)) {
                         continue;
                     }
+                    System.out.println("3");
                     String elementID = ExportUtility.getElementID(sourceElement);
                     if (elementID == null) {
                         continue;
                     }
+                    System.out.println("4");
 
-                    if (changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
-                        inMemoryChangelog.get(Changelog.ChangeType.CREATED).remove(elementID);
-                        inMemoryChangelog.get(Changelog.ChangeType.UPDATED).remove(elementID);
-                        inMemoryChangelog.get(Changelog.ChangeType.DELETED).put(elementID, sourceElement);
-                        Application.getInstance().getGUILog().log("Deleted: " + elementID + " - " + (sourceElement instanceof NamedElement ? ((NamedElement) sourceElement).getName() : "<>"));
+                    Changelog.ChangeType changeType = Changelog.ChangeType.UPDATED;
+                    switch (changedPropertyName) {
+                        case UML2MetamodelConstants.INSTANCE_DELETED:
+                            changeType = Changelog.ChangeType.DELETED;
+                            break;
+                        case UML2MetamodelConstants.INSTANCE_CREATED:
+                            changeType = Changelog.ChangeType.CREATED;
+                            break;
                     }
-                    else if (changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_CREATED)) {
-                        inMemoryChangelog.get(Changelog.ChangeType.CREATED).put(elementID, sourceElement);
-                        inMemoryChangelog.get(Changelog.ChangeType.UPDATED).remove(elementID);
-                        inMemoryChangelog.get(Changelog.ChangeType.DELETED).remove(elementID);
-                        Application.getInstance().getGUILog().log("Created: " + elementID + " - " + (sourceElement instanceof NamedElement ? " " + ((NamedElement) sourceElement).getName() : "<>"));
-                    }
-                    else if (!inMemoryChangelog.get(Changelog.ChangeType.CREATED).containsKey(elementID) && !inMemoryChangelog.get(Changelog.ChangeType.DELETED).containsKey(elementID)) {
-                        inMemoryChangelog.get(Changelog.ChangeType.UPDATED).put(elementID, sourceElement);
-                        Application.getInstance().getGUILog().log("Updated: " + elementID + " - " + (sourceElement instanceof NamedElement ? " " + ((NamedElement) sourceElement).getName() : "<>"));
-                    }
-                    System.out.println(event.getPropertyName() + ": " + sourceElement.getID() + " - " + (sourceElement instanceof NamedElement ? ((NamedElement) sourceElement).getName() : "<>"));
+                    inMemoryLocalChangelog.addChange(elementID, sourceElement, changeType);
                 }
             } catch (Exception e) {
                 Application.getInstance().getGUILog().log("CommonSyncTransactionCommitListener had an unexpected error.");

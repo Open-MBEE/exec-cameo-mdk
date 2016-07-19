@@ -404,35 +404,29 @@ public class ModelValidator {
         // elementsKeyed.keySet() refers to all MagicDraw element IDs on Alfresco
         // all refers to MagicDraw view element and owned elements
         // 1st loop: MagicDraw elements get compared with Alfresco elements
-        Set<Element> missing = new HashSet<Element>();
+        Set<Element> missing = new HashSet<>();
         for (Element e: all) {
-            if (ps != null && ps.isCancel())
+            if (ps != null && ps.isCancel()) {
                 break;
+            }
             if (!elementsKeyed.containsKey(e.getID())) {
             	// MagicDraw element is not on Alfresco
                 if (checkExist && ExportUtility.shouldAdd(e)) {
                     missing.add(e);
-                } else
+                } else {
                     continue;
+                }
             }
         }
         JSONObject missingResult = getManyAlfrescoElements(missing, ps);
         updateElementsKeyed(missingResult, elementsKeyed);
         JSONObject failed = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
-        JSONArray deletedOnMMS = null;
-        if (failed == null)
-            deletedOnMMS = new JSONArray();
-        else
-            deletedOnMMS = (JSONArray)failed.get("deleted");
+        JSONArray deletedOnMMS = failed != null ? (JSONArray) failed.get("deleted") : new JSONArray();
         for (Element e: all) {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
-                ValidationRuleViolation v = null;
-                if (deletedOnMMS.contains(ExportUtility.getElementID(e)))
-                    v = new ValidationRuleViolation(e, "[EXIST] This have been deleted on MMS");
-                else
-                    v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS");
+                ValidationRuleViolation v = new ValidationRuleViolation(e, deletedOnMMS.contains(ExportUtility.getElementID(e)) ? "[EXIST] This have been deleted on MMS" : "[EXIST] This doesn't exist on MMS");
                 if (!crippled) {
                     v.addAction(new ExportElement(e));
                     v.addAction(new DeleteMagicDrawElement(e));
@@ -440,22 +434,22 @@ public class ModelValidator {
                 exist.addViolation(v);
                 continue;
             }
-            JSONObject elementInfo = (JSONObject)elementsKeyed.get(e.getID());
+            JSONObject elementInfo = elementsKeyed.get(e.getID());
             checkElement(e, elementInfo);
             checked.add(e.getID());
         }
 
-        Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
+        Set<String> elementsKeyedIds = new HashSet<>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
         CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
         JSONObject updated = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
-        JSONArray deletedLocally = null;
+        JSONArray deletedLocally;
         if (updated == null)
             deletedLocally = new JSONArray();
         else
             deletedLocally = (JSONArray)updated.get("deleted");
         // 2nd loop: unchecked Alfresco elements with sysml ID are now processed
-        Set<String> inMemoryDeletedElements = listener != null ? listener.getInMemoryChangelog().get(Changelog.ChangeType.DELETED).keySet() : null;
+        Set<String> inMemoryDeletedElements = listener != null ? listener.getInMemoryLocalChangelog().get(Changelog.ChangeType.DELETED).keySet() : null;
         for (String elementsKeyedId: elementsKeyedIds) {
             // MagicDraw element that has not been compared to Alfresco
             Element e = ExportUtility.getElementFromID(elementsKeyedId);

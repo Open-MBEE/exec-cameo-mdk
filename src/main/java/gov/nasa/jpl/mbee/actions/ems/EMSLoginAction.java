@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
@@ -89,10 +90,10 @@ public class EMSLoginAction extends MDAction {
             ViewEditUtils.clearUsernameAndPassword();
             return false;
         }
-        if (initJms && !RealTimeSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
-            Application.getInstance().getGUILog().log("Initializing MMS message queue...");
-            if (JMSUtils.initializeJms(Application.getInstance().getProject()))
-                Application.getInstance().getGUILog().log("MMS message queue initialized.");
+        if (initJms) {
+            for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(p);
+            }
         }
         Application.getInstance().getGUILog().log("Login complete.");
         return true;

@@ -3,13 +3,12 @@ package gov.nasa.jpl.mbee.ems.sync.realtime;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncStatusConfigurator;
-import gov.nasa.jpl.mbee.ems.sync.JMSMessageListener;
+import com.nomagic.ui.ProgressStatusRunner;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
-import javax.jms.Connection;
-import javax.jms.MessageConsumer;
-import javax.jms.Session;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,25 +29,15 @@ public class RealTimeSyncProjectEventListenerAdapter extends ProjectEventListene
 
     @Override
     public void projectOpened(Project project) {
-        Application.getInstance().getGUILog().log("Opened " + project.getID());
         RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
         if (realTimeSyncProjectMapping.isDisabled()) {
             return;
         }
-        try {
-            if (realTimeSyncProjectMapping.getMessageConsumer() != null) {
-                realTimeSyncProjectMapping.getMessageConsumer().close();
-            }
-            if (realTimeSyncProjectMapping.getSession() != null) {
-                realTimeSyncProjectMapping.getSession().close();
-            }
-            if (realTimeSyncProjectMapping.getConnection() != null) {
-                realTimeSyncProjectMapping.getConnection().close();
-            }
-        } catch (Exception e) {
-            Utils.printException(e);
+        Application.getInstance().getGUILog().log("Opened " + project.getID());
+        if (realTimeSyncProjectMapping.isDisabled()) {
+            return;
         }
-
+        // ...
     }
 
     @Override
@@ -58,30 +47,41 @@ public class RealTimeSyncProjectEventListenerAdapter extends ProjectEventListene
 
     @Override
     public void projectClosed(Project project) {
-        Application.getInstance().getGUILog().log("Closed " + project.getID());
         RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
-        try {
-            if (realTimeSyncProjectMapping.getMessageConsumer() != null) {
-                realTimeSyncProjectMapping.getMessageConsumer().close();
-            }
-            if (realTimeSyncProjectMapping.getSession() != null) {
-                realTimeSyncProjectMapping.getSession().close();
-            }
-            if (realTimeSyncProjectMapping.getConnection() != null) {
-                realTimeSyncProjectMapping.getConnection().close();
-            }
-        } catch (Exception e) {
-            Utils.printException(e);
+        if (realTimeSyncProjectMapping.isDisabled()) {
+            return;
         }
+        Application.getInstance().getGUILog().log("Closed " + project.getID());
+        // ...
         projectMappings.remove(project.getID());
         Utils.guilog("[INFO] Sync stopped for project " + project.getName());
-        // TODO REVIEW ME @Ivan
-        AutoSyncStatusConfigurator.getStatusAction().update(false);
     }
 
     @Override
     public void projectDeActivated(Project project) {
         projectClosed(project);
+    }
+
+    @Override
+    public void projectPreSaved(Project project, boolean savedInServer) {
+        boolean tempDisabled = true;
+        if (tempDisabled) {
+            return;
+        }
+        RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
+        if (realTimeSyncProjectMapping.isDisabled()) {
+            return;
+        }
+        Application.getInstance().getGUILog().log("Pre-saving " + project.getID());
+        boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
+        if (!save) {
+            return;
+        }
+        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+            return;
+        }
+        DeltaSyncRunner msr = new DeltaSyncRunner(true, true);
+        ProgressStatusRunner.runWithProgressStatus(msr, "Delta Sync", true, 0);
     }
 
     /*
@@ -125,43 +125,7 @@ public class RealTimeSyncProjectEventListenerAdapter extends ProjectEventListene
     }
 
     public static class RealTimeSyncProjectMapping {
-        private Connection connection;
-        private Session session;
-        private MessageConsumer messageConsumer;
-        private JMSMessageListener jmsMessageListener;
         private volatile boolean disabled;
-
-        public Connection getConnection() {
-            return connection;
-        }
-
-        public void setConnection(Connection connection) {
-            this.connection = connection;
-        }
-
-        public Session getSession() {
-            return session;
-        }
-
-        public void setSession(Session session) {
-            this.session = session;
-        }
-
-        public MessageConsumer getMessageConsumer() {
-            return messageConsumer;
-        }
-
-        public void setMessageConsumer(MessageConsumer messageConsumer) {
-            this.messageConsumer = messageConsumer;
-        }
-
-        public JMSMessageListener getJmsMessageListener() {
-            return jmsMessageListener;
-        }
-
-        public void setJmsMessageListener(JMSMessageListener jmsMessageListener) {
-            this.jmsMessageListener = jmsMessageListener;
-        }
 
         public boolean isDisabled() {
             return disabled;

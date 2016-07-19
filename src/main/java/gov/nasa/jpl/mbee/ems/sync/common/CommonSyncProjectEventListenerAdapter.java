@@ -15,21 +15,30 @@ public class CommonSyncProjectEventListenerAdapter extends ProjectEventListenerA
 
     @Override
     public void projectOpened(Project project) {
+        projectClosed(project);
         CommonSyncTransactionCommitListener listener = new CommonSyncTransactionCommitListener();
         ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
         getProjectMapping(project).setCommonSyncTransactionCommitListener(listener);
+
     }
 
     @Override
     public void projectClosed(Project project) {
         CommonSyncProjectMapping commonSyncProjectMapping = getProjectMapping(project);
-        if (commonSyncProjectMapping == null) {
-            return;
-        }
         if (commonSyncProjectMapping.getCommonSyncTransactionCommitListener() != null) {
             project.getRepository().getTransactionManager().removeTransactionCommitListener(commonSyncProjectMapping.getCommonSyncTransactionCommitListener());
         }
         projectMappings.remove(project.getID());
+    }
+
+    @Override
+    public void projectSaved(Project project, boolean savedInServer) {
+        CommonSyncProjectMapping commonSyncProjectMapping = CommonSyncProjectEventListenerAdapter.getProjectMapping(project);
+
+        CommonSyncTransactionCommitListener commonSyncTransactionCommitListener = commonSyncProjectMapping.getCommonSyncTransactionCommitListener();
+        if (commonSyncTransactionCommitListener != null) {
+            commonSyncTransactionCommitListener.getInMemoryLocalChangelog().clear();
+        }
     }
 
     public static CommonSyncProjectMapping getProjectMapping(Project project) {

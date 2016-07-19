@@ -29,12 +29,15 @@
 
 package gov.nasa.jpl.mbee.api;
 
+import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.ems.*;
 import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import java.awt.event.ActionEvent;
@@ -284,6 +287,10 @@ public class MDKHelper {
 	public static void updateAndCommitWithDeletesToMMS() {
 		UpdateFromJMSAndCommitWithDelete ufjmsacwd = new UpdateFromJMSAndCommitWithDelete();
 		validationWindow = new MDKValidationWindow(ufjmsacwd.updateAction());
+	}
+
+	public static Changelog<String, Element> getInMemoryElementChangelog(Project project) {
+		return CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener().getInMemoryLocalChangelog();
 	}
 
 }
