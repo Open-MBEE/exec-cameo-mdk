@@ -49,6 +49,8 @@ public class ModelExporter {
 
 	// private JSONObject elementHierarchy = new JSONObject();
 	private JSONObject elements = new JSONObject();
+	private JSONObject emfelements = new JSONObject();
+
 	// private JSONArray roots = new JSONArray();
 
 	private Set<Element> starts;
@@ -113,10 +115,13 @@ public class ModelExporter {
 			return false;
 		if (!ExportUtility.shouldAdd(e))
 			return false;
+ 
+				EMFExporter emfexp = new EMFExporter(e);
+		JSONObject emfElement = emfexp.fillElement(e);
 		JSONObject elementInfo = new JSONObject();
-		EMFExporter.fillElement(e, elementInfo);
-		// ExportUtility.fillElement(e, elementInfo);
+		ExportUtility.fillElement(e, elementInfo);
 		elements.put(e.getID(), elementInfo);
+		emfelements.put(e.getID(), emfElement);
 
 		if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e))
 			elementInfo.put("owner", parentPrj.getProjectID());
@@ -132,5 +137,15 @@ public class ModelExporter {
 		}
 		// elementHierarchy.put(e.getID(), children);
 		return true;
+	}
+
+	public JSONObject getEMFResult() {
+		JSONObject result = new JSONObject();
+		JSONArray elementss = new JSONArray();
+		elementss.addAll(emfelements.values());
+		result.put("elements", elementss);
+		result.put("source", "magicdraw");
+		result.put("mmsVersion", "2.3");
+		return result;
 	}
 }

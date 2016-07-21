@@ -78,7 +78,11 @@ public class DebugExportImportModels2 extends MDAction {
         }
         JSONObject result = me.getResult();
         String json = result.toJSONString();
+        JSONObject result1 = me.getEMFResult();
+        String jsonemf = result1.toJSONString();
 
         System.out.println(json);
+        System.out.println("EMF");
+        System.out.println(jsonemf);
     }
 }

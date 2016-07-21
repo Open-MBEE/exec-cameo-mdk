@@ -110,6 +110,17 @@ import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 public class EMFExporter {
+	public EMFExporter(Element element) {
+		super();
+		createdIDs = new ArrayList<String>();
+		for (EStructuralFeature ef : element.eClass().getEAllStructuralFeatures()) {
+			if (ef.getName().equals("ID")) {
+				IDStructuralFeature = ef;
+				break;
+			}
+		}
+	}
+
 	public static Logger log = Logger.getLogger(EMFExporter.class);
 	public static Map<String, Integer> mountedVersions;
 	public static boolean baselineNotSet = false;
@@ -118,9 +129,9 @@ public class EMFExporter {
 	private static EStructuralFeature IDStructuralFeature;
 	private static ArrayList<String> createdIDs;
 
-	public static JSONObject fillElement(Element element, JSONObject eInfo) {
-		JSONObject elementInfo = eInfo;
-		elementInfo = new JSONObject();
+	public JSONObject fillElement(Element element) {
+
+		JSONObject elementInfo = new JSONObject();
 		if (element.eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
 			String id = (String) element.eGet(IDStructuralFeature);
 			CREATENODE: {
@@ -131,13 +142,10 @@ public class EMFExporter {
 				}
 				elementInfo.put("sysmlId", id);
 				StringBuffer sb = new StringBuffer();
-				// sb.append(id);
-
 				for (EClass superType : element.eClass().getEAllSuperTypes()) {
 					// ne.addLabel(superType.getName());
 				}
 				elementInfo.put("type", element.eClass().getName());
-				// sb.append("CREATE (a" + id + ":" + element.eClass().getName() + " ");
 				for (EAttribute sf : element.eClass().getEAllAttributes()) {
 					if (!sf.isDerived()) {
 						if (sf != IDStructuralFeature) {
@@ -146,27 +154,21 @@ public class EMFExporter {
 								if (val instanceof EList) {
 									if (!((EList<?>) val).isEmpty()) {
 										elementInfo.put(sf.getName(), val);
-										// sb.append(sf.getName() + " : \"" + val + "\", ");
 									}
 								} else if (val instanceof EObject) {
 									elementInfo.put(sf.getName(), val);
-									// sb.append(sf.getName() + " : \"" + val + "\", ");
+								} else if (val instanceof Boolean) {
+									elementInfo.put(sf.getName(), val);
 								} else {
 									if (!val.toString().contains("html")) {
 										String escapedVal = StringEscapeUtils.escapeHtml(val.toString());
 										elementInfo.put(sf.getName(), escapedVal);
-										// val = val.toString().replaceAll("\"", "\\\"");
-										// sb.append(sf.getName() + " : \"" + escapedVal + "\", ");
-
 									}
 								}
 							}
 						}
 					}
 				}
-				sb.replace(sb.length() - 2, sb.length(), "");
-				// sb.append("}) \n");
-				// createBuffer.append(sb);
 			}
 			HashMap<String, String> relationMap = new HashMap<String, String>();
 			ArrayList<EReference> references = new ArrayList<EReference>();
@@ -174,7 +176,6 @@ public class EMFExporter {
 			references.addAll(refs);
 			EList<EReference> conts = element.eClass().getEAllContainments();
 			references.removeAll(conts);
-
 			for (EReference ref : references) {
 				if (!ref.isDerived()) {
 					Object val = element.eGet(ref);
@@ -194,18 +195,21 @@ public class EMFExporter {
 									}
 							}
 							if (!array.isEmpty()) {
-								elementInfo.put(ref.getName(), array);
+								elementInfo.put(ref.getName() + "Id", array);
 							}
 						} else if (val instanceof EObject) {
 							if (((EObject) val).eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
 								// relations.addRelation(element.eGet(IDStructuralFeature), ((EObject) val).eGet(IDStructuralFeature), ref.getName());
 								// relationMap.put(element.eGet(IDStructuralFeature).toString(), ((EObject) val).eGet(IDStructuralFeature) + "@" + ref.getName());
-								elementInfo.put(ref.getName(), ((EObject) val).eGet(IDStructuralFeature));
+								elementInfo.put(ref.getName() + "Id", ((EObject) val).eGet(IDStructuralFeature));
 							} else {
 								System.out.println("Skipped: " + val);
 							}
 						}
 					}
+				} else if ("owner".equals(ref.getName())) {
+					Object val = element.eGet(ref);
+					elementInfo.put(ref.getName() + "Id", ((EObject) val).eGet(IDStructuralFeature));
 				}
 			}
 			// relationList.add(relationMap);
@@ -214,20 +218,35 @@ public class EMFExporter {
 				if (val != null) {
 					if (val instanceof EList) {
 						if (!((EList<?>) val).isEmpty()) {
-							Iterator it = ((EList) val).iterator();
-							while (it.hasNext()) {
-								EObject eo = (EObject) it.next();
-								// createNeoElementInGraph(eo);
+							if ("ownedAttribute".equals(ref.getName())) {
+								Iterator it = ((EList) val).iterator();
+								JSONArray array = new JSONArray();
+								while (it.hasNext()) {
+									EObject eo = (EObject) it.next();
+									if (eo instanceof Element) {
+										array.add(fillElement((Element) eo));
+									}
+								}
+								elementInfo.put(ref.getName(), array);
 							}
 						}
 					} else if (val instanceof EObject) {
-						// createNeoElementInGraph((EObject) val);
+						if (true) {
+							if ("defaultValue".equals(ref.getName())) {
+								elementInfo.put(ref.getName(), fillElement((Element) val));
+							}
+						} else {
+							if (val instanceof Element) {
+								// elementInfo.put(ref.getName(), fillElement((Element) val));
+							}
+						}
 					}
 				}
 			}
 		}
+		elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
+		fillMetatype(element, elementInfo);
 		return elementInfo;
-
 	}
 
 	public static String getElementID(Element e) {
