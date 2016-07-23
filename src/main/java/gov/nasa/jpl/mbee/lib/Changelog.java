@@ -16,7 +16,7 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
     // ConcurrentHashMap was decided against as it doesn't accept null values (or keys) and while we could fill it with junk we don't expect
     // too much concurrency with Changelogs, so just syncing it shouldn't be an issue.
     public Map<K, V> getNewMap() {
-        return Collections.synchronizedMap(new HashMap<K, V>());
+        return Collections.synchronizedMap(new LinkedHashMap<K, V>());
     }
 
     @Override
@@ -32,8 +32,9 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
     public Changelog<K, V> clone() {
         Changelog<K, V> clonedChangelog = new Changelog<>();
         for (ChangeType changeType : ChangeType.values()) {
+            Map<K, V> map = clonedChangelog.get(changeType);
             for (Map.Entry<K, V> entry : get(changeType).entrySet()) {
-                clonedChangelog.get(changeType).put(entry.getKey(), entry.getValue());
+                map.put(entry.getKey(), entry.getValue());
             }
         }
         return clonedChangelog;
@@ -55,33 +56,30 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
         return combinedChangelog;
     }
 
-    public <W> Map<K, Pair<Set<Change<V>>, Set<Change<W>>>> conflicts(Changelog<K, W> changelog, BiPredicate<Set<Change<V>>, Set<Change<W>>> conflictCondition, Map<K, Pair<Set<Change<V>>, Set<Change<W>>>> conflicts) {
+    public <W> void findConflicts(Changelog<K, W> changelog, BiPredicate<Change<V>, Change<W>> conflictCondition, Map<K, Pair<Change<V>, Change<W>>> conflictedChanges, Map<K, Pair<Change<V>, Change<W>>> unconflictedChanges) {
         Set<K> keySet = new HashSet<>();
-        for (ChangeType changeType : ChangeType.values()) {
-            keySet.addAll(this.get(changeType).keySet());
-            keySet.addAll(changelog.get(changeType).keySet());
-        }
+        keySet.addAll(flattenedKeyset());
+        keySet.addAll(changelog.flattenedKeyset());
 
         V v;
         W w;
         for (K key : keySet) {
-            Set<Change<V>> vChanges = new HashSet<>();
-            Set<Change<W>> wChanges = new HashSet<>();
+            Change<V> vChange = null;
+            Change<W> wChange = null;
             for (ChangeType changeType : ChangeType.values()) {
-                if ((v = this.get(changeType).get(key)) != null) {
-                    vChanges.add(new Change<>(v, changeType));
+                if (vChange == null && (v = this.get(changeType).get(key)) != null) {
+                    vChange = new Change<>(v, changeType);
                 }
-                if ((w = changelog.get(changeType).get(key)) != null) {
-                    wChanges.add(new Change<>(w, changeType));
+                if (wChange == null && (w = changelog.get(changeType).get(key)) != null) {
+                    wChange = new Change<>(w, changeType);
                 }
             }
-            if (conflictCondition.test(vChanges, wChanges)) {
-                conflicts.put(key, new Pair<>(vChanges, wChanges));
-            }
+            (conflictCondition.test(vChange, wChange) ? conflictedChanges : unconflictedChanges).put(key, new Pair<>(vChange, wChange));
         }
-        return conflicts;
     }
 
+    // it is desired that all ChangeTypes are mutually exclusive
+    // enforces that a change can only exist under a single ChangetType at any point
     public void addChange(K k, V v, ChangeType changeType) {
         switch (changeType) {
             case CREATED:
@@ -121,13 +119,38 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
         }
     }
 
+    public boolean isEmpty() {
+        for (ChangeType changeType : ChangeType.values()) {
+            if (!get(changeType).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public int flattenedSize() {
+        int size = 0;
+        for (ChangeType changeType : ChangeType.values()) {
+            size += get(changeType).size();
+        }
+        return size;
+    }
+
+    public Set<K> flattenedKeyset() {
+        Set<K> keySet = new LinkedHashSet<>();
+        for (ChangeType changeType : ChangeType.values()) {
+            keySet.addAll(get(changeType).keySet());
+        }
+        return keySet;
+    }
+
     public enum ChangeType {
         CREATED,
         UPDATED,
         DELETED
     }
 
-    public class Change<C> extends Pair<C, ChangeType> {
+    public static class Change<C> extends Pair<C, ChangeType> {
 
         public Change(C c, ChangeType changeType) {
             super(c, changeType);

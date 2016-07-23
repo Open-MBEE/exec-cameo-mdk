@@ -302,12 +302,12 @@ AnnotationAction, IRuleViolationAction {
                 }
             }
         }
-        Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(newviews);
-        List<JSONObject> sortedNewviews = toCreate.get("create");
-        if (!toCreate.get("fail").isEmpty()) {
+        ImportUtility.CreationOrder creationOrder = ImportUtility.getCreationOrder(newviews);
+        List<JSONObject> sortedNewviews = creationOrder.getOrder();
+        if (!creationOrder.getFailed().isEmpty()) {
             Utils.guilog("[ERROR] Creating new view(s) failed. Owner(s) not found.");
             Utils.guilog("[ERROR] List of views failed: ");
-            for (JSONObject fail: toCreate.get("fail")) {
+            for (JSONObject fail: creationOrder.getFailed()) {
                 String id = (String)fail.get("sysmlid");
                 if (id != null)
                     Utils.guilog("[ERROR]      " + id);

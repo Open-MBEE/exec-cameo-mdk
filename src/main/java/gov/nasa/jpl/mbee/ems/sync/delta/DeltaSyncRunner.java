@@ -4,11 +4,11 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
@@ -22,7 +22,9 @@ import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.lib.Changelog;
+import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.function.BiPredicate;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
@@ -44,8 +46,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         PERSISTED_KEY_CHANGE_MAPPING.put("changed", Changelog.ChangeType.UPDATED);
     }
 
-    private boolean delete = false;
-    private boolean commit;
+    private boolean shouldDelete, shouldCommit, shouldUpdate;
 
     private Logger log = Logger.getLogger(getClass());
     private Project project = Application.getInstance().getProject();
@@ -53,41 +54,45 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     private boolean failure = false;
     private boolean skipUpdate = false;
 
-    private ValidationSuite suite = new ValidationSuite("Updated Elements/Failed Updates");
-    private ValidationRule updated = new ValidationRule("updated", "updated", ViolationSeverity.INFO);
+    private ValidationSuite changelogSuite = new ValidationSuite("Updated Elements/Failed Updates");
+    private ValidationRule locallyChangedValidationRule = new ValidationRule("updated", "updated", ViolationSeverity.INFO);
     private ValidationRule cannotUpdate = new ValidationRule("cannotUpdate", "cannotUpdate", ViolationSeverity.ERROR);
     private ValidationRule cannotRemove = new ValidationRule("cannotDelete", "cannotDelete", ViolationSeverity.WARNING);
     private ValidationRule cannotCreate = new ValidationRule("cannotCreate", "cannotCreate", ViolationSeverity.ERROR);
-    private Set<String> cannotChange;
+    private Changelog<String, Void> unmodifiableChangelog = new Changelog<>();
 
     private List<ValidationSuite> vss = new ArrayList<>();
 
-    public DeltaSyncRunner(boolean commit, boolean skipUpdate, boolean delete) {
-        this.commit = commit;
+    {
+        changelogSuite.addValidationRule(locallyChangedValidationRule);
+        changelogSuite.addValidationRule(cannotUpdate);
+        changelogSuite.addValidationRule(cannotRemove);
+        changelogSuite.addValidationRule(cannotCreate);
+    }
+
+    /*public DeltaSyncRunner(boolean shouldCommit, boolean skipUpdate, boolean shouldDelete) {
+        this.shouldCommit = shouldCommit;
         this.skipUpdate = skipUpdate;
-        this.delete = delete;
+        this.shouldDelete = shouldDelete;
+    }*/
+
+    public DeltaSyncRunner(boolean shouldCommit, boolean shouldDelete) {
+        this(shouldCommit, shouldDelete, true);
     }
 
-    public DeltaSyncRunner(boolean commit, boolean delete) {
-        this.commit = commit;
-        this.delete = delete;
+    public DeltaSyncRunner(boolean shouldCommmit, boolean shouldDelete, boolean shouldUpdate) {
+        this.shouldCommit = shouldCommmit;
+        this.shouldDelete = shouldDelete;
+        this.shouldUpdate = shouldUpdate;
     }
 
-    public Set<String> getCannotChange() {
-        return cannotChange;
+    public Changelog<String, Void> getUnmodifiableChangelog() {
+        return unmodifiableChangelog;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void run(ProgressStatus ps) {
-        if (!skipUpdate) {
-            Utils.guilog("[INFO] Getting changes from MMS...");
-        }
-        suite.addValidationRule(updated);
-        suite.addValidationRule(cannotUpdate);
-        suite.addValidationRule(cannotRemove);
-        suite.addValidationRule(cannotCreate);
-
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             if (TeamworkUtils.getLoggedUserName() == null) {
                 failure = true;
@@ -215,7 +220,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         // GET CONFLICTS
 
-        JSONObject conflictedChanges = DeltaSyncProjectEventListenerAdapter.getConflicts(Application.getInstance().getProject());
+        // JSONObject conflictedChanges = DeltaSyncProjectEventListenerAdapter.getConflicts(Application.getInstance().getProject());
 
         // BUILD COMPLETE LOCAL CHANGELOG
 
@@ -233,7 +238,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     }
                 }
             }
-            if (conflictedChanges != null) {
+            /*if (conflictedChanges != null) {
                 Object o = conflictedChanges.get(entry.getKey());
                 if (Collection.class.isAssignableFrom(o.getClass())) {
                     for (Object collectionObject : (Collection) o) {
@@ -243,7 +248,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         }
                     }
                 }
-            }
+            }*/
         }
         Changelog<String, Element> localChangelog = persistedLocalChangelog.and(listener.getInMemoryLocalChangelog());
 
@@ -267,7 +272,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     }
                 }
             }
-            if (conflictedChanges != null) {
+            /*if (conflictedChanges != null) {
                 Object o = conflictedChanges.get(entry.getKey());
                 if (Collection.class.isAssignableFrom(o.getClass())) {
                     for (Object collectionObject : (Collection) o) {
@@ -276,7 +281,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         }
                     }
                 }
-            }
+            }*/
         }
         Changelog<String, Void> jmsChangelog = persistedJmsChangelog.clone();
         for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
@@ -290,32 +295,35 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 jmsDeleted = jmsChangelog.get(Changelog.ChangeType.DELETED);
 
 
-        Set<String> toGet = new HashSet<>(jmsUpdated.keySet());
-        toGet.addAll(jmsCreated.keySet());
+        Set<String> elementIdsToGet = new HashSet<>(jmsUpdated.keySet());
+        elementIdsToGet.addAll(jmsCreated.keySet());
+        if (shouldUpdate) {
+            int size = jmsChangelog.size();
+            Application.getInstance().getGUILog().log("[INFO] Getting " + size + " changed elements" + (size != 1 ? "s" : "") + " from the MMS.");
+        }
 
-        Set<String> cannotAdd = new HashSet<>();
-        cannotChange = new HashSet<>();
-        Set<String> cannotDelete = new HashSet<>();
+        Map<String, JSONObject> jmsJsons = new HashMap<>(elementIdsToGet.size());
 
-        //get latest json for element added/changed from mms
-        if (!toGet.isEmpty()) {
+        // Get latest json for element added/changed from MMS
+
+        if (!elementIdsToGet.isEmpty()) {
             JSONObject getJson = new JSONObject();
             JSONArray getElements = new JSONArray();
             getJson.put("elements", getElements);
-            for (String e : toGet) {
+            for (String e : elementIdsToGet) {
                 JSONObject el = new JSONObject();
                 el.put("sysmlid", e);
                 getElements.add(el);
             }
             String url = ExportUtility.getUrlWithWorkspace();
             url += "/elements";
-            Utils.guilog("[INFO] Getting " + getElements.size() + " elements from MMS.");
             String response = null;
             try {
                 response = ExportUtility.getWithBody(url, getJson.toJSONString());
             } catch (ServerException ex) {
                 Utils.guilog("[ERROR] Get elements failed.");
             }
+            // TODO Reconsider @Ivan
             if (response == null) {
                 JSONObject abort = new JSONObject();
                 JSONArray abortChanged = new JSONArray();
@@ -343,406 +351,326 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Utils.guilog("[ERROR] Cannot get elements from MMS server. Update aborted. All changes will be attempted at next update.");
                 return;
             }
-            Map<String, JSONObject> webElements = new HashMap<String, JSONObject>();
-            try {
-                JSONObject webObject = (JSONObject) JSONValue.parse(response);
-                JSONArray webArray = (JSONArray) webObject.get("elements");
-                for (Object o : webArray) {
-                    String webId = (String) ((JSONObject) o).get("sysmlid");
-                    webElements.put(webId, (JSONObject) o);
-                }
-                //if (webElements.size() != toGet.size())
-                //    return; //??
-            } catch (Exception ex) {
-                log.error("", ex);
+            JSONObject webObject = (JSONObject) JSONValue.parse(response);
+            JSONArray webArray = (JSONArray) webObject.get("elements");
+            for (Object o : webArray) {
+                String webId = (String) ((JSONObject) o).get("sysmlid");
+                jmsJsons.put(webId, (JSONObject) o);
             }
-            //calculate order to create web added elements
-            List<JSONObject> webAddedObjects = new ArrayList<>(webElements.size());
-            for (String webAdd : jmsCreated.keySet()) {
-                if (webElements.containsKey(webAdd)) {
-                    webAddedObjects.add(webElements.get(webAdd));
-                }
+        }
+
+        // NEW CONFLICT DETECTION
+
+        Map<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedChanges = new LinkedHashMap<>(),
+                unconflictedChanges = new LinkedHashMap<>();
+        localChangelog.findConflicts(jmsChangelog, new BiPredicate<Changelog.Change<Element>, Changelog.Change<Void>>() {
+            @Override
+            public boolean test(Changelog.Change<Element> changes, Changelog.Change<Void> changes2) {
+                return changes != null && changes2 != null;
             }
+        }, conflictedChanges, unconflictedChanges);
 
-            //calculate potential conflicted set and clean web updated set
-            Set<String> localChangedIds = new HashSet<>(localUpdated.keySet());
-            localChangedIds.retainAll(jmsUpdated.keySet());
-            JSONArray webConflictedObjects = new JSONArray();
-            Set<Element> localConflictedElements = new HashSet<>();
-            if (!localChangedIds.isEmpty()) {
-                for (String conflictId : localChangedIds) {
-                    if (webElements.containsKey(conflictId)) {
-                        webConflictedObjects.add(webElements.get(conflictId));
-                        localConflictedElements.add(localUpdated.get(conflictId));
-                    }
-                }
-            }
-            //find web changed that are not conflicted
-            List<JSONObject> webChangedObjects = new ArrayList<>(webElements.size());
-            for (String webUpdate : jmsUpdated.keySet()) {
-                if (localChangedIds.contains(webUpdate)) {
-                    continue;
-                }
-                if (webElements.containsKey(webUpdate)) {
-                    webChangedObjects.add(webElements.get(webUpdate));
-                }
-            }
+        // MAP CHANGES TO ACTIONABLE GROUPS
 
-            Map<String, Element> mapping = new HashMap<>();
-            //lock stuff that needs to be changed first
-            Set<String> toLockIds = new HashSet<>(jmsUpdated.keySet());
-            toLockIds.addAll(jmsCreated.keySet());
-            toLockIds.addAll(jmsDeleted.keySet());
-            for (String id : toLockIds) {
-                Element e = ExportUtility.getElementFromID(id);
-                if (e != null) {
-                    //Utils.tryToLock(project, e, isFromTeamwork);
-                    mapping.put(id, e);
-                }
-                /*Constraint c = Utils.getViewConstraint(e);
-                if (c != null) {
-                    Utils.tryToLock(project, c, isFromTeamwork);
-                }*/
-            }
+        Map<String, Element> localElementsToPost = new LinkedHashMap<>(localCreated.size() + localUpdated.size());
+        Set<String> localElementsToDelete = new HashSet<>(localDeleted.size());
 
-            Utils.guilog("[INFO] Applying changes...");
-            listener.setDisabled(true);
-            SessionManager.getInstance().createSession("MMS Delta Sync Changes");
-            try {
-                Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(webAddedObjects);
+        Map<String, JSONObject> jmsElementsToCreateLocally = new LinkedHashMap<>(jmsCreated.size());
+        Map<String, Pair<JSONObject, Element>> jmsElementsToUpdateLocally = new LinkedHashMap<>(jmsUpdated.size());
+        Map<String, Element> jmsElementsToDeleteLocally = new LinkedHashMap<>(jmsDeleted.size());
 
-                List<JSONObject> webAddedSorted = toCreate.get("create");
-                List<JSONObject> fails = toCreate.get("fail");
-                //List<Map<String, Object>> toChange = new ArrayList<Map<String, Object>>();
-                //take care of web added
-                if (webAddedSorted != null) {
-                    ImportUtility.outputError = false;
-                    for (JSONObject element : webAddedSorted) {
-                        try {
-                            Element e = mapping.get(element.get("sysmlid"));
-                            if (e != null && !e.isEditable()) {
-                                //existing element and not editable
-                                continue;
-                            }
-                            ImportUtility.createElement(element, false);
-                        } catch (ImportException ex) {
+        // only one side of the pair will have a value
+        for (Map.Entry<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> unconflictedEntry : unconflictedChanges.entrySet()) {
+            String id = unconflictedEntry.getKey();
+            Changelog.Change<Element> localChange = unconflictedEntry.getValue().getFirst();
+            Changelog.Change<JSONObject> jmsChange = unconflictedEntry.getValue().getSecond() != null ?
+                    new Changelog.Change<>(jmsJsons.get(id), unconflictedEntry.getValue().getSecond().getSecond()) : null;
 
+            if (shouldCommit && localChange != null) {
+                Element element = localChange.getFirst();
+                switch (localChange.getSecond()) {
+                    case CREATED:
+                    case UPDATED:
+                        if (element == null) {
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to create/update element " + id + " on the MMS, but it no longer exists locally. Skipping.");
+                            continue;
                         }
-                    }
-                    ImportUtility.outputError = true;
-                    for (JSONObject element : webAddedSorted) {
-                        try {
-                            Element e = mapping.get(element.get("sysmlid"));
-                            if (e != null && !e.isEditable()) {
-                                continue; //TODO log this? this is an element that's already been created and 
-                                //currently not editable, most likely already processed by someone else,
-                                //should be taken off the to be created list
-                            }
-                            Element newe = ImportUtility.createElement(element, true);
-                            //Utils.guilog("[SYNC ADD] " + newe.getHumanName() + " created.");
-                            updated.addViolation(new ValidationRuleViolation(newe, "[CREATED]"));
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            cannotAdd.add((String) element.get("sysmlid"));
-                            ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ex.getMessage());
-                            vrv.addAction(new DetailDiff(new JSONObject(), element));
-                            cannotCreate.addViolation(vrv);
+                        localElementsToPost.put(id, element);
+                        break;
+                    case DELETED:
+                        if (element != null && !element.isInvalid()) {
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " from the MMS, but it still exists locally. Skipping.");
+                            continue;
                         }
+                        localElementsToDelete.add(id);
+                        break;
+                }
+            }
+            else if (shouldUpdate && jmsChange != null) {
+                JSONObject json = jmsChange.getFirst();
+                Element element = ExportUtility.getElementFromID(id);
+                switch (jmsChange.getSecond()) {
+                    case CREATED:
+                        if (json == null) {
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to create element " + id + " locally, but it no longer exists on the MMS. Skipping.");
+                            continue;
+                        }
+                        if (element != null) {
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to create element " + id + " locally, but it already exists. Skipping.");
+                            continue;
+                        }
+                        jmsElementsToCreateLocally.put(id, json);
+                        break;
+                    case UPDATED:
+                        if (json == null) {
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it no longer exists on the MMS. Skipping.");
+                            continue;
+                        }
+                        if (element == null) {
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it does not exist. Skipping.");
+                            continue;
+                        }
+                        if (!element.isEditable()) {
+                            // TODO Remove me to stop being noisy @Ivan
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is not editable. Skipping.");
+                            continue;
+                        }
+                        jmsElementsToUpdateLocally.put(id, new Pair<>(json, element));
+                        break;
+                    case DELETED:
+                        if (element == null) {
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it doesn't exist. Skipping.");
+                            continue;
+                        }
+                        if (!element.isEditable()) {
+                            // TODO Remove me to stop being noisy @Ivan
+                            Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is not editable. Skipping.");
+                            continue;
+                        }
+                        jmsElementsToDeleteLocally.put(id, element);
+                        break;
+                }
+            }
+        }
+
+        // COMMIT UNCONFLICTED CREATIONS AND UPDATES TO MMS
+
+        boolean shouldLogNoLocalChanges = !shouldCommit;
+        if (shouldCommit && !localElementsToPost.isEmpty()) {
+            JSONArray elementsJsonArray = new JSONArray();
+            for (Element element : localElementsToPost.values()) {
+                JSONObject elementJsonObject = ExportUtility.fillElement(element, null);
+                if (elementJsonObject != null) {
+                    elementsJsonArray.add(elementJsonObject);
+                }
+            }
+            if (!elementsJsonArray.isEmpty()) {
+                JSONObject body = new JSONObject();
+                body.put("elements", elementsJsonArray);
+                body.put("source", "magicdraw");
+                body.put("mmsVersion", DocGenPlugin.VERSION);
+                Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsJsonArray.size() + " local element" + (elementsJsonArray.size() != 1 ? "s" : "") + " on the MMS.");
+                gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), body.toJSONString(), "POST", true, elementsJsonArray.size(), "Sync Changes"));
+                shouldLogNoLocalChanges = true;
+            }
+        }
+
+        // COMMIT UNCONFLICTED DELETIONS TO MMS
+
+        if (shouldCommit && shouldDelete && !localElementsToDelete.isEmpty()) {
+            Application.getInstance().getGUILog().log("[INFO] Adding local deletions to MMS request queue.");
+            JSONArray elementsJsonArray = new JSONArray();
+            for (String id : localElementsToDelete) {
+                JSONObject elementJsonObject = new JSONObject();
+                elementJsonObject.put("sysmlid", id);
+                elementsJsonArray.add(elementJsonObject);
+            }
+            JSONObject body = new JSONObject();
+            body.put("elements", elementsJsonArray);
+            body.put("source", "magicdraw");
+            body.put("mmsVersion", DocGenPlugin.VERSION);
+            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + elementsJsonArray.size() + " local element" + (elementsJsonArray.size() != 1 ? "s" : "") + " on the MMS.");
+            gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, elementsJsonArray.size(), "Sync Deletes"));
+            shouldLogNoLocalChanges = true;
+        }
+
+        // OUTPUT RESULT OF LOCAL CHANGES
+
+        if (!shouldLogNoLocalChanges) {
+            Application.getInstance().getGUILog().log("[INFO] No local changes to commit to MMS.");
+        }
+
+        // ADD CREATED ELEMENTS FROM MMS
+
+        boolean shouldLogNoJmsChanges = !shouldUpdate;
+        if (shouldUpdate && !jmsElementsToCreateLocally.isEmpty()) {
+            ImportUtility.CreationOrder creationOrder = ImportUtility.getCreationOrder(jmsElementsToCreateLocally.values());
+            List<JSONObject> sortedJmsElementsToCreateLocally = creationOrder.getOrder();
+            if (!sortedJmsElementsToCreateLocally.isEmpty()) {
+                listener.setDisabled(true);
+                if (!SessionManager.getInstance().isSessionCreated()) {
+                    SessionManager.getInstance().createSession("DeltaSyncRunner execution");
+                }
+                ImportUtility.setShouldOutputError(false);
+                List<JSONObject> createdElementJsons = new ArrayList<>(sortedJmsElementsToCreateLocally.size());
+                for (JSONObject elementJson : sortedJmsElementsToCreateLocally) {
+                    try {
+                        Element element = ImportUtility.createElement(elementJson, false);
+                        if (element != null) {
+                            createdElementJsons.add(elementJson);
+                        }
+                    } catch (ImportException ie) {
+                        ie.printStackTrace();
+                        unmodifiableChangelog.addChange((String) elementJson.get("sysmlid"), null, Changelog.ChangeType.CREATED);
+                        ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ie.getMessage());
+                        vrv.addAction(new DetailDiff(new JSONObject(), elementJson));
+                        cannotCreate.addViolation(vrv);
                     }
                 }
-                for (JSONObject element : fails) {
-                    cannotAdd.add((String) element.get("sysmlid"));
+                List<Element> createdElements = new ArrayList<>(createdElementJsons.size());
+                for (JSONObject elementJson : createdElementJsons) {
+                    try {
+                        Element element = ImportUtility.createElement(elementJson, true);
+                        createdElements.add(element);
+                        locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[CREATED]"));
+                    } catch (ImportException ie) {
+                        ie.printStackTrace();
+                        unmodifiableChangelog.addChange((String) elementJson.get("sysmlid"), null, Changelog.ChangeType.CREATED);
+                        ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ie.getMessage());
+                        vrv.addAction(new DetailDiff(new JSONObject(), elementJson));
+                        cannotCreate.addViolation(vrv);
+                    }
+                }
+                listener.setDisabled(false);
+                ImportUtility.setShouldOutputError(true);
+                if (!createdElements.isEmpty()) {
+                    shouldLogNoJmsChanges = false;
+                    Application.getInstance().getGUILog().log("[INFO] Added " + createdElements.size() + " element" + (createdElements.size() != 1 ? "s" : "") + " locally from the MMS.");
+                }
+                for (JSONObject element : creationOrder.getFailed()) {
+                    unmodifiableChangelog.addChange((String) element.get("sysmlid"), null, Changelog.ChangeType.CREATED);
                     ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] Owner or chain of owners not found");
                     vrv.addAction(new DetailDiff(new JSONObject(), element));
                     cannotCreate.addViolation(vrv);
                 }
-
-
-                //take care of updated
-                for (JSONObject webUpdated : webChangedObjects) {
-                    Element e = ExportUtility.getElementFromID((String) webUpdated.get("sysmlid"));
-                    if (e == null) {
-                        //TODO bad? maybe it was supposed to have been added?
-                        continue;
-                    }
-                    JSONObject spec = (JSONObject) webUpdated.get("specialization");
-                    if (spec != null && spec.get("contents") != null) {
-                        Constraint c = Utils.getViewConstraint(e);
-                        if (c != null) {
-                            if (!c.isEditable()) {
-                                cannotChange.add(ExportUtility.getElementID(e)); //this is right since contents is embedded in view
-                                cannotUpdate.addViolation(new ValidationRuleViolation(c, "[UPDATE FAILED] - not editable"));
-                                continue;
-                            }
-                        }
-                    }
-                    if (!e.isEditable()) {
-                        cannotChange.add(ExportUtility.getElementID(e));
-                        //Utils.guilog("[ERROR - SYNC UPDATE] " + e.getHumanName() + " not editable.");
-                        cannotUpdate.addViolation(new ValidationRuleViolation(e, "[UPDATE FAILED] - not editable"));
-                        continue;
-                    }
-                    try {
-                        ImportUtility.updateElement(e, webUpdated);
-                        if (!(e.getOwner() != null && webUpdated.get("qualifiedId") instanceof String &&
-                                ((String) webUpdated.get("qualifiedId")).contains("holding_bin")))
-                        //don't update owner if trying to update existing element's owner to under a holding bin
-                        {
-                            ImportUtility.setOwner(e, webUpdated);
-                        }
-                        updated.addViolation(new ValidationRuleViolation(e, "[UPDATED]"));
-                        //Utils.guilog("[SYNC UPDATE] " + e.getHumanName() + " updated.");
-                        /*if (webUpdated.containsKey("specialization")) { //do auto doc hierarchy? very risky
-                            JSONArray view2view = (JSONArray)((JSONObject)webUpdated.get("specialization")).get("view2view");
-                            if (view2view != null) {
-                                JSONObject web = ExportUtility.keyView2View(view2view);
-                                DocumentGenerator dg = new DocumentGenerator(e, null, null);
-                                Document dge = dg.parseDocument(true, true, true);
-                                ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
-                                dge.accept(vhv);
-                                JSONObject model = vhv.getView2View();
-                                if (!ViewValidator.viewHierarchyMatch(e, dge, vhv, (JSONObject)webUpdated.get("specialization"))) {
-                                    Map<String, Object> result = ImportHierarchy.importHierarchy(e, model, web);
-                                    if (result != null && (Boolean)result.get("success")) {
-                                        Utils.guilog("[SYNC] Document hierarchy updated for " + e.getHumanName());
-                                        toChange.add(result);
-                                    } else
-                                        cannotChange.add(ExportUtility.getElementID(e));
-                                }
-                            }
-                        }*/
-                    } catch (Exception ex) {
-                        ValidationRuleViolation vrv = new ValidationRuleViolation(e, "[UPDATE FAILED] " + ex.getMessage());
-                        cannotUpdate.addViolation(vrv);
-                        log.error("", ex);
-                        cannotChange.add(ExportUtility.getElementID(e));
-                    }
-                }
-
-                //take care of deleted
-                for (String e : jmsDeleted.keySet()) {
-                    Element toBeDeleted = ExportUtility.getElementFromID(e);
-                    if (toBeDeleted == null) {
-                        continue;
-                    }
-                    if (!toBeDeleted.isEditable()) {
-                        cannotDelete.add(e);
-                        cannotRemove.addViolation(new ValidationRuleViolation(toBeDeleted, "[DELETE FAILED] - not editable"));
-                        continue;
-                    }
-                    try {
-                        ModelElementsManager.getInstance().removeElement(toBeDeleted);
-                        Utils.guilog("[SYNC DELETE] " + toBeDeleted.getHumanName() + " deleted.");
-                    } catch (Exception ex) {
-                        log.error("", ex);
-                        cannotDelete.add(e);
-                    }
-                }
-                listener.setDisabled(true);
-                SessionManager.getInstance().closeSession();
-                listener.setDisabled(false);
-                if (!skipUpdate) {
-                    Utils.guilog("[INFO] Finished applying changes.");
-                }
-            } catch (Exception ex) {
-                //something really bad happened, so save all changes for next time.
-                log.error("", ex);
-                SessionManager.getInstance().cancelSession();
-                Utils.printException(ex);
-                cannotAdd.clear();
-                cannotChange.clear();
-                cannotDelete.clear();
-                updated.getViolations().clear();
-                cannotUpdate.getViolations().clear();
-                cannotRemove.getViolations().clear();
-                cannotCreate.getViolations().clear();
-                for (String e : jmsDeleted.keySet()) {
-                    cannotDelete.add(e);
-                }
-                for (JSONObject element : webAddedObjects) {
-                    cannotAdd.add((String) element.get("sysmlid"));
-                }
-                for (JSONObject element : webChangedObjects) {
-                    cannotChange.add((String) element.get("sysmlid"));
-                }
-                Utils.guilog("[ERROR] Unexpected exception happened. All changes will be re-attempted at next update.");
-
-            } finally {
-                listener.setDisabled(false);
             }
-            JSONObject failed = null;
-            if (!cannotAdd.isEmpty() || !cannotChange.isEmpty() || !cannotDelete.isEmpty()) {
-                failed = new JSONObject();
-                JSONArray failedAdd = new JSONArray();
-                failedAdd.addAll(cannotAdd);
-                JSONArray failedChange = new JSONArray();
-                failedChange.addAll(cannotChange);
-                JSONArray failedDelete = new JSONArray();
-                failedDelete.addAll(cannotDelete);
-                failed.put("changed", failedChange);
-                failed.put("added", failedAdd);
-                failed.put("deleted", failedDelete);
-            }
+        }
+
+        // CHANGE UPDATED ELEMENTS FROM MMS
+
+        if (shouldUpdate && !jmsElementsToUpdateLocally.isEmpty()) {
             listener.setDisabled(true);
-            DeltaSyncProjectEventListenerAdapter.lockSyncFolder(project);
-            SessionManager.getInstance().createSession("failed changes");
-            try {
-                DeltaSyncProjectEventListenerAdapter.setUpdatesOrFailed(project, failed, "error", true);
-                SessionManager.getInstance().closeSession();
-            } catch (Exception ex) {
-                log.error("", ex);
-                SessionManager.getInstance().cancelSession();
+            if (!SessionManager.getInstance().isSessionCreated()) {
+                SessionManager.getInstance().createSession("DeltaSyncRunner execution");
             }
-            listener.setDisabled(false);
-            if (failed != null) {
-                Utils.guilog("[INFO] There were changes that couldn't be applied. These will be attempted on the next update.");
-            }
-
-            //show window of what got changed
-            vss.add(suite);
-            if (suite.hasErrors()) {
-                Utils.displayValidationWindow(vss, "Delta Sync Log");
-            }
-
-
-            //conflicts
-            JSONObject mvResult = new JSONObject();
-            mvResult.put("elements", webConflictedObjects);
-            ModelValidator mv = new ModelValidator(null, mvResult, false, localConflictedElements, false);
-            try {
-                mv.validate(false, null);
-            } catch (ServerException ignored) {
-            }
-            Set<Element> conflictedElements = mv.getDifferentElements();
-            if (!conflictedElements.isEmpty()) {
-                Utils.guilog("[INFO] There are potential conflicts between changes from MMS and locally changed elements. Please resolve first and re-run update/commit.");
-                JSONObject conflictedToSave = new JSONObject();
-                JSONArray conflictedElementIds = new JSONArray();
-                for (Element ce : conflictedElements) {
-                    conflictedElementIds.add(ExportUtility.getElementID(ce));
-                }
-                conflictedToSave.put("elements", conflictedElementIds);
-                listener.setDisabled(true);
-                SessionManager.getInstance().createSession("failed changes");
+            List<Element> updatedElements = new ArrayList<>(jmsElementsToUpdateLocally.size());
+            for (Map.Entry<String, Pair<JSONObject, Element>> elementEntry : jmsElementsToUpdateLocally.entrySet()) {
+                Element element = elementEntry.getValue().getSecond();
+                JSONObject elementJson = elementEntry.getValue().getFirst();
+                // Element both exists and is editable here
                 try {
-                    DeltaSyncProjectEventListenerAdapter.setConflicts(project, conflictedToSave);
-                    SessionManager.getInstance().closeSession();
-                } catch (Exception ex) {
-                    log.error("", ex);
-                    SessionManager.getInstance().cancelSession();
-                }
-                listener.setDisabled(false);
-                failure = true;
-                vss.add(mv.getSuite());
-                mv.showWindow();
-                return;
-            }
-        }
-        else {
-            if (!skipUpdate) {
-                Utils.guilog("[INFO] MMS has no updates.");
-            }
-        }
-
-        // send local changes
-        if (commit) {
-            Utils.guilog("[INFO] Committing local changes to MMS...");
-            JSONArray toSendElements = new JSONArray();
-            Set<String> alreadyAdded = new HashSet<String>();
-            for (Element e : localCreated.values()) {
-                if (e == null) {
-                    continue;
-                }
-                String id = ExportUtility.getElementID(e);
-                if (id == null) {
-                    continue;
-                }
-                if (alreadyAdded.contains(id)) {
-                    continue;
-                }
-                alreadyAdded.add(id);
-                toSendElements.add(ExportUtility.fillElement(e, null));
-            }
-            for (Element e : localUpdated.values()) {
-                if (e == null) {
-                    continue;
-                }
-                String id = ExportUtility.getElementID(e);
-                if (id == null) {
-                    continue;
-                }
-                if (alreadyAdded.contains(id)) {
-                    continue;
-                }
-                alreadyAdded.add(id);
-                toSendElements.add(ExportUtility.fillElement(e, null));
-            }
-            JSONObject toSendUpdates = new JSONObject();
-            toSendUpdates.put("elements", toSendElements);
-            toSendUpdates.put("source", "magicdraw");
-            toSendUpdates.put("mmsVersion", DocGenPlugin.VERSION);
-            if (toSendElements.size() > 100) {
-
-            }
-            //do foreground?
-            if (!toSendElements.isEmpty()) {
-                Utils.guilog("[INFO] Change requests are added to queue.");
-                gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), toSendUpdates.toJSONString(), "POST", true, toSendElements.size(), "Sync Changes"));
-            }
-            localCreated.clear();
-            localUpdated.clear();
-
-            JSONArray toDeleteElements = new JSONArray();
-            if (delete) {
-                for (String e : localDeleted.keySet()) {
-                    // somehow the model has it, don't delete on server
-                    if (ExportUtility.getElementFromID(e) != null) {
-                        continue;
+                    ImportUtility.updateElement(element, elementJson);
+                    if (!(element.getOwner() != null && elementJson.get("qualifiedId") instanceof String && ((String) elementJson.get("qualifiedId")).contains("/holding_bin/"))) {
+                        ImportUtility.setOwner(element, elementJson);
                     }
-                    JSONObject toDelete = new JSONObject();
-                    toDelete.put("sysmlid", e);
-                    toDeleteElements.add(toDelete);
+                    updatedElements.add(element);
+                    locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[UPDATED]"));
+                } catch (ImportException ie) {
+                    ie.printStackTrace();
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(element, "[UPDATE FAILED] " + ie.getMessage());
+                    cannotUpdate.addViolation(vrv);
+                    unmodifiableChangelog.addChange(elementEntry.getKey(), null, Changelog.ChangeType.UPDATED);
                 }
-                toSendUpdates.put("elements", toDeleteElements);
-                toSendUpdates.put("source", "magicdraw");
-                toSendUpdates.put("mmsVersion", DocGenPlugin.VERSION);
-                if (!toDeleteElements.isEmpty()) {
-                    Utils.guilog("[INFO] Delete requests are added to queue.");
-                    gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", toSendUpdates.toJSONString(), "DELETEALL", true, toDeleteElements.size(), "Sync Deletes"));
-                }
-                localDeleted.clear();
-            }
-            if (toDeleteElements.isEmpty() && toSendElements.isEmpty()) {
-                Utils.guilog("[INFO] No changes to commit.");
-            }
-            if (!toDeleteElements.isEmpty() || !toSendElements.isEmpty() || !toGet.isEmpty()) {
-                Utils.guilog("[INFO] Don't forget to save or commit to Teamwork and unlock!");
-            }
-
-            JSONObject toSave = null;
-            if (!delete && !localDeleted.isEmpty()) {
-                toSave = new JSONObject();
-                JSONArray toSaveDelete = new JSONArray();
-
-                toSaveDelete.addAll(localDeleted.keySet());
-                toSave.put("deleted", toSaveDelete);
-                toSave.put("changed", new JSONArray());
-                toSave.put("added", new JSONArray());
-                localDeleted.clear();
-            }
-            listener.setDisabled(true);
-            SessionManager.getInstance().createSession("updates sent");
-            try {
-                DeltaSyncProjectEventListenerAdapter.setUpdatesOrFailed(project, toSave, "update", true);
-                SessionManager.getInstance().closeSession();
-            } catch (Exception ex) {
-                log.error("", ex);
-                SessionManager.getInstance().cancelSession();
             }
             listener.setDisabled(false);
+            if (!updatedElements.isEmpty()) {
+                shouldLogNoJmsChanges = false;
+                Application.getInstance().getGUILog().log("[INFO] Updated " + updatedElements.size() + " element" + (updatedElements.size() != 1 ? "s" : "") + " locally from the MMS.");
+            }
         }
-        if (!toGet.isEmpty() && !commit) {
-            Utils.guilog("[INFO] Don't forget to save or commit to Teamwork and unlock!");
+
+        // REMOVE DELETED ELEMENTS FROM MMS
+
+        if (shouldUpdate && !jmsElementsToDeleteLocally.isEmpty()) {
+            listener.setDisabled(true);
+            if (!SessionManager.getInstance().isSessionCreated()) {
+                SessionManager.getInstance().createSession("DeltaSyncRunner execution");
+            }
+            List<String> deletedElementIDs = new ArrayList<>(jmsElementsToDeleteLocally.size());
+            for (Map.Entry<String, Element> elementEntry : jmsElementsToDeleteLocally.entrySet()) {
+                Element element = elementEntry.getValue();
+                try {
+                    ModelElementsManager.getInstance().removeElement(element);
+                    deletedElementIDs.add(elementEntry.getKey());
+                    locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[DELETED]"));
+                } catch (ReadOnlyElementException roee) {
+                    roee.printStackTrace();
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(element, "[DELETE FAILED] " + roee.getMessage());
+                    cannotUpdate.addViolation(vrv);
+                    unmodifiableChangelog.addChange(elementEntry.getKey(), null, Changelog.ChangeType.DELETED);
+                }
+            }
+            listener.setDisabled(false);
+            if (!deletedElementIDs.isEmpty()) {
+                shouldLogNoJmsChanges = false;
+                Application.getInstance().getGUILog().log("[INFO] Deleted " + deletedElementIDs.size() + " element" + (deletedElementIDs.size() != 1 ? "s" : "") + " locally from the MMS.");
+            }
+        }
+
+        // OUTPUT RESULT OF JMS CHANGES
+
+        if (!shouldLogNoJmsChanges) {
+            Application.getInstance().getGUILog().log("[INFO] No MMS changes to update locally.");
+        }
+
+        // SHOW VALIDATION WINDOW OF UNCONFLICTED CHANGES
+
+        vss.add(changelogSuite);
+        if (changelogSuite.hasErrors()) {
+            Utils.displayValidationWindow(vss, "Delta Sync Changelog");
+        }
+
+        // CLOSE SESSION IF OPENED
+
+        if (SessionManager.getInstance().isSessionCreated()) {
+            SessionManager.getInstance().closeSession();
+        }
+
+        // HANDLE CONFLICTS
+
+        Set<Element> localConflictedElements = new HashSet<>();
+        JSONObject body = new JSONObject();
+        JSONArray elementsJsonArray = new JSONArray();
+        body.put("elements", elementsJsonArray);
+
+        for (Map.Entry<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedEntry : conflictedChanges.entrySet()) {
+            String id = conflictedEntry.getKey();
+            Changelog.Change<Element> localChange = conflictedEntry.getValue().getFirst();
+            Changelog.Change<JSONObject> jmsChange = conflictedEntry.getValue().getSecond() != null ?
+                    new Changelog.Change<>(jmsJsons.get(id), conflictedEntry.getValue().getSecond().getSecond()) : null;
+
+            if (localChange != null) {
+                if (localChange.getFirst() != null) {
+                    localConflictedElements.add(localChange.getFirst());
+                }
+            }
+            else if (jmsChange != null) {
+                if (jmsChange.getFirst() != null) {
+                    elementsJsonArray.add(jmsChange.getFirst());
+                }
+            }
+        }
+
+        ModelValidator modelValidator = new ModelValidator(null, body, false, localConflictedElements, false);
+        try {
+            modelValidator.validate(false, null);
+        } catch (ServerException ignored) {
+
+        }
+        if (!modelValidator.getDifferentElements().isEmpty()) {
+            Application.getInstance().getGUILog().log("[INFO] There are potential conflicts in " + modelValidator.getDifferentElements().size() + " element" + (modelValidator.getDifferentElements().size() != 1 ? "s" : "") + " between MMS and local changes. Please resolve them and re-sync.");
+            vss.add(modelValidator.getSuite());
+            modelValidator.showWindow();
         }
     }
 

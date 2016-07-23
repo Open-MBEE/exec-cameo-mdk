@@ -28,7 +28,7 @@ import java.util.*;
 
 public class ImportUtility {
     public static Logger log = Logger.getLogger(ImportUtility.class);
-    public static boolean outputError = true;
+    private static boolean shouldOutputError = true;
     public static final Set<String> VALUESPECS = new HashSet<String>(Arrays.asList(
             new String[]{"LiteralInteger", "LiteralString", "LiteralBoolean",
                     "LiteralUnlimitedNatural", "Expression", "InstanceValue",
@@ -37,11 +37,17 @@ public class ImportUtility {
 
     ));
 
-    public static Map<String, List<JSONObject>> getCreationOrder(List<JSONObject> newElements) {
-        Map<String, List<JSONObject>> returns = new HashMap<String, List<JSONObject>>();
+    public static boolean shouldOutputError() {
+        return shouldOutputError;
+    }
 
+    public static void setShouldOutputError(boolean shouldOutputError) {
+        ImportUtility.shouldOutputError = shouldOutputError;
+    }
+
+    public static CreationOrder getCreationOrder(Collection<JSONObject> newElements) {
         DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>> graph = new DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>>();
-        Map<String, JSONObject> id2ob = new HashMap<String, JSONObject>();
+        Map<String, JSONObject> id2ob = new HashMap<>();
         for (JSONObject ob : newElements) {
             String sysmlid = (String) ob.get("sysmlid");
             if (sysmlid == null)
@@ -81,9 +87,25 @@ public class ImportUtility {
             }
         }
         toposort.removeAll(fails);
-        returns.put("create", toposort);
-        returns.put("fail", new ArrayList<JSONObject>(fails));
-        return returns;
+        return new CreationOrder(toposort, fails);
+    }
+
+    public static class CreationOrder {
+        private final List<JSONObject> order;
+        private final Set<JSONObject> failed;
+
+        public CreationOrder(List<JSONObject> order, Set<JSONObject> failed) {
+            this.order = order;
+            this.failed = failed;
+        }
+
+        public List<JSONObject> getOrder() {
+            return order;
+        }
+
+        public Set<JSONObject> getFailed() {
+            return failed;
+        }
     }
 
     public static Element createElement(JSONObject ob, boolean updateRelations) throws ImportException {
@@ -360,7 +382,7 @@ public class ImportUtility {
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            if (outputError)
+            if (shouldOutputError)
                 Utils.guilog("[ERROR] Owner not found for mms sync add");
             return;
         }
@@ -729,7 +751,7 @@ public class ImportUtility {
                 }
                 Element find = ExportUtility.getElementFromID(elementID);
                 if (find == null) {
-                    if (outputError) {
+                    if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("element") + " not found!");
                         throw new ReferenceException(v, o, "Element with id " + o.get("element") + " for ElementValue not found!");
                     }
@@ -748,14 +770,14 @@ public class ImportUtility {
                 }
                 Element findInst = ExportUtility.getElementFromID(instanceID);
                 if (findInst == null) {
-                    if (outputError) {
+                    if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("instance") + " not found!");
                         throw new ReferenceException(v, o, "Instance with id " + o.get("instance") + " for InstanceValue not found!");
                     }
                     break;
                 }
                 if (!(findInst instanceof InstanceSpecification)) {
-                    if (outputError) {
+                    if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                         throw new ReferenceException(v, o, "Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                     }

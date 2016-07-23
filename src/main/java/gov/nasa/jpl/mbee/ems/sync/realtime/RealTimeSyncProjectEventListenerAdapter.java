@@ -64,10 +64,11 @@ public class RealTimeSyncProjectEventListenerAdapter extends ProjectEventListene
 
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
-        boolean tempDisabled = true;
+        // TODO Handle isTeamworkProject && !savedInServer @Ivan
+        /*boolean tempDisabled = true;
         if (tempDisabled) {
             return;
-        }
+        }*/
         RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
         if (realTimeSyncProjectMapping.isDisabled()) {
             return;

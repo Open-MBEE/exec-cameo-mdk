@@ -50,7 +50,7 @@ public class OneClickUpdateDoc extends MDAction {
 
             if (!Utils.recommendUpdateFromTeamwork("(MMS Update has finished.)"))
                 return vss;
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true, null, null, null);
+            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getUnmodifiableChangelog().flattenedKeyset(), true, null, null, null);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.isFailure()) {

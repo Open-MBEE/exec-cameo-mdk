@@ -29,6 +29,7 @@ import javax.jms.TextMessage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Deprecated
 public class LegacyJMSMessageListener implements MessageListener {
@@ -80,9 +81,9 @@ public class LegacyJMSMessageListener implements MessageListener {
                                 addedJsons.add((JSONObject) o);
                             }
                         }
-                        Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(addedJsons);
-                        List<JSONObject> sortedAdded = toCreate.get("create");
-                        List<JSONObject> fail = toCreate.get("fail");
+                        ImportUtility.CreationOrder creationOrder = ImportUtility.getCreationOrder(addedJsons);
+                        List<JSONObject> sortedAdded = creationOrder.getOrder();
+                        Set<JSONObject> fail = creationOrder.getFailed();
                         if (sortedAdded != null) {
                             for (Object element : added) {
                                 addElement((JSONObject) element, false);
@@ -157,7 +158,7 @@ public class LegacyJMSMessageListener implements MessageListener {
                         else if (!changedElement.isEditable()) {
                             // TODO Remove printing and implement caching change to apply on lock
                             Utils.guilog("[ERROR - JMS] Element " + changedElement.getHumanName() + " is not editable!");
-                            failedChangelog.get(Changelog.ChangeType.UPDATED).put(sysmlid, null);
+                            failedChangelog.addChange(sysmlid, null, Changelog.ChangeType.UPDATED);
                             return null;
                         }
                         ImportUtility.updateElement(changedElement, ob);
@@ -177,7 +178,7 @@ public class LegacyJMSMessageListener implements MessageListener {
                                     return result;
                                 }
                                 else {
-                                    failedChangelog.get(Changelog.ChangeType.UPDATED).put(sysmlid, null);
+                                    failedChangelog.addChange(sysmlid, null, Changelog.ChangeType.UPDATED);
                                 }
                             }
                         }
@@ -187,7 +188,7 @@ public class LegacyJMSMessageListener implements MessageListener {
                         if (ex instanceof ImportException) {
                             Utils.guilog("[ERROR -- JMS] " + ex.getMessage());
                         }
-                        failedChangelog.get(Changelog.ChangeType.UPDATED).put(sysmlid, null);
+                        failedChangelog.addChange(sysmlid, null, Changelog.ChangeType.UPDATED);
                         return null;
                     }
                 }
@@ -200,7 +201,7 @@ public class LegacyJMSMessageListener implements MessageListener {
                             if (o instanceof String) {
                                 String sysmlid = (String) o;
                                 Utils.guilog("[ERROR -- JMS] Creating element " + sysmlid + " failed."); // most likely owner not found
-                                failedChangelog.get(Changelog.ChangeType.CREATED).put(sysmlid, null);
+                                failedChangelog.addChange(sysmlid, null, Changelog.ChangeType.CREATED);
                             }
                         }
                         else if (e != null && updateRelations) {
@@ -213,7 +214,7 @@ public class LegacyJMSMessageListener implements MessageListener {
                         }
                         Object o = ob.get("sysmlid");
                         if (o instanceof String) {
-                            failedChangelog.get(Changelog.ChangeType.CREATED).put((String) o, null);
+                            failedChangelog.addChange((String) o, null, Changelog.ChangeType.CREATED);
                         }
                     }
                 }
@@ -230,7 +231,7 @@ public class LegacyJMSMessageListener implements MessageListener {
                     }
                     if (!changedElement.isEditable()) {
                         Utils.guilog("[JMS] Element " + changedElement.getHumanName() + " is not editable.");
-                        failedChangelog.get(Changelog.ChangeType.DELETED).put(sysmlid, null);
+                        failedChangelog.addChange(sysmlid, null, Changelog.ChangeType.DELETED);
                         return;
                     }
                     try {
@@ -239,7 +240,7 @@ public class LegacyJMSMessageListener implements MessageListener {
                     } catch (ReadOnlyElementException e) {
                         Utils.guilog("[ERROR - JMS] Sync: " + changedElement.getHumanName() + " is read-only.");
                         log.error("", e);
-                        failedChangelog.get(Changelog.ChangeType.DELETED).put(sysmlid, null);
+                        failedChangelog.addChange(sysmlid, null, Changelog.ChangeType.DELETED);
                     }
                 }
 
@@ -259,7 +260,7 @@ public class LegacyJMSMessageListener implements MessageListener {
                         Utils.guilog("[JMS] Element " + changedElement.getHumanName() + " moved.");
                     } catch (Exception ex) {
                         log.error("", ex);
-                        failedChangelog.get(Changelog.ChangeType.UPDATED).put(sysmlid, null);
+                        failedChangelog.addChange(sysmlid, null, Changelog.ChangeType.UPDATED);
                     }
                 }
             };
