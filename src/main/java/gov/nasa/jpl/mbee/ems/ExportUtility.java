@@ -79,6 +79,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class ExportUtility {
+    public static boolean justPostconditionIds = true;  // don't embed conditions
+    
     public static Logger log = Logger.getLogger(ExportUtility.class);
     public static Map<String, Integer> mountedVersions;
     private static String developerUrl = "https://sheldon.jpl.nasa.gov";
@@ -1342,6 +1344,59 @@ public class ExportUtility {
         specialization.put("connectorKind", "NONE");
         return specialization;
     }
+    
+    // See if the constraint expression is of the form, Equals(result, <valueSpec>).
+    // If so, just get the valueSpec instead of the whole expression.
+    protected static ValueSpecification getOperationMethodValueSpec( ValueSpecification valueSpec ) {
+        if ( valueSpec instanceof Expression ) {
+            Expression expr = (Expression)valueSpec;
+            if ( expr.getOperand() != null && expr.getOperand().size() == 3 ) {
+                // check for result parameter as second operand 
+                ValueSpecification operand  = expr.getOperand().get( 1 );
+                if ( operand instanceof ElementValue ) {
+                    ElementValue ev = (ElementValue)operand;
+                    Element elem = ev.getElement();
+                    if ( elem != null && elem instanceof NamedElement &&
+                            ((NamedElement)elem).getName().endsWith( "result" ) ) {
+                        // Found the result part of result = ...
+                        // Now see if the first operand is Equals. This
+                        // could be a literal string, "Equals," or it
+                        // could be an Operation named "Equals."
+                        boolean operationIsEquals = false;
+                        operand  = expr.getOperand().get( 0 );
+                        if ( operand instanceof LiteralString ) {
+                            LiteralString str = (LiteralString)operand;
+                            if ( str.getValue() != null && str.getValue().length() >= 2 &&
+                                    str.getValue().substring( 0, 2 ).equalsIgnoreCase( "eq" ) ) {
+                                // Literal string for operation is "Equals."
+                                operationIsEquals = true;
+                            }
+                        }
+                        // Check if it's an "Equals" Operation
+                        if ( !operationIsEquals && operand instanceof ElementValue ) {
+                            ElementValue evEq = (ElementValue)operand;
+                            Element elemEq = evEq.getElement();
+                            if ( elemEq != null && evEq instanceof Operation) {
+                                Operation op = (Operation)evEq;
+                                if ( op.getName() != null && op.getName().length() >= 2
+                                     && op.getName().substring( 0, 2 ).equalsIgnoreCase( "eq" ) ) {
+                                    operationIsEquals = true;
+                                }
+                            }
+                        }
+                        if ( operationIsEquals ) {
+                            // Use the third operand as the valueSpec to add.
+                            ValueSpecification vSpec = expr.getOperand().get( 2 );
+                            if ( vSpec != null ) {
+                                valueSpec = vSpec;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return valueSpec;
+    }
 
     @SuppressWarnings("unchecked")
     public static JSONObject fillOperationSpecialization(Operation e, JSONObject spec) {
@@ -1352,6 +1407,31 @@ public class ExportUtility {
         List<Parameter> vsl = ((Operation) e).getOwnedParameter();
         if (vsl != null && vsl.size() > 0) {
             specialization.put("parameters", makeJsonArrayOfIDs(vsl));
+        }
+        //Find the postcondition constraint representing the operation's implementation.
+        if ( e.getPostcondition() != null && e.getPostcondition().size() > 1 ) {
+            log.warn( "The operation has multiple postconditions!  Will only export the first." );
+        }
+        if ( e.getPostcondition() != null ) {
+            if ( justPostconditionIds ) {
+                specialization.put("postconditions", makeJsonArrayOfIDs(e.getPostcondition()));
+            } else {
+                for ( Constraint child : e.getPostcondition() ) {
+                    // See if the constraint expression is of the form, Equals(result, <valueSpec>).
+                    // If so, just get the valueSpec instead of the whole expression.
+                    ValueSpecification valueSpec = child.getSpecification();
+                    if ( valueSpec != null ) {
+                        valueSpec = getOperationMethodValueSpec( valueSpec );
+                        // Add the method value spec json.
+                        JSONObject methodJson = new JSONObject(); 
+                        fillValueSpecification( valueSpec, methodJson );
+                        specialization.put( "expression", methodJson );
+                    }
+                    // There should only be one postcondition, but in case there are
+                    // more, just break after the first.
+                    break;
+                }
+            }
         }
         return specialization;
     }

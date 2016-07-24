@@ -28,6 +28,73 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
+import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.DeleteMagicDrawElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
+import gov.nasa.jpl.mbee.ems.validation.actions.Downgrade;
+import gov.nasa.jpl.mbee.ems.validation.actions.ElementDetail;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportAssociation;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportComment;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportConnector;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportConstraint;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportDoc;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportElement;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportInstanceSpec;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportMetatypes;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportName;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportOperation;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwnedAttribute;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportOwner;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportParameter;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportProperty;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportRel;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportSite;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportValue;
+import gov.nasa.jpl.mbee.ems.validation.actions.ExportViewConstraint;
+import gov.nasa.jpl.mbee.ems.validation.actions.FixModelOwner;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportAssociation;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportComment;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportConnector;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportConstraint;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportDoc;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportInstanceSpec;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportName;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportOperation;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportOwnedAttribute;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportParameter;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportProperty;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
+import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
+import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
+import gov.nasa.jpl.mbee.lib.Debug;
+import gov.nasa.jpl.mbee.lib.JSONUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -39,9 +106,30 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
@@ -80,6 +168,8 @@ public class ModelValidator {
     private ValidationRule metaclassDiff = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
     private ValidationRule connectorDiff = new ValidationRule("Connector", "role/property paths are different", ViolationSeverity.ERROR);
     private ValidationRule constraintDiff = new ValidationRule("Constraint", "constraint spec is different", ViolationSeverity.ERROR);
+    private ValidationRule operationDiff = new ValidationRule("Operation", "operation spec is different", ViolationSeverity.ERROR);
+    private ValidationRule parameterDiff = new ValidationRule("Parameter", "parameter spec is different", ViolationSeverity.ERROR);
     private ValidationRule associationDiff = new ValidationRule("Association", "association roles are different", ViolationSeverity.ERROR);
     private ValidationRule siteDiff = new ValidationRule("Site", "site existence", ViolationSeverity.ERROR);
     private ValidationRule productView = new ValidationRule("No longer a document", "no longer a document", ViolationSeverity.WARNING);
@@ -116,6 +206,8 @@ public class ModelValidator {
         suite.addValidationRule(propertyTypeDiff);
         suite.addValidationRule(connectorDiff);
         suite.addValidationRule(constraintDiff);
+        suite.addValidationRule(operationDiff);
+        suite.addValidationRule(parameterDiff);
         suite.addValidationRule(associationDiff);
         suite.addValidationRule(siteDiff);
         suite.addValidationRule(productView);
@@ -620,6 +712,22 @@ public class ModelValidator {
                 constraintDiff.addViolation(v);
                 differentElements.add(e);
             }
+        } else if (e instanceof Operation) {
+            ValidationRuleViolation v = operationDiff((Operation)e, elementInfo);
+            if (v != null) {
+                //v.addAction(vdiff);
+                v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
+                operationDiff.addViolation(v);
+                differentElements.add(e);
+            }
+        } else if (e instanceof Parameter) {
+            ValidationRuleViolation v = parameterDiff((Parameter)e, elementInfo);
+            if (v != null) {
+                //v.addAction(vdiff);
+                v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
+                parameterDiff.addViolation(v);
+                differentElements.add(e);
+            }
         } else if (e instanceof Association) {
             ValidationRuleViolation v = associationDiff((Association)e, elementInfo);
             if (v != null) {
@@ -1085,6 +1193,41 @@ public class ModelValidator {
                 v.addAction(new ExportConstraint(e));
             //v.addAction(getPaddingAction());
             v.addAction(new ImportConstraint(e, spec, result));
+            return v;
+        }
+        return null;
+    }
+    
+    private ValidationRuleViolation operationDiff(Operation e, JSONObject info) {
+        Boolean editable = (Boolean)info.get("editable");
+        JSONObject spec = (JSONObject)info.get("specialization");
+        JSONArray postconds = (JSONArray)spec.get("postconditions");
+        JSONArray parameters = (JSONArray)spec.get("parameters");
+        
+        JSONObject modelspec = ExportUtility.fillOperationSpecialization(e, null);
+        JSONArray modelPostconds = (JSONArray)modelspec.get( "postconditions" );
+        JSONArray modelParameters = (JSONArray)modelspec.get( "parameters" );
+
+        if ( !JSONUtils.compare( parameters, modelParameters )  ||
+             !Utils.isJSONArrayEqual( postconds, modelPostconds ) ) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[Operation] parameters/postconditions are different");
+            if (editable)
+                v.addAction(new ExportOperation(e));
+            v.addAction(new ImportOperation(e, spec, result));
+            return v;
+        }
+        return null;
+    }
+    
+    private ValidationRuleViolation parameterDiff(Parameter e, JSONObject info) {
+        Boolean editable = (Boolean)info.get("editable");
+        JSONObject spec = (JSONObject)info.get("specialization");
+        JSONObject modelspec = ExportUtility.fillParameterSpecialization(e, null);
+        if (!JSONUtils.compare(spec, modelspec)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(e, "[Parameter] directions/parameterTypes are different");
+            if (editable)
+                v.addAction(new ExportParameter(e));
+            v.addAction(new ImportParameter(e, spec, result));
             return v;
         }
         return null;
