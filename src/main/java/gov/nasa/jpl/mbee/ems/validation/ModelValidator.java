@@ -1208,7 +1208,7 @@ public class ModelValidator {
         JSONArray modelPostconds = (JSONArray)modelspec.get( "postconditions" );
         JSONArray modelParameters = (JSONArray)modelspec.get( "parameters" );
 
-        if ( !Utils.isJSONArrayEqual( parameters, modelParameters )  ||
+        if ( !JSONUtils.compare( parameters, modelParameters )  ||
              !Utils.isJSONArrayEqual( postconds, modelPostconds ) ) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[Operation] parameters/postconditions are different");
             if (editable)
@@ -1222,16 +1222,8 @@ public class ModelValidator {
     private ValidationRuleViolation parameterDiff(Parameter e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
         JSONObject spec = (JSONObject)info.get("specialization");
-        String direction = (String)spec.get("direction");
-        String parameterType = (String)spec.get("parameterType");
-        
         JSONObject modelspec = ExportUtility.fillParameterSpecialization(e, null);
-        String modelDirection = (String)modelspec.get( "direction" );
-        String modelParameterType = (String)modelspec.get( "parameterType" );
-
-        boolean directionSame = direction == modelDirection || ( direction != null && direction.equals( modelDirection ) );
-        boolean pTypeSame = parameterType == modelParameterType || ( parameterType != null && parameterType.equals( modelParameterType ) );
-        if ( !directionSame || !pTypeSame ) {
+        if (!JSONUtils.compare(spec, modelspec)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[Parameter] directions/parameterTypes are different");
             if (editable)
                 v.addAction(new ExportParameter(e));

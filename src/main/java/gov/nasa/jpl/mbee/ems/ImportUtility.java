@@ -365,9 +365,9 @@ public class ImportUtility {
                     setRelationshipEnds((DirectedRelationship) e, spec);
                 if (type != null && e instanceof Constraint && type.equals("Constraint"))
                     setConstraintSpecification((Constraint) e, spec);
-                if (type != null && e instanceof Constraint && type.equals("Operation"))
+                if (type != null && e instanceof Operation && type.equals("Operation"))
                     setOperationSpecification((Operation)e, spec);
-                if (type != null && e instanceof Constraint && type.equals("Parameter"))
+                if (type != null && e instanceof Parameter && type.equals("Parameter"))
                     setParameter((Parameter)e, spec);
                 if (type != null && e instanceof Connector && type.equals("Connector"))
                     setConnectorEnds((Connector) e, spec);
