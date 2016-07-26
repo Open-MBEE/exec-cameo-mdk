@@ -135,6 +135,7 @@ public class EMFExporter {
 		if (element.eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
 			String id = (String) element.eGet(IDStructuralFeature);
 			CREATENODE: {
+
 				if (createdIDs.contains(id)) {
 					break CREATENODE;
 				} else {
@@ -176,6 +177,7 @@ public class EMFExporter {
 			references.addAll(refs);
 			EList<EReference> conts = element.eClass().getEAllContainments();
 			references.removeAll(conts);
+
 			for (EReference ref : references) {
 				if (!ref.isDerived()) {
 					Object val = element.eGet(ref);
@@ -195,7 +197,7 @@ public class EMFExporter {
 									}
 							}
 							if (!array.isEmpty()) {
-								elementInfo.put(ref.getName() + "Id", array);
+								elementInfo.put(ref.getName() + "Ids", array);
 							}
 						} else if (val instanceof EObject) {
 							if (((EObject) val).eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
@@ -227,7 +229,7 @@ public class EMFExporter {
 										array.add(fillElement((Element) eo));
 									}
 								}
-								elementInfo.put(ref.getName(), array);
+								// elementInfo.put(ref.getName(), array);
 							}
 						}
 					} else if (val instanceof EObject) {
