@@ -61,7 +61,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private final Map<String, JSONObject> images;
     private final Set<Element> processedElements;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
+    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
         this.start = start;
         this.images = images != null ? images : new HashMap<String, JSONObject>();
         this.processedElements = processedElements != null ? processedElements : new HashSet<Element>();

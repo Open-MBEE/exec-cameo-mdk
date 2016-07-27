@@ -148,7 +148,8 @@ public class ImportUtility {
                 if (updateRelations) {
                     //StereotypesHelper.addStereotype(newE, sysmlView);
                     setOrCreateAsi(sysmlView, newE);
-                    setViewConstraint(newE, specialization);
+                    // server-side only view instances obsoletes this
+                    //setViewConstraint(newE, specialization);
                 }
             } else if (elementType.equalsIgnoreCase("viewpoint")) {
                 if (newE == null) {
@@ -240,7 +241,8 @@ public class ImportUtility {
                     Stereotype product = Utils.getDocumentStereotype();
                     //StereotypesHelper.addStereotype(newE, product);
                     setOrCreateAsi(product, newE);
-                    setViewConstraint(newE, specialization);
+                    // server-side only view instances obsoletes this
+                    //setViewConstraint(newE, specialization);
                 }
             } else if (elementType.equalsIgnoreCase("Association")) {
                 if (newE == null) {
@@ -323,16 +325,17 @@ public class ImportUtility {
                 }
                 if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
                     setInstanceSpecification((InstanceSpecification) e, spec);
-                if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
-                    setViewConstraint(e, spec);
-            } catch (ReferenceException ex) {
-                throw new ImportException(e, o, ex.getMessage());
+                // server-side only view instances obsoletes this
+                /*if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
+                    setViewConstraint(e, spec);*/
             } catch (ImportException ex) {
                 throw new ImportException(e, o, ex.getMessage());
             }
         }
     }
 
+    // server-side only view instances obsoletes this
+    @Deprecated
     public static void setViewConstraint(Element e, JSONObject specialization) throws ImportException {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {

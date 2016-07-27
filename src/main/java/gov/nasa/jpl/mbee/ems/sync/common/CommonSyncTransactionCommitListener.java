@@ -33,19 +33,23 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
     /**
      * Allow listener to be disabled during imports.
      */
-    private volatile boolean disabled = false;
+    private boolean disabled = false;
     private Changelog<String, Element> inMemoryLocalChangelog = new Changelog<>();
 
-    public Changelog<String, Element> getInMemoryLocalChangelog() {
-        return inMemoryLocalChangelog;
+    {
+        inMemoryLocalChangelog.setShouldLogChanges(true);
     }
 
-    public boolean isDisabled() {
+    public synchronized boolean isDisabled() {
         return disabled;
     }
 
-    public void setDisabled(boolean disabled) {
+    public synchronized void setDisabled(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    public Changelog<String, Element> getInMemoryLocalChangelog() {
+        return inMemoryLocalChangelog;
     }
 
     @Override

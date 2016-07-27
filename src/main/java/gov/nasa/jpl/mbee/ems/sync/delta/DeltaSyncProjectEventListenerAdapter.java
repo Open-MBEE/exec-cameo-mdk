@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.ems.sync.delta;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
@@ -14,9 +15,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.function.BiFunction;
 import gov.nasa.jpl.mbee.lib.function.Function;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import org.json.simple.JSONArray;
@@ -43,6 +46,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     private static DateFormat dfserver = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
     public static void lockSyncFolder(Project project) {
+        new RuntimeException("foobar").printStackTrace();
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             String folderId = project.getPrimaryProject().getProjectID();
             folderId += "_sync";
@@ -53,7 +57,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             try {
                 for (Element e : folder.getOwnedElement()) {
                     if (e instanceof Class) {
-                        Utils.tryToLock(project, e, true);
+                        Utils.tryToLock(project, e, project.isTeamworkServerProject());
                     }
                 }
             } catch (Exception e) {
@@ -187,6 +191,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         return res;
     }
 
+    @Deprecated
     public static void setUpdatesOrFailed(Project project, JSONObject o, String type, boolean clearAll) {
         List<NamedElement> es = getSyncElement(project, true, clearAll, type);
         es.get(0).setName(type + "_" + df.format(new Date()));
@@ -194,6 +199,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     }
 
     @SuppressWarnings("unchecked")
+    @Deprecated
     public static JSONObject getUpdatesOrFailed(Project project, String type) {
         List<NamedElement> elements = getSyncElement(project, false, false, type);
         if (elements.isEmpty()) {
@@ -414,52 +420,62 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         }*/
     }
 
-    private static final Map<String, Function<Project, Changelog<String, ?>>> PERSISTENT_CHANGELOGS = new HashMap<>(2);
+    private static final Map<SyncElement.Type, Function<Project, Changelog<String, ?>>> CHANGELOG_FUNCTIONS = new HashMap<>(2);
 
     static {
-        PERSISTENT_CHANGELOGS.put("update", new Function<Project, Changelog<String, ?>>() {
+        CHANGELOG_FUNCTIONS.put(SyncElement.Type.UPDATE, new Function<Project, Changelog<String, ?>>() {
             @Override
             public Changelog<String, ?> apply(Project project) {
-                return CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener().getInMemoryLocalChangelog();
+                Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
+                for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.UPDATE)) {
+                    combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
+                }
+                return combinedPersistedChangelog.and(CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener().getInMemoryLocalChangelog(), new BiFunction<String, Element, Void>() {
+                    @Override
+                    public Void apply(String key, Element element) {
+                        return null;
+                    }
+                });
             }
         });
-        PERSISTENT_CHANGELOGS.put("jms", new Function<Project, Changelog<String, ?>>() {
+        CHANGELOG_FUNCTIONS.put(SyncElement.Type.JMS, new Function<Project, Changelog<String, ?>>() {
             @Override
             public Changelog<String, ?> apply(Project project) {
-                return JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().getInMemoryJMSChangelog();
+                Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
+                for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.JMS)) {
+                    combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
+                }
+                return combinedPersistedChangelog.and(JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().getInMemoryJMSChangelog(), new BiFunction<String, JSONObject, Void>() {
+                    @Override
+                    public Void apply(String key, JSONObject jsonObject) {
+                        return null;
+                    }
+                });
             }
         });
     }
 
     @SuppressWarnings("unchecked")
     public static void persistChanges(Project project) {
-        for (Map.Entry<String, Function<Project, Changelog<String, ?>>> entry : PERSISTENT_CHANGELOGS.entrySet()) {
+        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener();
+        if (listener != null) {
+            listener.setDisabled(true);
+        }
+
+        for (Map.Entry<SyncElement.Type, Function<Project, Changelog<String, ?>>> entry : CHANGELOG_FUNCTIONS.entrySet()) {
             Changelog<String, ?> changelog = entry.getValue().apply(project);
-            final Set<String> newCreated = changelog.get(Changelog.ChangeType.CREATED).keySet(),
-                    newUpdated = changelog.get(Changelog.ChangeType.UPDATED).keySet(),
-                    newDeleted = changelog.get(Changelog.ChangeType.DELETED).keySet();
-            if (newCreated.isEmpty() && newUpdated.isEmpty() && newDeleted.isEmpty()) {
-                continue; //no need to save if there's nothing to save
-            }
-            JSONObject notSaved = new JSONObject();
-            JSONArray addedArray = new JSONArray();
-            JSONArray updatedArray = new JSONArray();
-            JSONArray deletedArray = new JSONArray();
-
-            addedArray.addAll(newCreated);
-            updatedArray.addAll(newUpdated);
-            deletedArray.addAll(newDeleted);
-
-            notSaved.put("added", addedArray);
-            notSaved.put("changed", updatedArray);
-            notSaved.put("deleted", deletedArray);
             if (!SessionManager.getInstance().isSessionCreated(project)) {
                 SessionManager.getInstance().createSession(project, "Persisting Delta Sync Changelog(s)");
             }
-            setUpdatesOrFailed(project, notSaved, entry.getKey(), false);
+            //setUpdatesOrFailed(project, notSaved, entry.getKey(), false);
+            SyncElements.setByType(project, entry.getKey(), SyncElements.buildJson(changelog).toJSONString());
         }
         if (SessionManager.getInstance().isSessionCreated(project)) {
             SessionManager.getInstance().closeSession();
+        }
+
+        if (listener != null) {
+            listener.setDisabled(false);
         }
     }
 
@@ -472,16 +488,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
             return;
         }
-        try {
-            persistChanges(project);
-            saveAutoSyncErrors(project);
-        } catch (Exception e) {
-            // potential session isn't created error if need to update from tw while committing
-            e.printStackTrace();
-            if (SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().cancelSession();
-            }
-        }
+        persistChanges(project);
     }
 
     /*@Override

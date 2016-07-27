@@ -12,7 +12,6 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -32,12 +31,19 @@ public class JMSMessageListener implements MessageListener {
     private final Project project;
     private final Changelog<String, JSONObject> inMemoryJMSChangelog = new Changelog<>();
 
+    {
+        inMemoryJMSChangelog.setShouldLogChanges(true);
+    }
+
+    private Message lastMessage;
+
     public JMSMessageListener(Project project) {
         this.project = project;
     }
 
     @Override
     public void onMessage(Message message) {
+        lastMessage = message;
         if (!(message instanceof TextMessage)) {
             return;
         }
@@ -78,12 +84,13 @@ public class JMSMessageListener implements MessageListener {
                 }
             }
         }
-        for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
-            System.out.println(changeType.name() + ": " + inMemoryJMSChangelog.get(changeType).size());
-        }
     }
 
     public Changelog<String, JSONObject> getInMemoryJMSChangelog() {
         return inMemoryJMSChangelog;
+    }
+
+    public Message getLastMessage() {
+        return lastMessage;
     }
 }

@@ -84,6 +84,9 @@ public class JMSUtils {
                 url = "tcp://" + url + ":61616";
             }
         }
+        if (!url.startsWith("failover:")) {
+            url = "failover:" + url;
+        }
         return new JMSInfo(url, isFromService);
     }
 

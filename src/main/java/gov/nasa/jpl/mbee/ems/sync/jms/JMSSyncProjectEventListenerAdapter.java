@@ -11,7 +11,10 @@ import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import org.apache.activemq.ActiveMQConnection;
 import org.netbeans.lib.cvsclient.commandLine.command.log;
+import weblogic.jms.common.JMSConstants;
+import weblogic.jms.extensions.WLConnection;
 
 import javax.jms.*;
 import javax.naming.NameNotFoundException;
@@ -95,16 +98,17 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             }
             String subscriberId = projectID + "-" + workspaceID + "-" + username; // weblogic can't have '/' in id
             Connection connection = connectionFactory.createConnection();
+            //((WLConnection) connection).setReconnectPolicy(JMSConstants.RECONNECT_POLICY_ALL);
             connection.setExceptionListener(new ExceptionListener() {
                 @Override
                 public void onException(JMSException e) {
                     e.printStackTrace();
+                    jmsSyncProjectMapping.setDisabled(true);
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
                             // TODO Implement auto-reconnect attempt
                             Application.getInstance().getGUILog().log("[WARNING] JMS sync interrupted. Restart MagicDraw to reconnect.");
-                            jmsSyncProjectMapping.setDisabled(true);
                         }
                     });
                 }

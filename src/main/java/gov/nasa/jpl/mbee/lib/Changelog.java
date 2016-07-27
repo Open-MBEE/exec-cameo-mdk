@@ -1,9 +1,8 @@
 package gov.nasa.jpl.mbee.lib;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mbee.lib.function.BiFunction;
 import gov.nasa.jpl.mbee.lib.function.BiPredicate;
 
 import java.util.*;
@@ -12,6 +11,16 @@ import java.util.*;
  * Created by igomes on 6/30/16.
  */
 public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> implements Cloneable {
+
+    private boolean shouldLogChanges;
+
+    public boolean shouldLogChanges() {
+        return shouldLogChanges;
+    }
+
+    public void setShouldLogChanges(boolean shouldLogChanges) {
+        this.shouldLogChanges = shouldLogChanges;
+    }
 
     // ConcurrentHashMap was decided against as it doesn't accept null values (or keys) and while we could fill it with junk we don't expect
     // too much concurrency with Changelogs, so just syncing it shouldn't be an issue.
@@ -41,14 +50,8 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
     }
 
     public Changelog<K, V> and(Changelog<K, V> secondChangelog) {
-        Changelog<K, V> combinedChangelog = new Changelog<>();
+        Changelog<K, V> combinedChangelog = this.clone();
         for (ChangeType changeType : ChangeType.values()) {
-            Map<K, V> map = combinedChangelog.get(changeType);
-            //map.putAll(this.get(changeType));
-            //map.putAll(secondChangelog.get(changeType));
-            for (Map.Entry<K, V> entry : this.get(changeType).entrySet()) {
-                combinedChangelog.addChange(entry.getKey(), entry.getValue(), changeType);
-            }
             for (Map.Entry<K, V> entry : secondChangelog.get(changeType).entrySet()) {
                 combinedChangelog.addChange(entry.getKey(), entry.getValue(), changeType);
             }
@@ -56,22 +59,31 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
         return combinedChangelog;
     }
 
+    public <W> Changelog<K, V> and(Changelog<K, W> secondChangelog, BiFunction<K, W, V> converter) {
+        Changelog<K, V> combinedChangelog = this.clone();
+        for (ChangeType changeType : ChangeType.values()) {
+            for (Map.Entry<K, W> entry : secondChangelog.get(changeType).entrySet()) {
+                combinedChangelog.addChange(entry.getKey(), converter.apply(entry.getKey(), entry.getValue()), changeType);
+            }
+        }
+        return combinedChangelog;
+    }
+
     public <W> void findConflicts(Changelog<K, W> changelog, BiPredicate<Change<V>, Change<W>> conflictCondition, Map<K, Pair<Change<V>, Change<W>>> conflictedChanges, Map<K, Pair<Change<V>, Change<W>>> unconflictedChanges) {
         Set<K> keySet = new HashSet<>();
-        keySet.addAll(flattenedKeyset());
+        keySet.addAll(this.flattenedKeyset());
         keySet.addAll(changelog.flattenedKeyset());
 
-        V v;
-        W w;
         for (K key : keySet) {
             Change<V> vChange = null;
             Change<W> wChange = null;
             for (ChangeType changeType : ChangeType.values()) {
-                if (vChange == null && (v = this.get(changeType).get(key)) != null) {
-                    vChange = new Change<>(v, changeType);
+                // must use containsKey instead of get, because null is an acceptable value in this paradigm
+                if (vChange == null && this.get(changeType).containsKey(key)) {
+                    vChange = new Change<>(this.get(changeType).get(key), changeType);
                 }
-                if (wChange == null && (w = changelog.get(changeType).get(key)) != null) {
-                    wChange = new Change<>(w, changeType);
+                if (wChange == null && changelog.get(changeType).containsKey(key)) {
+                    wChange = new Change<>(changelog.get(changeType).get(key), changeType);
                 }
             }
             (conflictCondition.test(vChange, wChange) ? conflictedChanges : unconflictedChanges).put(key, new Pair<>(vChange, wChange));
@@ -86,12 +98,16 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
                 Map<K, V> deletedElements = get(Changelog.ChangeType.DELETED);
                 if (deletedElements.containsKey(k)) {
                     deletedElements.remove(k);
-                    Application.getInstance().getGUILog().log("Undeleted: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                    if (shouldLogChanges) {
+                        Application.getInstance().getGUILog().log("Undeleted: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                    }
                 }
                 else {
                     get(Changelog.ChangeType.CREATED).put(k, v);
                     get(Changelog.ChangeType.UPDATED).remove(k);
-                    Application.getInstance().getGUILog().log("Created: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                    if (shouldLogChanges) {
+                        Application.getInstance().getGUILog().log("Created: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                    }
                 }
                 break;
             case DELETED:
@@ -99,18 +115,24 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
                 // minimizes extraneous deletions
                 if (createdChanges.containsKey(k)) {
                     createdChanges.remove(k);
-                    Application.getInstance().getGUILog().log("Unadded: " + k + " - " + (v instanceof NamedElement ? ((NamedElement) v).getName() : "<>"));
+                    if (shouldLogChanges) {
+                        Application.getInstance().getGUILog().log("Unadded: " + k + " - " + (v instanceof NamedElement ? ((NamedElement) v).getName() : "<>"));
+                    }
                 }
                 else {
                     get(Changelog.ChangeType.UPDATED).remove(k);
                     get(Changelog.ChangeType.DELETED).put(k, v);
-                    Application.getInstance().getGUILog().log("Deleted: " + k + " - " + (v instanceof NamedElement ? ((NamedElement) v).getName() : "<>"));
+                    if (shouldLogChanges) {
+                        Application.getInstance().getGUILog().log("Deleted: " + k + " - " + (v instanceof NamedElement ? ((NamedElement) v).getName() : "<>"));
+                    }
                 }
                 break;
             case UPDATED:
                 if (!get(Changelog.ChangeType.CREATED).containsKey(k) && !get(Changelog.ChangeType.DELETED).containsKey(k)) {
                     get(Changelog.ChangeType.UPDATED).put(k, v);
-                    Application.getInstance().getGUILog().log("Updated: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                    if (shouldLogChanges) {
+                        Application.getInstance().getGUILog().log("Updated: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                    }
                 }
                 break;
             default:
@@ -150,10 +172,21 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
         DELETED
     }
 
-    public static class Change<C> extends Pair<C, ChangeType> {
+    public static class Change<C> {
+        private final C changed;
+        private final ChangeType type;
 
-        public Change(C c, ChangeType changeType) {
-            super(c, changeType);
+        public Change(C changed, ChangeType type) {
+            this.changed = changed;
+            this.type = type;
+        }
+
+        public C getChanged() {
+            return changed;
+        }
+
+        public ChangeType getType() {
+            return type;
         }
     }
 }

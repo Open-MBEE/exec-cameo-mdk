@@ -95,7 +95,6 @@ public class DocGenPlugin extends Plugin {
         getOclPlugin().init();
         getVcPlugin().init();
         MMSSyncPlugin.getInstance().init();
-        RealTimeSyncPlugin.getInstance().init();
         (new Thread(new OutputSyncRunner())).start();
         //ApplicationSyncEventSubscriber.subscribe(); //really old docweb sync, should remove related code
 
