@@ -51,6 +51,7 @@ import gov.nasa.jpl.mbee.model.PropertiesTableByAttributes;
 import gov.nasa.jpl.mbee.model.Query;
 import gov.nasa.jpl.mbee.model.Section;
 import gov.nasa.jpl.mbee.model.TableStructure;
+import gov.nasa.jpl.mbee.model.TemporalDiff;
 import gov.nasa.jpl.mbee.model.UserScript;
 import gov.nasa.jpl.mbee.model.ViewpointConstraint;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
@@ -746,7 +747,9 @@ public class DocumentGenerator {
             dge = new LibraryMapping();
         } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.viewpointConstraintStereotype)) {
             dge = new ViewpointConstraint(context.getValidator());
-        } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.javaExtensionStereotype, true)) {
+        } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.temporalDiffStereotype)) {
+            dge = new TemporalDiff();
+        }  else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.javaExtensionStereotype, true)) {
             Element e = an;
             if (!StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.javaExtensionStereotype)) {
                 if (an instanceof CallBehaviorAction
