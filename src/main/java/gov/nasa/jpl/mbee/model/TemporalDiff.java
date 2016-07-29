@@ -36,7 +36,6 @@ import java.util.List;
 
 import org.json.simple.JSONObject;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -51,8 +50,8 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 
 public class TemporalDiff extends Table {
-	private Date baseVersionTime;
-	private Date compareToTime;
+	private String baseVersionTime;
+	private String compareToTime;
 	private AvailableAttribute attributeToCompare;
 
 	public TemporalDiff() {
@@ -73,41 +72,22 @@ public class TemporalDiff extends Table {
 				setAttributeToCompare(Utils.getAvailableAttribute(attributeToCompare));
 			}
 		}
-
-		String baseVersionTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "baseVersionTime", false);
-		String compareToTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "compareToTime", false);
-
-		Date baseVersionDate = null;
-		Date compareToDate = null;
-		if (null == baseVersionTime || baseVersionTime.isEmpty() || baseVersionTime.equalsIgnoreCase("latest")) {
-
-		} else {
-			try {
-				baseVersionDate = parseDate(baseVersionTime);
-			} catch (ParseException e) {
-				Application.getInstance().getGUILog().log("[ERROR] Cannot parse baseVersionTime date format. Please use yyyy/MM/dd or yyyy/MM/dd HH:mm if required.");
-			}
-		}
-		if (null == compareToTime || compareToTime.isEmpty() || compareToTime.equalsIgnoreCase("latest")) {
-
-		} else {
-			try {
-				compareToDate = parseDate(compareToTime);
-			} catch (ParseException e) {
-				Application.getInstance().getGUILog().log("[ERROR] Cannot parse compareToTime date format. Please use yyyy/MM/dd or yyyy/MM/dd HH:mm if required.");
-			}
-		}
-
-		setBaseVersionTime(baseVersionDate);
-		setCompareToTime(compareToDate);
-
+		baseVersionTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "baseVersionTime", false);
+		compareToTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "compareToTime", false);
 	}
 
 	@Override
 	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
 		List<DocumentElement> res = new ArrayList<DocumentElement>();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssSSSZ");
-
+		Date baseVersionDate = null;
+		Date compareToDate = null;
+		if (null != baseVersionTime & !baseVersionTime.isEmpty() & !baseVersionTime.equalsIgnoreCase("latest")) {
+			baseVersionDate = parseDate(baseVersionTime);
+		}
+		if (null != compareToTime & !compareToTime.isEmpty() & !compareToTime.equalsIgnoreCase("latest")) {
+			compareToDate = parseDate(compareToTime);
+		}
 		List<Object> list = getTargets(); // This is not the right list of objects so far?
 		if (forViewEditor) {
 			// for every target.
@@ -120,14 +100,18 @@ public class TemporalDiff extends Table {
 					tag.append(" mms-attr=\"" + attributeToCompare.name() + "\" mms-version-one=");
 					if (compareToTime == null) {
 						tag.append("latest");
+					} else if (compareToDate == null) {
+						tag.append(compareToTime);
 					} else {
-						tag.append(sdf.format(compareToTime));
+						tag.append(sdf.format(compareToDate));
 					}
 					tag.append("\" mms-version-two=\"");
 					if (baseVersionTime == null) {
 						tag.append("latest");
+					} else if (baseVersionDate == null) {
+						tag.append(baseVersionTime);
 					} else {
-						tag.append(sdf.format(baseVersionTime));
+						tag.append(sdf.format(baseVersionDate));
 					}
 					tag.append("\"></mms-diff-attr>");
 				}
@@ -144,22 +128,22 @@ public class TemporalDiff extends Table {
 						Object v = Utils.getElementAttribute((Element) e, attributeToCompare);
 						if (!Utils2.isNullOrEmpty(v)) {
 							if (v instanceof String) {
-								System.out.println(v);
+								// System.out.println(v);
 							}
 						}
 					} else {
-						JSONObject compareJson = TimeQueryUtil.getHistoryOfElement((Element) e, compareToTime);
+						JSONObject compareJson = TimeQueryUtil.getHistoryOfElement((Element) e, compareToDate);
 						// System.out.println("Comp _____________" + compareJson);
 					}
 					if (baseVersionTime == null) {
 						Object v = Utils.getElementAttribute((Element) e, attributeToCompare);
 						if (!Utils2.isNullOrEmpty(v)) {
 							if (v instanceof String) {
-								System.out.println(v);
+								// System.out.println(v);
 							}
 						}
 					} else {
-						JSONObject baseJson = TimeQueryUtil.getHistoryOfElement((Element) e, baseVersionTime);
+						JSONObject baseJson = TimeQueryUtil.getHistoryOfElement((Element) e, baseVersionDate);
 						// System.out.println("Base _____________" + baseJson);
 
 					}
@@ -174,19 +158,19 @@ public class TemporalDiff extends Table {
 		}
 	}
 
-	public Date getBaseVersionTime() {
+	public String getBaseVersionTime() {
 		return baseVersionTime;
 	}
 
-	public void setBaseVersionTime(Date baseVersionTime) {
+	public void setBaseVersionTime(String baseVersionTime) {
 		this.baseVersionTime = baseVersionTime;
 	}
 
-	public Date getCompareToTime() {
+	public String getCompareToTime() {
 		return compareToTime;
 	}
 
-	public void setCompareToTime(Date compareToTime) {
+	public void setCompareToTime(String compareToTime) {
 		this.compareToTime = compareToTime;
 	}
 
@@ -198,7 +182,7 @@ public class TemporalDiff extends Table {
 		this.attributeToCompare = attributeToCompare;
 	}
 
-	private Date parseDate(String candidate) throws ParseException {
+	private Date parseDate(String candidate) {
 		List<SimpleDateFormat> knownPatterns = new ArrayList<SimpleDateFormat>();
 		knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"));
 		knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"));

@@ -20,12 +20,6 @@ import gov.nasa.jpl.mbee.lib.Utils;
 public class TimeQueryUtil {
 	private static JSONObject result;
 
-	public static void main(String[] args) {
-
-		Date date = new Date(1435042800000L);
-		// getHistoryOfElements(null, date);
-
-	}
 	// query server for timestamp version:
 	// https://fn-cae-ems.jpl.nasa.gov/alfresco/services/workspaces/master/tmt/elements/_18_0_2_baa02e2_1422996003330_165733_91914?timestamp=2015-12-13T16:21:06.797-0700
 	// compare elements
