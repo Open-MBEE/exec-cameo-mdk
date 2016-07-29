@@ -88,6 +88,7 @@ public class TemporalDiff extends Table {
 		if (null != compareToTime & !compareToTime.isEmpty() & !compareToTime.equalsIgnoreCase("latest")) {
 			compareToDate = parseDate(compareToTime);
 		}
+
 		List<Object> list = getTargets(); // This is not the right list of objects so far?
 		if (forViewEditor) {
 			// for every target.
@@ -145,7 +146,6 @@ public class TemporalDiff extends Table {
 					} else {
 						JSONObject baseJson = TimeQueryUtil.getHistoryOfElement((Element) e, baseVersionDate);
 						// System.out.println("Base _____________" + baseJson);
-
 					}
 				}
 				// diff the elements
