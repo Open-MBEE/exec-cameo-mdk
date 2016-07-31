@@ -67,7 +67,7 @@ public class TemporalDiff extends Table {
 	@Override
 	public void initialize() {
 
-		Object attr = GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "attributeToCompare", null);
+		Object attr = GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "desiredAttribute", null);
 		if (attr instanceof EnumerationLiteral) {
 			attributeToCompare = Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName());
 		} else
