@@ -1,17 +1,17 @@
 package gov.nasa.jpl.mbee.ems.sync.delta;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
+import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
+import com.nomagic.magicdraw.teamwork2.locks.LockService;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -26,12 +26,13 @@ import java.util.*;
  * Created by igomes on 7/25/16.
  */
 public class SyncElements {
-    public static Map<String, Changelog.ChangeType> JSON_KEY_CHANGE_MAPPING = new LinkedHashMap<>(3);
+    public static Map<String, Changelog.ChangeType> CHANGE_TYPE_KEY_MAP = new LinkedHashMap<>(3);
 
     static {
-        JSON_KEY_CHANGE_MAPPING.put("added", Changelog.ChangeType.CREATED);
-        JSON_KEY_CHANGE_MAPPING.put("deleted", Changelog.ChangeType.DELETED);
-        JSON_KEY_CHANGE_MAPPING.put("changed", Changelog.ChangeType.UPDATED);
+        // TODO Update keys :'(
+        CHANGE_TYPE_KEY_MAP.put("added", Changelog.ChangeType.CREATED);
+        CHANGE_TYPE_KEY_MAP.put("deleted", Changelog.ChangeType.DELETED);
+        CHANGE_TYPE_KEY_MAP.put("changed", Changelog.ChangeType.UPDATED);
     }
 
     private static final String CLEAR_SUFFIX = "_clear";
@@ -103,8 +104,6 @@ public class SyncElements {
             syncElements.put(name, new SyncElement((NamedElement) element, type));
         }
 
-        System.out.println("SYNC ELEMENTS 1 " + syncElements);
-
         // DELETE ALREADY CLEARED BLOCKS AND THEIR CLEAR BLOCKS (AND DANGLING CLEAR BLOCKS)
 
         for (NamedElement clearElement : clearElements) {
@@ -113,10 +112,8 @@ public class SyncElements {
             }
             String name = clearElement.getName();
             String clearedElementName = name.substring(0, name.length() - CLEAR_SUFFIX.length());
-            System.out.println("NAME " + clearedElementName);
             SyncElement clearedSyncElement = syncElements.get(clearedElementName);
             if (clearedSyncElement == null) {
-                System.out.println("DANGLING?");
                 // delete dangling clear blocks
                 try {
                     ModelElementsManager.getInstance().removeElement(clearElement);
@@ -137,8 +134,6 @@ public class SyncElements {
             }
         }
 
-        System.out.println("SYNC ELEMENTS 2 " + syncElements);
-
         // PERSIST CONTENT
 
         boolean isReusing = false;
@@ -157,18 +152,15 @@ public class SyncElements {
         newSyncElementElement.setName(type.getPrefix() + "_" + NAME_DATE_FORMAT.format(new Date()));
         ModelHelper.setComment(newSyncElementElement, comment);
 
-        System.out.println("SYNC ELEMENTS 3 " + syncElements);
         // DELETE/CLEAR ALL OLD SYNC ELEMENTS OF SAME TYPE AND DANGLING CLEAR BLOCKS
 
         for (SyncElement syncElement : syncElements.values()) {
-            System.out.println("DELETE? " + syncElement.getElement().getID());
             // so it doesn't delete the one that we just updated
             if (isReusing && syncElement.getElement() == newSyncElementElement) {
                 continue;
             }
             if (syncElement.getElement().isEditable()) {
                 try {
-                    System.out.println("DELETE");
                     ModelElementsManager.getInstance().removeElement(syncElement.getElement());
                     continue;
                 } catch (ReadOnlyElementException e) {
@@ -178,29 +170,18 @@ public class SyncElements {
             NamedElement newClearElement = project.getElementsFactory().createClassInstance();
             newClearElement.setName(syncElement.getElement().getName() + CLEAR_SUFFIX);
             newClearElement.setOwner(syncPackage);
-            System.out.println("CLEAR " + newClearElement.getID());
         }
 
         return new SyncElement(newSyncElementElement, type);
     }
 
-
-    private static final Map<Changelog.ChangeType, String> CHANGE_TYPE_KEY_MAP = new HashMap<>(3);
-
-    static {
-        // TODO Update keys :'(
-        CHANGE_TYPE_KEY_MAP.put(Changelog.ChangeType.CREATED, "added");
-        CHANGE_TYPE_KEY_MAP.put(Changelog.ChangeType.UPDATED, "changed");
-        CHANGE_TYPE_KEY_MAP.put(Changelog.ChangeType.DELETED, "deleted");
-    }
-
     @SuppressWarnings("unchecked")
     public static JSONObject buildJson(Changelog<String, ?> changelog) {
         JSONObject jsonObject = new JSONObject();
-        for (Map.Entry<Changelog.ChangeType, String> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
+        for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
             JSONArray jsonArray = new JSONArray();
-            jsonArray.addAll(changelog.get(entry.getKey()).keySet());
-            jsonObject.put(entry.getValue(), jsonArray);
+            jsonArray.addAll(changelog.get(entry.getValue()).keySet());
+            jsonObject.put(entry.getKey(), jsonArray);
         }
         return jsonObject;
     }
@@ -221,16 +202,43 @@ public class SyncElements {
 
     public static Changelog<String, Void> buildChangelog(JSONObject jsonObject) {
         Changelog<String, Void> changelog = new Changelog<>();
-        for (Map.Entry<Changelog.ChangeType, String> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
-            Object o = jsonObject.get(entry.getValue());
+        for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
+            Object o = jsonObject.get(entry.getKey());
             if (o instanceof JSONArray) {
                 for (Object o1 : (JSONArray) o) {
                     if (o1 instanceof String) {
-                        changelog.addChange((String) o1, null, entry.getKey());
+                        changelog.addChange((String) o1, null, entry.getValue());
                     }
                 }
             }
         }
         return changelog;
+    }
+
+    public static List<Element> lockSyncFolder(Project project) {
+        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            return Collections.emptyList();
+        }
+        String folderId = project.getPrimaryProject().getProjectID() + "_sync";
+        Element folder = ExportUtility.getElementFromID(folderId);
+        if (folder == null) {
+            return Collections.emptyList();
+        }
+        ILockProjectService lockService = LockService.getLockService(project);
+        if (lockService == null) {
+            return Collections.emptyList();
+        }
+        Collection<Element> ownedElements = folder.getOwnedElement();
+        List<Element> lockedElements = new ArrayList<>(ownedElements.size());
+        for (Element element : folder.getOwnedElement()) {
+            if (element instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class && !lockService.isLocked(element) && lockService.canBeLocked(element)) {
+                lockedElements.add(element);
+                //Utils.tryToLock(project, element, project.isTeamworkServerProject());
+            }
+        }
+        if (!lockService.lockElements(lockedElements, false, null)) {
+            return Collections.emptyList();
+        }
+        return lockedElements;
     }
 }

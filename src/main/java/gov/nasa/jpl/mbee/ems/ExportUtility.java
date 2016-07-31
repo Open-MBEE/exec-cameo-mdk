@@ -793,7 +793,6 @@ public class ExportUtility {
             }
             return true;
         } catch (ServerException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return false;
         }
@@ -2007,7 +2006,6 @@ public class ExportUtility {
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
         } catch (JMSException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         } finally {
             try {

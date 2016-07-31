@@ -233,6 +233,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             this.disabled = disabled;
         }
 
+        @Deprecated
         public List<TextMessage> getAllTextMessages(boolean shouldAcknowledge) {
             boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
             List<TextMessage> textMessages = new ArrayList<>();

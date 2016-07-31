@@ -30,8 +30,8 @@ package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -112,7 +112,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     protected void doAfterSuccess(){};
     
     protected void executeMany(Collection<Annotation> annos, String sessionName) {
-        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
         if (listener != null)
             listener.setDisabled(true);
         SessionManager.getInstance().createSession(sessionName);
@@ -142,7 +142,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     }
     
     protected void execute(String sessionName) {
-        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
         if (listener != null)
             listener.setDisabled(true);
         SessionManager.getInstance().createSession("Change Rel");

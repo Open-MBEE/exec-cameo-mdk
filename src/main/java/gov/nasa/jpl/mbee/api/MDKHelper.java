@@ -36,17 +36,14 @@ import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.swing.JButton;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -287,7 +284,7 @@ public class MDKHelper {
 	}
 
 	public static Changelog<String, Element> getInMemoryElementChangelog(Project project) {
-		return CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener().getInMemoryLocalChangelog();
+		return LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog();
 	}
 
 }

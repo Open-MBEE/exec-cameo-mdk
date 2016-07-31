@@ -1,9 +1,6 @@
 package gov.nasa.jpl.mbee.ems.sync.queue;
 
-import com.nomagic.magicdraw.core.Application;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.lib.Utils;
 import org.apache.log4j.Logger;
 
@@ -89,10 +86,6 @@ public class OutputSyncRunner implements Runnable {
                 log.error("", e);
             }
             if (q.isEmpty()) {
-                CommonSyncTransactionCommitListener lis = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
-                // TODO REIMPLEMENT ME @Ivan
-                if (lis != null/* && lis.isAuto()*/)
-                    continue; //prevent ui focus steal
                 Utils.guilog("[INFO] Finished processing queued requests.");
             }
 

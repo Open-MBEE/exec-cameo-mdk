@@ -17,8 +17,8 @@ import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
@@ -180,7 +180,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
-        CommonSyncTransactionCommitListener commonSyncTransactionCommitListener = CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener();
+        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
 
         // Query existing server-side JSONs for views
         if (!viewMap.isEmpty()) {
@@ -239,8 +239,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Create the session you intend to cancel to revert all temporary elements.
                 SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
-                if (commonSyncTransactionCommitListener != null) {
-                    commonSyncTransactionCommitListener.setDisabled(true);
+                if (localSyncTransactionCommitListener != null) {
+                    localSyncTransactionCommitListener.setDisabled(true);
                 }
 
                 // Now that all first-level instances are resolved, query for them and import client-side (in reverse order) as model elements
@@ -608,8 +608,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().cancelSession();
             }
-            if (commonSyncTransactionCommitListener != null) {
-                commonSyncTransactionCommitListener.setDisabled(false);
+            if (localSyncTransactionCommitListener != null) {
+                localSyncTransactionCommitListener.setDisabled(false);
             }
         }
         ImageValidator iv = new ImageValidator(dbAlfrescoVisitor.getImages(), images);

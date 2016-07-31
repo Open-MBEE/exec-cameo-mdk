@@ -439,7 +439,7 @@ public class ImportUtility {
         if (specialization.containsKey("classifier")) {
             JSONArray classifier = (JSONArray) specialization.get("classifier");
             if (classifier == null || classifier.isEmpty()) {
-                log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
+                log.info("[IMPORT/SYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
                 throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
             }
             List<Classifier> newClassifiers = new ArrayList<Classifier>();
@@ -467,7 +467,7 @@ public class ImportUtility {
             ModelHelper.setSupplierElement(dr, target);
             ModelHelper.setClientElement(dr, source);
         } else {
-            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
+            log.info("[IMPORT/SYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
             throw (new ReferenceException(dr, specialization, "Directed relationship has no source or target"));
         }
     }
@@ -487,7 +487,7 @@ public class ImportUtility {
             if (t != null)
                 p.setType(t);
             else
-                log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
+                log.info("[IMPORT/SYNC PROPERTY TYPE] prevent mistaken null type");
             //something bad happened
         }
 
@@ -595,7 +595,7 @@ public class ImportUtility {
             c.getEnd().get(0).setRole((ConnectableElement) webSourceE);
             c.getEnd().get(1).setRole((ConnectableElement) webTargetE);
         } else {
-            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
+            log.info("[IMPORT/SYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
             throw (new ReferenceException(c, spec, "Connector doesn't have both connectable roles."));
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
@@ -625,7 +625,7 @@ public class ImportUtility {
         List<Property> todelete = new ArrayList<Property>();
         int i = 0;
         if (webSource == null || webTarget == null) {
-            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
+            log.info("[IMPORT/SYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
             throw new ReferenceException(a, spec, "Association missing ends");
         }
         for (Property end : a.getMemberEnd()) {

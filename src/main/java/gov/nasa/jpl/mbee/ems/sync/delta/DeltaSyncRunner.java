@@ -16,15 +16,16 @@ import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.lib.Changelog;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.function.BiFunction;
@@ -93,7 +94,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             return;
         }
 
-        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener();
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener == null) {
             Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener.");
             failure = true;
@@ -103,7 +104,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // LOCK SYNC FOLDER
 
         listener.setDisabled(true);
-        DeltaSyncProjectEventListenerAdapter.lockSyncFolder(project);
+        SyncElements.lockSyncFolder(project);
         listener.setDisabled(false);
 
         // DOWNLOAD JMS MESSAGES IF ASYNC CONSUMER IS DISABLED
@@ -280,8 +281,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             continue;
                         }
                         if (!element.isEditable()) {
-                            // TODO Remove me to stop being noisy @Ivan
-                            Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is not editable. Skipping.");
+                            if (MDUtils.isDeveloperMode()) {
+                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is not editable. Skipping.");
+                            }
                             failedJmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
                             continue;
                         }
@@ -293,8 +295,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             continue;
                         }
                         if (!element.isEditable()) {
-                            // TODO Remove me to stop being noisy @Ivan
-                            Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is not editable. Skipping.");
+                            if (MDUtils.isDeveloperMode()) {
+                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is not editable. Skipping.");
+                            }
                             failedJmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                             continue;
                         }
@@ -608,10 +611,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, ExportUtility.getWorkspace() + "_mdk");
                 jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
                 int syncCount = successfulJmsChangelog.flattenedSize();
-                Application.getInstance().getGUILog().log("Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
+                Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
             } catch (JMSException e) {
                 e.printStackTrace();
-                Application.getInstance().getGUILog().log("Failed to notify other clients of synced elements. This could result in redundant local updates.");
+                Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
             }
         }
     }

@@ -18,20 +18,6 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     private static final Map<String, RealTimeSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
-    public void projectOpened(Project project) {
-        /*RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
-        if (realTimeSyncProjectMapping.isDisabled()) {
-            return;
-        }*/
-        // ...
-    }
-
-    /*@Override
-    public void projectActivated(Project project) {
-        projectOpened(project);
-    }*/
-
-    @Override
     public void projectClosed(Project project) {
         RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
         if (realTimeSyncProjectMapping.isDisabled()) {
@@ -39,11 +25,6 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         }
         projectMappings.remove(project.getID());
     }
-
-    /*@Override
-    public void projectDeActivated(Project project) {
-        projectClosed(project);
-    }*/
 
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
@@ -63,7 +44,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             return;
         }
         if (project.isTeamworkServerProject() && !savedInServer) {
-            Application.getInstance().getGUILog().log("Teamwork server project is being saved locally. Real time sync skipped.");
+            Application.getInstance().getGUILog().log("[INFO] Teamwork project is being saved locally. Real time sync skipped.");
             return;
         }
         DeltaSyncRunner deltaSyncRunner = new DeltaSyncRunner(true, true, true);

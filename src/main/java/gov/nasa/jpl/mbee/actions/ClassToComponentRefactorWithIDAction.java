@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.actions;
 
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
@@ -34,7 +34,7 @@ public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
                 + "happen on update from teamwork. Do you want to continue?");
         if (con == null || !con)
             return;
-        CommonSyncTransactionCommitListener listener = CommonSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getCommonSyncTransactionCommitListener();
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
         if (listener != null)
             listener.setDisabled(true);
         

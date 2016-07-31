@@ -46,11 +46,7 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.validation.actions.*;
-import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -420,7 +416,6 @@ public class ModelValidator {
         }
         JSONObject missingResult = getManyAlfrescoElements(missing, ps);
         updateElementsKeyed(missingResult, elementsKeyed);
-        // TODO get rid of this @Ivan
         for (Element e: all) {
             if (ps != null && ps.isCancel())
                 break;

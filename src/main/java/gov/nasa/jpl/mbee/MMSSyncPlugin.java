@@ -2,7 +2,7 @@ package gov.nasa.jpl.mbee;
 
 import com.nomagic.magicdraw.core.Application;
 import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 
@@ -13,7 +13,7 @@ import gov.nasa.jpl.mbee.ems.sync.coordinated.CoordinatedSyncProjectEventListene
  */
 public class MMSSyncPlugin extends MDPlugin {
     private static MMSSyncPlugin instance;
-    private CommonSyncProjectEventListenerAdapter commonSyncProjectEventListenerAdapter;
+    private LocalSyncProjectEventListenerAdapter localSyncProjectEventListenerAdapter;
     private JMSSyncProjectEventListenerAdapter jmsSyncProjectEventListenerAdapter;
     private DeltaSyncProjectEventListenerAdapter deltaSyncProjectEventListenerAdapter;
     private CoordinatedSyncProjectEventListenerAdapter coordinatedSyncProjectEventListenerAdapter;
@@ -25,8 +25,8 @@ public class MMSSyncPlugin extends MDPlugin {
         return instance;
     }
 
-    public CommonSyncProjectEventListenerAdapter getCommonSyncProjectEventListenerAdapter() {
-        return commonSyncProjectEventListenerAdapter;
+    public LocalSyncProjectEventListenerAdapter getLocalSyncProjectEventListenerAdapter() {
+        return localSyncProjectEventListenerAdapter;
     }
 
     public JMSSyncProjectEventListenerAdapter getJmsSyncProjectEventListenerAdapter() {
@@ -48,7 +48,7 @@ public class MMSSyncPlugin extends MDPlugin {
         Application.getInstance().getProjectsManager().addProjectListener(coordinatedSyncProjectEventListenerAdapter = new CoordinatedSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(deltaSyncProjectEventListenerAdapter = new DeltaSyncProjectEventListenerAdapter());
         // Common and JMS clear their respective inMemoryChangelogs on save, so it needs to go after coordinated and delta which use it.
-        Application.getInstance().getProjectsManager().addProjectListener(commonSyncProjectEventListenerAdapter = new CommonSyncProjectEventListenerAdapter());
+        Application.getInstance().getProjectsManager().addProjectListener(localSyncProjectEventListenerAdapter = new LocalSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(jmsSyncProjectEventListenerAdapter = new JMSSyncProjectEventListenerAdapter());
     }
 
