@@ -28,6 +28,16 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils.AvailableAttribute;
+import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,19 +50,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils.AvailableAttribute;
-import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
-
 public class TemporalDiff extends Table {
 	private String baseVersionTime;
 	private String compareToTime;
 	private AvailableAttribute attributeToCompare;
+	private String tagAttr;
 
 	public TemporalDiff() {
 		setSortElementsByName(false);
@@ -68,24 +70,28 @@ public class TemporalDiff extends Table {
 		Object attr = GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "attributeToCompare", null);
 		if (attr instanceof EnumerationLiteral) {
 			attributeToCompare = Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName());
-			if (attributeToCompare != null) {
-				setAttributeToCompare(Utils.getAvailableAttribute(attributeToCompare));
-			}
-		}
-		baseVersionTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "baseVersionTime", false);
-		compareToTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "compareToTime", false);
+		} else
+			attributeToCompare = Utils.AvailableAttribute.valueOf("Documentation");
+		if (attributeToCompare == Utils.AvailableAttribute.Documentation)
+			tagAttr = "doc";
+		else if (attributeToCompare == Utils.AvailableAttribute.Name)
+			tagAttr = "name";
+		else
+			tagAttr = "val";
+		baseVersionTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "baseVersionTime", null);
+		compareToTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "compareToTime", "latest");
 	}
 
 	@Override
 	public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
 		List<DocumentElement> res = new ArrayList<DocumentElement>();
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssSSSZ");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		Date baseVersionDate = null;
 		Date compareToDate = null;
-		if (null != baseVersionTime & !baseVersionTime.isEmpty() & !baseVersionTime.equalsIgnoreCase("latest")) {
+		if (null != baseVersionTime && !baseVersionTime.isEmpty() && !baseVersionTime.equalsIgnoreCase("latest")) {
 			baseVersionDate = parseDate(baseVersionTime);
 		}
-		if (null != compareToTime & !compareToTime.isEmpty() & !compareToTime.equalsIgnoreCase("latest")) {
+		if (null != compareToTime && !compareToTime.isEmpty() && !compareToTime.equalsIgnoreCase("latest")) {
 			compareToDate = parseDate(compareToTime);
 		}
 
@@ -97,8 +103,8 @@ public class TemporalDiff extends Table {
 			for (Object e : list) {
 				if (e instanceof Element) {
 					tag.append("<mms-diff-attr mms-eid=\"");
-					tag.append(((Element) e).getID() + "\"");
-					tag.append(" mms-attr=\"" + attributeToCompare.name() + "\" mms-version-one=");
+					tag.append(ExportUtility.getElementID((Element) e) + "\"");
+					tag.append(" mms-attr=\"" + tagAttr + "\" mms-version-one=");
 					if (compareToTime == null) {
 						tag.append("latest");
 					} else if (compareToDate == null) {
@@ -184,6 +190,7 @@ public class TemporalDiff extends Table {
 
 	private Date parseDate(String candidate) {
 		List<SimpleDateFormat> knownPatterns = new ArrayList<SimpleDateFormat>();
+		knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 		knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"));
 		knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"));
 		knownPatterns.add(new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss"));
