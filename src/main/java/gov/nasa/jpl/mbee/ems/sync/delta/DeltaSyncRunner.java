@@ -15,9 +15,11 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
@@ -27,6 +29,7 @@ import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.function.BiFunction;
 import gov.nasa.jpl.mbee.lib.function.BiPredicate;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
@@ -79,7 +82,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         this.shouldCommit = shouldCommmit;
         this.shouldCommitDeletes = shouldCommitDeletes;
         this.shouldUpdate = shouldUpdate;
-        new RuntimeException("OOOOO").printStackTrace();
     }
 
     @SuppressWarnings("unchecked")
@@ -100,24 +102,30 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         // LOCK SYNC FOLDER
 
-        new RuntimeException("asdfasdf").printStackTrace();
-        /*listener.setDisabled(true);
+        listener.setDisabled(true);
         DeltaSyncProjectEventListenerAdapter.lockSyncFolder(project);
-        listener.setDisabled(false);*/
+        listener.setDisabled(false);
 
         // DOWNLOAD JMS MESSAGES IF ASYNC CONSUMER IS DISABLED
 
-        final JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
+        JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
+        JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
+        if (jmsMessageListener == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Could not connect to MMS. Please verify your url/site configuration.");
+            failure = true;
+            return;
+        }
         if (jmsSyncProjectMapping.isDisabled()) {
-            List<TextMessage> textMessages = jmsSyncProjectMapping.getAllTextMessages(true);
+            jmsSyncProjectMapping.setDisabled(!JMSSyncProjectEventListenerAdapter.initDurable(project, jmsSyncProjectMapping));
+            /*List<TextMessage> textMessages = jmsSyncProjectMapping.getAllTextMessages(true);
             if (textMessages == null) {
                 Utils.guilog("[ERROR] Could not get changes from MMS. Please check your network connection and try again.");
                 failure = true;
                 return;
             }
             for (TextMessage textMessage : textMessages) {
-                jmsSyncProjectMapping.getJmsMessageListener().onMessage(textMessage);
-            }
+                jmsMessageListener.onMessage(textMessage);
+            }*/
         }
 
         // BUILD COMPLETE LOCAL CHANGELOG
@@ -148,7 +156,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         for (SyncElement syncElement : persistedJmsSyncElements) {
             persistedJmsChangelog = persistedJmsChangelog.and(SyncElements.buildChangelog(syncElement));
         }
-        Changelog<String, Void> jmsChangelog = persistedJmsChangelog.and(jmsSyncProjectMapping.getJmsMessageListener().getInMemoryJMSChangelog(), new BiFunction<String, JSONObject, Void>() {
+        Changelog<String, Void> jmsChangelog = persistedJmsChangelog.and(jmsMessageListener.getInMemoryJMSChangelog(), new BiFunction<String, JSONObject, Void>() {
             @Override
             public Void apply(String key, JSONObject jsonObject) {
                 return null;
@@ -161,8 +169,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         Set<String> elementIdsToGet = new HashSet<>(jmsUpdated.keySet());
         elementIdsToGet.addAll(jmsCreated.keySet());
-        if (shouldUpdate) {
-            int size = jmsChangelog.size();
+        if (shouldUpdate && !jmsChangelog.isEmpty()) {
+            int size = jmsChangelog.flattenedSize();
             Application.getInstance().getGUILog().log("[INFO] Getting " + size + " changed element" + (size != 1 ? "s" : "") + " from the MMS.");
         }
 
@@ -343,6 +351,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             Application.getInstance().getGUILog().log("[INFO] No local changes to commit to MMS.");
         }
 
+        // PREP UPDATED (FROM JMS) ELEMENTS CHANGELOG
+
+        Changelog<String, Void> successfulJmsChangelog = new Changelog<>();
+
         // ADD CREATED ELEMENTS LOCALLY FROM MMS
 
         boolean shouldLogNoJmsChanges = shouldUpdate;
@@ -370,11 +382,11 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         cannotCreate.addViolation(vrv);
                     }
                 }
-                List<Element> createdElements = new ArrayList<>(createdElementJsons.size());
+                Map<String, Void> createdElements = successfulJmsChangelog.get(Changelog.ChangeType.CREATED);
                 for (JSONObject elementJson : createdElementJsons) {
                     try {
                         Element element = ImportUtility.createElement(elementJson, true);
-                        createdElements.add(element);
+                        createdElements.put(ExportUtility.getElementID(element), null);
                         locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[CREATED]"));
                     } catch (ImportException ie) {
                         ie.printStackTrace();
@@ -406,7 +418,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             if (!SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().createSession("DeltaSyncRunner execution");
             }
-            List<Element> updatedElements = new ArrayList<>(jmsElementsToUpdateLocally.size());
+            Map<String, Void> updatedElements = successfulJmsChangelog.get(Changelog.ChangeType.UPDATED);
             for (Map.Entry<String, Pair<JSONObject, Element>> elementEntry : jmsElementsToUpdateLocally.entrySet()) {
                 Element element = elementEntry.getValue().getSecond();
                 JSONObject elementJson = elementEntry.getValue().getFirst();
@@ -416,7 +428,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     if (!(element.getOwner() != null && elementJson.get("qualifiedId") instanceof String && ((String) elementJson.get("qualifiedId")).contains("/holding_bin/"))) {
                         ImportUtility.setOwner(element, elementJson);
                     }
-                    updatedElements.add(element);
+                    updatedElements.put(ExportUtility.getElementID(element), null);
                     locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[UPDATED]"));
                 } catch (ImportException ie) {
                     ie.printStackTrace();
@@ -439,12 +451,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             if (!SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().createSession(getClass().getName() + " Execution");
             }
-            List<String> deletedElementIDs = new ArrayList<>(jmsElementsToDeleteLocally.size());
+            Map<String, Void> deletedElements = successfulJmsChangelog.get(Changelog.ChangeType.DELETED);
             for (Map.Entry<String, Element> elementEntry : jmsElementsToDeleteLocally.entrySet()) {
                 Element element = elementEntry.getValue();
                 try {
                     ModelElementsManager.getInstance().removeElement(element);
-                    deletedElementIDs.add(elementEntry.getKey());
+                    deletedElements.put(elementEntry.getKey(), null);
                     locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[DELETED]"));
                 } catch (ReadOnlyElementException roee) {
                     roee.printStackTrace();
@@ -454,9 +466,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             }
             listener.setDisabled(false);
-            if (!deletedElementIDs.isEmpty()) {
+            if (!deletedElements.isEmpty()) {
                 shouldLogNoJmsChanges = true;
-                Application.getInstance().getGUILog().log("[INFO] Deleted " + deletedElementIDs.size() + " element" + (deletedElementIDs.size() != 1 ? "s" : "") + " locally from the MMS.");
+                Application.getInstance().getGUILog().log("[INFO] Deleted " + deletedElements.size() + " element" + (deletedElements.size() != 1 ? "s" : "") + " locally from the MMS.");
             }
         }
 
@@ -532,7 +544,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // CLEAR IN-MEMORY AND PERSIST UNPROCESSED & FAILURES
 
         listener.getInMemoryLocalChangelog().clear();
-        jmsSyncProjectMapping.getJmsMessageListener().getInMemoryJMSChangelog().clear();
+        jmsMessageListener.getInMemoryJMSChangelog().clear();
 
         listener.setDisabled(true);
         if (!SessionManager.getInstance().isSessionCreated()) {
@@ -570,26 +582,38 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         SyncElements.setByType(project, SyncElement.Type.JMS, SyncElements.buildJson(unprocessedJmsChangelog).toJSONString());
 
         SessionManager.getInstance().closeSession();
-        System.out.println("ASDF " + listener.isDisabled());
         listener.setDisabled(false);
 
         // ACKNOWLEDGE LAST JMS MESSAGE TO CLEAR OWN QUEUE
 
-        new Thread() {
-            @Override
-            public void run() {
-                Message textMessage = jmsSyncProjectMapping.getJmsMessageListener().getLastMessage();
-                if (textMessage != null) {
-                    try {
-                        textMessage.acknowledge();
-                    } catch (JMSException e) {
-                        e.printStackTrace();
-                    }
-                }
+        Message lastMessage = jmsMessageListener.getLastMessage();
+        if (lastMessage != null) {
+            try {
+                lastMessage.acknowledge();
+            } catch (JMSException e) {
+                e.printStackTrace();
             }
-        }.start();
+        }
 
         // NOTIFY OTHER USERS OF PROCESSED ELEMENTS
+
+        if (!successfulJmsChangelog.isEmpty()) {
+            JSONObject teamworkCommittedMessage = new JSONObject();
+            teamworkCommittedMessage.put("source", "magicdraw");
+            teamworkCommittedMessage.put("sender", ViewEditUtils.getUsername());
+            teamworkCommittedMessage.put("synced", SyncElements.buildJson(successfulJmsChangelog));
+            try {
+                TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(teamworkCommittedMessage.toJSONString());
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, ExportUtility.getProjectId(project));
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, ExportUtility.getWorkspace() + "_mdk");
+                jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
+                int syncCount = successfulJmsChangelog.flattenedSize();
+                Application.getInstance().getGUILog().log("Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
+            } catch (JMSException e) {
+                e.printStackTrace();
+                Application.getInstance().getGUILog().log("Failed to notify other clients of synced elements. This could result in redundant local updates.");
+            }
+        }
     }
 
     public boolean isFailure() {

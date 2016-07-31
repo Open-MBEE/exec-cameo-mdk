@@ -1,36 +1,25 @@
 package gov.nasa.jpl.mbee.ems.jms;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.lib.Changelog;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.function.Predicate;
-import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.netbeans.lib.cvsclient.commandLine.command.log;
 
-import javax.jms.*;
+import javax.jms.ConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
-import java.text.ParseException;
-import java.util.*;
+import java.util.Hashtable;
 
 /**
  * Created by igomes on 6/29/16.
  */
 public class JMSUtils {
-    private static final String MSG_SELECTOR_PROJECT_ID = "projectId",
-            MSG_SELECTOR_WS_ID = "workspace";
+    public static final String MSG_SELECTOR_PROJECT_ID = "projectId",
+            MSG_SELECTOR_WORKSPACE_ID = "workspace";
 
     // Members to look up JMS using JNDI
     // TODO: If any other context factories are used, need to add those JARs into class path (e.g., for weblogic)
@@ -61,7 +50,7 @@ public class JMSUtils {
     }
 
     // Varies by current project
-    public static JMSInfo getJMSInfo(Project project) {
+    public static JMSInfo getJMSInfo(Project project) throws ServerException {
         JSONObject jmsJson = getJmsConnectionDetails(project);
         String url = ingestJson(jmsJson);
         boolean isFromService = url != null;
@@ -83,9 +72,6 @@ public class JMSUtils {
                 }
                 url = "tcp://" + url + ":61616";
             }
-        }
-        if (!url.startsWith("failover:")) {
-            url = "failover:" + url;
         }
         return new JMSInfo(url, isFromService);
     }
@@ -185,10 +171,10 @@ public class JMSUtils {
     public static String constructSelectorString(String projectID, String workspaceID) {
         StringBuilder selectorBuilder = new StringBuilder();
 
-        //selectorBuilder.append("(").append(MSG_SELECTOR_WS_ID).append("='").append(workspaceID).append("')");
+        //selectorBuilder.append("(").append(MSG_SELECTOR_WORKSPACE_ID).append("='").append(workspaceID).append("')");
 
         selectorBuilder.append("(").append(MSG_SELECTOR_PROJECT_ID).append(" = '").append(projectID).append("')")
-                .append(" AND ").append("(").append(MSG_SELECTOR_WS_ID).append(" = '").append(workspaceID).append("')");
+                .append(" AND ").append("((").append(MSG_SELECTOR_WORKSPACE_ID).append(" = '").append(workspaceID).append("') OR (").append(MSG_SELECTOR_WORKSPACE_ID).append(" = '").append(workspaceID).append("_mdk").append("'))");
 
         String outputMsgSelector = selectorBuilder.toString();
         selectorBuilder.delete(0, selectorBuilder.length());

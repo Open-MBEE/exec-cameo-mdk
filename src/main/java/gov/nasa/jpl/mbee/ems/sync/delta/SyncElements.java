@@ -103,6 +103,8 @@ public class SyncElements {
             syncElements.put(name, new SyncElement((NamedElement) element, type));
         }
 
+        System.out.println("SYNC ELEMENTS 1 " + syncElements);
+
         // DELETE ALREADY CLEARED BLOCKS AND THEIR CLEAR BLOCKS (AND DANGLING CLEAR BLOCKS)
 
         for (NamedElement clearElement : clearElements) {
@@ -111,9 +113,10 @@ public class SyncElements {
             }
             String name = clearElement.getName();
             String clearedElementName = name.substring(0, name.length() - CLEAR_SUFFIX.length());
-            syncElements.remove(clearedElementName);
+            System.out.println("NAME " + clearedElementName);
             SyncElement clearedSyncElement = syncElements.get(clearedElementName);
             if (clearedSyncElement == null) {
+                System.out.println("DANGLING?");
                 // delete dangling clear blocks
                 try {
                     ModelElementsManager.getInstance().removeElement(clearElement);
@@ -122,6 +125,7 @@ public class SyncElements {
                 }
                 continue;
             }
+            syncElements.remove(clearedElementName);
             if (!clearedSyncElement.getElement().isEditable()) {
                 continue;
             }
@@ -132,6 +136,8 @@ public class SyncElements {
                 e.printStackTrace();
             }
         }
+
+        System.out.println("SYNC ELEMENTS 2 " + syncElements);
 
         // PERSIST CONTENT
 
@@ -151,15 +157,18 @@ public class SyncElements {
         newSyncElementElement.setName(type.getPrefix() + "_" + NAME_DATE_FORMAT.format(new Date()));
         ModelHelper.setComment(newSyncElementElement, comment);
 
+        System.out.println("SYNC ELEMENTS 3 " + syncElements);
         // DELETE/CLEAR ALL OLD SYNC ELEMENTS OF SAME TYPE AND DANGLING CLEAR BLOCKS
 
         for (SyncElement syncElement : syncElements.values()) {
+            System.out.println("DELETE? " + syncElement.getElement().getID());
             // so it doesn't delete the one that we just updated
             if (isReusing && syncElement.getElement() == newSyncElementElement) {
                 continue;
             }
             if (syncElement.getElement().isEditable()) {
                 try {
+                    System.out.println("DELETE");
                     ModelElementsManager.getInstance().removeElement(syncElement.getElement());
                     continue;
                 } catch (ReadOnlyElementException e) {
@@ -169,6 +178,7 @@ public class SyncElements {
             NamedElement newClearElement = project.getElementsFactory().createClassInstance();
             newClearElement.setName(syncElement.getElement().getName() + CLEAR_SUFFIX);
             newClearElement.setOwner(syncPackage);
+            System.out.println("CLEAR " + newClearElement.getID());
         }
 
         return new SyncElement(newSyncElementElement, type);
@@ -196,27 +206,27 @@ public class SyncElements {
     }
 
     public static Changelog<String, Void> buildChangelog(SyncElement syncElement) {
-        Changelog<String, Void> changelog = new Changelog<>();
         String comment = ModelHelper.getComment(syncElement.getElement());
         JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObject = null;
-        Object o;
         try {
-            o = jsonParser.parse(comment);
+            Object o = jsonParser.parse(comment);
             if (o instanceof JSONObject) {
-                jsonObject = (JSONObject) o;
+                return buildChangelog((JSONObject) o);
             }
         } catch (ParseException e) {
             e.printStackTrace();
-            return changelog;
         }
-        if (jsonObject != null) {
-            for (Map.Entry<Changelog.ChangeType, String> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
-                if ((o = jsonObject.get(entry.getValue())) != null && o instanceof JSONArray) {
-                    for (Object o1 : (JSONArray) o) {
-                        if (o1 instanceof String) {
-                            changelog.addChange((String) o1, null, entry.getKey());
-                        }
+        return new Changelog<>();
+    }
+
+    public static Changelog<String, Void> buildChangelog(JSONObject jsonObject) {
+        Changelog<String, Void> changelog = new Changelog<>();
+        for (Map.Entry<Changelog.ChangeType, String> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
+            Object o = jsonObject.get(entry.getValue());
+            if (o instanceof JSONArray) {
+                for (Object o1 : (JSONArray) o) {
+                    if (o1 instanceof String) {
+                        changelog.addChange((String) o1, null, entry.getKey());
                     }
                 }
             }

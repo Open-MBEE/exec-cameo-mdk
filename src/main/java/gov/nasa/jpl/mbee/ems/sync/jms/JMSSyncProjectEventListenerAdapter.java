@@ -5,16 +5,15 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import org.apache.activemq.ActiveMQConnection;
-import org.netbeans.lib.cvsclient.commandLine.command.log;
-import weblogic.jms.common.JMSConstants;
-import weblogic.jms.extensions.WLConnection;
+import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
 import javax.naming.NameNotFoundException;
@@ -32,7 +31,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectOpened(Project project) {
         projectClosed(project);
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
-        jmsSyncProjectMapping.setDisabled(!initDurable(project, jmsSyncProjectMapping));
+        jmsSyncProjectMapping.setDisabled(!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project, jmsSyncProjectMapping));
     }
 
     @Override
@@ -56,11 +55,15 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
-        JMSSyncProjectMapping JMSSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(project);
+        JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(project);
 
-        JMSMessageListener JMSMessageListener = JMSSyncProjectMapping.getJmsMessageListener();
+        JMSMessageListener JMSMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
         if (JMSMessageListener != null) {
             JMSMessageListener.getInMemoryJMSChangelog().clear();
+        }
+        if (jmsSyncProjectMapping.isDisabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+            Application.getInstance().getGUILog().log("[INFO] Attempting to re-initialize JMS sync.");
+            projectOpened(project);
         }
     }
 
@@ -68,8 +71,16 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         String projectID = ExportUtility.getProjectId(project);
         String workspaceID = ExportUtility.getWorkspace();
 
-        JMSUtils.JMSInfo jmsInfo = JMSUtils.getJMSInfo(project);
-        String url = jmsInfo.getUrl();
+
+        JMSUtils.JMSInfo jmsInfo;
+        try {
+            jmsInfo = JMSUtils.getJMSInfo(project);
+        } catch (ServerException | IllegalArgumentException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed. Message: " + e.getMessage());
+            return false;
+        }
+        String url = jmsInfo != null ? jmsInfo.getUrl() : null;
         if (url == null) {
             Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed. Cannot get server URL.");
             return false;
@@ -81,38 +92,28 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             String user = TeamworkUtils.getLoggedUserName();
             if (user == null) {
-                Utils.guilog("[ERROR] You must be logged into Teamwork. JMS sync will not start.");
+                Application.getInstance().getGUILog().log("[ERROR] You must be logged into Teamwork. JMS sync will not start.");
                 return false;
             }
         }
         String username = ViewEditUtils.getUsername();
-        if (username == null || username.equals("")) {
-            Utils.guilog("[ERROR] You must be logged into MMS first. JMS sync will not start.");
+        if (username == null || username.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed. Could not login to MMS.");
             return false;
         }
         try {
             ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(JMSUtils.getJMSInfo(project));
             if (connectionFactory == null) {
-                Utils.guilog("[ERROR] Failed to create JMS connection factory.");
+                Application.getInstance().getGUILog().log("[ERROR] Failed to create JMS connection factory.");
                 return false;
             }
             String subscriberId = projectID + "-" + workspaceID + "-" + username; // weblogic can't have '/' in id
+
+            JMSMessageListener jmsMessageListener = new JMSMessageListener(project);
+
             Connection connection = connectionFactory.createConnection();
             //((WLConnection) connection).setReconnectPolicy(JMSConstants.RECONNECT_POLICY_ALL);
-            connection.setExceptionListener(new ExceptionListener() {
-                @Override
-                public void onException(JMSException e) {
-                    e.printStackTrace();
-                    jmsSyncProjectMapping.setDisabled(true);
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            // TODO Implement auto-reconnect attempt
-                            Application.getInstance().getGUILog().log("[WARNING] JMS sync interrupted. Restart MagicDraw to reconnect.");
-                        }
-                    });
-                }
-            });
+            connection.setExceptionListener(jmsMessageListener);
             connection.setClientID(subscriberId);
             Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
@@ -122,24 +123,24 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                     topic = (Topic) JMSUtils.getInitialContext().lookup(JMSUtils.JMS_TOPIC);
                 }
             } catch (NameNotFoundException ignored) {
-                // do nothing (just means topic hasn't been created yet
+                // do nothing; just means topic hasn't been created yet
             }
             if (topic == null) {
                 topic = session.createTopic(JMSUtils.JMS_TOPIC);
             }
-
             String messageSelector = JMSUtils.constructSelectorString(projectID, workspaceID);
-
             MessageConsumer consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
-
-            JMSMessageListener jmsMessageListener = new JMSMessageListener(project);
             consumer.setMessageListener(jmsMessageListener);
+
+            MessageProducer producer = session.createProducer(topic);
+
             connection.start();
 
             jmsSyncProjectMapping.setConnection(connection);
             jmsSyncProjectMapping.setSession(session);
             jmsSyncProjectMapping.setMessageConsumer(consumer);
             jmsSyncProjectMapping.setJmsMessageListener(jmsMessageListener);
+            jmsSyncProjectMapping.setMessageProducer(producer);
 
             // get everything that's already in the queue without blocking startup
             /*new Thread() {
@@ -154,11 +155,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 }
             }.start();*/
 
-            Utils.guilog("[INFO] JMS sync initiated.");
+            Application.getInstance().getGUILog().log("[INFO] JMS sync initiated.");
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            Utils.guilog("[ERROR] JMS sync initialization failed: " + e.getMessage());
+            jmsSyncProjectMapping.setDisabled(true);
+            Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed: " + e.getMessage());
         }
         return false;
     }
@@ -176,6 +178,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         private Session session;
         private MessageConsumer messageConsumer;
         private JMSMessageListener jmsMessageListener;
+        private MessageProducer messageProducer;
 
         private volatile boolean disabled;
 
@@ -211,7 +214,18 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             this.jmsMessageListener = jmsMessageListener;
         }
 
+        public MessageProducer getMessageProducer() {
+            return messageProducer;
+        }
+
+        public void setMessageProducer(MessageProducer messageProducer) {
+            this.messageProducer = messageProducer;
+        }
+
         public boolean isDisabled() {
+            if (jmsMessageListener == null) {
+                disabled = true;
+            }
             return disabled;
         }
 
@@ -224,7 +238,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             List<TextMessage> textMessages = new ArrayList<>();
             Message message;
             try {
-                while ((message = getMessageConsumer().receive(10000)) != null) {
+                while (getMessageConsumer() != null && (message = getMessageConsumer().receive(10000)) != null) {
                     if (!(message instanceof TextMessage)) {
                         continue;
                     }

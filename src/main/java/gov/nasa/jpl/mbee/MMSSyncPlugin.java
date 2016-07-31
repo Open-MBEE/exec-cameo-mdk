@@ -4,7 +4,7 @@ import com.nomagic.magicdraw.core.Application;
 import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.realtime.RealTimeSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 
 /*
  * This class is responsible for performing automatic syncs with
@@ -16,7 +16,7 @@ public class MMSSyncPlugin extends MDPlugin {
     private CommonSyncProjectEventListenerAdapter commonSyncProjectEventListenerAdapter;
     private JMSSyncProjectEventListenerAdapter jmsSyncProjectEventListenerAdapter;
     private DeltaSyncProjectEventListenerAdapter deltaSyncProjectEventListenerAdapter;
-    private RealTimeSyncProjectEventListenerAdapter realTimeSyncProjectEventListenerAdapter;
+    private CoordinatedSyncProjectEventListenerAdapter coordinatedSyncProjectEventListenerAdapter;
 
     public static MMSSyncPlugin getInstance() {
         if (instance == null) {
@@ -37,17 +37,17 @@ public class MMSSyncPlugin extends MDPlugin {
         return deltaSyncProjectEventListenerAdapter;
     }
 
-    public RealTimeSyncProjectEventListenerAdapter getRealTimeSyncProjectEventListenerAdapter() {
-        return realTimeSyncProjectEventListenerAdapter;
+    public CoordinatedSyncProjectEventListenerAdapter getCoordinatedSyncProjectEventListenerAdapter() {
+        return coordinatedSyncProjectEventListenerAdapter;
     }
 
     @Override
     public void initConfigurations() {
         System.out.println("Initializing MMSSyncPlugin.");
         // Order matters!
-        Application.getInstance().getProjectsManager().addProjectListener(realTimeSyncProjectEventListenerAdapter = new RealTimeSyncProjectEventListenerAdapter());
+        Application.getInstance().getProjectsManager().addProjectListener(coordinatedSyncProjectEventListenerAdapter = new CoordinatedSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(deltaSyncProjectEventListenerAdapter = new DeltaSyncProjectEventListenerAdapter());
-        // Common and JMS clear their respective inMemoryChangelogs on save, so it needs to go after realtime and delta which use it.
+        // Common and JMS clear their respective inMemoryChangelogs on save, so it needs to go after coordinated and delta which use it.
         Application.getInstance().getProjectsManager().addProjectListener(commonSyncProjectEventListenerAdapter = new CommonSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(jmsSyncProjectEventListenerAdapter = new JMSSyncProjectEventListenerAdapter());
     }

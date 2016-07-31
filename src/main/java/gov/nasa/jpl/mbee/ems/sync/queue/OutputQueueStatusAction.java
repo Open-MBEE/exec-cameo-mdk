@@ -24,7 +24,6 @@ import javax.swing.table.TableColumnModel;
 import com.nomagic.magicdraw.core.Application;
 
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
-import gov.nasa.jpl.mbee.ems.sync.*;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 public class OutputQueueStatusAction extends SRAction {	

@@ -9,6 +9,7 @@ import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Changelog;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
@@ -37,7 +38,9 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
     private Changelog<String, Element> inMemoryLocalChangelog = new Changelog<>();
 
     {
-        inMemoryLocalChangelog.setShouldLogChanges(true);
+        if (MDUtils.isDeveloperMode()) {
+            inMemoryLocalChangelog.setShouldLogChanges(true);
+        }
     }
 
     public synchronized boolean isDisabled() {
@@ -82,7 +85,6 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                         continue;
                     }
                     Element sourceElement = (Element) source;
-                    System.out.println(event.getPropertyName() + ": " + sourceElement.getID() + " - " + (sourceElement instanceof NamedElement ? ((NamedElement) sourceElement).getName() : "<>"));
                     String changedPropertyName = event.getPropertyName();
                     if (changedPropertyName == null || changedPropertyName.startsWith("_") || IGNORED_PROPERTY_CHANGE_EVENT_NAMES.contains(changedPropertyName)) {
                         continue;
@@ -90,7 +92,6 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                     if ((event.getNewValue() == null && event.getOldValue() == null) || (event.getNewValue() != null && event.getNewValue().equals(event.getOldValue()))) {
                         continue;
                     }
-                    System.out.println("1");
 
                     if (!changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
                         Element root = sourceElement;
@@ -101,7 +102,6 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                             continue;
                         }
                     }
-                    System.out.println("2");
 
                     // START PRE-PROCESSING
                     Element e;
@@ -127,12 +127,10 @@ public class CommonSyncTransactionCommitListener implements TransactionCommitLis
                     if (!ExportUtility.shouldAdd(sourceElement)) {
                         continue;
                     }
-                    System.out.println("3");
                     String elementID = ExportUtility.getElementID(sourceElement);
                     if (elementID == null) {
                         continue;
                     }
-                    System.out.println("4");
 
                     Changelog.ChangeType changeType = Changelog.ChangeType.UPDATED;
                     switch (changedPropertyName) {

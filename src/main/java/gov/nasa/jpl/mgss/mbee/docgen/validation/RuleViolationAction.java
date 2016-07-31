@@ -33,7 +33,7 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.Collection;

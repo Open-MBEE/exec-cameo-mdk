@@ -56,7 +56,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -825,15 +825,9 @@ public class ExportUtility {
                 return false;
             }
             return true;
-        } catch (HttpException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IOException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IllegalArgumentException ex) {
-            Utils.showPopupMessage("URL is malformed");
-            Utils.printException(ex);
+        } catch (IOException | IllegalArgumentException ex) {
+            //Utils.printException(ex);
+            ex.printStackTrace();
             throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
@@ -948,15 +942,9 @@ public class ExportUtility {
             }
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
-        } catch (HttpException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IOException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IllegalArgumentException ex) {
-            Utils.showPopupMessage("URL is malformed");
-            Utils.printException(ex);
+        } catch (IOException | IllegalArgumentException ex) {
+            //Utils.printException(ex);
+            ex.printStackTrace();
             throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
@@ -1998,8 +1986,13 @@ public class ExportUtility {
         Session session = null;
         MessageConsumer consumer = null;
         try {
-            JMSUtils.JMSInfo jmsInfo = JMSUtils.getJMSInfo(Application.getInstance().getProject());
-            String url = jmsInfo.getUrl();
+            JMSUtils.JMSInfo jmsInfo = null;
+            try {
+                jmsInfo = JMSUtils.getJMSInfo(Application.getInstance().getProject());
+            } catch (ServerException e) {
+                e.printStackTrace();
+            }
+            String url = jmsInfo != null ? jmsInfo.getUrl() : null;
             if (url == null) {
                 return;
             }

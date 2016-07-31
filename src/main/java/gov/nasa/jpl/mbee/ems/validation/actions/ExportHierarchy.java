@@ -32,7 +32,7 @@ import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;

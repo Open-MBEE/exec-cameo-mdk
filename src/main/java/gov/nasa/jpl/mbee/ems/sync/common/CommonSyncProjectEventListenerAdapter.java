@@ -19,7 +19,6 @@ public class CommonSyncProjectEventListenerAdapter extends ProjectEventListenerA
         CommonSyncTransactionCommitListener listener = new CommonSyncTransactionCommitListener();
         ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
         getProjectMapping(project).setCommonSyncTransactionCommitListener(listener);
-
     }
 
     @Override

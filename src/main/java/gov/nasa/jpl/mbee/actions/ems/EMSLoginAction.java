@@ -32,9 +32,6 @@ import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
-import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.realtime.RealTimeSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 

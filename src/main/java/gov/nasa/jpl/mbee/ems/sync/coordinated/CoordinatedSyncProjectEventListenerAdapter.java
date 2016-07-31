@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.ems.sync.realtime;
+package gov.nasa.jpl.mbee.ems.sync.coordinated;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -6,7 +6,6 @@ import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
-import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 
 import java.util.Map;
@@ -15,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by igomes on 6/22/16.
  */
-public class RealTimeSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
+public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final Map<String, RealTimeSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
@@ -27,10 +26,10 @@ public class RealTimeSyncProjectEventListenerAdapter extends ProjectEventListene
         // ...
     }
 
-    @Override
+    /*@Override
     public void projectActivated(Project project) {
         projectOpened(project);
-    }
+    }*/
 
     @Override
     public void projectClosed(Project project) {
@@ -41,10 +40,10 @@ public class RealTimeSyncProjectEventListenerAdapter extends ProjectEventListene
         projectMappings.remove(project.getID());
     }
 
-    @Override
+    /*@Override
     public void projectDeActivated(Project project) {
         projectClosed(project);
-    }
+    }*/
 
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {

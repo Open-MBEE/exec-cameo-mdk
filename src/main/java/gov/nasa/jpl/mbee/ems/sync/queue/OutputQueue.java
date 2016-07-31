@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.ems.sync.queue;
 
-import gov.nasa.jpl.mbee.ems.sync.Request;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;

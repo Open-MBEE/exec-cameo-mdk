@@ -1,12 +1,13 @@
 package gov.nasa.jpl.mbee.ems.sync.delta;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
+import com.nomagic.magicdraw.teamwork2.locks.LockService;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -16,9 +17,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.common.CommonSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Changelog;
-import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.function.BiFunction;
 import gov.nasa.jpl.mbee.lib.function.Function;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
@@ -45,25 +46,31 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
     private static DateFormat dfserver = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
-    public static void lockSyncFolder(Project project) {
-        new RuntimeException("foobar").printStackTrace();
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-            String folderId = project.getPrimaryProject().getProjectID();
-            folderId += "_sync";
-            Element folder = ExportUtility.getElementFromID(folderId);
-            if (folder == null) {
-                return;
-            }
-            try {
-                for (Element e : folder.getOwnedElement()) {
-                    if (e instanceof Class) {
-                        Utils.tryToLock(project, e, project.isTeamworkServerProject());
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+    public static List<Element> lockSyncFolder(Project project) {
+        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            return Collections.emptyList();
+        }
+        String folderId = project.getPrimaryProject().getProjectID() + "_sync";
+        Element folder = ExportUtility.getElementFromID(folderId);
+        if (folder == null) {
+            return Collections.emptyList();
+        }
+        ILockProjectService lockService = LockService.getLockService(project);
+        if (lockService == null) {
+            return Collections.emptyList();
+        }
+        Collection<Element> ownedElements = folder.getOwnedElement();
+        List<Element> lockedElements = new ArrayList<>(ownedElements.size());
+        for (Element element : folder.getOwnedElement()) {
+            if (element instanceof Class && !lockService.isLocked(element) && lockService.canBeLocked(element)) {
+                lockedElements.add(element);
+                //Utils.tryToLock(project, element, project.isTeamworkServerProject());
             }
         }
+        if (!lockService.lockElements(lockedElements, false, null)) {
+            return Collections.emptyList();
+        }
+        return lockedElements;
     }
 
     /*
@@ -430,6 +437,9 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
                 for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.UPDATE)) {
                     combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
                 }
+                if (CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener().getInMemoryLocalChangelog() == null) {
+                    return combinedPersistedChangelog;
+                }
                 return combinedPersistedChangelog.and(CommonSyncProjectEventListenerAdapter.getProjectMapping(project).getCommonSyncTransactionCommitListener().getInMemoryLocalChangelog(), new BiFunction<String, Element, Void>() {
                     @Override
                     public Void apply(String key, Element element) {
@@ -445,7 +455,11 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
                 for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.JMS)) {
                     combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
                 }
-                return combinedPersistedChangelog.and(JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().getInMemoryJMSChangelog(), new BiFunction<String, JSONObject, Void>() {
+                JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
+                if (jmsMessageListener == null) {
+                    return combinedPersistedChangelog;
+                }
+                return combinedPersistedChangelog.and(jmsMessageListener.getInMemoryJMSChangelog(), new BiFunction<String, JSONObject, Void>() {
                     @Override
                     public Void apply(String key, JSONObject jsonObject) {
                         return null;
