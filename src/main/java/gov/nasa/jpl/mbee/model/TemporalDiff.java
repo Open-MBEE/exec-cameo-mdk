@@ -104,7 +104,7 @@ public class TemporalDiff extends Table {
 				if (e instanceof Element) {
 					tag.append("<mms-diff-attr mms-eid=\"");
 					tag.append(ExportUtility.getElementID((Element) e) + "\"");
-					tag.append(" mms-attr=\"" + tagAttr + "\" mms-version-one=");
+					tag.append(" mms-attr=\"" + tagAttr + "\" mms-version-one=\"");
 					if (compareToTime == null) {
 						tag.append("latest");
 					} else if (compareToDate == null) {
