@@ -131,12 +131,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.validation.actions.*;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
@@ -178,7 +175,7 @@ public class ModelValidator {
     private ValidationRule metatypes = new ValidationRule("metatypes", "Metatypes", ViolationSeverity.ERROR);
     private ValidationRule ownedAttribute = new ValidationRule("ownedAttribute", "Owned Attribute", ViolationSeverity.ERROR);
     
-    private Set<Element> differentElements = new HashSet<Element>();
+    private Set<String> differentElements = new HashSet<>();
     private Project prj;
     private Collection<Element> starts;
     private JSONObject result;       
@@ -352,7 +349,7 @@ public class ModelValidator {
         };
     }
     
-    public Set<Element> getDifferentElements() {
+    public Set<String> getDifferentElementIDs() {
         return differentElements;
     }
     
@@ -367,7 +364,7 @@ public class ModelValidator {
         String projectUrl = ExportUtility.getUrlForProject();
         if (projectUrl == null)
             return false;
-        String globalUrl = ExportUtility.getUrl();
+        String globalUrl = ExportUtility.getUrl(Application.getInstance().getProject());
         globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         String globalResponse = null;
         try {
@@ -495,58 +492,42 @@ public class ModelValidator {
         // elementsKeyed.keySet() refers to all MagicDraw element IDs on Alfresco
         // all refers to MagicDraw view element and owned elements
         // 1st loop: MagicDraw elements get compared with Alfresco elements
-        Set<Element> missing = new HashSet<Element>();
+        Set<Element> missing = new HashSet<>();
         for (Element e: all) {
-            if (ps != null && ps.isCancel())
+            if (ps != null && ps.isCancel()) {
                 break;
+            }
             if (!elementsKeyed.containsKey(e.getID())) {
             	// MagicDraw element is not on Alfresco
                 if (checkExist && ExportUtility.shouldAdd(e)) {
                     missing.add(e);
-                } else
+                } else {
                     continue;
+                }
             }
         }
         JSONObject missingResult = getManyAlfrescoElements(missing, ps);
         updateElementsKeyed(missingResult, elementsKeyed);
-        JSONObject failed = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "error");
-        JSONArray deletedOnMMS = null;
-        if (failed == null)
-            deletedOnMMS = new JSONArray();
-        else
-            deletedOnMMS = (JSONArray)failed.get("deleted");
         for (Element e: all) {
             if (ps != null && ps.isCancel())
                 break;
             if (!elementsKeyed.containsKey(e.getID())) {
-                ValidationRuleViolation v = null;
-                if (deletedOnMMS.contains(ExportUtility.getElementID(e)))
-                    v = new ValidationRuleViolation(e, "[EXIST] This have been deleted on MMS");
-                else
-                    v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS");
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[EXIST] This doesn't exist on MMS");
                 if (!crippled) {
                     v.addAction(new ExportElement(e));
                     v.addAction(new DeleteMagicDrawElement(e));
                 }
                 exist.addViolation(v);
+                differentElements.add(ExportUtility.getElementID(e));
                 continue;
             }
-            JSONObject elementInfo = (JSONObject)elementsKeyed.get(e.getID());
+            JSONObject elementInfo = elementsKeyed.get(e.getID());
             checkElement(e, elementInfo);
             checked.add(e.getID());
         }
 
-        Set<String> elementsKeyedIds = new HashSet<String>(elementsKeyed.keySet());
+        Set<String> elementsKeyedIds = new HashSet<>(elementsKeyed.keySet());
         elementsKeyedIds.removeAll(checked);
-
-        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
-        JSONObject updated = AutoSyncProjectListener.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
-        JSONArray deletedLocally = null;
-        if (updated == null)
-            deletedLocally = new JSONArray();
-        else
-            deletedLocally = (JSONArray)updated.get("deleted");
-        // 2nd loop: unchecked Alfresco elements with sysml ID are now processed
         for (String elementsKeyedId: elementsKeyedIds) {
             // MagicDraw element that has not been compared to Alfresco
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
@@ -556,7 +537,7 @@ public class ModelValidator {
                 if (elementsKeyedId.endsWith("_pei"))
                     continue;
                 // Alfresco sysml element is not in MagicDraw
-                JSONObject jSONobject = (JSONObject)elementsKeyed.get(elementsKeyedId);
+                JSONObject jSONobject = elementsKeyed.get(elementsKeyedId);
                 String type = null;
                 if (jSONobject.containsKey("specialization")) {
                     type = (String)((JSONObject)jSONobject.get("specialization")).get("type");
@@ -567,15 +548,12 @@ public class ModelValidator {
                     type = "Element";
                 if (ImportUtility.VALUESPECS.contains(type))
                     continue;
-                ValidationRuleViolation v = null;
+                ValidationRuleViolation v;
                 String existname = (String)jSONobject.get("name");
                 if (existname ==  null)
-                    existname = "(no name)";
+                    existname = "<>";
                 existname.replace('`', '\'');
-                if (listener == null || (!listener.getDeletedElements().containsKey(elementsKeyedId) && !deletedLocally.contains(elementsKeyedId)))
-                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but not in Magicdraw");
-                else
-                    v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted from magicdraw");
+                v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted locally");
                 if (!crippled) {
                     v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
                     v.addAction(new DetailDiff(new JSONObject(), jSONobject));
@@ -585,12 +563,12 @@ public class ModelValidator {
                 	v.addAction(new ElementDetail(jSONobject));
                 }
                 exist.addViolation(v);
+                differentElements.add(elementsKeyedId);
             }
             else {
                 if (!(e instanceof ValueSpecification))
                     checkElement(e, elementsKeyed.get(elementsKeyedId));
             }
-
         }
     }
     
@@ -615,6 +593,7 @@ public class ModelValidator {
     }
     
     private void checkElement(Element e, JSONObject elementInfo) {
+        String elementID = ExportUtility.getElementID(e);
         String elementDoc = ModelHelper.getComment(e);
         String elementDocClean = ExportUtility.cleanHtml(elementDoc);
         String elementName = null;
@@ -635,7 +614,7 @@ public class ModelValidator {
 
         if (elementName != null && !elementName.equals(webName)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[NAME] model: " + elementName + ", web: " + webName);
-            differentElements.add(e);
+            differentElements.add(elementID);
             if (editable)
                 v.addAction(new ExportName((NamedElement)e));
             v.addAction(ddiff);
@@ -644,7 +623,7 @@ public class ModelValidator {
         }
         if (elementDoc != null && !(webDoc == null && elementDoc.equals("")) && !elementDocClean.equals(webDoc)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
-            differentElements.add(e);
+            differentElements.add(elementID);
             if (editable)
                 v.addAction(new ExportDoc(e));
             v.addAction(new CompareText(e, webDoc, elementDocClean, result));
@@ -660,14 +639,14 @@ public class ModelValidator {
                 //v.addAction(vdiff);
             	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 valueDiff.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
             ValidationRuleViolation v2 = propertyDiff((Property)e, elementInfo);
             if (v2 != null) {
                 //v2.addAction(vdiff);
             	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, ddiff);
                 propertyTypeDiff.addViolation(v2);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         } else if (e instanceof Slot) {
             ValidationRuleViolation v = valueDiff((Slot)e, elementInfo);
@@ -675,14 +654,14 @@ public class ModelValidator {
                 //v.addAction(vdiff);
             	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 valueDiff.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
             ValidationRuleViolation v2 = slotTypeDiff((Slot)e, elementInfo);
             if (v2 != null) {
                 //v2.addAction(vdiff);
             	v2.getActions().add(v2.getActions().size() > 1 ? 1 : 0, ddiff);
                 propertyTypeDiff.addViolation(v2);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         } else if (e instanceof Comment) {
             //ValidationRuleViolation v = commentDiff((Comment)e, elementInfo);
@@ -694,7 +673,7 @@ public class ModelValidator {
                 //v.addAction(vdiff);
         		v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 relDiff.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         } else if (e instanceof Connector) {
             ValidationRuleViolation v = connectorDiff((Connector)e, elementInfo);
@@ -702,7 +681,7 @@ public class ModelValidator {
                 //v.addAction(vdiff);
             	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 connectorDiff.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         } else if (e instanceof Constraint) {
             ValidationRuleViolation v = constraintDiff((Constraint)e, elementInfo);
@@ -710,7 +689,7 @@ public class ModelValidator {
                 //v.addAction(vdiff);
             	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 constraintDiff.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         } else if (e instanceof Operation) {
             ValidationRuleViolation v = operationDiff((Operation)e, elementInfo);
@@ -734,7 +713,7 @@ public class ModelValidator {
                 //v.addAction(vdiff);
             	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 associationDiff.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         } else if (e instanceof Package) {
             ValidationRuleViolation v = siteDiff((Package)e, elementInfo);
@@ -749,7 +728,7 @@ public class ModelValidator {
                 //v.addAction(vdiff);
             	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 instanceSpec.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         }
 
@@ -762,7 +741,7 @@ public class ModelValidator {
                 //v.addAction(vdiff);
             	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 viewConstraint.addViolation(v);
-                differentElements.add(e); //should this be here
+                differentElements.add(elementID); //should this be here
             }
         }
         */
@@ -771,7 +750,7 @@ public class ModelValidator {
             if (v != null) {
             	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 ownedAttribute.addViolation(v);
-                differentElements.add(e); //should this be here
+                differentElements.add(elementID); //should this be here
             }
         }
         ValidationRuleViolation v = ownerDiff(e, elementInfo);
@@ -779,14 +758,14 @@ public class ModelValidator {
             //v.addAction(vdiff);
         	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
             ownership.addViolation(v);
-            differentElements.add(e);
+            differentElements.add(elementID);
         }
         v = metatypeDiff(e, elementInfo);
         if (v != null) {
             //v.addAction(vdiff);
         	v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
             metatypes.addViolation(v);
-            differentElements.add(e);
+            differentElements.add(elementID);
         }
         docDiff(e, elementInfo);
     }
@@ -818,7 +797,9 @@ public class ModelValidator {
 
         return !JSONUtils.compare(firstContents, secondContents) || !Utils.isJSONArrayEqual(firstDisplayedElements, secondDisplayedElements);
     }
-        
+
+    // obsoleted by server-side only instances
+    @Deprecated
     private ValidationRuleViolation viewContentDiff(Element e, JSONObject elementInfo) {
         Object o;
 

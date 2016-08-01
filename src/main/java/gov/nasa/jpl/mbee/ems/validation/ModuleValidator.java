@@ -46,7 +46,7 @@ public class ModuleValidator {
         Project proj = Application.getInstance().getProject();
         IPrimaryProject prj = proj.getPrimaryProject();
         Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(prj);
-        String baseUrl = ExportUtility.getUrl();
+        String baseUrl = ExportUtility.getUrl(proj);
         String projectSite = ExportUtility.getSite();
         ExportUtility.updateMasterSites();
         Set<IMountPoint> mounts = ProjectUtilities.getAllMountPoints(prj);

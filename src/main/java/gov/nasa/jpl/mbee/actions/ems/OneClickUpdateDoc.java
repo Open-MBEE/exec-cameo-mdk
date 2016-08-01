@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
-import gov.nasa.jpl.mbee.ems.sync.ManualSyncRunner;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
@@ -40,7 +40,7 @@ public class OneClickUpdateDoc extends MDAction {
     
     public List<ValidationSuite> updateAction() {
         for (Element doc : docs) {
-            ManualSyncRunner msr = new ManualSyncRunner(false, false);
+            DeltaSyncRunner msr = new DeltaSyncRunner(false, false);
             ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
             vss.addAll(msr.getValidations());
             if (msr.isFailure()) {
@@ -50,7 +50,7 @@ public class OneClickUpdateDoc extends MDAction {
 
             if (!Utils.recommendUpdateFromTeamwork("(MMS Update has finished.)"))
                 return vss;
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), true, null, null, null);
+            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, true, null, null, null);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating View(s)...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.isFailure()) {
@@ -67,7 +67,7 @@ public class OneClickUpdateDoc extends MDAction {
 
             if (!Utils.recommendUpdateFromTeamwork("(MMS Update and View Generation have finished.)"))
                 return vss;
-            ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
+            DeltaSyncRunner msr2 = new DeltaSyncRunner(true, false);
             ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
             vss.addAll(msr2.getValidations());
         }

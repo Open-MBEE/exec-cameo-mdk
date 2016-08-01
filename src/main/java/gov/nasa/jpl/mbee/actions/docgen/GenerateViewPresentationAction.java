@@ -53,7 +53,7 @@ public class GenerateViewPresentationAction extends MDAction {
                 continue;
             }
             if (StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
-                ViewPresentationGenerator vg = new ViewPresentationGenerator(element, recurse, null, true, null, null, processedElements);
+                ViewPresentationGenerator vg = new ViewPresentationGenerator(element, recurse, true, null, null, processedElements);
                 ProgressStatusRunner.runWithProgressStatus(vg, "Generating View" + (recurse ? "s" : "") + " - " + ((element instanceof NamedElement && ((NamedElement) element).getName() != null) ? ((NamedElement) element).getName() : "<>"), true, 0);
                 if (vg.isFailure()) {
                     break;

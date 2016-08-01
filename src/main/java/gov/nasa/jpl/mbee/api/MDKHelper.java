@@ -29,21 +29,21 @@
 
 package gov.nasa.jpl.mbee.api;
 
+import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.ems.*;
 import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.swing.JButton;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -185,6 +185,7 @@ public class MDKHelper {
 	 * @param doc
 	 *            Selected Document Element.
 	 */
+	@Deprecated
 	public static void generateViewsAndCommitToMMS(Element doc) {
 		OneClickUpdateDoc ocud = new OneClickUpdateDoc(Lists.newArrayList(doc));
 		validationWindow = new MDKValidationWindow(ocud.updateAction());
@@ -241,18 +242,14 @@ public class MDKHelper {
 	/**
 	 * Starts MMS Auto Sync
 	 */
+	@Deprecated
 	public static void startAutoSync() {
-		ActionEvent event = new ActionEvent(new JButton(), 5, "");
-		StartAutoSyncAction sasa = new StartAutoSyncAction();
-		sasa.actionPerformed(event);
 	}
 	/**
 	 * Stops MMS Auto Sync
 	 */
+	@Deprecated
 	public static void stopAutoSync() {
-		ActionEvent event = new ActionEvent(new JButton(), 5, "");
-		CloseAutoSyncAction casa = new CloseAutoSyncAction();
-		casa.actionPerformed(event);
 	}
 
 	/**
@@ -284,6 +281,10 @@ public class MDKHelper {
 	public static void updateAndCommitWithDeletesToMMS() {
 		UpdateFromJMSAndCommitWithDelete ufjmsacwd = new UpdateFromJMSAndCommitWithDelete();
 		validationWindow = new MDKValidationWindow(ufjmsacwd.updateAction());
+	}
+
+	public static Changelog<String, Element> getInMemoryElementChangelog(Project project) {
+		return LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog();
 	}
 
 }

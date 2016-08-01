@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
- * 
+ * <p>
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * <p>
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- * 
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * <p>
+ * - Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list
+ * of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution.
+ * - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ * nor the names of its contributors may be used to endorse or promote products derived
+ * from this software without specific prior written permission.
+ * <p>
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
@@ -55,9 +55,9 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenPlugin;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
@@ -93,16 +93,18 @@ public class ExportUtility {
     public static void updateWorkspaceIdMapping() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> idmapping = null;
-        if (wsIdMapping.containsKey(projId))
+        if (wsIdMapping.containsKey(projId)) {
             idmapping = wsIdMapping.get(projId);
+        }
         else {
             idmapping = new HashMap<String, String>();
             wsIdMapping.put(projId, idmapping);
         }
 
-        String url = getUrl();
-        if (url == null)
+        String url = getUrl(Application.getInstance().getProject());
+        if (url == null) {
             return;
+        }
         url += "/workspaces";
         String result = null;
         try {
@@ -112,12 +114,12 @@ public class ExportUtility {
         }
         if (result != null) {
             idmapping.clear();
-            JSONObject ob =  (JSONObject) JSONValue.parse(result);
-            JSONArray array = (JSONArray)ob.get("workspaces");
-            for (Object ws: array) {
-                JSONObject workspace = (JSONObject)ws;
-                String id = (String)workspace.get("id");
-                String qname = (String)workspace.get("qualifiedName");
+            JSONObject ob = (JSONObject) JSONValue.parse(result);
+            JSONArray array = (JSONArray) ob.get("workspaces");
+            for (Object ws : array) {
+                JSONObject workspace = (JSONObject) ws;
+                String id = (String) workspace.get("id");
+                String qname = (String) workspace.get("qualifiedName");
                 idmapping.put(qname, id);
             }
         }
@@ -126,16 +128,18 @@ public class ExportUtility {
     public static void updateMasterSites() {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> idmapping = null;
-        if (sites.containsKey(projId))
+        if (sites.containsKey(projId)) {
             idmapping = sites.get(projId);
+        }
         else {
             idmapping = new HashMap<String, String>();
             sites.put(projId, idmapping);
         }
 
-        String url = getUrl();
-        if (url == null)
+        String url = getUrl(Application.getInstance().getProject());
+        if (url == null) {
             return;
+        }
         url += "/workspaces/master/sites";
         String result = null;
         try {
@@ -145,12 +149,12 @@ public class ExportUtility {
         }
         if (result != null) {
             idmapping.clear();
-            JSONObject ob =  (JSONObject) JSONValue.parse(result);
-            JSONArray array = (JSONArray)ob.get("sites");
-            for (Object ws: array) {
-                JSONObject site = (JSONObject)ws;
-                String id = (String)site.get("sysmlid");
-                idmapping.put((String)site.get("name"), id);
+            JSONObject ob = (JSONObject) JSONValue.parse(result);
+            JSONArray array = (JSONArray) ob.get("sites");
+            for (Object ws : array) {
+                JSONObject site = (JSONObject) ws;
+                String id = (String) site.get("sysmlid");
+                idmapping.put((String) site.get("name"), id);
             }
         }
     }
@@ -158,16 +162,19 @@ public class ExportUtility {
     public static boolean siteExists(String site, boolean human) {
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> idmapping = null;
-        if (sites.containsKey(projId))
+        if (sites.containsKey(projId)) {
             idmapping = sites.get(projId);
+        }
         else {
             idmapping = new HashMap<String, String>();
             sites.put(projId, idmapping);
         }
-        if (human)
+        if (human) {
             return idmapping.keySet().contains(site);
-        else
+        }
+        else {
             return idmapping.values().contains(site);
+        }
     }
 
     public static final Set<String> IGNORE_SLOT_FEATURES = new HashSet<String>(Arrays.asList(
@@ -260,7 +267,7 @@ public class ExportUtility {
             "_17_0_3_85f027d_1362349793876_780075_3033",
             "_17_0_4beta_85f027d_1366953341699_324867_3761",
             "_18_0_2_407019f_1433361787467_278914_14410" //view elements dummy slot
-            ));
+    ));
 
     public static final Set<String> IGNORE_INSTANCE_CLASSIFIERS = new HashSet<String>(Arrays.asList(
             "_11_5EAPbeta_be00301_1147431307463_773225_1455", //nested connector end
@@ -272,13 +279,13 @@ public class ExportUtility {
             "_16_8beta_9020291_1260453936960_387965_1187", //relation map
             "_17_0_2_3_407019f_1383165357327_898985_29071", //mms
             "_17_0_3_85f027d_1362349793845_681432_2986" //specification table
-            ));
+    ));
 
 
     public static String getElementID(Element e) {
-    	if (e == null) {
-    		return null;
-    	}
+        if (e == null) {
+            return null;
+        }
         if (e instanceof Slot) {
             Slot slot = (Slot) e;
             if (slot.getOwningInstance() == null || slot.getDefiningFeature() == null) {
@@ -292,8 +299,9 @@ public class ExportUtility {
     }
 
     public static Element getElementFromID(String id) {
-        if (id == null)
+        if (id == null) {
             return null;
+        }
         Project prj = Application.getInstance().getProject();
         String[] ids = id.split("-slot-");
         if (ids.length < 2) {
@@ -301,7 +309,8 @@ public class ExportUtility {
                 return prj.getModel();
             }
             return (Element) prj.getElementByID(ids[0]);
-        } else {
+        }
+        else {
             Element instancespec = (Element) prj.getElementByID(ids[0]);
             Element definingFeature = (Element) prj.getElementByID(ids[1]);
             if (instancespec != null && definingFeature != null && instancespec instanceof InstanceSpecification) {
@@ -309,31 +318,37 @@ public class ExportUtility {
                     if (slot.getDefiningFeature() == definingFeature)
                         return slot;
                 }
-            } else
+            }
+            else {
                 return null;
+            }
         }
         return null;
     }
 
-    public static String getUrl() {
-        String url = null;
-        Element model = Application.getInstance().getProject().getModel();
-        if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
-            url = (String) StereotypesHelper.getStereotypePropertyFirst(model,
+    public static String getUrl(Project project) {
+        if (project == null || project.getModel() == null) {
+            return null;
+        }
+        String url;
+        if (StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+            url = (String) StereotypesHelper.getStereotypePropertyFirst(project.getModel(),
                     "ModelManagementSystem", "MMS URL");
             if (url == null || url.equals("")) {
                 Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
                 url = null;
             }
-        } else {
+        }
+        else {
             Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
             url = null;
         }
         if (url == null && MDUtils.isDeveloperMode()) {
             url = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the editor URL:", developerUrl);
         }
-        if (url == null || url.equals(""))
+        if (url == null || url.equals("")) {
             return null;
+        }
         developerUrl = url;
         url += "/alfresco/service";
         return url;
@@ -350,8 +365,9 @@ public class ExportUtility {
         if (site == null && MDUtils.isDeveloperMode()) {
             site = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
         }
-        if (site == null || site.equals(""))
+        if (site == null || site.equals("")) {
             return null;
+        }
         developerSite = site;
         // do switch here
         return site;
@@ -369,8 +385,9 @@ public class ExportUtility {
     public static String getWorkspace() {
         Project project = Application.getInstance().getProject();
         String twbranch = getTeamworkBranch(project);
-        if (twbranch == null)
+        if (twbranch == null) {
             return "master";
+        }
         twbranch = "master/" + twbranch;
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
         Map<String, String> wsmap = wsIdMapping.get(projId);
@@ -384,36 +401,40 @@ public class ExportUtility {
                 updateWorkspaceIdMapping();
                 id = wsmap.get(twbranch);
             }
-            if (id != null)
+            if (id != null) {
                 return id;
+            }
         }
         Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
         return null;
     }
 
     public static String getUrlWithWorkspace() {
-        String url = getUrl();
+        String url = getUrl(Application.getInstance().getProject());
         String workspace = getWorkspace();
-        if (url != null && workspace != null)
+        if (url != null && workspace != null) {
             return url + "/workspaces/" + workspace;
+        }
         return null;
     }
 
     public static String getUrlWithWorkspaceAndSite() {
-        String url = getUrl();
+        String url = getUrl(Application.getInstance().getProject());
         String workspace = getWorkspace();
         String site = getSite();
-        if (url != null && workspace != null && site != null)
+        if (url != null && workspace != null && site != null) {
             return url + "/workspaces/" + workspace + "/sites/" + site;
+        }
         return null;
     }
 
     public static String getUrlForProject() {
-        String url = getUrl();
+        String url = getUrl(Application.getInstance().getProject());
         String site = getSite();
-        if (url == null || site == null)
+        if (url == null || site == null) {
             return null;
-        return url + "/workspaces/master/sites/" +  site + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        }
+        return url + "/workspaces/master/sites/" + site + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         /*String url = getUrlWithWorkspaceAndSite();
         if (url != null)
             return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
@@ -421,57 +442,71 @@ public class ExportUtility {
     }
 
     public static String getUrlForProject(IProject prj) {
-        String url = getUrl();
+        String url = getUrl(Application.getInstance().getProject());
         String site = getSiteForProject(prj);
-        if (url != null && site != null)
+        if (url != null && site != null) {
             return url + "/workspaces/master/sites/" + site + "/projects/" + prj.getProjectID();
+        }
         return null;
     }
 
     public static String getPostElementsUrl() {
         String url = getUrlWithWorkspaceAndSite();
-        if (url == null)
+        if (url == null) {
             return null;
+        }
         return url + "/elements";
     }
 
     public static boolean showErrors(int code, String response,
-            boolean showPopupErrors) {
+                                     boolean showPopupErrors) {
         if (code != 200) {
             if (code >= 500) {
-                if (showPopupErrors)
+                if (showPopupErrors) {
                     Utils.showPopupMessage("Server Error, see message window for details");
+                }
                 Utils.guilog(response);
-            } else if (code == 401) {
-                if (showPopupErrors)
+            }
+            else if (code == 401) {
+                if (showPopupErrors) {
                     Utils.showPopupMessage("You are not authorized or don't have permission, (you can login and try again).");
-                else
+                }
+                else {
                     Utils.guilog("You are not authorized or don't have permission, (you can login and try again).");
+                }
                 ViewEditUtils.clearUsernameAndPassword();
-            } else if (code == 403) {
-                if (showPopupErrors)
+            }
+            else if (code == 403) {
+                if (showPopupErrors) {
                     Utils.showPopupMessage("You do not have permission to do this");
-                else
+                }
+                else {
                     Utils.guilog("You do not have permission to do this");
-            } else {
+                }
+            }
+            else {
                 try {
                     Object o = JSONValue.parse(response);
-                    if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
-                        Utils.guilog("Server message: " + code + " " + ((JSONObject)o).get("message"));
-                    else
-                        Utils.guilog("Server response: " + code + " "  + response);
+                    if (o instanceof JSONObject && ((JSONObject) o).containsKey("message")) {
+                        Utils.guilog("Server message: " + code + " " + ((JSONObject) o).get("message"));
+                    }
+                    else {
+                        Utils.guilog("Server response: " + code + " " + response);
+                    }
                 } catch (Exception c) {
-                    Utils.guilog("Server response: " + code + " "  + response);
+                    Utils.guilog("Server response: " + code + " " + response);
                 }
-                if (code == 400)
+                if (code == 400) {
                     return false;
+                }
             }
             return true;
         }
         try {
             Object o = JSONValue.parse(response);
-            if (o instanceof JSONObject && ((JSONObject)o).containsKey("message"))
-                Utils.guilog("Server message: 200 " + ((JSONObject)o).get("message"));
+            if (o instanceof JSONObject && ((JSONObject) o).containsKey("message")) {
+                Utils.guilog("Server message: 200 " + ((JSONObject) o).get("message"));
+            }
         } catch (Exception c) {
 
         }
@@ -480,27 +515,32 @@ public class ExportUtility {
 
     public static String delete(String url, boolean feedback) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-        if (url == null)
+        if (url == null) {
             return null;
+        }
         checkAndResetTicket();
         url = addTicketToUrl(url);
         DeleteMethod gm = new DeleteMethod(url);
         try {
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url, gm);
-            if (print)
+            if (print) {
                 log.info("delete: " + url);
-            if (feedback)
+            }
+            if (feedback) {
                 Utils.guilog("[INFO] Deleting...");
+            }
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-            if (print)
+            if (print) {
                 log.info("delete response: " + json);
+            }
             if (showErrors(code, json, false)) {
                 return null;
             }
-            if (feedback)
+            if (feedback) {
                 Utils.guilog("[INFO] Delete Successful");
+            }
             return json;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -514,21 +554,24 @@ public class ExportUtility {
 
     public static String send(String url, PostMethod pm) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-        if (url == null)
+        if (url == null) {
             return null;
+        }
         checkAndResetTicket();
         url = addTicketToUrl(url);
         try {
             //GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
-            if (print)
+            if (print) {
                 log.info("send file: " + url);
+            }
             HttpClient client = new HttpClient();
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            if (print)
+            if (print) {
                 log.info("send file response: " + code + " " + response);
+            }
             if (showErrors(code, response, false)) {
                 return null;
             }
@@ -541,30 +584,34 @@ public class ExportUtility {
             pm.releaseConnection();
         }
     }
+
     public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog) {
-    	return send(url, json, showPopupErrors, suppressGuiLog, "Send#?");
+        return send(url, json, showPopupErrors, suppressGuiLog, "Send#?");
     }
+
     public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog, String _threadName) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-        if (url == null)
+        if (url == null) {
             return null;
+        }
         checkAndResetTicket();
         url = addTicketToUrl(url);
         EntityEnclosingMethod pm = null;
         //if (method == null)
-            pm = new PostMethod(url);
+        pm = new PostMethod(url);
         //else
-            //pm = new PutMethod(url);
+        //pm = new PutMethod(url);
         //GUILog gl = Application.getInstance().getGUILog();
         try {
-            if (!suppressGuiLog)
+            if (!suppressGuiLog) {
                 Utils.guilog("[INFO] Sending...");
-           // if (json.length() > 3000) {
-                // System.out.println(json);
-             //   log.info(_id + " send: " + url + ": " + json);
-                //gl.log("(see md.log for what got sent - too big to show)");
+            }
+            // if (json.length() > 3000) {
+            // System.out.println(json);
+            //   log.info(_id + " send: " + url + ": " + json);
+            //gl.log("(see md.log for what got sent - too big to show)");
             //} else
-                log.info(_threadName + " send: " + url + ": " + json);// gl.log(json);
+            log.info(_threadName + " send: " + url + ": " + json);// gl.log(json);
             pm.setRequestHeader("Content-Type", "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
@@ -577,28 +624,33 @@ public class ExportUtility {
             */
 
             ViewEditUtils.setCredentials(client, url, pm);
-            if (print)
+            if (print) {
                 log.info(_threadName + " executing....");
+            }
             int code = client.executeMethod(pm);
-            if (print)
+            if (print) {
                 log.info(_threadName + " server returned: " + code);
+            }
             String response = pm.getResponseBodyAsString();
-            if (print)
+            if (print) {
                 log.info(_threadName + " response: " + code + " " + response);
+            }
             if (showErrors(code, response, showPopupErrors)) {
                 return null;
             }
-            if (print)
+            if (print) {
                 log.info(_threadName + " Send Successful.");
-            if (!suppressGuiLog)
+            }
+            if (!suppressGuiLog) {
                 Utils.guilog("[INFO] Send Successful.");
+            }
             return response;
-        } catch( org.apache.commons.httpclient.ConnectTimeoutException ex){ //the time to establish the connection with the remote host
-        	Utils.printException(ex);
-        	return null;
-        } catch(  java.net.SocketTimeoutException ex){ //the time waiting for data after the connection was established; maximum time of inactivity between two data packets
-        	Utils.printException(ex);
-        	return null;
+        } catch (org.apache.commons.httpclient.ConnectTimeoutException ex) { //the time to establish the connection with the remote host
+            Utils.printException(ex);
+            return null;
+        } catch (java.net.SocketTimeoutException ex) { //the time waiting for data after the connection was established; maximum time of inactivity between two data packets
+            Utils.printException(ex);
+            return null;
         } catch (Exception ex) { //java.net.SocketException: Software caused connection abort: recv failed
             Utils.printException(ex);
             return null;
@@ -612,7 +664,7 @@ public class ExportUtility {
 
     public static String send(String url, String json) {
         //return send(url, json, null); //method == null means POST
-    	return send(url, json/*, method*/, true, false);
+        return send(url, json/*, method*/, true, false);
     }
 
     public static String deleteWithBody(String url, String json, boolean feedback) {
@@ -622,8 +674,9 @@ public class ExportUtility {
         url = addTicketToUrl(url);
         pm = new DeleteMethodWithEntity(url);
         try {
-            if (print)
+            if (print) {
                 log.info("deleteWithBody: " + url + ": " + json);// gl.log(json);
+            }
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
@@ -631,13 +684,15 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            if (print)
+            if (print) {
                 log.info("deleteWithBody Response: " + code + " " + response);
+            }
             if (showErrors(code, response, false)) {
                 return null;
             }
-            if (feedback)
+            if (feedback) {
                 Utils.guilog("[INFO] Delete Successful");
+            }
             return response;
         } catch (Exception ex) {
             Utils.printException(ex);
@@ -654,8 +709,9 @@ public class ExportUtility {
         url = addTicketToUrl(url);
         pm = new GetMethodWithEntity(url);
         try {
-            if (print)
+            if (print) {
                 log.info("getWithBody: " + url + ": " + json);// gl.log(json);
+            }
             pm.setRequestHeader("Content-Type",
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
@@ -663,13 +719,15 @@ public class ExportUtility {
             ViewEditUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
-            if (print)
+            if (print) {
                 log.info("getWithBody Response: " + code + " " + response);
+            }
             if (showErrors(code, response, false)) {
                 throw new ServerException(json, code);
             }
-            if (code == 400)
+            if (code == 400) {
                 throw new ServerException(json, code);
+            }
             return response;
         } catch (HttpException ex) {
             Utils.printException(ex);
@@ -704,7 +762,7 @@ public class ExportUtility {
             String id = (String) ((JSONObject) viewinfo).get("id");
             JSONArray children = (JSONArray) ((JSONObject) viewinfo)
                     .get("childrenViews");
-            if (response.containsKey(id) && !((JSONArray)response.get(id)).equals(children)) {
+            if (response.containsKey(id) && !((JSONArray) response.get(id)).equals(children)) {
                 //something is messed up
                 Utils.log("[WARNING] Document hierarchy from MMS is inconsistent and will interfere with validation, please file a CAE Support jira at https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary with component MD.MDK to request help to resolve.");
             }
@@ -720,16 +778,16 @@ public class ExportUtility {
 
     // helper method for long for get() method. will trigger a login dialogue
     public static String get(String url, boolean showPopupErrors) throws ServerException {
-    	return get(url, null, null, showPopupErrors);
+        return get(url, null, null, showPopupErrors);
     }
 
     // helper method for long for get() method. will bypass the login dialogue if username is not null or empty ""
     public static String get(String url, String username, String password) throws ServerException {
-    	return get(url, username, password, true);
+        return get(url, username, password, true);
     }
 
     public static boolean checkAndResetTicket() {
-        String baseUrl = getUrl();
+        String baseUrl = getUrl(Application.getInstance().getProject());
         try {
             boolean validTicket = checkTicket(baseUrl);
             if (!validTicket) {
@@ -737,7 +795,6 @@ public class ExportUtility {
             }
             return true;
         } catch (ServerException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return false;
         }
@@ -746,38 +803,38 @@ public class ExportUtility {
     public static boolean checkTicket(String baseUrl) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         String ticket = ViewEditUtils.getTicket();
-        if (ticket == null || ticket.equals(""))
+        if (ticket == null || ticket.equals("")) {
             return false;
+        }
         String url = baseUrl + "/mms/login/ticket/" + ViewEditUtils.getTicket();
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
-            if (print)
+            if (print) {
                 log.info("checkTicket: " + url);
+            }
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-            if (print)
+            if (print) {
                 log.info("checkTicket response: " + code + " " + json);
-            if (code != 404 && code != 200)
+            }
+            if (code != 404 && code != 200) {
                 throw new ServerException(json, code); //?
+            }
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
-            if (code == 404)
+            if (code == 404) {
                 return false;
+            }
             return true;
-        } catch (HttpException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IOException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IllegalArgumentException ex) {
-            Utils.showPopupMessage("URL is malformed");
-            Utils.printException(ex);
+        } catch (IOException | IllegalArgumentException ex) {
+            //Utils.printException(ex);
+            ex.printStackTrace();
             throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
         }
     }
+
     // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
     public static String getTicket(String url, String username, String password, boolean showPopupErrors) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
@@ -785,21 +842,21 @@ public class ExportUtility {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
 
         HttpClient client = new HttpClient();
-        if (url == null)
+        if (url == null) {
             return null;
-       // url = "https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login";
+        }
+        // url = "https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login";
         PostMethod postMethod = new PostMethod(url);
         String userpasswordJsonString = "";
         try {
-
-            if (username != null && !username.equals(""))
+            if (username != null && !username.equals("")) {
                 ViewEditUtils.setUsernameAndPassword(username, password, true);
-
+            }
             userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
 
-           // String JSON_STRING = "{\"username\":\"username\", \"password\":\"password\"}";
+            // String JSON_STRING = "{\"username\":\"username\", \"password\":\"password\"}";
 
             StringRequestEntity requestEntity = new StringRequestEntity(
                     userpasswordJsonString,
@@ -810,25 +867,31 @@ public class ExportUtility {
             postMethod.setRequestEntity(requestEntity);
             int code = client.executeMethod(postMethod);
             String json = postMethod.getResponseBodyAsString();
-            if (print)
+            if (print) {
                 log.info("get ticket response: " + code + " " + json);
+            }
             if (showErrors(code, json, showPopupErrors)) {
                 throw new ServerException(json, code);
             }
-            if (code == 400)
+            if (code == 400) {
                 throw new ServerException(json, code); //?
+            }
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
 
-            JSONObject ob =  (JSONObject) JSONValue.parse(json);
+            JSONObject ob = (JSONObject) JSONValue.parse(json);
             if (ob != null) {
-                JSONObject d = (JSONObject)ob.get("data");
+                JSONObject d = (JSONObject) ob.get("data");
                 if (d != null && !d.isEmpty()) {
-                    String ticket = (String)d.get("ticket");
+                    String ticket = (String) d.get("ticket");
                     ViewEditUtils.setTicket(ticket);
-                } else
+                }
+                else {
                     return null;
-            } else
+                }
+            }
+            else {
                 return null;
+            }
             return json;
         } catch (HttpException ex) {
             Utils.printException(ex);
@@ -844,45 +907,46 @@ public class ExportUtility {
             postMethod.releaseConnection();
         }
     }
+
     // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
     public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-        if (url == null)
+        if (url == null) {
             return null;
+        }
         checkAndResetTicket();
         url = addTicketToUrl(url);
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
-            if (username == null || username.equals(""))
+            if (username == null || username.equals("")) {
                 ViewEditUtils.setCredentials(client, url, gm);
-            else
+            }
+            else {
                 ViewEditUtils.setCredentials(client, url, gm, username, password);
+            }
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
-            if (print)
+            if (print) {
                 log.info("get: " + url);
+            }
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
-            if (print)
+            if (print) {
                 log.info("get response: " + code + " " + json);
+            }
             if (showErrors(code, json, showPopupErrors)) {
                 throw new ServerException(json, code);
             }
-            if (code == 400)
+            if (code == 400) {
                 throw new ServerException(json, code); //?
+            }
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
-        } catch (HttpException ex) {
-            Utils.printException(ex);
+        } catch (IOException | IllegalArgumentException ex) {
+            //Utils.printException(ex);
+            ex.printStackTrace();
             throw new ServerException("", 500);
-        } catch (IOException ex) {
-            Utils.printException(ex);
-            throw new ServerException("", 500);
-        } catch (IllegalArgumentException ex) {
-                Utils.showPopupMessage("URL is malformed");
-                Utils.printException(ex);
-                throw new ServerException("", 500);
         } finally {
             gm.releaseConnection();
         }
@@ -890,28 +954,33 @@ public class ExportUtility {
 
     public static String addTicketToUrl(String r) {
         String ticket = ViewEditUtils.getTicket();
-        if (ticket == null || ticket.equals(""))
+        if (ticket == null || ticket.equals("")) {
             return r;
+        }
         String url = r;
-        if (url.contains("?"))
+        if (url.contains("?")) {
             url += "&alf_ticket=" + ticket;
-        else
-            url +="?alf_ticket=" + ticket;
+        }
+        else {
+            url += "?alf_ticket=" + ticket;
+        }
         return url;
     }
 
     //check if comment is actually the documentation of its owner
     public static boolean isElementDocumentation(Comment c) {
         if (c.getAnnotatedElement().size() > 1
-                || c.getAnnotatedElement().isEmpty())
+                || c.getAnnotatedElement().isEmpty()) {
             return false;
-        if (c.getAnnotatedElement().iterator().next() == c.getOwner())
+        }
+        if (c.getAnnotatedElement().iterator().next() == c.getOwner()) {
             return true;
+        }
         return false;
     }
 
     public static JSONObject fillValueSpecification(ValueSpecification vs,
-            JSONObject einfo) {
+                                                    JSONObject einfo) {
         return fillValueSpecification(vs, einfo, false);
     }
 
@@ -919,12 +988,14 @@ public class ExportUtility {
     //given value spec and value object, fill in stuff
     @SuppressWarnings("unchecked")
     public static JSONObject fillValueSpecification(ValueSpecification vs,
-            JSONObject einfo, boolean useLongForDouble) {
-        if (vs == null)
+                                                    JSONObject einfo, boolean useLongForDouble) {
+        if (vs == null) {
             return null;
+        }
         JSONObject elementInfo = einfo;
-        if (elementInfo == null)
+        if (elementInfo == null) {
             elementInfo = new JSONObject();
+        }
         elementInfo.put("valueExpression", null);
         // ValueSpecification expr = vs.getExpression();
         // if ( expr != null ) {
@@ -932,7 +1003,8 @@ public class ExportUtility {
         // }
         if (vs instanceof Duration) {
             elementInfo.put("type", "Duration");
-        } else if (vs instanceof DurationInterval) {
+        }
+        else if (vs instanceof DurationInterval) {
             elementInfo.put("type", "DurationInterval");
             elementInfo.put("min", null);
             elementInfo.put("max", null);
@@ -942,15 +1014,18 @@ public class ExportUtility {
             Duration minD = ((DurationInterval) vs).getMin();
             if (minD != null)
                 elementInfo.put("durationMin", minD.getID());*/
-        } else if (vs instanceof ElementValue) {
+        }
+        else if (vs instanceof ElementValue) {
             elementInfo.put("type", "ElementValue");
             Element elem = ((ElementValue) vs).getElement();
             if (elem != null) {
                 elementInfo.put("element", ExportUtility.getElementID(elem));
-            } else {
+            }
+            else {
                 elementInfo.put("element", null);
             }
-        } else if (vs instanceof Expression) {
+        }
+        else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
             //if (((Expression) vs).getSymbol() != null) {
             //    elementInfo.put("symbol", ((Expression) vs).getSymbol());
@@ -965,56 +1040,69 @@ public class ExportUtility {
                 }
                 elementInfo.put("operand", operand);
             }
-        } else if (vs instanceof InstanceValue) {
+        }
+        else if (vs instanceof InstanceValue) {
             elementInfo.put("type", "InstanceValue");
             InstanceValue iv = (InstanceValue) vs;
             InstanceSpecification i = iv.getInstance();
             if (i != null) {
                 elementInfo.put("instance", ExportUtility.getElementID(i));
-            } else {
+            }
+            else {
                 elementInfo.put("instance", null);
             }
-        } else if (vs instanceof LiteralSpecification) {
+        }
+        else if (vs instanceof LiteralSpecification) {
             if (vs instanceof LiteralBoolean) {
                 elementInfo.put("type", "LiteralBoolean");
                 elementInfo.put("boolean", ((LiteralBoolean) vs).isValue());
-            } else if (vs instanceof LiteralInteger) {
+            }
+            else if (vs instanceof LiteralInteger) {
                 elementInfo.put("type", "LiteralInteger");
                 elementInfo.put("integer", new Long(((LiteralInteger) vs).getValue()));
-            } else if (vs instanceof LiteralNull) {
+            }
+            else if (vs instanceof LiteralNull) {
                 elementInfo.put("type", "LiteralNull");
-            } else if (vs instanceof LiteralReal) {
+            }
+            else if (vs instanceof LiteralReal) {
                 elementInfo.put("type", "LiteralReal");
                 double real = ((LiteralReal) vs).getValue();
                 elementInfo.put("double", real);
                 if (real % 1 == 0 && useLongForDouble) {
                     try {
-                        elementInfo.put("double", (long)real);
+                        elementInfo.put("double", (long) real);
                     } catch (Exception ex) {
 
                     }
                 }
-            } else if (vs instanceof LiteralString) {
+            }
+            else if (vs instanceof LiteralString) {
                 elementInfo.put("type", "LiteralString");
                 elementInfo.put("string", Utils.stripHtmlWrapper(((LiteralString) vs).getValue()));
-            } else if (vs instanceof LiteralUnlimitedNatural) {
+            }
+            else if (vs instanceof LiteralUnlimitedNatural) {
                 elementInfo.put("type", "LiteralUnlimitedNatural");
                 elementInfo.put("naturalValue", new Long(
                         ((LiteralUnlimitedNatural) vs).getValue()));
             }
-        } else if (vs instanceof OpaqueExpression) {
+        }
+        else if (vs instanceof OpaqueExpression) {
             elementInfo.put("type", "OpaqueExpression");
             List<String> body = ((OpaqueExpression) vs).getBody();
             if (body != null) {
                 elementInfo.put("expressionBody", makeJsonArray(body));
-            } else {
+            }
+            else {
                 elementInfo.put("expressionBody", new JSONArray());
             }
-        } else if (vs instanceof StringExpression) {
+        }
+        else if (vs instanceof StringExpression) {
             elementInfo.put("type", "StringExpression");
-        } else if (vs instanceof TimeExpression) {
+        }
+        else if (vs instanceof TimeExpression) {
             elementInfo.put("type", "TimeExpression");
-        } else if (vs instanceof TimeInterval) {
+        }
+        else if (vs instanceof TimeInterval) {
             elementInfo.put("type", "TimeInterval");
             elementInfo.put("min", null);
             elementInfo.put("max", null);
@@ -1033,8 +1121,9 @@ public class ExportUtility {
             Collection<T> collection) {
         JSONArray ids = new JSONArray();
         for (T t : collection) {
-            if (t != null)
+            if (t != null) {
                 ids.add(t.getID());
+            }
         }
         return ids;
     }
@@ -1043,8 +1132,9 @@ public class ExportUtility {
     protected static <T> JSONArray makeJsonArray(Collection<T> collection) {
         JSONArray arr = new JSONArray();
         for (T t : collection) {
-            if (t != null)
+            if (t != null) {
                 arr.add(t);
+            }
         }
         return arr;
     }
@@ -1052,53 +1142,70 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillElement(Element e, JSONObject eInfo) {
         JSONObject elementInfo = eInfo;
-        if (elementInfo == null)
+        if (elementInfo == null) {
             elementInfo = new JSONObject();
+        }
         JSONObject specialization = new JSONObject();
         elementInfo.put("specialization", specialization);
         Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
-            fillPackage((Package)e, specialization);
-        } else if (e instanceof Property || e instanceof Slot) {
-        		fillPropertySpecialization(e, specialization, true, true);
-        } else if (e instanceof DirectedRelationship) {
-            fillDirectedRelationshipSpecialization((DirectedRelationship)e, specialization);
-        } else if (e instanceof Connector) {
-            fillConnectorSpecialization((Connector)e, specialization);
-        } else if (e instanceof Operation) {
-            fillOperationSpecialization((Operation)e, specialization);
-        } else if (e instanceof Constraint) {
-            fillConstraintSpecialization((Constraint)e, specialization);
-        } else if (e instanceof InstanceSpecification) {
+            fillPackage((Package) e, specialization);
+        }
+        else if (e instanceof Property || e instanceof Slot) {
+            fillPropertySpecialization(e, specialization, true, true);
+        }
+        else if (e instanceof DirectedRelationship) {
+            fillDirectedRelationshipSpecialization((DirectedRelationship) e, specialization);
+        }
+        else if (e instanceof Connector) {
+            fillConnectorSpecialization((Connector) e, specialization);
+        }
+        else if (e instanceof Operation) {
+            fillOperationSpecialization((Operation) e, specialization);
+        }
+        else if (e instanceof Constraint) {
+            fillConstraintSpecialization((Constraint) e, specialization);
+        }
+        else if (e instanceof InstanceSpecification) {
             specialization.put("type", "InstanceSpecification");
-            fillInstanceSpecificationSpecialization((InstanceSpecification)e, specialization);
+            fillInstanceSpecificationSpecialization((InstanceSpecification) e, specialization);
             /*ValueSpecification spec = ((InstanceSpecification) e)
                     .getSpecification();
             if (spec != null)
                 specialization.put("instanceSpecificationSpecification",
                         spec.getID());*/
-        } else if (e instanceof Parameter) {
-            fillParameterSpecialization((Parameter)e, specialization);
-        } else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
+        }
+        else if (e instanceof Parameter) {
+            fillParameterSpecialization((Parameter) e, specialization);
+        }
+        else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
             specialization.put("type", "Comment");
-        } else if (e instanceof Association) {
-            fillAssociationSpecialization((Association)e, specialization);
-        } else if (e.getClass().getSimpleName().equals("ClassImpl")) {
+        }
+        else if (e instanceof Association) {
+            fillAssociationSpecialization((Association) e, specialization);
+        }
+        else if (e.getClass().getSimpleName().equals("ClassImpl")) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
             Stereotype view = Utils.getViewStereotype();
             Stereotype doc = Utils.getProductStereotype();
             //Stereotype view = Utils.getViewStereotype();
-            if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint))
+            if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint)) {
                 specialization.put("type", "Viewpoint");
+            }
             else if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view)) {
-                if (StereotypesHelper.hasStereotypeOrDerived(e, doc))
+                if (StereotypesHelper.hasStereotypeOrDerived(e, doc)) {
                     specialization.put("type", "Product");
-                else
+                }
+                else {
                     specialization.put("type", "View");
+                }
                 fillViewContent(e, specialization);
-            } else
+            }
+            else {
                 specialization.put("type", "Element");
-        } else {
+            }
+        }
+        else {
             specialization.put("type", "Untyped");
         }
         fillOwnedAttribute(e, elementInfo);
@@ -1110,15 +1217,18 @@ public class ExportUtility {
         return elementInfo;
     }
 
-	public static JSONObject fillViewContent(Element e, JSONObject spec) {
+    public static JSONObject fillViewContent(Element e, JSONObject spec) {
         Stereotype doc = Utils.getProductStereotype();
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
-        if (StereotypesHelper.hasStereotypeOrDerived(e, doc))
+        }
+        if (StereotypesHelper.hasStereotypeOrDerived(e, doc)) {
             specialization.put("type", "Product");
-        else
+        }
+        else {
             specialization.put("type", "View");
+        }
         Constraint c = Utils.getViewConstraint(e);
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
@@ -1131,11 +1241,13 @@ public class ExportUtility {
         /*Object o = StereotypesHelper.getStereotypePropertyFirst(e, Utils.getViewClassStereotype(), "elements");
         if (o != null && o instanceof String) {
             try {
-                JSONArray a = (JSONArray)JSONValue.parse((String)o);
+                JSONArray a = (JSONArray) JSONValue.parse((String) o);
                 specialization.put("allowedElements", new JSONArray());
                 specialization.put("displayedElements", a);
-            } catch (Exception ex) {}
-        } else {
+            } catch (Exception ex) {
+            }
+        }
+        else {
             specialization.put("displayedElements", new JSONArray());
         }*/
         return specialization;
@@ -1144,94 +1256,101 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillPropertySpecialization(Element e, JSONObject spec, boolean value, boolean ptype) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
-		if (e instanceof Property) {
-		    specialization.put("aggregation", ((Property)e).getAggregation().toString().toUpperCase());
-			specialization.put("type", "Property");
-		    specialization.put("isDerived", ((Property) e).isDerived());
-		    specialization.put("isSlot", false);
-		    if (value) {
-		        ValueSpecification vs = ((Property) e).getDefaultValue();
-		        JSONArray singleElementSpecVsArray = new JSONArray();
-		        if (vs != null) {
-		            // Create a new JSONObject and a new JSONArray. Fill in
-		            // the values to the new JSONObject and then insert
-		            // that JSONObject into the array (NOTE: there will
-		            // be single element in this array). Finally, insert
-		            // the array into the specialization element as the
-		            // value of the "value" property.
-		            //
+        }
+        if (e instanceof Property) {
+            specialization.put("aggregation", ((Property) e).getAggregation().toString().toUpperCase());
+            specialization.put("type", "Property");
+            specialization.put("isDerived", ((Property) e).isDerived());
+            specialization.put("isSlot", false);
+            if (value) {
+                ValueSpecification vs = ((Property) e).getDefaultValue();
+                JSONArray singleElementSpecVsArray = new JSONArray();
+                if (vs != null) {
+                    // Create a new JSONObject and a new JSONArray. Fill in
+                    // the values to the new JSONObject and then insert
+                    // that JSONObject into the array (NOTE: there will
+                    // be single element in this array). Finally, insert
+                    // the array into the specialization element as the
+                    // value of the "value" property.
+                    //
 
-		            JSONObject newElement = new JSONObject();
-		            fillValueSpecification(vs, newElement);
-		            singleElementSpecVsArray.add(newElement);
-		        }
-		        specialization.put("value", singleElementSpecVsArray);
-		    }
-		    //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
-		    //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
-		    if (ptype) {
-		        Type type = ((Property) e).getType();
-		        if (type != null) {
-		            specialization.put("propertyType", "" + type.getID());
-		        } else
-		            specialization.put("propertyType", null);
-		    }
-		    specialization.put("multiplicityMin", (long)((Property)e).getLower());
-		    specialization.put("multiplicityMax", (long)((Property)e).getUpper());
+                    JSONObject newElement = new JSONObject();
+                    fillValueSpecification(vs, newElement);
+                    singleElementSpecVsArray.add(newElement);
+                }
+                specialization.put("value", singleElementSpecVsArray);
+            }
+            //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
+            //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
+            if (ptype) {
+                Type type = ((Property) e).getType();
+                if (type != null) {
+                    specialization.put("propertyType", "" + type.getID());
+                }
+                else {
+                    specialization.put("propertyType", null);
+                }
+            }
+            specialization.put("multiplicityMin", (long) ((Property) e).getLower());
+            specialization.put("multiplicityMax", (long) ((Property) e).getUpper());
 
-		    Collection<Property> cps = ((Property)e).getRedefinedProperty();
-		    JSONArray redefinedProperties = new JSONArray();
-		    for (Property cp : cps)
-		     	redefinedProperties.add(getElementID(cp));
-		    specialization.put("redefines", redefinedProperties);
+            Collection<Property> cps = ((Property) e).getRedefinedProperty();
+            JSONArray redefinedProperties = new JSONArray();
+            for (Property cp : cps) {
+                redefinedProperties.add(getElementID(cp));
+            }
+            specialization.put("redefines", redefinedProperties);
 
-		} else { //if (e instanceof Slot) {
-			specialization.put("type", "Property");
-			specialization.put("isDerived", false);
-		    specialization.put("isSlot", true);
+        }
+        else { //if (e instanceof Slot) {
+            specialization.put("type", "Property");
+            specialization.put("isDerived", false);
+            specialization.put("isSlot", true);
 
 
-		    // Retrieve a list of ValueSpecification objects.
-		    // Loop through these objects, creating a new JSONObject
-		    // for each value spec. Fill in the new JSONObject and
-		    // insert them into a new JSONArray.
-		    // Finally, once you've looped through all the value
-		    // specifications, insert the JSONArray into the
-		    // new specialization element.
-		    //
-		    if (value) {
-		        List<ValueSpecification> vsl = ((Slot) e).getValue();
-		        JSONArray specVsArray = new JSONArray();
-		        if (vsl != null && vsl.size() > 0) {
-		            for (ValueSpecification vs : vsl) {
-		                JSONObject newElement = new JSONObject();
-		                fillValueSpecification(vs, newElement);
-		                specVsArray.add(newElement);
-		            }
-		        }
-		        specialization.put("value", specVsArray);
-		    }
-		    if (ptype) {
-		        Element type = ((Slot) e).getDefiningFeature();
-		        if (type != null) {
-		            specialization.put("propertyType", "" + type.getID());
-		        }
-		    }
-		}
+            // Retrieve a list of ValueSpecification objects.
+            // Loop through these objects, creating a new JSONObject
+            // for each value spec. Fill in the new JSONObject and
+            // insert them into a new JSONArray.
+            // Finally, once you've looped through all the value
+            // specifications, insert the JSONArray into the
+            // new specialization element.
+            //
+            if (value) {
+                List<ValueSpecification> vsl = ((Slot) e).getValue();
+                JSONArray specVsArray = new JSONArray();
+                if (vsl != null && vsl.size() > 0) {
+                    for (ValueSpecification vs : vsl) {
+                        JSONObject newElement = new JSONObject();
+                        fillValueSpecification(vs, newElement);
+                        specVsArray.add(newElement);
+                    }
+                }
+                specialization.put("value", specVsArray);
+            }
+            if (ptype) {
+                Element type = ((Slot) e).getDefiningFeature();
+                if (type != null) {
+                    specialization.put("propertyType", "" + type.getID());
+                }
+            }
+        }
         return specialization;
     }
 
     @SuppressWarnings("unchecked")
     public static JSONObject fillInstanceSpecificationSpecialization(InstanceSpecification e, JSONObject spec) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
-        if (e.getSpecification() != null)
+        }
+        if (e.getSpecification() != null) {
             specialization.put("instanceSpecificationSpecification", fillValueSpecification(e.getSpecification(), null));
+        }
         JSONArray classifiers = new JSONArray();
-        for (Classifier c: e.getClassifier()) {
+        for (Classifier c : e.getClassifier()) {
             classifiers.add(c.getID());
         }
         specialization.put("classifier", classifiers);
@@ -1239,38 +1358,40 @@ public class ExportUtility {
         return specialization;
     }
 
-	public static JSONObject sanitizeJSON(JSONObject spec) {
-		List<Object> remKeys = new ArrayList<Object>();
-		for (Object key: spec.keySet()) {
-			// delete empty JSONArray
-			if (spec.get(key) instanceof JSONArray && ((JSONArray)spec.get(key)).isEmpty()) {
-				remKeys.add(key);
-			}
-		}
-		for (Object key: remKeys) {
-			spec.remove(key);
-		}
-		return spec;
-	}
+    public static JSONObject sanitizeJSON(JSONObject spec) {
+        List<Object> remKeys = new ArrayList<Object>();
+        for (Object key : spec.keySet()) {
+            // delete empty JSONArray
+            if (spec.get(key) instanceof JSONArray && ((JSONArray) spec.get(key)).isEmpty()) {
+                remKeys.add(key);
+            }
+        }
+        for (Object key : remKeys) {
+            spec.remove(key);
+        }
+        return spec;
+    }
 
     @SuppressWarnings("unchecked")
     public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
+        }
         int i = 0;
-        for (Property p: e.getMemberEnd()) {
+        for (Property p : e.getMemberEnd()) {
             if (i == 0) {
                 specialization.put("source", p.getID());
                 // specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
-            } else {
+            }
+            else {
                 specialization.put("target", p.getID());
                 // specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
         }
         JSONArray owned = new JSONArray();
-        for (Property p: e.getOwnedEnd()) {
+        for (Property p : e.getOwnedEnd()) {
             owned.add(p.getID());
         }
         specialization.put("ownedEnd", owned);
@@ -1281,8 +1402,9 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillPackage(Package e, JSONObject spec) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
+        }
         specialization.put("type", "Package");
         specialization.put("isSite", Utils.isSiteChar(e));
         return specialization;
@@ -1291,8 +1413,9 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject spec) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
+        }
         specialization.put("type", "Constraint");
         ValueSpecification vspec = e.getSpecification();
         if (vspec != null) {
@@ -1306,22 +1429,26 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillConnectorSpecialization(Connector e, JSONObject spec) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
+        }
         specialization.put("type", "Connector");
         int i = 0;
-        if (e.getEnd() == null)
+        if (e.getEnd() == null) {
             return spec;
-        for ( ConnectorEnd end : e.getEnd()) {
+        }
+        for (ConnectorEnd end : e.getEnd()) {
             JSONArray propertyPath = new JSONArray();
-            if ( end.getRole() != null ) {
+            if (end.getRole() != null) {
                 if (StereotypesHelper.hasStereotype(end, "NestedConnectorEnd")) {
                     List<Element> ps = StereotypesHelper.getStereotypePropertyValue(end, "NestedConnectorEnd", "propertyPath");
-                    for (Element path: ps) {
+                    for (Element path : ps) {
                         if (path instanceof ElementValue) {
-                            propertyPath.add(((ElementValue)path).getElement().getID());
-                        } else if (path instanceof Property)
+                            propertyPath.add(((ElementValue) path).getElement().getID());
+                        }
+                        else if (path instanceof Property) {
                             propertyPath.add(path.getID());
+                        }
                     }
                 }
                 propertyPath.add(end.getRole().getID());
@@ -1330,17 +1457,20 @@ public class ExportUtility {
                 //specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
                 //specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
                 specialization.put("sourcePath", propertyPath);
-            } else {
+            }
+            else {
                 //specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
                 //specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
                 specialization.put("targetPath", propertyPath);
             }
             i++;
         }
-        if (e.getType() == null)
+        if (e.getType() == null) {
             specialization.put("connectorType", null);
-        else
+        }
+        else {
             specialization.put("connectorType", e.getType().getID());
+        }
         specialization.put("connectorKind", "NONE");
         return specialization;
     }
@@ -1401,8 +1531,9 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillOperationSpecialization(Operation e, JSONObject spec) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
+        }
         specialization.put("type", "Operation");
         List<Parameter> vsl = ((Operation) e).getOwnedParameter();
         if (vsl != null && vsl.size() > 0) {
@@ -1439,17 +1570,20 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillParameterSpecialization(Parameter e, JSONObject spec) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
+        }
         specialization.put("type", "Parameter");
-        if (e.getDirection() != null)
+        if (e.getDirection() != null) {
             specialization.put("direction", e.getDirection().toString());
-        if (e.getType() != null)
+        }
+        if (e.getType() != null) {
             specialization.put("parameterType", e.getType().getID());
+        }
         //ValueSpecification defaultValue = p.getDefaultValue();
         //if (defaultValue != null) {
         //    specialization.put("parameterDefaultValue",
-         //           defaultValue.getID());
+        //           defaultValue.getID());
         // }
         return specialization;
     }
@@ -1457,31 +1591,43 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject fillDirectedRelationshipSpecialization(DirectedRelationship e, JSONObject spec) {
         JSONObject specialization = spec;
-        if (specialization == null)
+        if (specialization == null) {
             specialization = new JSONObject();
+        }
         if (e instanceof Dependency) {
-            if (StereotypesHelper.hasStereotype(e, "characterizes"))
+            if (StereotypesHelper.hasStereotype(e, "characterizes")) {
                 specialization.put("type", "Characterizes");
+            }
             else if (StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.queriesStereotype))
+                    DocGen3Profile.queriesStereotype)) {
                 specialization.put("type", "Expose");
-            else
+            }
+            else {
                 specialization.put("type", "Dependency");
-        } else if (e instanceof Generalization) {
+            }
+        }
+        else if (e instanceof Generalization) {
             Stereotype conforms = Utils.getSysML14ConformsStereotype();
-            if (conforms != null && StereotypesHelper.hasStereotypeOrDerived(e, conforms))
+            if (conforms != null && StereotypesHelper.hasStereotypeOrDerived(e, conforms)) {
                 specialization.put("type", "Conform");
-            else
+            }
+            else {
                 specialization.put("type", "Generalization");
-        } else {
+            }
+        }
+        else {
             specialization.put("type", "DirectedRelationship");
         }
         Element client = ModelHelper.getClientElement(e);
         Element supplier = ModelHelper.getSupplierElement(e);
         if (client != null) //this shouldn't happen
+        {
             specialization.put("source", getElementID(client));
+        }
         if (supplier != null) //this shouldn't happen
+        {
             specialization.put("target", getElementID(supplier));
+        }
         return specialization;
     }
 
@@ -1492,10 +1638,12 @@ public class ExportUtility {
             info = new JSONObject();
             info.put("sysmlid", getElementID(e));
         }
-        if (e instanceof NamedElement)
-            info.put("name", ((NamedElement)e).getName());
-        else
+        if (e instanceof NamedElement) {
+            info.put("name", ((NamedElement) e).getName());
+        }
+        else {
             info.put("name", "");
+        }
         return info;
     }
 
@@ -1510,23 +1658,23 @@ public class ExportUtility {
         return info;
     }
 
-	@SuppressWarnings("unchecked")
-	public static JSONObject fillOwnedAttribute(Element e, JSONObject einfo) {
-		JSONObject info = einfo;
-		if (info == null) {
-			info = new JSONObject();
-			info.put("sysmlid", getElementID(e));
-		}
+    @SuppressWarnings("unchecked")
+    public static JSONObject fillOwnedAttribute(Element e, JSONObject einfo) {
+        JSONObject info = einfo;
+        if (info == null) {
+            info = new JSONObject();
+            info.put("sysmlid", getElementID(e));
+        }
 
-		JSONArray propIDs = new JSONArray();
-		if (e instanceof Class) {
-			for (Property prop: ((Class)e).getOwnedAttribute()) {
-				propIDs.add(getElementID(prop));
-			}
-			info.put("ownedAttribute", propIDs);
-		}
-		return info;
-	}
+        JSONArray propIDs = new JSONArray();
+        if (e instanceof Class) {
+            for (Property prop : ((Class) e).getOwnedAttribute()) {
+                propIDs.add(getElementID(prop));
+            }
+            info.put("ownedAttribute", propIDs);
+        }
+        return info;
+    }
 
     @SuppressWarnings("unchecked")
     public static JSONObject fillOwner(Element e, JSONObject einfo) {
@@ -1535,10 +1683,12 @@ public class ExportUtility {
             info = new JSONObject();
             info.put("sysmlid", getElementID(e));
         }
-        if (e.getOwner() == null)
+        if (e.getOwner() == null) {
             info.put("owner", null);
-        else
+        }
+        else {
             info.put("owner", "" + getElementID(e.getOwner()));
+        }
         return info;
     }
 
@@ -1562,38 +1712,40 @@ public class ExportUtility {
         if (e instanceof Stereotype) {
             info.put("isMetatype", true);
             JSONArray metatypes = new JSONArray();
-            for (Class c: ((Stereotype)e).getSuperClass()) {
+            for (Class c : ((Stereotype) e).getSuperClass()) {
                 if (c instanceof Stereotype) {
                     metatypes.add(c.getID());
                 }
             }
-            for (Class c: StereotypesHelper.getBaseClasses((Stereotype)e)) {
+            for (Class c : StereotypesHelper.getBaseClasses((Stereotype) e)) {
                 metatypes.add(c.getID());
             }
             info.put("metatypes", metatypes);
         }
         if (e instanceof Class) {
             try {
-                java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class)e);
+                java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class) e);
                 if (c != null) {
                     info.put("isMetatype", true);
                     info.put("metatypes", new JSONArray());
                 }
-            } catch (Exception ex) {}
+            } catch (Exception ex) {
+            }
         }
         List<Stereotype> stereotypes = StereotypesHelper.getStereotypes(e);
         JSONArray applied = new JSONArray();
-        for (Stereotype s: stereotypes) {
+        for (Stereotype s : stereotypes) {
             applied.add(s.getID());
         }
         Class baseClass = StereotypesHelper.getBaseClass(e);
-        if (baseClass != null)
+        if (baseClass != null) {
             applied.add(baseClass.getID());
+        }
         info.put("appliedMetatypes", applied);
         return info;
     }
 
-  //no one's using this, should consider removing it
+    //no one's using this, should consider removing it
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
         String tag = null;
@@ -1607,7 +1759,8 @@ public class ExportUtility {
                 // "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
                 return null;
             }
-        } else {
+        }
+        else {
             // JOptionPane
             // .showMessageDialog(null,
             // "Your project root element doesn't have ModelManagementSystem baselineTag stereotype property set! Mount structure check will not be done!");
@@ -1623,8 +1776,9 @@ public class ExportUtility {
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
             String baselineTag = getBaselineTag();
-            if (baselineTag == null)
+            if (baselineTag == null) {
                 return true;
+            }
             List<String> tags = ProjectUtilities.getVersionTags(prj
                     .getPrimaryProject());
             if (!tags.contains(baselineTag)) {
@@ -1642,10 +1796,13 @@ public class ExportUtility {
                     }
                 }
             }
-        } else
+        }
+        else {
             baselineNotSet = false;
+        }
         return true;
     }
+
     //no one uses this, should remove
     public static boolean checkBaseline() {
         /*if (!ExportUtility.checkBaselineMount()) {
@@ -1665,7 +1822,7 @@ public class ExportUtility {
     }
 
     public static Integer getAlfrescoProjectVersion(String projectId, String wsId) {
-        String baseUrl = getUrl();//WithWorkspace();
+        String baseUrl = getUrl(Application.getInstance().getProject());//WithWorkspace();
         baseUrl += "/workspaces/" + wsId;
         String checkProjUrl = baseUrl + "/projects/" + projectId;
         return getAlfrescoProjectVersionWithUrl(checkProjUrl);
@@ -1678,15 +1835,17 @@ public class ExportUtility {
         } catch (ServerException ex) {
 
         }
-        if (json == null)
+        if (json == null) {
             return null; // ??
+        }
         JSONObject result = (JSONObject) JSONValue.parse(json);
         if (result.containsKey("elements")) {
-            JSONArray elements = (JSONArray)result.get("elements");
-            if (!elements.isEmpty() && ((JSONObject)elements.get(0)).containsKey("specialization")) {
-                JSONObject spec = (JSONObject)((JSONObject)elements.get(0)).get("specialization");
-                if (spec.containsKey("projectVersion") && spec.get("projectVersion") != null)
+            JSONArray elements = (JSONArray) result.get("elements");
+            if (!elements.isEmpty() && ((JSONObject) elements.get(0)).containsKey("specialization")) {
+                JSONObject spec = (JSONObject) ((JSONObject) elements.get(0)).get("specialization");
+                if (spec.containsKey("projectVersion") && spec.get("projectVersion") != null) {
                     return Integer.valueOf(spec.get("projectVersion").toString());
+                }
             }
         }
         return null;
@@ -1845,8 +2004,9 @@ public class ExportUtility {
 
     public static void sendProjectVersion() {
         String baseurl = getUrlWithWorkspaceAndSite();
-        if (baseurl == null)
+        if (baseurl == null) {
             return;
+        }
         JSONObject result = ExportUtility.getProjectJson();
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
@@ -1855,8 +2015,9 @@ public class ExportUtility {
         tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(result);
         String url = baseurl + "/projects";
-        if (!url.contains("master"))
+        if (!url.contains("master")) {
             url += "?createSite=true";
+        }
         Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
@@ -1864,8 +2025,9 @@ public class ExportUtility {
 
     public static void sendProjectVersion(String projId, Integer version) {
         String baseurl = getUrlWithWorkspaceAndSite();
-        if (baseurl == null)
+        if (baseurl == null) {
             return;
+        }
         JSONObject result = ExportUtility.getProjectJSON(null, projId, version);
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
@@ -1874,15 +2036,16 @@ public class ExportUtility {
         tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(result);
         String url = baseurl + "/projects";
-        if (!url.contains("master"))
+        if (!url.contains("master")) {
             url += "?createSite=true";
+        }
         Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
         //send(url, tosend.toJSONString(), null, false);
     }
 
     public static String initializeBranchVersion(String taskId) {
-        String baseUrl = ExportUtility.getUrl();
+        String baseUrl = ExportUtility.getUrl(Application.getInstance().getProject());
         String site = ExportUtility.getSite();
         String projUrl = baseUrl + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true";
         JSONObject moduleJson = ExportUtility.getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), 0);
@@ -1902,33 +2065,39 @@ public class ExportUtility {
         Session session = null;
         MessageConsumer consumer = null;
         try {
-            Map<String, String> urlInfo = new HashMap<String, String>();
-            AutoSyncProjectListener.getJMSUrl(urlInfo);
-            String url = urlInfo.get( "url" );
+            JMSUtils.JMSInfo jmsInfo = null;
+            try {
+                jmsInfo = JMSUtils.getJMSInfo(Application.getInstance().getProject());
+            } catch (ServerException e) {
+                e.printStackTrace();
+            }
+            String url = jmsInfo != null ? jmsInfo.getUrl() : null;
             if (url == null) {
                 return;
             }
-            ConnectionFactory connectionFactory = AutoSyncProjectListener.createConnectionFactory( urlInfo );
+            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
             connection = connectionFactory.createConnection();
             String subscriberId = projectId + "/" + taskId;
             connection.setClientID(subscriberId);
             // connection.setExceptionListener(this);
             session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            String messageSelector = AutoSyncProjectListener.constructSelectorString(projectId, taskId);
+            String messageSelector = JMSUtils.constructSelectorString(projectId, taskId);
             Topic topic = session.createTopic("master");
             consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             connection.start();
         } catch (JMSException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         } finally {
             try {
-                if (consumer != null)
+                if (consumer != null) {
                     consumer.close();
-                if (session != null)
+                }
+                if (session != null) {
                     session.close();
-                if (connection != null)
+                }
+                if (connection != null) {
                     connection.close();
+                }
             } catch (JMSException e) {
                 e.printStackTrace();
             }
@@ -1948,50 +2117,62 @@ public class ExportUtility {
     //whether something should be sent to alfresco - ignore specific slots, documentation comment elements, value specs, empty instance specs (most likely from just stereotype application)
     public static boolean shouldAdd(Element e) {
         if (e == null || e instanceof ValueSpecification || e instanceof Extension
-                || e instanceof ProfileApplication)
+                || e instanceof ProfileApplication) {
             return false;
+        }
         if (e instanceof Comment
-                && ExportUtility.isElementDocumentation((Comment) e))
+                && ExportUtility.isElementDocumentation((Comment) e)) {
             return false;
+        }
         if (e instanceof InstanceSpecification && !(e instanceof EnumerationLiteral)) {
             boolean shouldIgnore = true;
-            for (Classifier c: ((InstanceSpecification)e).getClassifier()) {
-                if (!(c instanceof Stereotype))
+            for (Classifier c : ((InstanceSpecification) e).getClassifier()) {
+                if (!(c instanceof Stereotype)) {
                     return true;
-                if (!IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID()))
+                }
+                if (!IGNORE_INSTANCE_CLASSIFIERS.contains(c.getID())) {
                     shouldIgnore = false;
+                }
             }
-            if (!shouldIgnore && !e.getOwnedElement().isEmpty())
-                return true;
-            return false;
+            return !shouldIgnore && !e.getOwnedElement().isEmpty();
             /*if (((InstanceSpecification)e).getClassifier().size() == 1 &&
                     IGNORE_INSTANCE_CLASSIFIERS.contains(((InstanceSpecification)e).getClassifier().get(0).getID()))
                 return false;*/
         }
-        if (e instanceof ConnectorEnd)
+        if (e instanceof ConnectorEnd) {
             return false;
-        if (e instanceof Slot && ((Slot)e).getDefiningFeature() != null
+        }
+        if (e instanceof Slot && ((Slot) e).getDefiningFeature() != null
                 && ExportUtility.IGNORE_SLOT_FEATURES.contains(((Slot) e)
-                        .getDefiningFeature().getID()))
+                .getDefiningFeature().getID())) {
             return false;
-        if (e instanceof Slot && (e.getOwner() == null || ((Slot)e).getDefiningFeature() == null)) //model is messed up
-                return false;
+        }
+        if (e instanceof Slot && (e.getOwner() == null || ((Slot) e).getDefiningFeature() == null)) //model is messed up
+        {
+            return false;
+        }
         if (e.getID().endsWith("sync") || (e.getOwner() != null && e.getOwner().getID().endsWith("sync"))) //delayed sync stuff
+        {
             return false;
-        if (e instanceof Constraint) {
-            if (isViewConstraint((Constraint)e))
-                return false;
+        }
+        if (e instanceof Constraint && isViewConstraint((Constraint) e)) {
+            return false;
         }
         return true;
     }
 
-    public static boolean isViewConstraint(Constraint e) {
-        Element maybeView = e.getOwner();
+    public static Element getViewFromConstraint(Constraint constraint) {
+        Element maybeView = constraint.getOwner();
         Stereotype v = Utils.getViewStereotype();
-        List<Element> constrained = ((Constraint)e).getConstrainedElement();
-        if (maybeView != null && v != null && StereotypesHelper.hasStereotypeOrDerived(maybeView, v) && constrained.size() == 1 && constrained.get(0) == maybeView)
-            return true; //view constraint, get from view itself
-        return false;
+        List<Element> constrained = constraint.getConstrainedElement();
+        if (maybeView != null && v != null && StereotypesHelper.hasStereotypeOrDerived(maybeView, v) && constrained.size() == 1 && constrained.get(0) == maybeView) {
+            return maybeView;
+        }
+        return null;
+    }
+
+    public static boolean isViewConstraint(Constraint constraint) {
+        return getViewFromConstraint(constraint) != null;
     }
 
     public static final Pattern HTML_WHITESPACE_END = Pattern.compile(
@@ -2019,13 +2200,15 @@ public class ExportUtility {
     @SuppressWarnings("unchecked")
     public static JSONObject getProjectJSON(String name, String projId, Integer version) {
         JSONObject result = new JSONObject();
-        if (name != null)
+        if (name != null) {
             result.put("name", name);
+        }
         result.put("sysmlid", projId);
         JSONObject spec = new JSONObject();
         spec.put("type", "Project");
-        if (version != null)
+        if (version != null) {
             spec.put("projectVersion", version.toString());
+        }
         result.put("specialization", spec);
         return result;
     }
@@ -2036,8 +2219,9 @@ public class ExportUtility {
 
     public static Integer getProjectVersion(Project proj) {
         Integer ver = null;
-        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject()))
+        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
             ver = TeamworkService.getInstance(proj).getVersion(proj).getNumber();
+        }
         return ver;
     }
 
@@ -2048,22 +2232,4 @@ public class ExportUtility {
         }
         return branch;
     }
-
-    /**
-     * Gets JMS JNDI connection details from the MMS server
-     * @return  JSONObject of the connection details
-     */
-    public static JSONObject getJmsConnectionDetails() {
-        String url = getUrl() + "/connection/jms";
-        String jsonString = null;
-        try {
-            jsonString = get(url, false);
-        } catch (ServerException ex) {}
-        if (jsonString == null) return null;
-
-        return (JSONObject)JSONValue.parse( jsonString );
-    }
-
-
-
 }

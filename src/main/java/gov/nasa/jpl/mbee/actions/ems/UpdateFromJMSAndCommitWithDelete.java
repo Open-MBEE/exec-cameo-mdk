@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.sync.ManualSyncRunner;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
@@ -29,7 +29,7 @@ public class UpdateFromJMSAndCommitWithDelete extends MMSAction {
     }
     
     public List<ValidationSuite> updateAction() {
-    	ManualSyncRunner msr = new ManualSyncRunner(true, true);
+    	DeltaSyncRunner msr = new DeltaSyncRunner(true, true);
         ProgressStatusRunner.runWithProgressStatus(msr, "Delta Sync", true, 0);
         vss.addAll(msr.getValidations());
         return vss;

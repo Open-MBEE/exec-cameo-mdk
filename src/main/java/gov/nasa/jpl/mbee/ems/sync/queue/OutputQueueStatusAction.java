@@ -1,15 +1,11 @@
-package gov.nasa.jpl.mbee.ems.sync;
+package gov.nasa.jpl.mbee.ems.sync.queue;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.AbstractAction;
@@ -21,13 +17,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
 
 import com.nomagic.magicdraw.core.Application;
 
@@ -182,7 +174,7 @@ public class OutputQueueStatusAction extends SRAction {
 				        int modelRow = Integer.valueOf( e.getActionCommand() );
 				        if ( modelRow == 0){
 				        	Utils.guilog("Cancel Pressed.");
-				        	OutputQueue.getInstance().setCurrent(null); //let the table update when it actually moves on 
+				        	OutputQueue.getInstance().setCurrent(null); //let the table update when it actually moves on
 		                    /*SwingUtilities.invokeLater(new Runnable() {
 		                        @Override
 		                        public void run() {

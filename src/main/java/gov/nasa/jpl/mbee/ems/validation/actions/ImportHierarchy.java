@@ -33,10 +33,10 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
@@ -109,11 +109,9 @@ AnnotationAction, IRuleViolationAction {
         if (anno != null) {
             
         } else {
-            Project project = Application.getInstance().getProject();
-            Map<String, ?> projectInstances = ProjectListenerMapping.getInstance().get(project);
-            AutoSyncCommitListener listener = (AutoSyncCommitListener)projectInstances.get("AutoSyncCommitListener");
+            LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
             if (listener != null)
-                listener.enable();
+                listener.setDisabled(false);
             Map<String, Object> result = importHierarchy(view, md, keyed);
             
             if ((Boolean)result.get("success")) {
@@ -304,12 +302,12 @@ AnnotationAction, IRuleViolationAction {
                 }
             }
         }
-        Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(newviews);
-        List<JSONObject> sortedNewviews = toCreate.get("create");
-        if (!toCreate.get("fail").isEmpty()) {
+        ImportUtility.CreationOrder creationOrder = ImportUtility.getCreationOrder(newviews);
+        List<JSONObject> sortedNewviews = creationOrder.getOrder();
+        if (!creationOrder.getFailed().isEmpty()) {
             Utils.guilog("[ERROR] Creating new view(s) failed. Owner(s) not found.");
             Utils.guilog("[ERROR] List of views failed: ");
-            for (JSONObject fail: toCreate.get("fail")) {
+            for (JSONObject fail: creationOrder.getFailed()) {
                 String id = (String)fail.get("sysmlid");
                 if (id != null)
                     Utils.guilog("[ERROR]      " + id);

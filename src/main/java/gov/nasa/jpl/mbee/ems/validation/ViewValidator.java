@@ -124,7 +124,7 @@ public class ViewValidator {
         String projectUrl = ExportUtility.getUrlForProject();
         if (projectUrl == null)
             return false;
-        String globalUrl = ExportUtility.getUrl();
+        String globalUrl = ExportUtility.getUrl(Application.getInstance().getProject());
         globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         String globalResponse = null;
         try {

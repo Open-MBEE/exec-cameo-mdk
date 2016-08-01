@@ -28,8 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.HashSet;

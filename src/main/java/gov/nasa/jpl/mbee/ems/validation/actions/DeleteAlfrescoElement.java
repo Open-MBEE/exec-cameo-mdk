@@ -41,8 +41,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 
 public class DeleteAlfrescoElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 

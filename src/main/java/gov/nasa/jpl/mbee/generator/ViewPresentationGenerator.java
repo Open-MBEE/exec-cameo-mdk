@@ -15,8 +15,10 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
@@ -61,7 +63,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private final Map<String, JSONObject> images;
     private final Set<Element> processedElements;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, Set<String> cannotChange, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
+    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
         this.start = start;
         this.images = images != null ? images : new HashMap<String, JSONObject>();
         this.processedElements = processedElements != null ? processedElements : new HashSet<Element>();
@@ -178,6 +180,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
+        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+
         // Query existing server-side JSONs for views
         if (!viewMap.isEmpty()) {
             // STAGE 2: Downloading existing view instances
@@ -211,6 +215,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 JSONObject viewOperandJSONObject = (JSONObject) viewOperandObject;
                                 if (viewOperandJSONObject.containsKey("instance") && viewOperandJSONObject.get("instance") instanceof String) {
                                     String instanceID = (String) viewOperandJSONObject.get("instance");
+                                    if (!instanceID.endsWith("_pei")) {
+                                        continue;
+                                    }
                                     if (generatedFromViewProperty != null) {
                                         slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
                                     }
@@ -232,6 +239,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Create the session you intend to cancel to revert all temporary elements.
                 SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
+                if (localSyncTransactionCommitListener != null) {
+                    localSyncTransactionCommitListener.setDisabled(true);
+                }
 
                 // Now that all first-level instances are resolved, query for them and import client-side (in reverse order) as model elements
                 // Add any sections that are found along the way and loop until no more are found
@@ -272,6 +282,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                         JSONObject instanceOperandJSONObject = (JSONObject) instanceOperandObject;
                                         if (instanceOperandJSONObject.containsKey("instance") && instanceOperandJSONObject.get("instance") instanceof String) {
                                             String instanceID = (String) instanceOperandJSONObject.get("instance");
+                                            if (!instanceID.endsWith("_pei")) {
+                                                continue;
+                                            }
                                             if (generatedFromViewProperty != null) {
                                                 slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
                                             }
@@ -594,6 +607,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // cancel session so all elements created get deleted automatically
             if (SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().cancelSession();
+            }
+            if (localSyncTransactionCommitListener != null) {
+                localSyncTransactionCommitListener.setDisabled(false);
             }
         }
         ImageValidator iv = new ImageValidator(dbAlfrescoVisitor.getImages(), images);

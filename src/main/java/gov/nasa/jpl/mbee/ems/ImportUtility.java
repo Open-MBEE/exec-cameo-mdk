@@ -62,7 +62,7 @@ import java.util.*;
 
 public class ImportUtility {
     public static Logger log = Logger.getLogger(ImportUtility.class);
-    public static boolean outputError = true;
+    private static boolean shouldOutputError = true;
     public static final Set<String> VALUESPECS = new HashSet<String>(Arrays.asList(
             new String[]{"LiteralInteger", "LiteralString", "LiteralBoolean",
                     "LiteralUnlimitedNatural", "Expression", "InstanceValue",
@@ -71,11 +71,17 @@ public class ImportUtility {
 
     ));
 
-    public static Map<String, List<JSONObject>> getCreationOrder(List<JSONObject> newElements) {
-        Map<String, List<JSONObject>> returns = new HashMap<String, List<JSONObject>>();
+    public static boolean shouldOutputError() {
+        return shouldOutputError;
+    }
 
+    public static void setShouldOutputError(boolean shouldOutputError) {
+        ImportUtility.shouldOutputError = shouldOutputError;
+    }
+
+    public static CreationOrder getCreationOrder(Collection<JSONObject> newElements) {
         DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>> graph = new DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>>();
-        Map<String, JSONObject> id2ob = new HashMap<String, JSONObject>();
+        Map<String, JSONObject> id2ob = new HashMap<>();
         for (JSONObject ob : newElements) {
             String sysmlid = (String) ob.get("sysmlid");
             if (sysmlid == null)
@@ -115,9 +121,25 @@ public class ImportUtility {
             }
         }
         toposort.removeAll(fails);
-        returns.put("create", toposort);
-        returns.put("fail", new ArrayList<JSONObject>(fails));
-        return returns;
+        return new CreationOrder(toposort, fails);
+    }
+
+    public static class CreationOrder {
+        private final List<JSONObject> order;
+        private final Set<JSONObject> failed;
+
+        public CreationOrder(List<JSONObject> order, Set<JSONObject> failed) {
+            this.order = order;
+            this.failed = failed;
+        }
+
+        public List<JSONObject> getOrder() {
+            return order;
+        }
+
+        public Set<JSONObject> getFailed() {
+            return failed;
+        }
     }
 
     public static Element createElement(JSONObject ob, boolean updateRelations) throws ImportException {
@@ -160,7 +182,8 @@ public class ImportUtility {
                 if (updateRelations) {
                     //StereotypesHelper.addStereotype(newE, sysmlView);
                     setOrCreateAsi(sysmlView, newE);
-                    setViewConstraint(newE, specialization);
+                    // server-side only view instances obsoletes this
+                    //setViewConstraint(newE, specialization);
                 }
             } else if (elementType.equalsIgnoreCase("viewpoint")) {
                 if (newE == null) {
@@ -264,7 +287,8 @@ public class ImportUtility {
                     Stereotype product = Utils.getDocumentStereotype();
                     //StereotypesHelper.addStereotype(newE, product);
                     setOrCreateAsi(product, newE);
-                    setViewConstraint(newE, specialization);
+                    // server-side only view instances obsoletes this
+                    //setViewConstraint(newE, specialization);
                 }
             } else if (elementType.equalsIgnoreCase("Association")) {
                 if (newE == null) {
@@ -380,16 +404,17 @@ public class ImportUtility {
                 }
                 if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
                     setInstanceSpecification((InstanceSpecification) e, spec);
-                if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
-                    setViewConstraint(e, spec);
-            } catch (ReferenceException ex) {
-                throw new ImportException(e, o, ex.getMessage());
+                // server-side only view instances obsoletes this
+                /*if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
+                    setViewConstraint(e, spec);*/
             } catch (ImportException ex) {
                 throw new ImportException(e, o, ex.getMessage());
             }
         }
     }
 
+    // server-side only view instances obsoletes this
+    @Deprecated
     public static void setViewConstraint(Element e, JSONObject specialization) throws ImportException {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {
@@ -439,7 +464,7 @@ public class ImportUtility {
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            if (outputError)
+            if (shouldOutputError)
                 Utils.guilog("[ERROR] Owner not found for mms sync add");
             return;
         }
@@ -493,7 +518,7 @@ public class ImportUtility {
         if (specialization.containsKey("classifier")) {
             JSONArray classifier = (JSONArray) specialization.get("classifier");
             if (classifier == null || classifier.isEmpty()) {
-                log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
+                log.info("[IMPORT/SYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
                 throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
             }
             List<Classifier> newClassifiers = new ArrayList<Classifier>();
@@ -521,7 +546,7 @@ public class ImportUtility {
             ModelHelper.setSupplierElement(dr, target);
             ModelHelper.setClientElement(dr, source);
         } else {
-            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
+            log.info("[IMPORT/SYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
             throw (new ReferenceException(dr, specialization, "Directed relationship has no source or target"));
         }
     }
@@ -541,7 +566,7 @@ public class ImportUtility {
             if (t != null)
                 p.setType(t);
             else
-                log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
+                log.info("[IMPORT/SYNC PROPERTY TYPE] prevent mistaken null type");
             //something bad happened
         }
 
@@ -901,7 +926,7 @@ public class ImportUtility {
             c.getEnd().get(0).setRole((ConnectableElement) webSourceE);
             c.getEnd().get(1).setRole((ConnectableElement) webTargetE);
         } else {
-            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
+            log.info("[IMPORT/SYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
             throw (new ReferenceException(c, spec, "Connector doesn't have both connectable roles."));
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
@@ -931,7 +956,7 @@ public class ImportUtility {
         List<Property> todelete = new ArrayList<Property>();
         int i = 0;
         if (webSource == null || webTarget == null) {
-            log.info("[IMPORT/AUTOSYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
+            log.info("[IMPORT/SYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
             throw new ReferenceException(a, spec, "Association missing ends");
         }
         for (Property end : a.getMemberEnd()) {
@@ -1060,7 +1085,7 @@ public class ImportUtility {
                 }
                 Element find = ExportUtility.getElementFromID(elementID);
                 if (find == null) {
-                    if (outputError) {
+                    if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("element") + " not found!");
                         throw new ReferenceException(v, o, "Element with id " + o.get("element") + " for ElementValue not found!");
                     }
@@ -1079,14 +1104,14 @@ public class ImportUtility {
                 }
                 Element findInst = ExportUtility.getElementFromID(instanceID);
                 if (findInst == null) {
-                    if (outputError) {
+                    if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("instance") + " not found!");
                         throw new ReferenceException(v, o, "Instance with id " + o.get("instance") + " for InstanceValue not found!");
                     }
                     break;
                 }
                 if (!(findInst instanceof InstanceSpecification)) {
-                    if (outputError) {
+                    if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                         throw new ReferenceException(v, o, "Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                     }

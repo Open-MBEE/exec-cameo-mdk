@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
-import gov.nasa.jpl.mbee.ems.sync.ManualSyncRunner;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.generator.ViewInstanceUtils;
 import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -30,12 +30,12 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 public class UpdateAllDocs extends MMSAction {
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "GenerateAllAndCommit";
+    public static final String actionid = "GenerateAllDocs";
     
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     
     public UpdateAllDocs() {
-        super(actionid, "Generate All Documents and Commit to MMS", null, null);
+        super(actionid, "Generate All Documents", null, null);
     }
     
     @SuppressWarnings("unchecked")
@@ -47,13 +47,13 @@ public class UpdateAllDocs extends MMSAction {
     }
     
     public List<ValidationSuite> updateAction() {
-        ManualSyncRunner msr = new ManualSyncRunner(false, false);
+        /*DeltaSyncRunner msr = new DeltaSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         vss.addAll(msr.getValidations());
         if (msr.isFailure()) {
             Utils.guilog("[ERROR] Update from MMS was not completed");
             return vss;
-        }
+        }*/
         
         Set<Element> docs = getProjectDocuments();
         ViewInstanceUtils viu = new ViewInstanceUtils();
@@ -61,7 +61,7 @@ public class UpdateAllDocs extends MMSAction {
         for (Element doc: docs) {
             if (!Utils.recommendUpdateFromTeamwork())
                 return vss;
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, msr.getCannotChange(), false, viu, images, null);
+            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, false, viu, images, null);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.isFailure()) {
@@ -70,17 +70,17 @@ public class UpdateAllDocs extends MMSAction {
                 return vss;
             }
             
-            ValidateViewRunner vvr = new ValidateViewRunner(doc, false, true, false);
+            /*ValidateViewRunner vvr = new ValidateViewRunner(doc, false, true, false);
             ProgressStatusRunner.runWithProgressStatus(vvr, "Validating View Hierarchy", true, 0);
-            vss.addAll(vvr.getValidations());
+            vss.addAll(vvr.getValidations());*/
         }
         Utils.displayValidationWindow(vss, "View Generation and Images Validation");
         
-        if (!Utils.recommendUpdateFromTeamwork("(MMS Update and Document Generations have finished.)"))
+        /*if (!Utils.recommendUpdateFromTeamwork("(MMS Update and Document Generations have finished.)"))
             return vss;
-        ManualSyncRunner msr2 = new ManualSyncRunner(true, false);
+        DeltaSyncRunner msr2 = new DeltaSyncRunner(true, false);
         ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
-        vss.addAll(msr2.getValidations());
+        vss.addAll(msr2.getValidations());*/
         return vss;
     }
     

@@ -29,8 +29,8 @@
 package gov.nasa.jpl.mbee.lib;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
@@ -58,7 +58,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.rmi.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +80,6 @@ import javax.swing.JTabbedPane;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -2106,6 +2104,10 @@ public class Utils {
         return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement");
     }
 
+    public static Property getViewElementsProperty() {
+        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view::elements");
+    }
+
     public static Constraint getViewConstraint(Element view) {
         if (view != null) {
             Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
@@ -2124,17 +2126,7 @@ public class Utils {
      * Log to GUILog in UI's event dispatcher
      */
     public static void guilog(final String s) {
-        //SwingUtilities.invokeLater(new Runnable() {
-        //    @Override
-        //    public void run() {
-    	// second parameter used as a quickfix to prevent log from stealing focus during auto-sync
-    	AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
-    	boolean auto = false;
-    	if (listener != null && listener.isAuto())
-    		auto = true;
-        Application.getInstance().getGUILog().log(s, !auto || !s.startsWith("[INFO]"));
-        //    }
-        //});
+        Application.getInstance().getGUILog().log(s, !s.startsWith("[INFO]"));
     }
     
     /**
@@ -3663,9 +3655,9 @@ public class Utils {
         String user = TeamworkUtils.getLoggedUserName();
         if (user == null) 
             return false;
-        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener != null)
-            listener.disable(); 
+            listener.setDisabled(true);
         //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
         try {
@@ -3693,7 +3685,7 @@ public class Utils {
         if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
             SessionManager.getInstance().createSession("session after lock"); 
         if (listener != null)
-            listener.enable();
+            listener.setDisabled(false);
         //if a session was open and lock triggered a teamwork update, session would be closed
         if (e.isEditable())
             return true;
@@ -3713,18 +3705,18 @@ public class Utils {
         	forceDialogTrue = false;
             return true;
         }
-    	Project prj = Application.getInstance().getProject();
-        if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+    	Project project = Application.getInstance().getProject();
+        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()))
             return true;
         String user = TeamworkUtils.getLoggedUserName();
-        ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(prj);
+        ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(project);
         try {
             int lastVersion = TeamworkUtils.getLastVersion(currentProj);
             if (user == null || lastVersion < 0) {
                 Utils.guilog("[ERROR] You must be logged into Teamwork first.");
                 return false;
             }
-            if (lastVersion == TeamworkService.getInstance(prj).getVersion(prj).getNumber())
+            if (lastVersion == TeamworkService.getInstance(project).getVersion(project).getNumber())
                 return true;
         } catch (IOException uhe) {
             Utils.guilog("[ERROR] You must be logged into Teamwork first.");
@@ -3741,12 +3733,12 @@ public class Utils {
                 + "This action may autolock elements and trigger a teamwork update. Do you want to continue?\n" + add, buttons, false);
         if (reply == null || !reply)
             return false;
-        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(prj);
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener != null)
-            listener.disable(); 
-        TeamworkUtils.updateProject(prj);
+            listener.setDisabled(true);
+        TeamworkUtils.updateProject(project);
         if (listener != null)
-            listener.enable();
+            listener.setDisabled(false);
         return true;
     }
     

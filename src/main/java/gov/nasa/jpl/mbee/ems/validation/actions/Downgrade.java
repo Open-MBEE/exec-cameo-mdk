@@ -45,7 +45,6 @@ public class Downgrade extends RuleViolationAction implements AnnotationAction, 
 
     @Override
     public void execute(Collection<Annotation> arg0) {
-        // TODO Auto-generated method stub
         
     }
 }
