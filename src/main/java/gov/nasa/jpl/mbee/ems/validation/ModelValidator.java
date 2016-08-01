@@ -31,8 +31,6 @@ package gov.nasa.jpl.mbee.ems.validation;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.ems.validation.actions.CompareText;
 import gov.nasa.jpl.mbee.ems.validation.actions.CreateMagicDrawElement;
 import gov.nasa.jpl.mbee.ems.validation.actions.DeleteAlfrescoElement;
@@ -697,7 +695,7 @@ public class ModelValidator {
                 //v.addAction(vdiff);
                 v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 operationDiff.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         } else if (e instanceof Parameter) {
             ValidationRuleViolation v = parameterDiff((Parameter)e, elementInfo);
@@ -705,7 +703,7 @@ public class ModelValidator {
                 //v.addAction(vdiff);
                 v.getActions().add(v.getActions().size() > 1 ? 1 : 0, ddiff);
                 parameterDiff.addViolation(v);
-                differentElements.add(e);
+                differentElements.add(elementID);
             }
         } else if (e instanceof Association) {
             ValidationRuleViolation v = associationDiff((Association)e, elementInfo);
