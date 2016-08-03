@@ -1,8 +1,6 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
-import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
-import gov.nasa.jpl.mbee.generator.ViewInstanceUtils;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
@@ -56,7 +54,7 @@ public class UpdateAllDocs extends MMSAction {
         }*/
         
         Set<Element> docs = getProjectDocuments();
-        ViewInstanceUtils viu = new ViewInstanceUtils();
+        PresentationElementUtils viu = new PresentationElementUtils();
         Map<String, JSONObject> images = new HashMap<String, JSONObject>();
         for (Element doc: docs) {
             if (!Utils.recommendUpdateFromTeamwork())

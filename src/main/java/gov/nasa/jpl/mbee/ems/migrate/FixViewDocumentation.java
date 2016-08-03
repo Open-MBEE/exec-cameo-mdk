@@ -28,8 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.migrate;
 
+import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
@@ -57,8 +57,8 @@ public class FixViewDocumentation extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         
-        Classifier c = Utils.getParaClassifier();
-        Classifier p = Utils.getOpaqueParaClassifier();
+        Classifier c = PresentationElementType.PARAGRAPH.getClassifier(Application.getInstance().getProject());
+        Classifier p = PresentationElementType.OPAQUE_PARAGRAPH.getClassifier(Application.getInstance().getProject());
         if (c == null || p == null) {
             Application.getInstance().getGUILog().log("[INFO] Nothing to fix.");
             return;

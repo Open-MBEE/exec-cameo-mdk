@@ -2,11 +2,11 @@ package gov.nasa.jpl.mbee.ems.sync.jms;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.project.ProjectsManager;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
@@ -89,7 +89,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                                 if (sysmlid.startsWith("PROJECT")) {
                                     continue;
                                 }
-                                if (sysmlid.endsWith("_pei")) {
+                                if (sysmlid.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                     continue;
                                 }
                                 inMemoryJMSChangelog.addChange((String) o, elementJson, entry.getValue());

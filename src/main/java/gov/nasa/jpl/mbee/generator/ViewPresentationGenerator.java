@@ -43,13 +43,15 @@ import java.util.*;
  * @author dlam
  */
 public class ViewPresentationGenerator implements RunnableWithProgress {
+    private static final String SPOOFED_VIEW_INSTANCE_ID_SUFFIX = "_spoofed" + PresentationElementUtils.ID_SUFFIX;
+
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
     private ValidationRule uneditableElements = new ValidationRule("Uneditable elements", "uneditable elements", ViolationSeverity.WARNING);
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
 
-    private ViewInstanceUtils instanceUtils;
+    private PresentationElementUtils instanceUtils;
 
     private boolean recurse;
     private Element start;
@@ -63,7 +65,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private final Map<String, JSONObject> images;
     private final Set<Element> processedElements;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
+    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
         this.start = start;
         this.images = images != null ? images : new HashMap<String, JSONObject>();
         this.processedElements = processedElements != null ? processedElements : new HashSet<Element>();
@@ -76,7 +78,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
         this.instanceUtils = viu;
         if (this.instanceUtils == null) {
-            this.instanceUtils = new ViewInstanceUtils();
+            this.instanceUtils = new PresentationElementUtils();
         }
         suite.addValidationRule(uneditableContent);
         suite.addValidationRule(viewInProject);
@@ -215,7 +217,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 JSONObject viewOperandJSONObject = (JSONObject) viewOperandObject;
                                 if (viewOperandJSONObject.containsKey("instance") && viewOperandJSONObject.get("instance") instanceof String) {
                                     String instanceID = (String) viewOperandJSONObject.get("instance");
-                                    if (!instanceID.endsWith("_pei")) {
+                                    if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                         continue;
                                     }
                                     if (generatedFromViewProperty != null) {
@@ -282,7 +284,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                         JSONObject instanceOperandJSONObject = (JSONObject) instanceOperandObject;
                                         if (instanceOperandJSONObject.containsKey("instance") && instanceOperandJSONObject.get("instance") instanceof String) {
                                             String instanceID = (String) instanceOperandJSONObject.get("instance");
-                                            if (!instanceID.endsWith("_pei")) {
+                                            if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                                 continue;
                                             }
                                             if (generatedFromViewProperty != null) {
@@ -315,6 +317,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
 
                     JSONObject elementJSONObject = instanceJSONsIterator.previous();
+
+                    Object o;
+                    String sysmlid;
+                    // Spoof legacy (potentially) client-side view instance
+                    if ((o = elementJSONObject.get("sysmlid")) instanceof String && !(sysmlid = (String) o).endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                        elementJSONObject.put("sysmlid", sysmlid + SPOOFED_VIEW_INSTANCE_ID_SUFFIX);
+                    }
+
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
                         Element element = ImportUtility.createElement(elementJSONObject, false, true);
@@ -510,8 +520,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     continue;
                 }
                 JSONObject oldInstanceSpecificationJSON = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
+                JSONObject instanceSpecificationToCommit = null;
                 if (oldInstanceSpecificationJSON == null) {
-                    elementsJSONArray.add(instanceSpecificationJSON);
+                    instanceSpecificationToCommit = instanceSpecificationJSON;
                 } else {
                     // We only want to compare documentation and specialization to see if we need to update the instance
                     JSONObject subInstanceSpecificationJSON = new JSONObject(), oldSubInstanceSpecificationJSON = new JSONObject();
@@ -520,8 +531,17 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     subInstanceSpecificationJSON.put("specialization", instanceSpecificationJSON.get("specialization"));
                     oldSubInstanceSpecificationJSON.put("specialization", oldInstanceSpecificationJSON.get("specialization"));
                     if (!JSONUtils.compare(subInstanceSpecificationJSON, oldSubInstanceSpecificationJSON)) {
-                        elementsJSONArray.add(instanceSpecificationJSON);
+                        instanceSpecificationToCommit = instanceSpecificationJSON;
                     }
+                }
+                if (instanceSpecificationToCommit != null) {
+                    String sysmlid;
+                    Object o;
+                    // Unspoof legacy (potentially) client-side view instance
+                    if ((o = instanceSpecificationToCommit.get("sysmlid")) instanceof String && ((sysmlid = (String) o).endsWith(SPOOFED_VIEW_INSTANCE_ID_SUFFIX))) {
+                        instanceSpecificationToCommit.put("sysmlid", sysmlid.substring(0, sysmlid.length() - SPOOFED_VIEW_INSTANCE_ID_SUFFIX.length()));
+                    }
+                    elementsJSONArray.add(instanceSpecificationToCommit);
                 }
 
                 for (Slot slot : instance.getSlot()) {

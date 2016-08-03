@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.lib;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.api.ElementFinder;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.generator.CollectFilterParser;
@@ -1911,33 +1912,6 @@ public class Utils {
         return pkgs;
     }
 
-    /**
-     * 
-     * @param qualifiedName
-     *          in the format of magicdraw's qualified name: ex "Package::hello::world
-     * @return
-     */
-    public static Element getElementByQualifiedName(String qualifiedName) {
-        String[] path = qualifiedName.split("::");
-        Element curElement = Application.getInstance().getProject().getModel();
-        for (int i = 0; i < path.length; i++) {
-            curElement = findChildByName(curElement, path[i]);
-            if (curElement == null)
-                return null;
-        }
-        return curElement;
-    }
-
-    public static Element findChildByName(Element owner, String name) {
-        for (Element e: owner.getOwnedElement()) {
-            if (e instanceof NamedElement) {
-                if (((NamedElement)e).getName().equals(name))
-                    return e;
-            }
-        }
-        return null;
-    }
-
     public static Map< Element, Map< String, Collection< Element > > > nameOrIdSearchOwnerCache =
             new HashMap< Element, Map<String, Collection<Element> > >();
     public static Map< String, Collection< Element > > nameOrIdSearchCache =
@@ -2016,96 +1990,84 @@ public class Utils {
         return StereotypesHelper.getStereotype(getProject(), stereotypeName);
     }
 
+    @Deprecated
     public static Stereotype getDocumentStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::Document");
+        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::_Stereotypes::Document", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getCharacterizesStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::characterizes");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::_Stereotypes::characterizes", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getViewpointStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Viewpoint");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::Viewpoint", Application.getInstance().getProject());
     }
 
+    @Deprecated
     public static Stereotype getViewStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::View");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::View", Application.getInstance().getProject());
     }
 
+    @Deprecated
     public static Stereotype getViewClassStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getCommentStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Comment");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Comment", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getConformsStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Conform");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::Conform", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getSysML14ConformsStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Conforms");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Conforms", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getProductStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::Product");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::Product", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getExposeStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Expose");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Expose", Application.getInstance().getProject());
     }
 
+    @Deprecated
     public static Stereotype get18ExposeStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Expose");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::Expose", Application.getInstance().getProject());
     }
 
+    @Deprecated
     public static Stereotype getElementGroupStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::ElementGroup");
-    }
-    
-    public static Classifier getOpaqueParaClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueParagraph");
-    }
-    
-    public static Classifier getParaClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Paragraph");
-    }
-    
-    public static Classifier getOpaqueTableClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueTable");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::ElementGroup", Application.getInstance().getProject());
     }
 
-    public static Classifier getOpaqueListClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueList");
-    }
-    
-    public static Classifier getOpaqueImageClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueImage");
-    }
-
-    public static Classifier getOpaqueSectionClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection");
-    }
-
-    public static Classifier getSectionClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section");
-    }
-    
+    @Deprecated
     public static Stereotype getPresentsStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents");
-    }
-    
-    public static Property getGeneratedFromViewProperty() {
-        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView");
-    }
-    
-    public static Property getGeneratedFromElementProperty() {
-        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents", Application.getInstance().getProject());
     }
 
+    @Deprecated
+    public static Property getGeneratedFromViewProperty() {
+        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView", Application.getInstance().getProject());
+    }
+
+    @Deprecated
+    public static Property getGeneratedFromElementProperty() {
+        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement", Application.getInstance().getProject());
+    }
+
+    @Deprecated
     public static Property getViewElementsProperty() {
-        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view::elements");
+        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view::elements", Application.getInstance().getProject());
     }
 
     public static Constraint getViewConstraint(Element view) {

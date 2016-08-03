@@ -330,6 +330,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         // COMMIT UNCONFLICTED DELETIONS TO MMS
+        // NEEDS TO BE AFTER UPDATE; EX: MOVE ELEMENT OUT ON MMS, DELETE OWNER LOCALLY, WHAT HAPPENS?
 
         if (shouldCommit && shouldCommitDeletes && !localElementsToDelete.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Adding local deletions to MMS request queue.");
