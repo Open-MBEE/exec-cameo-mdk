@@ -38,6 +38,7 @@ import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Changelog;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
 import java.util.ArrayList;
@@ -117,7 +118,7 @@ public class MDKHelper {
 	
 	/**
 	 * Logs onto mms using the supplied username and password Does not generate
-	 * or interract with mmslogin dialog window
+	 * or interact with mmslogin dialog window
 	 * 
 	 * @param username
 	 * @param password
@@ -126,6 +127,16 @@ public class MDKHelper {
 		EMSLoginAction ela = new EMSLoginAction();
 		return ela.loginAction(username, password);
 	}
+
+    /**
+     * Sets the supplied username and password in memory. Does not validate its accuracy.
+     *
+     * @param username
+     * @param password
+     */
+	public static void setMMSLoginCredentials(String username, String password) {
+        ViewEditUtils.setUsernameAndPassword(username, password, username != null && !username.isEmpty() && password != null && !password.isEmpty());
+    }
 
 	/**
 	 * Causes program to pause execution until all added commit operations
