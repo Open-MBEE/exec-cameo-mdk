@@ -519,6 +519,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     oldSubInstanceSpecificationJSON.put("documentation", oldInstanceSpecificationJSON.get("documentation"));
                     subInstanceSpecificationJSON.put("specialization", instanceSpecificationJSON.get("specialization"));
                     oldSubInstanceSpecificationJSON.put("specialization", oldInstanceSpecificationJSON.get("specialization"));
+                    subInstanceSpecificationJSON.put("name", instanceSpecificationJSON.get("name"));
+                    oldSubInstanceSpecificationJSON.put("name", oldInstanceSpecificationJSON.get("name"));
                     if (!JSONUtils.compare(subInstanceSpecificationJSON, oldSubInstanceSpecificationJSON)) {
                         elementsJSONArray.add(instanceSpecificationJSON);
                     }
