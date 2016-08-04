@@ -15,10 +15,10 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
@@ -162,7 +162,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                         failure = true;
                     }
-                } else {
+                }
+                else {
                     updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                     failure = true;
                 }
@@ -172,7 +173,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (failure) {
             if (showValidation) {
-                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+                Utils.displayValidationWindow(vss, "View Generation Validation");
             }
             return;
         }
@@ -443,7 +444,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (failure) {
             if (showValidation) {
-                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+                Utils.displayValidationWindow(vss, "View Generation Validation");
             }
             SessionManager.getInstance().cancelSession();
             return;
@@ -495,7 +496,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         specializationJSON = fullViewJSON != null && (o = fullViewJSON.get("specialization")) instanceof JSONObject ? (JSONObject) o : null;
                 if (oldSpecializationJSON == null || specializationJSON == null) {
                     elementsJSONArray.add(fullViewJSON);
-                } else {
+                }
+                else {
                     specializationJSON.put("displayedElements", view2elements.get(view));
                     if (ModelValidator.isViewSpecializationDiff(oldSpecializationJSON, specializationJSON)) {
                         JSONObject subViewJSON = new JSONObject();
@@ -523,7 +525,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 JSONObject instanceSpecificationToCommit = null;
                 if (oldInstanceSpecificationJSON == null) {
                     instanceSpecificationToCommit = instanceSpecificationJSON;
-                } else {
+                }
+                else {
                     // We only want to compare documentation and specialization to see if we need to update the instance
                     JSONObject subInstanceSpecificationJSON = new JSONObject(), oldSubInstanceSpecificationJSON = new JSONObject();
                     subInstanceSpecificationJSON.put("documentation", instanceSpecificationJSON.get("documentation"));
@@ -635,12 +638,20 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         ImageValidator iv = new ImageValidator(dbAlfrescoVisitor.getImages(), images);
         // this checks images generated from the local generation against what's on the web based on checksum
         iv.validate();
-        vss.add(iv.getSuite());
-        if (showValidation) {
-            if (suite.hasErrors() || iv.getSuite().hasErrors()) {
-                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+        // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
+        for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
+            for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
+                if (!validationRuleViolation.getActions().isEmpty()) {
+                    validationRuleViolation.getActions().get(0).actionPerformed(null);
+                }
             }
         }
+        /*vss.add(iv.getSuite());
+        if (showValidation) {
+            if (suite.hasErrors() || iv.getSuite().hasErrors()) {
+                Utils.displayValidationWindow(vss, "View Generation Validation");
+            }
+        }*/
     }
 
     private void handlePes(List<PresentationElement> pes, Package p) {
