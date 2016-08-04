@@ -15,10 +15,10 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
@@ -49,7 +49,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
 
-    private ViewInstanceUtils instanceUtils;
+    private PresentationElementUtils instanceUtils;
 
     private boolean recurse;
     private Element start;
@@ -63,7 +63,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private final Map<String, JSONObject> images;
     private final Set<Element> processedElements;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
+    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
         this.start = start;
         this.images = images != null ? images : new HashMap<String, JSONObject>();
         this.processedElements = processedElements != null ? processedElements : new HashSet<Element>();
@@ -76,7 +76,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
         this.instanceUtils = viu;
         if (this.instanceUtils == null) {
-            this.instanceUtils = new ViewInstanceUtils();
+            this.instanceUtils = new PresentationElementUtils();
         }
         suite.addValidationRule(uneditableContent);
         suite.addValidationRule(viewInProject);
@@ -160,7 +160,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                         failure = true;
                     }
-                } else {
+                }
+                else {
                     updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                     failure = true;
                 }
@@ -170,7 +171,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (failure) {
             if (showValidation) {
-                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+                Utils.displayValidationWindow(vss, "View Generation Validation");
             }
             return;
         }
@@ -190,7 +191,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             JSONObject viewResponse;
             try {
-                viewResponse = ModelValidator.getManyAlfescoElements(viewMap.keySet(), progressStatus);
+                viewResponse = ModelValidator.getManyAlfrescoElementsByID(viewMap.keySet(), progressStatus);
             } catch (ServerException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -215,7 +216,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 JSONObject viewOperandJSONObject = (JSONObject) viewOperandObject;
                                 if (viewOperandJSONObject.containsKey("instance") && viewOperandJSONObject.get("instance") instanceof String) {
                                     String instanceID = (String) viewOperandJSONObject.get("instance");
-                                    if (!instanceID.endsWith("_pei")) {
+                                    if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                         continue;
                                     }
                                     if (generatedFromViewProperty != null) {
@@ -257,7 +258,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         List<String> elementIDs = new ArrayList<>(instanceIDs);
                         elementIDs.addAll(slotIDs);
-                        response = ModelValidator.getManyAlfescoElements(elementIDs, progressStatus);
+                        response = ModelValidator.getManyAlfrescoElementsByID(elementIDs, progressStatus);
                     } catch (ServerException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -282,7 +283,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                         JSONObject instanceOperandJSONObject = (JSONObject) instanceOperandObject;
                                         if (instanceOperandJSONObject.containsKey("instance") && instanceOperandJSONObject.get("instance") instanceof String) {
                                             String instanceID = (String) instanceOperandJSONObject.get("instance");
-                                            if (!instanceID.endsWith("_pei")) {
+                                            if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                                 continue;
                                             }
                                             if (generatedFromViewProperty != null) {
@@ -433,7 +434,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (failure) {
             if (showValidation) {
-                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+                Utils.displayValidationWindow(vss, "View Generation Validation");
             }
             SessionManager.getInstance().cancelSession();
             return;
@@ -485,7 +486,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         specializationJSON = fullViewJSON != null && (o = fullViewJSON.get("specialization")) instanceof JSONObject ? (JSONObject) o : null;
                 if (oldSpecializationJSON == null || specializationJSON == null) {
                     elementsJSONArray.add(fullViewJSON);
-                } else {
+                }
+                else {
                     specializationJSON.put("displayedElements", view2elements.get(view));
                     if (ModelValidator.isViewSpecializationDiff(oldSpecializationJSON, specializationJSON)) {
                         JSONObject subViewJSON = new JSONObject();
@@ -510,9 +512,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     continue;
                 }
                 JSONObject oldInstanceSpecificationJSON = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
+                JSONObject instanceSpecificationToCommit = null;
                 if (oldInstanceSpecificationJSON == null) {
-                    elementsJSONArray.add(instanceSpecificationJSON);
-                } else {
+                    instanceSpecificationToCommit = instanceSpecificationJSON;
+                }
+                else {
                     // We only want to compare documentation and specialization to see if we need to update the instance
                     JSONObject subInstanceSpecificationJSON = new JSONObject(), oldSubInstanceSpecificationJSON = new JSONObject();
                     subInstanceSpecificationJSON.put("documentation", instanceSpecificationJSON.get("documentation"));
@@ -522,8 +526,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     subInstanceSpecificationJSON.put("name", instanceSpecificationJSON.get("name"));
                     oldSubInstanceSpecificationJSON.put("name", oldInstanceSpecificationJSON.get("name"));
                     if (!JSONUtils.compare(subInstanceSpecificationJSON, oldSubInstanceSpecificationJSON)) {
-                        elementsJSONArray.add(instanceSpecificationJSON);
+                        instanceSpecificationToCommit = instanceSpecificationJSON;
                     }
+                }
+                if (instanceSpecificationToCommit != null) {
+                    elementsJSONArray.add(instanceSpecificationToCommit);
                 }
 
                 for (Slot slot : instance.getSlot()) {
@@ -617,12 +624,20 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         ImageValidator iv = new ImageValidator(dbAlfrescoVisitor.getImages(), images);
         // this checks images generated from the local generation against what's on the web based on checksum
         iv.validate();
-        vss.add(iv.getSuite());
-        if (showValidation) {
-            if (suite.hasErrors() || iv.getSuite().hasErrors()) {
-                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+        // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
+        for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
+            for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
+                if (!validationRuleViolation.getActions().isEmpty()) {
+                    validationRuleViolation.getActions().get(0).actionPerformed(null);
+                }
             }
         }
+        /*vss.add(iv.getSuite());
+        if (showValidation) {
+            if (suite.hasErrors() || iv.getSuite().hasErrors()) {
+                Utils.displayValidationWindow(vss, "View Generation Validation");
+            }
+        }*/
     }
 
     private void handlePes(List<PresentationElement> pes, Package p) {

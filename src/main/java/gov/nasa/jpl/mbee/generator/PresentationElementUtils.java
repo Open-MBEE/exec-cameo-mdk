@@ -9,23 +9,25 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
+import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.PresentationElement;
-import gov.nasa.jpl.mbee.viewedit.PresentationElement.PEType;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 
 import java.util.*;
 
-public class ViewInstanceUtils {
-    private Classifier paraC = Utils.getOpaqueParaClassifier(),
-            tparaC = Utils.getParaClassifier(),
-            tableC = Utils.getOpaqueTableClassifier(),
-            listC = Utils.getOpaqueListClassifier(),
-            imageC = Utils.getOpaqueImageClassifier(),
-            sectionC = Utils.getOpaqueSectionClassifier(),
-            tsectionC = Utils.getSectionClassifier();
+public class PresentationElementUtils {
+    public static final String ID_SUFFIX = "_pei";
+
+    private Classifier paraC = PresentationElementType.OPAQUE_PARAGRAPH.getClassifier(Application.getInstance().getProject()),
+            tparaC = PresentationElementType.PARAGRAPH.getClassifier(Application.getInstance().getProject()),
+            tableC = PresentationElementType.OPAQUE_TABLE.getClassifier(Application.getInstance().getProject()),
+            listC = PresentationElementType.OPAQUE_LIST.getClassifier(Application.getInstance().getProject()),
+            imageC = PresentationElementType.OPAQUE_IMAGE.getClassifier(Application.getInstance().getProject()),
+            sectionC = PresentationElementType.OPAQUE_SECTION.getClassifier(Application.getInstance().getProject()),
+            tsectionC = PresentationElementType.SECTION.getClassifier(Application.getInstance().getProject());
     private Stereotype presentsS = Utils.getPresentsStereotype(),
             productS = Utils.getProductStereotype(),
             viewS = Utils.getViewClassStereotype();
@@ -46,7 +48,7 @@ public class ViewInstanceUtils {
         return null;
     }
     
-    public ViewInstanceInfo getCurrentInstances(Element viewOrSection, Element view) {
+    public PresentationElementInfo getCurrentInstances(Element viewOrSection, Element view) {
         List<InstanceSpecification> tables = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> lists = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> sections = new ArrayList<InstanceSpecification>();
@@ -59,7 +61,7 @@ public class ViewInstanceUtils {
         List<InstanceSpecification> opaque = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> extraManualRef = new ArrayList<InstanceSpecification>();
 
-        ViewInstanceInfo res = new ViewInstanceInfo(all, images, tables, lists, paras, sections, manuals, extraRef, extraManualRef, unused, opaque);
+        PresentationElementInfo res = new PresentationElementInfo(all, images, tables, lists, paras, sections, manuals, extraRef, extraManualRef, unused, opaque);
         Expression e = getViewOrSectionExpression(viewOrSection);
         boolean isView = !(viewOrSection instanceof InstanceSpecification);
         if (e == null) {
@@ -223,7 +225,7 @@ public class ViewInstanceUtils {
                 }
             } else
                 return true;
-        } else if (pe.getType().equals(PEType.SECTION)) {
+        } else if (pe.getType().equals(PresentationElementType.SECTION)) {
             if (!(is.getSpecification() instanceof Expression))
                 return true;
             List<InstanceSpecification> list = new ArrayList<InstanceSpecification>();
@@ -252,7 +254,7 @@ public class ViewInstanceUtils {
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
             Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-            is.setID(is.getID() + "_pei");
+            is.setID(is.getID() + ID_SUFFIX);
             if (!pe.isViewDocHack()) {
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);
@@ -261,7 +263,7 @@ public class ViewInstanceUtils {
                 ElementValue ev = ef.createElementValueInstance();
                 ev.setElement(pe.getView());
                 s.getValue().add(ev);
-                if (pe.getType() == PEType.SECTION && pe.getLoopElement() != null) {
+                if (pe.getType() == PresentationElementType.SECTION && pe.getLoopElement() != null) {
                     Slot ss = ef.createSlotInstance();
                     ss.setOwner(is);
                     ss.setOwningInstance(is);
@@ -285,15 +287,15 @@ public class ViewInstanceUtils {
             name = "View Documentation";
             classifier = tparaC;
         } else {
-            if (pe.getType() == PEType.PARA)
+            if (pe.getType() == PresentationElementType.PARAGRAPH)
                 classifier = paraC;
-            else if (pe.getType() == PEType.TABLE)
+            else if (pe.getType() == PresentationElementType.TABLE)
                 classifier = tableC;
-            else if (pe.getType() == PEType.LIST)
+            else if (pe.getType() == PresentationElementType.LIST)
                 classifier = listC;
-            else if (pe.getType() == PEType.IMAGE)
+            else if (pe.getType() == PresentationElementType.IMAGE)
                 classifier = imageC;
-            else if (pe.getType() == PEType.SECTION)
+            else if (pe.getType() == PresentationElementType.SECTION)
                 classifier = sectionC;
             name = pe.getName();
             if (name == null || name.isEmpty())
@@ -310,7 +312,7 @@ public class ViewInstanceUtils {
         is.setName(name);
         is.getClassifier().clear();
         is.getClassifier().add(classifier);
-        if (pe.getType() == PEType.SECTION) { //assume all children pe have instance, caller should walk bottom up
+        if (pe.getType() == PresentationElementType.SECTION) { //assume all children pe have instance, caller should walk bottom up
             ValueSpecification expression = is.getSpecification();
             if (!(expression instanceof Expression))
                 expression = ef.createExpressionInstance();

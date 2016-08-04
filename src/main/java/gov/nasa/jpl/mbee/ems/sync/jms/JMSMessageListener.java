@@ -2,11 +2,12 @@ package gov.nasa.jpl.mbee.ems.sync.jms;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.project.ProjectsManager;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
+import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
@@ -80,22 +81,44 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
             // Retrieve the changed elements: each type of change (updated, added, moved, deleted) will be returned as an JSONArray.
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
-                if ((o = workspace2.get(entry.getKey())) instanceof JSONArray) {
-                    for (Object arrayObject : (JSONArray) o) {
-                        if (arrayObject instanceof JSONObject) {
-                            JSONObject elementJson = (JSONObject) arrayObject;
-                            if ((o = elementJson.get("sysmlid")) instanceof String) {
-                                String sysmlid = (String) o;
-                                if (sysmlid.startsWith("PROJECT")) {
-                                    continue;
+                if (!((o = workspace2.get(entry.getKey())) instanceof JSONArray)) {
+                    continue;
+                }
+                for (Object arrayObject : (JSONArray) o) {
+                    if (!(arrayObject instanceof JSONObject)) {
+                        continue;
+                    }
+                    JSONObject elementJson = (JSONObject) arrayObject;
+                    if (!((o = elementJson.get("sysmlid")) instanceof String)) {
+                        continue;
+                    }
+                    String sysmlid = (String) o;
+                    if (sysmlid.startsWith("PROJECT")) {
+                        continue;
+                    }
+                    if (sysmlid.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                        continue;
+                    }
+                    if ((o = elementJson.get("specialization")) instanceof JSONObject && (o = ((JSONObject) o).get("classifier")) instanceof JSONArray) {
+                        boolean isPresentationElement = false;
+                        for (Object c : (JSONArray) o) {
+                            if (c instanceof String) {
+                                for (PresentationElementType presentationElementType : PresentationElementType.values()) {
+                                    if (c.equals(presentationElementType.getId())) {
+                                        isPresentationElement = true;
+                                        break;
+                                    }
                                 }
-                                if (sysmlid.endsWith("_pei")) {
-                                    continue;
-                                }
-                                inMemoryJMSChangelog.addChange((String) o, elementJson, entry.getValue());
+                            }
+                            if (isPresentationElement) {
+                                break;
                             }
                         }
+                        if (isPresentationElement) {
+                            continue;
+                        }
                     }
+                    inMemoryJMSChangelog.addChange((String) o, elementJson, entry.getValue());
                 }
             }
         }

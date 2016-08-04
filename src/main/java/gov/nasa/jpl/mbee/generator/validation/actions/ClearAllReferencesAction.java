@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.generator.validation.actions;
 
-import gov.nasa.jpl.mbee.generator.ViewInstanceUtils;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
@@ -38,7 +38,7 @@ public class ClearAllReferencesAction extends MDAction implements AnnotationActi
         SessionManager.getInstance().createSession("fix duplicate references");
         for (Annotation a : arg0) {
             Element e = (Element) a.getTarget();
-            Expression ex = ViewInstanceUtils.getViewOrSectionExpression(e);
+            Expression ex = PresentationElementUtils.getViewOrSectionExpression(e);
             if (ex == null)
                 continue;
             Constraint c = Utils.getViewConstraint(e);
@@ -54,7 +54,7 @@ public class ClearAllReferencesAction extends MDAction implements AnnotationActi
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Expression ex = ViewInstanceUtils.getViewOrSectionExpression(viewOrSection);
+        Expression ex = PresentationElementUtils.getViewOrSectionExpression(viewOrSection);
         Constraint c = Utils.getViewConstraint(viewOrSection);
         if (ex == null)
             return;

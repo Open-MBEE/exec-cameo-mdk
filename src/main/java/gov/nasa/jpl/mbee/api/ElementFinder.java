@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
@@ -150,6 +151,16 @@ public class ElementFinder {
 			return null;
 	}
 
+	public static Element findOwnedElementByName(Element owner, String name) {
+		for (Element e: owner.getOwnedElement()) {
+			if (e instanceof NamedElement) {
+				if (((NamedElement)e).getName().equals(name))
+					return e;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Retrieves all elements in the project with the specified name in the
 	 * model inclusive of the root (the first element in the list). No guarantee
@@ -254,6 +265,23 @@ public class ElementFinder {
 	public static Element getElementByID(String targetID) {
 		Element target = (Element) Application.getInstance().getProject().getElementByID(targetID);
 		return target;
+	}
+
+	/**
+	 *
+	 * @param qualifiedName
+	 *          in the format of magicdraw's qualified name: ex "Package::hello::world
+	 * @return
+	 */
+	public static Element getElementByQualifiedName(String qualifiedName, Project project) {
+		String[] path = qualifiedName.split("::");
+		Element curElement = project.getModel();
+		for (int i = 0; i < path.length; i++) {
+			curElement = findOwnedElementByName(curElement, path[i]);
+			if (curElement == null)
+				return null;
+		}
+		return curElement;
 	}
 	
 	/**

@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation;
 
+import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
@@ -72,6 +73,7 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -105,7 +107,6 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
@@ -129,23 +130,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
-import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.validation.actions.*;
-import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.JSONUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ModelValidator {
 
@@ -267,7 +251,7 @@ public class ModelValidator {
         return s;
     }
     
-    public static JSONObject getManyAlfescoElements(Collection<String> ids, ProgressStatus ps) throws ServerException {
+    public static JSONObject getManyAlfrescoElementsByID(Collection<String> ids, ProgressStatus ps) throws ServerException {
         if (ids.isEmpty()) {
             return null;
         }
@@ -287,6 +271,11 @@ public class ModelValidator {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
+                /*try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
                 String tres;
                 try {
                     tres = ExportUtility.getWithBody(url, body.toJSONString());
@@ -305,7 +294,7 @@ public class ModelValidator {
             while(t.isAlive()) {
                 if (ps.isCancel()) {
                     //clean up thread?
-                    Utils.guilog("[INFO] Search for elements canceled.");
+                    Utils.guilog("[INFO] Search for elements cancelled.");
                     code.set(500);
                     break;
                 }
@@ -334,7 +323,7 @@ public class ModelValidator {
         for (Element element : elements) {
             ids.add(element.getID());
         }
-        return getManyAlfescoElements(ids, ps);
+        return getManyAlfrescoElementsByID(ids, ps);
     }
     
     @Deprecated
@@ -532,7 +521,7 @@ public class ModelValidator {
             if (e == null || e == prj.getModel()){
                 if (elementsKeyedId.startsWith("PROJECT"))
                     continue;
-                if (elementsKeyedId.endsWith("_pei"))
+                if (elementsKeyedId.endsWith(PresentationElementUtils.ID_SUFFIX))
                     continue;
                 // Alfresco sysml element is not in MagicDraw
                 JSONObject jSONobject = elementsKeyed.get(elementsKeyedId);
@@ -542,6 +531,26 @@ public class ModelValidator {
                 }
                 if (type != null && type.equals("Project"))
                     continue;
+                Object o = jSONobject.get("specialization");
+                if (o instanceof JSONObject && (o = ((JSONObject) o).get("classifier")) instanceof JSONArray) {
+                    boolean isPresentationElement = false;
+                    for (Object c : (JSONArray) o) {
+                        if (c instanceof String) {
+                            for (PresentationElementType presentationElementType : PresentationElementType.values()) {
+                                if (c.equals(presentationElementType.getId())) {
+                                    isPresentationElement = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (isPresentationElement) {
+                            break;
+                        }
+                    }
+                    if (isPresentationElement) {
+                        continue;
+                    }
+                }
                 if (type == null)
                     type = "Element";
                 if (ImportUtility.VALUESPECS.contains(type))

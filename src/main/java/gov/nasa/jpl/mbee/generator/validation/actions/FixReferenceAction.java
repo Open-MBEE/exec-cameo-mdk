@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.generator.validation.actions;
 
-import gov.nasa.jpl.mbee.generator.ViewInstanceUtils;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
@@ -52,7 +52,7 @@ public class FixReferenceAction extends MDAction implements AnnotationAction {
             Element e = (Element) a.getTarget();
             List<InstanceSpecification> toRemove = opaque.get(e);
             List<InstanceSpecification> maybeRemove = manual.get(e);
-            Expression ex = ViewInstanceUtils.getViewOrSectionExpression(e);
+            Expression ex = PresentationElementUtils.getViewOrSectionExpression(e);
             if (ex == null)
                 continue;
             Constraint c = Utils.getViewConstraint(e);
@@ -79,7 +79,7 @@ public class FixReferenceAction extends MDAction implements AnnotationAction {
     public void actionPerformed(ActionEvent e) {
         List<InstanceSpecification> toRemove = opaque.get(viewOrSection);
         List<InstanceSpecification> maybeRemove = manual.get(viewOrSection);
-        Expression ex = ViewInstanceUtils
+        Expression ex = PresentationElementUtils
                 .getViewOrSectionExpression(viewOrSection);
         if (ex == null)
             return;

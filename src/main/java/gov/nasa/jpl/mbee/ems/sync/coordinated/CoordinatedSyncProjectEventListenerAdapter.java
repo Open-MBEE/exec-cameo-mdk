@@ -60,6 +60,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     }
 
     public static class RealTimeSyncProjectMapping {
+        // TODO Volatile to synchronized @Ivan
         private volatile boolean disabled;
 
         public boolean isDisabled() {

@@ -47,7 +47,7 @@ public abstract class Migrator {
 		// try to do a server background commit
 		//url += "?background=true"; added in Request
 		
-		Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
+		Application.getInstance().getGUILog().log("[INFO] Migration request is added to queue.");
 		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), "Migration",true));
 	}
 
