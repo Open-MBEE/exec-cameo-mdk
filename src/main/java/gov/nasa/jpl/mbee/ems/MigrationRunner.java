@@ -1,9 +1,6 @@
 package gov.nasa.jpl.mbee.ems;
 
-import gov.nasa.jpl.mbee.ems.migrate.Crushinator21To22Migrator;
-import gov.nasa.jpl.mbee.ems.migrate.Crushinator22To23Migrator;
-import gov.nasa.jpl.mbee.ems.migrate.MigrationKind;
-import gov.nasa.jpl.mbee.ems.migrate.View2ViewMigrator;
+import gov.nasa.jpl.mbee.ems.migrate.*;
 
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
@@ -20,15 +17,16 @@ public class MigrationRunner implements RunnableWithProgress {
 	public void run(ProgressStatus arg0) {
 		switch (mk) {
 			case CRUSHINATOR21TO22:
-				Crushinator21To22Migrator migrationVal = new Crushinator21To22Migrator();
-				migrationVal.migrate(arg0);
+				new Crushinator21To22Migrator().migrate(arg0);
 				break;
 			case CRUSHINATOR22TO23:
-			    Crushinator22To23Migrator migration = new Crushinator22To23Migrator();
-			    migration.migrate(arg0);
+			    new Crushinator22To23Migrator().migrate(arg0);
+				break;
+			case CRUSHINATOR23TO24:
+				new Crushinator23To24Migrator().migrate(arg0);
+				break;
 			case VIEW2VIEW:
-				View2ViewMigrator view2view = new View2ViewMigrator();
-				view2view.migrate(arg0);
+				new View2ViewMigrator().migrate(arg0);
 				break;
 			default:
 				break;
