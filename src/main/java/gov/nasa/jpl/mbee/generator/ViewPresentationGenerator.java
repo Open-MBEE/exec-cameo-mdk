@@ -193,7 +193,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             JSONObject viewResponse;
             try {
-                viewResponse = ModelValidator.getManyAlfescoElements(viewMap.keySet(), progressStatus);
+                viewResponse = ModelValidator.getManyAlfrescoElementsByID(viewMap.keySet(), progressStatus);
             } catch (ServerException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -260,7 +260,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         List<String> elementIDs = new ArrayList<>(instanceIDs);
                         elementIDs.addAll(slotIDs);
-                        response = ModelValidator.getManyAlfescoElements(elementIDs, progressStatus);
+                        response = ModelValidator.getManyAlfrescoElementsByID(elementIDs, progressStatus);
                     } catch (ServerException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");

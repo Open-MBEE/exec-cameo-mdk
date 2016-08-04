@@ -75,6 +75,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         this.shouldDelete = shouldDelete;
     }*/
 
+    @Deprecated
     public DeltaSyncRunner(boolean shouldCommit, boolean shouldCommitDeletes) {
         this(shouldCommit, shouldCommitDeletes, true);
     }
@@ -180,29 +181,24 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // Get latest json for element added/changed from MMS
 
         if (!elementIdsToGet.isEmpty()) {
-            JSONObject getJson = new JSONObject();
-            JSONArray getElements = new JSONArray();
-            getJson.put("elements", getElements);
-            for (String e : elementIdsToGet) {
-                JSONObject el = new JSONObject();
-                el.put("sysmlid", e);
-                getElements.add(el);
-            }
-            String url = ExportUtility.getUrlWithWorkspace();
-            url += "/elements";
-            String response = null;
+            JSONObject response = null;
             try {
-                response = ExportUtility.getWithBody(url, getJson.toJSONString());
-            } catch (ServerException ex) {
-                Utils.guilog("[ERROR] Get elements failed.");
+                response = ModelValidator.getManyAlfrescoElementsByID(elementIdsToGet, ps);
+            } catch (ServerException e) {
+                if (!ps.isCancel()) {
+                    Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
+                }
+            }
+            if (ps.isCancel()) {
+                Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
+                return;
             }
             if (response == null) {
                 failure = true;
-                Utils.guilog("[ERROR] Cannot get elements from MMS server. Update aborted. All changes will be attempted at next update.");
+                Utils.guilog("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
                 return;
             }
-            JSONObject webObject = (JSONObject) JSONValue.parse(response);
-            JSONArray webArray = (JSONArray) webObject.get("elements");
+            JSONArray webArray = (JSONArray) response.get("elements");
             for (Object o : webArray) {
                 String webId = (String) ((JSONObject) o).get("sysmlid");
                 jmsJsons.put(webId, (JSONObject) o);
@@ -305,6 +301,11 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         break;
                 }
             }
+        }
+
+        if (ps.isCancel()) {
+            Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
+            return;
         }
 
         // COMMIT UNCONFLICTED CREATIONS AND UPDATES TO MMS

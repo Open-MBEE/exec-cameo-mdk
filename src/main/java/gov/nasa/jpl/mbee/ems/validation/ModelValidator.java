@@ -250,7 +250,7 @@ public class ModelValidator {
         return s;
     }
     
-    public static JSONObject getManyAlfescoElements(Collection<String> ids, ProgressStatus ps) throws ServerException {
+    public static JSONObject getManyAlfrescoElementsByID(Collection<String> ids, ProgressStatus ps) throws ServerException {
         if (ids.isEmpty()) {
             return null;
         }
@@ -270,6 +270,11 @@ public class ModelValidator {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
+                /*try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
                 String tres;
                 try {
                     tres = ExportUtility.getWithBody(url, body.toJSONString());
@@ -288,7 +293,7 @@ public class ModelValidator {
             while(t.isAlive()) {
                 if (ps.isCancel()) {
                     //clean up thread?
-                    Utils.guilog("[INFO] Search for elements canceled.");
+                    Utils.guilog("[INFO] Search for elements cancelled.");
                     code.set(500);
                     break;
                 }
@@ -317,7 +322,7 @@ public class ModelValidator {
         for (Element element : elements) {
             ids.add(element.getID());
         }
-        return getManyAlfescoElements(ids, ps);
+        return getManyAlfrescoElementsByID(ids, ps);
     }
     
     @Deprecated
