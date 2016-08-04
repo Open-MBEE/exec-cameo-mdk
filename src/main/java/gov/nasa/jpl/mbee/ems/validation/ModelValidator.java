@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation;
 
+import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
@@ -530,6 +531,26 @@ public class ModelValidator {
                 }
                 if (type != null && type.equals("Project"))
                     continue;
+                Object o = jSONobject.get("specialization");
+                if (o instanceof JSONObject && (o = ((JSONObject) o).get("classifier")) instanceof JSONArray) {
+                    boolean isPresentationElement = false;
+                    for (Object c : (JSONArray) o) {
+                        if (c instanceof String) {
+                            for (PresentationElementType presentationElementType : PresentationElementType.values()) {
+                                if (c.equals(presentationElementType.getId())) {
+                                    isPresentationElement = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (isPresentationElement) {
+                            break;
+                        }
+                    }
+                    if (isPresentationElement) {
+                        continue;
+                    }
+                }
                 if (type == null)
                     type = "Element";
                 if (ImportUtility.VALUESPECS.contains(type))

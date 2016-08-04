@@ -43,8 +43,6 @@ import java.util.*;
  * @author dlam
  */
 public class ViewPresentationGenerator implements RunnableWithProgress {
-    private static final String SPOOFED_VIEW_INSTANCE_ID_SUFFIX = "_spoofed" + PresentationElementUtils.ID_SUFFIX;
-
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
     private ValidationRule uneditableElements = new ValidationRule("Uneditable elements", "uneditable elements", ViolationSeverity.WARNING);
@@ -318,14 +316,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
 
                     JSONObject elementJSONObject = instanceJSONsIterator.previous();
-
-                    Object o;
-                    String sysmlid;
-                    // Spoof legacy (potentially) client-side view instance
-                    if ((o = elementJSONObject.get("sysmlid")) instanceof String && !(sysmlid = (String) o).endsWith(PresentationElementUtils.ID_SUFFIX)) {
-                        elementJSONObject.put("sysmlid", sysmlid + SPOOFED_VIEW_INSTANCE_ID_SUFFIX);
-                    }
-
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
                         Element element = ImportUtility.createElement(elementJSONObject, false, true);
@@ -538,12 +528,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                 }
                 if (instanceSpecificationToCommit != null) {
-                    String sysmlid;
-                    Object o;
-                    // Unspoof legacy (potentially) client-side view instance
-                    if ((o = instanceSpecificationToCommit.get("sysmlid")) instanceof String && ((sysmlid = (String) o).endsWith(SPOOFED_VIEW_INSTANCE_ID_SUFFIX))) {
-                        instanceSpecificationToCommit.put("sysmlid", sysmlid.substring(0, sysmlid.length() - SPOOFED_VIEW_INSTANCE_ID_SUFFIX.length()));
-                    }
                     elementsJSONArray.add(instanceSpecificationToCommit);
                 }
 
