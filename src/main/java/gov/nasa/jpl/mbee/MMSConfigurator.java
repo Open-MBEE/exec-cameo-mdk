@@ -65,19 +65,16 @@ public class MMSConfigurator implements AMConfigurator {
             category.addAction(validateCategory);
             validateCategory.addAction(new ValidateModulesAction());
             validateCategory.addAction(new ValidateBranchesAction());
-            MDKOptionsGroup optionsGroup = MDKOptionsGroup.getMDKOptions();
-            if (optionsGroup != null && optionsGroup.isMMSLiveSync()) {
-                category.addAction(new StartAutoSyncAction());
-                category.addAction(new CloseAutoSyncAction());
-            }
             
-            MDActionsCategory sync = new MDActionsCategory("MMSMAINSYNC", "Update and Commit");
+            /*MDActionsCategory sync = new MDActionsCategory("MMSMAINSYNC", "Update and Commit");
             sync.setNested(true);
             category.addAction(sync);
             sync.addAction(new UpdateFromJMS(false));
             sync.addAction(new UpdateFromJMS(true));
             sync.addAction(new UpdateFromJMSAndCommitWithDelete());
-            sync.addAction(new UpdateAllDocs());
+            sync.addAction(new UpdateAllDocs());*/
+
+            category.addAction(new UpdateAllDocs());
             
             category.addAction(new SendProjectVersionAction());
             category.addAction(new MigrationCategory());

@@ -1,17 +1,13 @@
 package gov.nasa.jpl.mbee.actions;
 
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.ProjectListenerMapping;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.Map;
-
-import javax.swing.KeyStroke;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.ui.browser.actions.DefaultBrowserAction;
@@ -37,13 +33,9 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
                 + "happen on update from teamwork. Do you want to continue?");
         if (con == null || !con)
             return;
-        Project project = Application.getInstance().getProject();
-        Map<String, ?> projectInstances = ProjectListenerMapping.getInstance()
-                .get(project);
-        AutoSyncCommitListener listener = (AutoSyncCommitListener) projectInstances
-                .get("AutoSyncCommitListener");
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
         if (listener != null)
-            listener.disable();
+            listener.setDisabled(true);
 
         SessionManager sessionManager = SessionManager.getInstance();
         sessionManager.createSession("Convert Component To Class");
@@ -71,7 +63,7 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
         sessionManager.closeSession();
 
         if (listener != null)
-            listener.enable();
+            listener.setDisabled(false);
     }
 
 }

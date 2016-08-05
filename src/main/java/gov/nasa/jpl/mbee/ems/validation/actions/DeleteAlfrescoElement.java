@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
@@ -40,8 +41,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 
 public class DeleteAlfrescoElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -69,7 +70,7 @@ public class DeleteAlfrescoElement extends RuleViolationAction implements Annota
         JSONArray elements = new JSONArray();
         send.put("elements", elements);
         send.put("source", "magicdraw");
-        send.put("mmsVersion", "2.3");
+        send.put("mmsVersion", DocGenPlugin.VERSION);
         for (Annotation anno: annos) {
             String message = anno.getText();
             String[] mes = message.split("`");

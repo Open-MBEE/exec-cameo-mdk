@@ -30,6 +30,7 @@ package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.api.ElementFinder;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.ViewParser;
@@ -568,12 +569,12 @@ public class OclEvaluator {
                 
                 // try child
                 if ( source != null && source instanceof Element ) {
-                    e = Utils.findChildByName( (Element)source, nameOrId );
+                    e = ElementFinder.findOwnedElementByName( (Element)source, nameOrId );
                     if ( e != null ) return e;
                 }
                 
                 // try qualified name
-                e = Utils.getElementByQualifiedName( nameOrId );
+                e = ElementFinder.getElementByQualifiedName(nameOrId, Application.getInstance().getProject());
                 if ( e != null ) return e;
 
                 // try searching everything

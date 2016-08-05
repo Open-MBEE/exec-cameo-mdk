@@ -29,26 +29,28 @@
 
 package gov.nasa.jpl.mbee.api;
 
+import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.ems.*;
 import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.lib.Changelog;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.swing.JButton;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import org.python.google.common.collect.Lists;
 
 /**
  * This class exposes MDK operations for use in external programs.
@@ -116,7 +118,7 @@ public class MDKHelper {
 	
 	/**
 	 * Logs onto mms using the supplied username and password Does not generate
-	 * or interract with mmslogin dialog window
+	 * or interact with mmslogin dialog window
 	 * 
 	 * @param username
 	 * @param password
@@ -125,6 +127,16 @@ public class MDKHelper {
 		EMSLoginAction ela = new EMSLoginAction();
 		return ela.loginAction(username, password);
 	}
+
+    /**
+     * Sets the supplied username and password in memory. Does not validate its accuracy.
+     *
+     * @param username
+     * @param password
+     */
+	public static void setMMSLoginCredentials(String username, String password) {
+        ViewEditUtils.setUsernameAndPassword(username, password, username != null && !username.isEmpty() && password != null && !password.isEmpty());
+    }
 
 	/**
 	 * Causes program to pause execution until all added commit operations
@@ -173,7 +185,7 @@ public class MDKHelper {
 	 * 
 	 */
 	public static void generateViews(Element doc, Boolean recurse) {
-		GenerateViewPresentationAction gvpa = new GenerateViewPresentationAction(doc, recurse);
+		GenerateViewPresentationAction gvpa = new GenerateViewPresentationAction(Lists.newArrayList(doc), recurse);
 		validationWindow = new MDKValidationWindow(gvpa.updateAction());
 	}
 
@@ -184,8 +196,9 @@ public class MDKHelper {
 	 * @param doc
 	 *            Selected Document Element.
 	 */
+	@Deprecated
 	public static void generateViewsAndCommitToMMS(Element doc) {
-		OneClickUpdateDoc ocud = new OneClickUpdateDoc(doc);
+		OneClickUpdateDoc ocud = new OneClickUpdateDoc(Lists.newArrayList(doc));
 		validationWindow = new MDKValidationWindow(ocud.updateAction());
 	}
 
@@ -240,18 +253,14 @@ public class MDKHelper {
 	/**
 	 * Starts MMS Auto Sync
 	 */
+	@Deprecated
 	public static void startAutoSync() {
-		ActionEvent event = new ActionEvent(new JButton(), 5, "");
-		StartAutoSyncAction sasa = new StartAutoSyncAction();
-		sasa.actionPerformed(event);
 	}
 	/**
 	 * Stops MMS Auto Sync
 	 */
+	@Deprecated
 	public static void stopAutoSync() {
-		ActionEvent event = new ActionEvent(new JButton(), 5, "");
-		CloseAutoSyncAction casa = new CloseAutoSyncAction();
-		casa.actionPerformed(event);
 	}
 
 	/**
@@ -283,6 +292,10 @@ public class MDKHelper {
 	public static void updateAndCommitWithDeletesToMMS() {
 		UpdateFromJMSAndCommitWithDelete ufjmsacwd = new UpdateFromJMSAndCommitWithDelete();
 		validationWindow = new MDKValidationWindow(ufjmsacwd.updateAction());
+	}
+
+	public static Changelog<String, Element> getInMemoryElementChangelog(Project project) {
+		return LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog();
 	}
 
 }

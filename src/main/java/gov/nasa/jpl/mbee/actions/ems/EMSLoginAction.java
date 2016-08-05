@@ -28,9 +28,10 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
+import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
@@ -67,12 +68,13 @@ public class EMSLoginAction extends MDAction {
     }
     
     public static boolean loginAction(String username, String password, boolean initJms) {
+        Project project = Application.getInstance().getProject();
         ViewEditUtils.clearUsernameAndPassword();
-        if (Application.getInstance().getProject() == null) {
+        if (project == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
         }
-        String url = ExportUtility.getUrl();
+        String url = ExportUtility.getUrl(project);
         if (url == null)
             return false;
         String response = null;
@@ -86,10 +88,11 @@ public class EMSLoginAction extends MDAction {
             return false;
         }
         if (initJms) {
-            Application.getInstance().getGUILog().log("Logged in, initializing MMS message queue.");
-            if (AutoSyncProjectListener.initializeJms(Application.getInstance().getProject()))
-                Application.getInstance().getGUILog().log("Finished.");
+            for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(p);
+            }
         }
+        Application.getInstance().getGUILog().log("Login complete.");
         return true;
     }
 

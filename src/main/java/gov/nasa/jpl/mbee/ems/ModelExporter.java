@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.ArrayList;
@@ -105,7 +106,7 @@ public class ModelExporter {
         elementss.addAll(elements.values());
         result.put("elements", elementss);
         result.put("source", "magicdraw");
-        result.put("mmsVersion", "2.3");
+        result.put("mmsVersion", DocGenPlugin.VERSION);
         //result.put("elementHierarchy", elementHierarchy);
         return result;
     }

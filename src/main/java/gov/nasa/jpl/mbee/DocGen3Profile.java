@@ -48,6 +48,7 @@ public class DocGen3Profile {
     public static final String structuredQueryStereotype             = "StructuredQuery";
     public static final String tableStereotype                       = "Table";
     public static final String bulletedListStereotype                = "BulletedList";
+    public static final String temporalDiffStereotype                = "TemporalDiff";
     public static final String combinedMatrixStereotype              = "zzCombinedMatrix";
     public static final String methodStereotype                      = "Method";
 

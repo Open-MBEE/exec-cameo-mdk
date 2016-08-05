@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
+import gov.nasa.jpl.mbee.api.ElementFinder;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.Frame;
@@ -86,7 +87,7 @@ public class CreateOntoBehaviorBlocks extends SRAction {
 					container = (Namespace) dlg.getSelectedElement();
 				}	 
 				SessionManager.getInstance().createSession("create ontobehavior");
-				behaviorOccurence = (Classifier) Utils.getElementByQualifiedName("SysML Extensions::SystemsReasoner::BehaviorOccurence");
+				behaviorOccurence = (Classifier) ElementFinder.getElementByQualifiedName("SysML Extensions::SystemsReasoner::BehaviorOccurence", Application.getInstance().getProject());
 				Profile sysml = StereotypesHelper.getProfile(Project.getProject(classifier), "SysML");
 				Stereotype block = StereotypesHelper.getStereotype(Project.getProject(classifier), "Block", sysml);
 			

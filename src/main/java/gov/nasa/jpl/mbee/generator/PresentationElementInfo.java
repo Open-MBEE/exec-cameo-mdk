@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 
-public class ViewInstanceInfo {
+public class PresentationElementInfo {
     private List<InstanceSpecification> all;
     private List<InstanceSpecification> opaque;
     private List<InstanceSpecification> images;
@@ -20,14 +20,14 @@ public class ViewInstanceInfo {
     private List<InstanceSpecification> extraManualRef; //manual instances that are referenced by > 1 view
     private List<InstanceSpecification> unused; //unused instances in view instance package
     
-    public ViewInstanceInfo() {
+    public PresentationElementInfo() {
         
     }
     
-    public ViewInstanceInfo(List<InstanceSpecification> all, List<InstanceSpecification> images, List<InstanceSpecification> tables,
-            List<InstanceSpecification> lists, List<InstanceSpecification> paras, List<InstanceSpecification> sections, 
-            List<InstanceSpecification> manuals, List<InstanceSpecification> extraRef, List<InstanceSpecification> extraManualRef, List<InstanceSpecification> unused,
-            List<InstanceSpecification> opaque) {
+    public PresentationElementInfo(List<InstanceSpecification> all, List<InstanceSpecification> images, List<InstanceSpecification> tables,
+                                   List<InstanceSpecification> lists, List<InstanceSpecification> paras, List<InstanceSpecification> sections,
+                                   List<InstanceSpecification> manuals, List<InstanceSpecification> extraRef, List<InstanceSpecification> extraManualRef, List<InstanceSpecification> unused,
+                                   List<InstanceSpecification> opaque) {
         this.all = all;
         this.images = images;
         this.tables = tables;

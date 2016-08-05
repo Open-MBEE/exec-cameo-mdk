@@ -28,9 +28,10 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 
 import java.awt.event.ActionEvent;
 
@@ -57,7 +58,7 @@ public class InitializeProjectAction extends MDAction {
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
         tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", "2.3");
+        tosend.put("mmsVersion", DocGenPlugin.VERSION);
         JSONObject result = ExportUtility.getProjectJson();
         array.add(result);
         String json = tosend.toJSONString();

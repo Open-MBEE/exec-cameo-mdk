@@ -176,7 +176,7 @@ public class ViewEditUtils {
             }
             makeSureUserGetsFocus(usernameFld);
             JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
-                    "Enter your username and password for ViewEditor:", JOptionPane.OK_CANCEL_OPTION,
+                    "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
 
            
@@ -228,7 +228,7 @@ public class ViewEditUtils {
                 }
                 makeSureUserGetsFocus(usernameFld);
                 JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
-                        "Enter your username and password for ViewEditor:", JOptionPane.OK_CANCEL_OPTION,
+                        "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                         JOptionPane.PLAIN_MESSAGE);
 
                 setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);

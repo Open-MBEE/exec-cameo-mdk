@@ -28,59 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
 
-import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.AutoSyncProjectListener;
-import gov.nasa.jpl.mbee.generator.CollectFilterParser;
-import gov.nasa.jpl.mbee.generator.DocumentValidator;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
-import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTableModel;
-import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationWindowRun;
-import gov.nasa.jpl.ocl.GetCallOperation;
-import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
-import gov.nasa.jpl.ocl.OclEvaluator;
-
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Frame;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Field;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.swing.JOptionPane;
-import javax.swing.JTabbedPane;
-
-import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -113,38 +60,44 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ActivityPartition;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.StructuralFeature;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectableElement;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
+import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.api.ElementFinder;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.generator.CollectFilterParser;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
+import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
+import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTableModel;
+import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.*;
+import gov.nasa.jpl.ocl.GetCallOperation;
+import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
+import gov.nasa.jpl.ocl.OclEvaluator;
+import org.apache.log4j.Logger;
+import org.json.simple.JSONArray;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.text.DecimalFormat;
+import java.util.*;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class contains utility methods for collection and filtering on magicdraw
@@ -1913,33 +1866,6 @@ public class Utils {
         return pkgs;
     }
 
-    /**
-     * 
-     * @param qualifiedName
-     *          in the format of magicdraw's qualified name: ex "Package::hello::world
-     * @return
-     */
-    public static Element getElementByQualifiedName(String qualifiedName) {
-        String[] path = qualifiedName.split("::");
-        Element curElement = Application.getInstance().getProject().getModel();
-        for (int i = 0; i < path.length; i++) {
-            curElement = findChildByName(curElement, path[i]);
-            if (curElement == null)
-                return null;
-        }
-        return curElement;
-    }
-
-    public static Element findChildByName(Element owner, String name) {
-        for (Element e: owner.getOwnedElement()) {
-            if (e instanceof NamedElement) {
-                if (((NamedElement)e).getName().equals(name))
-                    return e;
-            }
-        }
-        return null;
-    }
-
     public static Map< Element, Map< String, Collection< Element > > > nameOrIdSearchOwnerCache =
             new HashMap< Element, Map<String, Collection<Element> > >();
     public static Map< String, Collection< Element > > nameOrIdSearchCache =
@@ -2018,96 +1944,95 @@ public class Utils {
         return StereotypesHelper.getStereotype(getProject(), stereotypeName);
     }
 
+    @Deprecated
     public static Stereotype getDocumentStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::Document");
+        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::_Stereotypes::Document", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getCharacterizesStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::_Stereotypes::characterizes");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::_Stereotypes::characterizes", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getViewpointStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Viewpoint");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::Viewpoint", Application.getInstance().getProject());
     }
 
+    @Deprecated
     public static Stereotype getViewStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::View");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::View", Application.getInstance().getProject());
     }
 
+    @Deprecated
     public static Stereotype getViewClassStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getCommentStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Comment");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Comment", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getConformsStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Conform");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::Conform", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getSysML14ConformsStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Conforms");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Conforms", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getProductStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::Product");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::Product", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Stereotype getExposeStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Expose");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Expose", Application.getInstance().getProject());
     }
 
+    @Deprecated
     public static Stereotype get18ExposeStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML::ModelElements::Expose");
-    }
-    
-    public static Classifier getOpaqueParaClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueParagraph");
-    }
-    
-    public static Classifier getParaClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Paragraph");
-    }
-    
-    public static Classifier getOpaqueTableClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueTable");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::Expose", Application.getInstance().getProject());
     }
 
-    public static Classifier getOpaqueListClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueList");
-    }
-    
-    public static Classifier getOpaqueImageClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueImage");
+    @Deprecated
+    public static Stereotype getElementGroupStereotype() {
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML::ModelElements::ElementGroup", Application.getInstance().getProject());
     }
 
-    public static Classifier getOpaqueSectionClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection");
-    }
-
-    public static Classifier getSectionClassifier() {
-        return (Classifier)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section");
-    }
-    
+    @Deprecated
     public static Stereotype getPresentsStereotype() {
-        return (Stereotype)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents");
+        return (Stereotype)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Property getGeneratedFromViewProperty() {
-        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView");
+        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
     public static Property getGeneratedFromElementProperty() {
-        return (Property)getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement");
+        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement", Application.getInstance().getProject());
     }
-    
+
+    @Deprecated
+    public static Property getViewElementsProperty() {
+        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view::elements", Application.getInstance().getProject());
+    }
+
     public static Constraint getViewConstraint(Element view) {
-        if (view == null)
-            return null;
-        for (Element e: view.getOwnedElement()) {
-            if (e instanceof Constraint && ((Constraint)e).getConstrainedElement().contains(view))
-                return (Constraint)e;
+        if (view != null) {
+            Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
+            for (Constraint constraint : constraints) {
+                if (constraint != null && constraint.getID().endsWith(("_vc"))) {
+                    return constraint;
+                }
+            }
+
         }
         return null;
     }
@@ -2117,17 +2042,7 @@ public class Utils {
      * Log to GUILog in UI's event dispatcher
      */
     public static void guilog(final String s) {
-        //SwingUtilities.invokeLater(new Runnable() {
-        //    @Override
-        //    public void run() {
-    	// second parameter used as a quickfix to prevent log from stealing focus during auto-sync
-    	AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(Application.getInstance().getProject());
-    	boolean auto = false;
-    	if (listener != null && listener.isAuto())
-    		auto = true;
-        Application.getInstance().getGUILog().log(s, !auto || !s.startsWith("[INFO]"));
-        //    }
-        //});
+        Application.getInstance().getGUILog().log(s, !s.startsWith("[INFO]"));
     }
     
     /**
@@ -3628,7 +3543,7 @@ public class Utils {
         ex.printStackTrace();
     }
     
-    public static boolean jsonArraySetDiff(JSONArray a, JSONArray b) {
+    public static boolean isJSONArrayEqual(JSONArray a, JSONArray b) {
     	if (a != null && b != null) {
     		Set as = new HashSet();
     		Set bs = new HashSet();
@@ -3664,9 +3579,10 @@ public class Utils {
         String user = TeamworkUtils.getLoggedUserName();
         if (user == null) 
             return false;
-        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
-        if (listener != null)
-            listener.disable(); 
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        if (listener != null) {
+            listener.setDisabled(true);
+        }
       //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
         ILockProjectService lockService = LockService.getLockService(project);
@@ -3679,9 +3595,10 @@ public class Utils {
             ex.printStackTrace();
         }
         if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
-            SessionManager.getInstance().createSession("session after lock"); 
-        if (listener != null)
-            listener.enable();
+            SessionManager.getInstance().createSession("session after lock");
+        if (listener != null) {
+            listener.setDisabled(false);
+        }
         //if a session was open and lock triggered a teamwork update, session would be closed
         uneditable.clear();
         for (Element e: es) {
@@ -3707,9 +3624,9 @@ public class Utils {
         String user = TeamworkUtils.getLoggedUserName();
         if (user == null) 
             return false;
-        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(project);
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener != null)
-            listener.disable(); 
+            listener.setDisabled(true);
         //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
         boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
         try {
@@ -3737,7 +3654,7 @@ public class Utils {
         if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
             SessionManager.getInstance().createSession("session after lock"); 
         if (listener != null)
-            listener.enable();
+            listener.setDisabled(false);
         //if a session was open and lock triggered a teamwork update, session would be closed
         if (e.isEditable())
             return true;
@@ -3757,20 +3674,27 @@ public class Utils {
         	forceDialogTrue = false;
             return true;
         }
-    	Project prj = Application.getInstance().getProject();
-        if (!ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject()))
+    	Project project = Application.getInstance().getProject();
+        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()))
             return true;
         String user = TeamworkUtils.getLoggedUserName();
-        if (user == null) {
-            Utils.guilog("[ERROR] You must be logged into teamwork first.");
-            return false;
-        }
-        ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(prj);
+        ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(project);
         try {
-            if (TeamworkUtils.getLastVersion(currentProj) == TeamworkService.getInstance(prj).getVersion(prj).getNumber())
+            int lastVersion = TeamworkUtils.getLastVersion(currentProj);
+            if (user == null || lastVersion < 0) {
+                Utils.guilog("[ERROR] You must be logged into Teamwork first.");
+                return false;
+            }
+            if (lastVersion == TeamworkService.getInstance(project).getVersion(project).getNumber())
                 return true;
+        } catch (IOException uhe) {
+            Utils.guilog("[ERROR] You must be logged into Teamwork first.");
+            uhe.printStackTrace();
+            return false;
         } catch (Exception ex) {
-            
+            Utils.guilog("[ERROR] Unknown exception occurred when trying to verify Teamwork state.");
+            ex.printStackTrace();
+            return false;
         }
         String[] buttons = {"Continue (May trigger update)", "Cancel"};
         Boolean reply = Utils.getUserYesNoAnswerWithButton("There's a new project version available on teamwork.\nIt's highly recommended that you update from teamwork first,\n"
@@ -3778,12 +3702,12 @@ public class Utils {
                 + "This action may autolock elements and trigger a teamwork update. Do you want to continue?\n" + add, buttons, false);
         if (reply == null || !reply)
             return false;
-        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(prj);
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener != null)
-            listener.disable(); 
-        TeamworkUtils.updateProject(prj);
+            listener.setDisabled(true);
+        TeamworkUtils.updateProject(project);
         if (listener != null)
-            listener.enable();
+            listener.setDisabled(false);
         return true;
     }
     

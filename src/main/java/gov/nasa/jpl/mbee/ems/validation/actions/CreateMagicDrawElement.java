@@ -35,10 +35,7 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.json.simple.JSONObject;
 
@@ -105,15 +102,15 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                     }
                 }
             }
-            Map<String, List<JSONObject>> toCreate = ImportUtility.getCreationOrder(tocreate);
-            tocreate = toCreate.get("create");
-            List<JSONObject> fail = toCreate.get("fail");
+            ImportUtility.CreationOrder creationOrder = ImportUtility.getCreationOrder(tocreate);
+            tocreate = creationOrder.getOrder();
+            Set<JSONObject> fail = creationOrder.getFailed();
             if (!fail.isEmpty()) {
                 Utils.guilog("[ERROR] Cannot create elements (owner(s) not found)");
                 multipleSuccess = false;
                 return false;
             } else {
-                ImportUtility.outputError = false;
+                ImportUtility.setShouldOutputError(false);
                 for (JSONObject newe: tocreate) {
                     try {
                         Element newElement = ImportUtility.createElement(newe, false);
@@ -126,7 +123,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                         
                     }
                 }
-                ImportUtility.outputError = true;
+                ImportUtility.setShouldOutputError(true);
                 for (JSONObject newe: tocreate) {
                     try {
                         Element newElement = ImportUtility.createElement(newe, true);

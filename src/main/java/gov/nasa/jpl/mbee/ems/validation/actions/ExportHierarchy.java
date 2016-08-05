@@ -29,9 +29,10 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
 import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.sync.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.Request;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.Document;
@@ -121,7 +122,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             documents.add(doc);
             send.put("elements", documents);
             send.put("source", "magicdraw");
-            send.put("mmsVersion", "2.3");
+            send.put("mmsVersion", DocGenPlugin.VERSION);
             //if (ExportUtility.send(docurl, send.toJSONString()) == null)
             //    return false;
             Utils.guilog("[INFO] Request is added to queue.");
@@ -139,7 +140,7 @@ public class ExportHierarchy extends RuleViolationAction implements AnnotationAc
             JSONObject send  = new JSONObject();
             send.put("elements", views);
             send.put("source", "magicdraw");
-            send.put("mmsVersion", "2.3");
+            send.put("mmsVersion", DocGenPlugin.VERSION);
             //if (ExportUtility.send(url + "/elements", send.toJSONString()) == null)
             //    return false;
             Utils.guilog("[INFO] Request is added to queue.");

@@ -11,7 +11,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +25,6 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.impl.ElementsFactory;
 
@@ -44,6 +42,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
  * @author dlam
  *
  */
+@Deprecated
 public class ViewInstancesOrganizer implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Organization");
     //unable to move instances or packages to their right place
@@ -57,25 +56,24 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
     private Element start;
     private boolean isFromTeamwork;
     private boolean showValidation;
-    private ViewInstanceUtils instanceUtils;
+    private PresentationElementUtils peUtils;
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
     private Project project = Application.getInstance().getProject();
     private Set<Element> shouldMove = new HashSet<Element>();
-    private Map<Element, ViewInstanceInfo> infos = new HashMap<Element, ViewInstanceInfo>();
+    private Map<Element, PresentationElementInfo> infos = new HashMap<Element, PresentationElementInfo>();
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
     private Package unused = null;
-    private Collection<Element> toLockOptional = new HashSet<Element>();
     
     private Map<Element, List<InstanceSpecification>> all = new HashMap<Element, List<InstanceSpecification>>();
     private Map<Element, List<InstanceSpecification>> allManual = new HashMap<Element, List<InstanceSpecification>>();
     
-    public ViewInstancesOrganizer(Element start, boolean recurse, boolean showValidation, ViewInstanceUtils viu) {
+    public ViewInstancesOrganizer(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu) {
         this.start = start;
         this.recurse = recurse;
         this.showValidation = showValidation;
-        this.instanceUtils = viu;
-        if (this.instanceUtils == null)
-            this.instanceUtils = new ViewInstanceUtils();
+        this.peUtils = viu;
+        if (this.peUtils == null)
+            this.peUtils = new PresentationElementUtils();
         suite.addValidationRule(uneditableOwner);
         suite.addValidationRule(viewParent);
         suite.addValidationRule(instanceRef);
@@ -94,7 +92,7 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
         ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
         dge.accept(vhv);
         Map<Element, List<Element>> view2view = vhv.getView2ViewElements();
-        List<Element> views = instanceUtils.getViewProcessOrder(start, view2view);
+        List<Element> views = peUtils.getViewProcessOrder(start, view2view);
         
         Set<Element> skippedViews = new HashSet<Element>();
         for (Element view: views) {
@@ -102,23 +100,21 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
                 skippedViews.add(view);
                 continue;
             }
-            Package viewPackage = instanceUtils.findViewInstancePackage(view);
-            List<Package> parents = instanceUtils.findCorrectViewInstancePackageOwners(view);
+            Package viewPackage = peUtils.findViewInstancePackage(view);
+            List<Package> parents = peUtils.findCorrectViewInstancePackageOwners(view);
             if (viewPackage != null && !parents.contains(viewPackage.getOwner())) {
-                toLockOptional.add(viewPackage);
-                //Utils.tryToLock(project, viewPackage, isFromTeamwork); //package needs moving
+                Utils.tryToLock(project, viewPackage, isFromTeamwork); //package needs moving
                 shouldMove.add(viewPackage);
             }
             lockElements(view, view, viewPackage);
         }
-        Utils.tryToLockMany(project, toLockOptional, isFromTeamwork, false);
         boolean sessionCreated = false;
         try {
             if (!SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().createSession("view instance organize");
                 sessionCreated = true;
             }
-            unused = instanceUtils.getOrCreateUnusedInstancePackage();
+            unused = peUtils.getOrCreateUnusedInstancePackage();
             for (Element view: views) {
                 if (skippedViews.contains(view))
                     continue;
@@ -142,24 +138,22 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
     }
     
     public void lockElements(Element viewOrSection, Element view, Package viewPackage) { //try to lock things, doesn't matter if fails
-        ViewInstanceInfo info = instanceUtils.getCurrentInstances(viewOrSection, view);
+        PresentationElementInfo info = peUtils.getCurrentInstances(viewOrSection, view);
         
         for (InstanceSpecification is: info.getSections()) {
             lockElements(is, view, viewPackage);
         }
         for (InstanceSpecification is: info.getOpaque()) {
             if (is.getOwner() != viewPackage) { //check sections
-                //Utils.tryToLock(project, is, isFromTeamwork); //instance needs moving
-                toLockOptional.add(is);
+                Utils.tryToLock(project, is, isFromTeamwork); //instance needs moving
                 shouldMove.add(is);
             }
         }
         for (InstanceSpecification is: info.getManuals()) {
-            if (instanceUtils.isSection(is))
+            if (peUtils.isSection(is))
                 lockElements(is, view, viewPackage);
-            if (!instanceUtils.isInSomeViewPackage(is)) {
-                //Utils.tryToLock(project, is, isFromTeamwork); //manual instance needs moving
-                toLockOptional.add(is);
+            if (!peUtils.isInSomeViewPackage(is)) {
+                Utils.tryToLock(project, is, isFromTeamwork); //manual instance needs moving
                 shouldMove.add(is);
             }
         }
@@ -175,21 +169,20 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
             instanceRef.addViolation(vrv);
         }
         for (InstanceSpecification is: info.getUnused()) {
-            //Utils.tryToLock(project, is, isFromTeamwork);
-            toLockOptional.add(is);
+            Utils.tryToLock(project, is, isFromTeamwork);
         }
         infos.put(viewOrSection, info);
     }
 
     private void handle(Element viewOrSection, Package p) {
-        ViewInstanceInfo info = infos.get(viewOrSection);
+        PresentationElementInfo info = infos.get(viewOrSection);
         for (InstanceSpecification is: info.getSections()) {
             handle(is, p);
         }
         for (InstanceSpecification is: info.getOpaque())
             moveViewInstance(is, p);
         for (InstanceSpecification is: info.getManuals()) {
-            if (instanceUtils.isSection(is))
+            if (peUtils.isSection(is))
                 handle(is, p);
             if (shouldMove.contains(is))
                 moveViewInstance(is, p);
@@ -215,10 +208,10 @@ public class ViewInstancesOrganizer implements RunnableWithProgress {
     }
     
     public Package createOrMoveViewInstancePackage(Element view) {
-        Package viewPackage = instanceUtils.findViewInstancePackage(view);
-        List<Package> parentPackages = instanceUtils.findCorrectViewInstancePackageOwners(view);
+        Package viewPackage = peUtils.findViewInstancePackage(view);
+        List<Package> parentPackages = peUtils.findCorrectViewInstancePackageOwners(view);
         if (viewPackage == null) {
-            viewPackage = instanceUtils.createViewInstancePackage(view, parentPackages.get(0));
+            viewPackage = peUtils.createViewInstancePackage(view, parentPackages.get(0));
         }
         if (!parentPackages.contains(viewPackage.getOwner())) {
             if (!viewPackage.isEditable()) {
