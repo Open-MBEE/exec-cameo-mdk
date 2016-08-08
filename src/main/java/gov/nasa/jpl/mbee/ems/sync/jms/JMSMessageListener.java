@@ -20,9 +20,6 @@ import javax.jms.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Created by igomes on 7/13/16.
- */
 public class JMSMessageListener implements MessageListener, ExceptionListener {
     private static final Map<String, Changelog.ChangeType> CHANGE_MAPPING = new LinkedHashMap<>(4);
 
