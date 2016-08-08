@@ -46,7 +46,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     private Message lastMessage;
 
-    public JMSMessageListener(Project project) {
+    JMSMessageListener(Project project) {
         this.project = project;
     }
 
@@ -118,7 +118,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                             continue;
                         }
                     }
-                    inMemoryJMSChangelog.addChange((String) o, elementJson, entry.getValue());
+                    inMemoryJMSChangelog.addChange(sysmlid, elementJson, entry.getValue());
                 }
             }
         }
