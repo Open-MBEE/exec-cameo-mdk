@@ -287,11 +287,11 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                         break;
                     }
                 }
-                if (areAllDocuments) {
+                /*if (areAllDocuments) {
                     NMAction action = manager.getActionFor(ValidateHierarchyAction.actionid);
                     if (action == null)
                         modelLoad2.addAction(new ValidateHierarchyAction(es));
-                }
+                }*/
                 /*ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
 
                 action = manager.getActionFor("ExportView");

@@ -48,7 +48,7 @@ public abstract class Migrator {
 		//url += "?background=true"; added in Request
 		
 		Application.getInstance().getGUILog().log("[INFO] Migration request is added to queue.");
-		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), "Migration",true));
+		OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), "Migration", true));
 	}
 
 
