@@ -6,15 +6,18 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
 import org.json.simple.JSONArray;
@@ -103,7 +106,7 @@ public class Crushinator23To24Migrator extends Migrator {
                 documents = new HashSet<>();
         Set<Property> properties = new HashSet<>();
         Set<Association> associations = new HashSet<>();
-        Set<Constraint> constraints = new HashSet<>();
+        Set<Element> elementsToDelete = new HashSet<>();
         if (viewStereotype == null) {
             Application.getInstance().getGUILog().log("[ERROR] Failed to find view stereotype.");
             failed = true;
@@ -135,33 +138,46 @@ public class Crushinator23To24Migrator extends Migrator {
         }
 
         List<Element> viewsAndDocuments = new ArrayList<>(views.size() + documents.size());
+        PresentationElementUtils presentationElementUtils = new PresentationElementUtils();
         viewsAndDocuments.addAll(views);
         viewsAndDocuments.addAll(documents);
         for (Element element : viewsAndDocuments) {
             Constraint constraint = Utils.getViewConstraint(element);
             if (constraint != null) {
-                constraints.add(constraint);
+                elementsToDelete.add(constraint);
+            }
+            Package viewInstancePackage = presentationElementUtils.findViewInstancePackage(element);
+            if (viewInstancePackage != null) {
+                elementsToDelete.add(viewInstancePackage);
             }
             if (element instanceof Class) {
                 properties.addAll(((Class) element).getOwnedAttribute());
             }
+        }
+        BaseElement viewInstancesPackage = project.getElementByID(project.getPrimaryProject().getProjectID().replace("PROJECT", "View_Instances"));
+        if (viewInstancesPackage instanceof Element) {
+            elementsToDelete.add((Element) viewInstancesPackage);
+        }
+        BaseElement unusedViewInstancePackage = project.getElementByID(project.getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances"));
+        if (unusedViewInstancePackage instanceof Element) {
+            elementsToDelete.add((Element) unusedViewInstancePackage);
         }
 
         for (Property property : properties) {
             associations.add(property.getAssociation());
         }
 
-        if (!constraints.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Deleting " + constraints.size() + " client-side view constraint" + (constraints.size() != 1 ? "s" : "") + ".");
+        if (!elementsToDelete.isEmpty()) {
+            Application.getInstance().getGUILog().log("[INFO] Deleting " + elementsToDelete.size() + " client-side view related element" + (elementsToDelete.size() != 1 ? "s" : "") + ".");
             if (!SessionManager.getInstance().isSessionCreated(project)) {
                 SessionManager.getInstance().createSession(project, "2.3 to 2.4 Migration");
             }
-            for (Element constraint : constraints) {
+            for (Element element : elementsToDelete) {
                 try {
-                    ModelElementsManager.getInstance().removeElement(constraint);
+                    ModelElementsManager.getInstance().removeElement(element);
                 } catch (ReadOnlyElementException ignored) {
                     failed = true;
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to delete read-only element " + constraint.getID() + ".");
+                    Application.getInstance().getGUILog().log("[ERROR] Failed to delete read-only element " + element.getID() + ".");
                 }
             }
         }
