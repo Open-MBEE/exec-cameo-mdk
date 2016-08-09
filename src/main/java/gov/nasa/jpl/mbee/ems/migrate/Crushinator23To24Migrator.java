@@ -52,7 +52,9 @@ public class Crushinator23To24Migrator extends Migrator {
             new String[]{"sysmlid"},
             new String[]{"owner"},
             new String[]{"specialization", "ownedEnd"},
-            new String[]{"specialization", "type"}
+            new String[]{"specialization", "type"},
+            new String[]{"specialization", "source"},
+            new String[]{"specialization", "target"}
     );
 
     private Project project = Application.getInstance().getProject();

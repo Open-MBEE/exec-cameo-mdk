@@ -17,12 +17,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import javax.jms.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Created by igomes on 7/13/16.
- */
 public class JMSMessageListener implements MessageListener, ExceptionListener {
     private static final Map<String, Changelog.ChangeType> CHANGE_MAPPING = new LinkedHashMap<>(4);
 
@@ -46,7 +42,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     private Message lastMessage;
 
-    public JMSMessageListener(Project project) {
+    JMSMessageListener(Project project) {
         this.project = project;
     }
 
@@ -75,7 +71,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         if ((o = jsonObject.get("workspace2")) instanceof JSONObject) {
             JSONObject workspace2 = (JSONObject) o;
 
-            if (!((o = jsonObject.get("source")) instanceof String) || o.equals("magicdraw")) {
+            if (((o = jsonObject.get("source")) instanceof String) && ((String) o).startsWith("magicdraw")) {
                 return;
             }
 
@@ -118,7 +114,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                             continue;
                         }
                     }
-                    inMemoryJMSChangelog.addChange((String) o, elementJson, entry.getValue());
+                    inMemoryJMSChangelog.addChange(sysmlid, elementJson, entry.getValue());
                 }
             }
         }

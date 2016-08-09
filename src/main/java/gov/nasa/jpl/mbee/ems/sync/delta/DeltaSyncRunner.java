@@ -244,7 +244,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         localElementsToPost.put(id, element);
                         break;
                     case DELETED:
-                        if (element != null && !element.isInvalid()) {
+                        if (element != null && !project.isDisposed(element)) {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " from the MMS, but it still exists locally. Skipping.");
                             continue;
                         }

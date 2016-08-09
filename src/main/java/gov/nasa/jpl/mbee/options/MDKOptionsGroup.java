@@ -85,7 +85,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
     @Override
     public void setDefaultValues() {
-        setLogJson(true);
+        setLogJson(false);
         setSaveChanges(true);
         setCommitListener(true);
         setMMSLiveSync(true);
