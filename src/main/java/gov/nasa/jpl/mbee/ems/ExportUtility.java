@@ -463,25 +463,25 @@ public class ExportUtility {
         if (code != 200) {
             if (code >= 500) {
                 if (showPopupErrors) {
-                    Utils.showPopupMessage("Server Error, see message window for details");
+                    Utils.showPopupMessage("Server Error. See message window for details.");
                 }
                 Utils.guilog(response);
             }
             else if (code == 401) {
                 if (showPopupErrors) {
-                    Utils.showPopupMessage("You are not authorized or don't have permission, (you can login and try again).");
+                    Utils.showPopupMessage("You are not authorized or don't have permission. You can login and try again.");
                 }
                 else {
-                    Utils.guilog("You are not authorized or don't have permission, (you can login and try again).");
+                    Utils.guilog("You are not authorized or don't have permission. You can login and try again.");
                 }
                 ViewEditUtils.clearUsernameAndPassword();
             }
             else if (code == 403) {
                 if (showPopupErrors) {
-                    Utils.showPopupMessage("You do not have permission to do this");
+                    Utils.showPopupMessage("You do not have permission to do this.");
                 }
                 else {
-                    Utils.guilog("You do not have permission to do this");
+                    Utils.guilog("You do not have permission to do this.");
                 }
             }
             else {
@@ -489,6 +489,9 @@ public class ExportUtility {
                     Object o = JSONValue.parse(response);
                     if (o instanceof JSONObject && ((JSONObject) o).containsKey("message")) {
                         Utils.guilog("Server message: " + code + " " + ((JSONObject) o).get("message"));
+                    }
+                    else if (o instanceof JSONObject || o instanceof JSONArray) {
+                        Utils.guilog("Server response: " + code + (MDKOptionsGroup.getMDKOptions().isLogJson() ? " " + response : ""));
                     }
                     else {
                         Utils.guilog("Server response: " + code + " " + response);
