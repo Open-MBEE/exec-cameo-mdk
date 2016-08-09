@@ -488,13 +488,16 @@ public class ExportUtility {
                 try {
                     Object o = JSONValue.parse(response);
                     if (o instanceof JSONObject && ((JSONObject) o).containsKey("message")) {
-                        Utils.guilog("Server message: " + code + (MDKOptionsGroup.getMDKOptions().isLogJson() ? " " + ((JSONObject) o).get("message") : ""));
+                        Utils.guilog("Server message: " + code + " " + ((JSONObject) o).get("message"));
                     }
-                    else {
+                    else if (o instanceof JSONObject || o instanceof JSONArray) {
                         Utils.guilog("Server response: " + code + (MDKOptionsGroup.getMDKOptions().isLogJson() ? " " + response : ""));
                     }
+                    else {
+                        Utils.guilog("Server response: " + code + " " + response);
+                    }
                 } catch (Exception c) {
-                    Utils.guilog("Server response: " + code + (MDKOptionsGroup.getMDKOptions().isLogJson() ? " " + response : ""));
+                    Utils.guilog("Server response: " + code + " " + response);
                 }
                 if (code == 400) {
                     return false;
@@ -505,7 +508,7 @@ public class ExportUtility {
         try {
             Object o = JSONValue.parse(response);
             if (o instanceof JSONObject && ((JSONObject) o).containsKey("message")) {
-                Utils.guilog("Server message: 200" + (MDKOptionsGroup.getMDKOptions().isLogJson() ? " " + ((JSONObject) o).get("message") : ""));
+                Utils.guilog("Server message: 200 " + ((JSONObject) o).get("message"));
             }
         } catch (Exception c) {
 
