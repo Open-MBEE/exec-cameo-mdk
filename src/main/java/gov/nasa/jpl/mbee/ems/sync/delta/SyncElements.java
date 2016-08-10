@@ -42,7 +42,7 @@ public class SyncElements {
         return project.getPrimaryProject().getProjectID() + "_sync";
     }
 
-    private static Package getSyncPackage(Project project) {
+    public static Package getSyncPackage(Project project) {
         String folderId = getSyncPackageID(project);
         Element folder = ExportUtility.getElementFromID(folderId);
         return folder instanceof Package ? (Package) folder : null;

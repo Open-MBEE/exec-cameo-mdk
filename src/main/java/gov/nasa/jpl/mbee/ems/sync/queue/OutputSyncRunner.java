@@ -33,11 +33,11 @@ public class OutputSyncRunner implements Runnable {
     @Override
     public void run() {
         log.info("sync runner started");
-        gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue q = gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue.getInstance();
+        OutputQueue q = OutputQueue.getInstance();
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+                OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
             }
         });
         while (true) {
@@ -46,7 +46,7 @@ public class OutputSyncRunner implements Runnable {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
+                            OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
                         }
                     });
                 }

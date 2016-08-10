@@ -15,6 +15,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
@@ -161,6 +162,11 @@ public class Crushinator23To24Migrator extends Migrator {
         BaseElement unusedViewInstancePackage = project.getElementByID(project.getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances"));
         if (unusedViewInstancePackage instanceof Element) {
             elementsToDelete.add((Element) unusedViewInstancePackage);
+        }
+        // cannot confirm validity of 2.3- changelogs and lots of unneeded blocks
+        Package syncPackage = SyncElements.getSyncPackage(project);
+        if (syncPackage != null) {
+            elementsToDelete.add(syncPackage);
         }
 
         for (Property property : properties) {

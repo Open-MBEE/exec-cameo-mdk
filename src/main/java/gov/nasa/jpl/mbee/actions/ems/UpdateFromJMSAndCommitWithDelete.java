@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.nomagic.ui.ProgressStatusRunner;
 
+@Deprecated
 public class UpdateFromJMSAndCommitWithDelete extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "UpdateFromJMSAndCommitWithDelete";

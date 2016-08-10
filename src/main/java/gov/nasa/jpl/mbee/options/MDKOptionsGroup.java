@@ -14,9 +14,9 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     public static final String GROUP = "MDK";
     
     public static final String LOG_JSON_ID = "LOG_JSON",
-            SAVE_CHANGES_ID = "SAVE_LOCAL_CHANGES_ON_PROJECT_SAVE",
-            LISTENER_ID = "ENABLE_COMMIT_LISTENER",
-            MMS_LIVE_SYNC = "SHOW_MMS_LIVE_SYNC";
+            PERSIST_CHANGELOG = "PERSIST_CHANGELOG_ON_SAVE",
+            CHANGE_LISTENER = "ENABLE_CHANGE_LISTENER",
+            COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC";
 
     
     public MDKOptionsGroup() {
@@ -40,40 +40,40 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
     }
     
-    public boolean isSaveChanges() {
-        Property p = getProperty(SAVE_CHANGES_ID);
+    public boolean isPersistChangelog() {
+        Property p = getProperty(PERSIST_CHANGELOG);
         return (Boolean)p.getValue();
     }
     
-    public void setSaveChanges(boolean value) {
-        BooleanProperty property = new BooleanProperty(SAVE_CHANGES_ID, value);
+    public void setPersistChangelog(boolean value) {
+        BooleanProperty property = new BooleanProperty(PERSIST_CHANGELOG, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property);
     }
     
-    public boolean isCommitListener() {
-        Property p = getProperty(LISTENER_ID);
+    public boolean isChangeListenerEnabled() {
+        Property p = getProperty(CHANGE_LISTENER);
         return (Boolean)p.getValue();
     }
     
-    public void setCommitListener(boolean value) {
-        BooleanProperty property = new BooleanProperty(LISTENER_ID, value);
-        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
-        property.setGroup(GROUP);
-        addProperty(property);
-    }
-
-    public void setMMSLiveSync(boolean value) {
-        BooleanProperty property = new BooleanProperty(MMS_LIVE_SYNC, value);
+    public void setChangeListenerEnabled(boolean value) {
+        BooleanProperty property = new BooleanProperty(CHANGE_LISTENER, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property);
     }
 
-    public boolean isMMSLiveSync() {
-        Property p = getProperty(MMS_LIVE_SYNC);
+    public boolean isCoordinatedSyncEnabled() {
+        Property p = getProperty(COORDINATED_SYNC);
         return (Boolean)p.getValue();
+    }
+
+    public void setCoordinatedSyncEnabled(boolean value) {
+        BooleanProperty property = new BooleanProperty(COORDINATED_SYNC, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
+        addProperty(property);
     }
     
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = new PropertyResourceProvider() {
@@ -86,9 +86,9 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     @Override
     public void setDefaultValues() {
         setLogJson(false);
-        setSaveChanges(true);
-        setCommitListener(true);
-        setMMSLiveSync(true);
+        setPersistChangelog(true);
+        setChangeListenerEnabled(true);
+        setCoordinatedSyncEnabled(true);
     }
     
     private static final String MDK_OPTIONS_NAME = "MDK";

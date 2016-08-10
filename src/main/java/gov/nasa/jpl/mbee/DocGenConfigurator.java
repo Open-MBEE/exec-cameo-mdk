@@ -28,59 +28,10 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
-import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
-import gov.nasa.jpl.mbee.actions.PublishDocWebAction;
-import gov.nasa.jpl.mbee.actions.docgen.CreateRestrictedValueAction;
-import gov.nasa.jpl.mbee.actions.docgen.GenerateDocumentAction;
-import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
-import gov.nasa.jpl.mbee.actions.docgen.InstanceViewpointAction;
-import gov.nasa.jpl.mbee.actions.docgen.MigrateToClassViewAction;
-import gov.nasa.jpl.mbee.actions.docgen.NumberAssociationAction;
-import gov.nasa.jpl.mbee.actions.docgen.NumberDependencyAction;
-import gov.nasa.jpl.mbee.actions.docgen.RunUserScriptAction;
-import gov.nasa.jpl.mbee.actions.docgen.RunUserValidationScriptAction;
-import gov.nasa.jpl.mbee.actions.docgen.ValidateDocument3Action;
-import gov.nasa.jpl.mbee.actions.docgen.ValidateOldDocgen;
-import gov.nasa.jpl.mbee.actions.docgen.ValidateViewStructureAction;
-import gov.nasa.jpl.mbee.actions.docgen.ViewDocument3Action;
-import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
-import gov.nasa.jpl.mbee.actions.ems.ExportAllDocuments;
-import gov.nasa.jpl.mbee.actions.ems.ExportModelAction;
-import gov.nasa.jpl.mbee.actions.ems.ExportViewAction;
-import gov.nasa.jpl.mbee.actions.ems.InitializeProjectAction;
-import gov.nasa.jpl.mbee.actions.ems.OneClickUpdateDoc;
-import gov.nasa.jpl.mbee.actions.ems.OrganizeViewInstancesAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateElementAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateElementDepthAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateHierarchyAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateModelAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateViewAction;
-import gov.nasa.jpl.mbee.actions.ems.ValidateViewRecursiveAction;
-import gov.nasa.jpl.mbee.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.lib.MDUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
-import gov.nasa.jpl.mbee.model.Document;
-import gov.nasa.jpl.mbee.model.UserScript;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.actions.ActionsStateUpdater;
-import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
-import com.nomagic.magicdraw.actions.ConfiguratorWithPriority;
-import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.actions.*;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.browser.Node;
@@ -91,12 +42,26 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
+import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
+import gov.nasa.jpl.mbee.actions.docgen.*;
+import gov.nasa.jpl.mbee.actions.ems.*;
+import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.lib.MDUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mbee.model.CollectActionsVisitor;
+import gov.nasa.jpl.mbee.model.Document;
+import gov.nasa.jpl.mbee.model.UserScript;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class DocGenConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 

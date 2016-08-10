@@ -30,6 +30,7 @@ import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.function.BiFunction;
 import gov.nasa.jpl.mbee.lib.function.BiPredicate;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
@@ -49,7 +50,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
     private final Project project = Application.getInstance().getProject();
 
-    private boolean failure = false;
+    private boolean failure = true;
 
     private ValidationSuite changelogSuite = new ValidationSuite("Updated Elements/Failed Updates");
     private ValidationRule locallyChangedValidationRule = new ValidationRule("updated", "updated", ViolationSeverity.INFO);
@@ -58,7 +59,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     private ValidationRule cannotCreate = new ValidationRule("cannotCreate", "cannotCreate", ViolationSeverity.ERROR);
 
     private Changelog<String, Element> failedLocalChangelog = new Changelog<>();
-    private Changelog<String, Void> failedJmsChangelog = new Changelog<>();
+    private Changelog<String, Void> failedJmsChangelog = new Changelog<>(), successfulJmsChangelog = new Changelog<>();
 
     private List<ValidationSuite> vss = new ArrayList<>();
 
@@ -90,7 +91,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     @Override
     public void run(ProgressStatus ps) {
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && TeamworkUtils.getLoggedUserName() == null) {
-            failure = true;
             Utils.guilog("[ERROR] You need to be logged in to Teamwork first.");
             return;
         }
@@ -98,7 +98,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener == null) {
             Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener.");
-            failure = true;
             return;
         }
 
@@ -113,13 +112,14 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
         JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
         if (jmsMessageListener == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Could not connect to MMS. Please verify your url/site configuration.");
-            failure = true;
+            if (MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
+                Application.getInstance().getGUILog().log("[ERROR] Not connected to JMS queue. Skipping sync. All changes will be re-attempted in the next sync.");
+            }
             return;
         }
-        if (jmsSyncProjectMapping.isDisabled()) {
+        /*if (jmsSyncProjectMapping.isDisabled()) {
             jmsSyncProjectMapping.setDisabled(!JMSSyncProjectEventListenerAdapter.initDurable(project, jmsSyncProjectMapping));
-            /*List<TextMessage> textMessages = jmsSyncProjectMapping.getAllTextMessages(true);
+            List<TextMessage> textMessages = jmsSyncProjectMapping.getAllTextMessages(true);
             if (textMessages == null) {
                 Utils.guilog("[ERROR] Could not get changes from MMS. Please check your network connection and try again.");
                 failure = true;
@@ -127,8 +127,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
             for (TextMessage textMessage : textMessages) {
                 jmsMessageListener.onMessage(textMessage);
-            }*/
-        }
+            }
+        }*/
 
         // BUILD COMPLETE LOCAL CHANGELOG
 
@@ -194,7 +194,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 return;
             }
             if (response == null) {
-                failure = true;
                 Utils.guilog("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
                 return;
             }
@@ -355,10 +354,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         if (shouldLogNoLocalChanges) {
             Application.getInstance().getGUILog().log("[INFO] No local changes to commit to MMS.");
         }
-
-        // PREP UPDATED (FROM JMS) ELEMENTS CHANGELOG
-
-        Changelog<String, Void> successfulJmsChangelog = new Changelog<>();
 
         // ADD CREATED ELEMENTS LOCALLY FROM MMS
 
@@ -589,36 +584,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         SessionManager.getInstance().closeSession();
         listener.setDisabled(false);
 
-        // ACKNOWLEDGE LAST JMS MESSAGE TO CLEAR OWN QUEUE
+        // SUCCESS
 
-        Message lastMessage = jmsMessageListener.getLastMessage();
-        if (lastMessage != null) {
-            try {
-                lastMessage.acknowledge();
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
-        }
+        failure = false;
+    }
 
-        // NOTIFY OTHER USERS OF PROCESSED ELEMENTS
-
-        if (!successfulJmsChangelog.isEmpty()) {
-            JSONObject teamworkCommittedMessage = new JSONObject();
-            teamworkCommittedMessage.put("source", "magicdraw");
-            teamworkCommittedMessage.put("sender", ViewEditUtils.getUsername());
-            teamworkCommittedMessage.put("synced", SyncElements.buildJson(successfulJmsChangelog));
-            try {
-                TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(teamworkCommittedMessage.toJSONString());
-                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, ExportUtility.getProjectId(project));
-                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, ExportUtility.getWorkspace() + "_mdk");
-                jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
-                int syncCount = successfulJmsChangelog.flattenedSize();
-                Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
-            } catch (JMSException e) {
-                e.printStackTrace();
-                Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
-            }
-        }
+    public Changelog<String, Void> getSuccessfulJmsChangelog() {
+        return successfulJmsChangelog;
     }
 
     public boolean isFailure() {
