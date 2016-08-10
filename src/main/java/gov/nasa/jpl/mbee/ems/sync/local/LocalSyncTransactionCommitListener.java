@@ -56,7 +56,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
 
     @Override
     public Runnable transactionCommited(Collection<PropertyChangeEvent> events) {
-        if (isDisabled() || !MDKOptionsGroup.getMDKOptions().isCommitListener()) {
+        if (isDisabled() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
             return null;
         }
         return new TransactionCommitHandler(events, Application.getInstance().getProject().getModel());

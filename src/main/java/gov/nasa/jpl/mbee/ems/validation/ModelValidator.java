@@ -1235,7 +1235,7 @@ public class ModelValidator {
 //        String webSourceAggr = (String)webspec.get("sourceAggregation");
 //        String webTargetAggr = (String)webspec.get("targetAggregation");
         JSONArray webOwned = (JSONArray)webspec.get("ownedEnd");
-        if (!modelSource.equals(webSource) || !modelTarget.equals(webTarget) ||
+        if (modelSource == null || modelTarget == null || modelOwned == null || !modelSource.equals(webSource) || !modelTarget.equals(webTarget) ||
 //                !modelSourceAggr.equals(webSourceAggr) || !modelTargetAggr.equals(webTargetAggr) ||
                 !modelOwned.equals(webOwned)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[ASSOC] Association roles/aggregation/navigability are different");

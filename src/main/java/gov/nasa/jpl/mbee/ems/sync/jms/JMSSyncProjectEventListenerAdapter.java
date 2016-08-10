@@ -31,7 +31,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectOpened(Project project) {
         projectClosed(project);
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
-        jmsSyncProjectMapping.setDisabled(!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project, jmsSyncProjectMapping));
+        jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project, jmsSyncProjectMapping));
     }
 
     @Override
@@ -61,7 +61,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (JMSMessageListener != null) {
             JMSMessageListener.getInMemoryJMSChangelog().clear();
         }
-        if (jmsSyncProjectMapping.isDisabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+        if (jmsSyncProjectMapping.isDisabled() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
             Application.getInstance().getGUILog().log("[INFO] Attempting to re-initialize JMS sync.");
             projectOpened(project);
         }

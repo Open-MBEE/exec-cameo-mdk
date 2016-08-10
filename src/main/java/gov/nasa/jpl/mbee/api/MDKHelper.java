@@ -198,8 +198,8 @@ public class MDKHelper {
 	 */
 	@Deprecated
 	public static void generateViewsAndCommitToMMS(Element doc) {
-		OneClickUpdateDoc ocud = new OneClickUpdateDoc(Lists.newArrayList(doc));
-		validationWindow = new MDKValidationWindow(ocud.updateAction());
+		//OneClickUpdateDoc ocud = new OneClickUpdateDoc(Lists.newArrayList(doc));
+		//validationWindow = new MDKValidationWindow(ocud.updateAction());
 	}
 
 	/**
@@ -230,10 +230,11 @@ public class MDKHelper {
 	 * @param validateTarget
 	 *            element that the validation is to be performed upon
 	 */
+	@Deprecated
 	public static void validateViewHierarchy(Element validateTarget) {
-		ValidateViewRunner vvr = new ValidateViewRunner(validateTarget, false, true, true);
-		ProgressStatusRunner.runWithProgressStatus(vvr, "Validating Views", true, 0);
-		validationWindow = new MDKValidationWindow(vvr.getValidations());
+		//ValidateViewRunner vvr = new ValidateViewRunner(validateTarget, false, true, true);
+		//ProgressStatusRunner.runWithProgressStatus(vvr, "Validating Views", true, 0);
+		//validationWindow = new MDKValidationWindow(vvr.getValidations());
 	}
 
 	/**********************************************************************************
@@ -245,10 +246,15 @@ public class MDKHelper {
 	/**
 	 * Executes "Generate All Documents and Commit" action
 	 */
+	@Deprecated
 	public static void generateAllDocumentsAndCommitToMMS() {
-		UpdateAllDocs uad = new UpdateAllDocs();
-		validationWindow = new MDKValidationWindow(uad.updateAction());
+		generateAllDocuments();
 	}
+
+	public static void generateAllDocuments() {
+        UpdateAllDocs uad = new UpdateAllDocs();
+        validationWindow = new MDKValidationWindow(uad.updateAction());
+    }
 
 	/**
 	 * Starts MMS Auto Sync
@@ -266,14 +272,16 @@ public class MDKHelper {
 	/**
 	 * Executes "Update From MMS" action
 	 */
+	@Deprecated
 	public static void updateFromMMS() {
-		UpdateFromJMS ufjms = new UpdateFromJMS(false);
-		validationWindow = new MDKValidationWindow(ufjms.updateAction());
+		//UpdateFromJMS ufjms = new UpdateFromJMS(false);
+		//validationWindow = new MDKValidationWindow(ufjms.updateAction());
 	}
 
     /**
      * Executes "Commit to MMS" action
      */
+    @Deprecated
     public static void commitToMMS() {
         updateAndCommitToMMS();
     }
@@ -281,17 +289,19 @@ public class MDKHelper {
 	/**
 	 * Executes "Commit to MMS" action
 	 */
+	@Deprecated
 	public static void updateAndCommitToMMS() {
-		UpdateFromJMS ufjms = new UpdateFromJMS(true);
-		validationWindow = new MDKValidationWindow(ufjms.updateAction());
+		//UpdateFromJMS ufjms = new UpdateFromJMS(true);
+		//validationWindow = new MDKValidationWindow(ufjms.updateAction());
 	}
 
 	/**
 	 * Executes "Commit to MMS with Deletes" action
 	 */
+	@Deprecated
 	public static void updateAndCommitWithDeletesToMMS() {
-		UpdateFromJMSAndCommitWithDelete ufjmsacwd = new UpdateFromJMSAndCommitWithDelete();
-		validationWindow = new MDKValidationWindow(ufjmsacwd.updateAction());
+		//UpdateFromJMSAndCommitWithDelete ufjmsacwd = new UpdateFromJMSAndCommitWithDelete();
+		//validationWindow = new MDKValidationWindow(ufjmsacwd.updateAction());
 	}
 
 	public static Changelog<String, Element> getInMemoryElementChangelog(Project project) {

@@ -48,6 +48,9 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     @Override
     public void onMessage(Message message) {
+        if (!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
+            return;
+        }
         lastMessage = message;
         if (!(message instanceof TextMessage)) {
             return;
@@ -160,7 +163,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
     public void onException(JMSException exception) {
         Application.getInstance().getGUILog().log("[WARNING] Lost connection with JMS. Please check your network configuration.");
         JMSSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(true);
-        while (JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") && !project.isProjectClosed()) {
+        while (JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") && !project.isProjectClosed() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
             int delay = Math.min(600, (int) Math.pow(2, reconnectionAttempts++));
             Application.getInstance().getGUILog().log("[INFO] Attempting to reconnect to JMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
             try {

@@ -72,7 +72,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
-        boolean save = MDKOptionsGroup.getMDKOptions().isSaveChanges();
+        boolean save = MDKOptionsGroup.getMDKOptions().isPersistChangelog();
         if (!save) {
             return;
         }
@@ -83,6 +83,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     }
 
     public static void persistChanges(Project project) {
+
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener != null) {
             listener.setDisabled(true);
