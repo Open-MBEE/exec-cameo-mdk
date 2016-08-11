@@ -2185,7 +2185,7 @@ public class ExportUtility {
 
     public static String cleanHtml(String s) {
         return Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "")
-                .replace("<br>", "").replace("</br>", "");// .replace("\n", "");
+                .replace("<br>", "").replace("</br>", "").replace("\n", "");
         // inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
         // return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
     }

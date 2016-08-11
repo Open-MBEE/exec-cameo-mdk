@@ -629,6 +629,13 @@ public class ModelValidator {
             nameDiff.addViolation(v);
         }
         if (elementDoc != null && !(webDoc == null && elementDoc.equals("")) && !elementDocClean.equals(webDoc)) {
+            /*if (webDoc != null) {
+                for (int i = 0; i < Math.max(elementDocClean.length(), webDoc.length()); i++) {
+                    Character elementChar = i < elementDocClean.length() ? elementDocClean.charAt(i) : null;
+                    Character webChar = i < webDoc.length() ? webDoc.charAt(i) : null;
+                    System.out.println((elementChar != null ? "'" + elementChar + "' [" + (int) elementChar + "]" : "~") + "\t" + (webChar != null ? "'" + webChar + "' [" + (int) webChar + "]" : "~"));
+                }
+            }*/
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
             differentElements.add(elementID);
             if (editable)
