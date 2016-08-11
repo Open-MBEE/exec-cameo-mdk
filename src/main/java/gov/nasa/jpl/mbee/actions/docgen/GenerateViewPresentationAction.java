@@ -19,7 +19,7 @@ public class GenerateViewPresentationAction extends MDAction {
     public static final String actionid = "GenerateViewPresentation";
     public static final String recurseActionid = "GenerateViewPresentationR";
 
-    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    private List<ValidationSuite> vss = new ArrayList<>();
     private List<Element> elements;
     private boolean recurse;
 
@@ -32,9 +32,7 @@ public class GenerateViewPresentationAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!Utils.recommendUpdateFromTeamwork()) {
-            return;
-        }
+        Utils.recommendUpdateFromTeamwork();
         updateAction();
     }
 

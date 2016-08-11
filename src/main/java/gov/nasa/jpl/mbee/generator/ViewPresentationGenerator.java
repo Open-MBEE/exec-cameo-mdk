@@ -577,8 +577,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("No changes required to generate views.");
             }
 
-            // STAGE 6: Cleaning up
-            progressStatus.setDescription("Cleaning up");
+            // STAGE 6: Finishing up
+
+            progressStatus.setDescription("Finishing up");
             progressStatus.setCurrent(6);
 
             // Cleaning up after myself. While cancelSession *should* undo all elements created, there are certain edge

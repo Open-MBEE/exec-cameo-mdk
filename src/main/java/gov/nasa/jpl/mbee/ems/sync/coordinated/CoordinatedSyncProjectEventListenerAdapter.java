@@ -56,7 +56,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             return;
         }
         if (project.isTeamworkServerProject() && !savedInServer) {
-            Application.getInstance().getGUILog().log("[INFO] Teamwork project is being saved locally. Real time sync skipped.");
+            Application.getInstance().getGUILog().log("[INFO] Teamwork project is being saved locally. Coordinated sync skipped.");
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);
