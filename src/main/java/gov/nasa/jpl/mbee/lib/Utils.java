@@ -3778,12 +3778,12 @@ public class Utils {
                 + "This action may autolock elements and trigger a teamwork update. Do you want to continue?\n" + add, buttons, false);
         if (reply == null || !reply)
             return false;
-        AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(prj);
+        /*AutoSyncCommitListener listener = AutoSyncProjectListener.getCommitListener(prj);
         if (listener != null)
             listener.disable(); 
         TeamworkUtils.updateProject(prj);
         if (listener != null)
-            listener.enable();
+            listener.enable();*/
         return true;
     }
     

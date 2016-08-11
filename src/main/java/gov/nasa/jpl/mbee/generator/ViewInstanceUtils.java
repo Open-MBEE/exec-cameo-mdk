@@ -262,6 +262,8 @@ public class ViewInstanceUtils {
                     return true;
                 }
             }
+            if (pe.getName() != null && !pe.getName().equals(is.getName()))
+                return true;
         }
         return false;
     }
