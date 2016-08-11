@@ -1,13 +1,5 @@
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.systemsreasoner.AspectAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateOntoBehaviorBlocks;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
- import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,14 +19,22 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
- 
+
+import gov.nasa.jpl.mbee.actions.systemsreasoner.AspectAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.CopyAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateOntoBehaviorBlocks;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
+
 public class SRConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
 	public static final String NAME = "Systems Reasoner";
 
-	private SRAction validateAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null,
-			createInstanceMenuAction = null, aspectAction;
- 
+	private SRAction validateAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
+
 	@Override
 	public int getPriority() {
 		return 0; // medium
@@ -64,12 +64,13 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
 	protected void configure(ActionsManager manager, List<Element> elements) {
 		// refresh the actions for every new click (or selection)
-		validateAction = null; 
- 		ontoBehaviorAction = null;
+		validateAction = null;
+		ontoBehaviorAction = null;
 		createSpecificAction = null;
 		createInstanceMenuAction = null;
 		instance2BSTAction = null;
 		aspectAction = null;
+		copyAction = null;
 
 		ActionsCategory category = (ActionsCategory) manager.getActionFor("SRMain");
 		if (category == null) {
@@ -93,19 +94,20 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		manager.addCategory(0, category);
 
 		category.addAction(validateAction);
- 		if (elements.size() < 2) {
+		if (elements.size() < 2) {
 			if (elements.get(0) instanceof Behavior) {
 				category.addAction(ontoBehaviorAction);
 			}
 		}
- 		category.addAction(createSpecificAction);
+		category.addAction(copyAction);
+		category.addAction(createSpecificAction);
 		category.addAction(createInstanceMenuAction);
 		category.addAction(instance2BSTAction);
 		category.addAction(aspectAction);
- 	 
-	 	category.getActions().clear();
-  		category.setUseActionForDisable(true);
- 		if (category.isEmpty()) {
+
+		category.getActions().clear();
+		category.setUseActionForDisable(true);
+		if (category.isEmpty()) {
 			final MDAction mda = new MDAction(null, null, null, "null");
 			mda.updateState();
 			mda.setEnabled(false);
@@ -114,7 +116,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 	}
 
 	public ActionsCategory handleMultipleNodes(ActionsCategory category, ActionsManager manager, List<Element> elements) {
-	 	final List<Classifier> classifiers = new ArrayList<Classifier>();
+		final List<Classifier> classifiers = new ArrayList<Classifier>();
 		final List<InstanceSpecification> instances = new ArrayList<InstanceSpecification>();
 		final List<Element> validatableElements = new ArrayList<Element>();
 		boolean hasUneditable = false;
@@ -127,7 +129,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 				} else if (element instanceof InstanceSpecification) {
 					instances.add((InstanceSpecification) element);
 					validatableElements.add(element);
-				} 
+				}
 				if (!hasUneditable && !element.isEditable()) {
 					hasUneditable = true;
 				}
@@ -138,13 +140,13 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 		if (validatableElements.isEmpty()) {
 			// category = disableCategory(category);
 			return null;
-		} 
+		}
 		// otherwise, add the classes to the ValidateAction action
-		validateAction = new ValidateAction(validatableElements);  
-		category.addAction(validateAction); 
-		if (!classifiers.isEmpty()) {  
+		validateAction = new ValidateAction(validatableElements);
+		category.addAction(validateAction);
+		if (!classifiers.isEmpty()) {
 			aspectAction = new AspectAction(classifiers);
-		} 
+		}
 		if (!instances.isEmpty()) {
 			instance2BSTAction = new Instance2BSTAction(instances);
 		}
@@ -154,14 +156,19 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
 	public ActionsCategory handleSingleNode(ActionsCategory category, ActionsManager manager, Element element) {
 		if (element == null)
-			return null; 
+			return null;
+		if (element instanceof Package) {
+			copyAction = new CopyAction(element);
+		}
 		if (element instanceof Classifier) {
 			final Classifier classifier = (Classifier) element;
-			validateAction = new ValidateAction(classifier); 
-	 		ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
+			validateAction = new ValidateAction(classifier);
+			ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
 			createSpecificAction = new CreateSpecificAction(classifier, false);
 			createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
-			aspectAction = new AspectAction(classifier); 
+			aspectAction = new AspectAction(classifier);
+			copyAction = new CopyAction(element);
+
 			if (classifier instanceof Behavior) {
 
 			}
@@ -173,7 +180,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 			instance2BSTAction = new Instance2BSTAction(insts);
 		} else {
 			return null;
-		} 
+		}
 		return category;
 	}
 

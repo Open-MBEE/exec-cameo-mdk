@@ -41,7 +41,6 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EAttribute;
-import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
@@ -110,8 +109,11 @@ import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 public class EMFExporter {
+	private JSONArray siblings;
+
 	public EMFExporter(Element element) {
 		super();
+		siblings = new JSONArray();
 		createdIDs = new ArrayList<String>();
 		for (EStructuralFeature ef : element.eClass().getEAllStructuralFeatures()) {
 			if (ef.getName().equals("ID")) {
@@ -129,6 +131,7 @@ public class EMFExporter {
 	private static EStructuralFeature IDStructuralFeature;
 	private static ArrayList<String> createdIDs;
 
+	@SuppressWarnings("unchecked")
 	public JSONObject fillElement(Element element) {
 
 		JSONObject elementInfo = new JSONObject();
@@ -141,15 +144,19 @@ public class EMFExporter {
 				} else {
 					createdIDs.add(id);
 				}
-				elementInfo.put("sysmlId", id);
-				StringBuffer sb = new StringBuffer();
-				for (EClass superType : element.eClass().getEAllSuperTypes()) {
-					// ne.addLabel(superType.getName());
+				if (element.eClass().getName().equals("Slot")) {
+					elementInfo.put("sysmlId", ((Slot) element).getOwner().getID() + "-slot-" + ((Slot) element).getDefiningFeature().getID());
+				} else {
+					elementInfo.put("sysmlId", id);
 				}
 				elementInfo.put("type", element.eClass().getName());
+				if ("Connector".equals(element.eClass().getName())) {
+					fillConnectorSpecialization((Connector) element, elementInfo);
+				}
 				for (EAttribute sf : element.eClass().getEAllAttributes()) {
 					if (!sf.isDerived()) {
 						if (sf != IDStructuralFeature) {
+							// if (!sf.getName().contains("_")) {
 							Object val = element.eGet(sf);
 							if (val != null) {
 								if (val instanceof EList) {
@@ -167,11 +174,11 @@ public class EMFExporter {
 									}
 								}
 							}
+							// }
 						}
 					}
 				}
 			}
-			HashMap<String, String> relationMap = new HashMap<String, String>();
 			ArrayList<EReference> references = new ArrayList<EReference>();
 			EList<EReference> refs = element.eClass().getEAllReferences();
 			references.addAll(refs);
@@ -180,6 +187,7 @@ public class EMFExporter {
 
 			for (EReference ref : references) {
 				if (!ref.isDerived()) {
+					// if (!ref.getName().contains("_")) {
 					Object val = element.eGet(ref);
 					if (val != null) {
 						if (val instanceof EList) {
@@ -188,8 +196,6 @@ public class EMFExporter {
 								if (obs instanceof EObject)
 									if (!((EList<?>) val).isEmpty()) {
 										if (((EObject) obs).eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
-											// relations.addRelation(element.eGet(IDStructuralFeature), ((EObject) obs).eGet(IDStructuralFeature), ref.getName());
-											// relationMap.put(element.eGet(IDStructuralFeature).toString(), ((EObject) obs).eGet(IDStructuralFeature) + "@" + ref.getName());
 											array.add(((EObject) obs).eGet(IDStructuralFeature));
 										} else {
 											System.out.println("Skipped: " + obs);
@@ -201,46 +207,72 @@ public class EMFExporter {
 							}
 						} else if (val instanceof EObject) {
 							if (((EObject) val).eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
-								// relations.addRelation(element.eGet(IDStructuralFeature), ((EObject) val).eGet(IDStructuralFeature), ref.getName());
-								// relationMap.put(element.eGet(IDStructuralFeature).toString(), ((EObject) val).eGet(IDStructuralFeature) + "@" + ref.getName());
 								elementInfo.put(ref.getName() + "Id", ((EObject) val).eGet(IDStructuralFeature));
 							} else {
 								System.out.println("Skipped: " + val);
 							}
+							// }
 						}
 					}
 				} else if ("owner".equals(ref.getName())) {
 					Object val = element.eGet(ref);
 					elementInfo.put(ref.getName() + "Id", ((EObject) val).eGet(IDStructuralFeature));
 				}
+
 			}
-			// relationList.add(relationMap);
 			for (EReference ref : conts) {
-				Object val = element.eGet(ref);
-				if (val != null) {
-					if (val instanceof EList) {
-						if (!((EList<?>) val).isEmpty()) {
-							if ("ownedAttribute".equals(ref.getName())) {
+				if (!ref.getName().contains("_") & !"ownedDiagram".equals(ref.getName())) {
+					Object val = element.eGet(ref);
+					if (val != null) {
+						if (val instanceof EList) {
+							if (!((EList<?>) val).isEmpty()) {
+								// if ("ownedAttribute".equals(ref.getName())) {
 								Iterator it = ((EList) val).iterator();
-								JSONArray array = new JSONArray();
+								JSONArray childArray = new JSONArray();
+								JSONArray idArray = new JSONArray();
+
 								while (it.hasNext()) {
 									EObject eo = (EObject) it.next();
 									if (eo instanceof Element) {
-										array.add(fillElement((Element) eo));
+										if (eo instanceof ValueSpecification) {
+											if (!createdIDs.contains(((Element) eo).getID())) {
+												childArray.add(fillElement((Element) eo));
+												// fillElement((Element) eo);
+												// array.add(((Element) eo).getID());
+											}
+										} else {
+											if (!createdIDs.contains(((Element) eo).getID())) {
+												siblings.add(fillElement((Element) eo));
+												// fillElement((Element) eo);
+												idArray.add(((Element) eo).getID());
+											}
+										}
 									}
 								}
-								// elementInfo.put(ref.getName(), array);
+								if (!idArray.isEmpty()) {
+									elementInfo.put(ref.getName() + "Ids", idArray);
+								}
+								if (!childArray.isEmpty()) {
+									elementInfo.put(ref.getName(), childArray);
+								}
 							}
-						}
-					} else if (val instanceof EObject) {
-						if (true) {
-							if ("defaultValue".equals(ref.getName())) {
-								elementInfo.put(ref.getName(), fillElement((Element) val));
-							}
-						} else {
+						} else if (val instanceof EObject) {
 							if (val instanceof Element) {
-								// elementInfo.put(ref.getName(), fillElement((Element) val));
+								if (val instanceof ValueSpecification) {
+									if (!createdIDs.contains(((Element) val).getID())) {
+										elementInfo.put(ref.getName(), fillElement((Element) val));
+										// fillElement((Element) eo);
+										// array.add(((Element) eo).getID());
+									}
+								} else {
+									if (!createdIDs.contains(((Element) val).getID())) {
+										siblings.add(fillElement((Element) val));
+										// fillElement((Element) val);
+										elementInfo.put(ref.getName() + "Id", ((Element) val).getID());
+									}
+								}
 							}
+
 						}
 					}
 				}
@@ -751,11 +783,11 @@ public class EMFExporter {
 			if (i == 0) {
 				// specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
 				// specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
-				elementInfo.put("sourcePathId", propertyPath);
+				elementInfo.put("endAPathIds", propertyPath);
 			} else {
 				// specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
 				// specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
-				elementInfo.put("targetPathId", propertyPath);
+				elementInfo.put("endBPathIds", propertyPath);
 			}
 			i++;
 		}
@@ -933,6 +965,10 @@ public class EMFExporter {
 
 		info.put("appliedMetatypesId", applied);
 		return info;
+	}
+
+	public JSONArray getSiblings() {
+		return siblings;
 	}
 
 }

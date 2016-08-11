@@ -28,61 +28,64 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions;
 
-import gov.nasa.jpl.mbee.Configurator;
-import gov.nasa.jpl.mbee.ems.ModelExporter;
-import gov.nasa.jpl.mbee.lib.MDUtils;
-
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.json.simple.JSONObject;
+
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+import gov.nasa.jpl.mbee.Configurator;
+import gov.nasa.jpl.mbee.ems.ModelExporter;
+import gov.nasa.jpl.mbee.lib.MDUtils;
+
 public class DebugExportImportModels2 extends MDAction {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private Element start;
-    
-    public static final String actionid = "Debug";
-    
-    public DebugExportImportModels2() {
-        super(actionid, "(Debug Export)", null, null);
-    }
-    
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        
-        Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.isLastContextDiagram());
+	private Element start;
 
-        if (  selectedElements.toArray()[0] instanceof Element)
-            start = (Element)selectedElements.toArray()[0];
-        int depth = 0;
-        boolean packageOnly = false;
-        
-        ModelExporter me;
-        //GUILog gl = Application.getInstance().getGUILog();
-        
-        if (start == Application.getInstance().getProject().getModel()) {
-            me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
-            System.out.println(start);
-        } else {
-            System.out.println(start);
-            Set<Element> root = new HashSet<Element>();
-            root.add(start);
-            me = new ModelExporter(root, depth, packageOnly, Application.getInstance().getProject().getPrimaryProject());
-        }
-        JSONObject result = me.getResult();
-        String json = result.toJSONString();
-        JSONObject result1 = me.getEMFResult();
-        String jsonemf = result1.toJSONString();
+	public static final String actionid = "Debug";
 
-        System.out.println(json);
-        System.out.println("EMF");
-        System.out.println(jsonemf);
-    }
+	public DebugExportImportModels2() {
+		super(actionid, "(Debug Export)", null, null);
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+
+		Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.isLastContextDiagram());
+
+		if (selectedElements.toArray()[0] instanceof Element)
+			start = (Element) selectedElements.toArray()[0];
+		int depth = 0;
+		boolean packageOnly = false;
+
+		ModelExporter me;
+		// GUILog gl = Application.getInstance().getGUILog();
+
+		if (start == Application.getInstance().getProject().getModel()) {
+			me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
+			System.out.println(start);
+		} else {
+			System.out.println(start);
+			Set<Element> root = new HashSet<Element>();
+			root.add(start);
+			me = new ModelExporter(root, depth, packageOnly, Application.getInstance().getProject().getPrimaryProject());
+		}
+		long start1 = System.currentTimeMillis();
+		JSONObject result = me.getResult();
+		String json = result.toJSONString();
+		long stop1 = System.currentTimeMillis();
+		JSONObject result1 = me.getEMFResult();
+		String jsonemf = result1.toJSONString();
+		long stop2 = System.currentTimeMillis();
+		System.out.println(json);
+		System.out.println((stop1 - start1) + " milliseconds pre and EMF: " + (stop2 - stop1));
+		System.out.println(jsonemf);
+	}
 }

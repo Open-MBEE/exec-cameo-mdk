@@ -87,6 +87,7 @@ public class ModelExporter {
 
 	@SuppressWarnings("unchecked")
 	public JSONObject getResult() {
+
 		for (Element e : starts) {
 			addToElements(e, 1);
 			// roots.add(e.getID());
@@ -115,13 +116,10 @@ public class ModelExporter {
 			return false;
 		if (!ExportUtility.shouldAdd(e))
 			return false;
- 
-				EMFExporter emfexp = new EMFExporter(e);
-		JSONObject emfElement = emfexp.fillElement(e);
+
 		JSONObject elementInfo = new JSONObject();
 		ExportUtility.fillElement(e, elementInfo);
 		elements.put(e.getID(), elementInfo);
-		emfelements.put(e.getID(), emfElement);
 
 		if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e))
 			elementInfo.put("owner", parentPrj.getProjectID());
@@ -142,6 +140,13 @@ public class ModelExporter {
 	public JSONObject getEMFResult() {
 		JSONObject result = new JSONObject();
 		JSONArray elementss = new JSONArray();
+		for (Element e : starts) {
+			EMFExporter emfexp = new EMFExporter(e);
+			JSONObject emfElement = emfexp.fillElement(e);
+			emfelements.put(e.getID(), emfElement);
+			elementss.addAll(emfexp.getSiblings());
+		}
+
 		elementss.addAll(emfelements.values());
 		result.put("elements", elementss);
 		result.put("source", "magicdraw");
