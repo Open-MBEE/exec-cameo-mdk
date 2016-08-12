@@ -1173,7 +1173,7 @@ public class ModelValidator {
         JSONObject value = (JSONObject)spec.get("specification");
         JSONObject modelspec = ExportUtility.fillConstraintSpecialization(e, null);
         //JSONObject modelvalue = (JSONObject)modelspec.get("specification");
-        JSONObject modelvalue = ExportUtility.fillValueSpecification(e.getSpecification(), null, true);
+        JSONObject modelvalue = ExportUtility.fillValueSpecification(e.getSpecification(), null);
         //if (jsonObjectEquals(value, modelvalue))
         //    return null;
         // if (modelvalue != null && modelvalue.equals(value))
@@ -1296,8 +1296,7 @@ public class ModelValidator {
         String modelString = null;
         String webString = null;
         boolean stringMatch = false;
-        JSONObject model = ExportUtility.fillValueSpecification(vs, null, true);
-        // if (model.equals(firstObject)) {
+        JSONObject model = ExportUtility.fillValueSpecification(vs, null);
         if (!JSONUtils.compare(model, firstObject)) {
             if (vs instanceof LiteralString && "LiteralString".equals(firstObject.get("type"))) {
                 modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());

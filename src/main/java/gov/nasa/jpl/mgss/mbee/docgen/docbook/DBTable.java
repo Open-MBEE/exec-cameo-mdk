@@ -240,7 +240,7 @@ public class DBTable extends DocumentElement {
         }
         this.body = newbody;
         this.headers =  null;
-        this.cols = newbody.get(0).size();
+        this.cols = !newbody.isEmpty() ? newbody.get(0).size() : 0;
         List<DBColSpec> newcolspecs = new ArrayList<DBColSpec>();
         for (int i = 1; i <= cols; i++) {
             newcolspecs.add(new DBColSpec(i));

@@ -416,7 +416,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         progressStatus.setCurrent(4);
 
         DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
-        book.accept(dbAlfrescoVisitor);
+        try {
+            book.accept(dbAlfrescoVisitor);
+        } catch (Exception e) {
+            Utils.printException(e);
+            e.printStackTrace();
+        }
         Map<Element, List<PresentationElement>> view2pe = dbAlfrescoVisitor.getView2Pe();
         Map<Element, List<PresentationElement>> view2unused = dbAlfrescoVisitor.getView2Unused();
         Map<Element, JSONArray> view2elements = dbAlfrescoVisitor.getView2Elements();
