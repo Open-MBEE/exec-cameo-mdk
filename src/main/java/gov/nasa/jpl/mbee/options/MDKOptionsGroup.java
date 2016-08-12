@@ -95,7 +95,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     
     @Override
     public String getName() {
-        return EnvironmentOptionsResources.getString(MDK_OPTIONS_NAME);
+        //return EnvironmentOptionsResources.getString(MDK_OPTIONS_NAME);
+        return MDK_OPTIONS_NAME;
     }
 
     
