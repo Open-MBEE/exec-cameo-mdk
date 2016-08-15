@@ -38,6 +38,12 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     }
 
     @Override
+    public void projectReplaced(Project oldProject, Project newProject) {
+        projectClosed(oldProject);
+        projectOpened(newProject);
+    }
+
+    @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
         deltaSyncRunner = null;
         /*boolean tempDisabled = true;
@@ -60,7 +66,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);
-        ProgressStatusRunner.runWithProgressStatus(deltaSyncRunner, "Delta Sync", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(deltaSyncRunner, "Coordinated Sync", true, 0);
     }
 
     @Override

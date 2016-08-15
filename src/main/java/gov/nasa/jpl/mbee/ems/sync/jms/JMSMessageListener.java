@@ -7,6 +7,7 @@ import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.MDUtils;
@@ -95,7 +96,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     if (sysmlid.startsWith("PROJECT")) {
                         continue;
                     }
-                    if (sysmlid.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                    if (sysmlid.startsWith(ModelValidator.HIDDEN_ID_PREFIX)) {
                         continue;
                     }
                     if ((o = elementJson.get("specialization")) instanceof JSONObject && (o = ((JSONObject) o).get("classifier")) instanceof JSONArray) {

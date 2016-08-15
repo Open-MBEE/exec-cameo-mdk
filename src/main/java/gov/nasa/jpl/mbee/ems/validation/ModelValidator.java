@@ -132,6 +132,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 
 public class ModelValidator {
+    public static final String HIDDEN_ID_PREFIX = "_hidden_";
 
     private ValidationSuite suite = new ValidationSuite("Model Sync");
     private ValidationRule nameDiff = new ValidationRule("Mismatched Name", "name is different", ViolationSeverity.ERROR);
@@ -519,10 +520,12 @@ public class ModelValidator {
             // MagicDraw element that has not been compared to Alfresco
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
             if (e == null || e == prj.getModel()){
-                if (elementsKeyedId.startsWith("PROJECT"))
+                if (elementsKeyedId.startsWith("PROJECT")) {
                     continue;
-                if (elementsKeyedId.endsWith(PresentationElementUtils.ID_SUFFIX))
+                }
+                if (elementsKeyedId.startsWith(ModelValidator.HIDDEN_ID_PREFIX)) {
                     continue;
+                }
                 // Alfresco sysml element is not in MagicDraw
                 JSONObject jSONobject = elementsKeyed.get(elementsKeyedId);
                 String type = null;

@@ -10,6 +10,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.PresentationElement;
 import org.json.simple.JSONObject;
@@ -28,13 +29,25 @@ public class PresentationElementUtils {
             imageC = PresentationElementType.OPAQUE_IMAGE.getClassifier(Application.getInstance().getProject()),
             sectionC = PresentationElementType.OPAQUE_SECTION.getClassifier(Application.getInstance().getProject()),
             tsectionC = PresentationElementType.SECTION.getClassifier(Application.getInstance().getProject());
-    private Stereotype presentsS = Utils.getPresentsStereotype(),
-            productS = Utils.getProductStereotype(),
-            viewS = Utils.getViewClassStereotype();
+    private Stereotype presentsStereotype = Utils.getPresentsStereotype(),
+            productStereotype = Utils.getProductStereotype(),
+            viewClassStereotype = Utils.getViewClassStereotype();
     private Property generatedFromView = Utils.getGeneratedFromViewProperty(),
             generatedFromElement = Utils.getGeneratedFromElementProperty();
     
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+
+    public Stereotype getPresentsStereotype() {
+        return presentsStereotype;
+    }
+
+    public Stereotype getProductStereotype() {
+        return productStereotype;
+    }
+
+    public Stereotype getViewClassStereotype() {
+        return viewClassStereotype;
+    }
 
     public static Expression getViewOrSectionExpression(Element viewOrSection) {
         if (viewOrSection instanceof InstanceSpecification) {
@@ -149,8 +162,8 @@ public class PresentationElementUtils {
     public boolean isInSomeViewPackage(InstanceSpecification is) {
         Element owner = is.getOwner();
         if (owner instanceof Package) {
-            for (Element e: Utils.collectDirectedRelatedElementsByRelationshipStereotype(owner, presentsS, 2, false, 1)) {
-                if (StereotypesHelper.hasStereotypeOrDerived(e, viewS))
+            for (Element e: Utils.collectDirectedRelatedElementsByRelationshipStereotype(owner, presentsStereotype, 2, false, 1)) {
+                if (StereotypesHelper.hasStereotypeOrDerived(e, viewClassStereotype))
                     return true;
             }
         }
@@ -158,7 +171,7 @@ public class PresentationElementUtils {
     }
     
     public Package findViewInstancePackage(Element view) {
-        List<Element> results = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, presentsS, 1, false, 1);
+        List<Element> results = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, presentsStereotype, 1, false, 1);
         if (!results.isEmpty() && results.get(0) instanceof Package) {
             return (Package)results.get(0);
         }
@@ -168,7 +181,7 @@ public class PresentationElementUtils {
     public List<Package> findCorrectViewInstancePackageOwners(Element view) {
         Type viewt = (Type)view;
         List<Package> parentPack = new ArrayList<Package>();
-        if (StereotypesHelper.hasStereotypeOrDerived(view, productS)) {
+        if (StereotypesHelper.hasStereotypeOrDerived(view, productStereotype)) {
             Element owner = view.getOwner();
             while (!(owner instanceof Package)) {
                 owner = owner.getOwner();
@@ -177,7 +190,7 @@ public class PresentationElementUtils {
         } else {
             for (TypedElement t: viewt.get_typedElementOfType()) {
                 if (t instanceof Property && ((Property)t).getAggregation().equals(AggregationKindEnum.COMPOSITE) &&
-                        StereotypesHelper.hasStereotypeOrDerived(t.getOwner(), viewS)) {
+                        StereotypesHelper.hasStereotypeOrDerived(t.getOwner(), viewClassStereotype)) {
                     Package parent = findViewInstancePackage(t.getOwner());
                     if (parent != null)
                         parentPack.add(parent);
@@ -202,7 +215,7 @@ public class PresentationElementUtils {
         d.setOwner(viewPackage);
         ModelHelper.setSupplierElement(d, viewPackage);
         ModelHelper.setClientElement(d, view);
-        StereotypesHelper.addStereotype(d, presentsS);
+        StereotypesHelper.addStereotype(d, presentsStereotype);
         return viewPackage;
     }
     
@@ -254,7 +267,7 @@ public class PresentationElementUtils {
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
             Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-            is.setID(is.getID() + ID_SUFFIX);
+            is.setID(ModelValidator.HIDDEN_ID_PREFIX + is.getID() + ID_SUFFIX);
             if (!pe.isViewDocHack()) {
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);

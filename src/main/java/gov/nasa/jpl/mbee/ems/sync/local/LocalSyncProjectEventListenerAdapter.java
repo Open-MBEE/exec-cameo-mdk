@@ -31,6 +31,12 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     }
 
     @Override
+    public void projectReplaced(Project oldProject, Project newProject) {
+        projectClosed(oldProject);
+        projectOpened(newProject);
+    }
+
+    @Override
     public void projectSaved(Project project, boolean savedInServer) {
         CommonSyncProjectMapping commonSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
 

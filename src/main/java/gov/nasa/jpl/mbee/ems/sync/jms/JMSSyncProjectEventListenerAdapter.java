@@ -54,6 +54,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     }
 
     @Override
+    public void projectReplaced(Project oldProject, Project newProject) {
+        projectClosed(oldProject);
+        projectOpened(newProject);
+    }
+
+    @Override
     public void projectSaved(Project project, boolean savedInServer) {
         JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(project);
 

@@ -216,9 +216,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 JSONObject viewOperandJSONObject = (JSONObject) viewOperandObject;
                                 if (viewOperandJSONObject.containsKey("instance") && viewOperandJSONObject.get("instance") instanceof String) {
                                     String instanceID = (String) viewOperandJSONObject.get("instance");
-                                    if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                                    /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                         continue;
-                                    }
+                                    }*/
                                     if (generatedFromViewProperty != null) {
                                         slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
                                     }
@@ -283,9 +283,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                         JSONObject instanceOperandJSONObject = (JSONObject) instanceOperandObject;
                                         if (instanceOperandJSONObject.containsKey("instance") && instanceOperandJSONObject.get("instance") instanceof String) {
                                             String instanceID = (String) instanceOperandJSONObject.get("instance");
-                                            if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                                            /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                                 continue;
-                                            }
+                                            }*/
                                             if (generatedFromViewProperty != null) {
                                                 slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
                                             }
