@@ -1498,11 +1498,15 @@ public class ModelValidator {
         return true;
     }
     
-    private JSONObject getAlfrescoElement(Element e) {
+    public static JSONObject getAlfrescoElement(Element e) {
+        String id = ExportUtility.getElementID(e);
+        return getAlfrescoElementByID(id);
+    }
+    
+    public static JSONObject getAlfrescoElementByID(String id) {
         String url = ExportUtility.getUrlWithWorkspace();
         if (url == null)
             return null;
-        String id = ExportUtility.getElementID(e);
         id = id.replace(".", "%2E");
         url += "/elements/" + id;
         String response = null;
@@ -1519,4 +1523,5 @@ public class ModelValidator {
             return null;
         return (JSONObject)elements.get(0);
     }
+
 }

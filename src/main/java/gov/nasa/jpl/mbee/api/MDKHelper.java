@@ -32,10 +32,12 @@ package gov.nasa.jpl.mbee.api;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.ems.*;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
@@ -50,6 +52,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
+import org.json.simple.JSONObject;
 import org.python.google.common.collect.Lists;
 
 /**
@@ -237,6 +241,28 @@ public class MDKHelper {
 		//validationWindow = new MDKValidationWindow(vvr.getValidations());
 	}
 
+	/**********************************************************************************
+     * 
+     * MMS REST Interractions
+     * 
+     **********************************************************************************/
+    
+    public static JSONObject getMMSJSON (Element e) {
+        return ModelValidator.getAlfrescoElement(e);
+    }
+    
+    public static JSONObject getMMSJSONByID (String s) {
+        return ModelValidator.getAlfrescoElementByID(s);
+    }
+    
+    public static JSONObject getManyMMSJSON (Collection<Element> ce) throws ServerException {
+        return ModelValidator.getManyAlfrescoElements(ce, null);
+    }
+    
+    public static JSONObject getManyMmsJsonByID (Collection<String> cs) throws ServerException {
+        return ModelValidator.getManyAlfrescoElementsByID(cs, null);
+    }
+    
 	/**********************************************************************************
 	 *
 	 * Model wide MDK Actions
