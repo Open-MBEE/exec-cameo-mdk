@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.eclipse.emf.common.util.Enumerator;
 import org.eclipse.emf.ecore.EAttribute;
@@ -24,10 +25,12 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKind;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 
@@ -55,26 +58,15 @@ public class EMFImporter {
 		nameAtt = UMLFactory.eINSTANCE.getUMLPackage().getNamedElement_Name();
 
 		try {
-			head = (JSONObject) parsier.parse(new FileReader("/Users/johannes/Documents/projects/SECAE/HybridSUVJSONemf4large.json"));
+			head = (JSONObject) parsier.parse(new FileReader("/Users/johannes/Documents/projects/SECAE/HybridSUVJSONemf2.json"));
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void createElementsFromJSON() { // This can be speed up by preselecting a couple of the most present eClasses and switch through them.
-		// UMLFactory.eINSTANCE.create(null);
-		// InstanceSpecification is = UMLFactory.eINSTANCE.createInstanceSpecification();
-		// EList<EAttribute> list = is.eClass().getEAllAttributes();
-		// System.out.println(list.size());
-		// for (EAttribute ea : list) {
-		// System.out.println(ea.getName());
-		// EDataType type = (ea).getEAttributeType();
-		// if (type instanceof EEnum) {
-		// System.out.println(type + " is an EEnum");
-		// } else {
-		// System.out.println(type + " is not an EEnum ");
-		// }
-		// }
+	public void createElementsFromJSON() {
+		// This can be speed up by preselecting a couple of the most present eClasses and switch through them.
+
 		SessionManager.getInstance().createSession("importing elements");
 
 		JSONArray ja = (JSONArray) head.get("elements");
@@ -83,6 +75,8 @@ public class EMFImporter {
 				// System.out.println(((JSONObject) je).get("type"));
 				Object typename = ((JSONObject) je).get("type");
 				if (!typename.toString().equals("PackageImport")) { // TODO whats wrong with PackageImports?
+					// System.out.println("PI");
+					// }
 					EClassifier etype = UMLPackage.eINSTANCE.getEClassifier(typename.toString());
 					if (etype instanceof EClass) {
 						EClass eclass = (EClass) etype;
@@ -179,15 +173,19 @@ public class EMFImporter {
 														if (referencedObject != null) {
 															System.out.println("Adding in " + editedObject.eGet(nameAtt) + " under " + sf.getName() + " :" + referencedObject.eGet(nameAtt));
 															sf = UMLFactory.eINSTANCE.getUMLPackage().getInstanceSpecification_Classifier();
-
-															// EList list = (EList) editedObject.eGet(sf);
-															// System.out.println(list.size());
-															// list.add(referencedObject);
-															// editedObject.eSet(sf, list);
+															if (editedObject instanceof InstanceSpecification) {
+																if (referencedObject instanceof Stereotype) {
+																	// ((InstanceSpecification) editedObject).getClassifier().add((Classifier) referencedObject);
+																	// StereotypesHelper.addStereotype((Element) editedObject, (Stereotype) referencedObject);
+																	// ImportUtility.setOrCreateAsi((Stereotype) referencedObject, (Element) editedObject);
+																	List list = (List) editedObject.eGet(sf);
+																	list.add(referencedObject);
+																	// editedObject.eSet(sf, list);
+																}
+															}
 														} else {
 															System.out.println("Cant find " + sf.getName() + " with id " + propid);
 														}
-
 													}
 												}
 											}
