@@ -82,7 +82,7 @@ public class ModelExportRunner implements RunnableWithProgress {
         OutputQueue.getInstance().offer(new Request(url, json, me.getNumberOfElements(), "Model Export", background));
         //if (!url.contains("background"))
         if ( !background)
-        	Utils.guilog("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
+        	Utils.guilog("[INFO] MagicDraw background export running. Please wait until it's finished to close MagicDraw. You can continue to use MagicDraw in the meantime. You'll see a message about queued requests finished processing when finished.");
         //ExportUtility.send(url, json, null, false);
     }
 }

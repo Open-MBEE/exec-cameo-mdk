@@ -1,13 +1,14 @@
 package gov.nasa.jpl.mbee.ems.sync.local;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
-import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -17,11 +18,11 @@ import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * This class responds to commits done in the document.
  *
- * @author jsalcedo
  * @author igomes
  */
 public class LocalSyncTransactionCommitListener implements TransactionCommitListener {
@@ -30,6 +31,9 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
             UML2MetamodelConstants.ID,
             PropertyNames.NESTED_CLASSIFIER
     );
+
+    private Project project;
+
     /**
      * Allow listener to be disabled during imports.
      */
@@ -40,6 +44,10 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
         if (MDUtils.isDeveloperMode()) {
             inMemoryLocalChangelog.setShouldLogChanges(true);
         }
+    }
+
+    public LocalSyncTransactionCommitListener(Project project) {
+        this.project = project;
     }
 
     public synchronized boolean isDisabled() {
@@ -59,7 +67,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
         if (isDisabled() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
             return null;
         }
-        return new TransactionCommitHandler(events, Application.getInstance().getProject().getModel());
+        return new TransactionCommitHandler(events, project);
     }
 
     /**
@@ -68,11 +76,11 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
      */
     private class TransactionCommitHandler implements Runnable {
         private final Collection<PropertyChangeEvent> events;
-        private final Model model;
+        private final Project project;
 
-        TransactionCommitHandler(final Collection<PropertyChangeEvent> events, Model model) {
+        TransactionCommitHandler(final Collection<PropertyChangeEvent> events, Project project) {
             this.events = events;
-            this.model = model;
+            this.project = project;
         }
 
         @Override
@@ -97,7 +105,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                         while (root.getOwner() != null) {
                             root = root.getOwner();
                         }
-                        if (!root.equals(model)) {
+                        if (!root.equals(project.getModel())) {
                             continue;
                         }
                     }
@@ -128,6 +136,9 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                     }
                     String elementID = ExportUtility.getElementID(sourceElement);
                     if (elementID == null) {
+                        continue;
+                    }
+                    if (elementID.matches(ModelValidator.HOLDING_BIN_PACKAGE_ID_REGEX)) {
                         continue;
                     }
 

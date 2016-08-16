@@ -3696,10 +3696,9 @@ public class Utils {
             ex.printStackTrace();
             return false;
         }
-        String[] buttons = {"Continue (May trigger update)", "Cancel"};
-        Boolean reply = Utils.getUserYesNoAnswerWithButton("There's a new project version available on teamwork.\nIt's highly recommended that you update from teamwork first,\n"
-                + "and commit to teamwork immediately after this action.\n"
-                + "This action may autolock elements and trigger a teamwork update. Do you want to continue?\n" + add, buttons, false);
+        String[] buttons = {"Update", "Ignore"};
+        Boolean reply = Utils.getUserYesNoAnswerWithButton("There is a new project version available on Teamwork.\nIt is highly recommended that you update before proceeding.\n"
+                 + add, buttons, false);
         if (reply == null || !reply)
             return false;
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();

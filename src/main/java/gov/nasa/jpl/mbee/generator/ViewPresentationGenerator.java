@@ -216,9 +216,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 JSONObject viewOperandJSONObject = (JSONObject) viewOperandObject;
                                 if (viewOperandJSONObject.containsKey("instance") && viewOperandJSONObject.get("instance") instanceof String) {
                                     String instanceID = (String) viewOperandJSONObject.get("instance");
-                                    if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                                    /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                         continue;
-                                    }
+                                    }*/
                                     if (generatedFromViewProperty != null) {
                                         slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
                                     }
@@ -283,9 +283,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                         JSONObject instanceOperandJSONObject = (JSONObject) instanceOperandObject;
                                         if (instanceOperandJSONObject.containsKey("instance") && instanceOperandJSONObject.get("instance") instanceof String) {
                                             String instanceID = (String) instanceOperandJSONObject.get("instance");
-                                            if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                                            /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                                 continue;
-                                            }
+                                            }*/
                                             if (generatedFromViewProperty != null) {
                                                 slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
                                             }
@@ -416,7 +416,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         progressStatus.setCurrent(4);
 
         DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
-        book.accept(dbAlfrescoVisitor);
+        try {
+            book.accept(dbAlfrescoVisitor);
+        } catch (Exception e) {
+            Utils.printException(e);
+            e.printStackTrace();
+        }
         Map<Element, List<PresentationElement>> view2pe = dbAlfrescoVisitor.getView2Pe();
         Map<Element, List<PresentationElement>> view2unused = dbAlfrescoVisitor.getView2Unused();
         Map<Element, JSONArray> view2elements = dbAlfrescoVisitor.getView2Elements();
@@ -577,8 +582,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("No changes required to generate views.");
             }
 
-            // STAGE 6: Cleaning up
-            progressStatus.setDescription("Cleaning up");
+            // STAGE 6: Finishing up
+
+            progressStatus.setDescription("Finishing up");
             progressStatus.setCurrent(6);
 
             // Cleaning up after myself. While cancelSession *should* undo all elements created, there are certain edge

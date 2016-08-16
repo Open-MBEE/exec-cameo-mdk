@@ -9,15 +9,20 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -59,6 +64,10 @@ public class Crushinator23To24Migrator extends Migrator {
             new String[]{"specialization", "type"},
             new String[]{"specialization", "source"},
             new String[]{"specialization", "target"}
+    ), PRESENTATION_ELEMENT_KEYS = Arrays.asList(
+            new String[]{"sysmlid"},
+            new String[]{"owner"},
+            new String[]{"specialization"}
     );
 
     private Project project = Application.getInstance().getProject();
@@ -74,7 +83,6 @@ public class Crushinator23To24Migrator extends Migrator {
             Application.getInstance().getGUILog().log("[ERROR] Local sync transaction commit listener not found. Aborting.");
             return;
         }
-        listener.setDisabled(true);
 
         List<InstanceSpecification> presentationElements = new ArrayList<>();
         for (PresentationElementType presentationElementType : PresentationElementType.values()) {
@@ -86,28 +94,14 @@ public class Crushinator23To24Migrator extends Migrator {
             }
             presentationElements.addAll(presentationElementTypeClassifier.get_instanceSpecificationOfClassifier());
         }
-        if (!presentationElements.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Deleting " + presentationElements.size() + " client-side presentation element" + (presentationElements.size() != 1 ? "s" : "") + ".");
-            if (!SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().createSession(project, "2.3 to 2.4 Migration");
-            }
-            for (Element presentationElement : presentationElements) {
-                try {
-                    ModelElementsManager.getInstance().removeElement(presentationElement);
-                } catch (ReadOnlyElementException ignored) {
-                    failed = true;
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to delete read-only element " + presentationElement.getID() + ".");
-                }
-            }
-        }
 
-        Map<String, JSONObject> elementJsonMap = new HashMap<>();
+        Map<String, JSONObject> elementJsonMap = new LinkedHashMap<>();
         Stereotype viewStereotype = Utils.getViewStereotype();
         Set<Element> views = new HashSet<>(),
                 documents = new HashSet<>();
         Set<Property> properties = new HashSet<>();
         Set<Association> associations = new HashSet<>();
-        Set<Element> elementsToDelete = new HashSet<>();
+        Set<Element> elementsToDeleteLocally = new HashSet<>(), elementsToDeleteRemotely = new HashSet<>();
         if (viewStereotype == null) {
             Application.getInstance().getGUILog().log("[ERROR] Failed to find view stereotype.");
             failed = true;
@@ -142,14 +136,23 @@ public class Crushinator23To24Migrator extends Migrator {
         PresentationElementUtils presentationElementUtils = new PresentationElementUtils();
         viewsAndDocuments.addAll(views);
         viewsAndDocuments.addAll(documents);
+        List<Package> viewInstancePackages = new ArrayList<>(viewsAndDocuments.size());
         for (Element element : viewsAndDocuments) {
             Constraint constraint = Utils.getViewConstraint(element);
             if (constraint != null) {
-                elementsToDelete.add(constraint);
+                elementsToDeleteLocally.add(constraint);
             }
             Package viewInstancePackage = presentationElementUtils.findViewInstancePackage(element);
             if (viewInstancePackage != null) {
-                elementsToDelete.add(viewInstancePackage);
+                viewInstancePackages.add(viewInstancePackage);
+                elementsToDeleteLocally.add(viewInstancePackage);
+                elementsToDeleteRemotely.add(viewInstancePackage);
+                for (Dependency dependency : viewInstancePackage.getSupplierDependency()) {
+                    if (StereotypesHelper.hasStereotype(dependency, presentationElementUtils.getPresentsStereotype())) {
+                        elementsToDeleteLocally.add(dependency);
+                        elementsToDeleteRemotely.add(dependency);
+                    }
+                }
             }
             if (element instanceof Class) {
                 properties.addAll(((Class) element).getOwnedAttribute());
@@ -157,41 +160,23 @@ public class Crushinator23To24Migrator extends Migrator {
         }
         BaseElement viewInstancesPackage = project.getElementByID(project.getPrimaryProject().getProjectID().replace("PROJECT", "View_Instances"));
         if (viewInstancesPackage instanceof Element) {
-            elementsToDelete.add((Element) viewInstancesPackage);
+            elementsToDeleteLocally.add((Element) viewInstancesPackage);
+            elementsToDeleteRemotely.add((Element) viewInstancesPackage);
         }
         BaseElement unusedViewInstancePackage = project.getElementByID(project.getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances"));
         if (unusedViewInstancePackage instanceof Element) {
-            elementsToDelete.add((Element) unusedViewInstancePackage);
+            elementsToDeleteLocally.add((Element) unusedViewInstancePackage);
+            elementsToDeleteRemotely.add((Element) unusedViewInstancePackage);
         }
         // cannot confirm validity of 2.3- changelogs and lots of unneeded blocks
         Package syncPackage = SyncElements.getSyncPackage(project);
         if (syncPackage != null) {
-            elementsToDelete.add(syncPackage);
+            elementsToDeleteLocally.add(syncPackage);
         }
 
         for (Property property : properties) {
             associations.add(property.getAssociation());
         }
-
-        if (!elementsToDelete.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Deleting " + elementsToDelete.size() + " client-side view related element" + (elementsToDelete.size() != 1 ? "s" : "") + ".");
-            if (!SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().createSession(project, "2.3 to 2.4 Migration");
-            }
-            for (Element element : elementsToDelete) {
-                try {
-                    ModelElementsManager.getInstance().removeElement(element);
-                } catch (ReadOnlyElementException ignored) {
-                    failed = true;
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to delete read-only element " + element.getID() + ".");
-                }
-            }
-        }
-
-        if (SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().closeSession();
-        }
-        listener.setDisabled(false);
 
         Map<String, Pair<List<String[]>, Set<? extends Element>>> keyPathMapping = new HashMap<>();
         keyPathMapping.put("view", new Pair<List<String[]>, Set<? extends Element>>(VIEW_JSON_KEYS, views));
@@ -227,11 +212,112 @@ public class Crushinator23To24Migrator extends Migrator {
             }
         }
 
+        for (Package viewInstancePackage : viewInstancePackages) {
+            JSONObject jsonObject = ExportUtility.fillElement(viewInstancePackage, null);
+            if (jsonObject == null) {
+                Application.getInstance().getGUILog().log("[ERROR] Failed to serialize view instance package " + viewInstancePackage.getID() + ".");
+                failed = true;
+                continue;
+            }
+            Object o = jsonObject.get("sysmlid");
+            if (o instanceof String) {
+                String newSysmlid = ModelValidator.HIDDEN_ID_PREFIX + o;
+                jsonObject.put("sysmlid", newSysmlid);
+                jsonObject.put("owner", null);
+                elementJsonMap.put(newSysmlid, jsonObject);
+            }
+        }
+
+        for (InstanceSpecification presentationElement : presentationElements) {
+            JSONObject jsonObject = ExportUtility.fillElement(presentationElement, null);
+            if (jsonObject == null) {
+                Application.getInstance().getGUILog().log("[ERROR] Failed to serialize presentation element " + presentationElement.getID() + ".");
+                failed = true;
+                continue;
+            }
+            Object o = jsonObject.get("owner");
+            if (o instanceof String) {
+                String newOwnerId = ModelValidator.HIDDEN_ID_PREFIX + o;
+                jsonObject.put("owner", elementJsonMap.containsKey(newOwnerId) ? newOwnerId : null);
+                jsonObject = transform(jsonObject, PRESENTATION_ELEMENT_KEYS);
+                if (jsonObject == null) {
+                    Application.getInstance().getGUILog().log("[ERROR] Failed to transform presentation element " + presentationElement.getID() + ".");
+                    failed = true;
+                    continue;
+                }
+                elementJsonMap.put(ExportUtility.getElementID(presentationElement), jsonObject);
+            }
+        }
+
         if (!elementJsonMap.isEmpty()) {
             JSONArray jsonArray = new JSONArray();
             jsonArray.addAll(elementJsonMap.values());
-            commit(jsonArray);
+
+            JSONObject body = new JSONObject();
+            body.put("elements", jsonArray);
+            // Intentionally not sending source so that it is not skipped on Coordinated Sync. Otherwise holding_bin intermediate packages won't be created, which could cause errors if non-hidden elements are created there.
+            //send.put("source", "magicdraw");
+            body.put("mmsVersion", DocGenPlugin.VERSION);
+
+
+            String url = ExportUtility.getPostElementsUrl();
+            Application.getInstance().getGUILog().log("[INFO] Queueing request to update " + elementJsonMap.size() + " element" + (elementJsonMap.size() != 1 ? "s" : "") + " on the MMS.");
+            //System.out.println(body);
+            OutputQueue.getInstance().offer(new Request(url, body.toJSONString(), jsonArray.size(), "Migration Creations/Updates", false));
         }
+
+        if (!elementsToDeleteRemotely.isEmpty()) {
+            JSONArray jsonArray = new JSONArray();
+            for (Element element : elementsToDeleteRemotely) {
+                JSONObject elementJsonObject = new JSONObject();
+                elementJsonObject.put("sysmlid", ExportUtility.getElementID(element));
+                jsonArray.add(elementJsonObject);
+            }
+            JSONObject body = new JSONObject();
+            body.put("elements", jsonArray);
+            body.put("source", "magicdraw");
+            body.put("mmsVersion", DocGenPlugin.VERSION);
+            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + jsonArray.size() + " element" + (jsonArray.size() != 1 ? "s" : "") + " on the MMS.");
+            //System.out.println(body);
+            OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, jsonArray.size(), "Migration Deletes"));
+        }
+
+        listener.setDisabled(true);
+
+        if (!presentationElements.isEmpty()) {
+            Application.getInstance().getGUILog().log("[INFO] Deleting " + presentationElements.size() + " client-side presentation element" + (presentationElements.size() != 1 ? "s" : "") + ".");
+            if (!SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().createSession(project, "2.3 to 2.4 Migration");
+            }
+            for (Element presentationElement : presentationElements) {
+                try {
+                    ModelElementsManager.getInstance().removeElement(presentationElement);
+                } catch (ReadOnlyElementException ignored) {
+                    failed = true;
+                    Application.getInstance().getGUILog().log("[ERROR] Failed to delete read-only element " + presentationElement.getID() + ".");
+                }
+            }
+        }
+
+        if (!elementsToDeleteLocally.isEmpty()) {
+            Application.getInstance().getGUILog().log("[INFO] Deleting " + elementsToDeleteLocally.size() + " client-side view related element" + (elementsToDeleteLocally.size() != 1 ? "s" : "") + ".");
+            if (!SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().createSession(project, "2.3 to 2.4 Migration");
+            }
+            for (Element element : elementsToDeleteLocally) {
+                try {
+                    ModelElementsManager.getInstance().removeElement(element);
+                } catch (ReadOnlyElementException ignored) {
+                    failed = true;
+                    Application.getInstance().getGUILog().log("[ERROR] Failed to delete read-only element " + element.getID() + ".");
+                }
+            }
+        }
+
+        if (SessionManager.getInstance().isSessionCreated()) {
+            SessionManager.getInstance().closeSession();
+        }
+        listener.setDisabled(false);
 
         if (failed) {
             Application.getInstance().getGUILog().log("[ERROR] Migration failed! Please see log messages above for more details. Please restart the migration once the errors are resolved.");

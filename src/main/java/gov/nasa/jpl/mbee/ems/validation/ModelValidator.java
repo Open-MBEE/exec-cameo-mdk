@@ -132,6 +132,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 
 public class ModelValidator {
+    public static final String HIDDEN_ID_PREFIX = "_hidden_",
+            HOLDING_BIN_PACKAGE_ID_REGEX = "^(holding_bin|(Y|M|D|H){2}_[0-9]+)_.+$";
 
     private ValidationSuite suite = new ValidationSuite("Model Sync");
     private ValidationRule nameDiff = new ValidationRule("Mismatched Name", "name is different", ViolationSeverity.ERROR);
@@ -519,10 +521,12 @@ public class ModelValidator {
             // MagicDraw element that has not been compared to Alfresco
             Element e = ExportUtility.getElementFromID(elementsKeyedId);
             if (e == null || e == prj.getModel()){
-                if (elementsKeyedId.startsWith("PROJECT"))
+                if (elementsKeyedId.startsWith("PROJECT")) {
                     continue;
-                if (elementsKeyedId.endsWith(PresentationElementUtils.ID_SUFFIX))
+                }
+                if (elementsKeyedId.startsWith(ModelValidator.HIDDEN_ID_PREFIX)) {
                     continue;
+                }
                 // Alfresco sysml element is not in MagicDraw
                 JSONObject jSONobject = elementsKeyed.get(elementsKeyedId);
                 String type = null;
@@ -562,7 +566,9 @@ public class ModelValidator {
                 existname.replace('`', '\'');
                 v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted locally");
                 if (!crippled) {
-                    v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
+                    if (!elementsKeyedId.matches(HOLDING_BIN_PACKAGE_ID_REGEX)) {
+                        v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
+                    }
                     v.addAction(new DetailDiff(new JSONObject(), jSONobject));
                     //v.addAction(new ElementDetail(jSONobject));
                     v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
@@ -629,6 +635,13 @@ public class ModelValidator {
             nameDiff.addViolation(v);
         }
         if (elementDoc != null && !(webDoc == null && elementDoc.equals("")) && !elementDocClean.equals(webDoc)) {
+            /*if (webDoc != null) {
+                for (int i = 0; i < Math.max(elementDocClean.length(), webDoc.length()); i++) {
+                    Character elementChar = i < elementDocClean.length() ? elementDocClean.charAt(i) : null;
+                    Character webChar = i < webDoc.length() ? webDoc.charAt(i) : null;
+                    System.out.println((elementChar != null ? "'" + elementChar + "' [" + (int) elementChar + "]" : "~") + "\t" + (webChar != null ? "'" + webChar + "' [" + (int) webChar + "]" : "~"));
+                }
+            }*/
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[DOC] model: " + truncate(elementDocClean) + ", web: " + truncate((String)elementInfo.get("documentation")));
             differentElements.add(elementID);
             if (editable)
@@ -1166,7 +1179,7 @@ public class ModelValidator {
         JSONObject value = (JSONObject)spec.get("specification");
         JSONObject modelspec = ExportUtility.fillConstraintSpecialization(e, null);
         //JSONObject modelvalue = (JSONObject)modelspec.get("specification");
-        JSONObject modelvalue = ExportUtility.fillValueSpecification(e.getSpecification(), null, true);
+        JSONObject modelvalue = ExportUtility.fillValueSpecification(e.getSpecification(), null);
         //if (jsonObjectEquals(value, modelvalue))
         //    return null;
         // if (modelvalue != null && modelvalue.equals(value))
@@ -1289,8 +1302,7 @@ public class ModelValidator {
         String modelString = null;
         String webString = null;
         boolean stringMatch = false;
-        JSONObject model = ExportUtility.fillValueSpecification(vs, null, true);
-        // if (model.equals(firstObject)) {
+        JSONObject model = ExportUtility.fillValueSpecification(vs, null);
         if (!JSONUtils.compare(model, firstObject)) {
             if (vs instanceof LiteralString && "LiteralString".equals(firstObject.get("type"))) {
                 modelString = ExportUtility.cleanHtml(((LiteralString)vs).getValue());

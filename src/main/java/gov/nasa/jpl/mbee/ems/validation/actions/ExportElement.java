@@ -97,7 +97,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), annos.size(), "Element", background));
         if (!url.contains("background"))
-            Utils.guilog("[INFO] Magicdraw background export running, please wait until it's finished to close Magicdraw. You can continue to use Magicdraw in the meantime. You'll see a message about queued requests finished processing when finished.");
+            Utils.guilog("[INFO] MagicDraw background export running. Please wait until it's finished to close MagicDraw. You can continue to use MagicDraw in the meantime. You'll see a message about queued requests finished processing when finished.");
     }
 
     @SuppressWarnings("unchecked")

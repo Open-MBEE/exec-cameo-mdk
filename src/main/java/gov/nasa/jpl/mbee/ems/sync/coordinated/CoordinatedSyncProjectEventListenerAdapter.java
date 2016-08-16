@@ -38,6 +38,12 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     }
 
     @Override
+    public void projectReplaced(Project oldProject, Project newProject) {
+        projectClosed(oldProject);
+        projectOpened(newProject);
+    }
+
+    @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
         deltaSyncRunner = null;
         /*boolean tempDisabled = true;
@@ -56,11 +62,11 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             return;
         }
         if (project.isTeamworkServerProject() && !savedInServer) {
-            Application.getInstance().getGUILog().log("[INFO] Teamwork project is being saved locally. Real time sync skipped.");
+            Application.getInstance().getGUILog().log("[INFO] Teamwork project is being saved locally. Coordinated sync skipped.");
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);
-        ProgressStatusRunner.runWithProgressStatus(deltaSyncRunner, "Delta Sync", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(deltaSyncRunner, "Coordinated Sync", true, 0);
     }
 
     @Override

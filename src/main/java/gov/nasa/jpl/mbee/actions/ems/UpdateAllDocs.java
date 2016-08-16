@@ -39,8 +39,7 @@ public class UpdateAllDocs extends MMSAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
-        if (!Utils.recommendUpdateFromTeamwork())
-            return;
+        Utils.recommendUpdateFromTeamwork();
         updateAction();
     }
     
@@ -57,8 +56,10 @@ public class UpdateAllDocs extends MMSAction {
         PresentationElementUtils viu = new PresentationElementUtils();
         Map<String, JSONObject> images = new HashMap<String, JSONObject>();
         for (Element doc: docs) {
+            /*
             if (!Utils.recommendUpdateFromTeamwork())
                 return vss;
+            */
             ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, false, viu, images, null);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
