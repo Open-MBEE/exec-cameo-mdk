@@ -132,7 +132,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 
 public class ModelValidator {
-    public static final String HIDDEN_ID_PREFIX = "_hidden_";
+    public static final String HIDDEN_ID_PREFIX = "_hidden_",
+            HOLDING_BIN_PACKAGE_ID_REGEX = "^(holding_bin|(Y|M|D|H){2}_[0-9]+)_.+$";
 
     private ValidationSuite suite = new ValidationSuite("Model Sync");
     private ValidationRule nameDiff = new ValidationRule("Mismatched Name", "name is different", ViolationSeverity.ERROR);
@@ -565,7 +566,9 @@ public class ModelValidator {
                 existname.replace('`', '\'');
                 v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted locally");
                 if (!crippled) {
-                    v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
+                    if (!elementsKeyedId.matches(HOLDING_BIN_PACKAGE_ID_REGEX)) {
+                        v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
+                    }
                     v.addAction(new DetailDiff(new JSONObject(), jSONobject));
                     //v.addAction(new ElementDetail(jSONobject));
                     v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));

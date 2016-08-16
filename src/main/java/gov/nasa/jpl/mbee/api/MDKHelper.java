@@ -243,7 +243,7 @@ public class MDKHelper {
 
 	/**********************************************************************************
      * 
-     * MMS REST Interractions
+     * MMS REST Interactions
      * 
      **********************************************************************************/
     
@@ -261,6 +261,23 @@ public class MDKHelper {
     
     public static JSONObject getManyMmsJsonByID (Collection<String> cs) throws ServerException {
         return ModelValidator.getManyAlfrescoElementsByID(cs, null);
+    }
+    
+    public static void createMMSElement() {
+        //TODO
+        // mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
+    }
+    
+    public static void deleteMMSElement() {
+        //TODO
+        // mimic: curl <ticket stuff> -X https://<server name>/alfresco/service/workspaces/master/elements/<element sysml id>
+        // see ExportUtility.delete(String url, false) for additional options
+    }
+    
+    public static void updateMMSElement() {
+        //TODO
+        // mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
+        // see ExportUtility.
     }
     
 	/**********************************************************************************
