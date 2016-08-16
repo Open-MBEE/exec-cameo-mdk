@@ -71,6 +71,8 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import javax.jms.*;
 import javax.swing.*;
@@ -2235,4 +2237,88 @@ public class ExportUtility {
         }
         return branch;
     }
+    
+    /**
+     * Method to check if the currently logged in user has permissions to edit the specified site on
+     * the specified server.
+     * 
+     * @param url
+     *          The url of the mms server you are querying. Ex: "https://mms.myOrg.gov". 
+     *          Also accepts the url returned by the getUrl() function. 
+     * @param site
+     *          Site name (sysmlid) of the site you are querying for
+     * @return
+     *          true if the site lists "editable":"true" for the logged in user, false otherwise
+     * @throws ServerException
+     */
+    public static boolean checkWiteWritePermissions (String url, String site) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        
+        //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
+        if (url.endsWith("/alfresco/service")) {
+            url += "/workspaces/master/sites";
+        }
+        else {
+            url += "/alfresco/service/workspaces/master/sites";
+        }
+        
+        GetMethod gm = null;
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
+        gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            if (print) {
+                log.info("checkTicket: " + url);
+            }
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            if (print) {
+                log.info("sites response: " + code + " " + json);
+            }
+            if (code != 404 && code != 200) {
+                throw new ServerException(json, code); //?
+            }
+            else {
+                JSONObject siteResponse;
+                try {
+                    siteResponse = (JSONObject) (new JSONParser()).parse(json);
+                } catch (ParseException e) {
+                    throw new ServerException(json, 500);
+                }
+                JSONArray returnedSiteList = (JSONArray) siteResponse.get("sites");
+                for (Object returnedSite : returnedSiteList) {
+                    JSONObject rs = (JSONObject) returnedSite;
+                    if (rs.get("sysmlid").equals(site)) {
+                        return Boolean.getBoolean((String) rs.get("edittable"));
+                    }
+                }
+            }
+            return false;
+        } catch (IOException | IllegalArgumentException ex) {
+            //Utils.printException(ex);
+            ex.printStackTrace();
+            throw new ServerException("", 500);
+        } finally {
+            gm.releaseConnection();
+        }
+    }
+    
+    /**
+     * Convenience method for confirmSiteWritePermissions(string, string) to check if a project 
+     * is editable by the logged in user. Uses the url and site information stored in the currently 
+     * open project.
+     * 
+     * @return
+     *          true if the site lists "editable":"true" for the logged in user, false otherwise
+     *          or if no project is open.
+     * @throws ServerException
+     */
+    public static boolean checkWiteWritePermissions () throws ServerException {
+        Project proj = Application.getInstance().getProject();
+        if (proj == null)
+            return false;
+        return checkWiteWritePermissions(getUrl(proj), getSite());
+    }
+    
 }
