@@ -2251,7 +2251,7 @@ public class ExportUtility {
      *          true if the site lists "editable":"true" for the logged in user, false otherwise
      * @throws ServerException
      */
-    public static boolean checkWiteWritePermissions (String url, String site) throws ServerException {
+    public static boolean checkSiteWritePermissions (String url, String site) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         
         //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
@@ -2314,11 +2314,11 @@ public class ExportUtility {
      *          or if no project is open.
      * @throws ServerException
      */
-    public static boolean checkWiteWritePermissions () throws ServerException {
+    public static boolean checkSiteWritePermissions () throws ServerException {
         Project proj = Application.getInstance().getProject();
         if (proj == null)
             return false;
-        return checkWiteWritePermissions(getUrl(proj), getSite());
+        return checkSiteWritePermissions(getUrl(proj), getSite());
     }
     
 }
