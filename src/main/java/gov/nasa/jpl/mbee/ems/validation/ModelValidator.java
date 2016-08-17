@@ -1503,6 +1503,8 @@ public class ModelValidator {
     
     public static JSONObject getAlfrescoElement(Element e) {
         String id = ExportUtility.getElementID(e);
+        if (id == null)
+            return null;
         return getAlfrescoElementByID(id);
     }
     

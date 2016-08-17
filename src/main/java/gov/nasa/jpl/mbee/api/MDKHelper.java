@@ -32,6 +32,7 @@ package gov.nasa.jpl.mbee.api;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.ems.*;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
@@ -247,19 +248,19 @@ public class MDKHelper {
      * 
      **********************************************************************************/
     
-    public static JSONObject getMMSJSON (Element e) {
+    public static JSONObject getMMSJSON(Element e) {
         return ModelValidator.getAlfrescoElement(e);
     }
     
-    public static JSONObject getMMSJSONByID (String s) {
+    public static JSONObject getMMSJSONByID(String s) {
         return ModelValidator.getAlfrescoElementByID(s);
     }
     
-    public static JSONObject getManyMMSJSON (Collection<Element> ce) throws ServerException {
+    public static JSONObject getManyMMSJSON(Collection<Element> ce) throws ServerException {
         return ModelValidator.getManyAlfrescoElements(ce, null);
     }
     
-    public static JSONObject getManyMmsJsonByID (Collection<String> cs) throws ServerException {
+    public static JSONObject getManyMMSJSONByID(Collection<String> cs) throws ServerException {
         return ModelValidator.getManyAlfrescoElementsByID(cs, null);
     }
     
@@ -268,10 +269,22 @@ public class MDKHelper {
         // mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
     }
     
-    public static void deleteMMSElement() {
-        //TODO
+    public static void deleteMMSElement(Element deleteTarget) throws Exception {
         // mimic: curl <ticket stuff> -X https://<server name>/alfresco/service/workspaces/master/elements/<element sysml id>
-        // see ExportUtility.delete(String url, false) for additional options
+
+        Project proj = Application.getInstance().getProject();
+        if (proj == null)
+            throw new Exception("No project opened.");
+        String url = ExportUtility.getUrl(proj);
+        if (url == null)
+            throw new Exception("Project does not have MMS URL configured.");
+        String sysmlid = deleteTarget.getID();
+        if (sysmlid == null)
+            throw new Exception("Element does not exist in model");
+        url += "/workspaces/master/elements/" + sysmlid;
+        String response = ExportUtility.delete(url, true);
+        if (response == null)
+            throw new Exception("Unable to delete indicated element on MMS");
     }
     
     public static void updateMMSElement() {

@@ -2251,7 +2251,7 @@ public class ExportUtility {
      *          true if the site lists "editable":"true" for the logged in user, false otherwise
      * @throws ServerException
      */
-    public static boolean checkSiteWritePermissions (String url, String site) throws ServerException {
+    public static boolean checkSiteWritePermissions(String url, String site) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         
         //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
@@ -2262,10 +2262,9 @@ public class ExportUtility {
             url += "/alfresco/service/workspaces/master/sites";
         }
         
-        GetMethod gm = null;
         checkAndResetTicket();
         url = addTicketToUrl(url);
-        gm = new GetMethod(url);
+        GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
             if (print) {
@@ -2276,10 +2275,7 @@ public class ExportUtility {
             if (print) {
                 log.info("sites response: " + code + " " + json);
             }
-            if (code != 404 && code != 200) {
-                throw new ServerException(json, code); //?
-            }
-            else {
+            if (code == 200) {
                 JSONObject siteResponse;
                 try {
                     siteResponse = (JSONObject) (new JSONParser()).parse(json);
@@ -2289,13 +2285,19 @@ public class ExportUtility {
                 JSONArray returnedSiteList = (JSONArray) siteResponse.get("sites");
                 for (Object returnedSite : returnedSiteList) {
                     JSONObject rs = (JSONObject) returnedSite;
-                    if (rs.get("sysmlid").equals(site)) {
-                        return Boolean.getBoolean((String) rs.get("edittable"));
+                    if (rs.containsKey("editable") && rs.containsKey("sysmlid") && rs.get("sysmlid").equals(site)) {
+                        return Boolean.getBoolean((String) rs.get("editable"));
                     }
                 }
             }
+            else if (code == 401 || code == 403 || code == 404) {
+                return false;
+            }
+            else {
+                throw new ServerException(json, code);
+            }
             return false;
-        } catch (IOException | IllegalArgumentException ex) {
+        } catch (IOException ex) {
             //Utils.printException(ex);
             ex.printStackTrace();
             throw new ServerException("", 500);
@@ -2311,14 +2313,20 @@ public class ExportUtility {
      * 
      * @return
      *          true if the site lists "editable":"true" for the logged in user, false otherwise
-     *          or if no project is open.
+     *          or when no project is open or project lacks url and site specifications
      * @throws ServerException
      */
-    public static boolean checkSiteWritePermissions () throws ServerException {
+    public static boolean checkSiteWritePermissions() throws ServerException {
         Project proj = Application.getInstance().getProject();
         if (proj == null)
             return false;
-        return checkSiteWritePermissions(getUrl(proj), getSite());
+        String url = getUrl(proj);
+        if (url == null)
+            return false;
+        String site = getSite();
+        if (site == null)
+            return false;
+        return checkSiteWritePermissions(url, site);
     }
     
 }
