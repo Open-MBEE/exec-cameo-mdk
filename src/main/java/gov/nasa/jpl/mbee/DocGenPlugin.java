@@ -33,6 +33,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
+import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.lib.Debug;
@@ -88,6 +89,7 @@ public class DocGenPlugin extends Plugin {
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srconfig);
 
         acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
+        acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 
         getOclPlugin().init();
         getVcPlugin().init();

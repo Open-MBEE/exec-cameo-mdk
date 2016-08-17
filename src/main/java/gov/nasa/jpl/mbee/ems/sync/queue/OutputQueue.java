@@ -20,7 +20,7 @@ public class OutputQueue extends LinkedBlockingQueue<Request> {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                OutputQueueStatusConfigurator.getOutputQueueStatusAction().update(true);
+                OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
             }
         });
         return result;

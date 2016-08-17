@@ -71,6 +71,7 @@ public class ViewEditUtils {
     private static String             username              = "";
     private static String             password              = "";
     private static boolean            passwordSet           = false;
+    private static boolean loginDialogDisabled = false;
     private static String             authStringEnc         = "";
     private static String             ticket = "";
     private static final List<String> servers               = Arrays.asList(
@@ -150,8 +151,47 @@ public class ViewEditUtils {
      * @return
      */
     public static String getUserNamePasswordInJSON() {
-      
         if (!passwordSet) {
+            showLoginDialog();
+        }
+        JSONObject temp = new JSONObject();
+        temp.put("username", username);
+        temp.put("password", password);
+        return  temp.toJSONString();
+      }
+    
+    /**
+     * Sets credentials for the client based on the actual URL string
+     * 
+     * @param client
+     * @param urlstring
+     */
+    //TODO rewrite
+   public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method) {
+        try {
+            URL url = new URL(urlstring);
+
+            if (!passwordSet) {
+                showLoginDialog();
+            }
+
+            Credentials creds = new UsernamePasswordCredentials(username, password);
+            client.getState().setCredentials(
+                    new AuthScope(url.getHost(), url.getPort(), AuthScope.ANY_REALM), creds);
+            client.setTimeout(0);
+            client.setConnectionTimeout(0);
+            client.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
+                    new DefaultHttpMethodRetryHandler(0, false));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        // proxy cache needs Authorization header
+        method.addRequestHeader( new Header("Authorization", getAuthStringEnc()) );
+    }
+
+    public static void showLoginDialog() {
+        if (!loginDialogDisabled) {
             // Pop up one time dialog for logging into Alfresco
             JPanel userPanel = new JPanel();
             userPanel.setLayout(new GridLayout(2, 2));
@@ -179,74 +219,8 @@ public class ViewEditUtils {
                     "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
 
-           
-            //passwordSet = true;
-            //username = usernameFld.getText();
-            //password = new String(passwordFld.getPassword());
-            //or shuold call
             setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);
         }
-        JSONObject temp = new JSONObject();
-        temp.put("username", username);
-        temp.put("password", password);
-        return  temp.toJSONString();
-      }
-    
-    /**
-     * Sets credentials for the client based on the actual URL string
-     * 
-     * @param client
-     * @param urlstring
-     */
-    //TODO rewrite
-   public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method) {
-        try {
-            URL url = new URL(urlstring);
-
-            if (!passwordSet) {
-                // Pop up one time dialog for logging into Alfresco
-                JPanel userPanel = new JPanel();
-                userPanel.setLayout(new GridLayout(2, 2));
-
-                JLabel usernameLbl = new JLabel("Username:");
-                JLabel passwordLbl = new JLabel("Password:");
-
-                JTextField usernameFld = new JTextField();
-                JPasswordField passwordFld = new JPasswordField();
-
-                userPanel.add(usernameLbl);
-                userPanel.add(usernameFld);
-                userPanel.add(passwordLbl);
-                userPanel.add(passwordFld);
-
-                if (username != null) {
-                    usernameFld.setText(username);
-                    usernameFld.requestFocus();
-                }
-                if (password != null) {
-                    passwordFld.setText(password);
-                }
-                makeSureUserGetsFocus(usernameFld);
-                JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
-                        "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
-                        JOptionPane.PLAIN_MESSAGE);
-
-                setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);
-            }
-
-            Credentials creds = new UsernamePasswordCredentials(username, password);
-            client.getState().setCredentials(
-                    new AuthScope(url.getHost(), url.getPort(), AuthScope.ANY_REALM), creds);
-            client.setTimeout(0);
-            client.setConnectionTimeout(0);
-            client.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
-                    new DefaultHttpMethodRetryHandler(0, false));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        // proxy cache needs Authorization header
-        method.addRequestHeader( new Header("Authorization", getAuthStringEnc()) );
     }
     
     /**
@@ -353,5 +327,13 @@ public class ViewEditUtils {
     }
     public static void setTicket(String _ticket){
         ticket = _ticket;
+    }
+
+    public static boolean isLoginDialogDisabled() {
+        return loginDialogDisabled;
+    }
+
+    public static void setLoginDialogDisabled(boolean loginDialogDisabled) {
+        ViewEditUtils.loginDialogDisabled = loginDialogDisabled;
     }
 }

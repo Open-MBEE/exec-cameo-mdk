@@ -7,6 +7,7 @@ import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
+import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Changelog;
@@ -121,6 +122,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     inMemoryJMSChangelog.addChange(sysmlid, elementJson, entry.getValue());
                 }
             }
+            SyncStatusConfigurator.getSyncStatusAction().update();
         }
         else if ((o = jsonObject.get("synced")) instanceof JSONObject) {
             JSONObject synced = (JSONObject) o;
@@ -149,6 +151,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             if (MDUtils.isDeveloperMode()) {
                 Application.getInstance().getGUILog().log("[INFO] Cleared " + size + " MMS element change" + (size != 1 ? "s" : "") + " as a result of another client syncing the model.");
             }
+            SyncStatusConfigurator.getSyncStatusAction().update();
         }
     }
 

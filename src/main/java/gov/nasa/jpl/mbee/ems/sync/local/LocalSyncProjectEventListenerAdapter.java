@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by igomes on 6/28/16.
  */
 public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<String, CommonSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<String, LocalSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
     public void projectOpened(Project project) {
@@ -23,9 +23,9 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     @Override
     public void projectClosed(Project project) {
-        CommonSyncProjectMapping commonSyncProjectMapping = getProjectMapping(project);
-        if (commonSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
-            project.getRepository().getTransactionManager().removeTransactionCommitListener(commonSyncProjectMapping.getLocalSyncTransactionCommitListener());
+        LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
+        if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
+            project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
         }
         projectMappings.remove(project.getID());
     }
@@ -38,23 +38,23 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
-        CommonSyncProjectMapping commonSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
+        LocalSyncProjectMapping localSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
 
-        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = commonSyncProjectMapping.getLocalSyncTransactionCommitListener();
+        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.getInMemoryLocalChangelog().clear();
         }
     }
 
-    public static CommonSyncProjectMapping getProjectMapping(Project project) {
-        CommonSyncProjectMapping commonSyncProjectMapping = projectMappings.get(project.getID());
-        if (commonSyncProjectMapping == null) {
-            projectMappings.put(project.getID(), commonSyncProjectMapping = new CommonSyncProjectMapping());
+    public static LocalSyncProjectMapping getProjectMapping(Project project) {
+        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project.getID());
+        if (localSyncProjectMapping == null) {
+            projectMappings.put(project.getID(), localSyncProjectMapping = new LocalSyncProjectMapping());
         }
-        return commonSyncProjectMapping;
+        return localSyncProjectMapping;
     }
 
-    public static class CommonSyncProjectMapping {
+    public static class LocalSyncProjectMapping {
         private LocalSyncTransactionCommitListener localSyncTransactionCommitListener;
 
         public LocalSyncTransactionCommitListener getLocalSyncTransactionCommitListener() {
