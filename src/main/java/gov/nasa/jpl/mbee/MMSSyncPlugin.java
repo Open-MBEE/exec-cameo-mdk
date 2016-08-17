@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusProjectEventListenerAdapter;
 
 /*
  * This class is responsible for performing automatic syncs with
@@ -17,6 +18,7 @@ public class MMSSyncPlugin extends MDPlugin {
     private JMSSyncProjectEventListenerAdapter jmsSyncProjectEventListenerAdapter;
     private DeltaSyncProjectEventListenerAdapter deltaSyncProjectEventListenerAdapter;
     private CoordinatedSyncProjectEventListenerAdapter coordinatedSyncProjectEventListenerAdapter;
+    private SyncStatusProjectEventListenerAdapter syncStatusProjectEventListenerAdapter;
 
     public static MMSSyncPlugin getInstance() {
         if (instance == null) {
@@ -41,6 +43,11 @@ public class MMSSyncPlugin extends MDPlugin {
         return coordinatedSyncProjectEventListenerAdapter;
     }
 
+    public SyncStatusProjectEventListenerAdapter getSyncStatusProjectEventListenerAdapter() {
+
+        return syncStatusProjectEventListenerAdapter;
+    }
+
     @Override
     public void initConfigurations() {
         System.out.println("Initializing MMSSyncPlugin.");
@@ -50,6 +57,7 @@ public class MMSSyncPlugin extends MDPlugin {
         // Common and JMS clear their respective inMemoryChangelogs on save, so it needs to go after coordinated and delta which use it.
         Application.getInstance().getProjectsManager().addProjectListener(localSyncProjectEventListenerAdapter = new LocalSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(jmsSyncProjectEventListenerAdapter = new JMSSyncProjectEventListenerAdapter());
+        Application.getInstance().getProjectsManager().addProjectListener(syncStatusProjectEventListenerAdapter = new SyncStatusProjectEventListenerAdapter());
     }
 
     public boolean isSupported() {

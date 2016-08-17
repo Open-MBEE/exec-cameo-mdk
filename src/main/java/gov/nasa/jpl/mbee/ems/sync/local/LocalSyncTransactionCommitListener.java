@@ -8,6 +8,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.MDUtils;
@@ -153,6 +154,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                     }
                     inMemoryLocalChangelog.addChange(elementID, sourceElement, changeType);
                 }
+                SyncStatusConfigurator.getSyncStatusAction().update();
             } catch (Exception e) {
                 Application.getInstance().getGUILog().log("[ERROR] LocalSyncTransactionCommitListener had an unexpected error: " + e.getMessage());
                 Utils.printException(e);

@@ -38,11 +38,7 @@ public class OutputQueueStatusAction extends SRAction {
 	}
 	
 	public void update() {
-		update(false);
-	}
-	
-	public void update(final boolean plusOne) {
-	    boolean haveCurrent = OutputQueue.getInstance().getCurrent() != null;
+		boolean haveCurrent = OutputQueue.getInstance().getCurrent() != null;
 		setName(OutputQueueStatusAction.NAME + ": " + (OutputQueue.getInstance().size() + (haveCurrent ? 1 : 0)));
 		if (outputQueueDetailWindow.isVisible()) {
 			outputQueueDetailWindow.update();
