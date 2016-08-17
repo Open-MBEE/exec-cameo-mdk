@@ -55,7 +55,7 @@ public class OutputSyncRunner implements Runnable {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        OutputQueueStatusConfigurator.getOutputQueueStatusAction().update(true);
+                        OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
                     }
                 });
                 if (r.getMethod().equals("LOG"))
