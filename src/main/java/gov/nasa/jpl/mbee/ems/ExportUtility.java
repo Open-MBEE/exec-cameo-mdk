@@ -2273,7 +2273,7 @@ public class ExportUtility {
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             if (print) {
-                log.info("sites response: " + code + " " + json);
+                log.info("sites response: " + code + " " + json);                
             }
             if (code == 200) {
                 JSONObject siteResponse;
@@ -2286,7 +2286,7 @@ public class ExportUtility {
                 for (Object returnedSite : returnedSiteList) {
                     JSONObject rs = (JSONObject) returnedSite;
                     if (rs.containsKey("editable") && rs.containsKey("sysmlid") && rs.get("sysmlid").equals(site)) {
-                        return Boolean.getBoolean((String) rs.get("editable"));
+                        return (boolean) rs.get("editable");
                     }
                 }
             }

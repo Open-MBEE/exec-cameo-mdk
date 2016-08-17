@@ -293,6 +293,16 @@ public class MDKHelper {
         // see ExportUtility.
     }
     
+    public static boolean checkSiteWritePermissions() {
+        try {
+            return ExportUtility.checkSiteWritePermissions();
+        } catch (ServerException se) {
+            return false;
+        }
+    }
+
+
+    
 	/**********************************************************************************
 	 *
 	 * Model wide MDK Actions
