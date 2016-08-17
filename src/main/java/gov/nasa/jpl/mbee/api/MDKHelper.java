@@ -308,4 +308,11 @@ public class MDKHelper {
 		return LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog();
 	}
 
+	public static boolean isLoginDialogDisabled() {
+		return ViewEditUtils.isLoginDialogDisabled();
+	}
+
+	public static void setLoginDialogDisabled(boolean loginDialogDisabled) {
+		ViewEditUtils.setLoginDialogDisabled(loginDialogDisabled);
+	}
 }

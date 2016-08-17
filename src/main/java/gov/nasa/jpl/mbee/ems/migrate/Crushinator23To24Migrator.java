@@ -22,6 +22,7 @@ import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Pair;
@@ -318,6 +319,7 @@ public class Crushinator23To24Migrator extends Migrator {
             SessionManager.getInstance().closeSession();
         }
         listener.setDisabled(false);
+        SyncStatusConfigurator.getSyncStatusAction().update();
 
         if (failed) {
             Application.getInstance().getGUILog().log("[ERROR] Migration failed! Please see log messages above for more details. Please restart the migration once the errors are resolved.");
