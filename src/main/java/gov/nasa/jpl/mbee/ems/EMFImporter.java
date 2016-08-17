@@ -58,7 +58,7 @@ public class EMFImporter {
 		nameAtt = UMLFactory.eINSTANCE.getUMLPackage().getNamedElement_Name();
 
 		try {
-			head = (JSONObject) parsier.parse(new FileReader("/Users/johannes/Documents/projects/SECAE/HybridSUVJSONemf2.json"));
+			head = (JSONObject) parsier.parse(new FileReader("/Users/johannes/Documents/projects/SECAE/HybridSUVJSONemf4large.json"));
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
