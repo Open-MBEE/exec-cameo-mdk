@@ -15,12 +15,12 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.validation.actions.DetailDiff;
 import gov.nasa.jpl.mbee.lib.Changelog;
@@ -84,6 +84,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     @SuppressWarnings("unchecked")
     @Override
     public void run(ProgressStatus ps) {
+        ps.setDescription("Initializing");
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && TeamworkUtils.getLoggedUserName() == null) {
             Utils.guilog("[ERROR] You need to be logged in to Teamwork first.");
             return;
@@ -92,6 +93,27 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener == null) {
             Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener.");
+            return;
+        }
+
+        String url = ExportUtility.getUrl(project);
+        if (url == null || url.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Url not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+            return;
+        }
+        String site = ExportUtility.getSite();
+        if (site == null || site.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Site not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+            return;
+        }
+        try {
+            if (!ExportUtility.hasSiteWritePermissions(url, site)) {
+                Application.getInstance().getGUILog().log("[ERROR] User does not have sufficient permissions on MMS or the site/url is misconfigured. Skipping sync. All changes will be re-attempted in the next sync.");
+                return;
+            }
+        } catch (ServerException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while verifying site permissions. Skipping sync. All changes will be re-attempted in the next sync. Error: " + e.getMessage());
             return;
         }
 
@@ -175,6 +197,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // Get latest json for element added/changed from MMS
 
         if (!elementIdsToGet.isEmpty()) {
+            ps.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
             JSONObject response = null;
             try {
                 response = ModelValidator.getManyAlfrescoElementsByID(elementIdsToGet, ps);
@@ -200,6 +223,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         // NEW CONFLICT DETECTION
 
+        ps.setDescription("Detecting conflicts");
         Map<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedChanges = new LinkedHashMap<>(),
                 unconflictedChanges = new LinkedHashMap<>();
         localChangelog.findConflicts(jmsChangelog, new BiPredicate<Changelog.Change<Element>, Changelog.Change<Void>>() {
@@ -305,6 +329,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         boolean shouldLogNoLocalChanges = shouldCommit;
         if (shouldCommit && !localElementsToPost.isEmpty()) {
+            ps.setDescription("Committing creations and updates to MMS");
+
             JSONArray elementsJsonArray = new JSONArray();
             for (Element element : localElementsToPost.values()) {
                 JSONObject elementJsonObject = ExportUtility.fillElement(element, null);
@@ -327,7 +353,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // NEEDS TO BE AFTER LOCAL; EX: MOVE ELEMENT OUT ON MMS, DELETE OWNER LOCALLY, WHAT HAPPENS?
 
         if (shouldCommit && shouldCommitDeletes && !localElementsToDelete.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Adding local deletions to MMS request queue.");
+            ps.setDescription("Committing deletions to MMS");
+
             JSONArray elementsJsonArray = new JSONArray();
             for (String id : localElementsToDelete) {
                 JSONObject elementJsonObject = new JSONObject();
@@ -353,6 +380,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         boolean shouldLogNoJmsChanges = shouldUpdate;
         if (shouldUpdate && !jmsElementsToCreateLocally.isEmpty()) {
+            ps.setDescription("Creating elements from MMS");
+
             ImportUtility.CreationOrder creationOrder = ImportUtility.getCreationOrder(jmsElementsToCreateLocally.values());
             List<JSONObject> sortedJmsElementsToCreateLocally = creationOrder.getOrder();
             if (!sortedJmsElementsToCreateLocally.isEmpty()) {
@@ -408,6 +437,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // CHANGE UPDATED ELEMENTS LOCALLY FROM MMS
 
         if (shouldUpdate && !jmsElementsToUpdateLocally.isEmpty()) {
+            ps.setDescription("Updating elements from MMS");
+
             listener.setDisabled(true);
             if (!SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().createSession("DeltaSyncRunner execution");
@@ -441,6 +472,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // REMOVE DELETED ELEMENTS LOCALLY FROM MMS
 
         if (shouldUpdate && !jmsElementsToDeleteLocally.isEmpty()) {
+            ps.setDescription("Deleting elements from MMS");
+
             listener.setDisabled(true);
             if (!SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().createSession(getClass().getName() + " Execution");
@@ -451,7 +484,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 try {
                     ModelElementsManager.getInstance().removeElement(element);
                     deletedElements.put(elementEntry.getKey(), null);
-                    locallyChangedValidationRule.addViolation(new ValidationRuleViolation(project.getModel(), "[DELETED] " + element.getHumanName() +  " - " + element.getID()));
+                    locallyChangedValidationRule.addViolation(new ValidationRuleViolation(project.getModel(), "[DELETED] " + element.getHumanName() + " - " + element.getID()));
                 } catch (ReadOnlyElementException roee) {
                     roee.printStackTrace();
                     ValidationRuleViolation vrv = new ValidationRuleViolation(project.getModel(), "[DELETE FAILED] " + element.getHumanName() + " - " + element.getID() + " - Reason: " + roee.getMessage());
@@ -465,6 +498,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("[INFO] Deleted " + deletedElements.size() + " element" + (deletedElements.size() != 1 ? "s" : "") + " locally from the MMS.");
             }
         }
+
+        ps.setDescription("Finishing up");
 
         // OUTPUT RESULT OF MMS CHANGES
 

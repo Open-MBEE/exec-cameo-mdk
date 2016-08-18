@@ -20,12 +20,9 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
-import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -181,26 +178,38 @@ public class Crushinator23To24Migrator extends Migrator {
             associations.add(property.getAssociation());
         }
 
-        List<JSONObject> viewAndDocumentJsonObjects = new ArrayList<>(viewsAndDocuments.size());
+        List<JSONObject> elementJsonObjects = new ArrayList<>(documents.size() + views.size() + properties.size() + associations.size());
         for (Element document : documents) {
             JSONObject jsonObject = convertElementToPartialJson(document, DOCUMENT_JSON_KEYS);
             Object o;
             if (jsonObject != null && (o = jsonObject.get("specialization")) instanceof JSONObject) {
                 ((JSONObject) o).put("view2view", null);
-                viewAndDocumentJsonObjects.add(jsonObject);
+                elementJsonObjects.add(jsonObject);
             }
         }
         for (Element view : views) {
             JSONObject jsonObject = convertElementToPartialJson(view, VIEW_JSON_KEYS);
             if (jsonObject != null) {
-                viewAndDocumentJsonObjects.add(jsonObject);
+                elementJsonObjects.add(jsonObject);
             }
         }
-        if (!viewAndDocumentJsonObjects.isEmpty()) {
-            ps.setDescription("Updating " + viewAndDocumentJsonObjects.size() + " Document" + (viewAndDocumentJsonObjects.size() != 1 ? "s" : "") + "/View" + (viewAndDocumentJsonObjects.size() != 1 ? "s" : "") + " on MMS");
+        for (Property property : properties) {
+            JSONObject jsonObject = convertElementToPartialJson(property, PROPERTY_JSON_KEYS);
+            if (jsonObject != null) {
+                elementJsonObjects.add(jsonObject);
+            }
+        }
+        for (Association association : associations) {
+            JSONObject jsonObject = convertElementToPartialJson(association, ASSOCIATION_JSON_KEYS);
+            if (jsonObject != null) {
+                elementJsonObjects.add(jsonObject);
+            }
+        }
+        if (!elementJsonObjects.isEmpty()) {
+            ps.setDescription("Updating " + elementJsonObjects.size() + " Element" + (elementJsonObjects.size() != 1 ? "s" : "") + " on the MMS");
 
             JSONArray jsonArray = new JSONArray();
-            jsonArray.addAll(viewAndDocumentJsonObjects);
+            jsonArray.addAll(elementJsonObjects);
             JSONObject body = new JSONObject();
             body.put("elements", jsonArray);
             body.put("source", "magicdraw");
@@ -210,35 +219,7 @@ public class Crushinator23To24Migrator extends Migrator {
                 handleCancel();
                 return;
             }
-            Application.getInstance().getGUILog().log("[INFO] Updated " + viewAndDocumentJsonObjects.size() + " Document" + (viewAndDocumentJsonObjects.size() != 1 ? "s" : "") + "/View" + (viewAndDocumentJsonObjects.size() != 1 ? "s" : "") + " on MMS.");
-        }
-
-        List<JSONObject> propertyJsonObjects = new ArrayList<>(properties.size());
-        for (Property property : properties) {
-            JSONObject jsonObject = convertElementToPartialJson(property, PROPERTY_JSON_KEYS);
-            if (jsonObject != null) {
-                propertyJsonObjects.add(jsonObject);
-            }
-        }
-        if (!propertyJsonObjects.isEmpty()) {
-            sendStaggered(propertyJsonObjects, "Property", "Properties", ps);
-            if (ps.isCancel()) {
-                return;
-            }
-        }
-
-        List<JSONObject> associationJsonObjects = new ArrayList<>(associations.size());
-        for (Association association : associations) {
-            JSONObject jsonObject = convertElementToPartialJson(association, ASSOCIATION_JSON_KEYS);
-            if (jsonObject != null) {
-                associationJsonObjects.add(jsonObject);
-            }
-        }
-        if (!associationJsonObjects.isEmpty()) {
-            sendStaggered(associationJsonObjects, "Association", "Associations", ps);
-            if (ps.isCancel()) {
-                return;
-            }
+            Application.getInstance().getGUILog().log("[INFO] Updated " + elementJsonObjects.size() + " Element" + (elementJsonObjects.size() != 1 ? "s" : "") + " on the MMS.");
         }
 
         Map<String, JSONObject> hiddenViewInstancePackageJsonObjects = new LinkedHashMap<>(viewInstancePackages.size());
@@ -268,7 +249,7 @@ public class Crushinator23To24Migrator extends Migrator {
         for (InstanceSpecification presentationElement : presentationElements) {
             JSONObject jsonObject = ExportUtility.fillElement(presentationElement, null);
             if (jsonObject == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Failed to serialize presentation element " + presentationElement.getID() + ".");
+                Application.getInstance().getGUILog().log("[ERROR] Failed to serialize Presentation Element " + presentationElement.getID() + ".");
                 failed = true;
                 continue;
             }
@@ -278,7 +259,7 @@ public class Crushinator23To24Migrator extends Migrator {
                 jsonObject.put("owner", hiddenViewInstancePackageJsonObjects.containsKey(newOwnerId) ? newOwnerId : null);
                 jsonObject = transform(jsonObject, PRESENTATION_ELEMENT_KEYS);
                 if (jsonObject == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to transform presentation element " + presentationElement.getID() + ".");
+                    Application.getInstance().getGUILog().log("[ERROR] Failed to transform Presentation Element " + presentationElement.getID() + ".");
                     failed = true;
                     continue;
                 }
