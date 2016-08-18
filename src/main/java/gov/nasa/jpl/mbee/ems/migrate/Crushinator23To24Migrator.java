@@ -206,7 +206,7 @@ public class Crushinator23To24Migrator extends Migrator {
             }
         }
         if (!elementJsonObjects.isEmpty()) {
-            ps.setDescription("Updating " + elementJsonObjects.size() + " Element" + (elementJsonObjects.size() != 1 ? "s" : "") + " on the MMS");
+            ps.setDescription("Updating " + elementJsonObjects.size() + " element" + (elementJsonObjects.size() != 1 ? "s" : "") + " on the MMS");
 
             JSONArray jsonArray = new JSONArray();
             jsonArray.addAll(elementJsonObjects);
@@ -219,14 +219,14 @@ public class Crushinator23To24Migrator extends Migrator {
                 handleCancel();
                 return;
             }
-            Application.getInstance().getGUILog().log("[INFO] Updated " + elementJsonObjects.size() + " Element" + (elementJsonObjects.size() != 1 ? "s" : "") + " on the MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Updated " + elementJsonObjects.size() + " element" + (elementJsonObjects.size() != 1 ? "s" : "") + " on the MMS.");
         }
 
         Map<String, JSONObject> hiddenViewInstancePackageJsonObjects = new LinkedHashMap<>(viewInstancePackages.size());
         for (Package viewInstancePackage : viewInstancePackages) {
             JSONObject jsonObject = ExportUtility.fillElement(viewInstancePackage, null);
             if (jsonObject == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Failed to serialize view instance package " + viewInstancePackage.getID() + ".");
+                Application.getInstance().getGUILog().log("[ERROR] Failed to serialize View Instance Package " + viewInstancePackage.getID() + ".");
                 failed = true;
                 continue;
             }
@@ -330,7 +330,7 @@ public class Crushinator23To24Migrator extends Migrator {
         }
 
         if (!elementsToDeleteLocally.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Deleting " + elementsToDeleteLocally.size() + " client-side view related element" + (elementsToDeleteLocally.size() != 1 ? "s" : "") + ".");
+            Application.getInstance().getGUILog().log("[INFO] Deleting " + elementsToDeleteLocally.size() + " client-side View related element" + (elementsToDeleteLocally.size() != 1 ? "s" : "") + ".");
             if (!SessionManager.getInstance().isSessionCreated(project)) {
                 SessionManager.getInstance().createSession(project, "C-3 to C-4 Migration");
             }
