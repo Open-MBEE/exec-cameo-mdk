@@ -31,6 +31,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * This class migrates a MagicDraw project from EMS 2.3 to EMS 2.4
@@ -70,6 +71,7 @@ public class Crushinator23To24Migrator extends Migrator {
             new String[]{"owner"},
             new String[]{"specialization"}
     );
+    private static final int MAX_ELEMENTS_PER_REQUEST = 99;
 
     private Project project = Application.getInstance().getProject();
     private boolean failed;
@@ -96,13 +98,13 @@ public class Crushinator23To24Migrator extends Migrator {
             presentationElements.addAll(presentationElementTypeClassifier.get_instanceSpecificationOfClassifier());
         }
 
-        Map<String, JSONObject> elementJsonMap = new LinkedHashMap<>();
+        //Map<String, JSONObject> elementJsonMap = new LinkedHashMap<>();
         Stereotype viewStereotype = Utils.getViewStereotype();
-        Set<Element> views = new HashSet<>(),
-                documents = new HashSet<>();
-        Set<Property> properties = new HashSet<>();
-        Set<Association> associations = new HashSet<>();
-        Set<Element> elementsToDeleteLocally = new HashSet<>(), elementsToDeleteRemotely = new HashSet<>();
+        Set<Element> views = new LinkedHashSet<>(),
+                documents = new LinkedHashSet<>();
+        Set<Property> properties = new LinkedHashSet<>();
+        Set<Association> associations = new LinkedHashSet<>();
+        Set<Element> elementsToDeleteLocally = new LinkedHashSet<>(), elementsToDeleteRemotely = new LinkedHashSet<>();
         if (viewStereotype == null) {
             Application.getInstance().getGUILog().log("[ERROR] Failed to find view stereotype.");
             failed = true;
@@ -179,40 +181,67 @@ public class Crushinator23To24Migrator extends Migrator {
             associations.add(property.getAssociation());
         }
 
-        Map<String, Pair<List<String[]>, Set<? extends Element>>> keyPathMapping = new HashMap<>();
-        keyPathMapping.put("view", new Pair<List<String[]>, Set<? extends Element>>(VIEW_JSON_KEYS, views));
-        keyPathMapping.put("document", new Pair<List<String[]>, Set<? extends Element>>(DOCUMENT_JSON_KEYS, documents));
-        keyPathMapping.put("property", new Pair<List<String[]>, Set<? extends Element>>(PROPERTY_JSON_KEYS, properties));
-        keyPathMapping.put("association", new Pair<List<String[]>, Set<? extends Element>>(ASSOCIATION_JSON_KEYS, associations));
+        List<JSONObject> viewAndDocumentJsonObjects = new ArrayList<>(viewsAndDocuments.size());
+        for (Element document : documents) {
+            JSONObject jsonObject = convertElementToPartialJson(document, DOCUMENT_JSON_KEYS);
+            Object o;
+            if (jsonObject != null && (o = jsonObject.get("specialization")) instanceof JSONObject) {
+                ((JSONObject) o).put("view2view", null);
+                viewAndDocumentJsonObjects.add(jsonObject);
+            }
+        }
+        for (Element view : views) {
+            JSONObject jsonObject = convertElementToPartialJson(view, VIEW_JSON_KEYS);
+            if (jsonObject != null) {
+                viewAndDocumentJsonObjects.add(jsonObject);
+            }
+        }
+        if (!viewAndDocumentJsonObjects.isEmpty()) {
+            ps.setDescription("Updating " + viewAndDocumentJsonObjects.size() + " Document" + (viewAndDocumentJsonObjects.size() != 1 ? "s" : "") + "/View" + (viewAndDocumentJsonObjects.size() != 1 ? "s" : "") + " on MMS");
 
-        for (Map.Entry<String, Pair<List<String[]>, Set<? extends Element>>> entry : keyPathMapping.entrySet()) {
-            for (Element element : entry.getValue().getSecond()) {
-                if (!ExportUtility.shouldAdd(element)) {
-                    continue;
-                }
-                if (ProjectUtilities.isElementInAttachedProject(element)) {
-                    continue;
-                }
-                JSONObject jsonObject = ExportUtility.fillElement(element, null);
-                Object o;
-                if (entry.getKey().equals("document") && (o = jsonObject.get("specialization")) instanceof JSONObject) {
-                    ((JSONObject) o).put("view2view", null);
-                }
-                if (jsonObject == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to serialize " + entry.getKey() + " " + element.getID() + ".");
-                    failed = true;
-                    continue;
-                }
-                jsonObject = transform(jsonObject, entry.getValue().getFirst());
-                if (jsonObject == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to transform " + entry.getKey() + " " + element.getID() + ".");
-                    failed = true;
-                    continue;
-                }
-                elementJsonMap.put(ExportUtility.getElementID(element), jsonObject);
+            JSONArray jsonArray = new JSONArray();
+            jsonArray.addAll(viewAndDocumentJsonObjects);
+            JSONObject body = new JSONObject();
+            body.put("elements", jsonArray);
+            body.put("source", "magicdraw");
+            body.put("mmsVersion", DocGenPlugin.VERSION);
+            ExportUtility.send(ExportUtility.getPostElementsUrl(), body.toJSONString(), false, false);
+            if (ps.isCancel()) {
+                handleCancel();
+                return;
+            }
+            Application.getInstance().getGUILog().log("[INFO] Updated " + viewAndDocumentJsonObjects.size() + " Document" + (viewAndDocumentJsonObjects.size() != 1 ? "s" : "") + "/View" + (viewAndDocumentJsonObjects.size() != 1 ? "s" : "") + " on MMS.");
+        }
+
+        List<JSONObject> propertyJsonObjects = new ArrayList<>(properties.size());
+        for (Property property : properties) {
+            JSONObject jsonObject = convertElementToPartialJson(property, PROPERTY_JSON_KEYS);
+            if (jsonObject != null) {
+                propertyJsonObjects.add(jsonObject);
+            }
+        }
+        if (!propertyJsonObjects.isEmpty()) {
+            sendStaggered(propertyJsonObjects, "Property", "Properties", ps);
+            if (ps.isCancel()) {
+                return;
             }
         }
 
+        List<JSONObject> associationJsonObjects = new ArrayList<>(associations.size());
+        for (Association association : associations) {
+            JSONObject jsonObject = convertElementToPartialJson(association, ASSOCIATION_JSON_KEYS);
+            if (jsonObject != null) {
+                associationJsonObjects.add(jsonObject);
+            }
+        }
+        if (!associationJsonObjects.isEmpty()) {
+            sendStaggered(associationJsonObjects, "Association", "Associations", ps);
+            if (ps.isCancel()) {
+                return;
+            }
+        }
+
+        Map<String, JSONObject> hiddenViewInstancePackageJsonObjects = new LinkedHashMap<>(viewInstancePackages.size());
         for (Package viewInstancePackage : viewInstancePackages) {
             JSONObject jsonObject = ExportUtility.fillElement(viewInstancePackage, null);
             if (jsonObject == null) {
@@ -225,10 +254,17 @@ public class Crushinator23To24Migrator extends Migrator {
                 String newSysmlid = ModelValidator.HIDDEN_ID_PREFIX + o;
                 jsonObject.put("sysmlid", newSysmlid);
                 jsonObject.put("owner", null);
-                elementJsonMap.put(newSysmlid, jsonObject);
+                hiddenViewInstancePackageJsonObjects.put(newSysmlid, jsonObject);
+            }
+        }
+        if (!hiddenViewInstancePackageJsonObjects.isEmpty()) {
+            sendStaggered(hiddenViewInstancePackageJsonObjects.values(), "View Instance Package", "View Instance Packages", ps, true);
+            if (ps.isCancel()) {
+                return;
             }
         }
 
+        List<JSONObject> presentationElementJsonObjects = new ArrayList<>(presentationElements.size());
         for (InstanceSpecification presentationElement : presentationElements) {
             JSONObject jsonObject = ExportUtility.fillElement(presentationElement, null);
             if (jsonObject == null) {
@@ -239,56 +275,68 @@ public class Crushinator23To24Migrator extends Migrator {
             Object o = jsonObject.get("owner");
             if (o instanceof String) {
                 String newOwnerId = ModelValidator.HIDDEN_ID_PREFIX + o;
-                jsonObject.put("owner", elementJsonMap.containsKey(newOwnerId) ? newOwnerId : null);
+                jsonObject.put("owner", hiddenViewInstancePackageJsonObjects.containsKey(newOwnerId) ? newOwnerId : null);
                 jsonObject = transform(jsonObject, PRESENTATION_ELEMENT_KEYS);
                 if (jsonObject == null) {
                     Application.getInstance().getGUILog().log("[ERROR] Failed to transform presentation element " + presentationElement.getID() + ".");
                     failed = true;
                     continue;
                 }
-                elementJsonMap.put(ExportUtility.getElementID(presentationElement), jsonObject);
+                presentationElementJsonObjects.add(jsonObject);
             }
         }
-
-        if (!elementJsonMap.isEmpty()) {
-            JSONArray jsonArray = new JSONArray();
-            jsonArray.addAll(elementJsonMap.values());
-
-            JSONObject body = new JSONObject();
-            body.put("elements", jsonArray);
+        if (!presentationElementJsonObjects.isEmpty()) {
             // Intentionally not sending source so that it is not skipped on Coordinated Sync. Otherwise holding_bin intermediate packages won't be created, which could cause errors if non-hidden elements are created there.
-            //send.put("source", "magicdraw");
-            body.put("mmsVersion", DocGenPlugin.VERSION);
-
-
-            String url = ExportUtility.getPostElementsUrl();
-            Application.getInstance().getGUILog().log("[INFO] Queueing request to update " + elementJsonMap.size() + " element" + (elementJsonMap.size() != 1 ? "s" : "") + " on the MMS.");
-            //System.out.println(body);
-            OutputQueue.getInstance().offer(new Request(url, body.toJSONString(), jsonArray.size(), "Migration Creations/Updates", false));
+            sendStaggered(presentationElementJsonObjects, "Presentation Element", "Presentation Elements", ps, true);
+            if (ps.isCancel()) {
+                return;
+            }
         }
 
         if (!elementsToDeleteRemotely.isEmpty()) {
-            JSONArray jsonArray = new JSONArray();
-            for (Element element : elementsToDeleteRemotely) {
-                JSONObject elementJsonObject = new JSONObject();
-                elementJsonObject.put("sysmlid", ExportUtility.getElementID(element));
-                jsonArray.add(elementJsonObject);
+            int total = 0;
+            String status = "Deleting " + elementsToDeleteRemotely.size() + " legacy View Instance Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + " on the MMS";
+            Queue<Element> elementJsonQueue = new LinkedBlockingQueue<>(elementsToDeleteRemotely);
+            ps.setIndeterminate(false);
+            ps.setCurrent(0);
+            ps.setMax(elementsToDeleteLocally.size() / MAX_ELEMENTS_PER_REQUEST + 1);
+            while (ps.getCurrent() < ps.getMax()) {
+                if (ps.isCancel()) {
+                    handleCancel();
+                    return;
+                }
+                ps.setDescription(status + " (" + total + "/" + elementsToDeleteRemotely.size() + ")");
+                JSONArray jsonArray = new JSONArray();
+                for (int i = 0; i < MAX_ELEMENTS_PER_REQUEST && !elementJsonQueue.isEmpty(); i++) {
+                    JSONObject elementJsonObject = new JSONObject();
+                    elementJsonObject.put("sysmlid", ExportUtility.getElementID(elementJsonQueue.poll()));
+                    jsonArray.add(elementJsonObject);
+                }
+                JSONObject body = new JSONObject();
+                body.put("elements", jsonArray);
+                body.put("source", "magicdraw");
+                body.put("mmsVersion", DocGenPlugin.VERSION);
+                //Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + jsonArray.size() + " element" + (jsonArray.size() != 1 ? "s" : "") + " on the MMS.");
+                //System.out.println(body);
+                //OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, jsonArray.size(), "Migration Deletes"));
+                ExportUtility.deleteWithBody(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), true);
+
+                ps.increase();
+                total += jsonArray.size();
             }
-            JSONObject body = new JSONObject();
-            body.put("elements", jsonArray);
-            body.put("source", "magicdraw");
-            body.put("mmsVersion", DocGenPlugin.VERSION);
-            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + jsonArray.size() + " element" + (jsonArray.size() != 1 ? "s" : "") + " on the MMS.");
-            //System.out.println(body);
-            OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, jsonArray.size(), "Migration Deletes"));
+            ps.setDescription(null);
+            ps.setIndeterminate(true);
+            Application.getInstance().getGUILog().log("[INFO] Deleted " + elementsToDeleteRemotely.size() + " legacy View Instance Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + " on the MMS.");
         }
+
+        // POINT OF NO RETURN; NO MORE CANCELLING
 
         listener.setDisabled(true);
 
         if (!presentationElements.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Deleting " + presentationElements.size() + " client-side presentation element" + (presentationElements.size() != 1 ? "s" : "") + ".");
             if (!SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().createSession(project, "2.3 to 2.4 Migration");
+                SessionManager.getInstance().createSession(project, "C-3 to C-4 Migration");
             }
             for (Element presentationElement : presentationElements) {
                 try {
@@ -303,7 +351,7 @@ public class Crushinator23To24Migrator extends Migrator {
         if (!elementsToDeleteLocally.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Deleting " + elementsToDeleteLocally.size() + " client-side view related element" + (elementsToDeleteLocally.size() != 1 ? "s" : "") + ".");
             if (!SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().createSession(project, "2.3 to 2.4 Migration");
+                SessionManager.getInstance().createSession(project, "C-3 to C-4 Migration");
             }
             for (Element element : elementsToDeleteLocally) {
                 try {
@@ -325,7 +373,9 @@ public class Crushinator23To24Migrator extends Migrator {
             Application.getInstance().getGUILog().log("[ERROR] Migration failed! Please see log messages above for more details. Please restart the migration once the errors are resolved.");
         }
         else {
-            Application.getInstance().getGUILog().log("[INFO] " + ExportUtility.getProjectId(project) + " successfully migrated from 2.3 to 2.4.");
+            Application.getInstance().getGUILog().log("[INFO] Project " + project.getName() + " successfully migrated from C-3 to C-4.");
+            Application.getInstance().getGUILog().log("[INFO] Please review the contents of the notification window to verify and then " + (project.isTeamworkServerProject() ? "commit to Teamwork" : "save") + " without making further modification.");
+            Application.getInstance().getGUILog().log("[INFO] In the case that an error occurred, close the project abandoning all changes. Then re-open the project and restart the migration.");
         }
     }
 
@@ -352,5 +402,79 @@ public class Crushinator23To24Migrator extends Migrator {
             }
         }
         return jsonObject;
+    }
+
+    private JSONObject convertElementToPartialJson(Element element, List<String[]> keyPaths) {
+        if (!ExportUtility.shouldAdd(element)) {
+            return null;
+        }
+        if (ProjectUtilities.isElementInAttachedProject(element)) {
+            return null;
+        }
+        JSONObject jsonObject = ExportUtility.fillElement(element, null);
+        Object o;
+        /*if (entry.getKey().equals("document") && (o = jsonObject.get("specialization")) instanceof JSONObject) {
+            ((JSONObject) o).put("view2view", null);
+        }*/
+        if (jsonObject == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Failed to serialize " + element.getID() + ".");
+            failed = true;
+            return null;
+        }
+        jsonObject = transform(jsonObject, keyPaths);
+        if (jsonObject == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Failed to transform " + element.getID() + ".");
+            failed = true;
+            return null;
+        }
+        return jsonObject;
+    }
+
+    private void handleCancel() {
+        Application.getInstance().getGUILog().log("[WARNING] Migration manually cancelled by user. Please note that the migration has not completed and will need to be ran again.");
+        failed = true;
+    }
+
+    private void sendStaggered(Collection<JSONObject> jsonObjects, String elementType, String elementTypePlural, ProgressStatus progressStatus) {
+        sendStaggered(jsonObjects, elementType, elementTypePlural, progressStatus, false);
+    }
+
+    private void sendStaggered(Collection<JSONObject> jsonObjects, String elementType, String elementTypePlural, ProgressStatus progressStatus, boolean suppressSource) {
+        if (!jsonObjects.isEmpty()) {
+            int total = 0;
+            String status = "Updating " + (jsonObjects.size() != 1 ? elementTypePlural : elementType) + " on the MMS";
+            Queue<JSONObject> elementJsonQueue = new LinkedBlockingQueue<>(jsonObjects);
+            progressStatus.setIndeterminate(false);
+            progressStatus.setCurrent(0);
+            progressStatus.setMax(jsonObjects.size() / MAX_ELEMENTS_PER_REQUEST + 1);
+            while (progressStatus.getCurrent() < progressStatus.getMax()) {
+                progressStatus.setDescription(status + " (" + total + "/" + jsonObjects.size() + ")");
+                JSONArray jsonArray = new JSONArray();
+                for (int i = 0; i < MAX_ELEMENTS_PER_REQUEST && !elementJsonQueue.isEmpty(); i++) {
+                    jsonArray.add(elementJsonQueue.poll());
+                }
+
+                JSONObject body = new JSONObject();
+                body.put("elements", jsonArray);
+                if (!suppressSource) {
+                    body.put("source", "magicdraw");
+                }
+                body.put("mmsVersion", DocGenPlugin.VERSION);
+                //Application.getInstance().getGUILog().log("[INFO] Queueing request to update " + elementJsonMap.size() + " element" + (elementJsonMap.size() != 1 ? "s" : "") + " on the MMS.");
+                //System.out.println(body);
+                //OutputQueue.getInstance().offer(new Request(url, body.toJSONString(), jsonArray.size(), "Migration Creations/Updates", false));
+                ExportUtility.send(ExportUtility.getPostElementsUrl(), body.toJSONString(), false, false);
+                if (progressStatus.isCancel()) {
+                    handleCancel();
+                    return;
+                }
+
+                progressStatus.increase();
+                total += jsonArray.size();
+            }
+            progressStatus.setDescription(null);
+            progressStatus.setIndeterminate(true);
+            Application.getInstance().getGUILog().log("[INFO] Updated " + jsonObjects.size() + " " + (jsonObjects.size() != 1 ? elementTypePlural : elementType) + " on the MMS.");
+        }
     }
 }

@@ -9,7 +9,6 @@ import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
-import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
@@ -24,6 +23,7 @@ import java.util.*;
 public class JMSMessageListener implements MessageListener, ExceptionListener {
     private static final Map<String, Changelog.ChangeType> CHANGE_MAPPING = new LinkedHashMap<>(4);
 
+    private volatile boolean isExceptionHandlerRunning;
     private int reconnectionAttempts = 0;
 
     static {
@@ -165,16 +165,22 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     @Override
     public void onException(JMSException exception) {
+        if (isExceptionHandlerRunning) {
+            return;
+        }
+        isExceptionHandlerRunning = true;
         Application.getInstance().getGUILog().log("[WARNING] Lost connection with JMS. Please check your network configuration.");
         JMSSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(true);
-        while (JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") && !project.isProjectClosed() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
+        while (shouldAttemptToReconnect()) {
             int delay = Math.min(600, (int) Math.pow(2, reconnectionAttempts++));
             Application.getInstance().getGUILog().log("[INFO] Attempting to reconnect to JMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
             try {
                 Thread.sleep(delay * 1000);
             } catch (InterruptedException ignored) {
             }
-            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(project);
+            if (shouldAttemptToReconnect()) {
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(project);
+            }
         }
         if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
             reconnectionAttempts = 0;
@@ -183,5 +189,10 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         else {
             Application.getInstance().getGUILog().log("[WARNING] Failed to reconnect to JMS after dropped connection. Please close and re-open the project to re-initiate.");
         }
+        isExceptionHandlerRunning = false;
+    }
+
+    private boolean shouldAttemptToReconnect() {
+        return JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") && !project.isProjectClosed() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled();
     }
 }
