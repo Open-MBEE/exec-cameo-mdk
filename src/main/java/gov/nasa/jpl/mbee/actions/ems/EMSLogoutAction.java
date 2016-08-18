@@ -29,7 +29,9 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
+import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
@@ -59,6 +61,7 @@ public class EMSLogoutAction extends MMSAction {
             MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectClosed(p);
         }
         Application.getInstance().getGUILog().log("Logged out");
+        SyncStatusConfigurator.getSyncStatusAction().update();
         ActionsStateUpdater.updateActionsState();
     }
 

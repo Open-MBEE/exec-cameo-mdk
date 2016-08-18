@@ -23,6 +23,7 @@ import javax.swing.table.TableColumnModel;
 
 import com.nomagic.magicdraw.core.Application;
 
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
 import gov.nasa.jpl.mbee.lib.Utils;
 
@@ -43,6 +44,7 @@ public class OutputQueueStatusAction extends SRAction {
 		if (outputQueueDetailWindow.isVisible()) {
 			outputQueueDetailWindow.update();
 		}
+		DocGenPlugin.updateMainToolbarCategory();
 		//Application.getInstance().getGUILog().log(getName());
 		//System.out.println(getName());
 	}

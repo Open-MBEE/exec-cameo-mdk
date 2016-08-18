@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.actions.ems.sync;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.sync.status.ui.SyncStatusFrame;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElement;
@@ -105,6 +106,7 @@ public class SyncStatusAction extends SRAction {
             @Override
             public void run() {
                 setName(NAME + ": " + numberFormat.format(totalChangedCount[0]));
+                DocGenPlugin.updateMainToolbarCategory();
             }
         });
 

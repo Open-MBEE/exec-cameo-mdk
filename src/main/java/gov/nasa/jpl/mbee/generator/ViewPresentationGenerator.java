@@ -94,6 +94,31 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             SessionManager.getInstance().closeSession();
         }
 
+        String url = ExportUtility.getUrl(project);
+        if (url == null || url.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Url not specified. Aborting view generation.");
+            failure = true;
+            return;
+        }
+        String site = ExportUtility.getSite();
+        if (site == null || site.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Site not specified. Aborting view generation.");
+            failure = true;
+            return;
+        }
+        try {
+            if (!ExportUtility.hasSiteWritePermissions(url, site)) {
+                Application.getInstance().getGUILog().log("[ERROR] User does not have sufficient permissions on MMS or the site/url is misconfigured. Aborting view generation.");
+                failure = true;
+                return;
+            }
+        } catch (ServerException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while verifying site permissions. Aborting view generation. Error: " + e.getMessage());
+            failure = true;
+            return;
+        }
+
         // STAGE 1: Calculating view structure
         progressStatus.setDescription("Calculating view structure");
         progressStatus.setCurrent(1);
