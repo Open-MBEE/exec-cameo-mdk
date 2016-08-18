@@ -451,10 +451,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 try {
                     ModelElementsManager.getInstance().removeElement(element);
                     deletedElements.put(elementEntry.getKey(), null);
-                    locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[DELETED]"));
+                    locallyChangedValidationRule.addViolation(new ValidationRuleViolation(project.getModel(), "[DELETED] " + element.getHumanName() +  " - " + element.getID()));
                 } catch (ReadOnlyElementException roee) {
                     roee.printStackTrace();
-                    ValidationRuleViolation vrv = new ValidationRuleViolation(element, "[DELETE FAILED] " + roee.getMessage());
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(project.getModel(), "[DELETE FAILED] " + element.getHumanName() + " - " + element.getID() + " - Reason: " + roee.getMessage());
                     cannotUpdate.addViolation(vrv);
                     failedJmsChangelog.addChange(elementEntry.getKey(), null, Changelog.ChangeType.DELETED);
                 }
