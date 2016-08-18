@@ -32,10 +32,12 @@ package gov.nasa.jpl.mbee.api;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.ems.*;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
 import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
-import gov.nasa.jpl.mbee.ems.ValidateViewRunner;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
@@ -50,6 +52,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
+import org.json.simple.JSONObject;
 import org.python.google.common.collect.Lists;
 
 /**
@@ -238,6 +242,85 @@ public class MDKHelper {
 	}
 
 	/**********************************************************************************
+     * 
+     * MMS REST Interactions
+     * 
+     **********************************************************************************/
+    
+    public static JSONObject getMmsElement(Element e) {
+        return ModelValidator.getAlfrescoElement(e);
+    }
+    
+    public static JSONObject getMmsElementByID(String s) {
+        return ModelValidator.getAlfrescoElementByID(s);
+    }
+    
+    public static JSONObject getMmsElements(Collection<Element> ce) throws ServerException {
+        return ModelValidator.getManyAlfrescoElements(ce, null);
+    }
+    
+    public static JSONObject getMmsElementsByID(Collection<String> cs) throws ServerException {
+        return ModelValidator.getManyAlfrescoElementsByID(cs, null);
+    }
+    
+    public static void createMmsElement() {
+        //TODO
+        // mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
+    }
+    
+    public static void deleteMmsElement(Element deleteTarget) throws Exception {
+        // mimic: curl <ticket stuff> -X https://<server name>/alfresco/service/workspaces/master/elements/<element sysml id>
+
+        Project proj = Application.getInstance().getProject();
+        if (proj == null)
+            throw new Exception("No project opened.");
+        String url = ExportUtility.getUrl(proj);
+        if (url == null)
+            throw new Exception("Project does not have MMS URL configured.");
+        String sysmlid = deleteTarget.getID();
+        if (sysmlid == null)
+            throw new Exception("Element does not exist in model");
+        url += "/workspaces/master/elements/" + sysmlid;
+        String response = ExportUtility.delete(url, true);
+        if (response == null)
+            throw new Exception("Unable to delete indicated element on MMS");
+    }
+    
+    public static void updateMmsElement() {
+        //TODO
+        // mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
+        // see ExportUtility.
+    }
+
+	/**
+	 * Convenience method for confirmSiteWritePermissions(string, string) to check if a project
+	 * is editable by the logged in user. Uses the url and site information stored in the currently
+	 * open project.
+	 *
+	 * @return
+	 *          true if the site lists "editable":"true" for the logged in user, false otherwise
+	 *          or when no project is open or project lacks url and site specifications
+	 */
+    public static boolean hasSiteWritePermissions() {
+        try {
+			Project proj = Application.getInstance().getProject();
+			if (proj == null)
+				return false;
+			String url = ExportUtility.getUrl(proj);
+			if (url == null)
+				return false;
+			String site = ExportUtility.getSite();
+			if (site == null)
+				return false;
+			return ExportUtility.hasSiteWritePermissions(url, site);
+        } catch (ServerException se) {
+            return false;
+        }
+    }
+
+
+    
+	/**********************************************************************************
 	 *
 	 * Model wide MDK Actions
 	 * 
@@ -308,4 +391,11 @@ public class MDKHelper {
 		return LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog();
 	}
 
+	public static boolean isLoginDialogDisabled() {
+		return ViewEditUtils.isLoginDialogDisabled();
+	}
+
+	public static void setLoginDialogDisabled(boolean loginDialogDisabled) {
+		ViewEditUtils.setLoginDialogDisabled(loginDialogDisabled);
+	}
 }

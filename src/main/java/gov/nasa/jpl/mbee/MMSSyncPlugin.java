@@ -54,7 +54,7 @@ public class MMSSyncPlugin extends MDPlugin {
         // Order matters!
         Application.getInstance().getProjectsManager().addProjectListener(coordinatedSyncProjectEventListenerAdapter = new CoordinatedSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(deltaSyncProjectEventListenerAdapter = new DeltaSyncProjectEventListenerAdapter());
-        // Common and JMS clear their respective inMemoryChangelogs on save, so it needs to go after coordinated and delta which use it.
+        // Common and MMS clear their respective inMemoryChangelogs on save, so it needs to go after coordinated and delta which use it.
         Application.getInstance().getProjectsManager().addProjectListener(localSyncProjectEventListenerAdapter = new LocalSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(jmsSyncProjectEventListenerAdapter = new JMSSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(syncStatusProjectEventListenerAdapter = new SyncStatusProjectEventListenerAdapter());

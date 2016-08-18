@@ -68,7 +68,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             JMSMessageListener.getInMemoryJMSChangelog().clear();
         }
         if (jmsSyncProjectMapping.isDisabled() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
-            Application.getInstance().getGUILog().log("[INFO] Attempting to re-initialize JMS sync.");
+            Application.getInstance().getGUILog().log("[INFO] Attempting to re-initialize MMS sync.");
             projectOpened(project);
         }
     }
@@ -83,34 +83,34 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             jmsInfo = JMSUtils.getJMSInfo(project);
         } catch (ServerException | IllegalArgumentException e) {
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed. Message: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Message: " + e.getMessage());
             return false;
         }
         String url = jmsInfo != null ? jmsInfo.getUrl() : null;
         if (url == null) {
-            Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed. Cannot get server URL.");
+            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Cannot get server URL.");
             return false;
         }
         if (workspaceID == null) {
-            Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed. Cannot get the server workspace that corresponds to this project branch.");
+            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Cannot get the server workspace that corresponds to this project branch.");
             return false;
         }
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             String user = TeamworkUtils.getLoggedUserName();
             if (user == null) {
-                Application.getInstance().getGUILog().log("[ERROR] You must be logged into Teamwork. JMS sync will not start.");
+                Application.getInstance().getGUILog().log("[ERROR] You must be logged into Teamwork. MMS sync will not start.");
                 return false;
             }
         }
         String username = ViewEditUtils.getUsername();
         if (username == null || username.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed. Could not login to MMS.");
+            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
             return false;
         }
         try {
             ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(JMSUtils.getJMSInfo(project));
             if (connectionFactory == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Failed to create JMS connection factory.");
+                Application.getInstance().getGUILog().log("[ERROR] Failed to create MMS connection factory.");
                 return false;
             }
             String subscriberId = projectID + "-" + workspaceID + "-" + username; // weblogic can't have '/' in id
@@ -161,12 +161,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 }
             }.start();*/
 
-            Application.getInstance().getGUILog().log("[INFO] JMS sync initiated.");
+            Application.getInstance().getGUILog().log("[INFO] MMS sync initiated.");
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             jmsSyncProjectMapping.setDisabled(true);
-            Application.getInstance().getGUILog().log("[ERROR] JMS sync initialization failed: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed: " + e.getMessage());
         }
         return false;
     }
@@ -251,7 +251,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                     }
                     TextMessage textMessage = (TextMessage) message;
                     if (print) {
-                        System.out.println("From JMS: " + textMessage.getText());
+                        System.out.println("From MMS: " + textMessage.getText());
                     }
                     textMessages.add(textMessage);
 

@@ -28,6 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import com.nomagic.actions.ActionsCategory;
+import com.nomagic.actions.ActionsManager;
+import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
@@ -54,7 +57,10 @@ public class DocGenPlugin extends Plugin {
     private ValidateConstraintsPlugin vcPlugin = null;
     public static ClassLoader extensionsClassloader = null;
 
-    public static final String VERSION = "2.3";
+    public static final String VERSION = "2.3",
+            MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
+
+    public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
 
     public DocGenPlugin() {
         super();
@@ -148,5 +154,22 @@ public class DocGenPlugin extends Plugin {
         }
         extensionsClassloader = new URLClassLoader(extensions.toArray(new URL[]{}),
                 DocGenPlugin.class.getClassLoader());
+    }
+
+    public static void updateMainToolbarCategory() {
+        if (MAIN_TOOLBAR_ACTIONS_MANAGER == null) {
+            return;
+        }
+        ActionsCategory category = MAIN_TOOLBAR_ACTIONS_MANAGER.getCategory(MAIN_TOOLBAR_CATEGORY_NAME);
+        if (category == null) {
+            return;
+        }
+        List<NMAction> actions = new ArrayList<>(category.getActions());
+        for (NMAction action : actions) {
+            category.removeAction(action);
+        }
+        for (NMAction action : actions) {
+            category.addAction(action);
+        }
     }
 }

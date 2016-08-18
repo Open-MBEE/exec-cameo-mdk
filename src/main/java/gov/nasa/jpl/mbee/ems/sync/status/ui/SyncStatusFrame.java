@@ -140,7 +140,7 @@ public class SyncStatusFrame extends JFrame {
         setContentPane(rootPanel);
         setLocationRelativeTo(Application.getInstance().getMainFrame());
         pack();
-        setMinimumSize(rootPanel.getSize());
+        setMinimumSize(getSize());
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setAlwaysOnTop(true);
     }

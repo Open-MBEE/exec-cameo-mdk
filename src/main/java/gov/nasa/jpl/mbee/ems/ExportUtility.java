@@ -71,6 +71,8 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import javax.jms.*;
 import javax.swing.*;
@@ -2234,5 +2236,73 @@ public class ExportUtility {
             branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(proj).getURI());
         }
         return branch;
+    }
+    
+    /**
+     * Method to check if the currently logged in user has permissions to edit the specified site on
+     * the specified server.
+     * 
+     * @param url
+     *          The url of the mms server you are querying. Ex: "https://mms.myOrg.gov". 
+     *          Also accepts the url returned by the getUrl() function. 
+     * @param site
+     *          Site name (sysmlid) of the site you are querying for
+     * @return
+     *          true if the site lists "editable":"true" for the logged in user, false otherwise
+     * @throws ServerException
+     */
+    public static boolean hasSiteWritePermissions(String url, String site) throws ServerException {
+        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+        
+        //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
+        if (url.endsWith("/alfresco/service")) {
+            url += "/workspaces/master/sites";
+        }
+        else {
+            url += "/alfresco/service/workspaces/master/sites";
+        }
+        
+        checkAndResetTicket();
+        url = addTicketToUrl(url);
+        GetMethod gm = new GetMethod(url);
+        try {
+            HttpClient client = new HttpClient();
+            if (print) {
+                log.info("checkTicket: " + url);
+            }
+            int code = client.executeMethod(gm);
+            String json = gm.getResponseBodyAsString();
+            if (print) {
+                log.info("sites response: " + code + " " + json);                
+            }
+            if (code == 200) {
+                JSONObject siteResponse;
+                try {
+                    siteResponse = (JSONObject) (new JSONParser()).parse(json);
+                } catch (ParseException e) {
+                    throw new ServerException(json, 500);
+                }
+                JSONArray returnedSiteList = (JSONArray) siteResponse.get("sites");
+                for (Object returnedSite : returnedSiteList) {
+                    JSONObject rs = (JSONObject) returnedSite;
+                    if (rs.containsKey("editable") && rs.containsKey("sysmlid") && rs.get("sysmlid").equals(site)) {
+                        return (boolean) rs.get("editable");
+                    }
+                }
+            }
+            else if (code == 401 || code == 403 || code == 404) {
+                return false;
+            }
+            else {
+                throw new ServerException(json, code);
+            }
+            return false;
+        } catch (IOException ex) {
+            //Utils.printException(ex);
+            ex.printStackTrace();
+            throw new ServerException("", 500);
+        } finally {
+            gm.releaseConnection();
+        }
     }
 }
