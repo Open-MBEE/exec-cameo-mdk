@@ -74,7 +74,7 @@ public class SyncStatusAction extends SRAction {
                 inMemoryLocalDeletedCount[0] = localSyncTransactionCommitListener.getInMemoryLocalChangelog().get(Changelog.ChangeType.DELETED).size();
             }
             totalInMemoryLocalChangedCount[0] = inMemoryLocalCreatedCount[0] + inMemoryLocalUpdatedCount[0] + inMemoryLocalDeletedCount[0];
-            for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.UPDATE)) {
+            for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.LOCAL)) {
                 Changelog<String, Void> changelog = SyncElements.buildChangelog(syncElement);
                 persistedLocalCreatedCount[0] += changelog.get(Changelog.ChangeType.CREATED).size();
                 persistedLocalUpdatedCount[0] += changelog.get(Changelog.ChangeType.UPDATED).size();
@@ -90,7 +90,7 @@ public class SyncStatusAction extends SRAction {
                 inMemoryJmsDeletedCount[0] = jmsMessageListener.getInMemoryJMSChangelog().get(Changelog.ChangeType.DELETED).size();
             }
             totalInMemoryJmsChangedCount[0] = inMemoryJmsCreatedCount[0] + inMemoryJmsUpdatedCount[0] + inMemoryJmsDeletedCount[0];
-            for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.JMS)) {
+            for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.MMS)) {
                 Changelog<String, Void> changelog = SyncElements.buildChangelog(syncElement);
                 persistedJmsCreatedCount[0] += changelog.get(Changelog.ChangeType.CREATED).size();
                 persistedJmsUpdatedCount[0] += changelog.get(Changelog.ChangeType.UPDATED).size();

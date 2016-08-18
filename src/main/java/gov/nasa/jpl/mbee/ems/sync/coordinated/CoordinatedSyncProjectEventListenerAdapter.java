@@ -76,7 +76,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
             JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
-            // ACKNOWLEDGE LAST JMS MESSAGE TO CLEAR OWN QUEUE
+            // ACKNOWLEDGE LAST MMS MESSAGE TO CLEAR OWN QUEUE
 
             Message lastMessage;
             if (jmsMessageListener != null && (lastMessage = jmsMessageListener.getLastMessage()) != null) {

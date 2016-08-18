@@ -23,8 +23,8 @@ public class SyncElement {
     }
 
     public enum Type {
-        UPDATE,
-        JMS;
+        LOCAL,
+        MMS;
 
         private String prefix;
 

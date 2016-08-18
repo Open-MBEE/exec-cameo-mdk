@@ -21,7 +21,7 @@ public class JMSUtils {
     public static final String MSG_SELECTOR_PROJECT_ID = "projectId",
             MSG_SELECTOR_WORKSPACE_ID = "workspace";
 
-    // Members to look up JMS using JNDI
+    // Members to look up MMS using JNDI
     // TODO: If any other context factories are used, need to add those JARs into class path (e.g., for weblogic)
     public static String JMS_CTX_FACTORY = "org.apache.activemq.jndi.ActiveMQInitialContextFactory",
             JMS_CONN_FACTORY = "ConnectionFactory",
@@ -32,7 +32,7 @@ public class JMSUtils {
     private static InitialContext initialContext = null;
 
     /**
-     * Gets JMS JNDI connection details from the MMS server
+     * Gets MMS JNDI connection details from the MMS server
      *
      * @return JSONObject of the connection details
      */

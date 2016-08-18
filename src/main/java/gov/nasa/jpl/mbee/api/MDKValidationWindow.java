@@ -85,7 +85,7 @@ public class MDKValidationWindow {
             { "[OWNER]", "ExportOwner", "FixModelOwner" }, { "[PROP]", "ExportProperty", "ImportProperty" }, { "[FEATURE]", "ExportProperty", "" }, { "[SITE CHAR]", "ExportSite", "" }, { "[REL]", "ExportRel", "ImportRel" },
             { "[VALUE]", "ExportValue", "ImportValue" }, { "[CONNECTOR]", "ExportConnector", "ImportConnector" }, { "[CONSTRAINT]", "ExportConstraint", "ImportConstraint" }, { "[ASSOC]", "ExportAssociation", "ImportAssociation" },
             { "[METATYPE]", "ExportMetatypes", "" }, { "[HIERARCHY]", "ExportHierarchy", "ImportHierarchy" }, { "[IMAGE]", "ExportImage", "" }, { "[EXIST ON MMS]", "DeleteAlfrescoElement", "CreateMagicDrawElement" }, { "[CREATED]", "", "" },
-            { "[CREATE FAILED]", "", "" }, { "[UPDATED]", "", "" }, { "[UPDATE FAILED]", "", "" }, { "[DELETED]", "", "" }, { "[DELETE FAILED]", "", "" } };
+            { "[CREATE FAILED]", "", "" }, { "[UPDATED]", "", "" }, { "[LOCAL FAILED]", "", "" }, { "[DELETED]", "", "" }, { "[DELETE FAILED]", "", "" } };
 
     /**
      * Constructor. This will sort the validation rules results into a format expected by a user who sorted their validation result window based on message (for batch processing)

@@ -157,12 +157,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         ModelElementsManager.getInstance().removeElement(constraint);
                     } catch (ReadOnlyElementException e) {
-                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[LOCAL FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                         failure = true;
                     }
                 }
                 else {
-                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[LOCAL FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                     failure = true;
                 }
             }

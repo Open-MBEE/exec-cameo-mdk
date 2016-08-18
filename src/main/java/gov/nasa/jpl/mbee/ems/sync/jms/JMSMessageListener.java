@@ -65,7 +65,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-            System.out.println("JMS TextMessage for " + ExportUtility.getProjectId(project) + " -" + System.lineSeparator() + text);
+            System.out.println("MMS TextMessage for " + ExportUtility.getProjectId(project) + " -" + System.lineSeparator() + text);
         }
         Object o = JSONValue.parse(text);
         if (!(o instanceof JSONObject)) {
@@ -169,11 +169,11 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         isExceptionHandlerRunning = true;
-        Application.getInstance().getGUILog().log("[WARNING] Lost connection with JMS. Please check your network configuration.");
+        Application.getInstance().getGUILog().log("[WARNING] Lost connection with MMS. Please check your network configuration.");
         JMSSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(true);
         while (shouldAttemptToReconnect()) {
             int delay = Math.min(600, (int) Math.pow(2, reconnectionAttempts++));
-            Application.getInstance().getGUILog().log("[INFO] Attempting to reconnect to JMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
+            Application.getInstance().getGUILog().log("[INFO] Attempting to reconnect to MMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
             try {
                 Thread.sleep(delay * 1000);
             } catch (InterruptedException ignored) {
@@ -184,10 +184,10 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         }
         if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
             reconnectionAttempts = 0;
-            Application.getInstance().getGUILog().log("[INFO] Successfully reconnected to JMS after dropped connection.");
+            Application.getInstance().getGUILog().log("[INFO] Successfully reconnected to MMS after dropped connection.");
         }
         else {
-            Application.getInstance().getGUILog().log("[WARNING] Failed to reconnect to JMS after dropped connection. Please close and re-open the project to re-initiate.");
+            Application.getInstance().getGUILog().log("[WARNING] Failed to reconnect to MMS after dropped connection. Please close and re-open the project to re-initiate.");
         }
         isExceptionHandlerRunning = false;
     }

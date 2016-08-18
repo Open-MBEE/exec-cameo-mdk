@@ -23,19 +23,19 @@ import java.util.*;
  *   1. Create a transaction manager
  *   2. Create a TransactionCommitListener object
  *   3. Add the listener to the transaction manager object 
- *   4. Create a JMS topic and connection to that topic
- *   5. Store that connection so we keep track of the connections to JMS.
+ *   4. Create a MMS topic and connection to that topic
+ *   5. Store that connection so we keep track of the connections to MMS.
  *   
  */
 public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final Map<SyncElement.Type, Function<Project, Changelog<String, ?>>> CHANGELOG_FUNCTIONS = new HashMap<>(2);
 
     static {
-        CHANGELOG_FUNCTIONS.put(SyncElement.Type.UPDATE, new Function<Project, Changelog<String, ?>>() {
+        CHANGELOG_FUNCTIONS.put(SyncElement.Type.LOCAL, new Function<Project, Changelog<String, ?>>() {
             @Override
             public Changelog<String, ?> apply(Project project) {
                 Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
-                for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.UPDATE)) {
+                for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.LOCAL)) {
                     combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
                 }
                 if (LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog() == null) {
@@ -49,11 +49,11 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
                 });
             }
         });
-        CHANGELOG_FUNCTIONS.put(SyncElement.Type.JMS, new Function<Project, Changelog<String, ?>>() {
+        CHANGELOG_FUNCTIONS.put(SyncElement.Type.MMS, new Function<Project, Changelog<String, ?>>() {
             @Override
             public Changelog<String, ?> apply(Project project) {
                 Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
-                for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.JMS)) {
+                for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.MMS)) {
                     combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
                 }
                 JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
