@@ -280,7 +280,7 @@ public class Crushinator23To24Migrator extends Migrator {
             Queue<Element> elementJsonQueue = new LinkedBlockingQueue<>(elementsToDeleteRemotely);
             ps.setIndeterminate(false);
             ps.setCurrent(0);
-            ps.setMax(elementsToDeleteLocally.size() / MAX_ELEMENTS_PER_REQUEST + 1);
+            ps.setMax(elementsToDeleteRemotely.size() / MAX_ELEMENTS_PER_REQUEST + 1);
             while (ps.getCurrent() < ps.getMax()) {
                 if (ps.isCancel()) {
                     handleCancel();
