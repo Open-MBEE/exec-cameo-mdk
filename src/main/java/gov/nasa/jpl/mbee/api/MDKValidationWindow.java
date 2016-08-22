@@ -30,6 +30,7 @@
 package gov.nasa.jpl.mbee.api;
 
 import java.awt.event.ActionEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -157,12 +158,12 @@ public class MDKValidationWindow {
      * 
      * @return Number of violations of specified type
      */
-    public int listPooledViolations(String type) throws Exception {
+    public int listPooledViolations(String type) throws UnsupportedOperationException {
         type = standardize(type);
         int index;
         index = lookupListIndex(type);
         if (index == -1)
-            throw new Exception(type + " is not a supported violation result.");
+            throw new UnsupportedOperationException(type + " is not a supported violation result.");
         System.out.println("There are " + pooledViolations.get(index).size() + " ValidationRuleViolatons in the " + type + " pool");
         for (ValidationRuleViolation vrv : pooledViolations.get(index)) {
             System.out.println("  " + (vrv.getElement() != null ? vrv.getElement().getHumanName() : "null") + " : " + vrv.getComment());
@@ -245,7 +246,7 @@ public class MDKValidationWindow {
      *            will commit to MMS if true, will accept from MMS is false
      * @throws Exception
      */
-    private Collection<Element> processValidationResults(String violationType, Collection<Element> targets, boolean commit) throws Exception {
+    private Collection<Element> processValidationResults(String violationType, Collection<Element> targets, boolean commit) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         violationType = standardize(violationType);
         MagicDrawHelper.generalMessage((commit ? "Commit" : "Accept") + "ing " + (targets != null ? "selected " : "") + "instances of " + violationType + " violations.");
 
@@ -278,7 +279,7 @@ public class MDKValidationWindow {
         while (actionIndex < violationList.get(0).getActions().size() && !(violationList.get(0).getActions().get(actionIndex).getClass().getSimpleName().equals(className)))
             actionIndex++;
         if (actionIndex >= violationList.get(0).getActions().size() || !(violationList.get(0).getActions().get(actionIndex).getClass().getSimpleName().equals(className)))
-            throw new Exception("Unable to find " + className + " for violation type " + violationType);
+            throw new ClassNotFoundException("Unable to find " + className + " for violation type " + violationType);
 
         // project initialization is specialized and might not include a nmaction to run
         if (violationType.equals("INITIALIZATION")) {
@@ -296,9 +297,9 @@ public class MDKValidationWindow {
             for (ValidationRuleViolation vrv : violationList) {
                 if (targets == null || targets.remove(vrv.getElement())) {
                     if (commit) {
-                        ((ExportHierarchy) vrv.getActions().get(actionIndex)).actionPerformed(new ActionEvent(new JButton(), 5, ""));
+                        vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
                     } else {
-                        ((ImportHierarchy) vrv.getActions().get(actionIndex)).actionPerformed(new ActionEvent(new JButton(), 5, ""));
+                        vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
                     }
                 }
             }
@@ -342,7 +343,7 @@ public class MDKValidationWindow {
      *            Collection of elements whose validations should be processed; if null all will be processed
      * @throws Exception
      */
-    private Collection<Element> processAllMDChangesToMMS(Collection<Element> targets) throws Exception {
+    private Collection<Element> processAllMDChangesToMMS(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults(VALIDATION_OPTIONS[0 + PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, true);
         for (int i = 1 + PRE_OPERATIONS; i < VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS; i++)
             processValidationResults(VALIDATION_OPTIONS[i][RULE_VIOLATION_TYPE], targets, true);
@@ -357,11 +358,11 @@ public class MDKValidationWindow {
      *            Collection of elements whose validations should be processed; if null all will be processed
      * @throws Exception
      */
-    private Collection<Element> processAllMMSChangesIntoMD(Collection<Element> targets) throws Exception {
+    private Collection<Element> processAllMMSChangesIntoMD(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults(VALIDATION_OPTIONS[VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS][RULE_VIOLATION_TYPE], targets, false);
         for (int i = 1 + PRE_OPERATIONS; i < VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS; i++)
             processValidationResults(VALIDATION_OPTIONS[i][RULE_VIOLATION_TYPE], targets, false);
-        processValidationResults(VALIDATION_OPTIONS[0 + PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, false);
+        processValidationResults(VALIDATION_OPTIONS[PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, false);
         return targets;
     }
 
@@ -373,12 +374,10 @@ public class MDKValidationWindow {
 
     /**
      * Accepts the MMS version into MD for all violation types
-     * 
-     * @param violationType
-     *            the type of violation to be accepted
+     *
      * @throws Exception
      */
-    public void acceptAllMMSChangesIntoMD() throws Exception {
+    public void acceptAllMMSChangesIntoMD() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         processAllMMSChangesIntoMD(null);
     }
 
@@ -389,7 +388,7 @@ public class MDKValidationWindow {
      *            the type of violation to be accepted
      * @throws Exception
      */
-    public void acceptMMSChangesIntoMD(String violationType) throws Exception {
+    public void acceptMMSChangesIntoMD(String violationType) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults(violationType, null, false);
     }
 
@@ -401,7 +400,7 @@ public class MDKValidationWindow {
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws Exception
      */
-    public Collection<Element> acceptSpecificMMSChangesIntoMD(Collection<Element> targets) throws Exception {
+    public Collection<Element> acceptSpecificMMSChangesIntoMD(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         return processAllMMSChangesIntoMD(targets);
     }
 
@@ -415,7 +414,7 @@ public class MDKValidationWindow {
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws Exception
      */
-    public Collection<Element> acceptSpecificTypeMDChangesToMMS(String violationType, Collection<Element> targets) throws Exception {
+    public Collection<Element> acceptSpecificTypeMDChangesToMMS(String violationType, Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         return processValidationResults(violationType, targets, false);
     }
 
@@ -424,7 +423,7 @@ public class MDKValidationWindow {
      * 
      * @throws Exception
      */
-    public void commitAllMDChangesToMMS() throws Exception {
+    public void commitAllMDChangesToMMS() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         processAllMDChangesToMMS(null);
     }
 
@@ -435,7 +434,7 @@ public class MDKValidationWindow {
      *            the type of violation to be accepted
      * @throws Exception
      */
-    public void commitMDChangesToMMS(String violationType) throws Exception {
+    public void commitMDChangesToMMS(String violationType) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults(violationType, null, true);
     }
 
@@ -447,7 +446,7 @@ public class MDKValidationWindow {
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws Exception
      */
-    public Collection<Element> commitSpecificMDChangesToMMS(Collection<Element> targets) throws Exception {
+    public Collection<Element> commitSpecificMDChangesToMMS(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         return processAllMDChangesToMMS(targets);
     }
 
@@ -461,7 +460,7 @@ public class MDKValidationWindow {
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws Exception
      */
-    public Collection<Element> commitSpecificTypeMDChangesToMMS(String violationType, Collection<Element> targets) throws Exception {
+    public Collection<Element> commitSpecificTypeMDChangesToMMS(String violationType, Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         return processValidationResults(violationType, targets, true);
     }
 
@@ -470,7 +469,7 @@ public class MDKValidationWindow {
      * 
      * @throws Exception
      */
-    public void createAllMMSElementsNotFoundInMD() throws Exception {
+    public void createAllMMSElementsNotFoundInMD() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults("[EXIST on MMS]", null, false);
     }
 
@@ -479,7 +478,7 @@ public class MDKValidationWindow {
      * 
      * @throws Exception
      */
-    public void deleteAllMDElementsNotFoundOnMMS() throws Exception {
+    public void deleteAllMDElementsNotFoundOnMMS() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults("[EXIST]", null, false);
     }
 
@@ -488,7 +487,7 @@ public class MDKValidationWindow {
      * 
      * @throws Exception
      */
-    public void deleteAllMMSElementsNotFoundInMD() throws Exception {
+    public void deleteAllMMSElementsNotFoundInMD() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults("[EXIST on MMS]", null, true);
     }
 
@@ -497,7 +496,7 @@ public class MDKValidationWindow {
      * 
      * @throws Exception
      */
-    public void exportAllMDElementsToMMS() throws Exception {
+    public void exportAllMDElementsToMMS() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults("[EXIST]", null, true);
     }
 
@@ -591,7 +590,7 @@ public class MDKValidationWindow {
      * 
      * @throws Exception
      */
-    // private void exportAllValidatedAttribute() throws Exception {
+    // private void exportAllValidatedAttribute() {
     // // get the approrpiate violation list, throw exception if empty
     // String type = "[ATTRIBUTE]";
     // List<ValidationRuleViolation> importList = pooledViolations.get(lookupListIndex(type));
