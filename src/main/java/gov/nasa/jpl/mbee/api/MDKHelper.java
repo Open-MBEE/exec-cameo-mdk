@@ -361,7 +361,7 @@ public class MDKHelper {
 	 * 
 	 **********************************************************************************/
 
-    public static void disableSyncTransactionListener(boolean enable) {
+    public static void setSyncTransactionListenerDisabled(boolean enable) {
         Project project = Application.getInstance().getProject();
         LocalSyncProjectMapping lspm = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
         if (lspm == null)
