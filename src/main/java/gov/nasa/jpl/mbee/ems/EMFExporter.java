@@ -57,7 +57,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -195,19 +194,19 @@ public class EMFExporter {
 								while (it.hasNext()) {
 									EObject eo = (EObject) it.next();
 									if (eo instanceof Element) {
-										if (eo instanceof ValueSpecification) {
-											if (!createdIDs.contains(((Element) eo).getID())) {
-												childArray.add(fillElement((Element) eo));
-												// fillElement((Element) eo);
-												// array.add(((Element) eo).getID());
-											}
-										} else {
-											if (!createdIDs.contains(((Element) eo).getID())) {
-												siblings.add(fillElement((Element) eo));
-												// fillElement((Element) eo);
-												idArray.add(((Element) eo).getID());
-											}
+										// if (eo instanceof ValueSpecification) {
+										// if (!createdIDs.contains(((Element) eo).getID())) {
+										// childArray.add(fillElement((Element) eo));
+										// // fillElement((Element) eo);
+										// // array.add(((Element) eo).getID());
+										// }
+										// } else {
+										if (!createdIDs.contains(((Element) eo).getID())) {
+											siblings.add(fillElement((Element) eo));
+											// fillElement((Element) eo);
+											idArray.add(((Element) eo).getID());
 										}
+										// }
 									}
 								}
 								if (!idArray.isEmpty()) {
@@ -219,18 +218,18 @@ public class EMFExporter {
 							}
 						} else if (val instanceof EObject) {
 							if (val instanceof Element) {
-								if (val instanceof ValueSpecification) {
-									if (!createdIDs.contains(((Element) val).getID())) {
-										elementInfo.put(ref.getName(), fillElement((Element) val));
-										// fillElement((Element) eo);
-										// array.add(((Element) eo).getID());
-									}
-								} else {
-									if (!createdIDs.contains(((Element) val).getID())) {
-										siblings.add(fillElement((Element) val));
-										// fillElement((Element) val);
-										elementInfo.put(ref.getName() + "Id", ((Element) val).getID());
-									}
+								// if (val instanceof ValueSpecification) {
+								// if (!createdIDs.contains(((Element) val).getID())) {
+								// elementInfo.put(ref.getName(), fillElement((Element) val));
+								// // fillElement((Element) eo);
+								// // array.add(((Element) eo).getID());
+								// }
+								// } else {
+								if (!createdIDs.contains(((Element) val).getID())) {
+									siblings.add(fillElement((Element) val));
+									// fillElement((Element) val);
+									elementInfo.put(ref.getName() + "Id", ((Element) val).getID());
+									// }
 								}
 							}
 

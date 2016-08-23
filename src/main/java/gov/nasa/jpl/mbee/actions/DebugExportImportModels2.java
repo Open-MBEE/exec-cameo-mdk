@@ -29,6 +29,9 @@
 package gov.nasa.jpl.mbee.actions;
 
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -78,14 +81,25 @@ public class DebugExportImportModels2 extends MDAction {
 			me = new ModelExporter(root, depth, packageOnly, Application.getInstance().getProject().getPrimaryProject());
 		}
 		long start1 = System.currentTimeMillis();
-		JSONObject result = me.getResult();
-		String json = result.toJSONString();
+		// JSONObject result = me.getResult();
+		// String json = result.toJSONString();
 		long stop1 = System.currentTimeMillis();
 		JSONObject result1 = me.getEMFResult();
 		String jsonemf = result1.toJSONString();
 		long stop2 = System.currentTimeMillis();
-		System.out.println(json);
+		// System.out.println(json);
 		System.out.println((stop1 - start1) + " milliseconds pre and EMF: " + (stop2 - stop1));
-		System.out.println(jsonemf);
+		// System.out.println(jsonemf);
+
+		FileWriter fw;
+		try {
+			fw = new FileWriter(new File("/Users/johannes/Documents/projects/SECAE/compareImports/test04.json"));
+			fw.append(jsonemf);
+			fw.flush();
+			fw.close();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+
 	}
 }
