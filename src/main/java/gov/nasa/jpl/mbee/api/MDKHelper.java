@@ -30,6 +30,8 @@
 package gov.nasa.jpl.mbee.api;
 
 import com.nomagic.magicdraw.core.Project;
+
+import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.ems.*;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
@@ -263,27 +265,52 @@ public class MDKHelper {
         return ModelValidator.getManyAlfrescoElementsByID(cs, null);
     }
     
-    public static void createMmsElement() {
-        //TODO
-        // mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
+    public static void createMmsElement(Element e) throws Exception {
+//        mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
+        if (e == null)
+            throw new IllegalStateException("No element specified to export to MMS");
+        
+        Project proj = Application.getInstance().getProject();
+        if (proj == null)
+            throw new IllegalStateException("No project opened.");
+        
+        String url = ExportUtility.getPostElementsUrl();
+        if (url == null)
+            throw new IllegalStateException("Project does not have MMS URL configured.");
+        url += "/elements/" + e.getID();
+        System.out.println("******\n" + url);
+        //https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
+        
+        JSONObject jsob = ExportUtility.fillElement(e, null);
+        JSONObject send = new JSONObject();
+        send.put("elements", jsob);
+        send.put("source", "magicdraw");
+        send.put("mmsVersion", DocGenPlugin.VERSION);
+
+        String response = ExportUtility.send(url, send.toJSONString(), false, true);
+        if (response == null)
+            throw new ServerException("Server did not respond to request", 500);
     }
     
-    public static void deleteMmsElement(Element deleteTarget) throws Exception {
+    public static void deleteMmsElement(Element deleteTarget) throws IllegalStateException, ServerException {
         // mimic: curl <ticket stuff> -X https://<server name>/alfresco/service/workspaces/master/elements/<element sysml id>
 
         Project proj = Application.getInstance().getProject();
         if (proj == null)
-            throw new Exception("No project opened.");
-        String url = ExportUtility.getUrl(proj);
-        if (url == null)
-            throw new Exception("Project does not have MMS URL configured.");
+            throw new IllegalStateException("No project opened.");
+        
         String sysmlid = deleteTarget.getID();
         if (sysmlid == null)
-            throw new Exception("Element does not exist in model");
-        url += "/workspaces/master/elements/" + sysmlid;
+            throw new IllegalStateException("Element does not exist in model");
+
+        String url = ExportUtility.getUrlWithWorkspace();
+        if (url == null)
+            throw new IllegalStateException("Project does not have MMS URL configured.");
+        url += "/elements/" + sysmlid;
+        
         String response = ExportUtility.delete(url, true);
         if (response == null)
-            throw new Exception("Unable to delete indicated element on MMS");
+            throw new ServerException("Server did not respond to request", 500);
     }
     
     public static void updateMmsElement() {

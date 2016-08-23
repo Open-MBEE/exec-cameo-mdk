@@ -224,7 +224,7 @@ public class MagicDrawHelper {
 		return newPackage;
 	}
 	
-	protected static Package createPackageNoSession(String name, Element owner) {
+	public static Package createPackageNoSession(String name, Element owner) {
 		initializeFactory();
 		Package newPackage = ef.createPackageInstance();
 		finishElement(newPackage, name, owner);
@@ -238,7 +238,7 @@ public class MagicDrawHelper {
 		return newView;
 	}
 
-	protected static Class createViewNoSession(String name, Element owner) {
+	public static Class createViewNoSession(String name, Element owner) {
 		initializeFactory();
 		Class newView = ef.createClassInstance();
 		Stereotype sysmlView = Utils.getViewClassStereotype();
@@ -254,7 +254,7 @@ public class MagicDrawHelper {
 		return newDocument;
 	}
 
-	protected static Class createDocumentNoSession(String name, Element owner) {
+	public static Class createDocumentNoSession(String name, Element owner) {
 		initializeFactory();
 		Class newDocument = ef.createClassInstance();
 		Stereotype sysmlDocument = Utils.getDocumentStereotype();
@@ -307,7 +307,7 @@ public class MagicDrawHelper {
 		return genr;
 	}
 	
-	protected static Generalization createGeneralizationNoSession(String name, Element owner, Element source, Element target) {
+	public static Generalization createGeneralizationNoSession(String name, Element owner, Element source, Element target) {
 		initializeFactory();
 		Generalization genr = ef.createGeneralizationInstance();
 		setRelationshipEnds(genr, source, target);
@@ -322,7 +322,7 @@ public class MagicDrawHelper {
 		return depd;
 	}
 	
-	protected static Dependency createDependencyNoSession(String name, Element owner, Element source, Element target) {
+	public static Dependency createDependencyNoSession(String name, Element owner, Element source, Element target) {
 		initializeFactory();
 		Dependency depd = ef.createDependencyInstance();
 		setRelationshipEnds(depd, source, target);
@@ -343,7 +343,7 @@ public class MagicDrawHelper {
 		return prop;
 	}
 	
-	protected static Property createPropertyNoSession(String name, Element owner, ValueSpecification defaultValue, 
+	public static Property createPropertyNoSession(String name, Element owner, ValueSpecification defaultValue, 
 			Element typeElement, String aggregation, String multMin, String multMax) {
 		initializeFactory();
 		Property prop = ef.createPropertyInstance();
