@@ -223,8 +223,8 @@ public class ModelValidator {
                 Element e = ExportUtility.getElementFromID(elementId);
                 if (e != null)
                     elementId = e.getID();
-                else
-                    continue; //this is ignoring slots on the server that're not in magicdraw
+                //else
+                //    continue; //this is ignoring slots on the server that're not in magicdraw
             }
             elementsKeyed.put(elementId, elementInfo);
         }

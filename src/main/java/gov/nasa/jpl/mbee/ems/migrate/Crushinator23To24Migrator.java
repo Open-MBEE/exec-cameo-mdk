@@ -416,10 +416,6 @@ public class Crushinator23To24Migrator extends Migrator {
         failed = true;
     }
 
-    private void sendStaggered(Collection<JSONObject> jsonObjects, String elementType, String elementTypePlural, ProgressStatus progressStatus) {
-        sendStaggered(jsonObjects, elementType, elementTypePlural, progressStatus, false);
-    }
-
     private void sendStaggered(Collection<JSONObject> jsonObjects, String elementType, String elementTypePlural, ProgressStatus progressStatus, boolean suppressSource) {
         if (!jsonObjects.isEmpty()) {
             int total = 0;
