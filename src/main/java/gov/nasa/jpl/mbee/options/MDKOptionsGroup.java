@@ -5,6 +5,7 @@ import com.nomagic.magicdraw.core.options.AbstractPropertyOptionsGroup;
 import com.nomagic.magicdraw.properties.BooleanProperty;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyResourceProvider;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 //import com.nomagic.magicdraw.ui.ImageMap16;
 //import com.nomagic.ui.SwingImageIcon;
 
@@ -85,7 +86,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
     @Override
     public void setDefaultValues() {
-        setLogJson(false);
+        setLogJson(MDUtils.isDeveloperMode());
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
