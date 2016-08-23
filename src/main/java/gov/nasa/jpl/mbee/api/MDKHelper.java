@@ -31,7 +31,7 @@ package gov.nasa.jpl.mbee.api;
 
 import com.nomagic.magicdraw.core.Project;
 
-import gov.nasa.jpl.mbee.DocGenPlugin;
+import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.actions.docgen.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.actions.ems.*;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
@@ -40,7 +40,11 @@ import gov.nasa.jpl.mbee.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter.LocalSyncProjectMapping;
 import gov.nasa.jpl.mbee.lib.Changelog;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
@@ -55,6 +59,7 @@ import com.nomagic.ui.ProgressStatusRunner;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.python.google.common.collect.Lists;
 
@@ -163,7 +168,6 @@ public class MDKHelper {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 						return false;
 					}
@@ -265,36 +269,15 @@ public class MDKHelper {
         return ModelValidator.getManyAlfrescoElementsByID(cs, null);
     }
     
-    public static void createMmsElement(Element e) throws Exception {
-//        mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
-        if (e == null)
-            throw new IllegalStateException("No element specified to export to MMS");
-        
-        Project proj = Application.getInstance().getProject();
-        if (proj == null)
-            throw new IllegalStateException("No project opened.");
-        
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null)
-            throw new IllegalStateException("Project does not have MMS URL configured.");
-        url += "/elements/" + e.getID();
-        System.out.println("******\n" + url);
-        //https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
-        
-        JSONObject jsob = ExportUtility.fillElement(e, null);
-        JSONObject send = new JSONObject();
-        send.put("elements", jsob);
-        send.put("source", "magicdraw");
-        send.put("mmsVersion", DocGenPlugin.VERSION);
-
-        String response = ExportUtility.send(url, send.toJSONString(), false, true);
-        if (response == null)
-            throw new ServerException("Server did not respond to request", 500);
-    }
-    
-    public static void deleteMmsElement(Element deleteTarget) throws IllegalStateException, ServerException {
-        // mimic: curl <ticket stuff> -X https://<server name>/alfresco/service/workspaces/master/elements/<element sysml id>
-
+    /**
+     * Sends a DELETE request to MMS for the indicated element.
+     * 
+     * @param deleteTarget
+     *          The element you want to delete on the MMS
+     * @throws IllegalStateException
+     * @throws ServerException
+     */
+    public static void deleteMmsElement(Element deleteTarget) throws IllegalStateException {
         Project proj = Application.getInstance().getProject();
         if (proj == null)
             throw new IllegalStateException("No project opened.");
@@ -310,14 +293,39 @@ public class MDKHelper {
         
         String response = ExportUtility.delete(url, true);
         if (response == null)
-            throw new ServerException("Server did not respond to request", 500);
+            throw new IllegalStateException("No response received from delete method. Possible malformed url.");
+    }
+
+    /**
+     * Sends a POST request to MMS with the element JSON, creating or updating the element as appropriate.
+     * 
+     * @param elementJSON
+     *          The JSONObject of the element to create or update. 
+     *          Generally acquired through ExportUtility.fillElement(element, null)
+     * @throws IllegalStateException
+     */
+    public static void postMmsElement(JSONObject elementJSON) throws IllegalStateException {
+        if (elementJSON == null)
+            throw new IllegalStateException("No element json specified to export to MMS");
+        
+        Project proj = Application.getInstance().getProject();
+        if (proj == null)
+            throw new IllegalStateException("No project opened.");
+        
+        String url = ExportUtility.getPostElementsUrl();
+        if (url == null)
+            throw new IllegalStateException("Project does not have MMS URL configured.");
+        
+        JSONArray elems = new JSONArray();
+        elems.add(elementJSON);
+        JSONObject send = new JSONObject();
+        send.put("elements", elems);
+        
+        String response = ExportUtility.send(url, send.toJSONString(), false, true);
+        if (response == null)
+            throw new IllegalStateException("Invalid send formatting.");
     }
     
-    public static void updateMmsElement() {
-        //TODO
-        // mimic: curl -w "$MMS_HTTP_SIG" $MMS_USER_PASSWORD -X POST -H "Content-Type:application/json" --data "{\"elements\":[{${sysmlid}  \"specialization\": {\"${attribKey}\":\"${attribValue}\"}}]}" https://<server name>/alfresco/service/workspaces/<<workspace>>/elements/<<element sysml id>>
-        // see ExportUtility.
-    }
 
 	/**
 	 * Convenience method for confirmSiteWritePermissions(string, string) to check if a project
@@ -353,6 +361,34 @@ public class MDKHelper {
 	 * 
 	 **********************************************************************************/
 
+    public static void disableSyncTransactionListener(boolean enable) {
+        Project project = Application.getInstance().getProject();
+        LocalSyncProjectMapping lspm = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
+        if (lspm == null)
+            throw new IllegalStateException("LocalSyncProjectMapping is null");
+        LocalSyncTransactionCommitListener lstcl = lspm.getLocalSyncTransactionCommitListener();
+        if (lstcl == null)
+            throw new IllegalStateException("LocalSyncTransactionCommitListener is null");
+        lstcl.setDisabled(enable);
+    }
+    
+    /**
+     * Updates the MDKValidationWindow object with the latest delta sync results, or sets window to null if there are no results.
+     */
+    public static MDKValidationWindow getCoordinatedSyncValidationWindow() {
+        CoordinatedSyncProjectEventListenerAdapter cspela = MMSSyncPlugin.getInstance().getCoordinatedSyncProjectEventListenerAdapter();
+        if (cspela == null)
+            validationWindow = null;
+        DeltaSyncRunner dsr = cspela.getDeltaSyncRunner();
+        if (dsr == null)
+            validationWindow = null;
+        List<ValidationSuite> vss = dsr.getValidations();
+        if (vss.isEmpty())
+            validationWindow = null;
+        validationWindow = new MDKValidationWindow(vss);
+        return validationWindow;
+    }
+    
 	/**
 	 * Executes "Generate All Documents and Commit" action
 	 */

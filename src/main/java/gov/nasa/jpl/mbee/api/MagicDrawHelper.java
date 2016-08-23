@@ -83,19 +83,19 @@ public class MagicDrawHelper {
 	private static Project project;
 	private static ElementsFactory ef;
 
-	private static void createSession() {
+	public static void createSession() {
 		if (!SessionManager.getInstance().isSessionCreated()) {
 			SessionManager.getInstance().createSession("Automated changes");
 		}
 	}
 
-	private static void cancelSession() {
+	public static void cancelSession() {
 		if (SessionManager.getInstance().isSessionCreated()) {
 			SessionManager.getInstance().cancelSession();
 		}
 	}
 
-	private static void closeSession() {
+	public static void closeSession() {
 		if (SessionManager.getInstance().isSessionCreated()) {
 			SessionManager.getInstance().closeSession();
 		}
@@ -535,7 +535,21 @@ public class MagicDrawHelper {
 		closeSession();
 	}
 
-	/**
+   /**
+     * Updates the comments of the target element, adding the necessary html
+     * wrapper
+     * 
+     * @param target
+     *            The level element whose comment you want to change
+     * @param documentation
+     *            The new comments for the target element
+     * 
+     */
+    public static void setElementDocumentationNoSession(Element target, String documentation) {
+        ImportUtility.setDocumentation(target, documentation);
+    }
+    
+    /**
 	 * 3-way merge - merge branch changes to trunk.
 	 *
 	 * @param projectName
