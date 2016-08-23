@@ -28,7 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation;
 
-import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
+import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
+import gov.nasa.jpl.mbee.api.docgen.presentation_elements.properties.PresentationElementPropertyEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
@@ -73,7 +74,6 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportRel;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportValue;
 import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
-import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -528,31 +528,54 @@ public class ModelValidator {
                     continue;
                 }
                 // Alfresco sysml element is not in MagicDraw
-                JSONObject jSONobject = elementsKeyed.get(elementsKeyedId);
+                JSONObject jsonObject = elementsKeyed.get(elementsKeyedId);
                 String type = null;
-                if (jSONobject.containsKey("specialization")) {
-                    type = (String)((JSONObject)jSONobject.get("specialization")).get("type");
+                if (jsonObject.containsKey("specialization")) {
+                    type = (String)((JSONObject)jsonObject.get("specialization")).get("type");
                 }
                 if (type != null && type.equals("Project"))
                     continue;
-                Object o = jSONobject.get("specialization");
-                if (o instanceof JSONObject && (o = ((JSONObject) o).get("classifier")) instanceof JSONArray) {
-                    boolean isPresentationElement = false;
-                    for (Object c : (JSONArray) o) {
-                        if (c instanceof String) {
-                            for (PresentationElementType presentationElementType : PresentationElementType.values()) {
-                                if (c.equals(presentationElementType.getId())) {
-                                    isPresentationElement = true;
-                                    break;
+                Object o = jsonObject.get("specialization");
+                if (o instanceof JSONObject) {
+                    JSONObject specialization = (JSONObject) o;
+                    Object o2;
+                    if ((o2 = specialization.get("classifier")) instanceof JSONArray) {
+                        boolean isPresentationElement = false;
+                        for (Object c : (JSONArray) o2) {
+                            if (c instanceof String) {
+                                for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
+                                    if (c.equals(presentationElementEnum.get().getID())) {
+                                        isPresentationElement = true;
+                                        break;
+                                    }
                                 }
+                            }
+                            if (isPresentationElement) {
+                                break;
                             }
                         }
                         if (isPresentationElement) {
-                            break;
+                            continue;
                         }
                     }
-                    if (isPresentationElement) {
-                        continue;
+                    if ((o2 = specialization.get("propertyType")) instanceof JSONArray) {
+                        boolean isPresentationElementProperty = false;
+                        for (Object c : (JSONArray) o2) {
+                            if (c instanceof String) {
+                                for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
+                                    if (c.equals(presentationElementPropertyEnum.get().getID())) {
+                                        isPresentationElementProperty = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (isPresentationElementProperty) {
+                                break;
+                            }
+                        }
+                        if (isPresentationElementProperty) {
+                            continue;
+                        }
                     }
                 }
                 if (type == null)
@@ -560,7 +583,7 @@ public class ModelValidator {
                 if (ImportUtility.VALUESPECS.contains(type))
                     continue;
                 ValidationRuleViolation v;
-                String existname = (String)jSONobject.get("name");
+                String existname = (String)jsonObject.get("name");
                 if (existname ==  null)
                     existname = "<>";
                 existname.replace('`', '\'');
@@ -569,11 +592,11 @@ public class ModelValidator {
                     if (!elementsKeyedId.matches(HOLDING_BIN_PACKAGE_ID_REGEX)) {
                         v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
                     }
-                    v.addAction(new DetailDiff(new JSONObject(), jSONobject));
+                    v.addAction(new DetailDiff(new JSONObject(), jsonObject));
                     //v.addAction(new ElementDetail(jSONobject));
-                    v.addAction(new CreateMagicDrawElement(jSONobject, elementsKeyed));
+                    v.addAction(new CreateMagicDrawElement(jsonObject, elementsKeyed));
                 } else {
-                	v.addAction(new ElementDetail(jSONobject));
+                	v.addAction(new ElementDetail(jsonObject));
                 }
                 exist.addViolation(v);
                 differentElements.add(elementsKeyedId);

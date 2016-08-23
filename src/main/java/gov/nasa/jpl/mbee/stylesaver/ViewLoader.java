@@ -273,8 +273,8 @@ public class ViewLoader extends MDAction {
     }
 
     /**
-     * Sets style properties in the parameterized PresentationElement according
-     * to the PresentationElement's style property.
+     * Sets style properties in the parameterized PresentationElementInstance according
+     * to the PresentationElementInstance's style property.
      * 
      * @param elem
      *            the element to set style properties in.

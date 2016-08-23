@@ -27,7 +27,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.viewedit.DBAlfrescoVisitor;
-import gov.nasa.jpl.mbee.viewedit.PresentationElement;
+import gov.nasa.jpl.mbee.viewedit.PresentationElementInstance;
 import gov.nasa.jpl.mbee.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
@@ -422,8 +422,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             Utils.printException(e);
             e.printStackTrace();
         }
-        Map<Element, List<PresentationElement>> view2pe = dbAlfrescoVisitor.getView2Pe();
-        Map<Element, List<PresentationElement>> view2unused = dbAlfrescoVisitor.getView2Unused();
+        Map<Element, List<PresentationElementInstance>> view2pe = dbAlfrescoVisitor.getView2Pe();
+        Map<Element, List<PresentationElementInstance>> view2unused = dbAlfrescoVisitor.getView2Unused();
         Map<Element, JSONArray> view2elements = dbAlfrescoVisitor.getView2Elements();
         List<Element> views = instanceUtils.getViewProcessOrder(start, dbAlfrescoVisitor.getHierarchyElements());
         views.removeAll(processedElements);
@@ -468,9 +468,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (skippedViews.contains(view)) {
                     continue;
                 }
-                for (PresentationElement presentationElement : view2pe.get(view)) {
-                    if (presentationElement.getInstance() != null) {
-                        instanceToView.add(new Pair<>(presentationElement.getInstance(), view));
+                for (PresentationElementInstance presentationElementInstance : view2pe.get(view)) {
+                    if (presentationElementInstance.getInstance() != null) {
+                        instanceToView.add(new Pair<>(presentationElementInstance.getInstance(), view));
                     }
                 }
 
@@ -646,8 +646,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }*/
     }
 
-    private void handlePes(List<PresentationElement> pes, Package p) {
-        for (PresentationElement pe : pes) {
+    private void handlePes(List<PresentationElementInstance> pes, Package p) {
+        for (PresentationElementInstance pe : pes) {
             if (pe.getChildren() != null && !pe.getChildren().isEmpty()) {
                 handlePes(pe.getChildren(), p);
             }
@@ -655,10 +655,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
     }
 
-    private void handleUnused(List<PresentationElement> pes, Package p) {
+    private void handleUnused(List<PresentationElementInstance> pes, Package p) {
         // Decided not to do anything with unused instances. Leaving this as a placeholder in case that changes.
         /*
-        for (PresentationElement pe: pes) {
+        for (PresentationElementInstance pe: pes) {
             if (pe.getInstance() != null && pe.getInstance().isEditable())
                 organizer.moveViewInstance(pe.getInstance(), p);
         }

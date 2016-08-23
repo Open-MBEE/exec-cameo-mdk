@@ -4,7 +4,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
-import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
+import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
+import gov.nasa.jpl.mbee.api.docgen.presentation_elements.properties.PresentationElementPropertyEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
@@ -100,23 +101,47 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     if (sysmlid.startsWith(ModelValidator.HIDDEN_ID_PREFIX)) {
                         continue;
                     }
-                    if ((o = elementJson.get("specialization")) instanceof JSONObject && (o = ((JSONObject) o).get("classifier")) instanceof JSONArray) {
-                        boolean isPresentationElement = false;
-                        for (Object c : (JSONArray) o) {
-                            if (c instanceof String) {
-                                for (PresentationElementType presentationElementType : PresentationElementType.values()) {
-                                    if (c.equals(presentationElementType.getId())) {
-                                        isPresentationElement = true;
-                                        break;
+                    if ((o = elementJson.get("specialization")) instanceof JSONObject) {
+                        JSONObject specialization = (JSONObject) o;
+                        Object o2;
+                        if ((o2 = specialization.get("classifier")) instanceof JSONArray) {
+                            boolean isPresentationElement = false;
+                            for (Object c : (JSONArray) o2) {
+                                if (c instanceof String) {
+                                    for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
+                                        if (c.equals(presentationElementEnum.get().getID())) {
+                                            isPresentationElement = true;
+                                            break;
+                                        }
                                     }
+                                }
+                                if (isPresentationElement) {
+                                    break;
                                 }
                             }
                             if (isPresentationElement) {
-                                break;
+                                continue;
+
                             }
                         }
-                        if (isPresentationElement) {
-                            continue;
+                        if ((o2 = specialization.get("propertyType")) instanceof JSONArray) {
+                            boolean isPresentationElementProperty = false;
+                            for (Object c : (JSONArray) o2) {
+                                if (c instanceof String) {
+                                    for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
+                                        if (c.equals(presentationElementPropertyEnum.get().getID())) {
+                                            isPresentationElementProperty = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (isPresentationElementProperty) {
+                                    break;
+                                }
+                            }
+                            if (isPresentationElementProperty) {
+                                continue;
+                            }
                         }
                     }
                     inMemoryJMSChangelog.addChange(sysmlid, elementJson, entry.getValue());

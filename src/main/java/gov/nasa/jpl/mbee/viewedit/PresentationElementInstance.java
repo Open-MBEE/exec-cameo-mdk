@@ -2,24 +2,24 @@ package gov.nasa.jpl.mbee.viewedit;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
+import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import org.json.simple.JSONObject;
 
 import java.util.List;
 
-public class PresentationElement {
+public class PresentationElementInstance {
     private InstanceSpecification instance; //existing instance, null if no existing instance to use
     private JSONObject newspec; //the to be json
-    private PresentationElementType type;
+    private PresentationElementEnum type;
     private Element view; //view that generated this pe, can be null if not generated
     private String name;
-    private PresentationElement parent; //section if applicable, otherwise null, use view
-    private List<PresentationElement> children; //if section
+    private PresentationElementInstance parent; //section if applicable, otherwise null, use view
+    private List<PresentationElementInstance> children; //if section
     private Element loopElement; //if section is generated from model element from docgen
     private boolean manual = false; //if manual is true, just use existing instance, not generated from docgen
     private boolean viewDocHack = false; //if opaque para view doc generated, change it so it's not opaque and point to itself with a transclusion to view instead
 
-    public PresentationElement(InstanceSpecification instance, JSONObject spec, PresentationElementType type, Element view, String name, PresentationElement parent, List<PresentationElement> children) {
+    public PresentationElementInstance(InstanceSpecification instance, JSONObject spec, PresentationElementEnum type, Element view, String name, PresentationElementInstance parent, List<PresentationElementInstance> children) {
         this.instance = instance;
         this.newspec = spec;
         this.type = type;
@@ -45,11 +45,11 @@ public class PresentationElement {
         this.newspec = newspec;
     }
 
-    public PresentationElementType getType() {
+    public PresentationElementEnum getType() {
         return type;
     }
 
-    public void setType(PresentationElementType type) {
+    public void setType(PresentationElementEnum type) {
         this.type = type;
     }
 
@@ -69,19 +69,19 @@ public class PresentationElement {
         this.name = name;
     }
 
-    public PresentationElement getParent() {
+    public PresentationElementInstance getParent() {
         return parent;
     }
 
-    public void setParent(PresentationElement parent) {
+    public void setParent(PresentationElementInstance parent) {
         this.parent = parent;
     }
 
-    public List<PresentationElement> getChildren() {
+    public List<PresentationElementInstance> getChildren() {
         return children;
     }
 
-    public void setChildren(List<PresentationElement> children) {
+    public void setChildren(List<PresentationElementInstance> children) {
         this.children = children;
     }
 

@@ -9,10 +9,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
-import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
+import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.PresentationElement;
+import gov.nasa.jpl.mbee.viewedit.PresentationElementInstance;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
@@ -22,13 +22,13 @@ import java.util.*;
 public class PresentationElementUtils {
     public static final String ID_SUFFIX = "_pei";
 
-    private Classifier paraC = PresentationElementType.OPAQUE_PARAGRAPH.getClassifier(Application.getInstance().getProject()),
-            tparaC = PresentationElementType.PARAGRAPH.getClassifier(Application.getInstance().getProject()),
-            tableC = PresentationElementType.OPAQUE_TABLE.getClassifier(Application.getInstance().getProject()),
-            listC = PresentationElementType.OPAQUE_LIST.getClassifier(Application.getInstance().getProject()),
-            imageC = PresentationElementType.OPAQUE_IMAGE.getClassifier(Application.getInstance().getProject()),
-            sectionC = PresentationElementType.OPAQUE_SECTION.getClassifier(Application.getInstance().getProject()),
-            tsectionC = PresentationElementType.SECTION.getClassifier(Application.getInstance().getProject());
+    private Classifier paraC = PresentationElementEnum.OPAQUE_PARAGRAPH.get().apply(Application.getInstance().getProject()),
+            tparaC = PresentationElementEnum.PARAGRAPH.get().apply(Application.getInstance().getProject()),
+            tableC = PresentationElementEnum.OPAQUE_TABLE.get().apply(Application.getInstance().getProject()),
+            listC = PresentationElementEnum.OPAQUE_LIST.get().apply(Application.getInstance().getProject()),
+            imageC = PresentationElementEnum.OPAQUE_IMAGE.get().apply(Application.getInstance().getProject()),
+            sectionC = PresentationElementEnum.OPAQUE_SECTION.get().apply(Application.getInstance().getProject()),
+            tsectionC = PresentationElementEnum.SECTION.get().apply(Application.getInstance().getProject());
     private Stereotype presentsStereotype = Utils.getPresentsStereotype(),
             productStereotype = Utils.getProductStereotype(),
             viewClassStereotype = Utils.getViewClassStereotype();
@@ -219,7 +219,7 @@ public class PresentationElementUtils {
         return viewPackage;
     }
     
-    public boolean needLockForEdit(PresentationElement pe) {
+    public boolean needLockForEdit(PresentationElementInstance pe) {
         InstanceSpecification is = pe.getInstance();
         if (is == null || (pe.isManual() && !pe.isViewDocHack()))
             return false;
@@ -238,11 +238,11 @@ public class PresentationElementUtils {
                 }
             } else
                 return true;
-        } else if (pe.getType().equals(PresentationElementType.SECTION)) {
+        } else if (pe.getType().equals(PresentationElementEnum.SECTION)) {
             if (!(is.getSpecification() instanceof Expression))
                 return true;
             List<InstanceSpecification> list = new ArrayList<InstanceSpecification>();
-            for (PresentationElement cpe: pe.getChildren()) {
+            for (PresentationElementInstance cpe: pe.getChildren()) {
                 if (cpe.getInstance() == null)
                     return true;
                 list.add(cpe.getInstance());
@@ -260,7 +260,7 @@ public class PresentationElementUtils {
         return false;
     }
     
-    public InstanceSpecification updateOrCreateInstance(PresentationElement pe, Package owner) {
+    public InstanceSpecification updateOrCreateInstance(PresentationElementInstance pe, Package owner) {
         InstanceSpecification is = pe.getInstance();
         if (is != null && pe.isManual() && !pe.isViewDocHack())
             return is;
@@ -276,7 +276,7 @@ public class PresentationElementUtils {
                 ElementValue ev = ef.createElementValueInstance();
                 ev.setElement(pe.getView());
                 s.getValue().add(ev);
-                if (pe.getType() == PresentationElementType.SECTION && pe.getLoopElement() != null) {
+                if (pe.getType() == PresentationElementEnum.SECTION && pe.getLoopElement() != null) {
                     Slot ss = ef.createSlotInstance();
                     ss.setOwner(is);
                     ss.setOwningInstance(is);
@@ -300,15 +300,15 @@ public class PresentationElementUtils {
             name = "View Documentation";
             classifier = tparaC;
         } else {
-            if (pe.getType() == PresentationElementType.PARAGRAPH)
+            if (pe.getType() == PresentationElementEnum.PARAGRAPH)
                 classifier = paraC;
-            else if (pe.getType() == PresentationElementType.TABLE)
+            else if (pe.getType() == PresentationElementEnum.TABLE)
                 classifier = tableC;
-            else if (pe.getType() == PresentationElementType.LIST)
+            else if (pe.getType() == PresentationElementEnum.LIST)
                 classifier = listC;
-            else if (pe.getType() == PresentationElementType.IMAGE)
+            else if (pe.getType() == PresentationElementEnum.IMAGE)
                 classifier = imageC;
-            else if (pe.getType() == PresentationElementType.SECTION)
+            else if (pe.getType() == PresentationElementEnum.SECTION)
                 classifier = sectionC;
             name = pe.getName();
             if (name == null || name.isEmpty())
@@ -325,13 +325,13 @@ public class PresentationElementUtils {
         is.setName(name);
         is.getClassifier().clear();
         is.getClassifier().add(classifier);
-        if (pe.getType() == PresentationElementType.SECTION) { //assume all children pe have instance, caller should walk bottom up
+        if (pe.getType() == PresentationElementEnum.SECTION) { //assume all children pe have instance, caller should walk bottom up
             ValueSpecification expression = is.getSpecification();
             if (!(expression instanceof Expression))
                 expression = ef.createExpressionInstance();
             expression.setOwner(is);
             List<InstanceValue> ivs = new ArrayList<InstanceValue>();
-            for (PresentationElement spe: pe.getChildren()) {
+            for (PresentationElementInstance spe: pe.getChildren()) {
                 InstanceValue iv = ef.createInstanceValueInstance();
                 iv.setInstance(spe.getInstance());
                 ivs.add(iv);
@@ -384,15 +384,15 @@ public class PresentationElementUtils {
         expression.getOperand().addAll(ivs);
     }
     
-    public void updateOrCreateConstraintFromPresentationElements(Element view, List<PresentationElement> presentationElements) {
-        List<InstanceSpecification> instanceSpecifications = new ArrayList<>(presentationElements.size());
-        for (PresentationElement presentationElement : presentationElements) {
-            instanceSpecifications.add(presentationElement.getInstance());
+    public void updateOrCreateConstraintFromPresentationElements(Element view, List<PresentationElementInstance> presentationElementInstances) {
+        List<InstanceSpecification> instanceSpecifications = new ArrayList<>(presentationElementInstances.size());
+        for (PresentationElementInstance presentationElementInstance : presentationElementInstances) {
+            instanceSpecifications.add(presentationElementInstance.getInstance());
         }
         updateOrCreateConstraintFromInstanceSpecifications(view, instanceSpecifications);
     }
     
-    /*public boolean needLockForEditConstraint(Element view, List<PresentationElement> pes) {
+    /*public boolean needLockForEditConstraint(Element view, List<PresentationElementInstance> pes) {
         Constraint c = Utils.getViewConstraint(view);
         if (c == null)
             return false;
@@ -401,7 +401,7 @@ public class PresentationElementUtils {
             return true;
         Expression ex = (Expression)vs;
         List<InstanceSpecification> list = new ArrayList<InstanceSpecification>();
-        for (PresentationElement cpe: pes) {
+        for (PresentationElementInstance cpe: pes) {
             if (cpe.getInstance() == null)
                 return true;
             list.add(cpe.getInstance());

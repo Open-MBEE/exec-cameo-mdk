@@ -15,7 +15,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGenPlugin;
-import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
+import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
@@ -85,10 +85,10 @@ public class Crushinator23To24Migrator extends Migrator {
         }
 
         List<InstanceSpecification> presentationElements = new ArrayList<>();
-        for (PresentationElementType presentationElementType : PresentationElementType.values()) {
-            Classifier presentationElementTypeClassifier = presentationElementType.getClassifier(project);
+        for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
+            Classifier presentationElementTypeClassifier = presentationElementEnum.get().apply(project);
             if (presentationElementTypeClassifier == null) {
-                Application.getInstance().getGUILog().log("[ERROR] " + presentationElementType.name() + " presentation element type classifier not found.");
+                Application.getInstance().getGUILog().log("[ERROR] " + presentationElementEnum.name() + " presentation element type classifier not found.");
                 failed = true;
                 continue;
             }
