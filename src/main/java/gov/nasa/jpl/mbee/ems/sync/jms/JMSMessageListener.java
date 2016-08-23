@@ -65,7 +65,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-            System.out.println("MMS TextMessage for " + ExportUtility.getProjectId(project) + " -" + System.lineSeparator() + text);
+            System.out.println("JMS TextMessage for " + ExportUtility.getProjectId(project) + " -" + System.lineSeparator() + text);
         }
         Object o = JSONValue.parse(text);
         if (!(o instanceof JSONObject)) {
