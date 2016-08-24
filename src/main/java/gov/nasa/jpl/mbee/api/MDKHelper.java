@@ -46,6 +46,7 @@ import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter.LocalSyncProjectMapping;
 import gov.nasa.jpl.mbee.lib.Changelog;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
@@ -135,8 +136,19 @@ public class MDKHelper {
 	 * @param password
 	 */
 	public static boolean loginToMMS(final String username, final String password) {
+	    Utils.setDisablePopups(true);
 		EMSLoginAction ela = new EMSLoginAction();
 		return ela.loginAction(username, password);
+	}
+	
+    /**
+     * Sets boolean that can disabled popups and redirect their messages to the GUI log.
+     *  
+     * @param disable
+     *              true to redirect popups to gui log, false to renable normal popup behavior
+     */
+	public static void setDisablePopups(boolean disable) {
+	    Utils.setDisablePopups(disable);
 	}
 
     /**
