@@ -83,19 +83,19 @@ public class MagicDrawHelper {
 	private static Project project;
 	private static ElementsFactory ef;
 
-	private static void createSession() {
+	public static void createSession() {
 		if (!SessionManager.getInstance().isSessionCreated()) {
 			SessionManager.getInstance().createSession("Automated changes");
 		}
 	}
 
-	private static void cancelSession() {
+	public static void cancelSession() {
 		if (SessionManager.getInstance().isSessionCreated()) {
 			SessionManager.getInstance().cancelSession();
 		}
 	}
 
-	private static void closeSession() {
+	public static void closeSession() {
 		if (SessionManager.getInstance().isSessionCreated()) {
 			SessionManager.getInstance().closeSession();
 		}
@@ -224,7 +224,7 @@ public class MagicDrawHelper {
 		return newPackage;
 	}
 	
-	protected static Package createPackageNoSession(String name, Element owner) {
+	public static Package createPackageNoSession(String name, Element owner) {
 		initializeFactory();
 		Package newPackage = ef.createPackageInstance();
 		finishElement(newPackage, name, owner);
@@ -238,7 +238,7 @@ public class MagicDrawHelper {
 		return newView;
 	}
 
-	protected static Class createViewNoSession(String name, Element owner) {
+	public static Class createViewNoSession(String name, Element owner) {
 		initializeFactory();
 		Class newView = ef.createClassInstance();
 		Stereotype sysmlView = Utils.getViewClassStereotype();
@@ -254,7 +254,7 @@ public class MagicDrawHelper {
 		return newDocument;
 	}
 
-	protected static Class createDocumentNoSession(String name, Element owner) {
+	public static Class createDocumentNoSession(String name, Element owner) {
 		initializeFactory();
 		Class newDocument = ef.createClassInstance();
 		Stereotype sysmlDocument = Utils.getDocumentStereotype();
@@ -307,7 +307,7 @@ public class MagicDrawHelper {
 		return genr;
 	}
 	
-	protected static Generalization createGeneralizationNoSession(String name, Element owner, Element source, Element target) {
+	public static Generalization createGeneralizationNoSession(String name, Element owner, Element source, Element target) {
 		initializeFactory();
 		Generalization genr = ef.createGeneralizationInstance();
 		setRelationshipEnds(genr, source, target);
@@ -322,7 +322,7 @@ public class MagicDrawHelper {
 		return depd;
 	}
 	
-	protected static Dependency createDependencyNoSession(String name, Element owner, Element source, Element target) {
+	public static Dependency createDependencyNoSession(String name, Element owner, Element source, Element target) {
 		initializeFactory();
 		Dependency depd = ef.createDependencyInstance();
 		setRelationshipEnds(depd, source, target);
@@ -343,7 +343,7 @@ public class MagicDrawHelper {
 		return prop;
 	}
 	
-	protected static Property createPropertyNoSession(String name, Element owner, ValueSpecification defaultValue, 
+	public static Property createPropertyNoSession(String name, Element owner, ValueSpecification defaultValue, 
 			Element typeElement, String aggregation, String multMin, String multMax) {
 		initializeFactory();
 		Property prop = ef.createPropertyInstance();
@@ -535,7 +535,21 @@ public class MagicDrawHelper {
 		closeSession();
 	}
 
-	/**
+   /**
+     * Updates the comments of the target element, adding the necessary html
+     * wrapper
+     * 
+     * @param target
+     *            The level element whose comment you want to change
+     * @param documentation
+     *            The new comments for the target element
+     * 
+     */
+    public static void setElementDocumentationNoSession(Element target, String documentation) {
+        ImportUtility.setDocumentation(target, documentation);
+    }
+    
+    /**
 	 * 3-way merge - merge branch changes to trunk.
 	 *
 	 * @param projectName
