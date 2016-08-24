@@ -28,6 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.generator;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import gov.nasa.jpl.mbee.lib.Pair;
 import gov.nasa.jpl.mbee.model.Container;
 import gov.nasa.jpl.mbee.model.DocGenElement;
 import gov.nasa.jpl.mbee.model.Document;
@@ -39,9 +42,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 /**
@@ -111,19 +111,21 @@ public class ProductViewParser {
      * @param view
      * @param parent
      *            parent view the current view should go under
-     * @param section
-     *            whether current view is a section
+     * @param nosection
+     *            whether current view is a nosection
      */
-    private void parseView(Class view, Container parent, boolean nosection) {
+    private void parseView(Class view, Container parent, boolean nosection, boolean recurse) {
         Section viewSection = dg.parseView(view);
         viewSection.setNoSection(nosection);
         parent.addElement(viewSection);
-        handleViewChildren(view, viewSection);
+        if (recurse) {
+            handleViewChildren(view, viewSection);
+        }
     }
 
     private void handleViewChildren(Class view, Container viewSection) {
-        List<Class> childSections = new ArrayList<Class>();
-        List<Class> childNoSections = new ArrayList<Class>();
+        List<Pair<Class, AggregationKind>> childSections = new ArrayList<>(),
+                childNoSections = new ArrayList<>();
         for (Property prop: view.getOwnedAttribute()) {
             if (!(prop.getType() instanceof Class))
                 continue;
@@ -132,16 +134,16 @@ public class ProductViewParser {
                     || excludeViews.contains(prop) || excludeViews.contains(type))
                 continue;
             if (noSections.contains(prop) || noSections.contains(type)) {
-                childNoSections.add(type);
+                childNoSections.add(new Pair<>(type, prop.getAggregation()));
             } else {
-                childSections.add(type);
+                childSections.add(new Pair<>(type, prop.getAggregation()));
             }
         }
-        for (Class nos: childNoSections) {
-            parseView(nos, viewSection, true);
+        for (Pair<Class, AggregationKind> pair : childNoSections) {
+            parseView(pair.getFirst(), viewSection, true, !AggregationKindEnum.NONE.equals(pair.getSecond()));
         }
-        for (Class s: childSections) {
-            parseView(s, viewSection, false);
+        for (Pair<Class, AggregationKind> pair: childSections) {
+            parseView(pair.getFirst(), viewSection, false, !AggregationKindEnum.NONE.equals(pair.getSecond()));
         }
     }
 }
