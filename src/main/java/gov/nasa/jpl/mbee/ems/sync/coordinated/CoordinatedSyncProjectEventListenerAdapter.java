@@ -117,6 +117,10 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         return realTimeSyncProjectMapping;
     }
 
+    public DeltaSyncRunner getDeltaSyncRunner() {
+        return deltaSyncRunner;
+    }
+
     public static class RealTimeSyncProjectMapping {
         // TODO Volatile to synchronized @Ivan
         private volatile boolean disabled;
