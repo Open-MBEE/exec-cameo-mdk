@@ -10,7 +10,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mbee.api.docgen.PresentationElementType;
+import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.generator.PresentationElementInfo;
 import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
@@ -50,10 +50,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     //for ems 2.2 reference tree
     // these are linked hash maps to make recursive sense in ViewPresentationGenerator
     private Map<Element, JSONArray> view2elements = new LinkedHashMap<Element, JSONArray>();
-    private Map<Element, List<PresentationElement>> view2pe = new LinkedHashMap<Element, List<PresentationElement>>();
-    private Map<Element, List<PresentationElement>> view2peOld = new LinkedHashMap<Element, List<PresentationElement>>();
+    private Map<Element, List<PresentationElementInstance>> view2pe = new LinkedHashMap<Element, List<PresentationElementInstance>>();
+    private Map<Element, List<PresentationElementInstance>> view2peOld = new LinkedHashMap<Element, List<PresentationElementInstance>>();
     private Stack<Element> currentView = new Stack<Element>();
-    private Stack<PresentationElement> currentSection = new Stack<PresentationElement>(); //if currently in section, sections cannot cross views
+    private Stack<PresentationElementInstance> currentSection = new Stack<PresentationElementInstance>(); //if currently in section, sections cannot cross views
     private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentTableInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentListInstances = new Stack<List<InstanceSpecification>>();
@@ -62,7 +62,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stack<List<InstanceSpecification>> currentImageInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentManualInstances = new Stack<List<InstanceSpecification>>();
     private Stack<List<InstanceSpecification>> currentUnusedInstances = new Stack<List<InstanceSpecification>>();
-    private Stack<List<PresentationElement>> newpe = new Stack<List<PresentationElement>>();
+    private Stack<List<PresentationElementInstance>> newpe = new Stack<List<PresentationElementInstance>>();
 
     private boolean main = false; //for ems 2.2 reference tree, only consider generated pe from main view and 
                                     //not nested tables/lists since those are embedded in json blob, main is false for Table and List Visitor
@@ -226,8 +226,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentInstanceList.remove(i);
         }
 
-        PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElement ipe = new PresentationElement(i, entry, PresentationElementType.IMAGE, currentView.peek(), (image.getTitle() == null ? "image": image.getTitle()), parentSec, null);
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), (image.getTitle() == null ? "image": image.getTitle()), parentSec, null);
         newpe.peek().add(ipe);
     }
 
@@ -249,8 +249,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentInstanceList.remove(i);
         }
 
-        PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElement ipe = new PresentationElement(i, l.getObject(), PresentationElementType.LIST, currentView.peek(), "list", parentSec, null);
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        PresentationElementInstance ipe = new PresentationElementInstance(i, l.getObject(), PresentationElementEnum.LIST, currentView.peek(), "list", parentSec, null);
         newpe.peek().add(ipe);
     }
 
@@ -269,8 +269,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentInstanceList.remove(i);
         }
 
-        PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElement ipe = new PresentationElement(i, entry, PresentationElementType.PARAGRAPH, currentView.peek(), "paragraph", parentSec, null);
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.PARAGRAPH, currentView.peek(), "paragraph", parentSec, null);
         newpe.peek().add(ipe);
     }
 
@@ -305,8 +305,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentInstanceList.remove(i);
         }
 
-        PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElement ipe = new PresentationElement(i, entry, PresentationElementType.PARAGRAPH, currentView.peek(), "paragraph", parentSec, null);
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.PARAGRAPH, currentView.peek(), "paragraph", parentSec, null);
         newpe.peek().add(ipe);
     }
 
@@ -385,8 +385,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentInstanceList.remove(i);
         }
 
-        PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElement ipe = new PresentationElement(i, v.getObject(), PresentationElementType.TABLE, currentView.peek(), table.getTitle() != null ? table.getTitle() : "table", parentSec, null);
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        PresentationElementInstance ipe = new PresentationElementInstance(i, v.getObject(), PresentationElementEnum.TABLE, currentView.peek(), table.getTitle() != null ? table.getTitle() : "table", parentSec, null);
         newpe.peek().add(ipe);
     }
       
@@ -427,14 +427,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         
       //for ems 2.2 reference tree
         currentView.push(e);
-        List<PresentationElement> viewChildren = new ArrayList<PresentationElement>();
+        List<PresentationElementInstance> viewChildren = new ArrayList<PresentationElementInstance>();
         newpe.push(viewChildren);
         view2pe.put(e, viewChildren);
-        view2peOld.put(e, new ArrayList<PresentationElement>());
+        view2peOld.put(e, new ArrayList<PresentationElementInstance>());
         
         processCurrentInstances(e, e);
         if (currentInstanceList.peek().isEmpty()) { //new view, add view doc hack
-            PresentationElement hack = new PresentationElement(null, null, null, e, null, null, null);
+            PresentationElementInstance hack = new PresentationElementInstance(null, null, null, e, null, null, null);
             hack.setManual(true);
             hack.setViewDocHack(true);
             newpe.peek().add(hack);
@@ -464,10 +464,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         view2elements.put(e, viewEs);
         addManualInstances(true);
         processUnusedInstances(e);
-        List<PresentationElement> pes = newpe.pop();
+        List<PresentationElementInstance> pes = newpe.pop();
         if (pes.isEmpty()) {
             //new view with nothing, auto add a pe that with cf that points to view doc
-            PresentationElement hack = new PresentationElement(null, null, null, e, null, null, null);
+            PresentationElementInstance hack = new PresentationElementInstance(null, null, null, e, null, null, null);
             hack.setManual(true);
             hack.setViewDocHack(true);
             pes.add(hack);
@@ -509,9 +509,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentSectionInstances.peek().remove(sec);
         }
 
-        PresentationElement parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        List<PresentationElement> secChildren = new ArrayList<PresentationElement>();
-        PresentationElement pe = new PresentationElement(sec, newSection, PresentationElementType.SECTION, currentView.peek(), section.getTitle() != null ? section.getTitle() : "section", parentSec, secChildren);
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        List<PresentationElementInstance> secChildren = new ArrayList<PresentationElementInstance>();
+        PresentationElementInstance pe = new PresentationElementInstance(sec, newSection, PresentationElementEnum.SECTION, currentView.peek(), section.getTitle() != null ? section.getTitle() : "section", parentSec, secChildren);
         pe.setLoopElement(loopElement);
         newpe.peek().add(pe);
         currentSection.push(pe);
@@ -592,11 +592,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         return elementSet;
     }
     
-    public Map<Element, List<PresentationElement>> getView2Pe() {
+    public Map<Element, List<PresentationElementInstance>> getView2Pe() {
         return view2pe;
     }
     
-    public Map<Element, List<PresentationElement>> getView2Unused() {
+    public Map<Element, List<PresentationElementInstance>> getView2Unused() {
         return view2peOld;
     }
 
@@ -645,7 +645,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         List<InstanceSpecification> manuals = currentManualInstances.peek();
         while (!instances.isEmpty() && manuals.contains(instances.get(0))) {
             InstanceSpecification is = instances.get(0);
-            PresentationElement pe = new PresentationElement(is, null, null, null, null, null, null);
+            PresentationElementInstance pe = new PresentationElementInstance(is, null, null, null, null, null, null);
             pe.setManual(true);
             if (is == viewDocHack) {
                 pe.setViewDocHack(true);
@@ -658,7 +658,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         }
         if (all) {
             for (InstanceSpecification is: new ArrayList<InstanceSpecification>(manuals)) {
-                PresentationElement pe = new PresentationElement(is, null, null, null, null, null, null);
+                PresentationElementInstance pe = new PresentationElementInstance(is, null, null, null, null, null, null);
                 pe.setManual(true);
                 if (is == viewDocHack) {
                     pe.setViewDocHack(true);
@@ -674,22 +674,22 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     
     private void processUnusedInstances(Element v) {
         for (InstanceSpecification is: currentTableInstances.peek()) {
-            view2peOld.get(v).add(new PresentationElement(is, null, PresentationElementType.TABLE, v, is.getName(), null, null));
+            view2peOld.get(v).add(new PresentationElementInstance(is, null, PresentationElementEnum.TABLE, v, is.getName(), null, null));
         }
         for (InstanceSpecification is: currentListInstances.peek()) {
-            view2peOld.get(v).add(new PresentationElement(is, null, PresentationElementType.LIST, v, is.getName(), null, null));
+            view2peOld.get(v).add(new PresentationElementInstance(is, null, PresentationElementEnum.LIST, v, is.getName(), null, null));
         }
         for (InstanceSpecification is: currentParaInstances.peek()) {
-            view2peOld.get(v).add(new PresentationElement(is, null, PresentationElementType.PARAGRAPH, v, is.getName(), null, null));
+            view2peOld.get(v).add(new PresentationElementInstance(is, null, PresentationElementEnum.PARAGRAPH, v, is.getName(), null, null));
         }
         for (InstanceSpecification is: currentImageInstances.peek()) {
-            view2peOld.get(v).add(new PresentationElement(is, null, PresentationElementType.IMAGE, v, is.getName(), null, null));
+            view2peOld.get(v).add(new PresentationElementInstance(is, null, PresentationElementEnum.IMAGE, v, is.getName(), null, null));
         }
         for (InstanceSpecification is: currentSectionInstances.peek()) {
-            view2peOld.get(v).add(new PresentationElement(is, null, PresentationElementType.SECTION, v, is.getName(), null, null));
+            view2peOld.get(v).add(new PresentationElementInstance(is, null, PresentationElementEnum.SECTION, v, is.getName(), null, null));
         }
         for (InstanceSpecification is: currentUnusedInstances.peek()) {
-            view2peOld.get(v).add(new PresentationElement(is, null, null, v, is.getName(), null, null));
+            view2peOld.get(v).add(new PresentationElementInstance(is, null, null, v, is.getName(), null, null));
         }
     }
 }

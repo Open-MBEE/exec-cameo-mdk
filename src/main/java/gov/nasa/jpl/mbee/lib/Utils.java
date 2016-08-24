@@ -2011,7 +2011,7 @@ public class Utils {
 
     @Deprecated
     public static Property getGeneratedFromViewProperty() {
-        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView", Application.getInstance().getProject());
+        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElementInstance::generatedFromView", Application.getInstance().getProject());
     }
 
     @Deprecated

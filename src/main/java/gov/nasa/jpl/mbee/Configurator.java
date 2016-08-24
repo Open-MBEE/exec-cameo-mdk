@@ -99,7 +99,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * return 0; }
      * 
      * @Override public void configure( ActionsManager paramActionsManager,
-     * PresentationElement paramPresentationElement ) { // TODO Auto-generated
+     * PresentationElementInstance paramPresentationElement ) { // TODO Auto-generated
      * method stub
      * 
      * }
@@ -121,8 +121,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * 
      * @Override public void configure( ActionsManager paramActionsManager,
      * DiagramPresentationElement paramDiagramPresentationElement,
-     * PresentationElement[] paramArrayOfPresentationElement,
-     * PresentationElement paramPresentationElement ) { // TODO Auto-generated
+     * PresentationElementInstance[] paramArrayOfPresentationElement,
+     * PresentationElementInstance paramPresentationElement ) { // TODO Auto-generated
      * method stub
      * 
      * }
@@ -522,7 +522,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * @see
      * com.nomagic.magicdraw.actions.DiagramContextToolbarAMConfigurator#configure
      * (com.nomagic.actions.ActionsManager,
-     * com.nomagic.magicdraw.uml.symbols.PresentationElement)
+     * com.nomagic.magicdraw.uml.symbols.PresentationElementInstance)
      */
     @Override
     public void configure(ActionsManager manager, PresentationElement diagram) {
@@ -755,8 +755,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * com.nomagic.magicdraw.actions.DiagramContextAMConfigurator#configure(com
      * .nomagic.actions.ActionsManager,
      * com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement,
-     * com.nomagic.magicdraw.uml.symbols.PresentationElement[],
-     * com.nomagic.magicdraw.uml.symbols.PresentationElement)
+     * com.nomagic.magicdraw.uml.symbols.PresentationElementInstance[],
+     * com.nomagic.magicdraw.uml.symbols.PresentationElementInstance)
      */
     @Override
     public void configure(ActionsManager manager, DiagramPresentationElement diagram,
