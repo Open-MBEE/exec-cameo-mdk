@@ -6,16 +6,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.eclipse.emf.common.util.Enumerator;
+import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EDataType;
-import org.eclipse.emf.ecore.EEnum;
+import org.eclipse.emf.ecore.ENamedElement;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
-import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -30,7 +29,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKind;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 
@@ -43,7 +41,6 @@ public class EMFImporter {
 	private EReference ownerRef;
 	private EAttribute nameAtt;
 	private Project project;
-	private EDataType estring;
 
 	public EMFImporter(Element element) {
 		Element owner = element;
@@ -57,7 +54,6 @@ public class EMFImporter {
 		JSONParser parsier = new JSONParser();
 		ownerRef = UMLFactory.eINSTANCE.getUMLPackage().getElement_Owner();
 		nameAtt = UMLFactory.eINSTANCE.getUMLPackage().getNamedElement_Name();
-		estring = EcorePackage.eINSTANCE.getEString();
 		try {
 			head = (JSONObject) parsier.parse(new FileReader("/Users/johannes/Documents/projects/SECAE/compareImports/test04.json"));
 		} catch (IOException | ParseException e) {
@@ -73,52 +69,51 @@ public class EMFImporter {
 		project.getCounter().setCanResetIDForObject(true);
 		try {
 
-			JSONArray ja = (JSONArray) head.get("elements");
-			for (Object je : ja) {
-				if (je instanceof JSONObject) {
+			JSONArray jsonArrayElements = (JSONArray) head.get("elements");
+			for (Object jsonElement : jsonArrayElements) {
+				if (jsonElement instanceof JSONObject) {
 					// System.out.println(((JSONObject) je).get("type"));
-					Object typename = ((JSONObject) je).get("type");
+					Object typename = ((JSONObject) jsonElement).get("type");
 					if (!typename.toString().equals("PackageImport")) { // TODO whats wrong with PackageImports?
 						// System.out.println("PI");
 						// }
 						EClassifier etype = UMLPackage.eINSTANCE.getEClassifier(typename.toString());
 						if (etype instanceof EClass) {
 							EClass eclass = (EClass) etype;
-							EObject newobject = UMLFactory.eINSTANCE.create((EClass) etype);
-							if (newobject instanceof MDObject) {
-								if (project.getElementByID((String) ((JSONObject) je).get("sysmlId")) == null) { // If it exists, create new ID.
-									((MDObject) newobject).setID((String) ((JSONObject) je).get("sysmlId"));
+							EObject editedObject = UMLFactory.eINSTANCE.create((EClass) etype);
+
+							clearPrePopulatedLists(editedObject);
+							System.out.print("Created new " + etype.getName());
+							if (editedObject instanceof MDObject) {
+								if (project.getElementByID((String) ((JSONObject) jsonElement).get("sysmlId")) == null) { // If it exists, create new ID.
+									((MDObject) editedObject).setID((String) ((JSONObject) jsonElement).get("sysmlId"));
+									System.out.print(" with its old ID.   " + ((JSONObject) jsonElement).get("sysmlId"));
 								}
 							}
-							createdElements.put((String) ((JSONObject) je).get("sysmlId"), newobject);
-							for (Object property : ((JSONObject) je).keySet()) {
+							createdElements.put((String) ((JSONObject) jsonElement).get("sysmlId"), editedObject);
+							System.out.println("");
+							for (Object property : ((JSONObject) jsonElement).keySet()) {
 								EStructuralFeature sf = eclass.getEStructuralFeature(property.toString());
 								if (sf != null) {
 									if (sf instanceof EAttribute) {
 										if (sf.isChangeable()) {
 											EDataType type = ((EAttribute) sf).getEAttributeType();
-											if (type instanceof EEnum) {
-												// System.out.println(type.getName() + type.getInstanceClassName() + type.getInstanceTypeName());
-												// System.out.println("Setting " + sf.getName() + " in " + typename.toString() + " to " + ((JSONObject) je).get(property));
-												Enumerator literal = ((EEnum) type).getEEnumLiteral((String) ((JSONObject) je).get(property)).getInstance();
-												// System.out.println(literal.getName());
-												newobject.eSet(sf, literal);
-												// if (literal.getName().contains("public")) {
-												// UMLPackage umlPackage = UMLFactory.eINSTANCE.getUMLPackage();
-												// VisibilityKind visibilityKind = com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKindEnum.PUBLIC;
-												// System.out.println(literal.toString() + " equals " + visibilityKind.toString() + " = " + literal.equals(visibilityKind));
-												// }
-											} else if ("visibility".equals(sf.getName())) {
-												// System.out.println(type.getName() + type.getInstanceClassName() + type.getInstanceTypeName());
-												UMLPackage umlPackage = UMLFactory.eINSTANCE.getUMLPackage();
-												VisibilityKind visibilityKind = com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKindEnum.PACKAGE;
-
-												// newobject.eSet(umlPackage.getPackageableElement_Visibility(), visibilityKind);
-												newobject.eSet(umlPackage.getNamedElement_Visibility(), visibilityKind);
-												// ((RefFeatured) newobject).refSetValue(PropertyNames.VISIBILITY, visibilityKind);
+											if (!sf.isMany()) {
+												Object jso = ((JSONObject) jsonElement).get(property);
+												editedObject.eSet(sf, EcoreUtil.createFromString(type, jso.toString()));
+												if (editedObject instanceof NamedElement) {
+													System.out.println("	Setting " + editedObject.eGet(nameAtt) + " " + sf.getName() + " to " + jso.toString());
+												}
 											} else {
-												Object jso = ((JSONObject) je).get(property);
-												newobject.eSet(sf, EcoreUtil.createFromString(type, jso.toString()));
+												List list = (List) editedObject.eGet(sf);
+												for (Object arrayElement : ((JSONArray) ((JSONObject) jsonElement).get(property))) {
+
+													list.add(arrayElement);
+													if (editedObject instanceof NamedElement) {
+														System.out.println("	Adding " + editedObject.eGet(nameAtt) + " " + sf.getName() + " to " + arrayElement.toString());
+													}
+												}
+
 											}
 										}
 									}
@@ -132,16 +127,16 @@ public class EMFImporter {
 				}
 			}
 
-			JSONArray ja1 = (JSONArray) head.get("elements");
-			for (Object je : ja1) {
-				if (je instanceof JSONObject) {
-					Object typename = ((JSONObject) je).get("type");
+			for (Object editedJSONObject : jsonArrayElements) {
+				if (editedJSONObject instanceof JSONObject) {
+					Object typename = ((JSONObject) editedJSONObject).get("type");
+					System.out.println("Editing a " + typename + "  ID: " + ((JSONObject) editedJSONObject).get("sysmlId"));
 					if (!typename.toString().equals("PackageImport")) { // TODO what's wrong with PackageImports?
 						EClassifier etype = UMLPackage.eINSTANCE.getEClassifier(typename.toString());
 						if (etype instanceof EClass) {
 							EClass eclass = (EClass) etype;
-							EObject editedObject = createdElements.get((String) ((JSONObject) je).get("sysmlId"));
-							AddLinks: for (Object property : ((JSONObject) je).keySet()) {
+							EObject editedObject = createdElements.get((String) ((JSONObject) editedJSONObject).get("sysmlId"));
+							AddLinks: for (Object property : ((JSONObject) editedJSONObject).keySet()) {
 								String propName = property.toString();
 								if (propName.contains("Ids")) {
 									propName = propName.substring(0, property.toString().length() - 3);
@@ -154,52 +149,60 @@ public class EMFImporter {
 										if (sf.isChangeable()) {
 											if (!sf.isDerived()) {
 												if (!sf.isMany()) {
-													// if (!((EReference) sf).isContainment()) {
-													// EClass type = ((EReference) sf).getEReferenceType();
-													EObject referencedObject = createdElements.get(((JSONObject) je).get(property));
+													EObject referencedObject = createdElements.get(((JSONObject) editedJSONObject).get(property));
 													if (referencedObject == null) {
-														referencedObject = (EObject) project.getElementByID((String) ((JSONObject) je).get(property));
+														referencedObject = (EObject) project.getElementByID((String) ((JSONObject) editedJSONObject).get(property));
 													}
 													if (referencedObject != null) {
 														if (editedObject instanceof NamedElement && referencedObject instanceof NamedElement) {
-															System.out.println("Setting " + editedObject.eGet(nameAtt) + " " + sf.getName() + " to " + referencedObject.eGet(nameAtt));
+															System.out.println("	Setting " + editedObject.eGet(nameAtt) + " " + sf.getName() + " to " + referencedObject.eGet(nameAtt) + " ID: "
+																	+ ((JSONObject) editedJSONObject).get(property));
 														}
-														editedObject.eSet(sf, referencedObject);
+														try {
+															editedObject.eSet(sf, referencedObject);
+														} catch (NullPointerException e) {
+															// createdElements.remove((String) ((JSONObject) je).get("sysmlId"));
+															// ((Element) editedObject).dispose();
+															System.out.println("	SING Not set " + sf.getName() + " due to NPE.");
+														}
 													} else {
-														System.out.println("Not found " + sf.getName() + " with id: " + ((JSONObject) je).get(property));
+														System.out.println("	SING Not found " + sf.getName() + " with id: " + ((JSONObject) editedJSONObject).get(property));
 														if (sf.isRequired()) {
-															System.out.println("Grande Misere, because we need it! ");
-															createdElements.remove((String) ((JSONObject) je).get("sysmlId"));
+															System.out.println("	Grande Misere, because we need it! Deleting Element.");
+															createdElements.remove((String) ((JSONObject) editedJSONObject).get("sysmlId"));
 															((Element) editedObject).dispose();
 															break AddLinks;
 														}
 													}
-													// }
+
 												} else {
-													// System.out.println("sf many:" + sf.getName());
-													// if (sf.getName().equals("classifier")) {
-													for (Object propid : ((JSONArray) ((JSONObject) je).get(property))) {
+													for (Object propid : ((JSONArray) ((JSONObject) editedJSONObject).get(property))) {
 														EObject referencedObject = createdElements.get(propid);
 														if (referencedObject == null) {
 															referencedObject = (EObject) project.getElementByID((String) propid);
 														}
 														if (referencedObject != null) {
-															System.out.println("Adding in " + editedObject.eGet(nameAtt) + " under " + sf.getName() + " :" + referencedObject.eGet(nameAtt));
 
-															// if (editedObject instanceof InstanceSpecification) {
-															// if (referencedObject instanceof Stereotype) {
-															// ((InstanceSpecification) editedObject).getClassifier().add((Classifier) referencedObject);
-															// StereotypesHelper.addStereotype((Element) editedObject, (Stereotype) referencedObject);
-															// ImportUtility.setOrCreateAsi((Stereotype) referencedObject, (Element) editedObject);
 															List list = (List) editedObject.eGet(sf);
-															list.add(referencedObject);
-															// }
-															// }
+															if (!list.contains(referencedObject)) {
+																list.add(referencedObject);
+																if (editedObject instanceof NamedElement && referencedObject instanceof NamedElement) {
+																	System.out.println("	Adding to " + editedObject.eGet(nameAtt) + " " + sf.getName() + " element: "
+																			+ referencedObject.eGet(nameAtt) + " ID: " + propid);
+																	EAnnotation ea = sf.getEAnnotation("subsets");
+																	if (ea != null) {
+																		for (EObject first : ea.getReferences()) {
+																			if (first instanceof ENamedElement) {
+																				System.out.println("			" + sf.getName() + " subsets " + ((ENamedElement) first).getName());
+																			}
+																		}
+																	}
+																}
+															}
 														} else {
-															System.out.println("Cant find " + sf.getName() + " with id " + propid);
+															System.out.println("	MANY Not found " + sf.getName() + " with id " + propid);
 														}
 													}
-													// }
 												}
 											}
 										}
@@ -207,15 +210,38 @@ public class EMFImporter {
 								}
 							}
 						}
+					} else {
+						System.out.println("PackageImports are not dealt with yet.");
 					}
 				}
 			}
-
 			findOwners();
-		} finally {
+		} finally
+
+		{
 			UMLFactory.eINSTANCE.setRepository(null);
 		}
 		SessionManager.getInstance().closeSession();
+
+	}
+
+	private void clearPrePopulatedLists(EObject editedObject) {
+		for (EReference er : editedObject.eClass().getEAllReferences()) {
+			if (er.isMany()) {
+				if (!((List) editedObject.eGet(er)).isEmpty()) {
+					System.out.println("Cleared " + editedObject.eClass().getName() + "  " + er.getName() + " is not empty");
+					((List) editedObject.eGet(er)).clear();
+				}
+			} else {
+				Object elf = editedObject.eGet(er);
+				if (elf != null) {
+					if (!elf.toString().isEmpty()) {
+						System.out.println("Elf " + er.getName() + " " + elf);
+					}
+				}
+			}
+		}
+
 	}
 
 	public void addReferencesToElements() {
@@ -224,14 +250,14 @@ public class EMFImporter {
 
 	public void findOwners() {
 		for (EObject el : createdElements.values()) {
-			System.out.println(el.eGet(nameAtt));
+			// System.out.println(el.eGet(nameAtt));
 			if (!createdElements.values().contains(el.eGet(ownerRef))) {
 				notContained.add(el);
 			}
 		}
 		for (EObject el : notContained) {
 			if (el instanceof PackageableElement) {
-				System.out.println("Adding " + el.eGet(nameAtt) + " to the owning package");
+				System.out.println("Adding " + el.eGet(nameAtt) + " to the owning package.");
 				owningPackage.getPackagedElement().add((PackageableElement) el);
 			}
 		}
