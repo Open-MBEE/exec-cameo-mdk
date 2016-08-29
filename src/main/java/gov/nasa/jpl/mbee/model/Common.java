@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
@@ -42,6 +44,7 @@ import java.util.Set;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.stereotypes.EditableChoosable;
 
 /**
  * Common is a collection of utility functions for creating DocumentElements
@@ -49,27 +52,33 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
  */
 public class Common {
 
-    public static void addReferenceToDBHasContent(Reference ref, DBHasContent parent) {
-        parent.addElements(getReferenceAsDocumentElements(ref));
+    public static void addReferenceToDBHasContent(Reference ref, DBHasContent parent, Query query) {
+        parent.addElements(getReferenceAsDocumentElements(ref, query));
     }
 
-    public static List<DocumentElement> getReferenceAsDocumentElements(Reference ref) {
+    public static List<DocumentElement> getReferenceAsDocumentElements(Reference ref, Query query) {
         List<DocumentElement> res = new ArrayList<DocumentElement>();
         if (ref.result == null)
             return res;
         if (!ref.isResultEditable()) {
             if (ref.result instanceof Collection) {
                 for (Object r: (Collection<?>)ref.result) {
-                    res.add(new DBParagraph(r));
+                    DocumentElement documentElement = new DBParagraph(r);
+                    initEditable(documentElement, query);
+                    res.add(documentElement);
                 }
             } else {
-                res.add(new DBParagraph(ref.result));
+                DocumentElement documentElement = new DBParagraph(ref.result);
+                initEditable(documentElement, query);
+                res.add(documentElement);
             }
         } else {
             //if (ref.result instanceof Collection && !((Collection<?>)ref.result).isEmpty()) {
             //    res.add(new DBParagraph(((Collection<?>)ref.result).iterator().next(), ref.element, ref.from));
             //} else {
-                res.add(new DBParagraph(ref.result, ref.element, ref.from));
+            DocumentElement documentElement = new DBParagraph(ref.result, ref.element, ref.from);
+            initEditable(documentElement, query);
+            res.add(documentElement);
             //}
         }
         return res;
@@ -81,9 +90,9 @@ public class Common {
      */
     public static Set<Object> seen = Collections.synchronizedSet(new HashSet<Object>());
 
-    public static DBTableEntry getStereotypePropertyEntry(Element e, Property p) {
+    public static DBTableEntry getStereotypePropertyEntry(Element e, Property p, Query query) {
         DBTableEntry res = new DBTableEntry();
-        addReferenceToDBHasContent(Reference.getPropertyReference(e, p), res);
+        addReferenceToDBHasContent(Reference.getPropertyReference(e, p), res, query);
         return res;
     }
 
@@ -104,5 +113,12 @@ public class Common {
             res.addElement(new DBParagraph(o));
         return res;
 
+    }
+
+    private static void initEditable(DocumentElement documentElement, Query query) {
+        Object o;
+        if (query != null && query.getDgElement() != null && documentElement instanceof EditableChoosable && (o = StereotypesHelper.getStereotypePropertyFirst(query.getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
+            ((EditableChoosable) documentElement).setEditable((Boolean) o);
+        }
     }
 }

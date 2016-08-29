@@ -388,7 +388,7 @@ public class TableStructure extends Table {
                 		nested.getParent().push(entry);
             			((DocGenElement)cellPart.result).accept(nested);
             		} else {
-            			Common.addReferenceToDBHasContent(cellPart, entry);
+            			Common.addReferenceToDBHasContent(cellPart, entry, this);
             		}
                 }
                 tableRow.add(entry);

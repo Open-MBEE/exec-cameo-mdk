@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mgss.mbee.docgen.docbook;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.stereotypes.EditableChoosable;
 
 /**
  * A paragraph. Unlike DBText, this WILL do processing on the given text to
@@ -37,9 +38,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
  * @author dlam
  * 
  */
-public class DBParagraph extends DocumentElement {
+public class DBParagraph extends DocumentElement implements EditableChoosable {
 
     private Object text;
+    private Boolean editable;
 
     public DBParagraph() {
     }
@@ -76,4 +78,13 @@ public class DBParagraph extends DocumentElement {
         return sb.toString();
     }
 
+    @Override
+    public Boolean isEditable() {
+        return editable;
+    }
+
+    @Override
+    public void setEditable(Boolean editable) {
+        this.editable = editable;
+    }
 }
