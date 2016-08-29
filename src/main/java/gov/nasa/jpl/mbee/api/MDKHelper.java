@@ -294,6 +294,9 @@ public class MDKHelper {
         String response = ExportUtility.delete(url, true);
         if (response == null)
             throw new IllegalStateException("No response received from delete method. Possible malformed url.");
+        else if (response.contains("Node already deleted.")) {
+            throw new IllegalStateException("Element has already been deleted on mms.");
+        }
     }
 
     /**
