@@ -456,11 +456,11 @@ public class MagicDrawHelper {
 	 * @param ele
 	 *            selected element to be deleted.
 	 */
-	public static void deleteMDElement(Element ele) throws Exception {
+	public static void deleteMDElement(Element ele) throws ReadOnlyElementException {
 		createSession();
 		try {
 			ModelElementsManager.getInstance().removeElement(ele);
-		} catch (Exception e) {
+		} catch (ReadOnlyElementException e) {
 			cancelSession();
 			throw e;
 		}

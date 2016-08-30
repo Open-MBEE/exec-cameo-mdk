@@ -107,7 +107,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             return;
         }
         try {
-            if (!ExportUtility.hasSiteWritePermissions(url, site)) {
+            if (!ExportUtility.hasSiteEditPermission(url, site)) {
                 Application.getInstance().getGUILog().log("[ERROR] User does not have sufficient permissions on MMS or the site/url is misconfigured. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }

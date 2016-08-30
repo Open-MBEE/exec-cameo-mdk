@@ -465,7 +465,8 @@ public class MDKValidationWindow {
     }
 
     /**
-     * Creates all MMS elements that were not found in MD (accepts their existence from MMS)
+     * Creates elements in MagicDraw for any missing MMS elements (accepts their existence from MMS)
+     * Equivalent to [EXIST on MMS] -> Create MagicDraw element
      * 
      * @throws Exception
      */
@@ -474,7 +475,8 @@ public class MDKValidationWindow {
     }
 
     /**
-     * Deletes all MD elements that were not found in MMS (accepts their non-existence from MMS)
+     * Deletes all elements from MD that were not found in MMS (accepts their non-existence from MMS)
+     * Equivalent to [EXIST] -> Delete MagicDraw element 
      * 
      * @throws Exception
      */
@@ -484,6 +486,7 @@ public class MDKValidationWindow {
 
     /**
      * Deletes all MMS elements that were not found in MD (commits their non-existence to MMS)
+     * Equivalent to [EXIST on MMS] -> Delete MMS element
      * 
      * @throws Exception
      */
@@ -493,6 +496,7 @@ public class MDKValidationWindow {
 
     /**
      * Exports all MD elements that were not found in MMS (commits their existence to MMS)
+     * Equivalent to [EXIST] -> Commit element
      * 
      * @throws Exception
      */
