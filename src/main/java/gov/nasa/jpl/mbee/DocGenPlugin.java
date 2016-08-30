@@ -57,7 +57,7 @@ public class DocGenPlugin extends Plugin {
     private ValidateConstraintsPlugin vcPlugin = null;
     public static ClassLoader extensionsClassloader = null;
 
-    public static final String VERSION = "2.3",
+    public static final String VERSION = "2.4",
             MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
 
     public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
