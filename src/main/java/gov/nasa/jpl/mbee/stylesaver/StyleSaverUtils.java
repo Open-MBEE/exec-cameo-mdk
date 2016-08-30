@@ -134,7 +134,7 @@ public class StyleSaverUtils {
      *            the element the returned style string is for.
      * @param style
      *            the main style string associated with the active diagram.
-     * @return the style string associated with the PresentationElementInstance argument
+     * @return the style string associated with the PresentationElement argument
      *         or null if the element has not yet had its style saved.
      */
     public static String getStyleStringForElement(PresentationElement elem, JSONObject style) {

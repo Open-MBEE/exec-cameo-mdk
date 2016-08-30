@@ -91,7 +91,7 @@ public class PresentationElementUtils {
                     if (iscs.contains(paraC) || iscs.contains(tableC) || iscs.contains(listC) ||
                             iscs.contains(imageC) || iscs.contains(sectionC)) {
                         for (Element el: is.getOwnedElement()) {
-                            if (el instanceof Slot && ((Slot)el).getDefiningFeature().getName().equals("generatedFromView") &&
+                            if (el instanceof Slot && ((Slot) el).getDefiningFeature() != null && ((Slot) el).getDefiningFeature().getName() != null &&  ((Slot)el).getDefiningFeature().getName().equals("generatedFromView") &&
                                     !((Slot)el).getValue().isEmpty() && ((Slot)el).getValue().get(0) instanceof ElementValue &&
                                     ((ElementValue)((Slot)el).getValue().get(0)).getElement() == view) {
                                 viewinstance = true;

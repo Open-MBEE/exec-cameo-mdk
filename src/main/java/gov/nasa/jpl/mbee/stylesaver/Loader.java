@@ -177,7 +177,7 @@ public class Loader extends MDAction {
      * @param style
      *            The main style string associated with the active diagram.
      * 
-     * @return The style string associated with the PresentationElementInstance
+     * @return The style string associated with the PresentationElement
      *         argument.
      */
     private static String getStyleString(PresentationElement elem, String style) {
@@ -200,8 +200,8 @@ public class Loader extends MDAction {
     }
 
     /**
-     * Sets style properties in the parameterized PresentationElementInstance according
-     * to the PresentationElementInstance's style property.
+     * Sets style properties in the parameterized PresentationElement according
+     * to the PresentationElement's style property.
      * 
      * @param elem
      *            The element to set style properties in.
