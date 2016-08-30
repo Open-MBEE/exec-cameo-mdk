@@ -33,11 +33,7 @@ import gov.nasa.jpl.mbee.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.GenerationContext;
-import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.lib.MoreToString;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
+import gov.nasa.jpl.mbee.lib.*;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
@@ -133,7 +129,7 @@ public class TableStructure extends Table {
 
     private String                      title;
 
-    private List<List<List<Reference>>> tableContent = new ArrayList<List<List<Reference>>>();
+    private List<List<List<Pair<Reference, Boolean>>>> tableContent = new ArrayList<>();
 
     private Map<TableColumn, Integer>   columnIndex  = new HashMap<TableStructure.TableColumn, Integer>(); //0 based
 
@@ -202,7 +198,7 @@ public class TableStructure extends Table {
                 outs = curNode.getOutgoing();
                 continue;
             }
-            col.editable = (Boolean)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.tableColumnStereotype, "editable", true);
+            col.editable = (Boolean)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.editableChoosable, "editable", true);
             col.activityNode = curNode;
             if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
                 col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
@@ -230,7 +226,7 @@ public class TableStructure extends Table {
     private void buildTableReferences(boolean forViewEditor, String outputDir) {
         Set<Object> warnedError = new HashSet<Object>();
         for (Object e: targets) {
-            List<List<Reference>> row = new ArrayList<List<Reference>>();
+            List<List<Pair<Reference, Boolean>>> row = new ArrayList<>();
             List<Object> startElements = new ArrayList<Object>();
             startElements.add(e);
             for (TableColumn tc: columns) {
@@ -245,7 +241,7 @@ public class TableStructure extends Table {
                 } else {
                     resultElements = Utils2.asList( startElements, Element.class);
                 }
-                List<Reference> cell = new ArrayList<Reference>();
+                List<Pair<Reference, Boolean>> cell = new ArrayList<>();
                 if (tc instanceof TableExpressionColumn && !((TableExpressionColumn)tc).iterate) {     
                     String expr = ((TableExpressionColumn)tc).expression;
                     if (expr != null) {
@@ -256,7 +252,7 @@ public class TableStructure extends Table {
                             Debug.outln( "valid result = " + result
                                          + " for expression " + expr + " on "
                                          + MoreToString.Helper.toLongString( resultElements ) );
-                            cell.add(new Reference(result));
+                            cell.add(new Pair<>(new Reference(result), tc.editable));
                         } else {
                             Debug.outln( "invalid evaluation of expression "
                                          + expr + " on "
@@ -279,12 +275,9 @@ public class TableStructure extends Table {
                             }
                             Object attr = Utils.getElementAttribute(re, at); // attr can be string, value spec, or list of value spec
                             if (attr == null && tc.editable && at == Utils.AvailableAttribute.Value && re instanceof Property)
-                                cell.add(new Reference(re, Utils.getFromAttribute(at), ""));
+                                cell.add(new Pair<>(new Reference(re, Utils.getFromAttribute(at), ""), tc.editable));
                             else if (attr != null) {
-                                if (tc.editable)
-                                    cell.add(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn)tc).attribute), attr));
-                                else
-                                    cell.add(new Reference(attr));
+                                cell.add(new Pair<>(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn)tc).attribute), attr), tc.editable));
                             }
                         } else if (tc instanceof TablePropertyColumn) {
                             Property prop = ((TablePropertyColumn)tc).property;
@@ -293,10 +286,10 @@ public class TableStructure extends Table {
                             }
                             Element slotOrProperty = Utils.getElementProperty(re, prop);
                             List<Object> values = Utils.getElementPropertyValues(re, prop, true);
-                            if (slotOrProperty != null && tc.editable) {
-                                cell.add(new Reference(slotOrProperty, From.DVALUE, values));
+                            if (slotOrProperty != null) {
+                                cell.add(new Pair<>(new Reference(slotOrProperty, From.DVALUE, values), tc.editable));
                             } else
-                                cell.add(new Reference(values));
+                                cell.add(new Pair<>(new Reference(values), tc.editable));
                         } else if (tc instanceof TableExpressionColumn) {
                             String expr = ((TableExpressionColumn)tc).expression;
                             if (expr == null) {
@@ -311,7 +304,7 @@ public class TableStructure extends Table {
                                 Debug.outln( "valid result = " + result
                                              + " for expression " + expr + " on "
                                              + MoreToString.Helper.toLongString( re ) );
-                                cell.add(new Reference(result));
+                                cell.add(new Pair<>(new Reference(result), false));
                             } else {
                                 Debug.outln( "invalid evaluation of expression "
                                         + expr + " on "
@@ -341,7 +334,7 @@ public class TableStructure extends Table {
                         	dg.parseActivityOrStructuredNode(a, con);
                         	//Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
                         	for (DocGenElement dge: con.getChildren()) {
-                        	    cell.add(new Reference(dge));
+                        	    cell.add(new Pair<>(new Reference(dge), tc.editable));
                         	}
                         }
                     }
@@ -377,18 +370,19 @@ public class TableStructure extends Table {
             table.setColspecs(colspecs);
         }
         List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-        for (List<List<Reference>> row: tableContent) {
+        for (List<List<Pair<Reference, Boolean>>> row: tableContent) {
             List<DocumentElement> tableRow = new ArrayList<DocumentElement>();
-            for (List<Reference> cell: row) {
+            for (List<Pair<Reference, Boolean>> cell: row) {
                 DBTableEntry entry = new DBTableEntry();
-                for (Reference cellPart: cell) {
+                for (Pair<Reference, Boolean> pair : cell) {
+                    Reference cellPart = pair.getFirst();
                     //Common.addReferenceToDBHasContent(cellPart, entry);
                 	if (cellPart.result instanceof DocGenElement) {
                 		DocBookOutputVisitor nested = new DocBookOutputVisitor(forViewEditor, outputDir);
                 		nested.getParent().push(entry);
             			((DocGenElement)cellPart.result).accept(nested);
             		} else {
-            			Common.addReferenceToDBHasContent(cellPart, entry, this);
+            			Common.addReferenceToDBHasContent(cellPart, entry, pair.getSecond());
             		}
                 }
                 tableRow.add(entry);
@@ -404,16 +398,16 @@ public class TableStructure extends Table {
         return res;
     }
 
-    public List<Reference> getCellReferences(List<List<Reference>> row, TableColumn col) {
-        List<Reference> colData = row.get(getColumnIndex(col));
+    public List<Pair<Reference, Boolean>> getCellReferences(List<List<Pair<Reference, Boolean>>> row, TableColumn col) {
+        List<Pair<Reference, Boolean>> colData = row.get(getColumnIndex(col));
         return colData;
     }
 
-    public List<Object> getCellData(List<List<Reference>> row, TableColumn col) {
-        List<Reference> colRefs = getCellReferences(row, col);
+    public List<Object> getCellData(List<List<Pair<Reference, Boolean>>> row, TableColumn col) {
+        List<Pair<Reference, Boolean>> colRefs = getCellReferences(row, col);
         List<Object> colData = new ArrayList<Object>();
-        for (Reference r: colRefs) {
-            colData.add(r.result);
+        for (Pair<Reference, Boolean> pair : colRefs) {
+            colData.add(pair.getFirst().result);
         }
         return colData;
     }

@@ -56,7 +56,20 @@ public class Common {
         parent.addElements(getReferenceAsDocumentElements(ref, query));
     }
 
+    public static void addReferenceToDBHasContent(Reference ref, DBHasContent parent, Boolean editable) {
+        parent.addElements(getReferenceAsDocumentElements(ref, editable));
+    }
+
     public static List<DocumentElement> getReferenceAsDocumentElements(Reference ref, Query query) {
+        Boolean editable = null;
+        Object o;
+        if (query != null && query.getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(query.getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
+            editable = (Boolean) o;
+        }
+        return getReferenceAsDocumentElements(ref, editable);
+    }
+
+    public static List<DocumentElement> getReferenceAsDocumentElements(Reference ref, Boolean editable) {
         List<DocumentElement> res = new ArrayList<DocumentElement>();
         if (ref.result == null)
             return res;
@@ -64,12 +77,12 @@ public class Common {
             if (ref.result instanceof Collection) {
                 for (Object r: (Collection<?>)ref.result) {
                     DocumentElement documentElement = new DBParagraph(r);
-                    initEditable(documentElement, query);
+                    initEditable(documentElement, editable);
                     res.add(documentElement);
                 }
             } else {
                 DocumentElement documentElement = new DBParagraph(ref.result);
-                initEditable(documentElement, query);
+                initEditable(documentElement, editable);
                 res.add(documentElement);
             }
         } else {
@@ -77,7 +90,7 @@ public class Common {
             //    res.add(new DBParagraph(((Collection<?>)ref.result).iterator().next(), ref.element, ref.from));
             //} else {
             DocumentElement documentElement = new DBParagraph(ref.result, ref.element, ref.from);
-            initEditable(documentElement, query);
+            initEditable(documentElement, editable);
             res.add(documentElement);
             //}
         }
@@ -112,13 +125,11 @@ public class Common {
         } else
             res.addElement(new DBParagraph(o));
         return res;
-
     }
 
-    private static void initEditable(DocumentElement documentElement, Query query) {
-        Object o;
-        if (query != null && query.getDgElement() != null && documentElement instanceof EditableChoosable && (o = StereotypesHelper.getStereotypePropertyFirst(query.getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
-            ((EditableChoosable) documentElement).setEditable((Boolean) o);
+    private static void initEditable(DocumentElement documentElement, Boolean editable) {
+        if (documentElement instanceof EditableChoosable && editable != null) {
+            ((EditableChoosable) documentElement).setEditable(editable);
         }
     }
 }
