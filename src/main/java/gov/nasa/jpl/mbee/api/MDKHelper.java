@@ -46,6 +46,7 @@ import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter.LocalSyncProjectMapping;
 import gov.nasa.jpl.mbee.lib.Changelog;
+import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 
@@ -135,8 +136,19 @@ public class MDKHelper {
 	 * @param password
 	 */
 	public static boolean loginToMMS(final String username, final String password) {
+	    Utils.setPopupsDisabled(true);
 		EMSLoginAction ela = new EMSLoginAction();
 		return ela.loginAction(username, password);
+	}
+	
+    /**
+     * Sets boolean that can disabled popups and redirect their messages to the GUI log.
+     *  
+     * @param disabled
+     *              true to redirect popups to gui log, false to renable normal popup behavior
+     */
+	public static void setPopupsDisabled(boolean disabled) {
+	    Utils.setPopupsDisabled(disabled);
 	}
 
     /**
@@ -336,7 +348,7 @@ public class MDKHelper {
 	 *          true if the site lists "editable":"true" for the logged in user, false otherwise
 	 *          or when no project is open or project lacks url and site specifications
 	 */
-    public static boolean hasSiteWritePermissions() {
+    public static boolean hasSiteEditPermission() {
         try {
 			Project proj = Application.getInstance().getProject();
 			if (proj == null)
@@ -347,7 +359,7 @@ public class MDKHelper {
 			String site = ExportUtility.getSite();
 			if (site == null)
 				return false;
-			return ExportUtility.hasSiteWritePermissions(url, site);
+			return ExportUtility.hasSiteEditPermission(url, site);
         } catch (ServerException se) {
             return false;
         }
