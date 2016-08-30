@@ -2251,7 +2251,7 @@ public class ExportUtility {
      *          true if the site lists "editable":"true" for the logged in user, false otherwise
      * @throws ServerException
      */
-    public static boolean hasSiteWritePermissions(String url, String site) throws ServerException {
+    public static boolean hasSiteEditPermission(String url, String site) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         
         //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites

@@ -170,7 +170,7 @@ public class Utils {
     private static boolean forceDialogFalse = false;
     private static boolean forceDialogTrue = false;
     private static boolean forceDialogCancel = false;
-    private static boolean disablePopup = false;
+    private static boolean popupsDisabled = false;
     
     private Utils() {
     }
@@ -2252,7 +2252,7 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
-        if (disablePopup) {
+        if (popupsDisabled) {
             Utils.guilog("[POPUP] " + message);
         }
         else {
@@ -3743,8 +3743,8 @@ public class Utils {
      * @param disable
      *              true to redirect popups to gui log, false to renable normal popup behavior
      */
-    public static void setDisablePopups(boolean disable) {
-        Utils.disablePopup = disable;
+    public static void setPopupsDisabled(boolean disable) {
+        Utils.popupsDisabled = disable;
     }
     
     /**

@@ -83,7 +83,7 @@ public class AutomatedViewGeneration extends CommandLine {
             // open
             loadTeamworkProject();
             // confirm MMS write permissions
-            checkSiteWritePermissions();
+            checkSiteEditPermission();
             // generate and commit images
             generateViewsForDocList();
             // logout in finally
@@ -131,7 +131,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private void loginTeamwork() throws FileNotFoundException, UnsupportedEncodingException, InterruptedException {
         // disable all mdk popup warnings
-        MDKHelper.setDisablePopups(true);
+        MDKHelper.setPopupsDisabled(true);
         
         String message = "[OPERATION] Logging in to Teamwork";
         logMessage(message);
@@ -235,16 +235,16 @@ public class AutomatedViewGeneration extends CommandLine {
      * @throws Exception User does not have write permissions to site, possibly due to site
      */
 
-    private void checkSiteWritePermissions() throws FileNotFoundException, IllegalAccessException, InterruptedException, UnsupportedEncodingException {
+    private void checkSiteEditPermission() throws FileNotFoundException, IllegalAccessException, InterruptedException, UnsupportedEncodingException {
         if (!MDKHelper.loginToMMS(teamworkUsername, teamworkPassword)) {
-            String message = "[FAILURE] User " + teamworkUsername + " can not log in to MMS";
+            String message = "[FAILURE] User " + teamworkUsername + " failed to login to MMS.";
             logMessage(message);
             error = 103;
             throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not log in to MMS server.");
             // LOG: Invalid account
         }
-        if (!MDKHelper.hasSiteWritePermissions()) {
-            String message = "[FAILURE] User " + teamworkUsername + " does not have permission to send to MMS site, or MMS is unsupported version.";
+        if (!MDKHelper.hasSiteEditPermission()) {
+            String message = "[FAILURE] User " + teamworkUsername + " does not have permission to MMS site or MMS is unsupported version.";
             logMessage(message);
             error = 103;
             throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not edit site (check Alfresco site membership) or MMS version < 2.3.8.");
