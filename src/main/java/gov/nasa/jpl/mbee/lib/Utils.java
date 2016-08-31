@@ -124,7 +124,7 @@ public class Utils {
     private static boolean forceDialogFalse = false;
     private static boolean forceDialogTrue = false;
     private static boolean forceDialogCancel = false;
-    private static boolean skipDialog = false;
+    private static boolean popupsDisabled = false;
     
     private Utils() {
     }
@@ -2011,7 +2011,7 @@ public class Utils {
 
     @Deprecated
     public static Property getGeneratedFromViewProperty() {
-        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElementInstance::generatedFromView", Application.getInstance().getProject());
+        return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView", Application.getInstance().getProject());
     }
 
     @Deprecated
@@ -2206,11 +2206,12 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
-        if (skipDialog) {
-            skipDialog = false;
-            return;
+        if (popupsDisabled) {
+            Utils.guilog("[POPUP] " + message);
         }
-        JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
+        else {
+            JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
+        }
     }
 
     public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons, boolean includeCancel) {
@@ -3742,33 +3743,41 @@ public class Utils {
         }
         return false;
     }
+
+    /**
+     * Sets boolean that can disabled popups and redirect their messages to the GUI log.
+     *  
+     * @param disable
+     *              true to redirect popups to gui log, false to renable normal popup behavior
+     */
+    public static void setPopupsDisabled(boolean disable) {
+        Utils.popupsDisabled = disable;
+    }
     
     /**
-     * Cause the next call of a user dialog generating method to return the indicated value
+     * Causes the next call of a user dialog generating method to return the indicated value
      * The called method should then reset these values, so they don't accidentally get used again
      */
     
     public static void forceDialogReturnTrue() {
-    	forceDialogTrue = true;
+    	Utils.forceDialogTrue = true;
     }
 
     public static void forceDialogReturnFalse() {
-    	forceDialogFalse = true;
+        Utils.forceDialogFalse = true;
     }
 
     public static void forceDialogReturnCancel() {
-    	forceDialogCancel = true;
+        Utils.forceDialogCancel = true;
     }
     
-    public static void forceSkipDialog() {
-    	skipDialog = true;
-    }
-    
+    /**
+     * Resets all unconsumed forced return values
+     */
     public static void resetForcedReturns() {
-    	forceDialogTrue = false;
-    	forceDialogFalse = false;
-    	forceDialogCancel = false;
-    	skipDialog = false;
+        Utils.forceDialogTrue = false;
+        Utils.forceDialogFalse = false;
+        Utils.forceDialogCancel = false;
     }
 
 }

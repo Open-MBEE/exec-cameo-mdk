@@ -158,7 +158,7 @@ public class CombinedMatrix extends Table {
                 continue;
             }
             for (Property p: getStereotypeProperties())
-                row.add(Common.getStereotypePropertyEntry(e, p));
+                row.add(Common.getStereotypePropertyEntry(e, p, this));
             for (Stereotype s: getOutgoing()) {
                 List<Element> blah = new ArrayList<Element>();
                 blah.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, s, 1, true, 1));

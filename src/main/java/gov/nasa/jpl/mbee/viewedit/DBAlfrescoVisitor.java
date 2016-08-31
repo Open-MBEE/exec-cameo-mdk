@@ -286,6 +286,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             entry.put("sourceType", "text");
             entry.put("text", DocGenUtils.addP(DocGenUtils.fixString(para.getText(), false)));
         }
+        entry.put("nonEditable", para.isEditable() != null && !para.isEditable());
         entry.put("type", "Paragraph");
         return entry;
     }

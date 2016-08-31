@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.GenerationContext;
@@ -176,7 +177,12 @@ public class Paragraph extends Query {
             Element e = (Element)result;
             Object v = Utils.getElementAttribute( e, attribute );
             if ( !Utils2.isNullOrEmpty( v ) ) {
-                res.add( new DBParagraph( v, e, getFrom() ) );
+                Object o;
+                DBParagraph dbParagraph = new DBParagraph(v, e, getFrom());
+                if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
+                    dbParagraph.setEditable((Boolean) o);
+                }
+                res.add(dbParagraph);
             }
         } else if ( !Utils2.isNullOrEmpty( result ) ) {
             if ( result instanceof Collection ) {
@@ -189,7 +195,12 @@ public class Paragraph extends Query {
                 }
             } else {
                 if ( !Utils2.isNullOrEmpty( result ) ) {
-                    res.add( new DBParagraph( result ) );
+                    Object o;
+                    DBParagraph dbParagraph = new DBParagraph(result);
+                    if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
+                        dbParagraph.setEditable((Boolean) o);
+                    }
+                    res.add(dbParagraph);
                 }
             }
         }
@@ -246,17 +257,23 @@ public class Paragraph extends Query {
                 Stereotype paragraphStereotype = Utils.getStereotype( DocGen3Profile.paragraphStereotype );
                 Slot s = Utils.getSlot( getDgElement(), Utils.getStereotypePropertyByName( paragraphStereotype, "body" ) );
                 //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
+                DBParagraph dbParagraph;
                 if (s != null) {
-                    res.add(new DBParagraph(getText(), s, From.DVALUE));
+                    dbParagraph = new DBParagraph(getText(), s, From.DVALUE);
                 } else { // dgElement is not a Paragraph
                     if (getDgElement() != null && getFrom() != null) {
-                        res.add(new DBParagraph(getText(), getDgElement(), getFrom()));
+                        dbParagraph = new DBParagraph(getText(), getDgElement(), getFrom());
                     } else if ( getDgElement() != null ) { // getFrom() must be null
-                        res.add(new DBParagraph(getText(), getDgElement(), From.DOCUMENTATION));
+                        dbParagraph = new DBParagraph(getText(), getDgElement(), From.DOCUMENTATION);
                     } else {
-                        res.add(new DBParagraph(getText()));
+                        dbParagraph = new DBParagraph(getText());
                     }
                 }
+                Object o;
+                if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
+                    dbParagraph.setEditable((Boolean) o);
+                }
+                res.add(dbParagraph);
             } //else {
                 //res.add(new DBParagraph(getText()));
             //}
@@ -334,7 +351,7 @@ public class Paragraph extends Query {
                         // cases 2 & 3: return a paragraph for each
                         // target-property pair (3) or for each target's
                         // documentation (2)
-                        res.addAll( Common.getReferenceAsDocumentElements( r ) );
+                        res.addAll( Common.getReferenceAsDocumentElements(r, this ));
 //                        res.add( new DBParagraph( r.getResult(),
 //                                                  r.getElement(), r.getFrom() ) );
                     } else {

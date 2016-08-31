@@ -61,7 +61,7 @@ public class TemporalDiff extends Table {
 	}
 
 	public void addStereotypeProperties(DBHasContent parent, Element e, Property p) {
-		Common.addReferenceToDBHasContent(Reference.getPropertyReference(e, p), parent);
+		Common.addReferenceToDBHasContent(Reference.getPropertyReference(e, p), parent, this);
 	}
 
 	@Override

@@ -238,7 +238,7 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
 
     private void getStereotypeProps(Element e, List<DocumentElement> row) {
         for (Property p: this.stereotypeProperties) {
-            row.add(Common.getStereotypePropertyEntry(e, p));
+            row.add(Common.getStereotypePropertyEntry(e, p, this));
         }
     }
 

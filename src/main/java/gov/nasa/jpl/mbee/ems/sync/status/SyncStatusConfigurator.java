@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.ems.sync.status;
 import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
+import com.nomagic.actions.NMAction;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.actions.ems.sync.SyncStatusAction;
 
@@ -10,6 +11,7 @@ import gov.nasa.jpl.mbee.actions.ems.sync.SyncStatusAction;
  * Created by igomes on 8/16/16.
  */
 public class SyncStatusConfigurator implements AMConfigurator {
+    private static final String SYNC_STATUS_CATEGORY_NAME = "Sync Status";
     private static SyncStatusAction SYNC_STATUS_ACTION;
 
     @Override
@@ -26,7 +28,16 @@ public class SyncStatusConfigurator implements AMConfigurator {
                 actionsManager.addCategory(category);
             }
         }
-        category.addAction(getSyncStatusAction());
+        NMAction action = category.getAction(SYNC_STATUS_CATEGORY_NAME);
+        ActionsCategory nestedCategory = null;
+        if (action instanceof ActionsCategory) {
+            nestedCategory = (ActionsCategory) action;
+        }
+        if (nestedCategory == null) {
+            nestedCategory = new ActionsCategory(SYNC_STATUS_CATEGORY_NAME, SYNC_STATUS_CATEGORY_NAME);
+            category.addAction(nestedCategory);
+        }
+        nestedCategory.addAction(getSyncStatusAction());
     }
 
     @Override

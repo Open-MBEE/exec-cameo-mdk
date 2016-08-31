@@ -80,463 +80,223 @@ import gov.nasa.jpl.mbee.lib.Utils;
  */
 public class MagicDrawHelper {
 
-	private static Project project;
-	private static ElementsFactory ef;
+    private static Project project;
+    private static ElementsFactory ef;
 
-	public static void createSession() {
-		if (!SessionManager.getInstance().isSessionCreated()) {
-			SessionManager.getInstance().createSession("Automated changes");
-		}
-	}
-
-	public static void cancelSession() {
-		if (SessionManager.getInstance().isSessionCreated()) {
-			SessionManager.getInstance().cancelSession();
-		}
-	}
-
-	public static void closeSession() {
-		if (SessionManager.getInstance().isSessionCreated()) {
-			SessionManager.getInstance().closeSession();
-		}
-	}
-
-	private static void initializeFactory() {
-		if (ef != null)
-			return;
-		project = Application.getInstance().getProject();
-		ef = project.getElementsFactory();
-	}
-	
-	/**
-	 * Prints a message to console and MD log 
-	 */
-	
-	public static void generalMessage(String s) {
-		Application instance = Application.getInstance();
-		instance.getGUILog().log(s);
-		System.out.println(s);
-	}
-
-
-	public static Element finishElement(Element newElement, String name, Element owner) {
-		if (newElement instanceof NamedElement && !(name == null || name.isEmpty() )) {
-			((NamedElement)newElement).setName(name);
-		}
-		newElement.setOwner(owner);
-		return newElement;
-	}
-
-	/**
-	 * Returns the user who holds a lock on the element, or null if there is no
-	 * lock holder
-	 * 
-	 * @param target
-	 *            The element you want the lock information from
-	 */
-
-	public static boolean confirmElementLocked(Element target) {
-		List<Element> lockedElements = new ArrayList<Element>();
-		lockedElements.addAll(TeamworkUtils.getLockedElement(Application.getInstance().getProject(), null));
-		return lockedElements.contains(target);
-	}
-
-	/**
-	 * Copies specific elements to a location
-	 * 
-	 * @param elementToCopy
-	 * @param copyTarget
-	 */
-	public static Element copyAndPaste(Element elementToCopy, Element copyTarget) throws Exception {
-		Element newCopy = null;
-
-		if (elementToCopy != null && copyTarget != null) {
-			try {
-				createSession();
-				newCopy = CopyPasting.copyPasteElement(elementToCopy, copyTarget, true);
-				closeSession();
-			} catch (Exception e) {
-				cancelSession();
-				throw e;
-			}
-		}
-		return newCopy;
-	}
-	
-    public static void prepareMMS(String url, String site) {
-		createSession();
-		String s;
-		s = "Model Management System";
-		if (StereotypesHelper.hasStereotype(ElementFinder.getModelRoot(), s)) {
-        	System.out.println("Found " + s);
+    /**
+     * Convenience method to ensure that we always have an ElementsFactory available.
+     */
+    private static void initializeFactory() {
+        if (ef != null)
+            return;
+        project = Application.getInstance().getProject();
+        ef = project.getElementsFactory();
+    }
+    
+    /*****************************************************************************************
+     * 
+     * Session management functions
+     * 
+     *****************************************************************************************/
+    
+    /**
+     * Creates a MagicDraw Session. All changes to be recorded in model programmatically 
+     * must occur after a session is opened, and will be recorded when the session is closed.
+     * A cancelled session will cause the changes to be lost.
+     * 
+     * @throws IllegalStateException  
+     */
+    public static void createSession() throws IllegalStateException {
+        if (SessionManager.getInstance().isSessionCreated()) {
+            throw new IllegalStateException("Unable to create session: a session is already open.");
         }
-        Stereotype mms = StereotypesHelper.getStereotype(project, s);
-		if (mms != null) {
-			System.out.println("Stereotype found " + s);
-		}
-		s = "ModelManagementSystem";
-		if (StereotypesHelper.hasStereotype(ElementFinder.getModelRoot(), s)) {
-        	System.out.println("Found " + s);
+        SessionManager.getInstance().createSession("Programmatic changes");
+    }
+    
+    /**
+     * Closes an open session, causing all programmatically completed changes in the current 
+     * session to be reflected in the model.
+     * 
+     * @throws IllegalStateException 
+     */
+    public static void closeSession() throws IllegalStateException {
+        if (!SessionManager.getInstance().isSessionCreated()) {
+            throw new IllegalStateException("Unable to close session: no session has been created to close.");
         }
-		mms = StereotypesHelper.getStereotype(project, s);
-		if (mms != null) {
-			System.out.println("Stereotype found " + s);
-		}
+        SessionManager.getInstance().closeSession();
+    }
+    
+    /**
+     * Cancels an open session, causing all programmatically completed changes in the current
+     * session to be lost and not recorded in the model.
+     * 
+     * @throws IllegalStateException
+     */
+    public static void cancelSession() throws IllegalStateException {
+        if (!SessionManager.getInstance().isSessionCreated()) {
+            throw new IllegalStateException("Unable to cancel session: no session has been created to cancel.");
+        }
+        SessionManager.getInstance().cancelSession();
+    }
 
-		
-		System.out.println(StereotypesHelper.canApplyStereotype(ElementFinder.getModelRoot(), mms));
-		if (!StereotypesHelper.hasStereotype(ElementFinder.getModelRoot(), "ModelManagementSystem")) {
-			StereotypesHelper.addStereotype(ElementFinder.getModelRoot(), mms);
-		}
-		StereotypesHelper.setStereotypePropertyValue(ElementFinder.getModelRoot(), mms, "MMS Site", site);
-		StereotypesHelper.setStereotypePropertyValue(ElementFinder.getModelRoot(), mms, "MMS URL", url);
-		
-		closeSession();
-	}
-	
-	private static Property getTagProperty(String name, Stereotype ster) {
-		List<Element> ste = StereotypesHelper.getExtendedElements(ster);
-		for (Element elem : ste) {
-			if (ster.hasOwnedAttribute()) {
-				List<Property> attribs = ster.getOwnedAttribute();
-				for (Property tag : attribs) {
-					System.out.println(tag.getName());
-					if (tag.getName().equals(name)) {
-						List<?> value = StereotypesHelper.getStereotypePropertyValue(elem, ster, tag.getName());
-						for (Object val :value) {
-							if (val instanceof LiteralString) {
-								System.out.println(((LiteralString)val).getValue() + " " + ((LiteralString)val).isEditable());
-							}
-						}
-						return tag;
-					}
-				}
-			}
-		}
-		System.out.println(name + " not found");
-		return null;
-	}
-	
-	public static Package createPackage(String name, Element owner) {
-		createSession();
-		Package newPackage = createPackageNoSession(name, owner);
-		closeSession();
-		return newPackage;
-	}
-	
-	public static Package createPackageNoSession(String name, Element owner) {
-		initializeFactory();
-		Package newPackage = ef.createPackageInstance();
-		finishElement(newPackage, name, owner);
-		return newPackage;
-	}
+    /*****************************************************************************************
+     * 
+     * Logging functions
+     * 
+     *****************************************************************************************/
+    
+    /**
+     * Prints a message to console and MD log 
+     */
+    public static void generalMessage(String s) {
+        Application instance = Application.getInstance();
+        instance.getGUILog().log(s);
+        System.out.println(s);
+    }
 
-	public static Class createView(String name, Element owner) {
-		createSession();
-		Class newView = createViewNoSession(name, owner);
-		closeSession();
-		return newView;
-	}
+    /*****************************************************************************************
+     * 
+     * Teamwork Lock Functions
+     * 
+     *****************************************************************************************/
+    
+    /**
+     * Returns the user who holds a lock on the element, or null if there is no
+     * lock holder
+     * 
+     * @param target
+     *            The element you want the lock information from
+     */
+    public static boolean confirmElementLocked(Element target) {
+        List<Element> lockedElements = new ArrayList<Element>();
+        lockedElements.addAll(TeamworkUtils.getLockedElement(Application.getInstance().getProject(), null));
+        return lockedElements.contains(target);
+    }
 
-	public static Class createViewNoSession(String name, Element owner) {
-		initializeFactory();
-		Class newView = ef.createClassInstance();
-		Stereotype sysmlView = Utils.getViewClassStereotype();
-		StereotypesHelper.addStereotype(newView, sysmlView);
-		finishElement(newView, name, owner);
-		return newView;
-	}
+    /**
+     * Commits to teamwork and releases locks in a robust manner.
+     * 
+     * Note - this is a time consuming operation when elements are created outside of the __MMSSync__ folder
+     * 
+     * @param user
+     * @param commitMessage
+     * @return
+     */
+    public static boolean teamworkCommitReleaseLocks(String user, String commitMessage) {
+        Project prj = Application.getInstance().getProject();
+        Collection<Element> lockedElements = TeamworkUtils.getLockedElement(prj, user);
+        Element syncpkg = ElementFinder.getElement("Package", "__MMSSync__");
+        if (syncpkg != null)
+            lockedElements.addAll(ElementFinder.findElements(syncpkg));
+        boolean success = TeamworkUtils.commitProject(prj, commitMessage, null, lockedElements, null);
+        lockedElements = TeamworkUtils.getLockedElement(prj, user);
+        if (syncpkg == null || !lockedElements.isEmpty())
+            TeamworkUtils.unlockElement(Application.getInstance().getProject(), ElementFinder.getModelRoot(), true, true, true);
+        return success;
+    }
+    
+    /*****************************************************************************************
+     * 
+     * Element positioning functions
+     * 
+     *****************************************************************************************/
+    
+    /**
+     * Copies specific elements to a location
+     * 
+     * @param elementToCopy
+     * @param copyTarget
+     */
+    public static Element copyElementToTarget(Element elementToCopy, Element copyTarget) {
+        Element newCopy = null;
+        if (elementToCopy != null && copyTarget != null) {
+            newCopy = CopyPasting.copyPasteElement(elementToCopy, copyTarget, true);
+        }
+        return newCopy;
+    }
+    
+    /**
+     * Deletes all elements in a project under the indicated parent.
+     * 
+     * @param parent
+     *            Parent element under which you want to delete elements.
+     */
+    public static void deleteEditableContainerChildren(Element parent) throws ReadOnlyElementException {
+        Collection<Element> elements = parent.getOwnedElement();
+        ArrayList<Element> eList = new ArrayList<Element>();
 
-	public static Class createDocument(String name, Element owner) {
-		createSession();
-		Class newDocument = createDocumentNoSession(name, owner);
-		closeSession();
-		return newDocument;
-	}
+        for (Element e : elements) {
+            if (e.getHumanName().startsWith("Package") && e.isEditable()) {
+                eList.add(e);
+            }
+            if (e.getHumanName().startsWith("Diagram") && e.isEditable()) {
+                eList.add(e);
+            }
+        }
 
-	public static Class createDocumentNoSession(String name, Element owner) {
-		initializeFactory();
-		Class newDocument = ef.createClassInstance();
-		Stereotype sysmlDocument = Utils.getDocumentStereotype();
-		ImportUtility.setOrCreateAsi(sysmlDocument, newDocument);
-		finishElement(newDocument, name, owner);
-		return newDocument;
-	}
+        for (Element elem : eList) {
+            deleteMDElement(elem);
+        }
+    }
 
-	public static Association createDirectedComposition(Element document, Element view) {
-		createSession();
-		initializeFactory();
-		Association assoc = ef.createAssociationInstance();
-		finishElement(assoc, null, document.getOwner());
-		Property source = createPropertyNoSession(((NamedElement)view).getName(), document, null, view, "composite", "1", "1");
-        Property target = createPropertyNoSession("", assoc, null, document, "none", "1", "1");
-		assoc.getMemberEnd().clear();
-		assoc.getMemberEnd().add(0, source);
-		assoc.getMemberEnd().add(target);
-		assoc.getOwnedEnd().add(0,target);
-		closeSession();
-		return assoc;
-	}
-	
-	public static Component createSiteCharComponent(String name, Element owner) {
-		Component comp = createComponent(name, owner);
-		Element genTarget = ElementFinder.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
-		createGeneralization("", comp, comp, genTarget);
-		createDependency("", comp, comp, owner);
-		return comp;
-	}
-	
-	public static Component createComponent(String name, Element owner) {
-		createSession();
-		Component comp = createComponentNoSession(name, owner);
-		closeSession();
-		return comp;
-	}
-	
-	public static Component createComponentNoSession(String name, Element owner) {
-		initializeFactory();
-		Component comp = ef.createComponentInstance();
-		finishElement(comp, name, owner);
-		return comp;
-	}
-	
-	public static Generalization createGeneralization(String name, Element owner, Element source, Element target) {
-		createSession();
-		Generalization genr = createGeneralizationNoSession(name, owner, source, target);
-		closeSession();
-		return genr;
-	}
-	
-	public static Generalization createGeneralizationNoSession(String name, Element owner, Element source, Element target) {
-		initializeFactory();
-		Generalization genr = ef.createGeneralizationInstance();
-		setRelationshipEnds(genr, source, target);
-		finishElement(genr, null, owner);
-		return genr;
-	}
-	
-	public static Dependency createDependency(String name, Element owner, Element source, Element target) {
-		createSession();
-		Dependency depd = createDependencyNoSession(name, owner, source, target);
-		closeSession();
-		return depd;
-	}
-	
-	public static Dependency createDependencyNoSession(String name, Element owner, Element source, Element target) {
-		initializeFactory();
-		Dependency depd = ef.createDependencyInstance();
-		setRelationshipEnds(depd, source, target);
-		finishElement(depd, null, owner);
-		return depd;
-	}
-	
-	public static void setRelationshipEnds(DirectedRelationship dr, Element source, Element target) {
-		ModelHelper.setClientElement(dr, source);
-		ModelHelper.setSupplierElement(dr, target);
-	}
-	
-	public static Property createProperty(String name, Element owner, ValueSpecification defaultValue, 
-			Element typeElement, String aggregation, String multMin, String multMax) {
-		createSession();
-		Property prop = createPropertyNoSession(name, owner, defaultValue, typeElement, aggregation, multMin, multMax);
-		closeSession();
-		return prop;
-	}
-	
-	public static Property createPropertyNoSession(String name, Element owner, ValueSpecification defaultValue, 
-			Element typeElement, String aggregation, String multMin, String multMax) {
-		initializeFactory();
-		Property prop = ef.createPropertyInstance();
-		
-		prop.setDefaultValue(defaultValue);
-		
-		if (typeElement != null)
-			prop.setType((Type) typeElement);
-		
-		if (aggregation != null)
-			prop.setAggregation(AggregationKindEnum.getByName(aggregation));
-		
-		if (multMin != null) {
-			try{
-				Long spmin = new Long(multMin);
-	    	    ValueSpecification pmin = prop.getLowerValue();
-	    	    if (pmin == null)
-	    	        pmin = ef.createLiteralIntegerInstance();
-	    	    if (pmin instanceof LiteralInteger)
-	    	        ((LiteralInteger)pmin).setValue(spmin.intValue());
-	    	    if (pmin instanceof LiteralUnlimitedNatural)
-	    	        ((LiteralUnlimitedNatural)pmin).setValue(spmin.intValue());
-	    	    prop.setLowerValue(pmin);
-	    	}
-	    	catch (NumberFormatException en){}
-		}
-		
-		if (multMax != null) {
-			try{
-				Long spmax = new Long(multMax);
-	    	    ValueSpecification pmin = prop.getLowerValue();
-	    	    if (pmin == null)
-	    	        pmin = ef.createLiteralIntegerInstance();
-	    	    if (pmin instanceof LiteralInteger)
-	    	        ((LiteralInteger)pmin).setValue(spmax.intValue());
-	    	    if (pmin instanceof LiteralUnlimitedNatural)
-	    	        ((LiteralUnlimitedNatural)pmin).setValue(spmax.intValue());
-	    	    prop.setLowerValue(pmin);
-	    	}
-	    	catch (NumberFormatException en){}
-		}
-		
-		finishElement(prop, null, owner);
-		return prop;
-	}
+    /**
+     * Deletes all editable container elements in a project.
+     */
+    public static void deleteLocalMDElements() throws ReadOnlyElementException {
+        deleteEditableContainerChildren(ElementFinder.getModelRoot());
+    }
 
-	/**
-	 * Creates a specified number of diagrams in the open project
-	 * 
-	 * @param num
-	 *            number of diagrams to be created.
-	 */
-	public static void createDiagrams(int num) {
-		createSession();
-		for (int i = 0; i < num; i++) {
-			try {
-				ModelElementsManager.getInstance().createDiagram(DiagramTypeConstants.UML_CLASS_DIAGRAM,
-						(Namespace) ElementFinder.getModelRoot());
-			} catch (ReadOnlyElementException e) {
-				e.printStackTrace();
-				cancelSession();
-			}
-		}
-		closeSession();
-	}
+    /**
+     * Deletes selected element from Magic Draw, including children
+     * Convenience method for the MD API. 
+     * 
+     * @param ele
+     *            selected element to be deleted.
+     */
+    public static void deleteMDElement(Element ele) throws ReadOnlyElementException {
+        ModelElementsManager.getInstance().removeElement(ele);
+    }
 
-	/**
-	 * Deletes all elements in a project under the indicated parent.
-	 * 
-	 * @param parent
-	 *            Parent element under which you want to delete elements.
-	 */
-	public static void deleteEditableContainerChildren(Element parent) {
-		Collection<Element> elements = parent.getOwnedElement();
-		ArrayList<Element> eList = new ArrayList<Element>();
-		createSession();
+    /**
+     * Returns the element's documentation, stripped of HTML wrapper
+     * 
+     * @param target
+     *            The level element whose comment you want to return
+     * 
+     */
+    public static String getElementDocumentation(Element target) {
+        return Utils.stripHtmlWrapper(ModelHelper.getComment(target));
+    }
 
-		for (Element e : elements) {
-			if (e.getHumanName().startsWith("Package") && e.isEditable()) {
-				eList.add(e);
-			}
-			if (e.getHumanName().startsWith("Diagram") && e.isEditable()) {
-				eList.add(e);
-			}
-		}
-
-		ModelElementsManager mem = ModelElementsManager.getInstance();
-		for (Element elem : eList) {
-			try {
-				mem.removeElement(elem);
-			} catch (Exception e) {
-				Application.getInstance().getGUILog()
-						.log("Exception occurred in delete all editable elements: " + e.toString());
-				cancelSession();
-			}
-		}
-		closeSession();
-	}
-
-	/**
-	 * Deletes all editable container elements in a project.
-	 */
-	public static void deleteLocalMDElements() {
-		deleteEditableContainerChildren(ElementFinder.getModelRoot());
-	}
-
-	/**
-	 * Deletes selected element from Magic Draw, including children
-	 * 
-	 * @param ele
-	 *            selected element to be deleted.
-	 */
-	public static void deleteMDElement(Element ele) throws Exception {
-		createSession();
-		try {
-			ModelElementsManager.getInstance().removeElement(ele);
-		} catch (Exception e) {
-			cancelSession();
-			throw e;
-		}
-		closeSession();
-	}
-
-	/**
-	 * Returns the comments of the associated elements, stripped of html wrapper
-	 * 
-	 * @param target
-	 *            The level element whose comment you want to return
-	 * 
-	 */
-	public static String getElementDocumentation(Element target) {
-		return Utils.stripHtmlWrapper(ModelHelper.getComment(target));
-	}
-
-	/**
-	 * Returns the value of the passed property
-	 * 
-	 * @param target
-	 *            The property whose value you wish to inspect
-	 */
-	public static String getPropertyValue(Element target) {
-		String value = null;
-		if (target instanceof Property) {
-			ValueSpecification vs = ((Property) target).getDefaultValue();
-			if (vs instanceof LiteralBoolean) {
-				value = Boolean.toString(((LiteralBoolean) vs).isValue());
-			} else if (vs instanceof LiteralInteger) {
-				value = Long.toString(((LiteralInteger) vs).getValue());
-			} else if (vs instanceof LiteralNull) {
-				value = null;
-			} else if (vs instanceof LiteralReal) {
-				value = Double.toString(((LiteralReal) vs).getValue());
-			} else if (vs instanceof LiteralString) {
-				value = Utils.stripHtmlWrapper(((LiteralString) vs).getValue());
-			} else if (vs instanceof LiteralUnlimitedNatural) {
-				value = Long.toString(((LiteralUnlimitedNatural) vs).getValue());
-			}
-		}
-		return value;
-	}
-
-	/**
-	 * Renames the passed NamedElement
-	 * 
-	 * @param target
-	 *            The NamedElement to rename
-	 * @param newName
-	 *            The new name for the element
-	 */
-	public static void renameElement(NamedElement target, String newName) {
-		createSession();
-		ImportUtility.setName(target, newName);
-		closeSession();
-	}
-
-	/**
-	 * Updates the comments of the target element, adding the necessary html
-	 * wrapper
-	 * 
-	 * @param target
-	 *            The level element whose comment you want to change
-	 * @param documentation
-	 *            The new comments for the target element
-	 * 
-	 */
-	public static void setElementDocumentation(Element target, String documentation) {
-		createSession();
-		ImportUtility.setDocumentation(target, documentation);
-		closeSession();
-	}
+    /**
+     * Returns the value of the passed property
+     * 
+     * @param target
+     *            The property whose value you wish to inspect
+     */
+    public static String getPropertyValue(Element target) {
+        String value = null;
+        if (target instanceof Property) {
+            ValueSpecification vs = ((Property) target).getDefaultValue();
+            if (vs instanceof LiteralBoolean) {
+                value = Boolean.toString(((LiteralBoolean) vs).isValue());
+            } else if (vs instanceof LiteralInteger) {
+                value = Long.toString(((LiteralInteger) vs).getValue());
+            } else if (vs instanceof LiteralNull) {
+                value = null;
+            } else if (vs instanceof LiteralReal) {
+                value = Double.toString(((LiteralReal) vs).getValue());
+            } else if (vs instanceof LiteralString) {
+                value = Utils.stripHtmlWrapper(((LiteralString) vs).getValue());
+            } else if (vs instanceof LiteralUnlimitedNatural) {
+                value = Long.toString(((LiteralUnlimitedNatural) vs).getValue());
+            }
+        }
+        return value;
+    }
 
    /**
-     * Updates the comments of the target element, adding the necessary html
+     * Sets the comments of the target element, adding the necessary html
      * wrapper
      * 
      * @param target
@@ -545,80 +305,319 @@ public class MagicDrawHelper {
      *            The new comments for the target element
      * 
      */
-    public static void setElementDocumentationNoSession(Element target, String documentation) {
+    public static void setElementDocumentation(Element target, String documentation) {
         ImportUtility.setDocumentation(target, documentation);
     }
     
     /**
-	 * 3-way merge - merge branch changes to trunk.
-	 *
-	 * @param projectName
-	 *            remote project name.
-	 * @param branchName
-	 *            branch name.
-	 * @return merged project.
-	 * @throws java.rmi.RemoteException
-	 *             remote exception.
-	 */
+     * Sets the name of the passed NamedElement.
+     * 
+     * @param target
+     *            The NamedElement to rename
+     * @param newName
+     *            The new name for the element
+     */
+    public static void setElementName(NamedElement target, String newName) {
+        ImportUtility.setName(target, newName);
+    }
 
-	public static void mergeToTrunk(String projectName, String branchName) throws Exception {
-		final ProjectDescriptor trunkDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(projectName);
+    /*****************************************************************************************
+     * 
+     * MMS Stereotype Functions
+     * 
+     *****************************************************************************************/
+    
+    //????
+    @Deprecated
+    public static void prepareMMS(String url, String site) {
+        String s;
+        s = "Model Management System";
+        if (StereotypesHelper.hasStereotype(ElementFinder.getModelRoot(), s)) {
+            System.out.println("Found " + s);
+        }
+        Stereotype mms = StereotypesHelper.getStereotype(project, s);
+        if (mms != null) {
+            System.out.println("Stereotype found " + s);
+        }
+        s = "ModelManagementSystem";
+        if (StereotypesHelper.hasStereotype(ElementFinder.getModelRoot(), s)) {
+            System.out.println("Found " + s);
+        }
+        mms = StereotypesHelper.getStereotype(project, s);
+        if (mms != null) {
+            System.out.println("Stereotype found " + s);
+        }
 
-		// load target project (trunk head)
-		final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
-		projectsManager.loadProject(trunkDescriptor, true);
-		final Project targetProject = projectsManager.getActiveProject();
-		projectsManager.closeProject();
+        
+        System.out.println(StereotypesHelper.canApplyStereotype(ElementFinder.getModelRoot(), mms));
+        if (!StereotypesHelper.hasStereotype(ElementFinder.getModelRoot(), "ModelManagementSystem")) {
+            StereotypesHelper.addStereotype(ElementFinder.getModelRoot(), mms);
+        }
+        StereotypesHelper.setStereotypePropertyValue(ElementFinder.getModelRoot(), mms, "MMS Site", site);
+        StereotypesHelper.setStereotypePropertyValue(ElementFinder.getModelRoot(), mms, "MMS URL", url);
+    }
+    
+    //????
+    @Deprecated
+    private static Property getTagProperty(String name, Stereotype ster) {
+        List<Element> ste = StereotypesHelper.getExtendedElements(ster);
+        for (Element elem : ste) {
+            if (ster.hasOwnedAttribute()) {
+                List<Property> attribs = ster.getOwnedAttribute();
+                for (Property tag : attribs) {
+                    System.out.println(tag.getName());
+                    if (tag.getName().equals(name)) {
+                        List<?> value = StereotypesHelper.getStereotypePropertyValue(elem, ster, tag.getName());
+                        for (Object val :value) {
+                            if (val instanceof LiteralString) {
+                                System.out.println(((LiteralString)val).getValue() + " " + ((LiteralString)val).isEditable());
+                            }
+                        }
+                        return tag;
+                    }
+                }
+            }
+        }
+        System.out.println(name + " not found");
+        return null;
+    }
+    
+    /*****************************************************************************************
+     * 
+     * Element Creation Functions
+     * 
+     *****************************************************************************************/
+    
+    public static Component createComponent(String name, Element owner) {
+        initializeFactory();
+        Component comp = ef.createComponentInstance();
+        finishElement(comp, name, owner);
+        return comp;
+    }
+    
+    public static Association createDirectedComposition(Element document, Element view) {
+        initializeFactory();
+        Association assoc = ef.createAssociationInstance();
+        finishElement(assoc, null, document.getOwner());
+        Property source = createProperty(((NamedElement)view).getName(), document, null, view, "composite", "1", "1");
+        Property target = createProperty("", assoc, null, document, "none", "1", "1");
+        assoc.getMemberEnd().clear();
+        assoc.getMemberEnd().add(0, source);
+        assoc.getMemberEnd().add(target);
+        assoc.getOwnedEnd().add(0,target);
+        return assoc;
+    }
+    
+    public static Dependency createDependency(String name, Element owner, Element source, Element target) {
+        initializeFactory();
+        Dependency depd = ef.createDependencyInstance();
+        setRelationshipEnds(depd, source, target);
+        finishElement(depd, null, owner);
+        return depd;
+    }
+    
+    public static Class createDocument(String name, Element owner) {
+        initializeFactory();
+        Class newDocument = ef.createClassInstance();
+        Stereotype sysmlDocument = Utils.getDocumentStereotype();
+        ImportUtility.setOrCreateAsi(sysmlDocument, newDocument);
+        finishElement(newDocument, name, owner);
+        return newDocument;
+    }
 
-		// ancestor is 1st version from trunk
-		final ProjectDescriptor ancestor = createProjectDescriptor(projectName, trunkDescriptor, 1);
+    public static Generalization createGeneralization(String name, Element owner, Element source, Element target) {
+        initializeFactory();
+        Generalization genr = ef.createGeneralizationInstance();
+        setRelationshipEnds(genr, source, target);
+        finishElement(genr, null, owner);
+        return genr;
+    }
+    
+    public static Package createPackage(String name, Element owner) {
+        initializeFactory();
+        Package newPackage = ef.createPackageInstance();
+        finishElement(newPackage, name, owner);
+        return newPackage;
+    }
 
-		// source is 2nd version from branch
-		String branchedProjectName = TeamworkUtils.generateProjectQualifiedName(projectName,
-				new String[] { branchName });
-		final ProjectDescriptor branchDescriptor = TeamworkUtils
-				.getRemoteProjectDescriptorByQualifiedName(branchedProjectName);
-		final ProjectDescriptor source = createProjectDescriptor(branchedProjectName, branchDescriptor, 2);
+    public static Property createProperty(String name, Element owner, ValueSpecification defaultValue, 
+            Element typeElement, String aggregation, String multMin, String multMax) {
+        initializeFactory();
+        Property prop = ef.createPropertyInstance();
+        
+        prop.setDefaultValue(defaultValue);
+        
+        if (typeElement != null)
+            prop.setType((Type) typeElement);
+        
+        if (aggregation != null)
+            prop.setAggregation(AggregationKindEnum.getByName(aggregation));
+        
+        if (multMin != null) {
+            try{
+                Long spmin = new Long(multMin);
+                ValueSpecification pmin = prop.getLowerValue();
+                if (pmin == null)
+                    pmin = ef.createLiteralIntegerInstance();
+                if (pmin instanceof LiteralInteger)
+                    ((LiteralInteger)pmin).setValue(spmin.intValue());
+                if (pmin instanceof LiteralUnlimitedNatural)
+                    ((LiteralUnlimitedNatural)pmin).setValue(spmin.intValue());
+                prop.setLowerValue(pmin);
+            }
+            catch (NumberFormatException en){}
+        }
+        
+        if (multMax != null) {
+            try{
+                Long spmax = new Long(multMax);
+                ValueSpecification pmin = prop.getLowerValue();
+                if (pmin == null)
+                    pmin = ef.createLiteralIntegerInstance();
+                if (pmin instanceof LiteralInteger)
+                    ((LiteralInteger)pmin).setValue(spmax.intValue());
+                if (pmin instanceof LiteralUnlimitedNatural)
+                    ((LiteralUnlimitedNatural)pmin).setValue(spmax.intValue());
+                prop.setLowerValue(pmin);
+            }
+            catch (NumberFormatException en){}
+        }
+        
+        finishElement(prop, null, owner);
+        return prop;
+    }
 
-		// merge project (prefer low memory usage to performance)
-		MergeUtil.merge(targetProject, source, ancestor, MergeUtil.ConflictResolution.TARGET_PREFERRED,
-				new SimpleErrorHandler(), MergeUtil.Optimization.MEMORY);
-	}
+    public static Component createSiteCharComponent(String name, Element owner) {
+        Component comp = createComponent(name, owner);
+        Element genTarget = ElementFinder.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
+        createGeneralization("", comp, comp, genTarget);
+        createDependency("", comp, comp, owner);
+        return comp;
+    }
+    
+    public static Class createView(String name, Element owner) {
+        initializeFactory();
+        Class newView = ef.createClassInstance();
+        Stereotype sysmlView = Utils.getViewClassStereotype();
+        StereotypesHelper.addStereotype(newView, sysmlView);
+        finishElement(newView, name, owner);
+        return newView;
+    }
 
-	public static ProjectDescriptor createProjectDescriptor(String projectName, ProjectDescriptor projectDescriptor,
-			int version) {
-		final String remoteID = ProjectDescriptorsFactory.getRemoteID(projectDescriptor.getURI());
-		return ProjectDescriptorsFactory.createRemoteProjectDescriptor(remoteID, projectName, version);
-	}
+    /******************************************************************************************************
+     * 
+     * Helper methods for element creation functions
+     * 
+     ******************************************************************************************************/
+    
+    /**
+     * Convenience method to fill element properties name and owner.
+     * 
+     * @param newElement
+     *          The element to be finished.
+     * @param name
+     *          The name of the NamedElement. This will be applied to a NamedElement
+     *          unless name is null. This parameter will be ignored if the element is not
+     *          a NamedElement. 
+     * @param owner
+     *          The owner of the element to be finished.
+     * @return
+     *          The finished newElement.
+     */
+    private static Element finishElement(Element newElement, String name, Element owner) {
+        if (newElement instanceof NamedElement && !(name == null || name.isEmpty() )) {
+            ((NamedElement)newElement).setName(name);
+        }
+        newElement.setOwner(owner);
+        return newElement;
+    }
 
-	/**
-	 * Commits to teamwork and releases locks in a robust manner.
-	 * 
-	 * Note - this is a time consuming operation when elements are created outside of the __MMSSync__ folder
-	 * 
-	 * @param user
-	 * @param commitMessage
-	 * @return
-	 */
-	public static boolean teamworkCommitReleaseLocks(String user, String commitMessage) {
-		Project prj = Application.getInstance().getProject();
-		Collection<Element> lockedElements = TeamworkUtils.getLockedElement(prj, user);
-		Element syncpkg = ElementFinder.getElement("Package", "__MMSSync__");
-		if (syncpkg != null)
-			lockedElements.addAll(ElementFinder.findElements(syncpkg));
-		boolean success = TeamworkUtils.commitProject(prj, commitMessage, null, lockedElements, null);
-		lockedElements = TeamworkUtils.getLockedElement(prj, user);
-		if (syncpkg == null || !lockedElements.isEmpty())
-			TeamworkUtils.unlockElement(Application.getInstance().getProject(), ElementFinder.getModelRoot(), true, true, true);
-		return success;
-	}
+    /**
+     * Convenience method to set or update relationship ends
+     * 
+     * @param dr
+     * @param source
+     * @param target
+     */
+    private static void setRelationshipEnds(DirectedRelationship dr, Element source, Element target) {
+        ModelHelper.setClientElement(dr, source);
+        ModelHelper.setSupplierElement(dr, target);
+    }
+    
+    
+    /******************************************************************************************************
+     * 
+     * Deprecated methods to deal with when appropriate
+     * 
+     ******************************************************************************************************/
+    
+    /**
+     * Creates a specified number of diagrams in the open project
+     * 
+     * @param num
+     *            number of diagrams to be created.
+     */
+    @Deprecated
+    public static void createDiagrams(int num) {
+        for (int i = 0; i < num; i++) {
+            try {
+                ModelElementsManager.getInstance().createDiagram(DiagramTypeConstants.UML_CLASS_DIAGRAM,
+                        (Namespace) ElementFinder.getModelRoot());
+            } catch (ReadOnlyElementException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-	private static class SimpleErrorHandler implements ErrorHandler<Exception> {
-		@Override
-		public void error(Exception ex) throws Exception {
-			// just print stack trace
-			ex.printStackTrace();
-		}
-	}
+    /**
+     * 3-way merge - merge branch changes to trunk.
+     *
+     * @param projectName
+     *            remote project name.
+     * @param branchName
+     *            branch name.
+     * @return merged project.
+     * @throws java.rmi.RemoteException
+     *             remote exception.
+     */
+    @Deprecated
+    public static void mergeToTrunk(String projectName, String branchName) throws Exception {
+        final ProjectDescriptor trunkDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(projectName);
+
+        // load target project (trunk head)
+        final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
+        projectsManager.loadProject(trunkDescriptor, true);
+        final Project targetProject = projectsManager.getActiveProject();
+        projectsManager.closeProject();
+
+        // ancestor is 1st version from trunk
+        final ProjectDescriptor ancestor = createProjectDescriptor(projectName, trunkDescriptor, 1);
+
+        // source is 2nd version from branch
+        String branchedProjectName = TeamworkUtils.generateProjectQualifiedName(projectName,
+                new String[] { branchName });
+        final ProjectDescriptor branchDescriptor = TeamworkUtils
+                .getRemoteProjectDescriptorByQualifiedName(branchedProjectName);
+        final ProjectDescriptor source = createProjectDescriptor(branchedProjectName, branchDescriptor, 2);
+
+        // merge project (prefer low memory usage to performance)
+        MergeUtil.merge(targetProject, source, ancestor, MergeUtil.ConflictResolution.TARGET_PREFERRED,
+                new SimpleErrorHandler(), MergeUtil.Optimization.MEMORY);
+    }
+    
+    @Deprecated
+    public static ProjectDescriptor createProjectDescriptor(String projectName, ProjectDescriptor projectDescriptor,
+            int version) {
+        final String remoteID = ProjectDescriptorsFactory.getRemoteID(projectDescriptor.getURI());
+        return ProjectDescriptorsFactory.createRemoteProjectDescriptor(remoteID, projectName, version);
+    }
+
+    private static class SimpleErrorHandler implements ErrorHandler<Exception> {
+        @Override
+        public void error(Exception ex) throws Exception {
+            // just print stack trace
+            ex.printStackTrace();
+        }
+    }
 
 }
