@@ -77,6 +77,8 @@ import org.json.simple.parser.ParseException;
 import javax.jms.*;
 import javax.swing.*;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -523,7 +525,7 @@ public class ExportUtility {
         if (url == null) {
             return null;
         }
-        checkAndResetTicket();
+        checkAndResetTicket(url);
         url = addTicketToUrl(url);
         DeleteMethod gm = new DeleteMethod(url);
         try {
@@ -562,7 +564,7 @@ public class ExportUtility {
         if (url == null) {
             return null;
         }
-        checkAndResetTicket();
+        checkAndResetTicket(url);
         url = addTicketToUrl(url);
         try {
             //GUILog gl = Application.getInstance().getGUILog();
@@ -599,7 +601,7 @@ public class ExportUtility {
         if (url == null) {
             return null;
         }
-        checkAndResetTicket();
+        checkAndResetTicket(url);
         url = addTicketToUrl(url);
         EntityEnclosingMethod pm = null;
         //if (method == null)
@@ -674,7 +676,7 @@ public class ExportUtility {
 
     public static String deleteWithBody(String url, String json, boolean feedback) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-        checkAndResetTicket();
+        checkAndResetTicket(url);
         EntityEnclosingMethod pm = null;
         url = addTicketToUrl(url);
         pm = new DeleteMethodWithEntity(url);
@@ -710,7 +712,7 @@ public class ExportUtility {
     public static String getWithBody(String url, String json) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         EntityEnclosingMethod pm = null;
-        checkAndResetTicket();
+        checkAndResetTicket(url);
         url = addTicketToUrl(url);
         pm = new GetMethodWithEntity(url);
         try {
@@ -791,8 +793,17 @@ public class ExportUtility {
         return get(url, username, password, true);
     }
 
-    public static boolean checkAndResetTicket() {
-        String baseUrl = getUrl(Application.getInstance().getProject());
+    public static boolean checkAndResetTicket(String urlString) {
+        // TODO Fix properly by passing project/site reference with the request so this sort of transformation isn't required
+        URL url;
+        String baseUrl;
+        try {
+            url = new URL(urlString);
+            baseUrl = url.getProtocol() + "://" + url.getHost() + "/alfresco/service";
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return false;
+        }
         try {
             boolean validTicket = checkTicket(baseUrl);
             if (!validTicket) {
@@ -919,7 +930,7 @@ public class ExportUtility {
         if (url == null) {
             return null;
         }
-        checkAndResetTicket();
+        checkAndResetTicket(url);
         url = addTicketToUrl(url);
         GetMethod gm = new GetMethod(url);
         try {
@@ -2262,7 +2273,7 @@ public class ExportUtility {
             url += "/alfresco/service/workspaces/master/sites";
         }
         
-        checkAndResetTicket();
+        checkAndResetTicket(url);
         url = addTicketToUrl(url);
         GetMethod gm = new GetMethod(url);
         try {

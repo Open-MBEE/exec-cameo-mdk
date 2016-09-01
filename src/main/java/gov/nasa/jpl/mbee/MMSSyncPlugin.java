@@ -1,10 +1,13 @@
 package gov.nasa.jpl.mbee;
 
+import com.nomagic.magicdraw.cookies.CloseCookie;
+import com.nomagic.magicdraw.cookies.CookieSet;
 import com.nomagic.magicdraw.core.Application;
 import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueCloseCookie;
 import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusProjectEventListenerAdapter;
 
 /*
@@ -58,6 +61,13 @@ public class MMSSyncPlugin extends MDPlugin {
         Application.getInstance().getProjectsManager().addProjectListener(localSyncProjectEventListenerAdapter = new LocalSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(jmsSyncProjectEventListenerAdapter = new JMSSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(syncStatusProjectEventListenerAdapter = new SyncStatusProjectEventListenerAdapter());
+
+        CookieSet cookieSet = Application.getInstance().getCookieSet();
+        CloseCookie closeCookie = (CloseCookie) cookieSet.getCookie(CloseCookie.class);
+        if (closeCookie != null) {
+            cookieSet.remove(closeCookie);
+        }
+        cookieSet.add(new OutputQueueCloseCookie(closeCookie));
     }
 
     public boolean isSupported() {
