@@ -23,25 +23,7 @@ public class CopyAction extends SRAction {
 
 		EMFImporter imp = new EMFImporter(element);
 		imp.createElementsFromJSON();
-		// final JSONObject json = ExportUtility.fillElement(element, new JSONObject());
-		// System.out.println(json.toJSONString());
-		// final Element owner = element.getOwner();
-		// SessionManager.getInstance().createSession("importing element");
-		// element.refDelete();
-		// Element copy = null;
-		// try {
-		// copy = ImportUtility.createElement(json, false);
-		// copy = ImportUtility.createElement(json, true);
-		// } catch (ImportException ex) {
-		//
-		// }
-		// System.out.println(copy);
-		// owner.getOwnedElement().add(copy);
-		// SessionManager.getInstance().closeSession();
+
 	}
-
-	// public Element clone(final Element element) {
-
-	// }
 
 }

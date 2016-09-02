@@ -65,9 +65,7 @@ public class ImportUtility {
 	public static Logger log = Logger.getLogger(ImportUtility.class);
 	public static boolean outputError = true;
 	public static final Set<String> VALUESPECS = new HashSet<String>(Arrays.asList(new String[] { "LiteralInteger", "LiteralString", "LiteralBoolean", "LiteralUnlimitedNatural", "Expression",
-			"InstanceValue", "ElementValue", "OpaqueExpression", "Interval", "LiteralReal", "Duration", "DurationInterval", "TimeInterval", "TimeExpression", "StringExpression" }
-
-	));
+			"InstanceValue", "ElementValue", "OpaqueExpression", "Interval", "LiteralReal", "Duration", "DurationInterval", "TimeInterval", "TimeExpression", "StringExpression" }));
 
 	public static Map<String, List<JSONObject>> getCreationOrder(List<JSONObject> newElements) {
 		Map<String, List<JSONObject>> returns = new HashMap<String, List<JSONObject>>();

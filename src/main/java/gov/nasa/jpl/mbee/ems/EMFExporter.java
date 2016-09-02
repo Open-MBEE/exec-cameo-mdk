@@ -31,6 +31,7 @@
 package gov.nasa.jpl.mbee.ems;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -50,13 +51,30 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralNull;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -91,7 +109,7 @@ public class EMFExporter {
 	private static ArrayList<String> createdIDs;
 
 	@SuppressWarnings("unchecked")
-	public JSONObject fillElement(Element element) {
+	public JSONObject createElement(Element element) {
 		// showElementMetaModel((NamedElement) element);
 		JSONObject elementInfo = new JSONObject();
 		if (element.eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
@@ -187,26 +205,26 @@ public class EMFExporter {
 						if (val instanceof EList) {
 							if (!((EList<?>) val).isEmpty()) {
 								// if ("ownedAttribute".equals(ref.getName())) {
-								Iterator it = ((EList) val).iterator();
+								Iterator<?> it = ((EList<?>) val).iterator();
 								JSONArray childArray = new JSONArray();
 								JSONArray idArray = new JSONArray();
 
 								while (it.hasNext()) {
 									EObject eo = (EObject) it.next();
 									if (eo instanceof Element) {
-										// if (eo instanceof ValueSpecification) {
-										// if (!createdIDs.contains(((Element) eo).getID())) {
-										// childArray.add(fillElement((Element) eo));
-										// // fillElement((Element) eo);
-										// // array.add(((Element) eo).getID());
-										// }
-										// } else {
-										if (!createdIDs.contains(((Element) eo).getID())) {
-											siblings.add(fillElement((Element) eo));
-											// fillElement((Element) eo);
-											idArray.add(((Element) eo).getID());
+										if (eo instanceof ValueSpecification) {
+											if (!createdIDs.contains(((Element) eo).getID())) {
+												childArray.add(fillValueSpecification((ValueSpecification) eo));
+												// fillElement((Element) eo);
+												// array.add(((Element) eo).getID());
+											}
+										} else {
+											if (!createdIDs.contains(((Element) eo).getID())) {
+												siblings.add(createElement((Element) eo));
+												// fillElement((Element) eo);
+												idArray.add(((Element) eo).getID());
+											}
 										}
-										// }
 									}
 								}
 								if (!idArray.isEmpty()) {
@@ -218,18 +236,18 @@ public class EMFExporter {
 							}
 						} else if (val instanceof EObject) {
 							if (val instanceof Element) {
-								// if (val instanceof ValueSpecification) {
-								// if (!createdIDs.contains(((Element) val).getID())) {
-								// elementInfo.put(ref.getName(), fillElement((Element) val));
-								// // fillElement((Element) eo);
-								// // array.add(((Element) eo).getID());
-								// }
-								// } else {
-								if (!createdIDs.contains(((Element) val).getID())) {
-									siblings.add(fillElement((Element) val));
-									// fillElement((Element) val);
-									elementInfo.put(ref.getName() + "Id", ((Element) val).getID());
-									// }
+								if (val instanceof ValueSpecification) {
+									if (!createdIDs.contains(((Element) val).getID())) {
+										elementInfo.put(ref.getName(), fillValueSpecification((ValueSpecification) val));
+										// fillElement((Element) eo);
+										// array.add(((Element) eo).getID());
+									}
+								} else {
+									if (!createdIDs.contains(((Element) val).getID())) {
+										siblings.add(createElement((Element) val));
+										// fillElement((Element) val);
+										elementInfo.put(ref.getName() + "Id", ((Element) val).getID());
+									}
 								}
 							}
 
@@ -241,6 +259,22 @@ public class EMFExporter {
 		elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
 		fillMetatype(element, elementInfo);
 		return elementInfo;
+	}
+
+	/**
+	 * Debug helper method. Can be discarded anytime.
+	 * 
+	 * @param element
+	 */
+	public void showElementMetaModel(NamedElement element) {
+		for (EAttribute sf : element.eClass().getEAllAttributes()) {
+			System.out.println(element.eGet(nameAtt) + " " + sf.getName() + " " + sf.isDerived() + " " + sf.isChangeable() + " " + sf.isID() + " " + sf.isMany());
+
+		}
+		for (EReference sf : element.eClass().getEAllReferences()) {
+			System.out.println(element.eGet(nameAtt) + " " + sf.getName() + " " + sf.isDerived() + " " + sf.isChangeable() + " " + sf.isContainment() + " " + sf.isContainer() + " " + sf.isMany());
+
+		}
 	}
 
 	public static String getElementID(Element e) {
@@ -344,15 +378,98 @@ public class EMFExporter {
 		return siblings;
 	}
 
-	public void showElementMetaModel(NamedElement element) {
-		for (EAttribute sf : element.eClass().getEAllAttributes()) {
-			System.out.println(element.eGet(nameAtt) + " " + sf.getName() + " " + sf.isDerived() + " " + sf.isChangeable() + " " + sf.isID() + " " + sf.isMany());
-
+	@SuppressWarnings("unchecked")
+	public static JSONObject fillValueSpecification(ValueSpecification vs) {
+		if (vs == null)
+			return null;
+		JSONObject elementInfo = new JSONObject();
+		if (vs instanceof InstanceValue) {
+			elementInfo.put("type", "InstanceValue");
+			InstanceValue iv = (InstanceValue) vs;
+			InstanceSpecification i = iv.getInstance();
+			elementInfo.put("instance", ((i != null) ? i.getID() : null));
+		} else if (vs instanceof LiteralSpecification) {
+			fillLiteralSpecification(vs, elementInfo);
+		} else if (vs instanceof ElementValue) {
+			elementInfo.put("type", "ElementValue");
+			Element elem = ((ElementValue) vs).getElement();
+			elementInfo.put("elementId", ((elem != null) ? getElementID(elem) : null));
+		} else if (vs instanceof Expression) {
+			elementInfo.put("type", "Expression");
+			expressionPutOperand(vs, elementInfo);
+		} else if (vs instanceof OpaqueExpression) {
+			elementInfo.put("type", "OpaqueExpression");
+			List<String> body = ((OpaqueExpression) vs).getBody();
+			elementInfo.put("body", ((body != null) ? makeJsonArray(body) : new JSONArray()));
+			elementInfo.put("language", ((((OpaqueExpression) vs).getLanguage() != null) ? makeJsonArray(((OpaqueExpression) vs).getLanguage()) : new JSONArray()));
+		} else if (vs instanceof StringExpression) {
+			createStringExpression(vs, elementInfo);
+		} else if (vs instanceof TimeExpression) {
+			elementInfo.put("type", "TimeExpression");
+		} else if (vs instanceof Duration) {
+			elementInfo.put("type", "Duration");
+		} else if (vs instanceof DurationInterval) {
+			elementInfo.put("type", "DurationInterval");
+			elementInfo.put("min", null);
+			elementInfo.put("max", null);
+		} else if (vs instanceof TimeInterval) {
+			elementInfo.put("type", "TimeInterval");
+			elementInfo.put("min", null);
+			elementInfo.put("max", null);
 		}
-		for (EReference sf : element.eClass().getEAllReferences()) {
-			System.out.println(element.eGet(nameAtt) + " " + sf.getName() + " " + sf.isDerived() + " " + sf.isChangeable() + " " + sf.isContainment() + " " + sf.isContainer() + " " + sf.isMany());
+		return elementInfo;
+	}
 
+	private static void createStringExpression(ValueSpecification vs, JSONObject elementInfo) {
+		elementInfo.put("type", "StringExpression");
+		expressionPutOperand(vs, elementInfo);
+		for (StringExpression subexp : (((StringExpression) vs).getSubExpression())) {
+			createStringExpression(vs, elementInfo);
 		}
+	}
+
+	private static void expressionPutOperand(ValueSpecification vs, JSONObject elementInfo) {
+		List<ValueSpecification> vsl = ((Expression) vs).getOperand();
+		if (vsl != null && vsl.size() > 0) {
+			JSONArray operand = new JSONArray();
+			for (ValueSpecification vs2 : vsl) {
+				operand.add(fillValueSpecification(vs2));
+			}
+			elementInfo.put("operand", operand);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void fillLiteralSpecification(ValueSpecification vs, JSONObject elementInfo) {
+		if (vs instanceof LiteralBoolean) {
+			elementInfo.put("type", "LiteralBoolean");
+			elementInfo.put("booleanValue", ((LiteralBoolean) vs).isValue());
+		} else if (vs instanceof LiteralInteger) {
+			elementInfo.put("type", "LiteralInteger");
+			elementInfo.put("value", new Long(((LiteralInteger) vs).getValue()));
+		} else if (vs instanceof LiteralNull) {
+			elementInfo.put("type", "LiteralNull");
+		} else if (vs instanceof LiteralReal) {
+			elementInfo.put("type", "LiteralReal");
+			double real = ((LiteralReal) vs).getValue();
+			elementInfo.put("value", real);
+		} else if (vs instanceof LiteralString) {
+			elementInfo.put("type", "LiteralString");
+			elementInfo.put("value", Utils.stripHtmlWrapper(((LiteralString) vs).getValue()));
+		} else if (vs instanceof LiteralUnlimitedNatural) {
+			elementInfo.put("type", "LiteralUnlimitedNatural");
+			elementInfo.put("value", new Long(((LiteralUnlimitedNatural) vs).getValue()));
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected static <T> JSONArray makeJsonArray(Collection<T> collection) {
+		JSONArray arr = new JSONArray();
+		for (T t : collection) {
+			if (t != null)
+				arr.add(t);
+		}
+		return arr;
 	}
 
 }

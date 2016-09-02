@@ -142,7 +142,7 @@ public class ModelExporter {
 		JSONArray elementss = new JSONArray();
 		for (Element e : starts) {
 			EMFExporter emfexp = new EMFExporter(e);
-			JSONObject emfElement = emfexp.fillElement(e);
+			JSONObject emfElement = emfexp.createElement(e);
 			emfelements.put(e.getID(), emfElement);
 			elementss.addAll(emfexp.getSiblings());
 		}
