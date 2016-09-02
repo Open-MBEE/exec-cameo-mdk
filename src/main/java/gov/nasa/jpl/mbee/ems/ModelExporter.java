@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
+import gov.nasa.jpl.mbee.lib.Utils;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,6 +37,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.ci.persistence.IProject;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -42,8 +45,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
-import gov.nasa.jpl.mbee.lib.Utils;
 
 public class ModelExporter {
 
@@ -122,7 +123,7 @@ public class ModelExporter {
 		elements.put(e.getID(), elementInfo);
 
 		if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e))
-			elementInfo.put("owner", parentPrj.getProjectID());
+			elementInfo.put("ownerId", parentPrj.getProjectID());
 
 		// if (e instanceof Property || e instanceof Slot)
 		// elements.putAll(ExportUtility.getReferencedElements(e));
@@ -143,6 +144,8 @@ public class ModelExporter {
 		for (Element e : starts) {
 			EMFExporter emfexp = new EMFExporter(e);
 			JSONObject emfElement = emfexp.fillElement(e);
+			if (e.getOwner() == Application.getInstance().getProject().getModel())
+				emfElement.put("ownerId", parentPrj.getProjectID());
 			emfelements.put(e.getID(), emfElement);
 			elementss.addAll(emfexp.getSiblings());
 		}
