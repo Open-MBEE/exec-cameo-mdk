@@ -230,6 +230,12 @@ public class MDKValidationWindow {
             s = "[" + s + "]";
         return s;
     }
+    
+    private String getIdFromVRVComment(ValidationRuleViolation vrv) {
+        String id = vrv.getComment();
+        id = id.substring(id.indexOf('`') + 1, id.lastIndexOf('`'));
+        return id;
+    }
 
     /************************************************************************
      * 
@@ -244,9 +250,23 @@ public class MDKValidationWindow {
      *            the type of violation to be accepted
      * @param commit
      *            will commit to MMS if true, will accept from MMS is false
-     * @throws Exception
+     * @param targets
+     *            limits processing of violations to only those elements that are
+     *            contained in the collection. if null, does not limit processing.
+     *            ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
+     *            exception will be thrown if specified with targetIDs.
+     * @param targetIDs
+     *            limits processing of violations to only those elements whose IDs are
+     *            contained in the collection. if null, does not limit processing.
+     *            ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
+     *            exception will be thrown if specified with targets.
+     * @throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
      */
-    private Collection<Element> processValidationResults(String violationType, Collection<Element> targets, boolean commit) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private void processValidationResults(String violationType, Collection<Element> targets, Collection<String> targetIDs, boolean commit) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        if (targets != null && targetIDs != null) {
+            throw new IllegalAccessException("Both element target lists specified.");
+        }
+        
         violationType = standardize(violationType);
         MagicDrawHelper.generalMessage((commit ? "Commit" : "Accept") + "ing " + (targets != null ? "selected " : "") + "instances of " + violationType + " violations.");
 
@@ -256,21 +276,20 @@ public class MDKValidationWindow {
         // if nothing to do, say so and return
         if (pooledViolations.get(ruleIndex).isEmpty()) {
             MagicDrawHelper.generalMessage("[INFO] There are no instances of " + violationType + " to " + (commit ? "commit" : "accept") + ".");
-            return targets;
+            return;
         } else if (className.equals("")) {
             MagicDrawHelper.generalMessage("[INFO] There is no " + (commit ? "commit" : "accept") + " action for instances of " + violationType + " to process.");
-            return targets;
+            return;
         }
 
         // get the appropriate violation list
-        listPooledViolations(violationType);
         List<ValidationRuleViolation> violationList = pooledViolations.get(ruleIndex);
 
         // there are not accept initialization actions, not any commit actions except for one with a specific message
         // if it's not an actionable initialization violation, there is nothing to do so return
         if (violationType.equals("INITIALIZATION")) {
             if (!commit || !violationList.get(0).getComment().equals("The project doesn't exist on the web.")) {
-                return targets;
+                return;
             }
         }
 
@@ -295,7 +314,7 @@ public class MDKValidationWindow {
 
             // type cast the action class appropriately, and then pass it a dummy action event to trigger
             for (ValidationRuleViolation vrv : violationList) {
-                if (targets == null || targets.remove(vrv.getElement())) {
+                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null) || targetIDs.remove(getIdFromVRVComment(vrv))) {
                     if (commit) {
                         vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
                     } else {
@@ -316,9 +335,10 @@ public class MDKValidationWindow {
             // get annotations from the nmaction objects by invoking the getAnnotation method on them
             Collection<Annotation> annos = new LinkedList<Annotation>();
             for (ValidationRuleViolation vrv : violationList) {
-                if (targets == null || targets.remove(vrv.getElement())) {
+                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null) || targetIDs.remove(getIdFromVRVComment(vrv))) {
                     Annotation anno = (Annotation) getAnnotation.invoke(vrv.getActions().get(actionIndex));
                     annos.add(anno);
+                    System.out.println("  " + (commit ? "Committed " : "Accepted ") + (vrv.getElement() != null ? vrv.getElement().getHumanName() : "null") + " : " + vrv.getComment());
                 }
             }
 
@@ -326,8 +346,6 @@ public class MDKValidationWindow {
             Utils.forceDialogReturnFalse();
             execute.invoke(violationList.get(0).getActions().get(actionIndex), annos);
         }
-
-        return targets;
     }
 
     /**************************************************************************
@@ -341,13 +359,13 @@ public class MDKValidationWindow {
      * 
      * @param targets
      *            Collection of elements whose validations should be processed; if null all will be processed
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     private Collection<Element> processAllMDChangesToMMS(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        processValidationResults(VALIDATION_OPTIONS[0 + PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, true);
+        processValidationResults(VALIDATION_OPTIONS[0 + PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, null, true);
         for (int i = 1 + PRE_OPERATIONS; i < VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS; i++)
-            processValidationResults(VALIDATION_OPTIONS[i][RULE_VIOLATION_TYPE], targets, true);
-        processValidationResults(VALIDATION_OPTIONS[VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS][RULE_VIOLATION_TYPE], targets, true);
+            processValidationResults(VALIDATION_OPTIONS[i][RULE_VIOLATION_TYPE], targets, null, true);
+        processValidationResults(VALIDATION_OPTIONS[VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS][RULE_VIOLATION_TYPE], targets, null, true);
         return targets;
     }
 
@@ -356,13 +374,13 @@ public class MDKValidationWindow {
      * 
      * @param targets
      *            Collection of elements whose validations should be processed; if null all will be processed
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     private Collection<Element> processAllMMSChangesIntoMD(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        processValidationResults(VALIDATION_OPTIONS[VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS][RULE_VIOLATION_TYPE], targets, false);
+        processValidationResults(VALIDATION_OPTIONS[VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS][RULE_VIOLATION_TYPE], targets, null, false);
         for (int i = 1 + PRE_OPERATIONS; i < VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS; i++)
-            processValidationResults(VALIDATION_OPTIONS[i][RULE_VIOLATION_TYPE], targets, false);
-        processValidationResults(VALIDATION_OPTIONS[PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, false);
+            processValidationResults(VALIDATION_OPTIONS[i][RULE_VIOLATION_TYPE], targets, null, false);
+        processValidationResults(VALIDATION_OPTIONS[PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, null, false);
         return targets;
     }
 
@@ -375,7 +393,7 @@ public class MDKValidationWindow {
     /**
      * Accepts the MMS version into MD for all violation types
      *
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void acceptAllMMSChangesIntoMD() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         processAllMMSChangesIntoMD(null);
@@ -386,22 +404,25 @@ public class MDKValidationWindow {
      * 
      * @param violationType
      *            the type of violation to be accepted
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void acceptMMSChangesIntoMD(String violationType) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        processValidationResults(violationType, null, false);
+        processValidationResults(violationType, null, null, false);
     }
 
     /**
-     * Commits the MD version to MMS for the all violation types, if the associated element is in the targets collection
+     * Accepts the MMS version into MD for the all violation types, if the associated element is in the collection targets
      * 
      * @param targets
      *            the collection of elements whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public Collection<Element> acceptSpecificMMSChangesIntoMD(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        return processAllMMSChangesIntoMD(targets);
+        Collection<Element> notFound = new ArrayList<Element>();
+        notFound.addAll(targets);
+        processAllMMSChangesIntoMD(notFound);
+        return notFound;
     }
 
     /**
@@ -412,16 +433,36 @@ public class MDKValidationWindow {
      * @param targets
      *            the collection of elements whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public Collection<Element> acceptSpecificTypeMDChangesToMMS(String violationType, Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        return processValidationResults(violationType, targets, false);
+        Collection<Element> notFound = new ArrayList<Element>();
+        notFound.addAll(targets);
+        processValidationResults(violationType, notFound, null, false);
+        return notFound;
+    }
+
+    /**
+     * Accepts the MMS version into MD for the specified violation type, if the associated element id is in the targetIDs collection
+     * 
+     * @param violationType
+     *            the type of violation to be accepted
+     * @param targets
+     *            the collection of element IDs whose validations are to be processed
+     * @return returns elements in the target collection that could not be processed / that did not have violations
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
+     */
+    public Collection<String> acceptSpecificTypeMDChangesToMMSByID(String violationType, Collection<String> targetIDs) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Collection<String> notFound = new ArrayList<String>();
+        notFound.addAll(targetIDs);
+        processValidationResults(violationType, null, notFound, false);
+        return notFound;
     }
 
     /**
      * Commits the MD version to MMS for all violation types
      * 
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void commitAllMDChangesToMMS() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         processAllMDChangesToMMS(null);
@@ -432,10 +473,10 @@ public class MDKValidationWindow {
      * 
      * @param violationType
      *            the type of violation to be accepted
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void commitMDChangesToMMS(String violationType) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        processValidationResults(violationType, null, true);
+        processValidationResults(violationType, null, null, true);
     }
 
     /**
@@ -444,10 +485,13 @@ public class MDKValidationWindow {
      * @param targets
      *            the collection of elements whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public Collection<Element> commitSpecificMDChangesToMMS(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        return processAllMDChangesToMMS(targets);
+        Collection<Element> notFound = new ArrayList<Element>();
+        notFound.addAll(targets);
+        processAllMDChangesToMMS(notFound);
+        return notFound;
     }
 
     /**
@@ -458,50 +502,97 @@ public class MDKValidationWindow {
      * @param targets
      *            the collection of elements whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public Collection<Element> commitSpecificTypeMDChangesToMMS(String violationType, Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        return processValidationResults(violationType, targets, true);
+        Collection<Element> notFound = new ArrayList<Element>();
+        notFound.addAll(targets);
+        processValidationResults(violationType, notFound, null, true);
+        return notFound;
+    }
+
+    /**
+     * Commits the MD version to MMS for the specified violation type, if the associated element id is in the targetIDs collection
+     * 
+     * @param violationType
+     *            the type of violation to be accepted
+     * @param targets
+     *            the collection of element IDs whose validations are to be processed
+     * @return returns elements in the target collection that could not be processed / that did not have violations
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
+     */
+    public Collection<String> commitSpecificTypeMDChangesToMMSByID(String violationType, Collection<String> targetIDs) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Collection<String> notFound = new ArrayList<String>();
+        notFound.addAll(targetIDs);
+        processValidationResults(violationType, null, notFound, true);
+        return notFound;
     }
 
     /**
      * Creates elements in MagicDraw for any missing MMS elements (accepts their existence from MMS)
      * Equivalent to [EXIST on MMS] -> Create MagicDraw element
      * 
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void createAllMMSElementsNotFoundInMD() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        processValidationResults("[EXIST on MMS]", null, false);
+        processValidationResults("[EXIST on MMS]", null, null, false);
     }
 
+    /**
+     * Creates elements in MagicDraw for missing MMS elements whose ids are in the targetIDs collection (accepts their existence from MMS)
+     * Equivalent to [EXIST on MMS] -> Create MagicDraw element
+     * 
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
+     */
+    public Collection<String> createSpecificMMSElementsNotFoundInMD(Collection<String> targetIDs) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Collection<String> notFound = new ArrayList<String>();
+        notFound.addAll(targetIDs);
+        processValidationResults("[EXIST on MMS]", null, notFound, false);
+        return notFound;
+    }
+
+    
     /**
      * Deletes all elements from MD that were not found in MMS (accepts their non-existence from MMS)
      * Equivalent to [EXIST] -> Delete MagicDraw element 
      * 
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void deleteAllMDElementsNotFoundOnMMS() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        processValidationResults("[EXIST]", null, false);
+        processValidationResults("[EXIST]", null, null, false);
     }
 
     /**
      * Deletes all MMS elements that were not found in MD (commits their non-existence to MMS)
      * Equivalent to [EXIST on MMS] -> Delete MMS element
      * 
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void deleteAllMMSElementsNotFoundInMD() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        processValidationResults("[EXIST on MMS]", null, true);
+        processValidationResults("[EXIST on MMS]", null, null, true);
+    }
+
+    /**
+     * Deletes MMS elements that were not found in MD whose ids are in the targetIDs collection (commits their non-existence to MMS)
+     * Equivalent to [EXIST on MMS] -> Delete MMS element
+     * 
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
+     */
+    public Collection<String> deleteSpecificMMSElementsNotFoundInMD(Collection<String> targetIDs) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Collection<String> notFound = new ArrayList<String>();
+        notFound.addAll(targetIDs);
+        processValidationResults("[EXIST on MMS]", null, notFound, true);
+        return notFound;
     }
 
     /**
      * Exports all MD elements that were not found in MMS (commits their existence to MMS)
      * Equivalent to [EXIST] -> Commit element
      * 
-     * @throws Exception
+     * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void exportAllMDElementsToMMS() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        processValidationResults("[EXIST]", null, true);
+        processValidationResults("[EXIST]", null, null, true);
     }
 
     /********************************************************************************
@@ -513,38 +604,39 @@ public class MDKValidationWindow {
     /**
      * Searches through the indicated list of pooled violations for elements in the passed collection
      * 
-     * @param targets
-     *            Elements to confirm the presence of in the validaitons
      * @param validationType
      *            Type of validation to search through
+     * @param targets
+     *            Elements to confirm the presence of in the validations
      * @return Returns The subset of the elements that were not found in the specified validation type pool
      */
-    public Collection<Element> confirmElementValidationTypeResult(Collection<Element> targets, String validationType) {
+    public Collection<Element> confirmElementValidationTypeResult(String validationType, Collection<Element> targets) {
         Collection<Element> notFound = new ArrayList<Element>();
         notFound.addAll(targets);
         validationType = standardize(validationType);
         int index = lookupListIndex(validationType);
         for (ValidationRuleViolation vrv : pooledViolations.get(index)) {
             if (notFound.remove(vrv.getElement())) {
-                if (notFound.isEmpty())
+                if (notFound.isEmpty()) {
                     return notFound;
+                }
             }
         }
         return notFound;
     }
 
     /**
-     * Searches through the all pooled violations for elements in the passed collection
+     * Searches through all pooled violations for elements in the passed collection
      * 
      * @param targets
-     *            Elements to confirm the presence of in the validaitons
-     * @return Returns The subset of the elements that were not found in the pools
+     *            Elements to confirm the presence of in the validations
+     * @return Returns the subset of the elements that were not found in any pool
      */
     public Collection<Element> confirmElementValidationResult(Collection<Element> targets) {
         Collection<Element> notFound = new ArrayList<Element>();
         notFound.addAll(targets);
         for (String[] sar : VALIDATION_OPTIONS) {
-            notFound = confirmElementValidationTypeResult(notFound, sar[RULE_VIOLATION_TYPE]);
+            notFound = confirmElementValidationTypeResult(sar[RULE_VIOLATION_TYPE], notFound);
             if (notFound.isEmpty()) {
                 return notFound;
             }
@@ -553,32 +645,48 @@ public class MDKValidationWindow {
     }
 
     /**
-     * Searches through the indicated list of pooled violations for the passed element
+     * Searches through the indicated list of pooled violations for the passed element IDs
      * 
-     * @param target
-     *            Element to confirm the presence of in the validaitons
-     * @return Returns true if the element was found in any validation pool, false otherwise
+     * @param validationType
+     *            Type of validation to search through
+     * @param targetIDs
+     *            Collection of strings to confirm the presence of in the validations
+     * @return Returns the subset of the element IDss that were not found in the indicated pool
      */
-    public boolean confirmElementValidationResult(Element target) {
-        Collection<Element> notFound = new ArrayList<Element>();
-        notFound.add(target);
-        return confirmElementValidationResult(notFound).isEmpty();
+    public Collection<String> confirmElementValidationTypeResultByID(String validationType, Collection<String> targetIDs) {
+        Collection<String> notFound = new ArrayList<String>();
+        notFound.addAll(targetIDs);
+        validationType = standardize(validationType);
+        int index = lookupListIndex(validationType);
+        for (ValidationRuleViolation vrv : pooledViolations.get(index)) {
+            if (notFound.remove(getIdFromVRVComment(vrv))) {
+                if (notFound.isEmpty()) {
+                    return notFound;
+                }
+            }
+        }
+        return notFound;
     }
 
     /**
-     * Searches through the indicated list of pooled violations for the passed element
+     * Searches through all pooled violations for element IDs in the passed collection
      * 
-     * @param target
-     *            Element to confirm the presence of in the validaitons
-     * @param validationType
-     *            Type of validation to search through
-     * @return Returns true if the element was found in any validation pool, false otherwise
+     * @param targetIDs
+     *            Collection of strings to confirm the presence of in the validations
+     * @return Returns the subset of the element IDs that were not found in any pool
      */
-    public boolean confirmElementValidationTypeResult(Element target, String validationType) {
-        Collection<Element> notFound = new ArrayList<Element>();
-        notFound.add(target);
-        return confirmElementValidationTypeResult(notFound, validationType).isEmpty();
+    public Collection<String> confirmElementValidationResultByID(Collection<String> targetIDs) {
+        Collection<String> notFound = new ArrayList<String>();
+        notFound.addAll(targetIDs);
+        for (String[] sar : VALIDATION_OPTIONS) {
+            notFound = confirmElementValidationTypeResultByID(sar[RULE_VIOLATION_TYPE], notFound);
+            if (notFound.isEmpty()) {
+                return notFound;
+            }
+        }
+        return notFound;
     }
+
 
     /********************************************************************************
      * 
