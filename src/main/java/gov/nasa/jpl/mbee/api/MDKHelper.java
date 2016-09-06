@@ -72,11 +72,29 @@ public class MDKHelper {
 
 	private static MDKValidationWindow validationWindow;
 
-	public static MDKValidationWindow getValidationWindow() {
+	public static MDKValidationWindow getManualValidationWindow() {
 		return validationWindow;
 	}
 
-	public static void updateValidationWindow(List<ValidationSuite> vss) {
+    /**
+     * Updates the MDKValidationWindow object with the latest delta sync results, or sets window to null if there are no results.
+     */
+    public static MDKValidationWindow getCoordinatedSyncValidationWindow() {
+        CoordinatedSyncProjectEventListenerAdapter cspela = MMSSyncPlugin.getInstance().getCoordinatedSyncProjectEventListenerAdapter();
+        if (cspela == null)
+            return null;
+        DeltaSyncRunner dsr = cspela.getDeltaSyncRunner();
+        if (dsr == null)
+            return null;
+        List<ValidationSuite> vss = dsr.getValidations();
+        if (vss.isEmpty())
+            return null;
+        validationWindow = new MDKValidationWindow(vss);
+        return validationWindow;
+    }
+    
+
+    public static void updateManualValidationWindow(List<ValidationSuite> vss) {
 		validationWindow = new MDKValidationWindow(vss);
 	}
 
@@ -385,23 +403,6 @@ public class MDKHelper {
         if (lstcl == null)
             throw new IllegalStateException("LocalSyncTransactionCommitListener is null");
         lstcl.setDisabled(enable);
-    }
-    
-    /**
-     * Updates the MDKValidationWindow object with the latest delta sync results, or sets window to null if there are no results.
-     */
-    public static MDKValidationWindow getCoordinatedSyncValidationWindow() {
-        CoordinatedSyncProjectEventListenerAdapter cspela = MMSSyncPlugin.getInstance().getCoordinatedSyncProjectEventListenerAdapter();
-        if (cspela == null)
-            validationWindow = null;
-        DeltaSyncRunner dsr = cspela.getDeltaSyncRunner();
-        if (dsr == null)
-            validationWindow = null;
-        List<ValidationSuite> vss = dsr.getValidations();
-        if (vss.isEmpty())
-            validationWindow = null;
-        validationWindow = new MDKValidationWindow(vss);
-        return validationWindow;
     }
     
 	/**
