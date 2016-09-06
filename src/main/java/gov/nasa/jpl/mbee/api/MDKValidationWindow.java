@@ -314,7 +314,7 @@ public class MDKValidationWindow {
 
             // type cast the action class appropriately, and then pass it a dummy action event to trigger
             for (ValidationRuleViolation vrv : violationList) {
-                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null) || targetIDs.remove(getIdFromVRVComment(vrv))) {
+                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getIdFromVRVComment(vrv)))) {
                     if (commit) {
                         vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
                     } else {
@@ -335,7 +335,7 @@ public class MDKValidationWindow {
             // get annotations from the nmaction objects by invoking the getAnnotation method on them
             Collection<Annotation> annos = new LinkedList<Annotation>();
             for (ValidationRuleViolation vrv : violationList) {
-                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null) || targetIDs.remove(getIdFromVRVComment(vrv))) {
+                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getIdFromVRVComment(vrv)))) {
                     Annotation anno = (Annotation) getAnnotation.invoke(vrv.getActions().get(actionIndex));
                     annos.add(anno);
                     System.out.println("  " + (commit ? "Committed " : "Accepted ") + (vrv.getElement() != null ? vrv.getElement().getHumanName() : "null") + " : " + vrv.getComment());
