@@ -35,6 +35,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.ci.persistence.IProject;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -122,7 +123,7 @@ public class ModelExporter {
 		elements.put(e.getID(), elementInfo);
 
 		if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e))
-			elementInfo.put("owner", parentPrj.getProjectID());
+			elementInfo.put("ownerId", parentPrj.getProjectID());
 
 		// if (e instanceof Property || e instanceof Slot)
 		// elements.putAll(ExportUtility.getReferencedElements(e));
@@ -142,7 +143,10 @@ public class ModelExporter {
 		JSONArray elementss = new JSONArray();
 		for (Element e : starts) {
 			EMFExporter emfexp = new EMFExporter(e);
+			// JSONObject emfElement = emfexp.createElement(e);
 			JSONObject emfElement = emfexp.createElement(e);
+			if (e.getOwner() == Application.getInstance().getProject().getModel())
+				emfElement.put("ownerId", parentPrj.getProjectID());
 			emfelements.put(e.getID(), emfElement);
 			elementss.addAll(emfexp.getSiblings());
 		}

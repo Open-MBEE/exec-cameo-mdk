@@ -30,6 +30,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
+import gov.nasa.jpl.mbee.lib.Utils;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -79,8 +81,6 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
-
-import gov.nasa.jpl.mbee.lib.Utils;
 
 public class EMFExporter {
 	private JSONArray siblings;
@@ -163,7 +163,7 @@ public class EMFExporter {
 			references.removeAll(conts);
 
 			for (EReference ref : references) {
-				if (!ref.isDerived()) {
+				if (!ref.isDerived() || ref.getName().equals("source") || ref.getName().equals("target")) {
 					// if (!ref.getName().contains("_")) {
 					Object val = element.eGet(ref);
 					if (val != null) {
@@ -180,7 +180,12 @@ public class EMFExporter {
 									}
 							}
 							if (!array.isEmpty()) {
-								elementInfo.put(ref.getName() + "Ids", array);
+								if (ref.getName().equals("source"))
+									elementInfo.put("sourceId", array.get(0));
+								else if (ref.getName().equals("target"))
+									elementInfo.put("targetId", array.get(0));
+								else
+									elementInfo.put(ref.getName() + "Ids", array);
 							}
 						} else if (val instanceof EObject) {
 							if (((EObject) val).eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
@@ -215,12 +220,13 @@ public class EMFExporter {
 										if (eo instanceof ValueSpecification) {
 											if (!createdIDs.contains(((Element) eo).getID())) {
 												childArray.add(fillValueSpecification((ValueSpecification) eo));
+
 												// fillElement((Element) eo);
 												// array.add(((Element) eo).getID());
 											}
 										} else {
-											if (!createdIDs.contains(((Element) eo).getID())) {
-												siblings.add(createElement((Element) eo));
+											if (!createdIDs.contains(((Element) eo).getID())) {												siblings.add(createElement((Element) eo));
+
 												// fillElement((Element) eo);
 												idArray.add(((Element) eo).getID());
 											}
@@ -325,8 +331,8 @@ public class EMFExporter {
 			i++;
 		}
 		Association type = e.getType();
-		elementInfo.put("connectorTypeId", (type == null) ? null : type.getID());
-		elementInfo.put("connectorKind", (e.getKind() == null) ? null : e.getKind().toString());
+		elementInfo.put("typeId", (type == null) ? null : type.getID());
+		elementInfo.put("kind", (e.getKind() == null) ? null : e.getKind().toString());
 		return elementInfo;
 	}
 
@@ -366,11 +372,11 @@ public class EMFExporter {
 		for (Stereotype s : stereotypes) {
 			applied.add(s.getID());
 		}
-		Class baseClass = StereotypesHelper.getBaseClass(e);
-		if (baseClass != null)
-			applied.add(baseClass.getID());
+		// Class baseClass = StereotypesHelper.getBaseClass(e);
+		// if (baseClass != null)
+		// applied.add(baseClass.getID());
 
-		info.put("appliedMetatypesId", applied);
+		info.put("appliedStereotypeIds", applied);
 		return info;
 	}
 

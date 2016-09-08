@@ -212,17 +212,12 @@ public class EMFImporter {
 												System.out.println("Its a " + specificationType.getName());
 
 												// for (Object property2 : ((JSONObject) vs).keySet()) {
-												// EStructuralFeature sf1 = eclass.getEStructuralFeature(property2.toString());
-												//
-												// }
-												//
+												// EStructuralFeature sf1 = eclass.getEStructuralFeature(property2.toString());}
 												// switch (specificationType.getName()) {
 												// case "LiteralString":
-												//
 												// break;
 												// case "Expression":
 												// System.out.println("");
-												//
 												// break;
 												// default:
 												// break;
@@ -231,10 +226,7 @@ public class EMFImporter {
 											// TODO Handle special impl. and check might fail, is the type no == valuespec
 											// if (((EReference) sf).getEReferenceType() == literalSpec) {
 											// EClassifier literalType = UMLPackage.eINSTANCE.getEClassifier(((EReference) sf).getEReferenceType().getName());
-											//
-											//
 											// }
-											// System.out.println("tes");
 										} else {
 											EObject referencedObject = createdElements.get(editedJSONObject.get(property));
 											if (referencedObject == null) {
@@ -311,9 +303,7 @@ public class EMFImporter {
 				if (!((Dependency) createdElement).hasClient() | !((Dependency) createdElement).hasSupplier()) {
 					System.out.println("Deleting dep: " + ((MDObject) createdElement).getID());
 					((Dependency) createdElement).dispose();
-
 				}
-
 			} else if (createdElement instanceof Association) {
 				if (!((Association) createdElement).hasMemberEnd()) {
 					System.out.println("Deleting association: " + ((MDObject) createdElement).getID());
