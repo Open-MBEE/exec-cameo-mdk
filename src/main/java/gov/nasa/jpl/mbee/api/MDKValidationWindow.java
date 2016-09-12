@@ -231,10 +231,16 @@ public class MDKValidationWindow {
         return s;
     }
     
-    private String getIdFromVRVComment(ValidationRuleViolation vrv) {
+    private String getVRVSysML(ValidationRuleViolation vrv) {
         String id = vrv.getComment();
-        id = id.substring(id.indexOf('`') + 1, id.lastIndexOf('`'));
-        return id;
+        Element vrve = vrv.getElement();
+        if (id.indexOf('`') > 0){
+            id = id.substring(id.indexOf('`') + 1, id.lastIndexOf('`'));
+            return id;
+        } else if (vrve != null) {
+            return vrve.getID();
+        }
+        return "";
     }
 
     /************************************************************************
@@ -314,7 +320,7 @@ public class MDKValidationWindow {
 
             // type cast the action class appropriately, and then pass it a dummy action event to trigger
             for (ValidationRuleViolation vrv : violationList) {
-                if ((targets == null || targets.remove(vrv.getElement()) ) && ( targetIDs == null || targetIDs.remove(getIdFromVRVComment(vrv)))) {
+                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getVRVSysML(vrv)))) {
                     if (commit) {
                         vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
                     } else {
@@ -335,7 +341,7 @@ public class MDKValidationWindow {
             // get annotations from the nmaction objects by invoking the getAnnotation method on them
             Collection<Annotation> annos = new LinkedList<Annotation>();
             for (ValidationRuleViolation vrv : violationList) {
-                if ((targets == null || targets.remove(vrv.getElement()) ) && ( targetIDs == null || targetIDs.remove(getIdFromVRVComment(vrv)))) {
+                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getVRVSysML(vrv)))) {
                     Annotation anno = (Annotation) getAnnotation.invoke(vrv.getActions().get(actionIndex));
                     annos.add(anno);
                     System.out.println("  " + (commit ? "Committed " : "Accepted ") + (vrv.getElement() != null ? vrv.getElement().getHumanName() : "null") + " : " + vrv.getComment());
@@ -659,7 +665,7 @@ public class MDKValidationWindow {
         validationType = standardize(validationType);
         int index = lookupListIndex(validationType);
         for (ValidationRuleViolation vrv : pooledViolations.get(index)) {
-            if (notFound.remove(getIdFromVRVComment(vrv))) {
+            if (notFound.remove(getVRVSysML(vrv))) {
                 if (notFound.isEmpty()) {
                     return notFound;
                 }

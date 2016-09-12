@@ -33,6 +33,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -48,7 +51,11 @@ import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralNull;
@@ -57,6 +64,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
@@ -66,12 +74,19 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKind;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKindEnum;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import com.nomagic.utils.ErrorHandler;
 
+import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ReferenceException;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 /**
@@ -111,6 +126,7 @@ public class MagicDrawHelper {
             throw new IllegalStateException("Unable to create session: a session is already open.");
         }
         SessionManager.getInstance().createSession("Programmatic changes");
+        initializeFactory();
     }
     
     /**
@@ -388,15 +404,29 @@ public class MagicDrawHelper {
      * 
      *****************************************************************************************/
     
+    public static Class createBlock(String name, Element owner) {
+        Class newBlock = createClass(name, owner);
+        Element stereo = ElementFinder.getElementByID("_11_5EAPbeta_be00301_1147424179914_458922_958");
+        if (!(stereo instanceof Stereotype))
+            return null;
+        Stereotype block = (Stereotype) stereo;
+        StereotypesHelper.addStereotype(newBlock, block);
+        return newBlock;
+    }
+    
+    public static Class createClass(String name, Element owner) {
+        Class newClass = ef.createClassInstance();
+        finishElement(newClass, name, owner);
+        return newClass;
+    }
+    
     public static Component createComponent(String name, Element owner) {
-        initializeFactory();
         Component comp = ef.createComponentInstance();
         finishElement(comp, name, owner);
         return comp;
     }
     
     public static Association createDirectedComposition(Element document, Element view) {
-        initializeFactory();
         Association assoc = ef.createAssociationInstance();
         finishElement(assoc, null, document.getOwner());
         Property source = createProperty(((NamedElement)view).getName(), document, null, view, "composite", "1", "1");
@@ -409,7 +439,6 @@ public class MagicDrawHelper {
     }
     
     public static Dependency createDependency(String name, Element owner, Element source, Element target) {
-        initializeFactory();
         Dependency depd = ef.createDependencyInstance();
         setRelationshipEnds(depd, source, target);
         finishElement(depd, null, owner);
@@ -417,16 +446,16 @@ public class MagicDrawHelper {
     }
     
     public static Class createDocument(String name, Element owner) {
-        initializeFactory();
-        Class newDocument = ef.createClassInstance();
-        Stereotype sysmlDocument = Utils.getDocumentStereotype();
-        ImportUtility.setOrCreateAsi(sysmlDocument, newDocument);
-        finishElement(newDocument, name, owner);
+        Class newDocument = createClass(name, owner);
+        Element stereo = ElementFinder.getElementByID("_17_0_2_3_87b0275_1371477871400_792964_43374");
+        if (!(stereo instanceof Stereotype))
+            return null;
+        Stereotype sysmlDocument = (Stereotype) stereo;
+        StereotypesHelper.addStereotype(newDocument, sysmlDocument);
         return newDocument;
     }
 
     public static Generalization createGeneralization(String name, Element owner, Element source, Element target) {
-        initializeFactory();
         Generalization genr = ef.createGeneralizationInstance();
         setRelationshipEnds(genr, source, target);
         finishElement(genr, null, owner);
@@ -434,17 +463,26 @@ public class MagicDrawHelper {
     }
     
     public static Package createPackage(String name, Element owner) {
-        initializeFactory();
         Package newPackage = ef.createPackageInstance();
         finishElement(newPackage, name, owner);
         return newPackage;
     }
+    
+    public static Property createPartProperty(String name, Element owner) {
+        Property newProp = createProperty(name, owner, null, null, null, null, null);
+        Element stereo = ElementFinder.getElementByID("_15_0_be00301_1199377756297_348405_2678");
+        if (!(stereo instanceof Stereotype))
+            return null;
+        Stereotype partProp = (Stereotype) stereo;
+        StereotypesHelper.addStereotype(newProp, partProp);
+        return newProp;
+    }
 
     public static Property createProperty(String name, Element owner, ValueSpecification defaultValue, 
             Element typeElement, String aggregation, String multMin, String multMax) {
-        initializeFactory();
         Property prop = ef.createPropertyInstance();
         
+        prop.setVisibility(VisibilityKindEnum.PUBLIC);
         prop.setDefaultValue(defaultValue);
         
         if (typeElement != null)
@@ -457,33 +495,35 @@ public class MagicDrawHelper {
             try{
                 Long spmin = new Long(multMin);
                 ValueSpecification pmin = prop.getLowerValue();
-                if (pmin == null)
+                if (pmin == null) {
                     pmin = ef.createLiteralIntegerInstance();
-                if (pmin instanceof LiteralInteger)
+                } else if (pmin instanceof LiteralInteger) {
                     ((LiteralInteger)pmin).setValue(spmin.intValue());
-                if (pmin instanceof LiteralUnlimitedNatural)
+                } else if (pmin instanceof LiteralUnlimitedNatural) {
                     ((LiteralUnlimitedNatural)pmin).setValue(spmin.intValue());
+                }
                 prop.setLowerValue(pmin);
             }
-            catch (NumberFormatException en){}
+            catch (NumberFormatException ignored) {}
         }
         
         if (multMax != null) {
             try{
                 Long spmax = new Long(multMax);
-                ValueSpecification pmin = prop.getLowerValue();
-                if (pmin == null)
-                    pmin = ef.createLiteralIntegerInstance();
-                if (pmin instanceof LiteralInteger)
-                    ((LiteralInteger)pmin).setValue(spmax.intValue());
-                if (pmin instanceof LiteralUnlimitedNatural)
-                    ((LiteralUnlimitedNatural)pmin).setValue(spmax.intValue());
-                prop.setLowerValue(pmin);
+                ValueSpecification pmax = prop.getLowerValue();
+                if (pmax == null) {
+                    pmax = ef.createLiteralIntegerInstance();
+                } else if (pmax instanceof LiteralInteger) {
+                    ((LiteralInteger)pmax).setValue(spmax.intValue());
+                } else if (pmax instanceof LiteralUnlimitedNatural) {
+                    ((LiteralUnlimitedNatural)pmax).setValue(spmax.intValue());
+                }
+                prop.setLowerValue(pmax);
             }
             catch (NumberFormatException en){}
         }
         
-        finishElement(prop, null, owner);
+        finishElement(prop, name, owner);
         return prop;
     }
 
@@ -495,12 +535,59 @@ public class MagicDrawHelper {
         return comp;
     }
     
+    @SuppressWarnings("unchecked")
+    public static ValueSpecification createValueSpec(String type, String value) throws ReferenceException {
+        ValueSpecification vs = null;
+        JSONObject valSpec = new JSONObject();
+        valSpec.put("type", type);
+        switch (type) {
+        case "LiteralString":
+            valSpec.put("string", value);
+            break;
+        case "LiteralInteger":
+            valSpec.put("integer", Long.parseLong(value));
+            break;
+        case "LiteralBoolean":
+            valSpec.put("boolean", Boolean.parseBoolean(value));
+            break;
+        case "LiteralUnlimitedNatural":
+            valSpec.put("naturalValue", Long.parseLong(value));
+            break;
+        case "LiteralReal":
+            valSpec.put("double", Double.parseDouble(value));
+            break;
+        case "ElementValue":
+            valSpec.put("element", value);
+            break;
+        case "InstanceValue":
+            valSpec.put("instance", value);
+            break;
+        case "Expression":
+            valSpec.put("operand", value);
+            break;
+        case "OpaqueExpression":
+            valSpec.put("expressionBody", value);
+            break;
+        case "TimeExpression":
+            break;
+        case "DurationInterval":
+            break;
+        case "TimeInterval":
+            break;
+        default:
+            return null;
+        }
+        vs = ImportUtility.createValueSpec(valSpec, null);
+        return vs;        
+    }
+    
     public static Class createView(String name, Element owner) {
-        initializeFactory();
-        Class newView = ef.createClassInstance();
-        Stereotype sysmlView = Utils.getViewClassStereotype();
-        StereotypesHelper.addStereotype(newView, sysmlView);
-        finishElement(newView, name, owner);
+        Class newView = createClass(name, owner);
+        Element stereo = ElementFinder.getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
+        if (!(stereo instanceof Stereotype))
+            return null;
+        Stereotype view = (Stereotype) stereo;
+        StereotypesHelper.addStereotype(newView, view);
         return newView;
     }
 
