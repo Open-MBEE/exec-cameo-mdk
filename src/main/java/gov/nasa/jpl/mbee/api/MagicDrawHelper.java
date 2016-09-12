@@ -69,6 +69,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -404,6 +405,17 @@ public class MagicDrawHelper {
      * 
      *****************************************************************************************/
     
+    public static Association createAssociation(Element owner, Element source, Element target) {
+        Association newAssoc = ef.createAssociationInstance();
+        finishElement(newAssoc, null, owner);
+        Property sourceProp = createProperty(((NamedElement)target).getName(), source, null, target, "none", "", "");
+        Property targetProp = createProperty(((NamedElement)source).getName(), target, null, source, "none", "", "");
+        newAssoc.getMemberEnd().clear();
+        newAssoc.getMemberEnd().add(0, sourceProp);
+        newAssoc.getMemberEnd().add(targetProp);
+        return newAssoc;
+    }
+    
     public static Class createBlock(String name, Element owner) {
         Class newBlock = createClass(name, owner);
         Element stereo = ElementFinder.getElementByID("_11_5EAPbeta_be00301_1147424179914_458922_958");
@@ -424,6 +436,15 @@ public class MagicDrawHelper {
         Component comp = ef.createComponentInstance();
         finishElement(comp, name, owner);
         return comp;
+    }
+    
+    public static Constraint createConstraint(String name, Element owner, ValueSpecification spec) {
+        Constraint newConstraint = ef.createConstraintInstance();
+        finishElement(newConstraint, name, owner);
+        if (spec != null) {
+            newConstraint.setSpecification(spec);
+        }
+        return newConstraint;
     }
     
     public static Association createDirectedComposition(Element document, Element view) {
@@ -481,15 +502,20 @@ public class MagicDrawHelper {
     public static Property createProperty(String name, Element owner, ValueSpecification defaultValue, 
             Element typeElement, String aggregation, String multMin, String multMax) {
         Property prop = ef.createPropertyInstance();
-        
+        finishElement(prop, name, owner);
         prop.setVisibility(VisibilityKindEnum.PUBLIC);
-        prop.setDefaultValue(defaultValue);
         
-        if (typeElement != null)
+        if (defaultValue != null) {
+            prop.setDefaultValue(defaultValue);
+        }
+        
+        if (typeElement != null) {
             prop.setType((Type) typeElement);
+        }
         
-        if (aggregation != null)
+        if (aggregation != null) {
             prop.setAggregation(AggregationKindEnum.getByName(aggregation));
+        }
         
         if (multMin != null) {
             try{
@@ -523,7 +549,6 @@ public class MagicDrawHelper {
             catch (NumberFormatException en){}
         }
         
-        finishElement(prop, name, owner);
         return prop;
     }
 
