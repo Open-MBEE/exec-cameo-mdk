@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.copypaste.CopyPasting;
@@ -51,11 +50,7 @@ import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralNull;
@@ -64,7 +59,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
@@ -75,17 +69,12 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.VisibilityKindEnum;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import com.nomagic.utils.ErrorHandler;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ReferenceException;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -481,10 +470,7 @@ public class MagicDrawHelper {
     
     public static Class createDocument(String name, Element owner) {
         Class newDocument = createClass(name, owner);
-        Element stereo = ElementFinder.getElementByID("_17_0_2_3_87b0275_1371477871400_792964_43374");
-        if (!(stereo instanceof Stereotype))
-            return null;
-        Stereotype sysmlDocument = (Stereotype) stereo;
+        Stereotype sysmlDocument = Utils.getDocumentStereotype();
         StereotypesHelper.addStereotype(newDocument, sysmlDocument);
         return newDocument;
     }
@@ -567,7 +553,7 @@ public class MagicDrawHelper {
 
     public static Component createSiteCharComponent(String name, Element owner) {
         Component comp = createComponent(name, owner);
-        Element genTarget = ElementFinder.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
+        Component genTarget = Utils.getSiteCharacterizationComponent();
         createGeneralization("", comp, comp, genTarget);
         createDependency("", comp, comp, owner);
         return comp;
@@ -621,11 +607,8 @@ public class MagicDrawHelper {
     
     public static Class createView(String name, Element owner) {
         Class newView = createClass(name, owner);
-        Element stereo = ElementFinder.getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
-        if (!(stereo instanceof Stereotype))
-            return null;
-        Stereotype view = (Stereotype) stereo;
-        StereotypesHelper.addStereotype(newView, view);
+        Stereotype sysmlView = Utils.getViewStereotype();
+        StereotypesHelper.addStereotype(newView, sysmlView);
         return newView;
     }
 
