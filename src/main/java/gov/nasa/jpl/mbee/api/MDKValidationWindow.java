@@ -231,7 +231,7 @@ public class MDKValidationWindow {
         return s;
     }
     
-    private String getVRVSysML(ValidationRuleViolation vrv) {
+    private String getVRVElementID(ValidationRuleViolation vrv) {
         String id = vrv.getComment();
         Element vrve = vrv.getElement();
         if (id.indexOf('`') > 0){
@@ -320,7 +320,7 @@ public class MDKValidationWindow {
 
             // type cast the action class appropriately, and then pass it a dummy action event to trigger
             for (ValidationRuleViolation vrv : violationList) {
-                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getVRVSysML(vrv)))) {
+                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getVRVElementID(vrv)))) {
                     if (commit) {
                         vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
                     } else {
@@ -341,7 +341,7 @@ public class MDKValidationWindow {
             // get annotations from the nmaction objects by invoking the getAnnotation method on them
             Collection<Annotation> annos = new LinkedList<Annotation>();
             for (ValidationRuleViolation vrv : violationList) {
-                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getVRVSysML(vrv)))) {
+                if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getVRVElementID(vrv)))) {
                     Annotation anno = (Annotation) getAnnotation.invoke(vrv.getActions().get(actionIndex));
                     annos.add(anno);
                     System.out.println("  " + (commit ? "Committed " : "Accepted ") + (vrv.getElement() != null ? vrv.getElement().getHumanName() : "null") + " : " + vrv.getComment());
@@ -665,7 +665,7 @@ public class MDKValidationWindow {
         validationType = standardize(validationType);
         int index = lookupListIndex(validationType);
         for (ValidationRuleViolation vrv : pooledViolations.get(index)) {
-            if (notFound.remove(getVRVSysML(vrv))) {
+            if (notFound.remove(getVRVElementID(vrv))) {
                 if (notFound.isEmpty()) {
                     return notFound;
                 }
