@@ -1086,8 +1086,8 @@ public class ImportUtility {
                 Element find = ExportUtility.getElementFromID(elementID);
                 if (find == null) {
                     if (shouldOutputError) {
-                        //Utils.guilog("Element with id " + o.get("element") + " not found!");
-                        throw new ReferenceException(v, o, "Element with id " + o.get("element") + " for ElementValue not found!");
+                        //Utils.guilog("Element with id " + o.get("element") + " not found.");
+                        throw new ReferenceException(v, o, "Element with id " + o.get("element") + " for ElementValue not found.");
                     }
                     break;
                 }
@@ -1105,8 +1105,8 @@ public class ImportUtility {
                 Element findInst = ExportUtility.getElementFromID(instanceID);
                 if (findInst == null) {
                     if (shouldOutputError) {
-                        //Utils.guilog("Element with id " + o.get("instance") + " not found!");
-                        throw new ReferenceException(v, o, "Instance with id " + o.get("instance") + " for InstanceValue not found!");
+                        //Utils.guilog("Element with id " + o.get("instance") + " not found.");
+                        throw new ReferenceException(v, o, "Instance with id " + o.get("instance") + " for InstanceValue not found.");
                     }
                     break;
                 }

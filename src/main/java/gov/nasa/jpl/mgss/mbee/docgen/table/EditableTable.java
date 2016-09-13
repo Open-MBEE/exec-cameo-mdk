@@ -385,8 +385,8 @@ public class EditableTable extends JDialog {
                             }
                         }
                     } else {
-                        JOptionPane.showMessageDialog(null, "Element with ID " + props[c] + " not found!");
-                        gl.log("Element with ID " + props[c] + " not found!");
+                        JOptionPane.showMessageDialog(null, "Element with ID " + props[c] + " not found.");
+                        gl.log("Element with ID " + props[c] + " not found.");
                     }
                     col++;
                 }

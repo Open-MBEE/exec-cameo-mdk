@@ -248,7 +248,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // Add any sections that are found along the way and loop until no more are found
                 List<JSONObject> instanceJSONObjects = new ArrayList<>();
                 List<JSONObject> slotJSONObjects = new ArrayList<>();
-                while (!instanceIDs.isEmpty()) {
+                while (!instanceIDs.isEmpty() && !slotIDs.isEmpty()) {
                     // Allow cancellation between every depths' server query.
                     if (handleCancel(progressStatus)) {
                         return;
@@ -327,7 +327,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;*/
-                        Application.getInstance().getGUILog().log("Failed to import instance specification " + elementJSONObject.get("sysmlid") + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + elementJSONObject.get("sysmlid") + ": " + e.getMessage());
                     }
                 }
 
@@ -349,7 +349,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;*/
-                        Application.getInstance().getGUILog().log("Failed to import slot " + slotJSONObject.get("sysmlid") + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotJSONObject.get("sysmlid") + ": " + e.getMessage());
                     }
                 }
 
@@ -454,7 +454,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // Using null package with intention to cancel session and delete instances to prevent model validation error.
                 handlePes(view2pe.get(view), null);
                 instanceUtils.updateOrCreateConstraintFromPresentationElements(view, view2pe.get(view));
-                handleUnused(view2unused.get(view), unused);
             }
 
             if (handleCancel(progressStatus)) {
@@ -462,7 +461,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
 
             // commit to MMS
-            JSONArray elementsJSONArray = new JSONArray();
+            JSONArray elementsJsonArray = new JSONArray();
             Queue<Pair<InstanceSpecification, Element>> instanceToView = new LinkedList<>();
             for (Element view : views) {
                 if (skippedViews.contains(view)) {
@@ -485,20 +484,20 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
                 // portion of the JSON required to update the view contents.
                 Object o;
-                JSONObject oldViewJSON = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getJson() : null,
-                        oldSpecializationJSON = oldViewJSON != null && (o = oldViewJSON.get("specialization")) instanceof JSONObject ? (JSONObject) o : null,
-                        fullViewJSON = ExportUtility.fillElement(view, null),
-                        specializationJSON = fullViewJSON != null && (o = fullViewJSON.get("specialization")) instanceof JSONObject ? (JSONObject) o : null;
-                if (oldSpecializationJSON == null || specializationJSON == null) {
-                    elementsJSONArray.add(fullViewJSON);
+                JSONObject oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getJson() : null,
+                        oldSpecializationJson = oldViewJson != null && (o = oldViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null,
+                        fullViewJson = ExportUtility.fillElement(view, null),
+                        specializationJson = fullViewJson != null && (o = fullViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null;
+                if (oldSpecializationJson == null || specializationJson == null) {
+                    elementsJsonArray.add(fullViewJson);
                 }
                 else {
-                    specializationJSON.put("displayedElements", view2elements.get(view));
-                    if (ModelValidator.isViewSpecializationDiff(oldSpecializationJSON, specializationJSON)) {
-                        JSONObject subViewJSON = new JSONObject();
-                        subViewJSON.put("sysmlid", fullViewJSON.get("sysmlid"));
-                        subViewJSON.put("specialization", specializationJSON);
-                        elementsJSONArray.add(subViewJSON);
+                    specializationJson.put("displayedElements", view2elements.get(view));
+                    if (ModelValidator.isViewSpecializationDiff(oldSpecializationJson, specializationJson)) {
+                        JSONObject subViewJson = new JSONObject();
+                        subViewJson.put("sysmlid", fullViewJson.get("sysmlid"));
+                        subViewJson.put("specialization", specializationJson);
+                        elementsJsonArray.add(subViewJson);
                     }
                 }
             }
@@ -512,50 +511,50 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     instanceToView.add(new Pair<>(subInstance, pair.getSecond()));
                 }
 
-                JSONObject instanceSpecificationJSON = ExportUtility.fillElement(instance, null);
-                if (instanceSpecificationJSON == null) {
+                JSONObject instanceSpecificationJson = ExportUtility.fillElement(instance, null);
+                if (instanceSpecificationJson == null) {
                     continue;
                 }
-                JSONObject oldInstanceSpecificationJSON = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
+                JSONObject oldInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
                 JSONObject instanceSpecificationToCommit = null;
-                if (oldInstanceSpecificationJSON == null) {
-                    instanceSpecificationToCommit = instanceSpecificationJSON;
+                if (oldInstanceSpecificationJson == null) {
+                    instanceSpecificationToCommit = instanceSpecificationJson;
                 }
                 else {
                     // We only want to compare documentation and specialization to see if we need to update the instance
-                    JSONObject subInstanceSpecificationJSON = new JSONObject(), oldSubInstanceSpecificationJSON = new JSONObject();
-                    subInstanceSpecificationJSON.put("documentation", instanceSpecificationJSON.get("documentation"));
-                    oldSubInstanceSpecificationJSON.put("documentation", oldInstanceSpecificationJSON.get("documentation"));
-                    subInstanceSpecificationJSON.put("specialization", instanceSpecificationJSON.get("specialization"));
-                    oldSubInstanceSpecificationJSON.put("specialization", oldInstanceSpecificationJSON.get("specialization"));
-                    subInstanceSpecificationJSON.put("name", instanceSpecificationJSON.get("name"));
-                    oldSubInstanceSpecificationJSON.put("name", oldInstanceSpecificationJSON.get("name"));
-                    if (!JSONUtils.compare(subInstanceSpecificationJSON, oldSubInstanceSpecificationJSON)) {
-                        instanceSpecificationToCommit = instanceSpecificationJSON;
+                    JSONObject subInstanceSpecificationJson = new JSONObject(), oldSubInstanceSpecificationJson = new JSONObject();
+                    subInstanceSpecificationJson.put("documentation", instanceSpecificationJson.get("documentation"));
+                    oldSubInstanceSpecificationJson.put("documentation", oldInstanceSpecificationJson.get("documentation"));
+                    subInstanceSpecificationJson.put("specialization", instanceSpecificationJson.get("specialization"));
+                    oldSubInstanceSpecificationJson.put("specialization", oldInstanceSpecificationJson.get("specialization"));
+                    subInstanceSpecificationJson.put("name", instanceSpecificationJson.get("name"));
+                    oldSubInstanceSpecificationJson.put("name", oldInstanceSpecificationJson.get("name"));
+                    if (!JSONUtils.compare(subInstanceSpecificationJson, oldSubInstanceSpecificationJson)) {
+                        instanceSpecificationToCommit = instanceSpecificationJson;
                     }
                 }
                 if (instanceSpecificationToCommit != null) {
-                    elementsJSONArray.add(instanceSpecificationToCommit);
+                    elementsJsonArray.add(instanceSpecificationToCommit);
                 }
 
                 for (Slot slot : instance.getSlot()) {
-                    JSONObject slotJSON = ExportUtility.fillElement(slot, null);
-                    if (slotJSON == null) {
+                    JSONObject slotJson = ExportUtility.fillElement(slot, null);
+                    if (slotJson == null) {
                         continue;
                     }
-                    JSONObject oldSlotJSON = slotMap.containsKey(slot.getID()) ? slotMap.get(slot.getID()).getFirst() : null;
-                    if (oldSlotJSON == null) {
-                        elementsJSONArray.add(slotJSON);
+                    JSONObject oldSlotJson = slotMap.containsKey(slot.getID()) ? slotMap.get(slot.getID()).getFirst() : null;
+                    if (oldSlotJson == null) {
+                        elementsJsonArray.add(slotJson);
                         continue;
                     }
                     // We only want to compare owner and specialization to see if we need to update the slot
-                    JSONObject subSlotJSON = new JSONObject(), oldSubSlotJSON = new JSONObject();
-                    subSlotJSON.put("owner", slotJSON.get("owner"));
-                    oldSubSlotJSON.put("owner", oldSlotJSON.get("owner"));
-                    subSlotJSON.put("specialization", slotJSON.get("specialization"));
-                    oldSubSlotJSON.put("specialization", oldSlotJSON.get("specialization"));
-                    if (!JSONUtils.compare(subSlotJSON, oldSubSlotJSON)) {
-                        elementsJSONArray.add(slotJSON);
+                    JSONObject subSlotJson = new JSONObject(), oldSubSlotJson = new JSONObject();
+                    subSlotJson.put("owner", slotJson.get("owner"));
+                    oldSubSlotJson.put("owner", oldSlotJson.get("owner"));
+                    subSlotJson.put("specialization", slotJson.get("specialization"));
+                    oldSubSlotJson.put("specialization", oldSlotJson.get("specialization"));
+                    if (!JSONUtils.compare(subSlotJson, oldSubSlotJson)) {
+                        elementsJsonArray.add(slotJson);
                     }
                 }
             }
@@ -565,20 +564,52 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 return;
             }
 
-            if (!elementsJSONArray.isEmpty()) {
+            boolean changed = false;
+
+            if (!elementsJsonArray.isEmpty()) {
                 // STAGE 5: Queueing upload of generated view instances
                 progressStatus.setDescription("Queueing upload of generated view instances");
                 progressStatus.setCurrent(5);
 
                 JSONObject body = new JSONObject();
-                body.put("elements", elementsJSONArray);
+                body.put("elements", elementsJsonArray);
                 body.put("source", "magicdraw");
                 body.put("mmsVersion", DocGenPlugin.VERSION);
-                Application.getInstance().getGUILog().log("Updating/creating " + elementsJSONArray.size() + " element" + (elementsJSONArray.size() != 1 ? "s" : "") + " to generate views.");
+                Application.getInstance().getGUILog().log("Updating/creating " + elementsJsonArray.size() + " element" + (elementsJsonArray.size() != 1 ? "s" : "") + " to generate views.");
 
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), body.toJSONString(), "POST", true, elementsJSONArray.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), body.toJSONString(), "POST", true, elementsJsonArray.size(), "Sync Changes"));
+                changed = true;
             }
-            else {
+
+            // Delete unused presentation elements
+
+            elementsJsonArray = new JSONArray();
+            for (List<PresentationElementInstance> presentationElementInstances : view2unused.values()) {
+                for (PresentationElementInstance presentationElementInstance : presentationElementInstances) {
+                    if (presentationElementInstance.getInstance() == null) {
+                        continue;
+                    }
+                    String id = ExportUtility.getElementID(presentationElementInstance.getInstance());
+                    if (id == null) {
+                        continue;
+                    }
+                    JSONObject elementJsonObject = new JSONObject();
+                    elementJsonObject.put("sysmlid", id);
+                    elementsJsonArray.add(elementJsonObject);
+                }
+            }
+            if (!elementsJsonArray.isEmpty()) {
+                JSONObject body = new JSONObject();
+                body.put("elements", elementsJsonArray);
+                body.put("source", "magicdraw");
+                body.put("mmsVersion", DocGenPlugin.VERSION);
+                Application.getInstance().getGUILog().log("Deleting " + elementsJsonArray.size() + " unused presentation element" + (elementsJsonArray.size() != 1 ? "s" : "") + ".");
+
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, elementsJsonArray.size(), "View Generation"));
+                changed = true;
+            }
+
+            if (!changed) {
                 Application.getInstance().getGUILog().log("No changes required to generate views.");
             }
 
@@ -653,16 +684,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             instanceUtils.updateOrCreateInstance(pe, p);
         }
-    }
-
-    private void handleUnused(List<PresentationElementInstance> pes, Package p) {
-        // Decided not to do anything with unused instances. Leaving this as a placeholder in case that changes.
-        /*
-        for (PresentationElementInstance pe: pes) {
-            if (pe.getInstance() != null && pe.getInstance().isEditable())
-                organizer.moveViewInstance(pe.getInstance(), p);
-        }
-        */
     }
 
     private boolean handleCancel(ProgressStatus progressStatus) {
