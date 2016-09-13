@@ -68,7 +68,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
 
     public static boolean postImage(String key, Map<String, JSONObject> is) {
         if (is == null || is.get(key) == null) {
-            Utils.guilog("[ERROR] Image data with id " + key + " not found!");
+            Utils.guilog("[ERROR] Image data with id " + key + " not found.");
             return false;
         }
         String filename = (String)is.get(key).get("abspath");

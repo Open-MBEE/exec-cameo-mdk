@@ -177,6 +177,11 @@ public class Crushinator23To24Migrator extends Migrator {
         for (Property property : properties) {
             associations.add(property.getAssociation());
         }
+        for (InstanceSpecification presentationElement : presentationElements) {
+            if (!presentationElement.has_instanceValueOfInstance()) {
+                elementsToDeleteRemotely.add(presentationElement);
+            }
+        }
 
         List<JSONObject> elementJsonObjects = new ArrayList<>(documents.size() + views.size() + properties.size() + associations.size());
         for (Element document : documents) {
@@ -226,7 +231,7 @@ public class Crushinator23To24Migrator extends Migrator {
         for (Package viewInstancePackage : viewInstancePackages) {
             JSONObject jsonObject = ExportUtility.fillElement(viewInstancePackage, null);
             if (jsonObject == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Failed to serialize View Instance Package " + viewInstancePackage.getID() + ".");
+                Application.getInstance().getGUILog().log("[ERROR] Failed to serialize Presentation Element Package " + viewInstancePackage.getID() + ".");
                 failed = true;
                 continue;
             }
@@ -239,7 +244,7 @@ public class Crushinator23To24Migrator extends Migrator {
             }
         }
         if (!hiddenViewInstancePackageJsonObjects.isEmpty()) {
-            sendStaggered(hiddenViewInstancePackageJsonObjects.values(), "View Instance Package", "View Instance Packages", ps, true);
+            sendStaggered(hiddenViewInstancePackageJsonObjects.values(), "Presentation Element Package", "Presentation Element Packages", ps, true);
             if (ps.isCancel()) {
                 return;
             }
@@ -276,7 +281,7 @@ public class Crushinator23To24Migrator extends Migrator {
 
         if (!elementsToDeleteRemotely.isEmpty()) {
             int total = 0;
-            String status = "Deleting " + elementsToDeleteRemotely.size() + " legacy View Instance Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + " on the MMS";
+            String status = "Deleting " + elementsToDeleteRemotely.size() + " legacy Presentation Element Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + " on the MMS";
             Queue<Element> elementJsonQueue = new LinkedBlockingQueue<>(elementsToDeleteRemotely);
             ps.setIndeterminate(false);
             ps.setCurrent(0);
@@ -307,7 +312,7 @@ public class Crushinator23To24Migrator extends Migrator {
             }
             ps.setDescription(null);
             ps.setIndeterminate(true);
-            Application.getInstance().getGUILog().log("[INFO] Deleted " + elementsToDeleteRemotely.size() + " legacy View Instance Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + " on the MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Deleted " + elementsToDeleteRemotely.size() + " legacy Presentation Element Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + "/Unused Presentation Element" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + " on the MMS.");
         }
 
         // POINT OF NO RETURN; NO MORE CANCELLING

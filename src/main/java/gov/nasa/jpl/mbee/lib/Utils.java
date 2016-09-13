@@ -64,6 +64,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
+import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectableElement;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
@@ -2022,6 +2023,11 @@ public class Utils {
     @Deprecated
     public static Property getViewElementsProperty() {
         return (Property)ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view::elements", Application.getInstance().getProject());
+    }
+    
+    @Deprecated
+    public static Component getSiteCharacterizationComponent() {
+        return (Component)ElementFinder.getElementByQualifiedName("SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library::Site Characterization", Application.getInstance().getProject());
     }
 
     public static Constraint getViewConstraint(Element view) {
