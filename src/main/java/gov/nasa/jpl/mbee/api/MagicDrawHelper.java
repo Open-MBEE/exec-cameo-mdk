@@ -290,24 +290,37 @@ public class MagicDrawHelper {
      * 
      * @param target
      *            The property whose value you wish to inspect
+     * @return 
      */
     public static String getPropertyValue(Element target) {
         String value = null;
         if (target instanceof Property) {
             ValueSpecification vs = ((Property) target).getDefaultValue();
-            if (vs instanceof LiteralBoolean) {
-                value = Boolean.toString(((LiteralBoolean) vs).isValue());
-            } else if (vs instanceof LiteralInteger) {
-                value = Long.toString(((LiteralInteger) vs).getValue());
-            } else if (vs instanceof LiteralNull) {
-                value = null;
-            } else if (vs instanceof LiteralReal) {
-                value = Double.toString(((LiteralReal) vs).getValue());
-            } else if (vs instanceof LiteralString) {
-                value = Utils.stripHtmlWrapper(((LiteralString) vs).getValue());
-            } else if (vs instanceof LiteralUnlimitedNatural) {
-                value = Long.toString(((LiteralUnlimitedNatural) vs).getValue());
-            }
+            value = getSpecificationValue(vs);
+        }
+        return value;
+    }
+    
+    /**
+     * Returns the value stored in a ValueSpecification
+     * 
+     * @param vs The ValueSpecification to extract a value from
+     * @return the value in the ValueSpecification, expressed as a string.
+     */
+    public static String getSpecificationValue(ValueSpecification vs) {
+        String value = null;
+        if (vs instanceof LiteralBoolean) {
+            value = Boolean.toString(((LiteralBoolean) vs).isValue());
+        } else if (vs instanceof LiteralInteger) {
+            value = Long.toString(((LiteralInteger) vs).getValue());
+        } else if (vs instanceof LiteralNull) {
+            value = null;
+        } else if (vs instanceof LiteralReal) {
+            value = Double.toString(((LiteralReal) vs).getValue());
+        } else if (vs instanceof LiteralString) {
+            value = Utils.stripHtmlWrapper(((LiteralString) vs).getValue());
+        } else if (vs instanceof LiteralUnlimitedNatural) {
+            value = Long.toString(((LiteralUnlimitedNatural) vs).getValue());
         }
         return value;
     }
