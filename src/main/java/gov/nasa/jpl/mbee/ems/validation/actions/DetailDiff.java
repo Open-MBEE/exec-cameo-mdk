@@ -164,7 +164,7 @@ public class DetailDiff extends RuleViolationAction implements AnnotationAction,
 			value = "null";
 		
 		// reassign value if it is an id (but not value for sysmlid)
-		if (!current.hasKey() || (current.hasKey() && !current.getKey().equals("sysmlid"))) {
+		if (!current.hasKey() || (current.hasKey() && !current.getKey().equals("sysmlId"))) {
 			Element target = ExportUtility.getElementFromID(value.toString());
 			if (target instanceof NamedElement) {
 				value = ((NamedElement) target).getQualifiedName();

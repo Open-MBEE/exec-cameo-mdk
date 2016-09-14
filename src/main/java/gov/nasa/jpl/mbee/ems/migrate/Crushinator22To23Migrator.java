@@ -24,10 +24,9 @@ public class Crushinator22To23Migrator extends Migrator {
         for (Element elem : missing) {
             if (elem instanceof Property) { //property multiplicity and redefines
                 JSONObject einfo = new JSONObject();
-                einfo.put("sysmlid", ExportUtility.getElementID(elem));
+                einfo.put("sysmlId", ExportUtility.getElementID(elem));
                 einfo = ExportUtility.fillOwner(elem, einfo);
-                JSONObject spec = ExportUtility.fillPropertySpecialization(elem, null, false, false);
-                einfo.put("specialization", spec);
+                ExportUtility.fillPropertySpecialization(elem, einfo, false, false);
                 exportElems.add(einfo);
             }
             

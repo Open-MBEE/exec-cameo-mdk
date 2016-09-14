@@ -91,8 +91,8 @@ public class ExportValue extends RuleViolationAction implements AnnotationAction
     @SuppressWarnings("unchecked")
     private JSONObject getInfo(Element e) {
         JSONObject elementInfo = new JSONObject();
-        elementInfo.put("specialization", ExportUtility.fillPropertySpecialization(e, null, true, false));
-        elementInfo.put("sysmlid", ExportUtility.getElementID(e));
+        ExportUtility.fillPropertySpecialization(e, elementInfo, true, false);
+        elementInfo.put("sysmlId", ExportUtility.getElementID(e));
         return elementInfo;
     }
 }

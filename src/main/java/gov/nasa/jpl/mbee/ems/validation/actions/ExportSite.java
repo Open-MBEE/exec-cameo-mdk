@@ -44,7 +44,7 @@ public class ExportSite extends RuleViolationAction implements AnnotationAction,
             if (e instanceof Package) {
                 set.add(e);
                 JSONObject elementOb = ExportUtility.fillId(e, null);
-                elementOb.put("specialization", ExportUtility.fillPackage((Package)e, null));
+                ExportUtility.fillPackage((Package)e, elementOb);
                 infos.add(elementOb);
             }
         }
@@ -58,7 +58,7 @@ public class ExportSite extends RuleViolationAction implements AnnotationAction,
             return;
         JSONArray elements = new JSONArray();
         JSONObject elementOb = ExportUtility.fillId(element, null);
-        elementOb.put("specialization", ExportUtility.fillPackage(element, null));
+        ExportUtility.fillPackage(element, elementOb);
         elements.add(elementOb);
         commit(elements, "Site");
     }

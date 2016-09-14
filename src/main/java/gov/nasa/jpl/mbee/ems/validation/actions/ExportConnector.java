@@ -36,7 +36,7 @@ public class ExportConnector extends RuleViolationAction implements AnnotationAc
         for (Annotation anno: annos) {
             Element e = (Element)anno.getTarget();
             JSONObject elementOb = ExportUtility.fillId(e, null);
-            elementOb.put("specialization", ExportUtility.fillConnectorSpecialization((Connector)e, null));
+            ExportUtility.fillConnectorSpecialization((Connector)e, elementOb);
             infos.add(elementOb);
         }
         commit(infos, "Connector");
@@ -47,7 +47,7 @@ public class ExportConnector extends RuleViolationAction implements AnnotationAc
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
         JSONObject elementOb = ExportUtility.fillId(element, null);
-        elementOb.put("specialization", ExportUtility.fillConnectorSpecialization((Connector)element, null));
+        ExportUtility.fillConnectorSpecialization((Connector)element, elementOb);
         elements.add(elementOb);
         commit(elements, "Connector");
     }

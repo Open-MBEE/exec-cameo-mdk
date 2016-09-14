@@ -36,9 +36,9 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
-import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputSyncRunner;
+import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.patternloader.PatternLoaderConfigurator;
@@ -55,6 +55,7 @@ import java.util.jar.JarFile;
 public class DocGenPlugin extends Plugin {
     private OclEvaluatorPlugin oclPlugin = null;
     private ValidateConstraintsPlugin vcPlugin = null;
+    private DebugExportImportModelPlugin debugExportImportModelPlugin = null;
     public static ClassLoader extensionsClassloader = null;
 
     public static final String VERSION = "2.4",
@@ -97,6 +98,7 @@ public class DocGenPlugin extends Plugin {
         acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 
+        getDebugExportImportPlugin().init();
         getOclPlugin().init();
         getVcPlugin().init();
         MMSSyncPlugin.getInstance().init();
@@ -106,6 +108,13 @@ public class DocGenPlugin extends Plugin {
         loadExtensionJars(); // people can actually just create a new plugin and
 
         Application.getInstance().getEnvironmentOptions().addGroup(new MDKOptionsGroup());
+    }
+
+    public DebugExportImportModelPlugin getDebugExportImportPlugin() {
+        if (debugExportImportModelPlugin == null) {
+            debugExportImportModelPlugin = new DebugExportImportModelPlugin();
+        }
+        return debugExportImportModelPlugin;
     }
 
     public OclEvaluatorPlugin getOclPlugin() {

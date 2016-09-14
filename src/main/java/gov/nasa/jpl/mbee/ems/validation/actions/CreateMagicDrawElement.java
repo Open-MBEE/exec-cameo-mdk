@@ -115,7 +115,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                     try {
                         Element newElement = ImportUtility.createElement(newe, false);
                         if (newElement == null) {
-                            Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (owner not found)");
+                            Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlId") + " (owner not found)");
                             multipleSuccess = false;
                             return false;
                         }
@@ -128,12 +128,12 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                     try {
                         Element newElement = ImportUtility.createElement(newe, true);
                         if (newElement == null) {
-                            Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (references not found)");
+                            Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlId") + " (references not found)");
                             multipleSuccess = false;
                             return false;
                         }
                     } catch (ImportException ex) {
-                        Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlid") + " (references not found)");
+                        Utils.guilog("[ERROR] Cannot create element " + newe.get("sysmlId") + " (references not found)");
                         multipleSuccess = false;
                         return false;
                     }

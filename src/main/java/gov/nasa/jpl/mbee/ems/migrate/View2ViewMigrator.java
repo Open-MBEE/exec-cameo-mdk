@@ -23,7 +23,7 @@ public class View2ViewMigrator extends Migrator {
 					if (doc != null && StereotypesHelper.hasStereotypeOrDerived(elem, doc)) {
 						JSONObject einfo = new JSONObject();
 						JSONObject spec = new JSONObject();
-						einfo.put("sysmlid", ExportUtility.getElementID(elem));
+						einfo.put("sysmlId", ExportUtility.getElementID(elem));
 						einfo.put("specialization", spec);
 						spec.put("view2view", null);
 						spec.put("type", "Product");

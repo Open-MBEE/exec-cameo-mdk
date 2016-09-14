@@ -206,7 +206,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             String docId = view.getID();
             JSONObject doc = null;
             for (JSONObject ele: (List<JSONObject>)viewsArray) {
-                if (ele.get("sysmlid").equals(docId)) {
+                if (ele.get("sysmlId").equals(docId)) {
                     doc = ele;
                     break;
                 }
@@ -300,7 +300,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             spec.put("view2view", ExportUtility.formatView2View(vhv.getView2View()));
             //spec.put("noSections", visitor2.getNosections());
             spec.put("type", "Product");
-            doc.put("sysmlid", view.getID());
+            doc.put("sysmlId", view.getID());
             doc.put("specialization", spec);
             documents.add(doc);
             send.put("elements", documents);*/

@@ -469,7 +469,7 @@ public class ModelValidator {
         keyedElements = elementsKeyed;
         result.put("elementsKeyed", elementsKeyed);
     }
-    
+
     @SuppressWarnings("unchecked")
     private void validateModel(Map<String, JSONObject> elementsKeyed, Set<Element> all, ProgressStatus ps) throws ServerException {
         //Set<Element> all = new HashSet<Element>();
@@ -935,7 +935,7 @@ public class ModelValidator {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property type/aggregation/multiplicity/redefines is different");
             if (editable)
                 v.addAction(new ExportProperty(e));
-            v.addAction(new ImportProperty(e, result, specialization));
+            v.addAction(new ImportProperty(e, result, info));
             return v;
         }
         return null;
@@ -993,7 +993,7 @@ public class ModelValidator {
         }
         return null;
     }
-    
+
     private ValidationRuleViolation relationshipDiff(DirectedRelationship e, JSONObject elementInfo) {
         JSONObject specialization = (JSONObject)elementInfo.get("specialization");
         Boolean editable = (Boolean)elementInfo.get("editable");
@@ -1176,7 +1176,7 @@ public class ModelValidator {
     }
     
     private ValidationRuleViolation connectorDiff(Connector e, JSONObject info) {
-        JSONObject webspec = (JSONObject)info.get("specialization");
+        JSONObject webspec = (JSONObject)info;
         Boolean editable = (Boolean)info.get("editable");
         JSONArray webSourcePropPath = (JSONArray)webspec.get("sourcePath");
         JSONArray webTargetPropPath = (JSONArray)webspec.get("targetPath");
@@ -1259,7 +1259,7 @@ public class ModelValidator {
     
     private ValidationRuleViolation associationDiff(Association e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
-        JSONObject webspec = (JSONObject)info.get("specialization");
+        JSONObject webspec = info;
         JSONObject modelspec = ExportUtility.fillAssociationSpecialization(e, null);
         String modelSource = (String)modelspec.get("source");
         String modelTarget = (String)modelspec.get("target");
@@ -1305,7 +1305,7 @@ public class ModelValidator {
     
     private ValidationRuleViolation instanceSpecificationDiff(InstanceSpecification e, JSONObject info) {
         Boolean editable = (Boolean)info.get("editable");
-        JSONObject webspec = (JSONObject)info.get("specialization");
+        JSONObject webspec = (JSONObject)info;
         JSONObject modelspec = ExportUtility.fillInstanceSpecificationSpecialization(e, null);
         // if (webspec.equals(modelspec)) {
         if (!JSONUtils.compare(webspec, modelspec)) {
@@ -1551,5 +1551,4 @@ public class ModelValidator {
             return null;
         return (JSONObject)elements.get(0);
     }
-
 }

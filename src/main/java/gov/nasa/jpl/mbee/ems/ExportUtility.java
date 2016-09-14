@@ -38,12 +38,19 @@ import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
+import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityParameterNode;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.OpaqueBehavior;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.CallEvent;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.Event;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.Trigger;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
@@ -53,11 +60,13 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.*;
+import com.nomagic.uml2.ext.magicdraw.statemachines.mdprotocolstatemachines.ProtocolConformance;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
-import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
@@ -84,7 +93,7 @@ import java.util.regex.Pattern;
 
 public class ExportUtility {
     public static boolean justPostconditionIds = true;  // don't embed conditions
-    
+
     public static Logger log = Logger.getLogger(ExportUtility.class);
     public static Map<String, Integer> mountedVersions;
     private static String developerUrl = "https://sheldon.jpl.nasa.gov";
@@ -157,7 +166,7 @@ public class ExportUtility {
             JSONArray array = (JSONArray) ob.get("sites");
             for (Object ws : array) {
                 JSONObject site = (JSONObject) ws;
-                String id = (String) site.get("sysmlid");
+                String id = (String) site.get("sysmlId");
                 idmapping.put((String) site.get("name"), id);
             }
         }
@@ -285,7 +294,6 @@ public class ExportUtility {
             "_17_0_3_85f027d_1362349793845_681432_2986" //specification table
     ));
 
-
     public static String getElementID(Element e) {
         if (e == null) {
             return null;
@@ -296,7 +304,8 @@ public class ExportUtility {
                 return null;
             }
             return slot.getOwningInstance().getID() + "-slot-" + slot.getDefiningFeature().getID();
-        } else if (e instanceof Model && e == Application.getInstance().getProject().getModel()) {
+        }
+        else if (e instanceof Model && e == Application.getInstance().getProject().getModel()) {
             return Application.getInstance().getProject().getPrimaryProject().getProjectID();
         }
         return e.getID();
@@ -319,8 +328,9 @@ public class ExportUtility {
             Element definingFeature = (Element) prj.getElementByID(ids[1]);
             if (instancespec != null && definingFeature != null && instancespec instanceof InstanceSpecification) {
                 for (Slot slot : ((InstanceSpecification) instancespec).getSlot()) {
-                    if (slot.getDefiningFeature() == definingFeature)
+                    if (slot.getDefiningFeature() == definingFeature) {
                         return slot;
+                    }
                 }
             }
             else {
@@ -360,8 +370,7 @@ public class ExportUtility {
 
     public static String getSite() {
         Element model = Application.getInstance().getProject().getModel();
-        String site = (String) StereotypesHelper.getStereotypePropertyFirst(
-                model, "ModelManagementSystem", "MMS Site");
+        String site = (String) StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "MMS Site");
         if (site == null || site.equals("")) {
             Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
             site = null;
@@ -558,7 +567,6 @@ public class ExportUtility {
 
     }
 
-
     public static String send(String url, PostMethod pm) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null) {
@@ -567,7 +575,7 @@ public class ExportUtility {
         checkAndResetTicket(url);
         url = addTicketToUrl(url);
         try {
-            //GUILog gl = Application.getInstance().getGUILog();
+            // GUILog gl = Application.getInstance().getGUILog();
             Utils.guilog("[INFO] Sending file...");
             if (print) {
                 log.info("send file: " + url);
@@ -623,7 +631,6 @@ public class ExportUtility {
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
 
-
             /*int timeout = 120; // seconds
             HttpParams httpParams = client.getParams();
             httpParams.setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, timeout * 1000); //cause ConnectionTimeoutException
@@ -665,9 +672,9 @@ public class ExportUtility {
             pm.releaseConnection();
         }
     }
-    /*public static String send(String url, String json, String method) {
-    return send(url, json, method, true, false);
-	}*/
+    /*
+     * public static String send(String url, String json, String method) { return send(url, json, method, true, false); }
+	 */
 
     public static String send(String url, String json) {
         //return send(url, json, null); //method == null means POST
@@ -761,7 +768,7 @@ public class ExportUtility {
         return response;
     }
 
-    //convert view2view json array given by alfresco server to format created by alfresco visitor
+    // convert view2view json array given by alfresco server to format created by alfresco visitor
     @SuppressWarnings("unchecked")
     public static JSONObject keyView2View(JSONArray vv) {
         JSONObject response = new JSONObject();
@@ -879,7 +886,6 @@ public class ExportUtility {
                     "application/json",
                     "UTF-8");
 
-
             postMethod.setRequestEntity(requestEntity);
             int code = client.executeMethod(postMethod);
             String json = postMethod.getResponseBodyAsString();
@@ -985,8 +991,7 @@ public class ExportUtility {
 
     //check if comment is actually the documentation of its owner
     public static boolean isElementDocumentation(Comment c) {
-        if (c.getAnnotatedElement().size() > 1
-                || c.getAnnotatedElement().isEmpty()) {
+        if (c.getAnnotatedElement().size() > 1 || c.getAnnotatedElement().isEmpty()) {
             return false;
         }
         if (c.getAnnotatedElement().iterator().next() == c.getOwner()) {
@@ -999,7 +1004,6 @@ public class ExportUtility {
                                                     JSONObject einfo) {
         return fillValueSpecification(vs, einfo, false);
     }
-
 
     //given value spec and value object, fill in stuff
     @SuppressWarnings("unchecked")
@@ -1034,18 +1038,13 @@ public class ExportUtility {
         else if (vs instanceof ElementValue) {
             elementInfo.put("type", "ElementValue");
             Element elem = ((ElementValue) vs).getElement();
-            if (elem != null) {
-                elementInfo.put("element", ExportUtility.getElementID(elem));
-            }
-            else {
-                elementInfo.put("element", null);
-            }
+            elementInfo.put("elementId", ((elem != null) ? ExportUtility.getElementID(elem) : null));
         }
         else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
-            //if (((Expression) vs).getSymbol() != null) {
-            //    elementInfo.put("symbol", ((Expression) vs).getSymbol());
-            //}
+            // if (((Expression) vs).getSymbol() != null) {
+            // elementInfo.put("symbol", ((Expression) vs).getSymbol());
+            // }
             List<ValueSpecification> vsl = ((Expression) vs).getOperand();
             if (vsl != null && vsl.size() > 0) {
                 JSONArray operand = new JSONArray();
@@ -1061,12 +1060,7 @@ public class ExportUtility {
             elementInfo.put("type", "InstanceValue");
             InstanceValue iv = (InstanceValue) vs;
             InstanceSpecification i = iv.getInstance();
-            if (i != null) {
-                elementInfo.put("instance", ExportUtility.getElementID(i));
-            }
-            else {
-                elementInfo.put("instance", null);
-            }
+            elementInfo.put("instance", ((i != null) ? ExportUtility.getElementID(i) : null));
         }
         else if (vs instanceof LiteralSpecification) {
             if (vs instanceof LiteralBoolean) {
@@ -1098,19 +1092,13 @@ public class ExportUtility {
             }
             else if (vs instanceof LiteralUnlimitedNatural) {
                 elementInfo.put("type", "LiteralUnlimitedNatural");
-                elementInfo.put("naturalValue", new Long(
-                        ((LiteralUnlimitedNatural) vs).getValue()));
+                elementInfo.put("naturalValue", new Long(((LiteralUnlimitedNatural) vs).getValue()));
             }
         }
         else if (vs instanceof OpaqueExpression) {
             elementInfo.put("type", "OpaqueExpression");
             List<String> body = ((OpaqueExpression) vs).getBody();
-            if (body != null) {
-                elementInfo.put("expressionBody", makeJsonArray(body));
-            }
-            else {
-                elementInfo.put("expressionBody", new JSONArray());
-            }
+            elementInfo.put("expressionBody", ((body != null) ? makeJsonArray(body) : new JSONArray()));
         }
         else if (vs instanceof StringExpression) {
             elementInfo.put("type", "StringExpression");
@@ -1122,19 +1110,16 @@ public class ExportUtility {
             elementInfo.put("type", "TimeInterval");
             elementInfo.put("min", null);
             elementInfo.put("max", null);
-            /*TimeExpression maxD = ((TimeInterval) vs).getMax();
-            if (maxD != null)
-                elementInfo.put("timeIntervalMax", maxD.getID());
-            TimeExpression minD = ((TimeInterval) vs).getMin();
-            if (minD != null)
-                elementInfo.put("timeIntervalMin", minD.getID());*/
+            /*
+             * TimeExpression maxD = ((TimeInterval) vs).getMax(); if (maxD != null) elementInfo.put("timeIntervalMax", maxD.getID()); TimeExpression minD = ((TimeInterval) vs).getMin(); if (minD != null) elementInfo.put("timeIntervalMin",
+			 * minD.getID());
+			 */
         }
         return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    protected static <T extends MDObject> JSONArray makeJsonArrayOfIDs(
-            Collection<T> collection) {
+    protected static <T extends MDObject> JSONArray makeJsonArrayOfIDs(Collection<T> collection) {
         JSONArray ids = new JSONArray();
         for (T t : collection) {
             if (t != null) {
@@ -1161,96 +1146,214 @@ public class ExportUtility {
         if (elementInfo == null) {
             elementInfo = new JSONObject();
         }
-        JSONObject specialization = new JSONObject();
-        elementInfo.put("specialization", specialization);
+        // JSONObject specialization = new JSONObject();
+        // elementInfo.put("specialization", specialization);
         Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
-            fillPackage((Package) e, specialization);
+            fillPackage((Package) e, elementInfo);
         }
         else if (e instanceof Property || e instanceof Slot) {
-            fillPropertySpecialization(e, specialization, true, true);
+            fillPropertySpecialization(e, elementInfo, true, true);
         }
         else if (e instanceof DirectedRelationship) {
-            fillDirectedRelationshipSpecialization((DirectedRelationship) e, specialization);
+            fillDirectedRelationshipSpecialization((DirectedRelationship) e, elementInfo);
         }
         else if (e instanceof Connector) {
-            fillConnectorSpecialization((Connector) e, specialization);
+            fillConnectorSpecialization((Connector) e, elementInfo);
         }
         else if (e instanceof Operation) {
-            fillOperationSpecialization((Operation) e, specialization);
+            fillOperationSpecialization((Operation) e, elementInfo);
         }
         else if (e instanceof Constraint) {
-            fillConstraintSpecialization((Constraint) e, specialization);
+            fillConstraintSpecialization((Constraint) e, elementInfo);
         }
         else if (e instanceof InstanceSpecification) {
-            specialization.put("type", "InstanceSpecification");
-            fillInstanceSpecificationSpecialization((InstanceSpecification) e, specialization);
-            /*ValueSpecification spec = ((InstanceSpecification) e)
-                    .getSpecification();
-            if (spec != null)
-                specialization.put("instanceSpecificationSpecification",
-                        spec.getID());*/
+            elementInfo.put("type", "InstanceSpecification");
+            fillInstanceSpecificationSpecialization((InstanceSpecification) e, elementInfo);
+			/*
+			 * ValueSpecification spec = ((InstanceSpecification) e) .getSpecification(); if (spec != null) specialization.put("instanceSpecificationSpecification", spec.getID());
+			 */
         }
         else if (e instanceof Parameter) {
-            fillParameterSpecialization((Parameter) e, specialization);
+            fillParameterSpecialization((Parameter) e, elementInfo);
         }
         else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
-            specialization.put("type", "Comment");
+            elementInfo.put("type", "Comment");
         }
         else if (e instanceof Association) {
-            fillAssociationSpecialization((Association) e, specialization);
+            fillAssociationSpecialization((Association) e, elementInfo);
+
         }
         else if (e.getClass().getSimpleName().equals("ClassImpl")) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
             Stereotype view = Utils.getViewStereotype();
             Stereotype doc = Utils.getProductStereotype();
-            //Stereotype view = Utils.getViewStereotype();
+            // Stereotype view = Utils.getViewStereotype();
             if (viewpoint != null && StereotypesHelper.hasStereotypeOrDerived(e, viewpoint)) {
-                specialization.put("type", "Viewpoint");
+                elementInfo.put("type", "Viewpoint");
             }
             else if (view != null && StereotypesHelper.hasStereotypeOrDerived(e, view)) {
                 if (StereotypesHelper.hasStereotypeOrDerived(e, doc)) {
-                    specialization.put("type", "Product");
+                    elementInfo.put("type", "Product");
                 }
                 else {
-                    specialization.put("type", "View");
+                    elementInfo.put("type", "View");
                 }
-                fillViewContent(e, specialization);
+                fillViewContent(e, elementInfo);
             }
             else {
-                specialization.put("type", "Element");
+                elementInfo.put("type", "Element");
             }
+
         }
         else {
-            specialization.put("type", "Untyped");
+            String typeName = "Untyped"; // default
+
+            Class baseClass = StereotypesHelper.getBaseClass(e);
+            if (baseClass != null) {
+                typeName = baseClass.getName();
+            }
+            elementInfo.put("type", typeName);
+
+            if (e instanceof ActivityParameterNode) {
+                fillActivityParameterNode((ActivityParameterNode) e, elementInfo);
+            }
+            else if (e instanceof Event) {
+                fillEvent((Event) e, elementInfo);
+            }
+            else if (e instanceof Transition) {
+                fillTransition((Transition) e, elementInfo);
+            }
+            else if (e instanceof ActivityEdge) // ControlFlow ObjectFlow
+            {
+                fillActivityEdge((ActivityEdge) e, elementInfo);
+            }
+            else if (e instanceof OpaqueBehavior) // OpaqueBehavior, FunctionBehavior
+            {
+                fillOpaqueBehavior((OpaqueBehavior) e, elementInfo);
+            }
+            else if (e instanceof CallBehaviorAction) {
+                fillCallBehaviorAction((CallBehaviorAction) e, elementInfo);
+            }
+            else if (e instanceof Trigger) {
+                fillTrigger((Trigger) e, elementInfo);
+            }
+            else if (e instanceof State) {
+                fillState((State) e, elementInfo);
+            }
+            else if (e instanceof Pseudostate) {
+                fillPseudostate((Pseudostate) e, elementInfo);
+            }
         }
         fillOwnedAttribute(e, elementInfo);
         fillName(e, elementInfo);
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
         fillMetatype(e, elementInfo);
-        elementInfo.put("sysmlid", getElementID(e));
+        elementInfo.put("sysmlId", getElementID(e));
         return elementInfo;
     }
 
-    public static JSONObject fillViewContent(Element e, JSONObject spec) {
-        Stereotype doc = Utils.getProductStereotype();
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    @SuppressWarnings("unchecked")
+    public static void fillPseudostate(Pseudostate e, JSONObject elementInfo) {
+        PseudostateKind s;
+        elementInfo.put("kind", ((s = e.getKind()) == null) ? null : s.toString());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillState(State e, JSONObject elementInfo) {
+        Element s;
+        if (!(e instanceof FinalState)) {
+            elementInfo.put("doActivityId", ((s = e.getDoActivity()) == null) ? null : s.getID());
+            elementInfo.put("entryId", ((s = e.getEntry()) == null) ? null : s.getID());
+            elementInfo.put("exitId", ((s = e.getExit()) == null) ? null : s.getID());
         }
-        if (StereotypesHelper.hasStereotypeOrDerived(e, doc)) {
-            specialization.put("type", "Product");
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillEvent(Event e, JSONObject elementInfo) {
+        Element s;
+        elementInfo.put("behaviorId", ((s = e.getBehavior()) == null) ? null : s.getID());
+        if (e instanceof CallEvent) {
+            elementInfo.put("operationId", ((s = ((CallEvent) e).getOperation()) == null) ? null : s.getID());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillTrigger(Trigger e, JSONObject elementInfo) {
+        Element s;
+        elementInfo.put("eventId", ((s = e.getEvent()) == null) ? null : s.getID());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillTransition(Transition e, JSONObject elementInfo) {
+        Element s;
+        elementInfo.put("clientId", ((s = ModelHelper.getClientElement(e)) == null) ? null : s.getID());
+        elementInfo.put("supplierId", ((s = ModelHelper.getSupplierElement(e)) == null) ? null : s.getID());
+        elementInfo.put("effectId", ((s = e.getEffect()) == null) ? null : s.getID());
+        if (e.hasTrigger()) {
+            for (Trigger t : e.getTrigger()) {// only one is allow to define in MD
+                elementInfo.put("triggerId", t.getID());
+            }
         }
         else {
-            specialization.put("type", "View");
+            elementInfo.put("triggerId", null);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillActivityParameterNode(ActivityParameterNode e, JSONObject elementInfo) {
+        Parameter s;
+        elementInfo.put("parameterId", ((s = e.getParameter()) == null) ? null : s.getID());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillOpaqueBehavior(OpaqueBehavior e, JSONObject elementInfo) {
+        elementInfo.put("body", makeJsonArray(e.getBody()));
+        elementInfo.put("language", makeJsonArray(e.getLanguage()));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillActivityEdge(ActivityEdge e, JSONObject elementInfo) {
+
+        Element s;
+        elementInfo.put("sourceId", ((s = e.getSource()) == null) ? null : s.getID());
+        elementInfo.put("targetId", ((s = e.getTarget()) == null) ? null : s.getID());
+
+        ValueSpecification gurad = e.getGuard();
+        if (gurad == null) {
+            elementInfo.put("guard", null);
+        }
+        else {
+            JSONObject vs = new JSONObject();
+            fillValueSpecification(gurad, vs);
+            elementInfo.put("guard", vs);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillCallBehaviorAction(CallBehaviorAction e, JSONObject elementInfo) {
+        Element s;
+        elementInfo.put("behaviorId", ((s = e.getBehavior()) == null) ? null : s.getID());
+    }
+
+    public static JSONObject fillViewContent(Element e, JSONObject elementInfo) {
+        Stereotype doc = Utils.getProductStereotype();
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
+        }
+        if (StereotypesHelper.hasStereotypeOrDerived(e, doc)) {
+            elementInfo.put("type", "Product");
+        }
+        else {
+            elementInfo.put("type", "View");
         }
         Constraint c = Utils.getViewConstraint(e);
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
             if (cob.containsKey("specification")) {
-                specialization.put("contents", cob.get("specification"));
-                specialization.put("contains", new JSONArray());
+                elementInfo.put("contents", (JSONObject) cob.get("specification"));
+                elementInfo.put("contains", new JSONArray());
             }
         }
         // Moved from stereotype to memory to not need a lock; see ViewPresentationGenerator
@@ -1258,28 +1361,28 @@ public class ExportUtility {
         if (o != null && o instanceof String) {
             try {
                 JSONArray a = (JSONArray) JSONValue.parse((String) o);
-                specialization.put("allowedElements", new JSONArray());
-                specialization.put("displayedElements", a);
-            } catch (Exception ex) {
-            }
-        }
+                        elementInfo.put("allowedElements", new JSONArray());
+                        elementInfo.put("displayedElements", a);
+                    } catch(Exception ex){
+                    }
+                }
         else {
-            specialization.put("displayedElements", new JSONArray());
+            elementInfo.put("displayedElements", new JSONArray());
         }*/
-        return specialization;
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillPropertySpecialization(Element e, JSONObject spec, boolean value, boolean ptype) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillPropertySpecialization(Element e, JSONObject elementInfo, boolean value,
+                                                        boolean ptype) {
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
         }
         if (e instanceof Property) {
-            specialization.put("aggregation", ((Property) e).getAggregation().toString().toUpperCase());
-            specialization.put("type", "Property");
-            specialization.put("isDerived", ((Property) e).isDerived());
-            specialization.put("isSlot", false);
+            elementInfo.put("aggregation", ((Property) e).getAggregation().toString().toUpperCase());
+            elementInfo.put("type", "Property");
+            elementInfo.put("isDerived", ((Property) e).isDerived());
+            elementInfo.put("isSlot", false);
             if (value) {
                 ValueSpecification vs = ((Property) e).getDefaultValue();
                 JSONArray singleElementSpecVsArray = new JSONArray();
@@ -1296,35 +1399,30 @@ public class ExportUtility {
                     fillValueSpecification(vs, newElement);
                     singleElementSpecVsArray.add(newElement);
                 }
-                specialization.put("value", singleElementSpecVsArray);
+                elementInfo.put("value", singleElementSpecVsArray);
             }
-            //specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
-            //specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
+            // specialization.put("upper", fillValueSpecification(((Property)e).getUpperValue(), null));
+            // specialization.put("lower", fillValueSpecification(((Property)e).getLowerValue(), null));
             if (ptype) {
                 Type type = ((Property) e).getType();
-                if (type != null) {
-                    specialization.put("propertyType", "" + type.getID());
-                }
-                else {
-                    specialization.put("propertyType", null);
-                }
+                elementInfo.put("propertyTypeId", (type == null) ? null : type.getID());
+
             }
-            specialization.put("multiplicityMin", (long) ((Property) e).getLower());
-            specialization.put("multiplicityMax", (long) ((Property) e).getUpper());
+            elementInfo.put("multiplicityMin", (long) ((Property) e).getLower());
+            elementInfo.put("multiplicityMax", (long) ((Property) e).getUpper());
 
             Collection<Property> cps = ((Property) e).getRedefinedProperty();
             JSONArray redefinedProperties = new JSONArray();
             for (Property cp : cps) {
                 redefinedProperties.add(getElementID(cp));
             }
-            specialization.put("redefines", redefinedProperties);
+            elementInfo.put("redefinesId", redefinedProperties);
 
         }
-        else { //if (e instanceof Slot) {
-            specialization.put("type", "Property");
-            specialization.put("isDerived", false);
-            specialization.put("isSlot", true);
-
+        else { // if (e instanceof Slot) {
+            elementInfo.put("type", "Property");
+            elementInfo.put("isDerived", false);
+            elementInfo.put("isSlot", true);
 
             // Retrieve a list of ValueSpecification objects.
             // Loop through these objects, creating a new JSONObject
@@ -1344,34 +1442,32 @@ public class ExportUtility {
                         specVsArray.add(newElement);
                     }
                 }
-                specialization.put("value", specVsArray);
+                elementInfo.put("value", specVsArray);
             }
             if (ptype) {
                 Element type = ((Slot) e).getDefiningFeature();
-                if (type != null) {
-                    specialization.put("propertyType", "" + type.getID());
-                }
+                elementInfo.put("propertyTypeId", (type == null) ? null : type.getID());
             }
         }
-        return specialization;
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillInstanceSpecificationSpecialization(InstanceSpecification e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillInstanceSpecificationSpecialization(InstanceSpecification e, JSONObject
+            elementInfo) {
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
         }
         if (e.getSpecification() != null) {
-            specialization.put("instanceSpecificationSpecification", fillValueSpecification(e.getSpecification(), null));
+            elementInfo.put("instanceSpecificationSpecification", fillValueSpecification(e.getSpecification(), null));
         }
         JSONArray classifiers = new JSONArray();
         for (Classifier c : e.getClassifier()) {
             classifiers.add(c.getID());
         }
-        specialization.put("classifier", classifiers);
-        specialization.put("type", "InstanceSpecification");
-        return specialization;
+        elementInfo.put("classifierId", classifiers);
+        elementInfo.put("type", "InstanceSpecification");
+        return elementInfo;
     }
 
     public static JSONObject sanitizeJSON(JSONObject spec) {
@@ -1389,19 +1485,18 @@ public class ExportUtility {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillAssociationSpecialization(Association e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillAssociationSpecialization(Association e, JSONObject elementInfo) {
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
         }
         int i = 0;
         for (Property p : e.getMemberEnd()) {
             if (i == 0) {
-                specialization.put("source", p.getID());
+                elementInfo.put("sourceId", p.getID());
                 // specialization.put("sourceAggregation", p.getAggregation().toString().toUpperCase());
             }
             else {
-                specialization.put("target", p.getID());
+                elementInfo.put("targetId", p.getID());
                 // specialization.put("targetAggregation", p.getAggregation().toString().toUpperCase());
             }
             i++;
@@ -1410,48 +1505,44 @@ public class ExportUtility {
         for (Property p : e.getOwnedEnd()) {
             owned.add(p.getID());
         }
-        specialization.put("ownedEnd", owned);
-        specialization.put("type", "Association");
-        return specialization;
+        elementInfo.put("ownedEnd", owned);
+        elementInfo.put("type", "Association");
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillPackage(Package e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillPackage(Package e, JSONObject elementInfo) {
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
         }
-        specialization.put("type", "Package");
-        specialization.put("isSite", Utils.isSiteChar(e));
-        return specialization;
+        elementInfo.put("type", "Package");
+        elementInfo.put("isSite", Utils.isSiteChar(e));
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject elementInfo) {
+        if (elementInfo != null) {
+            elementInfo.put("type", "Constraint");
+            ValueSpecification vspec = ((Constraint) e).getSpecification();
+            if (vspec != null) {
+                JSONObject cspec = new JSONObject();
+                fillValueSpecification(vspec, cspec);
+                elementInfo.put("specification", cspec);
+            }
         }
-        specialization.put("type", "Constraint");
-        ValueSpecification vspec = e.getSpecification();
-        if (vspec != null) {
-            JSONObject cspec = new JSONObject();
-            fillValueSpecification(vspec, cspec);
-            specialization.put("specification", cspec);
-        }
-        return specialization;
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillConnectorSpecialization(Connector e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillConnectorSpecialization(Connector e, JSONObject elementInfo) {
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
         }
-        specialization.put("type", "Connector");
+        elementInfo.put("type", "Connector");
         int i = 0;
         if (e.getEnd() == null) {
-            return spec;
+            return elementInfo;
         }
         for (ConnectorEnd end : e.getEnd()) {
             JSONArray propertyPath = new JSONArray();
@@ -1470,181 +1561,99 @@ public class ExportUtility {
                 propertyPath.add(end.getRole().getID());
             }
             if (i == 0) {
-                //specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
-                //specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
-                specialization.put("sourcePath", propertyPath);
+                // specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
+                // specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
+                elementInfo.put("sourcePathId", propertyPath);
             }
             else {
-                //specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
-                //specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
-                specialization.put("targetPath", propertyPath);
+                // specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
+                // specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
+                elementInfo.put("targetPathId", propertyPath);
             }
             i++;
         }
-        if (e.getType() == null) {
-            specialization.put("connectorType", null);
-        }
-        else {
-            specialization.put("connectorType", e.getType().getID());
-        }
-        specialization.put("connectorKind", "NONE");
-        return specialization;
-    }
-    
-    // See if the constraint expression is of the form, Equals(result, <valueSpec>).
-    // If so, just get the valueSpec instead of the whole expression.
-    protected static ValueSpecification getOperationMethodValueSpec( ValueSpecification valueSpec ) {
-        if ( valueSpec instanceof Expression ) {
-            Expression expr = (Expression)valueSpec;
-            if ( expr.getOperand() != null && expr.getOperand().size() == 3 ) {
-                // check for result parameter as second operand 
-                ValueSpecification operand  = expr.getOperand().get( 1 );
-                if ( operand instanceof ElementValue ) {
-                    ElementValue ev = (ElementValue)operand;
-                    Element elem = ev.getElement();
-                    if ( elem != null && elem instanceof NamedElement &&
-                            ((NamedElement)elem).getName().endsWith( "result" ) ) {
-                        // Found the result part of result = ...
-                        // Now see if the first operand is Equals. This
-                        // could be a literal string, "Equals," or it
-                        // could be an Operation named "Equals."
-                        boolean operationIsEquals = false;
-                        operand  = expr.getOperand().get( 0 );
-                        if ( operand instanceof LiteralString ) {
-                            LiteralString str = (LiteralString)operand;
-                            if ( str.getValue() != null && str.getValue().length() >= 2 &&
-                                    str.getValue().substring( 0, 2 ).equalsIgnoreCase( "eq" ) ) {
-                                // Literal string for operation is "Equals."
-                                operationIsEquals = true;
-                            }
-                        }
-                        // Check if it's an "Equals" Operation
-                        if ( !operationIsEquals && operand instanceof ElementValue ) {
-                            ElementValue evEq = (ElementValue)operand;
-                            Element elemEq = evEq.getElement();
-                            if ( elemEq != null && evEq instanceof Operation) {
-                                Operation op = (Operation)evEq;
-                                if ( op.getName() != null && op.getName().length() >= 2
-                                     && op.getName().substring( 0, 2 ).equalsIgnoreCase( "eq" ) ) {
-                                    operationIsEquals = true;
-                                }
-                            }
-                        }
-                        if ( operationIsEquals ) {
-                            // Use the third operand as the valueSpec to add.
-                            ValueSpecification vSpec = expr.getOperand().get( 2 );
-                            if ( vSpec != null ) {
-                                valueSpec = vSpec;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return valueSpec;
+        Association type = e.getType();
+        elementInfo.put("connectorTypeId", (type == null) ? null : type.getID());
+        elementInfo.put("connectorKind", (e.getKind() == null) ? null : e.getKind().toString());
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillOperationSpecialization(Operation e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillOperationSpecialization(Operation e, JSONObject elementInfo) {
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
         }
-        specialization.put("type", "Operation");
+        elementInfo.put("type", "Operation");
         List<Parameter> vsl = ((Operation) e).getOwnedParameter();
         if (vsl != null && vsl.size() > 0) {
-            specialization.put("parameters", makeJsonArrayOfIDs(vsl));
+            elementInfo.put("parametersId", makeJsonArrayOfIDs(vsl));
         }
-        //Find the postcondition constraint representing the operation's implementation.
-        if ( e.getPostcondition() != null && e.getPostcondition().size() > 1 ) {
-            log.warn( "The operation has multiple postconditions!  Will only export the first." );
+        else {
+            elementInfo.put("parametersId", new JSONArray());
         }
-        if ( e.getPostcondition() != null ) {
-            if ( justPostconditionIds ) {
-                specialization.put("postconditions", makeJsonArrayOfIDs(e.getPostcondition()));
-            } else {
-                for ( Constraint child : e.getPostcondition() ) {
-                    // See if the constraint expression is of the form, Equals(result, <valueSpec>).
-                    // If so, just get the valueSpec instead of the whole expression.
-                    ValueSpecification valueSpec = child.getSpecification();
-                    if ( valueSpec != null ) {
-                        valueSpec = getOperationMethodValueSpec( valueSpec );
-                        // Add the method value spec json.
-                        JSONObject methodJson = new JSONObject(); 
-                        fillValueSpecification( valueSpec, methodJson );
-                        specialization.put( "expression", methodJson );
-                    }
-                    // There should only be one postcondition, but in case there are
-                    // more, just break after the first.
-                    break;
-                }
-            }
-        }
-        return specialization;
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillParameterSpecialization(Parameter e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillParameterSpecialization(Parameter e, JSONObject elementInfo) {
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
         }
-        specialization.put("type", "Parameter");
-        if (e.getDirection() != null) {
-            specialization.put("direction", e.getDirection().toString());
-        }
-        if (e.getType() != null) {
-            specialization.put("parameterType", e.getType().getID());
-        }
-        //ValueSpecification defaultValue = p.getDefaultValue();
-        //if (defaultValue != null) {
-        //    specialization.put("parameterDefaultValue",
-        //           defaultValue.getID());
+        elementInfo.put("type", "Parameter");
+
+        ParameterDirectionKind dir = e.getDirection();
+        elementInfo.put("direction", (dir == null) ? null : dir.toString());
+
+        Type type = e.getType();
+        elementInfo.put("parameterTypeId", (type == null) ? null : type.getID());
+
+        // ValueSpecification defaultValue = p.getDefaultValue();
+        // if (defaultValue != null) {
+        // specialization.put("parameterDefaultValue",
+        // defaultValue.getID());
         // }
-        return specialization;
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject fillDirectedRelationshipSpecialization(DirectedRelationship e, JSONObject spec) {
-        JSONObject specialization = spec;
-        if (specialization == null) {
-            specialization = new JSONObject();
+    public static JSONObject fillDirectedRelationshipSpecialization(DirectedRelationship
+                                                                            e, JSONObject elementInfo) {
+        if (elementInfo == null) {
+            elementInfo = new JSONObject();
         }
         if (e instanceof Dependency) {
             if (StereotypesHelper.hasStereotype(e, "characterizes")) {
-                specialization.put("type", "Characterizes");
+                elementInfo.put("type", "Characterizes");
             }
-            else if (StereotypesHelper.hasStereotypeOrDerived(e,
-                    DocGen3Profile.queriesStereotype)) {
-                specialization.put("type", "Expose");
+            else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.queriesStereotype)) {
+                elementInfo.put("type", "Expose");
             }
             else {
-                specialization.put("type", "Dependency");
+                elementInfo.put("type", "Dependency");
             }
         }
         else if (e instanceof Generalization) {
             Stereotype conforms = Utils.getSysML14ConformsStereotype();
             if (conforms != null && StereotypesHelper.hasStereotypeOrDerived(e, conforms)) {
-                specialization.put("type", "Conform");
+                elementInfo.put("type", "Conform");
             }
             else {
-                specialization.put("type", "Generalization");
+                elementInfo.put("type", "Generalization");
             }
         }
+        else if (e instanceof ProtocolConformance) { // StateMachine
+            elementInfo.put("type", "ProtocolConformance");
+        }
         else {
-            specialization.put("type", "DirectedRelationship");
+            elementInfo.put("type", "DirectedRelationship");
         }
         Element client = ModelHelper.getClientElement(e);
         Element supplier = ModelHelper.getSupplierElement(e);
-        if (client != null) //this shouldn't happen
-        {
-            specialization.put("source", getElementID(client));
-        }
-        if (supplier != null) //this shouldn't happen
-        {
-            specialization.put("target", getElementID(supplier));
-        }
-        return specialization;
+        // (client != null) //this shouldn't happen
+        elementInfo.put("sourceId", (client == null) ? null : getElementID(client));
+        // (supplier != null) //this shouldn't happen
+        elementInfo.put("targetId", (supplier == null) ? null : getElementID(supplier));
+        return elementInfo;
     }
 
     @SuppressWarnings("unchecked")
@@ -1652,14 +1661,10 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
-        if (e instanceof NamedElement) {
-            info.put("name", ((NamedElement) e).getName());
-        }
-        else {
-            info.put("name", "");
-        }
+
+        info.put("name", (e instanceof NamedElement) ? ((NamedElement) e).getName() : "");
         return info;
     }
 
@@ -1668,7 +1673,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
         info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
         return info;
@@ -1679,7 +1684,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
 
         JSONArray propIDs = new JSONArray();
@@ -1687,7 +1692,7 @@ public class ExportUtility {
             for (Property prop : ((Class) e).getOwnedAttribute()) {
                 propIDs.add(getElementID(prop));
             }
-            info.put("ownedAttribute", propIDs);
+            info.put("ownedAttributeId", propIDs);
         }
         return info;
     }
@@ -1697,14 +1702,10 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
-        if (e.getOwner() == null) {
-            info.put("owner", null);
-        }
-        else {
-            info.put("owner", "" + getElementID(e.getOwner()));
-        }
+
+        info.put("ownerId", (e.getOwner() == null) ? null : getElementID(e.getOwner()));
         return info;
     }
 
@@ -1713,7 +1714,7 @@ public class ExportUtility {
         if (info == null) {
             info = new JSONObject();
         }
-        info.put("sysmlid", getElementID(e));
+        info.put("sysmlId", getElementID(e));
         return info;
     }
 
@@ -1722,7 +1723,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlid", getElementID(e));
+            info.put("sysmlId", getElementID(e));
         }
         info.put("isMetatype", false);
         if (e instanceof Stereotype) {
@@ -1736,7 +1737,7 @@ public class ExportUtility {
             for (Class c : StereotypesHelper.getBaseClasses((Stereotype) e)) {
                 metatypes.add(c.getID());
             }
-            info.put("metatypes", metatypes);
+            info.put("metatypesId", metatypes);
         }
         if (e instanceof Class) {
             try {
@@ -1757,17 +1758,17 @@ public class ExportUtility {
         if (baseClass != null) {
             applied.add(baseClass.getID());
         }
-        info.put("appliedMetatypes", applied);
+
+        info.put("appliedMetatypesId", applied);
         return info;
     }
 
-    //no one's using this, should consider removing it
+    // no one's using this, should consider removing it
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
         String tag = null;
         if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
-            tag = (String) StereotypesHelper.getStereotypePropertyFirst(model,
-                    "ModelManagementSystem", "baselineTag");
+            tag = (String) StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "baselineTag");
             if (tag == null || tag.equals("")) {
                 baselineNotSet = true;
                 // JOptionPane
@@ -1787,7 +1788,7 @@ public class ExportUtility {
         return tag;
     }
 
-    //no one uses this, should remove
+    // no one uses this, should remove
     public static boolean checkBaselineMount() {
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
@@ -1795,15 +1796,13 @@ public class ExportUtility {
             if (baselineTag == null) {
                 return true;
             }
-            List<String> tags = ProjectUtilities.getVersionTags(prj
-                    .getPrimaryProject());
+            List<String> tags = ProjectUtilities.getVersionTags(prj.getPrimaryProject());
             if (!tags.contains(baselineTag)) {
                 Utils.guilog("The current project is not an approved baseline version!");
                 return false;
             }
 
-            for (IAttachedProject proj : ProjectUtilities
-                    .getAllAttachedProjects(prj)) {
+            for (IAttachedProject proj : ProjectUtilities.getAllAttachedProjects(prj)) {
                 if (ProjectUtilities.isFromTeamworkServer(proj)) {
                     List<String> tags2 = ProjectUtilities.getVersionTags(proj);
                     if (!tags2.contains(baselineTag)) {
@@ -1819,15 +1818,12 @@ public class ExportUtility {
         return true;
     }
 
-    //no one uses this, should remove
+    // no one uses this, should remove
     public static boolean checkBaseline() {
-        /*if (!ExportUtility.checkBaselineMount()) {
-            Boolean con = Utils
-                    .getUserYesNoAnswer("Mount structure check did not pass (your project or mounts are not baseline versions)! Do you want to continue?");
-            // Utils.showPopupMessage("Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed");
-            if (con == null || !con)
-                return false;
-        }*/
+		/*
+		 * if (!ExportUtility.checkBaselineMount()) { Boolean con = Utils .getUserYesNoAnswer("Mount structure check did not pass (your project or mounts are not baseline versions)! Do you want to continue?"); // Utils.showPopupMessage(
+		 * "Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed"); if (con == null || !con) return false; }
+		 */
         return true;
     }
 
@@ -1868,149 +1864,49 @@ public class ExportUtility {
     }
 
     public static void sendProjectVersion(Element e) {
-        /*Project prj = Application.getInstance().getProject();
-        if (ProjectUtilities.isElementInAttachedProject(e)) {
-            IProject module = ProjectUtilities.getAttachedProject(e);
-            if (ProjectUtilities.isFromTeamworkServer(module)) {
-                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
-                ProjectVersion pv = new ProjectVersion(vd);
-                Integer teamwork = pv.getNumber();
-                sendProjectVersion(module.getProjectID(), teamwork);
-            }
-        } else {
-            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
-                sendProjectVersion(prj.getPrimaryProject().getProjectID(),
-                        TeamworkService.getInstance(prj).getVersion(prj)
-                                .getNumber());
-            }
-        }*/
+		/*
+		 * Project prj = Application.getInstance().getProject(); if (ProjectUtilities.isElementInAttachedProject(e)) { IProject module = ProjectUtilities.getAttachedProject(e); if (ProjectUtilities.isFromTeamworkServer(module)) {
+		 * IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork = pv.getNumber(); sendProjectVersion(module.getProjectID(), teamwork); } } else { if
+		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { sendProjectVersion(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber()); } }
+		 */
 
     }
 
     public static boolean okToExport(Element e) {
-        /*if (mountedVersions == null)
-            mountedVersions = new HashMap<String, Integer>();
-        Project prj = Application.getInstance().getProject();
-        if (ProjectUtilities.isElementInAttachedProject(e)) {
-            IAttachedProject module = ProjectUtilities.getAttachedProject(e);
-            if (ProjectUtilities.isFromTeamworkServer(module)) {
-                IVersionDescriptor vd = ProjectUtilities.getVersion(module);
-                ProjectVersion pv = new ProjectVersion(vd);
-                Integer teamwork = pv.getNumber();
-                // Integer teamwork =
-                // TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber();
-                Integer mms = getAlfrescoProjectVersion(module.getProjectID());
-                if (teamwork == mms || mms == null || teamwork >= mms)
-                    return true;
-                Boolean con = Utils
-                        .getUserYesNoAnswer("The element is in project "
-                                + module.getName()
-                                + " ("
-                                + teamwork
-                                + ") that is an older version of what's on the server ("
-                                + mms + "), do you want to continue export?");
-                if (con == null || !con)
-                    return false;
-            }
-            return true;
-        } else {
-            if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
-                Integer teamwork = TeamworkService.getInstance(prj)
-                        .getVersion(prj).getNumber();
-                Integer mms = getAlfrescoProjectVersion(prj.getPrimaryProject()
-                        .getProjectID());
-                if (teamwork == mms || mms == null || teamwork >= mms)
-                    return true;
-                Boolean con = Utils
-                        .getUserYesNoAnswer("The element is in project "
-                                + prj.getName()
-                                + " ("
-                                + teamwork
-                                + ") that is an older version of what's on the server ("
-                                + mms + "), do you want to continue export?");
-                if (con == null || !con)
-                    return false;
-            }
-            return true;
-        }*/
+		/*
+		 * if (mountedVersions == null) mountedVersions = new HashMap<String, Integer>(); Project prj = Application.getInstance().getProject(); if (ProjectUtilities.isElementInAttachedProject(e)) { IAttachedProject module =
+		 * ProjectUtilities.getAttachedProject(e); if (ProjectUtilities.isFromTeamworkServer(module)) { IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork =
+		 * pv.getNumber(); // Integer teamwork = // TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber(); Integer mms = getAlfrescoProjectVersion(module.getProjectID()); if (teamwork == mms || mms == null || teamwork >= mms)
+		 * return true; Boolean con = Utils .getUserYesNoAnswer("The element is in project " + module.getName() + " (" + teamwork + ") that is an older version of what's on the server (" + mms + "), do you want to continue export?"); if
+		 * (con == null || !con) return false; } return true; } else { if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { Integer teamwork = TeamworkService.getInstance(prj) .getVersion(prj).getNumber(); Integer mms =
+		 * getAlfrescoProjectVersion(prj.getPrimaryProject() .getProjectID()); if (teamwork == mms || mms == null || teamwork >= mms) return true; Boolean con = Utils .getUserYesNoAnswer("The element is in project " + prj.getName() + " (" +
+		 * teamwork + ") that is an older version of what's on the server (" + mms + "), do you want to continue export?"); if (con == null || !con) return false; } return true; }
+		 */
         return true;
     }
 
     public static boolean okToExport(Set<Element> set) {
-        /*Project prj = Application.getInstance().getProject();
-        mountedVersions = new HashMap<String, Integer>();
-        Map<String, String> projectNames = new HashMap<String, String>();
-        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
-            mountedVersions.put(prj.getPrimaryProject().getProjectID(),
-                    TeamworkService.getInstance(prj).getVersion(prj)
-                            .getNumber());
-            projectNames.put(prj.getPrimaryProject().getProjectID(),
-                    prj.getName());
-        }
-        for (Element e : set) {
-            if (ProjectUtilities.isElementInAttachedProject(e)) {
-                IProject module = ProjectUtilities.getAttachedProject(e);
-                if (ProjectUtilities.isFromTeamworkServer(module)
-                        && !mountedVersions.containsKey(module.getProjectID())) {
-                    IVersionDescriptor vd = ProjectUtilities.getVersion(module);
-                    ProjectVersion pv = new ProjectVersion(vd);
-                    Integer teamwork = pv.getNumber();
-                    mountedVersions.put(module.getProjectID(), teamwork);
-                    projectNames.put(module.getProjectID(), module.getName());
-                }
-            }
-        }
-        for (String prjId : mountedVersions.keySet()) {
-            Integer serverVersion = getAlfrescoProjectVersion(prjId);
-            if (serverVersion != null
-                    && serverVersion > mountedVersions.get(prjId)) {
-                Boolean con = Utils.getUserYesNoAnswer("Your project "
-                        + projectNames.get(prjId)
-                        + " is an older project version ("
-                        + mountedVersions.get(prjId)
-                        + ") than what's on the server (" + serverVersion
-                        + ") , do you want to continue?");
-                if (con == null || !con)
-                    return false;
-            }
-        }*/
+		/*
+		 * Project prj = Application.getInstance().getProject(); mountedVersions = new HashMap<String, Integer>(); Map<String, String> projectNames = new HashMap<String, String>(); if
+		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber());
+		 * projectNames.put(prj.getPrimaryProject().getProjectID(), prj.getName()); } for (Element e : set) { if (ProjectUtilities.isElementInAttachedProject(e)) { IProject module = ProjectUtilities.getAttachedProject(e); if
+		 * (ProjectUtilities.isFromTeamworkServer(module) && !mountedVersions.containsKey(module.getProjectID())) { IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork =
+		 * pv.getNumber(); mountedVersions.put(module.getProjectID(), teamwork); projectNames.put(module.getProjectID(), module.getName()); } } } for (String prjId : mountedVersions.keySet()) { Integer serverVersion =
+		 * getAlfrescoProjectVersion(prjId); if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) { Boolean con = Utils.getUserYesNoAnswer("Your project " + projectNames.get(prjId) + " is an older project version (" +
+		 * mountedVersions.get(prjId) + ") than what's on the server (" + serverVersion + ") , do you want to continue?"); if (con == null || !con) return false; } }
+		 */
         return true;
     }
 
     public static boolean okToExport() {
-        /*mountedVersions = new HashMap<String, Integer>();
-        Map<String, String> projectNames = new HashMap<String, String>();
-        Project prj = Application.getInstance().getProject();
-        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
-            mountedVersions.put(prj.getPrimaryProject().getProjectID(),
-                    TeamworkService.getInstance(prj).getVersion(prj)
-                            .getNumber());
-            projectNames.put(prj.getPrimaryProject().getProjectID(),
-                    prj.getName());
-        }
-        for (IAttachedProject p : ProjectUtilities.getAllAttachedProjects(prj)) {
-            if (ProjectUtilities.isFromTeamworkServer(p)) {
-                IVersionDescriptor vd = ProjectUtilities.getVersion(p);
-                ProjectVersion pv = new ProjectVersion(vd);
-                Integer teamwork = pv.getNumber();
-                mountedVersions.put(p.getProjectID(), teamwork);
-                projectNames.put(p.getProjectID(), p.getName());
-            }
-        }
-        for (String prjId : mountedVersions.keySet()) {
-            Integer serverVersion = getAlfrescoProjectVersion(prjId);
-            if (serverVersion != null
-                    && serverVersion > mountedVersions.get(prjId)) {
-                Boolean con = Utils.getUserYesNoAnswer("Your project "
-                        + projectNames.get(prjId)
-                        + " is an older project version ("
-                        + mountedVersions.get(prjId)
-                        + ") than what's on the server (" + serverVersion
-                        + ") , do you want to continue?");
-                if (con == null || !con)
-                    return false;
-            }
-        }*/
+		/*
+		 * mountedVersions = new HashMap<String, Integer>(); Map<String, String> projectNames = new HashMap<String, String>(); Project prj = Application.getInstance().getProject(); if
+		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber());
+		 * projectNames.put(prj.getPrimaryProject().getProjectID(), prj.getName()); } for (IAttachedProject p : ProjectUtilities.getAllAttachedProjects(prj)) { if (ProjectUtilities.isFromTeamworkServer(p)) { IVersionDescriptor vd =
+		 * ProjectUtilities.getVersion(p); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork = pv.getNumber(); mountedVersions.put(p.getProjectID(), teamwork); projectNames.put(p.getProjectID(), p.getName()); } } for (String
+		 * prjId : mountedVersions.keySet()) { Integer serverVersion = getAlfrescoProjectVersion(prjId); if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) { Boolean con = Utils.getUserYesNoAnswer("Your project " +
+		 * projectNames.get(prjId) + " is an older project version (" + mountedVersions.get(prjId) + ") than what's on the server (" + serverVersion + ") , do you want to continue?"); if (con == null || !con) return false; } }
+		 */
         return true;
     }
 
@@ -2036,7 +1932,7 @@ public class ExportUtility {
         }
         Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
-        //send(url, tosend.toJSONString(), null, false);
+        // send(url, tosend.toJSONString(), null, false);
     }
 
     public static void sendProjectVersion(String projId, Integer version) {
@@ -2057,7 +1953,7 @@ public class ExportUtility {
         }
         Utils.guilog("[INFO] Request is added to queue.");
         OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
-        //send(url, tosend.toJSONString(), null, false);
+        // send(url, tosend.toJSONString(), null, false);
     }
 
     public static String initializeBranchVersion(String taskId) {
@@ -2071,8 +1967,8 @@ public class ExportUtility {
         tosend.put("source", "magicdraw");
         tosend.put("mmsVersion", DocGenPlugin.VERSION);
         array.add(moduleJson);
-        //OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
-        return ExportUtility.send(projUrl, tosend.toJSONString()/*, null*/, false, false);
+        // OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
+        return ExportUtility.send(projUrl, tosend.toJSONString()/* , null */, false, false);
     }
 
     public static void initializeDurableQueue(String taskId) {
@@ -2130,7 +2026,7 @@ public class ExportUtility {
         return StringEscapeUtils.unescapeHtml(s);
     }
 
-    //whether something should be sent to alfresco - ignore specific slots, documentation comment elements, value specs, empty instance specs (most likely from just stereotype application)
+    // whether something should be sent to alfresco - ignore specific slots, documentation comment elements, value specs, empty instance specs (most likely from just stereotype application)
     public static boolean shouldAdd(Element e) {
         if (e == null || e instanceof ValueSpecification || e instanceof Extension
                 || e instanceof ProfileApplication) {
@@ -2219,7 +2115,7 @@ public class ExportUtility {
         if (name != null) {
             result.put("name", name);
         }
-        result.put("sysmlid", projId);
+        result.put("sysmlId", projId);
         JSONObject spec = new JSONObject();
         spec.put("type", "Project");
         if (version != null) {
@@ -2248,23 +2144,20 @@ public class ExportUtility {
         }
         return branch;
     }
-    
+
     /**
      * Method to check if the currently logged in user has permissions to edit the specified site on
      * the specified server.
-     * 
-     * @param url
-     *          The url of the mms server you are querying. Ex: "https://mms.myOrg.gov". 
-     *          Also accepts the url returned by the getUrl() function. 
-     * @param site
-     *          Site name (sysmlid) of the site you are querying for
-     * @return
-     *          true if the site lists "editable":"true" for the logged in user, false otherwise
+     *
+     * @param url  The url of the mms server you are querying. Ex: "https://mms.myOrg.gov".
+     *             Also accepts the url returned by the getUrl() function.
+     * @param site Site name (sysmlid) of the site you are querying for
+     * @return true if the site lists "editable":"true" for the logged in user, false otherwise
      * @throws ServerException
      */
     public static boolean hasSiteEditPermission(String url, String site) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-        
+
         //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
         if (url.endsWith("/alfresco/service")) {
             url += "/workspaces/master/sites";
@@ -2272,7 +2165,7 @@ public class ExportUtility {
         else {
             url += "/alfresco/service/workspaces/master/sites";
         }
-        
+
         checkAndResetTicket(url);
         url = addTicketToUrl(url);
         GetMethod gm = new GetMethod(url);
@@ -2284,7 +2177,7 @@ public class ExportUtility {
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             if (print) {
-                log.info("sites response: " + code + " " + json);                
+                log.info("sites response: " + code + " " + json);
             }
             if (code == 200) {
                 JSONObject siteResponse;

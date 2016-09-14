@@ -1,15 +1,5 @@
 package gov.nasa.jpl.mbee.ems;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -17,31 +7,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceValue;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Parameter;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ParameterDirectionKindEnum;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.StructuralFeature;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
@@ -83,15 +49,16 @@ public class ImportUtility {
         DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>> graph = new DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>>();
         Map<String, JSONObject> id2ob = new HashMap<>();
         for (JSONObject ob : newElements) {
-            String sysmlid = (String) ob.get("sysmlid");
-            if (sysmlid == null)
+            String sysmlid = (String) ob.get("sysmlId");
+            if (sysmlid == null) {
                 continue;
+            }
             id2ob.put(sysmlid, ob);
             graph.addVertex(ob);
         }
         Map<String, JSONObject> fail = new HashMap<String, JSONObject>();
         for (JSONObject ob : newElements) {
-            String sysmlid = (String) ob.get("sysmlid");
+            String sysmlid = (String) ob.get("sysmlId");
             String ownerid = (String) ob.get("owner");
             Element newE = ExportUtility.getElementFromID(sysmlid);
             Element ownerE = ExportUtility.getElementFromID(ownerid);
@@ -99,12 +66,14 @@ public class ImportUtility {
                 fail.put(sysmlid, ob);
                 continue;
             }
-            if (newE != null || ownerE != null)
+            if (newE != null || ownerE != null) {
                 continue;
+            }
             JSONObject newj = id2ob.get(sysmlid);
             JSONObject ownerj = id2ob.get(ownerid);
-            if (newj != null && ownerj != null)
+            if (newj != null && ownerj != null) {
                 graph.addEdge(newj, ownerj);
+            }
         }
 
         SortedSet<JSONObject> reverse = (new TopologicalSort()).topological_sort(graph);
@@ -149,6 +118,8 @@ public class ImportUtility {
     public static Element createElement(JSONObject ob, boolean updateRelations, boolean ignoreOwner) throws ImportException {
         Project project = Application.getInstance().getProject();
         ElementsFactory ef = project.getElementsFactory();
+        ClassClass cll = ef.getClassClass();
+        InstanceSpecificationClass isc = ef.getInstanceSpecificationClass();
         project.getCounter().setCanResetIDForObject(true);
         if (!ignoreOwner) {
             String ownerId = (String) ob.get("owner");
@@ -162,10 +133,11 @@ public class ImportUtility {
         // For all new elements the should be the following fields
         // should be present: name, owner, and documentation
         //
-        String sysmlID = (String) ob.get("sysmlid");
+        String sysmlID = (String) ob.get("sysmlId");
         Element existing = ExportUtility.getElementFromID(sysmlID);
-        if (existing != null && !updateRelations)
-            return existing; //maybe jms feedback
+        if (existing != null && !updateRelations) {
+            return existing; // maybe jms feedback
+        }
         JSONObject specialization = (JSONObject) ob.get("specialization");
         String elementType = "Element";
         if (specialization != null) {
@@ -180,22 +152,24 @@ public class ImportUtility {
                 }
                 Stereotype sysmlView = Utils.getViewClassStereotype();
                 if (updateRelations) {
-                    //StereotypesHelper.addStereotype(newE, sysmlView);
+                    // StereotypesHelper.addStereotype(newE, sysmlView);
                     setOrCreateAsi(sysmlView, newE);
                     // server-side only view instances obsoletes this
                     //setViewConstraint(newE, specialization);
                 }
-            } else if (elementType.equalsIgnoreCase("viewpoint")) {
+            }
+            else if (elementType.equalsIgnoreCase("viewpoint")) {
                 if (newE == null) {
                     Class view = ef.createClassInstance();
                     newE = view;
                 }
                 if (updateRelations) {
                     Stereotype sysmlView = Utils.getViewpointStereotype();
-                    //StereotypesHelper.addStereotype(newE, sysmlView);
+                    // StereotypesHelper.addStereotype(newE, sysmlView);
                     setOrCreateAsi(sysmlView, newE);
                 }
-            } else if (elementType.equalsIgnoreCase("Property")) {
+            }
+            else if (elementType.equalsIgnoreCase("Property")) {
                 JSONArray vals = (JSONArray) specialization.get("value");
                 Boolean isSlot = (Boolean) specialization.get("isSlot");
                 if (isSlot != null && isSlot) {
@@ -207,27 +181,36 @@ public class ImportUtility {
                             String[] ids = sysmlID.split("-slot-");
                             if (ids.length == 2) {
                                 Element definingFeature = (Element) prj.getElementByID(ids[1]);
-                                if (definingFeature instanceof StructuralFeature)
+                                if (definingFeature instanceof StructuralFeature) {
                                     newSlot.setDefiningFeature((StructuralFeature) definingFeature);
-                                else
+                                }
+                                else {
                                     throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
-                            } else
+                                }
+                            }
+                            else {
                                 throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                            }
                         }
                     }
-                    if (specialization.containsKey("value"))
+                    if (specialization.containsKey("value")) {
                         setSlotValues((Slot) newE, vals);
-                } else {
+                    }
+                }
+                else {
                     if (newE == null) {
                         Property newProperty = ef.createPropertyInstance();
                         newE = newProperty;
                     }
-                    if (specialization.containsKey("value"))
+                    if (specialization.containsKey("value")) {
                         setPropertyDefaultValue((Property) newE, vals);
-                    if (specialization.containsKey("propertyType"))
+                    }
+                    if (specialization.containsKey("propertyType")) {
                         setProperty((Property) newE, specialization);
+                    }
                 }
-            } else if (elementType.equalsIgnoreCase("Dependency")
+            }
+            else if (elementType.equalsIgnoreCase("Dependency")
                     || elementType.equalsIgnoreCase("Expose")
                     || elementType.equalsIgnoreCase("DirectedRelationship")
                     || elementType.equalsIgnoreCase("Characterizes")) {
@@ -235,90 +218,107 @@ public class ImportUtility {
                     Dependency newDependency = ef.createDependencyInstance();
                     newE = newDependency;
                 }
-                if (updateRelations)
+                if (updateRelations) {
                     setRelationshipEnds((Dependency) newE, specialization);
+                }
                 if (elementType.equalsIgnoreCase("Characterizes")) {
                     Stereotype character = Utils.getCharacterizesStereotype();
                     StereotypesHelper.addStereotype((Dependency) newE, character);
-                } else if (elementType.equalsIgnoreCase("Expose")) {
+                }
+                else if (elementType.equalsIgnoreCase("Expose")) {
                     Stereotype expose = Utils.getExposeStereotype();
                     StereotypesHelper.addStereotype((Dependency) newE, expose);
                 }
-            } else if (elementType.equalsIgnoreCase("Generalization") || elementType.equalsIgnoreCase("Conform")) {
+            }
+            else if (elementType.equalsIgnoreCase("Generalization") || elementType.equalsIgnoreCase("Conform")) {
                 if (newE == null) {
                     Generalization newGeneralization = ef.createGeneralizationInstance();
                     newE = newGeneralization;
                 }
-                if (updateRelations)
+                if (updateRelations) {
                     setRelationshipEnds((Generalization) newE, specialization);
+                }
                 if (elementType.equalsIgnoreCase("Conform")) {
                     Stereotype conform = Utils.getSysML14ConformsStereotype();
                     StereotypesHelper.addStereotype((Generalization) newE, conform);
                 }
-            } else if (elementType.equalsIgnoreCase("Package")) {
+            }
+            else if (elementType.equalsIgnoreCase("Package")) {
                 if (newE == null) {
                     Package newPackage = ef.createPackageInstance();
                     newE = newPackage;
                 }
-            } else if (elementType.equalsIgnoreCase("Constraint")) {
+            }
+            else if (elementType.equalsIgnoreCase("Constraint")) {
                 if (newE == null) {
                     Constraint c = ef.createConstraintInstance();
                     newE = c;
                 }
                 setConstraintSpecification((Constraint) newE, specialization);
-            } else if (elementType.equalsIgnoreCase("Parameter")) {
-                if ( newE == null) {
+            }
+            else if (elementType.equalsIgnoreCase("Parameter")) {
+                if (newE == null) {
                     Parameter p = ef.createParameterInstance();
                     newE = p;
                 }
-                setParameter((Parameter)newE, specialization);
-            } else if (elementType.equalsIgnoreCase("Operation")) {
+                setParameter((Parameter) newE, specialization);
+            }
+            else if (elementType.equalsIgnoreCase("Operation")) {
                 if (newE == null) {
                     Operation c = ef.createOperationInstance();
                     newE = c;
                 }
-                setOperationSpecification((Operation)newE, specialization);
-            } else if (elementType.equalsIgnoreCase("Product")) {
+                setOperationSpecification((Operation) newE, specialization);
+            }
+            else if (elementType.equalsIgnoreCase("Product")) {
                 if (newE == null) {
                     Class prod = ef.createClassInstance();
                     newE = prod;
                 }
                 if (updateRelations) {
                     Stereotype product = Utils.getDocumentStereotype();
-                    //StereotypesHelper.addStereotype(newE, product);
+                    // StereotypesHelper.addStereotype(newE, product);
                     setOrCreateAsi(product, newE);
                     // server-side only view instances obsoletes this
                     //setViewConstraint(newE, specialization);
                 }
-            } else if (elementType.equalsIgnoreCase("Association")) {
+            }
+            else if (elementType.equalsIgnoreCase("Association")) {
                 if (newE == null) {
                     Association ac = ef.createAssociationInstance();
                     newE = ac;
                 }
-                if (updateRelations)
+                if (updateRelations) {
                     setAssociation((Association) newE, specialization);
-            } else if (elementType.equalsIgnoreCase("Connector")) {
+                }
+            }
+            else if (elementType.equalsIgnoreCase("Connector")) {
                 if (newE == null) {
                     Connector conn = ef.createConnectorInstance();
                     newE = conn;
                 }
-                if (updateRelations)
+                if (updateRelations) {
                     setConnectorEnds((Connector) newE, specialization);
-            } else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
+                }
+            }
+            else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
                 if (newE == null) {
                     InstanceSpecification is = ef.createInstanceSpecificationInstance();
                     newE = is;
                 }
                 setInstanceSpecification((InstanceSpecification) newE, specialization);
-            } else if (newE == null) {
+            }
+            else if (newE == null) {
                 Class newElement = ef.createClassInstance();
                 newE = newElement;
             }
             setName(newE, ob);
             if (!ignoreOwner && !(newE.getOwner() != null && ob.get("owner") instanceof String &&
                     ((String) ob.get("owner")).contains("holding_bin")))
-                //don't update owner if trying to update existing element's owner to under a holding bin
+            //don't update owner if trying to update existing element's owner to under a holding bin
+            {
                 setOwner(newE, ob);
+            }
             setDocumentation(newE, ob);
             setOwnedAttribute(newE, ob);
             newE.setID(sysmlID);
@@ -330,41 +330,45 @@ public class ImportUtility {
             setName(newE, ob);
             if (!(newE.getOwner() != null && ob.get("owner") instanceof String &&
                     ((String) ob.get("owner")).contains("holding_bin")))
-                //don't update owner if trying to update existing element's owner to under a holding bin
+            //don't update owner if trying to update existing element's owner to under a holding bin
+            {
                 setOwner(newE, ob);
+            }
             setDocumentation(newE, ob);
             newE.setID(sysmlID);
             throw ex;
         }
         return newE;
     }
-    
-    public static void setParameter( Parameter param,
-                                     JSONObject specialization ) {
-        Object o = specialization.get( "direction" );
+
+    public static void setParameter(Parameter param,
+                                    JSONObject specialization) {
+        Object o = specialization.get("direction");
         String direction = null;
-        if ( o instanceof String ) {
-            direction = (String)o;
+        if (o instanceof String) {
+            direction = (String) o;
         }
-        param.setDirection( ParameterDirectionKindEnum.get(direction) );
-        
-        o = specialization.get( "parameterType" );
+        param.setDirection(ParameterDirectionKindEnum.get(direction));
+
+        o = specialization.get("parameterType");
         String ptype = null;
-        if ( o instanceof String ) {
-            ptype = (String)o;
+        if (o instanceof String) {
+            ptype = (String) o;
         }
-        
+
         if (ptype != null) {
             Object obj = ExportUtility.getElementFromID(ptype);
             Type t = null;
-            if ( obj instanceof Type ) {
-                t = (Type)obj;
+            if (obj instanceof Type) {
+                t = (Type) obj;
             }
-            if (t != null)
+            if (t != null) {
                 param.setType(t);
-            else
+            }
+            else {
                 log.info("[IMPORT/AUTOSYNC PROPERTY TYPE] prevent mistaken null type");
-                //something bad happened
+            }
+            //something bad happened
         }
     }
 
@@ -378,23 +382,30 @@ public class ImportUtility {
                 String type = (String) spec.get("type");
                 if (type != null && type.equals("Property") && e instanceof Property) {
                     setProperty((Property) e, spec);
-                    if (spec.containsKey("value"))
+                    if (spec.containsKey("value")) {
                         setPropertyDefaultValue((Property) e, (JSONArray) spec.get("value"));
+                    }
                     //                if (spec.containsKey("propertyType"))
                     //                    setProperty((Property)e, spec);
                 }
-                if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value"))
+                if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value")) {
                     setSlotValues((Slot) e, (JSONArray) spec.get("value"));
-                if (type != null && e instanceof DirectedRelationship)
+                }
+                if (type != null && e instanceof DirectedRelationship) {
                     setRelationshipEnds((DirectedRelationship) e, spec);
-                if (type != null && e instanceof Constraint && type.equals("Constraint"))
+                }
+                if (type != null && e instanceof Constraint && type.equals("Constraint")) {
                     setConstraintSpecification((Constraint) e, spec);
-                if (type != null && e instanceof Operation && type.equals("Operation"))
-                    setOperationSpecification((Operation)e, spec);
-                if (type != null && e instanceof Parameter && type.equals("Parameter"))
-                    setParameter((Parameter)e, spec);
-                if (type != null && e instanceof Connector && type.equals("Connector"))
+                }
+                if (type != null && e instanceof Operation && type.equals("Operation")) {
+                    setOperationSpecification((Operation) e, spec);
+                }
+                if (type != null && e instanceof Parameter && type.equals("Parameter")) {
+                    setParameter((Parameter) e, spec);
+                }
+                if (type != null && e instanceof Connector && type.equals("Connector")) {
                     setConnectorEnds((Connector) e, spec);
+                }
                 if (type != null && e instanceof Association && type.equals("Association")) {
                     try {
                         setAssociation((Association) e, spec);
@@ -402,8 +413,9 @@ public class ImportUtility {
 
                     }
                 }
-                if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification"))
+                if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification")) {
                     setInstanceSpecification((InstanceSpecification) e, spec);
+                }
                 // server-side only view instances obsoletes this
                 /*if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
                     setViewConstraint(e, spec);*/
@@ -427,7 +439,8 @@ public class ImportUtility {
         if (specialization != null && specialization.containsKey("contents")) {
             if (specialization.get("contents") == null) {
                 c.setSpecification(null);
-            } else {
+            }
+            else {
                 try {
                     c.setSpecification(createValueSpec((JSONObject) specialization.get("contents"), c.getSpecification()));
                 } catch (ReferenceException ex) {
@@ -437,26 +450,30 @@ public class ImportUtility {
         }
         if (specialization.containsKey("displayedElements")) {
             JSONArray des = (JSONArray) specialization.get("displayedElements");
-            if (des != null)
+            if (des != null) {
                 StereotypesHelper.setStereotypePropertyValue(e, Utils.getViewClassStereotype(), "elements", des.toJSONString());
+            }
         }
     }
 
     public static void setName(Element e, JSONObject o) {
-        if (!o.containsKey("name"))
+        if (!o.containsKey("name")) {
             return;
+        }
         String name = (String) o.get("name");
         setName(e, name);
     }
 
     public static void setName(Element e, String name) {
-        if (e instanceof NamedElement && name != null)
+        if (e instanceof NamedElement && name != null) {
             ((NamedElement) e).setName(ExportUtility.unescapeHtml(name));
+        }
     }
 
     public static void setOwner(Element e, JSONObject o) {
-        if (!o.containsKey("owner"))
+        if (!o.containsKey("owner")) {
             return;
+        }
         String ownerId = (String) o.get("owner");
         if ((ownerId == null) || (ownerId.isEmpty())) {
             Utils.guilog("[ERROR] Owner not specified for mms sync add");
@@ -464,8 +481,9 @@ public class ImportUtility {
         }
         Element owner = ExportUtility.getElementFromID(ownerId);
         if (owner == null) {
-            if (shouldOutputError)
+            if (shouldOutputError) {
                 Utils.guilog("[ERROR] Owner not found for mms sync add");
+            }
             return;
         }
         e.setOwner(owner);
@@ -475,15 +493,17 @@ public class ImportUtility {
     }
 
     public static void setDocumentation(Element e, JSONObject o) {
-        if (!o.containsKey("documentation"))
+        if (!o.containsKey("documentation")) {
             return;
+        }
         String doc = (String) o.get("documentation");
         setDocumentation(e, doc);
     }
 
     public static void setDocumentation(Element e, String doc) {
-        if (doc != null)
+        if (doc != null) {
             ModelHelper.setComment(e, Utils.addHtmlWrapper(doc));
+        }
     }
 
     public static void setOwnedAttribute(Element e, JSONObject o) {
@@ -494,8 +514,9 @@ public class ImportUtility {
             for (Object a : attr) {
                 if (a instanceof String) {
                     Element prop = ExportUtility.getElementFromID((String) a);
-                    if (prop instanceof Property)
+                    if (prop instanceof Property) {
                         ordered.add((Property) prop);
+                    }
                 }
             }
             //if (ordered.size() < c.getOwnedAttribute().size())
@@ -513,8 +534,10 @@ public class ImportUtility {
             } catch (ReferenceException ex) {
                 throw new ImportException(is, specialization, "Specification: " + ex.getMessage(), ex);
             }
-        } else
+        }
+        else {
             is.setSpecification(null);
+        }
         if (specialization.containsKey("classifier")) {
             JSONArray classifier = (JSONArray) specialization.get("classifier");
             if (classifier == null || classifier.isEmpty()) {
@@ -526,12 +549,14 @@ public class ImportUtility {
                 Element e = ExportUtility.getElementFromID((String) id);
                 if (e instanceof Classifier) {
                     newClassifiers.add((Classifier) e);
-                } else {
+                }
+                else {
                     //throw new ImportException(is, specialization, (String)id + " is not a classifier");
                 }
             }
-            if (newClassifiers.isEmpty())
+            if (newClassifiers.isEmpty()) {
                 throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
+            }
             is.getClassifier().clear();
             is.getClassifier().addAll(newClassifiers);
         }
@@ -545,17 +570,20 @@ public class ImportUtility {
         if (source != null && target != null) {
             ModelHelper.setSupplierElement(dr, target);
             ModelHelper.setClientElement(dr, source);
-        } else {
+        }
+        else {
             log.info("[IMPORT/SYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
             throw (new ReferenceException(dr, specialization, "Directed relationship has no source or target"));
         }
     }
 
     public static void setPropertyDefaultValue(Property p, JSONArray values) throws ReferenceException {
-        if (values != null && values.size() > 0)
+        if (values != null && values.size() > 0) {
             p.setDefaultValue(createValueSpec((JSONObject) values.get(0), p.getDefaultValue()));
-        if (values != null && values.isEmpty())
+        }
+        if (values != null && values.isEmpty()) {
             p.setDefaultValue(null);
+        }
     }
 
     public static void setProperty(Property p, JSONObject spec) {
@@ -563,17 +591,20 @@ public class ImportUtility {
         String ptype = (String) spec.get("propertyType");
         if (ptype != null) {
             Type t = (Type) ExportUtility.getElementFromID(ptype);
-            if (t != null)
+            if (t != null) {
                 p.setType(t);
-            else
+            }
+            else {
                 log.info("[IMPORT/SYNC PROPERTY TYPE] prevent mistaken null type");
+            }
             //something bad happened
         }
 
         // set aggregation here
         AggregationKind aggr = null;
-        if (spec.get("aggregation") != null)
+        if (spec.get("aggregation") != null) {
             aggr = AggregationKindEnum.getByName(((String) spec.get("aggregation")).toLowerCase());
+        }
         if (aggr != null) {
             p.setAggregation(aggr);
         }
@@ -583,12 +614,15 @@ public class ImportUtility {
         if (spmin != null) {
             try {
                 ValueSpecification pmin = p.getLowerValue();
-                if (pmin == null)
+                if (pmin == null) {
                     pmin = ef.createLiteralIntegerInstance();
-                if (pmin instanceof LiteralInteger)
+                }
+                if (pmin instanceof LiteralInteger) {
                     ((LiteralInteger) pmin).setValue(spmin.intValue());
-                if (pmin instanceof LiteralUnlimitedNatural)
+                }
+                if (pmin instanceof LiteralUnlimitedNatural) {
                     ((LiteralUnlimitedNatural) pmin).setValue(spmin.intValue());
+                }
                 p.setLowerValue(pmin);
             } catch (NumberFormatException en) {
             }
@@ -597,24 +631,28 @@ public class ImportUtility {
         if (spmax != null) {
             try {
                 ValueSpecification pmax = p.getUpperValue();
-                if (pmax == null)
+                if (pmax == null) {
                     pmax = ef.createLiteralUnlimitedNaturalInstance();
-                if (pmax instanceof LiteralInteger)
+                }
+                if (pmax instanceof LiteralInteger) {
                     ((LiteralInteger) pmax).setValue(spmax.intValue());
-                if (pmax instanceof LiteralUnlimitedNatural)
+                }
+                if (pmax instanceof LiteralUnlimitedNatural) {
                     ((LiteralUnlimitedNatural) pmax).setValue(spmax.intValue());
+                }
                 p.setUpperValue(pmax);
             } catch (NumberFormatException en) {
             }
         }
         JSONArray redefineds = (JSONArray) spec.get("redefines");
         Collection<Property> redefinedps = p.getRedefinedProperty();
-        if (redefineds != null && redefineds.size() != 0) { //for now prevent accidental removal of things in case server doesn't have the right reference
+        if (redefineds != null && redefineds.size() != 0) { // for now prevent accidental removal of things in case server doesn't have the right reference
             redefinedps.clear();
             for (Object redefined : redefineds) {
                 Property redefinedp = (Property) ExportUtility.getElementFromID((String) redefined);
-                if (redefinedp != null)
+                if (redefinedp != null) {
                     redefinedps.add(redefinedp);
+                }
             }
         }
     }
@@ -624,20 +662,24 @@ public class ImportUtility {
     }
 
     public static void setSlotValues(Slot s, JSONArray values) throws ReferenceException {
-        if (values == null)
+        if (values == null) {
             return;
+        }
         List<ValueSpecification> originals = new ArrayList<ValueSpecification>(s.getValue());
         List<ValueSpecification> origs = new ArrayList<ValueSpecification>(originals);
         try {
             s.getValue().clear();
             for (Object o : values) {
                 ValueSpecification vs = null;
-                if (originals.size() > 0)
+                if (originals.size() > 0) {
                     vs = createValueSpec((JSONObject) o, originals.remove(0));
-                else
+                }
+                else {
                     vs = createValueSpec((JSONObject) o, null);
-                if (vs != null)
+                }
+                if (vs != null) {
                     s.getValue().add(vs);
+                }
             }
         } catch (ReferenceException ex) {
             s.getValue().clear();
@@ -647,8 +689,9 @@ public class ImportUtility {
     }
 
     public static void setConstraintSpecification(Constraint c, JSONObject spec) throws ImportException {
-        if (!spec.containsKey("specification"))
+        if (!spec.containsKey("specification")) {
             return;
+        }
         JSONObject sp = (JSONObject) spec.get("specification");
         if (sp != null) {
             try {
@@ -662,9 +705,9 @@ public class ImportUtility {
     /**
      * Get the "postconditions" array of constraint ids from the specialization
      * json and set the postconditions of the input Operation to the corresponding
-     * list of constraints. If there is no "postconditions" key in the json, do 
+     * list of constraints. If there is no "postconditions" key in the json, do
      * not change the existing postconditions.
-     * 
+     *
      * @param operation
      * @param specialization
      * @return
@@ -672,54 +715,57 @@ public class ImportUtility {
     protected static boolean setPostconditions(Operation operation,
                                                JSONObject specialization) {
         boolean changed = false;
-        JSONArray arr = (JSONArray)specialization.get("postconditions");
-        if ( arr == null ) return changed;
-        if ( operation.getPostcondition() == null ) {
+        JSONArray arr = (JSONArray) specialization.get("postconditions");
+        if (arr == null) {
+            return changed;
+        }
+        if (operation.getPostcondition() == null) {
             log.error("Trying to set Postconditions of Operation, " + operation
-                      + ", but it is null!");
+                    + ", but it is null!");
             return changed;
         }
         HashSet<Constraint> oldPostconds = new HashSet<Constraint>(operation.getPostcondition());
         operation.getPostcondition().clear();
-        for ( int i = 0; i < arr.size(); ++i) {
+        for (int i = 0; i < arr.size(); ++i) {
             String id = (String) arr.get(i);
             Element o = ExportUtility.getElementFromID(id);
-            if ( o instanceof Constraint ) {
-                Constraint c = (Constraint)o;
+            if (o instanceof Constraint) {
+                Constraint c = (Constraint) o;
                 operation.getPostcondition().add(c);
-                if ( !changed && !oldPostconds.contains(c) ) {
+                if (!changed && !oldPostconds.contains(c)) {
                     changed = true;
                 }
-            } else {
-                log.error("Trying to add something (" + o 
-                          + ") that is not a Constraint to Postconditions of Operation, "
-                          + operation);
+            }
+            else {
+                log.error("Trying to add something (" + o
+                        + ") that is not a Constraint to Postconditions of Operation, "
+                        + operation);
             }
         }
         // The statement below assumes that the set of Postconditions does not contain duplicates.
         changed = changed || (oldPostconds.size() != operation.getPostcondition().size());
         return changed;
     }
-    
+
     /**
-     * Set the Parameters of the Operation as well as its owned Postcondition as 
+     * Set the Parameters of the Operation as well as its owned Postcondition as
      * the specification of the Operation.
-     * 
+     *
      * @param operation
      * @param spec
      * @throws ImportException
      */
     public static void setOperationSpecification(Operation operation,
-                                                    JSONObject spec) throws ImportException {
+                                                 JSONObject spec) throws ImportException {
         // update parameters from expression
         Object params = spec.get("parameters");
-        JSONArray jarr = (JSONArray)(params instanceof JSONArray ? params : null);
+        JSONArray jarr = (JSONArray) (params instanceof JSONArray ? params : null);
         setOperationParameters(operation, jarr);
 
         // If the expression for the operation is not embedded in the
         // specialization json (spec), set the postconditions to the array in
         // the input json.
-        if ( spec.containsKey( "postconditions" ) ) {
+        if (spec.containsKey("postconditions")) {
             setPostconditions(operation, spec);
             if (ExportUtility.justPostconditionIds) {
                 return;
@@ -732,145 +778,158 @@ public class ImportUtility {
         try {
             // not sure what the agreed-upon key was for the expression
             o = spec.get("expression");
-            sp = (JSONObject)o;
+            sp = (JSONObject) o;
             if (sp == null) {
                 o = spec.get("method");
-                sp = (JSONObject)o;
+                sp = (JSONObject) o;
                 if (sp == null) {
                     o = spec.get("specification");
-                    sp = (JSONObject)o;
+                    sp = (JSONObject) o;
                 }
             }
-        } catch ( ClassCastException e ) {
+        } catch (ClassCastException e) {
             log.error("Operation json's specification or method is not a JSON Object: " + o);
         }
         if (sp != null) {
             // set postconditions
-            Constraint postcondition = getOrCreatePostcondition( operation );
+            Constraint postcondition = getOrCreatePostcondition(operation);
             //JSONObject methodJson = (JSONObject)spec.get("method");
             //if ( methodJson != null ) {
-                try {
-                    ValueSpecification vs = null;
-                    vs = createValueSpec(sp, null);
-                    if ( vs != null ) {
-                        ValueSpecification pcSpec = 
-                                postcondition.getSpecification();
-                        if ( pcSpec != null && pcSpec instanceof Expression ) {
-                            List<ValueSpecification> operands =
-                                    ((Expression)pcSpec).getOperand();
-                            if ( operands == null ) {
-                                log.error("Operands in Operation method expression is null!");
-                            } else if ( operands.size() == 2 ) {
-                                operands.add( vs );
-                            } else if ( operands.size() == 3 ) {
-                                operands.set( 2, vs );
-                            } else {
-                                log.error("Unexpected number of operands in Operation method expression: "
-                                          + operands.size());
+            try {
+                ValueSpecification vs = null;
+                vs = createValueSpec(sp, null);
+                if (vs != null) {
+                    ValueSpecification pcSpec =
+                            postcondition.getSpecification();
+                    if (pcSpec != null && pcSpec instanceof Expression) {
+                        List<ValueSpecification> operands =
+                                ((Expression) pcSpec).getOperand();
+                        if (operands == null) {
+                            log.error("Operands in Operation method expression is null!");
+                        }
+                        else if (operands.size() == 2) {
+                            operands.add(vs);
+                        }
+                        else if (operands.size() == 3) {
+                            operands.set(2, vs);
+                        }
+                        else {
+                            log.error("Unexpected number of operands in Operation method expression: "
+                                    + operands.size());
+                        }
+
+                        // Add the result parameter to operation's owned Parameters
+                        if (operands != null && operands.size() > 2) {
+                            Parameter resultParam = null;
+                            ValueSpecification resultOperand = operands.get(1);
+                            if (resultOperand instanceof ElementValue) {
+                                Element e = ((ElementValue) resultOperand).getElement();
+                                if (e instanceof Parameter) {
+                                    resultParam = (Parameter) e;
+                                }
                             }
-                            
-                            // Add the result parameter to operation's owned Parameters
-                            if ( operands != null && operands.size() > 2 ) {
-                                Parameter resultParam = null;
-                                ValueSpecification resultOperand = operands.get( 1 );
-                                if ( resultOperand instanceof ElementValue ) {
-                                    Element e = ((ElementValue)resultOperand).getElement();
-                                    if ( e instanceof Parameter ) {
-                                        resultParam = (Parameter)e;
-                                    }
-                                }
-                                if ( resultParam != null && !operation.getOwnedParameter().contains( resultOperand ) ) {
-                                    operation.getOwnedParameter().add( resultParam );
-                                }
+                            if (resultParam != null && !operation.getOwnedParameter().contains(resultOperand)) {
+                                operation.getOwnedParameter().add(resultParam);
                             }
                         }
                     }
-                    
-                    
-                } catch (ReferenceException ex) {
-                    throw new ImportException(operation, spec,
-                                              "Operation Specification: " 
-                                              + ex.getMessage());
                 }
+
+
+            } catch (ReferenceException ex) {
+                throw new ImportException(operation, spec,
+                        "Operation Specification: "
+                                + ex.getMessage());
             }
+        }
         //}
     }
 
-    
+
     /**
      * Set the Parameters of the Operation to the elements for the ids in the
      * array value for the "parameters" key.
-     * 
+     *
      * @param operation
      * @param parameters
      */
-    protected static boolean setOperationParameters( Operation operation,
-                                                     JSONArray parameters ) {
+    protected static boolean setOperationParameters(Operation operation,
+                                                    JSONArray parameters) {
         boolean changed = false;
-        if ( parameters == null ) return changed;
-        if ( operation.getOwnedParameter() == null ) {
+        if (parameters == null) {
+            return changed;
+        }
+        if (operation.getOwnedParameter() == null) {
             log.error("Trying to set Parameters of Operation, " + operation
-                      + ", but it is null!");
+                    + ", but it is null!");
             return changed;
         }
         ArrayList<Parameter> oldParams = new ArrayList<Parameter>(operation.getOwnedParameter());
         operation.getOwnedParameter().clear();
-        for ( int i = 0; i < parameters.size(); ++i) {
+        for (int i = 0; i < parameters.size(); ++i) {
             String id = (String) parameters.get(i);
             Element o = ExportUtility.getElementFromID(id);
-            if ( o instanceof Parameter ) {
-                Parameter c = (Parameter)o;
+            if (o instanceof Parameter) {
+                Parameter c = (Parameter) o;
                 operation.getOwnedParameter().add(c);
-                if ( !changed && !oldParams.contains(c) ) {
+                if (!changed && !oldParams.contains(c)) {
                     changed = true;
                 }
-            } else {
-                log.error("Trying to add something (" + o 
-                          + ") that is not a Parameter to owned Parameters of Operation, "
-                          + operation);
+            }
+            else {
+                log.error("Trying to add something (" + o
+                        + ") that is not a Parameter to owned Parameters of Operation, "
+                        + operation);
             }
         }
         // The statement below assumes that the set of owned Parameters does not contain duplicates.
         changed = changed || (oldParams.size() != operation.getOwnedParameter().size());
         return changed;
     }
-    
+
     /**
      * Set the owned Parameters of the Operation by extracting them from the Postconditions.
-     * 
+     *
      * @param operation
      */
-    protected static void computeAndSetOperationParameters( Operation operation ) {
-        if ( operation == null ) return;
+    protected static void computeAndSetOperationParameters(Operation operation) {
+        if (operation == null) {
+            return;
+        }
         List<Parameter> params = operation.getOwnedParameter();
-        if ( params == null ) return;
+        if (params == null) {
+            return;
+        }
         List<Parameter> newParams = new ArrayList<Parameter>();
         Collection<Constraint> pcs = operation.getPostcondition();
-        if ( pcs == null ) return;
+        if (pcs == null) {
+            return;
+        }
         // TODO -- this creates them all or adds nothing--we need to be able to
         // update them.  It also ignores the incoming JSON.
-        if ( operation.getOwnedParameter() != null &&
-             !operation.getOwnedParameter().isEmpty() ) {
-            for ( Constraint c : pcs ) {
+        if (operation.getOwnedParameter() != null &&
+                !operation.getOwnedParameter().isEmpty()) {
+            for (Constraint c : pcs) {
                 ValueSpecification cSpec = c.getSpecification();
-                addParametersFromValueSpec( cSpec, newParams );
+                addParametersFromValueSpec(cSpec, newParams);
             }
             operation.getOwnedParameter().addAll(newParams);
         }
     }
 
-    protected static void addParametersFromValueSpec( ValueSpecification cSpec,
-                                                      List<Parameter> params ) {
-        if ( cSpec instanceof ElementValue ) {
-            Element elem = ((ElementValue)cSpec).getElement();
-            if ( elem instanceof Parameter ) {
+    protected static void addParametersFromValueSpec(ValueSpecification cSpec,
+                                                     List<Parameter> params) {
+        if (cSpec instanceof ElementValue) {
+            Element elem = ((ElementValue) cSpec).getElement();
+            if (elem instanceof Parameter) {
                 params.add((Parameter) elem);
-            } else if ( elem instanceof Expression ) {
-                List<ValueSpecification> operands = 
-                        ((Expression)elem).getOperand();
-                if ( operands != null ) {
-                    for ( ValueSpecification vs : operands ) {
-                        addParametersFromValueSpec( vs, params );
+            }
+            else if (elem instanceof Expression) {
+                List<ValueSpecification> operands =
+                        ((Expression) elem).getOperand();
+                if (operands != null) {
+                    for (ValueSpecification vs : operands) {
+                        addParametersFromValueSpec(vs, params);
                     }
                 }
             }
@@ -878,9 +937,11 @@ public class ImportUtility {
     }
 
     protected static Constraint getOrCreatePostcondition(Operation operation) {
-        if ( operation.getPostcondition() != null ) {
-            for ( Constraint child : operation.getPostcondition() ) {
-                if ( child != null ) return child;
+        if (operation.getPostcondition() != null) {
+            for (Constraint child : operation.getPostcondition()) {
+                if (child != null) {
+                    return child;
+                }
             }
 
             // Create a new postcondition constraint
@@ -890,20 +951,20 @@ public class ImportUtility {
             Expression expr = ef.createExpressionInstance();
             pc.setSpecification(expr);
             List<ValueSpecification> operands = expr.getOperand();
-            if ( operands == null ) {
+            if (operands == null) {
                 operands = new ArrayList<ValueSpecification>();
-                
+
                 LiteralString equals = ef.createLiteralStringInstance();
                 equals.setValue("Equals");
                 operands.add(equals);
-                
+
                 Parameter result = ef.createParameterInstance();
                 result.setName("result");
                 result.setDirection(ParameterDirectionKindEnum.RETURN); // unclear what this should be
                 ElementValue ev = ef.createElementValueInstance();
                 ev.setElement(result);
                 operands.add(ev);
-                
+
                 // The third operand should be added by the caller.
             }
             return pc;
@@ -916,16 +977,19 @@ public class ImportUtility {
         JSONArray webTargetPath = (JSONArray) spec.get("targetPath");
         String webSource = null;
         String webTarget = null;
-        if (webSourcePath != null && !webSourcePath.isEmpty())
+        if (webSourcePath != null && !webSourcePath.isEmpty()) {
             webSource = (String) webSourcePath.remove(webSourcePath.size() - 1);
-        if (webTargetPath != null && !webTargetPath.isEmpty())
+        }
+        if (webTargetPath != null && !webTargetPath.isEmpty()) {
             webTarget = (String) webTargetPath.remove(webTargetPath.size() - 1);
+        }
         Element webSourceE = ExportUtility.getElementFromID(webSource);
         Element webTargetE = ExportUtility.getElementFromID(webTarget);
         if (webSourceE instanceof ConnectableElement && webTargetE instanceof ConnectableElement) {
             c.getEnd().get(0).setRole((ConnectableElement) webSourceE);
             c.getEnd().get(1).setRole((ConnectableElement) webTargetE);
-        } else {
+        }
+        else {
             log.info("[IMPORT/SYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
             throw (new ReferenceException(c, spec, "Connector doesn't have both connectable roles."));
         }
@@ -940,8 +1004,9 @@ public class ImportUtility {
         }
         String type = (String) spec.get("connectorType");
         Element asso = ExportUtility.getElementFromID(type);
-        if (asso instanceof Association)
+        if (asso instanceof Association) {
             c.setType((Association) asso);
+        }
     }
 
     public static void setAssociation(Association a, JSONObject spec) throws ReferenceException {
@@ -951,8 +1016,8 @@ public class ImportUtility {
         Element webTarget = ExportUtility.getElementFromID(webTargetId);
         Property modelSource = null;
         Property modelTarget = null;
-//        String webSourceA = (String)spec.get("sourceAggregation");
-//        String webTargetA = (String)spec.get("targetAggregation");
+        // String webSourceA = (String)spec.get("sourceAggregation");
+        // String webTargetA = (String)spec.get("targetAggregation");
         List<Property> todelete = new ArrayList<Property>();
         int i = 0;
         if (webSource == null || webTarget == null) {
@@ -960,24 +1025,24 @@ public class ImportUtility {
             throw new ReferenceException(a, spec, "Association missing ends");
         }
         for (Property end : a.getMemberEnd()) {
-            if (end != webSource && end != webTarget)
+            if (end != webSource && end != webTarget) {
                 todelete.add(end);
+            }
             else if (i == 0) {
                 modelSource = end;
-            } else {
+            }
+            else {
                 modelTarget = end;
             }
             i++;
         }
-        /*for (Property p: todelete) { //this used to be needed to prevent model corruption in 2.1? not needed in 18.0 (2.2)? corruption changes if asso is new or existing
-            try {
-                ModelElementsManager.getInstance().removeElement(p); //TODO propagate to alfresco?
-            } catch (ReadOnlyElementException e) {
-                e.printStackTrace();
-            }
-        }*/
-        if (modelSource == webSource && modelTarget == webTarget)
-            return; //don't need to mess with it
+        /*
+		 * for (Property p: todelete) { //this used to be needed to prevent model corruption in 2.1? not needed in 18.0 (2.2)? corruption changes if asso is new or existing try { ModelElementsManager.getInstance().removeElement(p); //TODO
+		 * propagate to alfresco? } catch (ReadOnlyElementException e) { e.printStackTrace(); } }
+		 */
+        if (modelSource == webSource && modelTarget == webTarget) {
+            return; // don't need to mess with it
+        }
         a.getMemberEnd().clear();
         //if (modelSource == null && webSource instanceof Property) {
         a.getMemberEnd().add(0, (Property) webSource);
@@ -1002,8 +1067,9 @@ public class ImportUtility {
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         for (String id : ids) {
             Element e = ExportUtility.getElementFromID(id);
-            if (e == null)
+            if (e == null) {
                 continue;
+            }
             ElementValue ev = ef.createElementValueInstance();
             ev.setElement(e);
             result.add(ev);
@@ -1015,8 +1081,9 @@ public class ImportUtility {
         List<Property> result = new ArrayList<Property>();
         for (String id : ids) {
             Element e = ExportUtility.getElementFromID(id);
-            if (e == null || !(e instanceof Property))
+            if (e == null || !(e instanceof Property)) {
                 continue;
+            }
             result.add((Property) e);
         }
         return result;
@@ -1030,53 +1097,70 @@ public class ImportUtility {
 
         switch (propValueType) {
             case LiteralString:
-                if (v != null && v instanceof LiteralString)
+                if (v != null && v instanceof LiteralString) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createLiteralStringInstance();
+                }
                 String s = (String) o.get("string");
-                if (s != null)
+                if (s != null) {
                     ((LiteralString) newval).setValue(Utils.addHtmlWrapper(s));
+                }
                 break;
             case LiteralInteger:
-                if (v != null && v instanceof LiteralInteger)
+                if (v != null && v instanceof LiteralInteger) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createLiteralIntegerInstance();
+                }
                 Long l = (Long) o.get("integer");
-                if (l != null)
+                if (l != null) {
                     ((LiteralInteger) newval).setValue(l.intValue());
+                }
                 break;
             case LiteralBoolean:
-                if (v != null && v instanceof LiteralBoolean)
+                if (v != null && v instanceof LiteralBoolean) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createLiteralBooleanInstance();
+                }
                 Boolean b = (Boolean) o.get("boolean");
-                if (b != null)
+                if (b != null) {
                     ((LiteralBoolean) newval).setValue(b);
+                }
                 break;
             case LiteralUnlimitedNatural:
-                if (v != null && v instanceof LiteralUnlimitedNatural)
+                if (v != null && v instanceof LiteralUnlimitedNatural) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createLiteralUnlimitedNaturalInstance();
+                }
                 Long ll = (Long) o.get("naturalValue");
-                if (ll != null)
+                if (ll != null) {
                     ((LiteralUnlimitedNatural) newval).setValue(ll.intValue());
+                }
                 break;
             case LiteralReal:
                 Double value;
-                if (o.get("double") instanceof Long)
+                if (o.get("double") instanceof Long) {
                     value = Double.parseDouble(((Long) o.get("double")).toString());
-                else
+                }
+                else {
                     value = (Double) o.get("double");
-                if (v != null && v instanceof LiteralReal)
+                }
+                if (v != null && v instanceof LiteralReal) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createLiteralRealInstance();
-                if (value != null)
+                }
+                if (value != null) {
                     ((LiteralReal) newval).setValue(value);
+                }
                 break;
             case ElementValue:
                 String elementID = (String) o.get("element");
@@ -1091,10 +1175,12 @@ public class ImportUtility {
                     }
                     break;
                 }
-                if (v != null && v instanceof ElementValue)
+                if (v != null && v instanceof ElementValue) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createElementValueInstance();
+                }
                 ((ElementValue) newval).setElement(find);
                 break;
             case InstanceValue:
@@ -1117,56 +1203,72 @@ public class ImportUtility {
                     }
                     break;
                 }
-                if (v != null && v instanceof InstanceValue)
+                if (v != null && v instanceof InstanceValue) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createInstanceValueInstance();
+                }
                 ((InstanceValue) newval).setInstance((InstanceSpecification) findInst);
                 break;
             case Expression:
-                if (v != null && v instanceof Expression)
+                if (v != null && v instanceof Expression) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createExpressionInstance();
-                if (!o.containsKey("operand") || !(o.get("operand") instanceof JSONArray))
+                }
+                if (!o.containsKey("operand") || !(o.get("operand") instanceof JSONArray)) {
                     break;
+                }
                 ((Expression) newval).getOperand().clear();
                 for (Object op : (JSONArray) o.get("operand")) {
                     ValueSpecification operand = createValueSpec((JSONObject) op, null);
-                    if (operand != null)
+                    if (operand != null) {
                         ((Expression) newval).getOperand().add(operand);
+                    }
                 }
                 break;
             case OpaqueExpression:
-                if (v != null && v instanceof OpaqueExpression)
+                if (v != null && v instanceof OpaqueExpression) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createOpaqueExpressionInstance();
-                if (!o.containsKey("expressionBody") || !(o.get("expressionBody") instanceof JSONArray))
+                }
+                if (!o.containsKey("expressionBody") || !(o.get("expressionBody") instanceof JSONArray)) {
                     break;
+                }
                 ((OpaqueExpression) newval).getBody().clear();
                 for (Object op : (JSONArray) o.get("expressionBody")) {
-                    if (op instanceof String)
+                    if (op instanceof String) {
                         ((OpaqueExpression) newval).getBody().add((String) op);
+                    }
                 }
                 break;
             case TimeExpression:
-                if (v != null && v instanceof TimeExpression)
+                if (v != null && v instanceof TimeExpression) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createTimeExpressionInstance();
+                }
                 break;
             case DurationInterval:
-                if (v != null && v instanceof DurationInterval)
+                if (v != null && v instanceof DurationInterval) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createDurationIntervalInstance();
+                }
                 break;
             case TimeInterval:
-                if (v != null && v instanceof TimeInterval)
+                if (v != null && v instanceof TimeInterval) {
                     newval = v;
-                else
+                }
+                else {
                     newval = ef.createTimeIntervalInstance();
+                }
                 break;
             default:
                 log.error("Bad PropertyValueType: " + valueType);

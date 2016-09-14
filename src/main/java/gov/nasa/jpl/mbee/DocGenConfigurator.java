@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -66,7 +66,7 @@ import java.util.Set;
 public class DocGenConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
     private Set<ActionsManager> viewQueryCalled = new HashSet<ActionsManager>();
-    
+
     @Override
     public int getPriority() {
         return ConfiguratorWithPriority.MEDIUM_PRIORITY;
@@ -75,32 +75,39 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
     @Override
     public void configure(ActionsManager manager, Tree browser) {
         Node no = browser.getSelectedNode();
-        if (no == null)
+        if (no == null) {
             return;
-        Object o = no.getUserObject();
-        if (!(o instanceof Element))
-            return;
-        List<Element> elements = new ArrayList<Element>();
-        for (Node node: browser.getSelectedNodes()) {
-            if (node == null)
-                continue;
-            Object ob = node.getUserObject();
-            if (!(ob instanceof Element))
-                continue;
-            elements.add((Element)ob);
         }
-        addElementActions(manager, (Element)o, elements);
+        Object o = no.getUserObject();
+        if (!(o instanceof Element)) {
+            return;
+        }
+        List<Element> elements = new ArrayList<Element>();
+        for (Node node : browser.getSelectedNodes()) {
+            if (node == null) {
+                continue;
+            }
+            Object ob = node.getUserObject();
+            if (!(ob instanceof Element)) {
+                continue;
+            }
+            elements.add((Element) ob);
+        }
+        addElementActions(manager, (Element) o, elements);
     }
 
     @Override
     public void configure(ActionsManager manager, DiagramPresentationElement diagram,
-            PresentationElement[] selected, PresentationElement requestor) {
-        if ( repainting() ) return;
+                          PresentationElement[] selected, PresentationElement requestor) {
+        if (repainting()) {
+            return;
+        }
 
         List<Element> es = new ArrayList<>();
-        for (PresentationElement pe: selected) {
-            if (pe.getElement() != null)
+        for (PresentationElement pe : selected) {
+            if (pe.getElement() != null) {
                 es.add(pe.getElement());
+            }
         }
         if (!es.isEmpty()) {
             addElementActions(manager, es.get(0), es);
@@ -111,12 +118,12 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
     public static boolean repainting() {
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
         String lastMethod = "";
-        for ( StackTraceElement traceElem : trace ) {
-            if ( traceElem.getClassName().contains( "MainFrame") && ( traceElem.getMethodName().equals( "paint" ) || lastMethod.equals( "paintImmediately" ) ) ) {
+        for (StackTraceElement traceElem : trace) {
+            if (traceElem.getClassName().contains("MainFrame") && (traceElem.getMethodName().equals("paint") || lastMethod.equals("paintImmediately"))) {
                 //Debug.outln( "@@@ repainting() = true" );
                 return true;
             }
-            if ( traceElem.getClassName().endsWith( "RepaintManager") && traceElem.getMethodName().equals( "paint" ) ) {
+            if (traceElem.getClassName().endsWith("RepaintManager") && traceElem.getMethodName().equals("paint")) {
                 //Debug.outln( "@@@ repainting() = true" );
                 return true;
             }
@@ -130,25 +137,29 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 
     private void addElementActions(ActionsManager manager, Element e, List<Element> es) {
         Project prj = Project.getProject(e);
-        if (prj == null)
+        if (prj == null) {
             return;
+        }
         Stereotype sysmlview = Utils.getViewStereotype();
         Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
         Stereotype documentView = Utils.getProductStereotype();
         Stereotype classview = Utils.getViewClassStereotype();
         Stereotype elementGroupStereotype = Utils.getElementGroupStereotype();
-        if (e == null)
+        if (e == null) {
             return;
+        }
 
         // top-level context menu: Refactor With ID
-        ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");       
-        if(e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)){
-            if (manager.getActionFor(ClassToComponentRefactorWithIDAction.actionid) == null)
-                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(es));   
+        ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");
+        if (e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)) {
+            if (manager.getActionFor(ClassToComponentRefactorWithIDAction.actionid) == null) {
+                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(es));
+            }
         }
-        if(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component){
-            if (manager.getActionFor(ComponentToClassRefactorWithIDAction.actionid) == null)
-                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(es));   
+        if (e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component) {
+            if (manager.getActionFor(ComponentToClassRefactorWithIDAction.actionid) == null) {
+                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(es));
+            }
         }
         //manager.addCategory(refactorWithIDActionCat);
 
@@ -156,17 +167,22 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (ViewEditUtils.isPasswordSet()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
-                if (manager.getActionFor(ExportModelAction.actionid) == null)
+                if (manager.getActionFor(ExportModelAction.actionid) == null) {
                     models.addAction(new ExportModelAction(e));
-                if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null)
+                }
+                if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null) {
                     models.addAction(new InitializeProjectAction());
+                }
             }
-            if (manager.getActionFor(ValidateModelAction.actionid) == null)
-                models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models": "Validate Models"));
-            if (manager.getActionFor(ValidateElementAction.actionid) == null)
-                models.addAction(new ValidateElementAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Element": "Validate Element"));
-            if (manager.getActionFor(ValidateElementDepthAction.actionid) == null)
-                models.addAction(new ValidateElementDepthAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models (specified depth)": "Validate Models (specified depth)"));
+            if (manager.getActionFor(ValidateModelAction.actionid) == null) {
+                models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models" : "Validate Models"));
+            }
+            if (manager.getActionFor(ValidateElementAction.actionid) == null) {
+                models.addAction(new ValidateElementAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Element" : "Validate Element"));
+            }
+            if (manager.getActionFor(ValidateElementDepthAction.actionid) == null) {
+                models.addAction(new ValidateElementDepthAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models (specified depth)" : "Validate Models (specified depth)"));
+            }
 
             /*if (e instanceof Package) {
                 if (manager.getActionFor(ExportAllDocuments.actionid) == null)
@@ -175,16 +191,17 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         }
         else {
             ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
-            if (manager.getActionFor(EMSLoginAction.actionid) == null)
+            if (manager.getActionFor(EMSLoginAction.actionid) == null) {
                 login.addAction(new EMSLoginAction());
-        	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
-        	//final MDAction mda = new MDAction(null, null, null, "null");
-        	//mda.updateState();
-        	//mda.setEnabled(false);
-    		//modelLoad.addAction(mda);
+            }
+            // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
+            //final MDAction mda = new MDAction(null, null, null, "null");
+            //mda.updateState();
+            //mda.setEnabled(false);
+            //modelLoad.addAction(mda);
         }
         ActionsStateUpdater.updateActionsState();
-        
+
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
         if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.validationScriptStereotype)) {
@@ -195,10 +212,12 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-            us.setTargets( Utils2.asList( targets, Object.class ) );
-            if (manager.getActionFor(RunUserValidationScriptAction.actionid) == null)
+            us.setTargets(Utils2.asList(targets, Object.class));
+            if (manager.getActionFor(RunUserValidationScriptAction.actionid) == null) {
                 c.addAction(new RunUserValidationScriptAction(us, true));
-        } else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
+            }
+        }
+        else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
             us.setDgElement(e);
@@ -206,9 +225,10 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                     DocGen3Profile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGen3Profile.oldQueriesStereotype, 1, false, 1));
-            us.setTargets( Utils2.asList( targets, Object.class ) );
-            if (manager.getActionFor(RunUserScriptAction.actionid) == null)
+            us.setTargets(Utils2.asList(targets, Object.class));
+            if (manager.getActionFor(RunUserScriptAction.actionid) == null) {
                 c.addAction(new RunUserScriptAction(us, true));
+            }
         }
         boolean canShowGeneration = true;
         for (Element element : es) {
@@ -230,8 +250,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                         category = new MDActionsCategory("ViewInteraction", "View Interaction");
                         category.setNested(true);
                         boolean added = addViewQueryActions(manager, category, (NamedElement) e);
-                        if (added)
+                        if (added) {
                             manager.addCategory(0, category);
+                        }
                     }
                 }
             }
@@ -290,20 +311,21 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             }
             else {
                 ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
-                if (manager.getActionFor(EMSLoginAction.actionid) == null)
+                if (manager.getActionFor(EMSLoginAction.actionid) == null) {
                     login.addAction(new EMSLoginAction());
-            	// Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
-            	//final MDAction mda = new MDAction(null, null, null, "null");
-            	//mda.updateState();
-            	//mda.setEnabled(false);
-        		//modelLoad2.addAction(mda);
+                }
+                // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
+                //final MDAction mda = new MDAction(null, null, null, "null");
+                //mda.updateState();
+                //mda.setEnabled(false);
+                //modelLoad2.addAction(mda);
             }
             ActionsStateUpdater.updateActionsState();
-            
+
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
             //action = manager.getActionFor(ExportViewAction.actionid);
             //if (action == null)
-                //addEditableViewActions(c, (NamedElement)e);
+            //addEditableViewActions(c, (NamedElement)e);
         }
         /*if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.project)) { // REVIEW
                                                                          // --
@@ -349,10 +371,11 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             // DefaultPropertyResourceProvider pp = new
             // DefaultPropertyResourceProvider();
             act = manager.getActionFor(ValidateOldDocgen.actionid);
-            if (act == null)
+            if (act == null) {
                 c.addAction(new ValidateOldDocgen());
+            }
         }
-        
+
         // DocGen menu
         if ((e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e,
                 DocGen3Profile.documentStereotype)) || StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
@@ -361,38 +384,45 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
             // DefaultPropertyResourceProvider pp = new
             // DefaultPropertyResourceProvider();
             act = manager.getActionFor(ValidateDocument3Action.actionid);
-            if (act == null)
+            if (act == null) {
                 c.addAction(new ValidateDocument3Action(e));
+            }
 
             act = manager.getActionFor(ValidateViewStructureAction.actionid);
-            if (act == null && e instanceof Classifier)
+            if (act == null && e instanceof Classifier) {
                 c.addAction(new ValidateViewStructureAction(e));
+            }
 
             act = manager.getActionFor(ViewDocument3Action.actionid);
-            if (act == null)
+            if (act == null) {
                 c.addAction(new ViewDocument3Action(e));
+            }
 
             act = manager.getActionFor(GenerateDocumentAction.actionid);
-            if (act == null)
+            if (act == null) {
                 c.addAction(new GenerateDocumentAction(e));
-            
+            }
+
             if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
                 if (e instanceof Package) {
                     act = manager.getActionFor(NumberDependencyAction.actionid);
-                    if (act == null)
+                    if (act == null) {
                         c.addAction(new NumberDependencyAction(e));
+                    }
                     act = manager.getActionFor(MigrateToClassViewAction.actionid);
-                    if (act == null)
+                    if (act == null) {
                         c.addAction(new MigrateToClassViewAction(e));
+                    }
                 }
                 if (e instanceof Class) {
                     act = manager.getActionFor(NumberAssociationAction.actionid);
-                    if (act == null)
-                        c.addAction(new NumberAssociationAction((Class)e));
+                    if (act == null) {
+                        c.addAction(new NumberAssociationAction((Class) e));
+                    }
                 }
                 //act = manager.getActionFor(PublishDocWebAction.actionid); 
                 //if (act == null) 
-                 //   c.addAction(new PublishDocWebAction((NamedElement)e));
+                //   c.addAction(new PublishDocWebAction((NamedElement)e));
             }
             /*
              * if (e instanceof Activity &&
@@ -406,8 +436,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlviewpoint)) {
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
             NMAction act = manager.getActionFor(InstanceViewpointAction.actionid);
-            if (act == null)
+            if (act == null) {
                 c.addAction(new InstanceViewpointAction(e));
+            }
         }
         // if ( ( e instanceof Activity &&
         // StereotypesHelper.hasStereotypeOrDerived( e,
@@ -417,7 +448,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         // NMAction act = manager.getActionFor( "DocGenComments" );
         // if ( act == null ) addCommentActions( c, (NamedElement)e );
         // }
-        
+
 //        if (e instanceof Property) {
 //        	ArrayList<Property> els = new ArrayList<Property>();
 //        	for (Element el: es) {
@@ -430,27 +461,32 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 //        		c.addAction(new CreateRestrictedValueAction((Property) e, els));
 //        }
         ArrayList<Property> selectedProperties = new ArrayList<Property>();
-        for (Element el: es) {
-        	if (el instanceof Property)
-        		selectedProperties.add((Property) el);
+        for (Element el : es) {
+            if (el instanceof Property) {
+                selectedProperties.add((Property) el);
+            }
         }
         if (!(selectedProperties.isEmpty())) {
-        	ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
-        	NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
-        	if (act == null)
-        		c.addAction(new CreateRestrictedValueAction(selectedProperties));
+            ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
+            NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
+            if (act == null) {
+                c.addAction(new CreateRestrictedValueAction(selectedProperties));
+            }
         }
     }
 
     private void addDiagramActions(ActionsManager manager, DiagramPresentationElement diagram) {
-        if (diagram == null)
+        if (diagram == null) {
             return;
+        }
         Element element = diagram.getActualElement();
-        if (element == null)
+        if (element == null) {
             return;
+        }
         Element owner = element.getOwner();
-        if (owner == null || !(owner instanceof NamedElement))
+        if (owner == null || !(owner instanceof NamedElement)) {
             return;
+        }
         // //this add actions for syncing to docweb comments
         // if (StereotypesHelper.hasStereotypeOrDerived(owner,
         // DocGen3Profile.documentViewStereotype)) {
@@ -463,7 +499,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 
     /**
      * add actions related to view editor (this includes view comments)
-     * 
+     *
      * @param parent
      * @param e
      */
@@ -491,16 +527,17 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         // }
     }
 */
+
     /**
      * Gets the specified category, creates it if necessary.
-     * 
+     *
      * @param manager
      * @param id
      * @param name
      * @return category with given id/name
      */
     private ActionsCategory myCategory(ActionsManager manager, String id, String name) {
-        ActionsCategory category = (ActionsCategory)manager.getActionFor(id); // getCategory(id);
+        ActionsCategory category = (ActionsCategory) manager.getActionFor(id); // getCategory(id);
         if (category == null) {
             category = new MDActionsCategory(id, name);
             category.setNested(true);
@@ -509,9 +546,9 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         }
         return category;
     }
-    
+
     private ActionsCategory getCategory(ActionsManager manager, String id, String name, ActionsCategory parent) {
-        ActionsCategory category = (ActionsCategory)manager.getActionFor(id);
+        ActionsCategory category = (ActionsCategory) manager.getActionFor(id);
         if (category == null) {
             //category = myCategory(manager, id, name); 
             category = new MDActionsCategory(id, name);
@@ -520,18 +557,20 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         }
         return category;
     }
+
     /**
      * this should be used to add actions that're possible when user right
      * clicks on a view<br/>
      * it parses the single view, gets any document model that'll result in
      * running script, editable table, validation rule
-     * 
+     *
      * @param parent
      * @param e
      */
     private boolean addViewQueryActions(ActionsManager manager, ActionsCategory parent, NamedElement e) {
-        if (viewQueryCalled.contains(manager))
+        if (viewQueryCalled.contains(manager)) {
             return false;
+        }
         DocumentGenerator dg = new DocumentGenerator(e, null, null);
         Document dge = dg.parseDocument(true, false, false);
         CollectActionsVisitor cav = new CollectActionsVisitor();
@@ -539,7 +578,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
 
         boolean added = false;
         if (cav.getActions().size() > 0) {
-            for (MDAction a: cav.getActions()) {
+            for (MDAction a : cav.getActions()) {
                 parent.addAction(a);
             }
             added = true;
