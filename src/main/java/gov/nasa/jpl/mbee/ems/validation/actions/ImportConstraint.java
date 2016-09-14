@@ -51,7 +51,8 @@ public class ImportConstraint extends RuleViolationAction implements AnnotationA
             }
             JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setConstraintSpecification((Constraint) e, (JSONObject) resultOb.get("specialization"));
+                ImportUtility.setConstraintSpecification((Constraint) e, (JSONObject) resultOb);
+//                ImportUtility.setConstraintSpecification((Constraint) e, (JSONObject) resultOb.get("specialization"));
             } catch (ImportException ex) {
                 Utils.guilog("[ERROR] " + ex.getMessage());
                 return false;

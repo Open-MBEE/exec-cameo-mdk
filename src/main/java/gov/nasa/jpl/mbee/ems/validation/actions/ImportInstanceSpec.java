@@ -79,7 +79,8 @@ public class ImportInstanceSpec extends RuleViolationAction implements Annotatio
             }
             JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setInstanceSpecification((InstanceSpecification) e, (JSONObject) resultOb.get("specialization"));
+                ImportUtility.setInstanceSpecification((InstanceSpecification) e, (JSONObject) resultOb);
+//                ImportUtility.setInstanceSpecification((InstanceSpecification) e, (JSONObject) resultOb.get("specialization"));
             } catch (ImportException ex) {
                 if (ex instanceof ReferenceException) {
                     Utils.guilog("[ERROR] " + ((NamedElement) e).getQualifiedName() + " cannot be imported because it'll be missing classifiers.");

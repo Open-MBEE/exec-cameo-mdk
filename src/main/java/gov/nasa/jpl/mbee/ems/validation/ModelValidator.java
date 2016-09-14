@@ -168,7 +168,7 @@ public class ModelValidator {
 
     public static ValidationRuleViolation siteDiff(Package e, JSONObject elementInfo) {
         JSONObject model = ExportUtility.fillPackage(e, null);
-        Boolean serverSite = (Boolean) ((JSONObject) elementInfo.get("specialization")).get("isSite");
+        Boolean serverSite = (Boolean) elementInfo.get("isSite");
         boolean serversite = false;
         if (serverSite != null && serverSite) {
             serversite = true;
@@ -482,36 +482,50 @@ public class ModelValidator {
                 // Alfresco sysml element is not in MagicDraw
                 JSONObject jsonObject = elementsKeyed.get(elementsKeyedId);
                 String type = null;
-                if (jsonObject.containsKey("specialization")) {
-                    type = (String) ((JSONObject) jsonObject.get("specialization")).get("type");
+                if (jsonObject.containsKey("type")) {
+                    type = (String) jsonObject.get("type");
                 }
                 if (type != null && type.equals("Project")) {
                     continue;
                 }
-                Object o = jsonObject.get("specialization");
-                if (o instanceof JSONObject) {
-                    JSONObject specialization = (JSONObject) o;
-                    Object o2;
-                    if ((o2 = specialization.get("classifier")) instanceof JSONArray) {
-                        boolean isPresentationElement = false;
-                        for (Object c : (JSONArray) o2) {
-                            if (c instanceof String) {
-                                for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
-                                    if (c.equals(presentationElementEnum.get().getID())) {
-                                        isPresentationElement = true;
-                                        break;
-                                    }
+                Object o;
+                if ((o = jsonObject.get("classifierIds")) instanceof JSONArray) {
+                    //TODO this is legacy element support. purge? @donbot (see also JMSMessageListener.java:105)
+                    boolean isPresentationElement = false;
+                    for (Object c : (JSONArray) o) {
+                        if (c instanceof String) {
+                            for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
+                                if (c.equals(presentationElementEnum.get().getID())) {
+                                    isPresentationElement = true;
+                                    break;
                                 }
-                            }
-                            if (isPresentationElement) {
-                                break;
                             }
                         }
                         if (isPresentationElement) {
-                            continue;
+                            break;
                         }
                     }
-                    if ((o2 = specialization.get("propertyType")) instanceof JSONArray) {
+                    if (isPresentationElement) {
+                        continue;
+                    }
+                }
+                if ((o = jsonObject.get("definingFeatureId")) instanceof String) {
+                    //TODO this is legacy element support. purge? @donbot (see also JMSMessageListener.java:125)
+                    boolean isPresentationElementProperty = false;
+                    for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
+                        if (o.equals(presentationElementPropertyEnum.get().getID())) {
+                            isPresentationElementProperty = true;
+                            break;
+                        }
+                    }
+                    if (isPresentationElementProperty) {
+                        continue;
+                    }
+                }
+                /*
+                 * previous check of propertyType json array
+                 * 
+                    if ((o = jsonObject.get("propertyType")) instanceof JSONArray) {
                         boolean isPresentationElementProperty = false;
                         for (Object c : (JSONArray) o2) {
                             if (c instanceof String) {
@@ -530,7 +544,8 @@ public class ModelValidator {
                             continue;
                         }
                     }
-                }
+                */
+                
                 if (type == null) {
                     type = "Element";
                 }
@@ -818,13 +833,7 @@ public class ModelValidator {
     // obsoleted by server-side only instances
     @Deprecated
     private ValidationRuleViolation viewContentDiff(Element e, JSONObject elementInfo) {
-        Object o;
-
-        JSONObject webViewSpec;
-        if (!((o = elementInfo.get("specialization")) instanceof JSONObject)) {
-            return null;
-        }
-        webViewSpec = (JSONObject) o;
+        JSONObject webViewSpec = elementInfo;
         if (isViewSpecializationDiff(webViewSpec, ExportUtility.fillViewContent(e, null))) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[VIEW CONSTRAINT] View constraint or displayed elements are different");
             v.addAction(new ExportViewConstraint((NamedElement) e));
@@ -834,8 +843,9 @@ public class ModelValidator {
         return null;
     }
 
+    @Deprecated
     private ValidationRuleViolation docDiff(Element e, JSONObject elementInfo) {
-        JSONObject webViewSpec = (JSONObject) elementInfo.get("specialization");
+        JSONObject webViewSpec = elementInfo;
         if (webViewSpec == null) {
             return null;
         }
@@ -908,9 +918,8 @@ public class ModelValidator {
 
     private ValidationRuleViolation propertyDiff(Property e, JSONObject info) {
         Boolean editable = (Boolean) info.get("editable");
-        JSONObject specialization = (JSONObject) info.get("specialization");
 
-        JSONObject webcopy = (JSONObject) specialization.clone();
+        JSONObject webcopy = (JSONObject) info.clone();
         if (webcopy.containsKey("value")) {
             webcopy.remove("value");
         }
@@ -925,6 +934,8 @@ public class ModelValidator {
         }
         return null;
         /*
+         *   //TODO purge? @donbot specification json references not updated in old code below
+         * 
         // diff the aggregation
         String modelAggr = e.getAggregation().toString().toUpperCase();
         String webAggr = null;
@@ -958,16 +969,14 @@ public class ModelValidator {
 
     private ValidationRuleViolation slotTypeDiff(Slot e, JSONObject info) {
         Boolean editable = (Boolean) info.get("editable");
-        JSONObject specialization = (JSONObject) info.get("specialization");
         NamedElement modelType = e.getDefiningFeature();
         String modelTypeId = null;
         if (modelType != null) {
             modelTypeId = modelType.getID();
         }
         String webTypeId = null;
-        if (specialization != null) {
-            webTypeId = (String) specialization.get("propertyType");
-        }
+        if (info.containsKey("definingFeatureId"))
+            webTypeId = (String) info.get("definingFeatureId");
         Element webTypeElement = null;
         if (webTypeId != null) {
             webTypeElement = ExportUtility.getElementFromID(webTypeId);
@@ -984,11 +993,10 @@ public class ModelValidator {
     }
 
     private ValidationRuleViolation relationshipDiff(DirectedRelationship e, JSONObject elementInfo) {
-        JSONObject specialization = (JSONObject) elementInfo.get("specialization");
         Boolean editable = (Boolean) elementInfo.get("editable");
-        String websourceId = (String) specialization.get("source");
+        String websourceId = (String) elementInfo.get("sourceId");
         Element websource = null;
-        String webtargetId = (String) specialization.get("target");
+        String webtargetId = (String) elementInfo.get("targetId");
         Element webtarget = null;
         Element localsource = ModelHelper.getClientElement(e);
         Element localtarget = ModelHelper.getSupplierElement(e);
@@ -1018,10 +1026,8 @@ public class ModelValidator {
 
     private ValidationRuleViolation valueDiff(Property e, JSONObject info) {
         Boolean editable = (Boolean) info.get("editable");
-        JSONObject specialization = (JSONObject) info.get("specialization");
-
         ValueSpecification vs = e.getDefaultValue();
-        JSONArray value = (JSONArray) specialization.get("value");
+        JSONArray value = (JSONArray) info.get("value");
 
         /*JSONObject modelSpec = ExportUtility.fillPropertySpecialization(e, null, false);
         JSONArray modelValue = (JSONArray)modelSpec.get("value");
@@ -1094,8 +1100,7 @@ public class ModelValidator {
 
     private ValidationRuleViolation valueDiff(Slot e, JSONObject info) {
         Boolean editable = (Boolean) info.get("editable");
-        JSONObject specialization = (JSONObject) info.get("specialization");
-        JSONArray value = (JSONArray) specialization.get("value");
+        JSONArray value = (JSONArray) info.get("value");
         /*JSONObject modelSpec = ExportUtility.fillPropertySpecialization(e, null, false);
         JSONArray modelValue = (JSONArray)modelSpec.get("value");
         if (!modelValue.equals(value)) {
@@ -1205,8 +1210,7 @@ public class ModelValidator {
 
     private ValidationRuleViolation constraintDiff(Constraint e, JSONObject info) {
         Boolean editable = (Boolean) info.get("editable");
-        JSONObject spec = (JSONObject) info.get("specialization");
-        JSONObject value = (JSONObject) spec.get("specification");
+        JSONObject value = (JSONObject) info.get("specification");
         JSONObject modelspec = ExportUtility.fillConstraintSpecialization(e, null);
         //JSONObject modelvalue = (JSONObject)modelspec.get("specification");
         JSONObject modelvalue = ExportUtility.fillValueSpecification(e.getSpecification(), null);
@@ -1225,7 +1229,7 @@ public class ModelValidator {
                 v.addAction(new ExportConstraint(e));
             }
             //v.addAction(getPaddingAction());
-            v.addAction(new ImportConstraint(e, spec, result));
+            v.addAction(new ImportConstraint(e, info, result));
             return v;
         }
         return null;
@@ -1233,9 +1237,8 @@ public class ModelValidator {
 
     private ValidationRuleViolation operationDiff(Operation e, JSONObject info) {
         Boolean editable = (Boolean) info.get("editable");
-        JSONObject spec = (JSONObject) info.get("specialization");
-        JSONArray postconds = (JSONArray) spec.get("postconditions");
-        JSONArray parameters = (JSONArray) spec.get("parameters");
+        JSONArray postconds = (JSONArray) info.get("postconditions");
+        JSONArray parameters = (JSONArray) info.get("parameters");
 
         JSONObject modelspec = ExportUtility.fillOperationSpecialization(e, null);
         JSONArray modelPostconds = (JSONArray) modelspec.get("postconditions");
@@ -1247,7 +1250,7 @@ public class ModelValidator {
             if (editable) {
                 v.addAction(new ExportOperation(e));
             }
-            v.addAction(new ImportOperation(e, spec, result));
+            v.addAction(new ImportOperation(e, info, result));
             return v;
         }
         return null;

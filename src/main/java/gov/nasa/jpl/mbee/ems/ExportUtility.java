@@ -1142,7 +1142,7 @@ public class ExportUtility {
         }
         // JSONObject specialization = new JSONObject();
         // elementInfo.put("specialization", specialization);
-        Stereotype commentS = Utils.getCommentStereotype();
+        //  Stereotype commentS = Utils.getCommentStereotype();
         if (e instanceof Package) {
             fillPackage((Package) e, elementInfo);
         }
@@ -1171,7 +1171,7 @@ public class ExportUtility {
         else if (e instanceof Parameter) {
             fillParameterSpecialization((Parameter) e, elementInfo);
         }
-        else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, commentS)) {
+        else if (e instanceof Comment || StereotypesHelper.hasStereotypeOrDerived(e, Utils.getCommentStereotype())) {
             elementInfo.put("type", "Comment");
         }
         else if (e instanceof Association) {
@@ -1314,13 +1314,13 @@ public class ExportUtility {
         elementInfo.put("sourceId", ((s = e.getSource()) == null) ? null : s.getID());
         elementInfo.put("targetId", ((s = e.getTarget()) == null) ? null : s.getID());
 
-        ValueSpecification gurad = e.getGuard();
-        if (gurad == null) {
+        ValueSpecification guard = e.getGuard();
+        if (guard == null) {
             elementInfo.put("guard", null);
         }
         else {
             JSONObject vs = new JSONObject();
-            fillValueSpecification(gurad, vs);
+            fillValueSpecification(guard, vs);
             elementInfo.put("guard", vs);
         }
     }
@@ -1735,7 +1735,7 @@ public class ExportUtility {
         }
         if (e instanceof Class) {
             try {
-                java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class) e);
+                java.lang.Class<?> c = StereotypesHelper.getClassOfMetaClass((Class) e);
                 if (c != null) {
                     info.put("isMetatype", true);
                     info.put("metatypes", new JSONArray());
@@ -1758,6 +1758,7 @@ public class ExportUtility {
     }
 
     // no one's using this, should consider removing it
+    @Deprecated
     public static String getBaselineTag() {
         Element model = Application.getInstance().getProject().getModel();
         String tag = null;
@@ -1783,6 +1784,7 @@ public class ExportUtility {
     }
 
     // no one uses this, should remove
+    @Deprecated
     public static boolean checkBaselineMount() {
         Project prj = Application.getInstance().getProject();
         if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
@@ -1813,6 +1815,7 @@ public class ExportUtility {
     }
 
     // no one uses this, should remove
+    @Deprecated
     public static boolean checkBaseline() {
 		/*
 		 * if (!ExportUtility.checkBaselineMount()) { Boolean con = Utils .getUserYesNoAnswer("Mount structure check did not pass (your project or mounts are not baseline versions)! Do you want to continue?"); // Utils.showPopupMessage(
@@ -1857,6 +1860,7 @@ public class ExportUtility {
         return null;
     }
 
+   @Deprecated
     public static void sendProjectVersion(Element e) {
 		/*
 		 * Project prj = Application.getInstance().getProject(); if (ProjectUtilities.isElementInAttachedProject(e)) { IProject module = ProjectUtilities.getAttachedProject(e); if (ProjectUtilities.isFromTeamworkServer(module)) {
@@ -1866,7 +1870,8 @@ public class ExportUtility {
 
     }
 
-    public static boolean okToExport(Element e) {
+   @Deprecated
+   public static boolean okToExport(Element e) {
 		/*
 		 * if (mountedVersions == null) mountedVersions = new HashMap<String, Integer>(); Project prj = Application.getInstance().getProject(); if (ProjectUtilities.isElementInAttachedProject(e)) { IAttachedProject module =
 		 * ProjectUtilities.getAttachedProject(e); if (ProjectUtilities.isFromTeamworkServer(module)) { IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork =
@@ -1879,7 +1884,8 @@ public class ExportUtility {
         return true;
     }
 
-    public static boolean okToExport(Set<Element> set) {
+   @Deprecated
+   public static boolean okToExport(Set<Element> set) {
 		/*
 		 * Project prj = Application.getInstance().getProject(); mountedVersions = new HashMap<String, Integer>(); Map<String, String> projectNames = new HashMap<String, String>(); if
 		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber());
@@ -1892,6 +1898,7 @@ public class ExportUtility {
         return true;
     }
 
+    @Deprecated
     public static boolean okToExport() {
 		/*
 		 * mountedVersions = new HashMap<String, Integer>(); Map<String, String> projectNames = new HashMap<String, String>(); Project prj = Application.getInstance().getProject(); if

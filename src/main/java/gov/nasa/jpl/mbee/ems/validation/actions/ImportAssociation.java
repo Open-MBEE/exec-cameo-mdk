@@ -56,7 +56,8 @@ public class ImportAssociation extends RuleViolationAction implements Annotation
             }
             JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setAssociation((Association) e, (JSONObject) resultOb.get("specialization"));
+                ImportUtility.setAssociation((Association) e, (JSONObject) resultOb);
+//                ImportUtility.setAssociation((Association) e, (JSONObject) resultOb.get("specialization"));
             } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] Failed association import because references not found.");
                 return false;

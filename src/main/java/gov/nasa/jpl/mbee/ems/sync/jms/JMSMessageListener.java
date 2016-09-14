@@ -102,49 +102,61 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     if (sysmlid.startsWith(ModelValidator.HIDDEN_ID_PREFIX)) {
                         continue;
                     }
-                    if ((o = elementJson.get("specialization")) instanceof JSONObject) {
-                        JSONObject specialization = (JSONObject) o;
-                        Object o2;
-                        if ((o2 = specialization.get("classifier")) instanceof JSONArray) {
-                            boolean isPresentationElement = false;
-                            for (Object c : (JSONArray) o2) {
-                                if (c instanceof String) {
-                                    for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
-                                        if (c.equals(presentationElementEnum.get().getID())) {
-                                            isPresentationElement = true;
-                                            break;
-                                        }
+                    if ((o = elementJson.get("classifierIds")) instanceof JSONArray) {
+                        //TODO this is legacy element support. purge? @donbot  (see also ModelValidator.java:493)
+                        boolean isPresentationElement = false;
+                        for (Object c : (JSONArray) o) {
+                            if (c instanceof String) {
+                                for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
+                                    if (c.equals(presentationElementEnum.get().getID())) {
+                                        isPresentationElement = true;
+                                        break;
                                     }
-                                }
-                                if (isPresentationElement) {
-                                    break;
                                 }
                             }
                             if (isPresentationElement) {
-                                continue;
-
+                                break;
                             }
                         }
-                        if ((o2 = specialization.get("propertyType")) instanceof JSONArray) {
-                            boolean isPresentationElementProperty = false;
-                            for (Object c : (JSONArray) o2) {
-                                if (c instanceof String) {
-                                    for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
-                                        if (c.equals(presentationElementPropertyEnum.get().getID())) {
-                                            isPresentationElementProperty = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (isPresentationElementProperty) {
-                                    break;
-                                }
-                            }
-                            if (isPresentationElementProperty) {
-                                continue;
-                            }
+                        if (isPresentationElement) {
+                            continue;
                         }
                     }
+                    if ((o = elementJson.get("definingFeatureId")) instanceof String) {
+                        //TODO this is legacy element support. purge? @donbot  (see also ModelValidator.java:513)
+                        boolean isPresentationElementProperty = false;
+                        for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
+                            if (o.equals(presentationElementPropertyEnum.get().getID())) {
+                                isPresentationElementProperty = true;
+                                break;
+                            }
+                        }
+                        if (isPresentationElementProperty) {
+                            continue;
+                        }
+                    }
+                      // previous instance of definingFeatureId pulled a JSONArray from propertyType key
+//                    if ((o = elementJson.get("definingFeatureId")) instanceof JSONArray) {
+//                        //TODO this is legacy element support. purge? @donbot
+//                        boolean isPresentationElementProperty = false;
+//                        for (Object c : (JSONArray) o) {
+//                            if (c instanceof String) {
+//                                for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
+//                                    if (c.equals(presentationElementPropertyEnum.get().getID())) {
+//                                        isPresentationElementProperty = true;
+//                                        break;
+//                                    }
+//                                }
+//                            }
+//                            if (isPresentationElementProperty) {
+//                                break;
+//                            }
+//                        }
+//                        if (isPresentationElementProperty) {
+//                            continue;
+//                        }
+//                    }
+
                     inMemoryJMSChangelog.addChange(sysmlid, elementJson, entry.getValue());
                 }
             }

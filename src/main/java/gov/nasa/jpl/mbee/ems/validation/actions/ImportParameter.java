@@ -49,7 +49,8 @@ public class ImportParameter extends RuleViolationAction implements AnnotationAc
                 return false;
             }
             JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
-            ImportUtility.setParameter((Parameter) e, (JSONObject) resultOb.get("specialization"));
+            ImportUtility.setParameter((Parameter) e, (JSONObject) resultOb);
+//            ImportUtility.setParameter((Parameter) e, (JSONObject) resultOb.get("specialization"));
         }
         else {
             ImportUtility.setParameter(element, spec);

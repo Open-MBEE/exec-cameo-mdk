@@ -49,7 +49,8 @@ public class ImportOperation extends RuleViolationAction implements AnnotationAc
             }
             JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setOperationSpecification((Operation) e, (JSONObject) resultOb.get("specialization"));
+                ImportUtility.setOperationSpecification((Operation) e, (JSONObject) resultOb);
+//                ImportUtility.setOperationSpecification((Operation) e, (JSONObject) resultOb.get("specialization"));
             } catch (ImportException ex) {
                 Utils.guilog("[ERROR] " + ex.getMessage());
                 return false;

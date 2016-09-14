@@ -407,7 +407,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     public void startView(Element e) {
         JSONObject view = new JSONObject();
-        JSONObject specialization = new JSONObject();
+//        JSONObject specialization = new JSONObject();
 
         //MDEV #673
         //Update code to create a specialization
@@ -415,12 +415,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //sub-elements in that specialization object.
         //
         if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype())) {
-            specialization.put("type", "Product");
+            view.put("type", "Product");
         }
         else {
-            specialization.put("type", "View");
+            view.put("type", "View");
         }
-        view.put("specialization", specialization);
         String id = e.getID();
         view.put("sysmlId", id);
         views.put(id, view);
@@ -428,7 +427,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         viewElements.push(viewE);
         //JJS : may need to make this a Stack
         JSONArray contains = new JSONArray();
-        specialization.put("contains", contains);
+        view.put("contains", contains);
         this.curContains.push(contains);
         addToElements(e);
         //MDEV-443 add view exposed elements to view elements
@@ -466,12 +465,12 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //specialization element.
         //
         JSONObject view = (JSONObject) views.get(e.getID());
-        JSONObject specialization = (JSONObject) view.get("specialization");
+//        JSONObject specialization = (JSONObject) view.get("specialization");
 
-        specialization.put("displayedElements", viewEs);
-        specialization.put("allowedElements", viewEs);
+        view.put("displayedElements", viewEs);
+        view.put("allowedElements", viewEs);
         if (recurse && !doc) {
-            specialization.put("childrenViews", sibviews.peek());
+            view.put("childrenViews", sibviews.peek());
         }
         view2view.put(e.getID(), sibviews.pop());
         view2viewElements.put(e, sibviewsElements.pop());
@@ -590,6 +589,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         return elements;
     }
 
+    @Deprecated
     public JSONObject getViews() {
         return views;
     }

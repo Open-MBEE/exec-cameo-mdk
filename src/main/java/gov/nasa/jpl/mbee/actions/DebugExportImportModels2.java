@@ -93,7 +93,7 @@ public class DebugExportImportModels2 extends MDAction {
 
         FileWriter fw;
         try {
-            fw = new FileWriter(new File("/Users/johannes/Documents/projects/SECAE/compareImports/test04.json"));
+            fw = new FileWriter(new File("DebugExportImportModelsData.json"));
             fw.append(jsonemf);
             fw.flush();
             fw.close();
