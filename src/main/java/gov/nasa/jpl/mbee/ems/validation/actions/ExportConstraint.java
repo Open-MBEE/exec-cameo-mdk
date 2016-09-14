@@ -34,7 +34,7 @@ public class ExportConstraint extends RuleViolationAction implements AnnotationA
         for (Annotation anno : annos) {
             Element e = (Element) anno.getTarget();
             JSONObject elementOb = ExportUtility.fillId(e, null);
-            elementOb.put("specialization", ExportUtility.fillConstraintSpecialization((Constraint) e, null));
+            ExportUtility.fillConstraintSpecialization((Constraint) e, elementOb);
             infos.add(elementOb);
         }
         commit(infos, "Constraint");
@@ -45,7 +45,7 @@ public class ExportConstraint extends RuleViolationAction implements AnnotationA
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
         JSONObject elementOb = ExportUtility.fillId(element, null);
-        elementOb.put("specialization", ExportUtility.fillConstraintSpecialization(element, null));
+        ExportUtility.fillConstraintSpecialization(element, elementOb);
         elements.add(elementOb);
         commit(elements, "Constraint");
     }

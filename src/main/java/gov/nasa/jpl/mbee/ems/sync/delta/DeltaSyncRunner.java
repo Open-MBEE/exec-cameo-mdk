@@ -358,7 +358,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             JSONArray elementsJsonArray = new JSONArray();
             for (String id : localElementsToDelete) {
                 JSONObject elementJsonObject = new JSONObject();
-                elementJsonObject.put("sysmlid", id);
+                elementJsonObject.put("sysmlId", id);
                 elementsJsonArray.add(elementJsonObject);
             }
             JSONObject body = new JSONObject();

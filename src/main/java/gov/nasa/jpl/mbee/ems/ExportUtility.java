@@ -91,6 +91,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
+@Deprecated
+//TODO migrate usage of these methods to EMFExporter.java @donbot
 public class ExportUtility {
     public static boolean justPostconditionIds = true;  // don't embed conditions
 
@@ -2115,12 +2117,10 @@ public class ExportUtility {
             result.put("name", name);
         }
         result.put("sysmlId", projId);
-        JSONObject spec = new JSONObject();
-        spec.put("type", "Project");
+        result.put("type", "Project");
         if (version != null) {
-            spec.put("projectVersion", version.toString());
+            result.put("projectVersion", version.toString());
         }
-        result.put("specialization", spec);
         return result;
     }
 

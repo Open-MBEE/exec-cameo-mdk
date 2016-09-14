@@ -9,6 +9,8 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+@Deprecated
+//TODO purge? @donbot 
 public class View2ViewMigrator extends Migrator {
 
     public void migrate(ProgressStatus ps) {

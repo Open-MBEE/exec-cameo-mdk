@@ -27,6 +27,7 @@ import org.json.simple.JSONObject;
 import java.util.*;
 
 @Deprecated
+//TODO Migrate use of these methods to EMFImporter.java @donbot
 public class ImportUtility {
     public static Logger log = Logger.getLogger(ImportUtility.class);
     private static boolean shouldOutputError = true;
@@ -562,8 +563,8 @@ public class ImportUtility {
     }
 
     public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) throws ReferenceException {
-        String sourceId = (String) specialization.get("source");
-        String targetId = (String) specialization.get("target");
+        String sourceId = (String) specialization.get("sourceId");
+        String targetId = (String) specialization.get("targetId");
         Element source = ExportUtility.getElementFromID(sourceId);
         Element target = ExportUtility.getElementFromID(targetId);
         if (source != null && target != null) {
@@ -1008,8 +1009,8 @@ public class ImportUtility {
     }
 
     public static void setAssociation(Association a, JSONObject spec) throws ReferenceException {
-        String webSourceId = (String) spec.get("source");
-        String webTargetId = (String) spec.get("target");
+        String webSourceId = (String) spec.get("sourceId");
+        String webTargetId = (String) spec.get("targetId");
         Element webSource = ExportUtility.getElementFromID(webSourceId);
         Element webTarget = ExportUtility.getElementFromID(webTargetId);
         Property modelSource = null;

@@ -314,7 +314,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             //spec.put("noSections", visitor2.getNosections());
             spec.put("type", "Product");
             doc.put("sysmlId", view.getID());
-            doc.put("specialization", spec);
+//            doc.put("specialization", spec);
             documents.add(doc);
             send.put("elements", documents);*/
             //OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));

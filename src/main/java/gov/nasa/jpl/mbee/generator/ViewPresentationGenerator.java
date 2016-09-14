@@ -42,6 +42,9 @@ import java.util.*;
 /**
  * @author dlam
  */
+
+@Deprecated
+//TODO update stuff in here for @donbot
 public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
@@ -498,8 +501,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     specializationJson.put("displayedElements", view2elements.get(view));
                     if (ModelValidator.isViewSpecializationDiff(oldSpecializationJson, specializationJson)) {
                         JSONObject subViewJson = new JSONObject();
-                        subViewJson.put("sysmlid", fullViewJson.get("sysmlid"));
-                        subViewJson.put("specialization", specializationJson);
+                        subViewJson.put("sysmlId", fullViewJson.get("sysmlId"));
+//                        subViewJson.put("specialization", specializationJson);
                         elementsJsonArray.add(subViewJson);
                     }
                 }

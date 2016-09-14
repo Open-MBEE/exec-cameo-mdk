@@ -63,6 +63,8 @@ import org.json.simple.JSONValue;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Deprecated
+//TODO rewrite the entire thing for @donbot
 public class ModelValidator {
     public static final String HIDDEN_ID_PREFIX = "_hidden_",
             HOLDING_BIN_PACKAGE_ID_REGEX = "^(holding_bin|(Y|M|D|H){2}_[0-9]+)_.+$";
@@ -199,7 +201,7 @@ public class ModelValidator {
         JSONArray idsJSONArray = new JSONArray();
         for (String id : ids) {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("sysmlid", id);
+            jsonObject.put("sysmlId", id);
             idsJSONArray.add(jsonObject);
         }
         final JSONObject body = new JSONObject();
@@ -1279,16 +1281,16 @@ public class ModelValidator {
         Boolean editable = (Boolean) info.get("editable");
         JSONObject webspec = info;
         JSONObject modelspec = ExportUtility.fillAssociationSpecialization(e, null);
-        String modelSource = (String) modelspec.get("source");
-        String modelTarget = (String) modelspec.get("target");
+        String modelSource = (String) modelspec.get("sourceId");
+        String modelTarget = (String) modelspec.get("targetId");
 //        String modelSourceAggr = (String)modelspec.get("sourceAggregation");
 //        String modelTargetAggr = (String)modelspec.get("targetAggregation");
-        JSONArray modelOwned = (JSONArray) modelspec.get("ownedEnd");
-        String webSource = (String) webspec.get("source");
-        String webTarget = (String) webspec.get("target");
+        JSONArray modelOwned = (JSONArray) modelspec.get("ownedEndIds");
+        String webSource = (String) webspec.get("sourceId");
+        String webTarget = (String) webspec.get("targetId");
 //        String webSourceAggr = (String)webspec.get("sourceAggregation");
 //        String webTargetAggr = (String)webspec.get("targetAggregation");
-        JSONArray webOwned = (JSONArray) webspec.get("ownedEnd");
+        JSONArray webOwned = (JSONArray) webspec.get("ownedEndIds");
         if (modelSource == null || modelTarget == null || modelOwned == null || !modelSource.equals(webSource) || !modelTarget.equals(webTarget) ||
 //                !modelSourceAggr.equals(webSourceAggr) || !modelTargetAggr.equals(webTargetAggr) ||
                 !modelOwned.equals(webOwned)) {

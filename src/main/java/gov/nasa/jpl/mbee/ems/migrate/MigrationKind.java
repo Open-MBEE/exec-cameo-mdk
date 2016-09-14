@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.ems.migrate;
 
+@Deprecated
+//TODO purge? @donbot
 public enum MigrationKind {
     CRUSHINATOR21TO22("CRUSHINATOR21TO22", "EMS 2.1 to 2.2"),
     VIEW2VIEW("VIEW2VIEW", "Upgrade View2View"),
