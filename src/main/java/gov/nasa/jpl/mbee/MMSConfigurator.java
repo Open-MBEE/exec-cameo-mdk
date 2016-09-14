@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,16 +28,14 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.ems.*;
-import gov.nasa.jpl.mbee.lib.MDUtils;
-
 import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
-import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.actions.ems.*;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 
 public class MMSConfigurator implements AMConfigurator {
 
@@ -52,8 +50,8 @@ public class MMSConfigurator implements AMConfigurator {
         NMAction category = manager.getActionFor("MMSMAIN");
         if (category == null) {
             category = new MDActionsCategory("MMSMAIN", "MMS");
-            ((ActionsCategory)category).setNested(true);
-            manager.addCategory((ActionsCategory)category);
+            ((ActionsCategory) category).setNested(true);
+            manager.addCategory((ActionsCategory) category);
             EMSLogoutAction logout = new EMSLogoutAction();
             EMSLoginAction login = new EMSLoginAction();
             login.setLogoutAction(logout);
@@ -75,7 +73,7 @@ public class MMSConfigurator implements AMConfigurator {
             sync.addAction(new UpdateAllDocs());*/
 
             category.addAction(new UpdateAllDocs());
-            
+
             category.addAction(new SendProjectVersionAction());
             category.addAction(new MigrationCategory());
             if (MDUtils.isDeveloperMode()) {

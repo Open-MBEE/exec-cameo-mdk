@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -30,7 +30,6 @@ package gov.nasa.jpl.mbee.dgview.impl;
 
 import gov.nasa.jpl.mbee.dgview.ColSpec;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
@@ -49,73 +48,73 @@ import org.eclipse.emf.ecore.impl.ENotificationImpl;
  * <em>Colnum</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public class ColSpecImpl extends ViewElementImpl implements ColSpec {
     /**
      * The default value of the '{@link #getColname() <em>Colname</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getColname()
+     *
      * @generated
      * @ordered
+     * @see #getColname()
      */
-    protected static final String COLNAME_EDEFAULT  = null;
+    protected static final String COLNAME_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getColname() <em>Colname</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getColname()
+     *
      * @generated
      * @ordered
+     * @see #getColname()
      */
-    protected String              colname           = COLNAME_EDEFAULT;
+    protected String colname = COLNAME_EDEFAULT;
 
     /**
      * The default value of the '{@link #getColwidth() <em>Colwidth</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getColwidth()
+     *
      * @generated
      * @ordered
+     * @see #getColwidth()
      */
     protected static final String COLWIDTH_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getColwidth() <em>Colwidth</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getColwidth()
+     *
      * @generated
      * @ordered
+     * @see #getColwidth()
      */
-    protected String              colwidth          = COLWIDTH_EDEFAULT;
+    protected String colwidth = COLWIDTH_EDEFAULT;
 
     /**
      * The default value of the '{@link #getColnum() <em>Colnum</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getColnum()
+     *
      * @generated
      * @ordered
+     * @see #getColnum()
      */
-    protected static final int    COLNUM_EDEFAULT   = 0;
+    protected static final int COLNUM_EDEFAULT = 0;
 
     /**
      * The cached value of the '{@link #getColnum() <em>Colnum</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getColnum()
+     *
      * @generated
      * @ordered
+     * @see #getColnum()
      */
-    protected int                 colnum            = COLNUM_EDEFAULT;
+    protected int colnum = COLNUM_EDEFAULT;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected ColSpecImpl() {
@@ -124,7 +123,7 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -134,7 +133,7 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -144,21 +143,22 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setColname(String newColname) {
         String oldColname = colname;
         colname = newColname;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.COL_SPEC__COLNAME,
                     oldColname, colname));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -168,21 +168,22 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setColwidth(String newColwidth) {
         String oldColwidth = colwidth;
         colwidth = newColwidth;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.COL_SPEC__COLWIDTH,
                     oldColwidth, colwidth));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -192,21 +193,22 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setColnum(int newColnum) {
         int oldColnum = colnum;
         colnum = newColnum;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.COL_SPEC__COLNUM, oldColnum,
                     colnum));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -224,20 +226,20 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void eSet(int featureID, Object newValue) {
         switch (featureID) {
             case DgviewPackage.COL_SPEC__COLNAME:
-                setColname((String)newValue);
+                setColname((String) newValue);
                 return;
             case DgviewPackage.COL_SPEC__COLWIDTH:
-                setColwidth((String)newValue);
+                setColwidth((String) newValue);
                 return;
             case DgviewPackage.COL_SPEC__COLNUM:
-                setColnum((Integer)newValue);
+                setColnum((Integer) newValue);
                 return;
         }
         super.eSet(featureID, newValue);
@@ -245,7 +247,7 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -266,7 +268,7 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -284,13 +286,14 @@ public class ColSpecImpl extends ViewElementImpl implements ColSpec {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public String toString() {
-        if (eIsProxy())
+        if (eIsProxy()) {
             return super.toString();
+        }
 
         StringBuffer result = new StringBuffer(super.toString());
         result.append(" (colname: ");

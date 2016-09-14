@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,18 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.docgen;
 
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.event.ActionEvent;
@@ -36,40 +48,19 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import com.nomagic.uml2.impl.ElementsFactory;
-
 /**
  * given a viewpoint composition hierarchy, makes the views, and have them
  * conform to the respective viewpoints
- * 
+ *
  * @author dlam
- * 
  */
 public class InstanceViewpointAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element            viewpoint;
-    private Stereotype         sysmlView;
-    private ElementsFactory    ef;
-    private Stereotype         sysmlViewpoint;
+    private Element viewpoint;
+    private Stereotype sysmlView;
+    private ElementsFactory ef;
+    private Stereotype sysmlViewpoint;
 
     public static final String actionid = "InstanceViewpoint";
 
@@ -94,14 +85,14 @@ public class InstanceViewpointAction extends MDAction {
         }
         List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
         types.add(Package.class);
-        Element pack = (Element)Utils.getUserSelection(types, "Choose where the instanced views should go");
+        Element pack = (Element) Utils.getUserSelection(types, "Choose where the instanced views should go");
         if (pack == null || !(pack instanceof Package)) {
             gl.log("you didn't select a package");
             return;
         }
         try {
             SessionManager.getInstance().createSession("instance viewpoint");
-            instance((Package)pack, (Class)viewpoint, ((Class)viewpoint).getName());
+            instance(pack, (Class) viewpoint, ((Class) viewpoint).getName());
             SessionManager.getInstance().closeSession();
         } catch (Exception ex) {
             StringWriter sw = new StringWriter();
@@ -122,14 +113,16 @@ public class InstanceViewpointAction extends MDAction {
         ModelHelper.setClientElement(conforms, view);
         ModelHelper.setSupplierElement(conforms, vp);
         conforms.setOwner(view);
-        for (Property p: vp.getOwnedAttribute()) {
+        for (Property p : vp.getOwnedAttribute()) {
             Type type = p.getType();
             if (type instanceof Class && StereotypesHelper.hasStereotypeOrDerived(type, sysmlViewpoint)) {
                 Class child = null;
-                if (p.getName().equals(""))
-                    child = instance(view, (Class)type, ((Class)type).getName());
-                else
-                    child = instance(view, (Class)type, p.getName());
+                if (p.getName().equals("")) {
+                    child = instance(view, (Class) type, type.getName());
+                }
+                else {
+                    child = instance(view, (Class) type, p.getName());
+                }
                 Association asso = ef.createAssociationInstance();
                 asso.getMemberEnd().get(0).setOwner(view);
                 asso.getMemberEnd().get(0).setType(child);

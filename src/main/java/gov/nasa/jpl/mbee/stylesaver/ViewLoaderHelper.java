@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,44 +28,32 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.stylesaver;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.PresentationElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.magicdraw.properties.BooleanProperty;
-import com.nomagic.magicdraw.properties.ChoiceProperty;
-import com.nomagic.magicdraw.properties.ColorProperty;
-import com.nomagic.magicdraw.properties.FontProperty;
-import com.nomagic.magicdraw.properties.Property;
-import com.nomagic.magicdraw.properties.PropertyManager;
+import com.nomagic.magicdraw.properties.*;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.magicdraw.uml.symbols.paths.PathElement;
 import com.nomagic.magicdraw.uml.symbols.shapes.ShapeElement;
+import org.json.simple.JSONObject;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Helper class containing methods for parsing and loading style information.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class ViewLoaderHelper {
     /**
      * Helper function that should be used to parse color information to load
      * into the property argument.
-     * 
-     * @param prop
-     *            the property to load color information into.
-     * @param value
-     *            the string to parse.
-     * @param elem
-     *            the element to load style into.
+     *
+     * @param prop  the property to load color information into.
+     * @param value the string to parse.
+     * @param elem  the element to load style into.
      */
     public static void setColor(Property prop, String value, PresentationElement elem) {
         // trim the RGB values
@@ -104,13 +92,10 @@ public class ViewLoaderHelper {
     /**
      * Helper function that should be used to parse font information to load
      * into the property argument.
-     * 
-     * @param prop
-     *            the property to load font information into.
-     * @param value
-     *            the string to parse.
-     * @param elem
-     *            the element to load style into.
+     *
+     * @param prop  the property to load font information into.
+     * @param value the string to parse.
+     * @param elem  the element to load style into.
      */
     public static void setFont(Property prop, String value, PresentationElement elem) {
         // go to the letter after the third ' ', this is where the font info
@@ -150,10 +135,12 @@ public class ViewLoaderHelper {
                 if (word.equals("bold\0")) {
                     style = Font.BOLD;
                     styleFlag = true;
-                } else if (word.equals("italic\0")) {
+                }
+                else if (word.equals("italic\0")) {
                     style = Font.ITALIC;
                     styleFlag = true;
-                } else if (italicBoldCandidate.equals("italic bold\0")) {
+                }
+                else if (italicBoldCandidate.equals("italic bold\0")) {
                     style = Font.ITALIC | Font.BOLD;
                     styleFlag = true;
                 }
@@ -190,13 +177,10 @@ public class ViewLoaderHelper {
 
     /**
      * Helper function that should be used to parse boolean styling.
-     * 
-     * @param prop
-     *            the property to load font information into.
-     * @param value
-     *            the string to parse.
-     * @param elem
-     *            the element to load style into.
+     *
+     * @param prop  the property to load font information into.
+     * @param value the string to parse.
+     * @param elem  the element to load style into.
      */
     public static void setBoolean(Property prop, String value, PresentationElement elem) {
         if (value == null) {
@@ -221,9 +205,11 @@ public class ViewLoaderHelper {
 
         if (value.equals("true")) {
             properties.addProperty(new BooleanProperty(prop.getID(), true));
-        } else if (value.equals("false")) {
+        }
+        else if (value.equals("false")) {
             properties.addProperty(new BooleanProperty(prop.getID(), false));
-        } else {
+        }
+        else {
             // some error in parsing
             Application.getInstance().getGUILog().log("A true/false property failed to load.");
             return;
@@ -242,13 +228,10 @@ public class ViewLoaderHelper {
     /**
      * Helper function that should be used to parse various choice properties of
      * elements.
-     * 
-     * @param prop
-     *            the property to load choice property information into.
-     * @param value
-     *            the string to parse.
-     * @param elem
-     *            the element to load style into.
+     *
+     * @param prop  the property to load choice property information into.
+     * @param value the string to parse.
+     * @param elem  the element to load style into.
      */
     public static void setChoice(Property prop, String value, PresentationElement elem) {
         String origValue = value;
@@ -272,13 +255,10 @@ public class ViewLoaderHelper {
     /**
      * Helper function that should be used to parse path style information of an
      * element.
-     * 
-     * @param prop
-     *            the property to load path style information into.
-     * @param value
-     *            the string to parse.
-     * @param elem
-     *            the element to load style into.
+     *
+     * @param prop  the property to load path style information into.
+     * @param value the string to parse.
+     * @param elem  the element to load style into.
      */
     public static void setPathStyle(Property prop, String value, PresentationElement elem) {
         // go to the letter after the third ' ', this is where the line style
@@ -300,13 +280,16 @@ public class ViewLoaderHelper {
         if (value.equals(PathElement.RECTILINEAR)) {
             properties.addProperty(new ChoiceProperty(prop.getID(), PathElement.RECTILINEAR,
                     PathElement.LINE_STYLE));
-        } else if (value.equals(PathElement.OBLIQUE)) {
+        }
+        else if (value.equals(PathElement.OBLIQUE)) {
             properties.addProperty(new ChoiceProperty(prop.getID(), PathElement.OBLIQUE,
                     PathElement.LINE_STYLE));
-        } else if (value.equals(PathElement.BEZIER)) {
+        }
+        else if (value.equals(PathElement.BEZIER)) {
             properties.addProperty(new ChoiceProperty(prop.getID(), PathElement.BEZIER,
                     PathElement.LINE_STYLE));
-        } else {
+        }
+        else {
             // some error in parsing
             Application.getInstance().getGUILog().log("The path style property failed to load.");
             return;
@@ -324,15 +307,13 @@ public class ViewLoaderHelper {
 
     /**
      * Helper function that should be used to parse break point information.
-     * 
-     * @param elem
-     *            the element to reshape.
-     * @param jsonObj
-     *            the JSON object to parse.
+     *
+     * @param elem    the element to reshape.
+     * @param jsonObj the JSON object to parse.
      */
     public static void setBreakPoints(PathElement elem, JSONObject jsonObj) {
         // get the break points in the saved style
-        Long numBreakPts = (Long)jsonObj.get("num_break_points");
+        Long numBreakPts = (Long) jsonObj.get("num_break_points");
 
         if (numBreakPts == null) {
             return;
@@ -360,16 +341,14 @@ public class ViewLoaderHelper {
 
     /**
      * Parses a JSONObject containing Point information and gets a new Point.
-     * 
-     * @param jsonObj
-     *            the JSONObject with Point information to parse.
-     * @param pointName
-     *            the name of the Point in the corresponding JSON string e.g.
-     *            break_point_1
+     *
+     * @param jsonObj   the JSONObject with Point information to parse.
+     * @param pointName the name of the Point in the corresponding JSON string e.g.
+     *                  break_point_1
      * @return the Point represented by this JSONObject.
      */
     private static Point getBreakPoint(JSONObject jsonObj, String pointName) {
-        String breakPtStr = (String)jsonObj.get(pointName);
+        String breakPtStr = (String) jsonObj.get(pointName);
 
         int firstEquals = breakPtStr.indexOf('=');
         breakPtStr = breakPtStr.substring(firstEquals + 1);
@@ -390,14 +369,12 @@ public class ViewLoaderHelper {
 
     /**
      * Helper function that should be used to parse path line width information.
-     * 
-     * @param elem
-     *            the PathElement to load with saved line width.
-     * @param jsonObj
-     *            the JSONObject with line width information to parse.
+     *
+     * @param elem    the PathElement to load with saved line width.
+     * @param jsonObj the JSONObject with line width information to parse.
      */
     public static void setLineWidth(PathElement elem, JSONObject jsonObj) {
-        String widthStr = (String)jsonObj.get("path_line_width");
+        String widthStr = (String) jsonObj.get("path_line_width");
 
         elem.setLineWidth(Integer.parseInt(widthStr));
     }
@@ -405,17 +382,15 @@ public class ViewLoaderHelper {
     /**
      * Helper function that should be used to parse bounds information to
      * reshape an element.
-     * 
-     * @param elem
-     *            the element to reshape.
-     * @param jsonObj
-     *            the JSON object to parse.
+     *
+     * @param elem    the element to reshape.
+     * @param jsonObj the JSON object to parse.
      */
     public static void setBounds(ShapeElement elem, JSONObject jsonObj) {
-        Double x = (Double)jsonObj.get("rect_x");
-        Double y = (Double)jsonObj.get("rect_y");
-        Double width = (Double)jsonObj.get("rect_width");
-        Double height = (Double)jsonObj.get("rect_height");
+        Double x = (Double) jsonObj.get("rect_x");
+        Double y = (Double) jsonObj.get("rect_y");
+        Double width = (Double) jsonObj.get("rect_width");
+        Double height = (Double) jsonObj.get("rect_height");
 
         if ((x == null) || (y == null) || (width == null) || (height == null)) {
             return;

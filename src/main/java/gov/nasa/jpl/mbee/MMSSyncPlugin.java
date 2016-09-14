@@ -3,10 +3,10 @@ package gov.nasa.jpl.mbee;
 import com.nomagic.magicdraw.cookies.CloseCookie;
 import com.nomagic.magicdraw.cookies.CookieSet;
 import com.nomagic.magicdraw.core.Application;
-import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueueCloseCookie;
 import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusProjectEventListenerAdapter;
 

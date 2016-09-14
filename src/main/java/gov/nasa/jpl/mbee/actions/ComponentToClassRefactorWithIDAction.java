@@ -1,12 +1,5 @@
 package gov.nasa.jpl.mbee.actions;
 
-import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.lib.Utils;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -15,6 +8,12 @@ import com.nomagic.magicdraw.uml.ConvertElementInfo;
 import com.nomagic.magicdraw.uml.Refactoring;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.lib.Utils;
+
+import java.awt.event.ActionEvent;
+import java.util.Collection;
 
 public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
 
@@ -31,18 +30,21 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
         Boolean con = Utils.getUserYesNoAnswer("Warning! Refactor with ID action is best used with an immediate commit to"
                 + " teamwork \nand no other active teamwork users on this project, else data loss may \n"
                 + "happen on update from teamwork. Do you want to continue?");
-        if (con == null || !con)
+        if (con == null || !con) {
             return;
+        }
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
-        if (listener != null)
+        if (listener != null) {
             listener.setDisabled(true);
+        }
 
         SessionManager sessionManager = SessionManager.getInstance();
         sessionManager.createSession("Convert Component To Class");
-        
-        for (Element element: elements) {
-            if (!(element instanceof Component))
+
+        for (Element element : elements) {
+            if (!(element instanceof Component)) {
                 continue;
+            }
             String elementID = element.getID();
             // Converts the element to an interface.
             ConvertElementInfo info = new ConvertElementInfo(
@@ -62,8 +64,9 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
         }
         sessionManager.closeSession();
 
-        if (listener != null)
+        if (listener != null) {
             listener.setDisabled(false);
+        }
     }
 
 }

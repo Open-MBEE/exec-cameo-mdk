@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,76 +28,76 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.io.PrintStream;
-import java.lang.reflect.Field;
-
-import javax.swing.JDialog;
-import javax.swing.JEditorPane;
-import javax.swing.SwingUtilities;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 
+import javax.swing.*;
+import java.awt.*;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+
 public class MdDebug extends Debug {
 
-    public static GUILog       gl       = getGuiLog();
-    public static StringBuffer glBuf    = new StringBuffer();
+    public static GUILog gl = getGuiLog();
+    public static StringBuffer glBuf = new StringBuffer();
     public static StringBuffer glErrBuf = new StringBuffer();
 
     /**
      * Iterative deepening search for a Component of a specified type contained
      * by the Container c or a subcomponent of c.
-     * 
+     *
      * @param c
      * @param type
      * @return the first Component that is an instance of type in a level order
-     *         traversal of contained components.
+     * traversal of contained components.
      */
     public static <TT> TT getComponentOfType(Container c, Class<TT> type) {
-        if (c == null)
+        if (c == null) {
             return null;
-        if (type == null)
+        }
+        if (type == null) {
             return null;
+        }
         // TODO -- MOVE TO A DIFFERENT UTILS CLASS!
         int depth = 0;
         while (true) {
             Pair<Boolean, TT> p = getComponentOfType(c, type, 0, depth++, null);
-            if (p == null)
+            if (p == null) {
                 return null;
-            if (!p.first)
+            }
+            if (!p.first) {
                 return null;
+            }
             TT tt = p.second;
-            if (tt != null)
+            if (tt != null) {
                 return tt;
+            }
         }
     }
 
     @SuppressWarnings("unchecked")
     public static <TT> Pair<Boolean, TT> getComponentOfType(Object o, Class<TT> type, int depth,
-            int maxDepth, Seen<Object> seen) {
-        if (o == null)
+                                                            int maxDepth, Seen<Object> seen) {
+        if (o == null) {
             return null;
-        if (type == null)
+        }
+        if (type == null) {
             return null;
+        }
         // don't check same component twice
         Pair<Boolean, Seen<Object>> p = Utils2.seen(o, true, seen);
-        if (p.first)
+        if (p.first) {
             return null;
+        }
         seen = p.second;
 
         boolean gotLeafContainer = false;
 
         Container c = null;
         if (o instanceof Container) {
-            c = (Container)o;
-        } else {
+            c = (Container) o;
+        }
+        else {
         }
 
         if (depth >= maxDepth) {
@@ -108,14 +108,15 @@ public class MdDebug extends Debug {
             // //":" + cmp.getName() );
             if (type.isInstance(o)) {
                 try {
-                    return new Pair<Boolean, TT>(true, (TT)o);
+                    return new Pair<Boolean, TT>(true, (TT) o);
                 } catch (ClassCastException e) {
                 }
             }
             if (c instanceof Container) {
                 gotLeafContainer = true;
             }
-        } else {
+        }
+        else {
             if (c != null) {
                 Component[] cmps = c.getComponents();
                 if (cmps.length > 0) {
@@ -124,7 +125,7 @@ public class MdDebug extends Debug {
                     // ", depth=" + depth + "): components = " + Utils.toString(
                     // cmps ) );
                 }
-                for (Component cmp: cmps) {
+                for (Component cmp : cmps) {
                     Pair<Boolean, TT> pp = getComponentOfType(cmp, type, depth + 1, maxDepth, seen);
                     if (pp != null) {
                         if (pp.first == true) {
@@ -143,7 +144,7 @@ public class MdDebug extends Debug {
             // o.getClass().getSimpleName() + ":" + name +
             // ", depth=" + depth + "): fields = " + Utils.toString( fields ) );
             // }
-            for (Field f: fields) {
+            for (Field f : fields) {
                 Object v = null;
                 try {
                     v = f.get(o);
@@ -173,13 +174,16 @@ public class MdDebug extends Debug {
         GUILog glt = null;
         try {
             Application app = Application.getInstance();
-            if (app == null)
+            if (app == null) {
                 return null;
-            if (app.getMainFrame() == null)
+            }
+            if (app.getMainFrame() == null) {
                 return null;
+            }
             glt = app.getGUILog();
-            if (glt == null)
+            if (glt == null) {
                 return null;
+            }
             // glt.log("initializing log");
         } catch (NoClassDefFoundError e) {
             glt = null;
@@ -196,13 +200,14 @@ public class MdDebug extends Debug {
     }
 
     public static void logUnsafe(final String s, final boolean addNewLine, final boolean isErr,
-            final Color color) {
-        if (!Debug.isOn())
+                                 final Color color) {
+        if (!Debug.isOn()) {
             return;
+        }
     }
 
     public static void logUnsafeForce(final String s, final boolean addNewLine, final boolean isErr,
-            final Color color) {
+                                      final Color color) {
         String ss = s;
         Color newColor = color;
         StringBuffer sb = (isErr ? glErrBuf : glBuf);
@@ -215,7 +220,8 @@ public class MdDebug extends Debug {
                 newColor = Color.RED;
             }
             ss = "ERR: " + ss;
-        } else {
+        }
+        else {
             if (newColor == null) {
                 newColor = Color.BLACK;
             }
@@ -223,16 +229,20 @@ public class MdDebug extends Debug {
 
         if (!addNewLine) {
             sb.append(ss);
-        } else if (gl != null) {
+        }
+        else if (gl != null) {
             if (newColor != Color.BLACK) {
                 logWithColor(ss, newColor);
-            } else {
+            }
+            else {
                 gl.log(ss);
             }
-            if (isErr)
+            if (isErr) {
                 glErrBuf = new StringBuffer();
-            else
+            }
+            else {
                 glBuf = new StringBuffer();
+            }
         }
 
         PrintStream stream = (isErr ? System.err : System.out);
@@ -253,13 +263,14 @@ public class MdDebug extends Debug {
     }
 
     public static void log(final String s, final boolean addNewLine, final boolean isErr, final Color color) {
-        if (!Debug.on)
+        if (!Debug.on) {
             return;
+        }
         logForce(s, addNewLine, isErr, color);
     }
 
     public static void logForce(final String s, final boolean addNewLine, final boolean isErr,
-            final Color color) {
+                                final Color color) {
         if (isGuiThread()) {
             logUnsafeForce(s, addNewLine, isErr, color);
             return;
@@ -277,8 +288,12 @@ public class MdDebug extends Debug {
     }
 
     public static void logWithColor(String msg, Color color) {
-        if ( color == null ) color = Color.black;
-        if ( gl == null ) gl = getGuiLog();
+        if (color == null) {
+            color = Color.black;
+        }
+        if (gl == null) {
+            gl = getGuiLog();
+        }
         gl.log(msg);
         /*JDialog log = gl.getLog();
         // JPanel jp = getComponentOfType( log, JPanel.class

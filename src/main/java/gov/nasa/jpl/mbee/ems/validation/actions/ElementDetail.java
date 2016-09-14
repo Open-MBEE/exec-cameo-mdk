@@ -1,34 +1,26 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-
-import javax.swing.JDialog;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONObject;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.Collection;
 
 public class ElementDetail extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private JSONObject result;
-    
+
     public ElementDetail(JSONObject result) {
         super("Element Detail", "ElementDetail", null, null);
         this.result = result;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return false;
@@ -36,31 +28,35 @@ public class ElementDetail extends RuleViolationAction implements AnnotationActi
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        
+
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         String detail = "";
         JSONObject spec = null;
-        for (Object o: result.keySet()) {
-            String key = (String)o;
+        for (Object o : result.keySet()) {
+            String key = (String) o;
             if (key.equals("specialization")) {
-                spec = (JSONObject)result.get("specialization");
+                spec = (JSONObject) result.get("specialization");
                 continue;
             }
-            if (result.get(key) != null)
+            if (result.get(key) != null) {
                 detail += key + ": " + result.get(key).toString() + "\n\n";
-            else
+            }
+            else {
                 detail += key + ": null\n\n";
+            }
         }
         if (spec != null) {
-            for (Object o: spec.keySet()) {
-                String key = (String)o;
-                if (spec.get(key) != null)
+            for (Object o : spec.keySet()) {
+                String key = (String) o;
+                if (spec.get(key) != null) {
                     detail += key + ": " + spec.get(key).toString() + "\n\n";
-                else
+                }
+                else {
                     detail += key + ": null\n\n";
+                }
             }
         }
         JTextArea web = new JTextArea(detail);

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
@@ -36,20 +37,18 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-
 public abstract class Table extends Query {
 
-    protected boolean        includeDoc;
+    protected boolean includeDoc;
     protected List<Property> stereotypeProperties;
-    protected List<String>   captions;
-    protected boolean        showCaptions;
-    protected String         style;
-    protected List<String>   colwidths;
-    protected boolean       transpose;
-    protected boolean		hideHeaders;
-    protected boolean       showIfEmpty;
-    
+    protected List<String> captions;
+    protected boolean showCaptions;
+    protected String style;
+    protected List<String> colwidths;
+    protected boolean transpose;
+    protected boolean hideHeaders;
+    protected boolean showIfEmpty;
+
     public void setIncludeDoc(boolean d) {
         includeDoc = d;
     }
@@ -105,7 +104,7 @@ public abstract class Table extends Query {
     public void setTranspose(boolean transpose) {
         this.transpose = transpose;
     }
-    
+
     public boolean isShowIfEmpty() {
         return showIfEmpty;
     }
@@ -115,29 +114,31 @@ public abstract class Table extends Query {
     }
 
     public boolean isHideHeaders() {
-    	return hideHeaders;
+        return hideHeaders;
     }
-    
+
     public void setHideHeaders(final boolean hideHeaders) {
-    	this.hideHeaders = hideHeaders;
+        this.hideHeaders = hideHeaders;
     }
 
     protected void setTableThings(DBTable dbTable) {
         String title = "";
-        if (getTitles() != null && getTitles().size() > 0)
+        if (getTitles() != null && getTitles().size() > 0) {
             title = getTitles().get(0);
+        }
         title = getTitlePrefix() + title + getTitleSuffix();
         dbTable.setTitle(title);
 
-        if (getCaptions() != null && getCaptions().size() > 0 && isShowCaptions())
+        if (getCaptions() != null && getCaptions().size() > 0 && isShowCaptions()) {
             dbTable.setCaption(getCaptions().get(0));
+        }
 
         dbTable.setStyle(getStyle());
 
         List<DBColSpec> cslist = new ArrayList<DBColSpec>();
         if (getColwidths() != null && !getColwidths().isEmpty()) {
             int i = 1;
-            for (String s: getColwidths()) {
+            for (String s : getColwidths()) {
                 DBColSpec cs = new DBColSpec(i);
                 cs.setColwidth(s);
                 cslist.add(cs);
@@ -153,24 +154,24 @@ public abstract class Table extends Query {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        setCaptions((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions,
+        setCaptions((List<String>) GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions,
                 "captions", new ArrayList<String>()));
-        setShowCaptions((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions,
+        setShowCaptions((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions,
                 "showCaptions", true));
-        setStereotypeProperties((List<Property>)GeneratorUtils
+        setStereotypeProperties((List<Property>) GeneratorUtils
                 .getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable,
                         "stereotypeProperties", new ArrayList<Property>()));
-        setIncludeDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement,
+        setIncludeDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.documentationChoosable, "includeDoc", false));
-        setStyle((String)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style",
+        setStyle((String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype, "style",
                 null));
-        setColwidths((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.tableStereotype,
+        setColwidths((List<String>) GeneratorUtils.getListProperty(dgElement, DocGen3Profile.tableStereotype,
                 "colwidths", new ArrayList<String>()));
-        setTranspose((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
+        setTranspose((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
                 "transpose", false));
-        setHideHeaders((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
+        setHideHeaders((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
                 "hideHeaders", false));
-        setShowIfEmpty((Boolean)GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
+        setShowIfEmpty((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tableStereotype,
                 "showIfEmpty", false));
     }
 }

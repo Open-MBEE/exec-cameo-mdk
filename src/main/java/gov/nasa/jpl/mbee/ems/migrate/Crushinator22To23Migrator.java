@@ -1,18 +1,14 @@
 package gov.nasa.jpl.mbee.ems.migrate;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 /**
  * This class migrates a MagicDraw project from EMS 2.2 to EMS 2.3
- *
- *
  */
 
 public class Crushinator22To23Migrator extends Migrator {
@@ -29,7 +25,7 @@ public class Crushinator22To23Migrator extends Migrator {
                 ExportUtility.fillPropertySpecialization(elem, einfo, false, false);
                 exportElems.add(einfo);
             }
-            
+
         }
         commit(exportElems);
     }

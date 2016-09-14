@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -29,43 +29,15 @@
 package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.Debug;
-
-import java.util.List;
-
 import lpg.runtime.IToken;
-
 import org.eclipse.ocl.Environment;
-import org.eclipse.ocl.expressions.AssociationClassCallExp;
-import org.eclipse.ocl.expressions.BooleanLiteralExp;
-import org.eclipse.ocl.expressions.CollectionItem;
-import org.eclipse.ocl.expressions.CollectionLiteralExp;
-import org.eclipse.ocl.expressions.CollectionRange;
-import org.eclipse.ocl.expressions.EnumLiteralExp;
-import org.eclipse.ocl.expressions.IfExp;
-import org.eclipse.ocl.expressions.IntegerLiteralExp;
-import org.eclipse.ocl.expressions.InvalidLiteralExp;
-import org.eclipse.ocl.expressions.IterateExp;
-import org.eclipse.ocl.expressions.IteratorExp;
-import org.eclipse.ocl.expressions.LetExp;
-import org.eclipse.ocl.expressions.MessageExp;
-import org.eclipse.ocl.expressions.NullLiteralExp;
-import org.eclipse.ocl.expressions.OCLExpression;
-import org.eclipse.ocl.expressions.OperationCallExp;
-import org.eclipse.ocl.expressions.PropertyCallExp;
-import org.eclipse.ocl.expressions.RealLiteralExp;
-import org.eclipse.ocl.expressions.StateExp;
-import org.eclipse.ocl.expressions.StringLiteralExp;
-import org.eclipse.ocl.expressions.TupleLiteralExp;
-import org.eclipse.ocl.expressions.TupleLiteralPart;
-import org.eclipse.ocl.expressions.TypeExp;
-import org.eclipse.ocl.expressions.UnlimitedNaturalLiteralExp;
-import org.eclipse.ocl.expressions.UnspecifiedValueExp;
-import org.eclipse.ocl.expressions.Variable;
-import org.eclipse.ocl.expressions.VariableExp;
+import org.eclipse.ocl.expressions.*;
 import org.eclipse.ocl.helper.Choice;
 import org.eclipse.ocl.helper.ChoiceKind;
 import org.eclipse.ocl.helper.ConstraintKind;
 import org.eclipse.ocl.utilities.ExpressionInOCL;
+
+import java.util.List;
 
 public class OCLSyntaxHelper<PK, C, O, P, EL, PM, S, COA, SSA, CT, CLS, E> extends
         org.eclipse.ocl.internal.helper.OCLSyntaxHelper<PK, C, O, P, EL, PM, S, COA, SSA, CT, CLS, E> {

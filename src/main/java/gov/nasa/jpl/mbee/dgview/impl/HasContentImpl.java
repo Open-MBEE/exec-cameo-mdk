@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -31,15 +31,14 @@ package gov.nasa.jpl.mbee.dgview.impl;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
 import gov.nasa.jpl.mbee.dgview.HasContent;
 import gov.nasa.jpl.mbee.dgview.ViewElement;
-
-import java.util.Collection;
-
 import org.eclipse.emf.common.notify.NotificationChain;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
+
+import java.util.Collection;
 
 /**
  * <!-- begin-user-doc --> An implementation of the model object '
@@ -52,23 +51,23 @@ import org.eclipse.emf.ecore.util.InternalEList;
  * <em>Children</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public abstract class HasContentImpl extends ViewElementImpl implements HasContent {
     /**
      * The cached value of the '{@link #getChildren() <em>Children</em>}'
      * containment reference list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getChildren()
+     *
      * @generated
      * @ordered
+     * @see #getChildren()
      */
     protected EList<ViewElement> children;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected HasContentImpl() {
@@ -77,7 +76,7 @@ public abstract class HasContentImpl extends ViewElementImpl implements HasConte
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -87,7 +86,7 @@ public abstract class HasContentImpl extends ViewElementImpl implements HasConte
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -101,21 +100,21 @@ public abstract class HasContentImpl extends ViewElementImpl implements HasConte
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
         switch (featureID) {
             case DgviewPackage.HAS_CONTENT__CHILDREN:
-                return ((InternalEList<?>)getChildren()).basicRemove(otherEnd, msgs);
+                return ((InternalEList<?>) getChildren()).basicRemove(otherEnd, msgs);
         }
         return super.eInverseRemove(otherEnd, featureID, msgs);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -129,7 +128,7 @@ public abstract class HasContentImpl extends ViewElementImpl implements HasConte
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @SuppressWarnings("unchecked")
@@ -138,7 +137,7 @@ public abstract class HasContentImpl extends ViewElementImpl implements HasConte
         switch (featureID) {
             case DgviewPackage.HAS_CONTENT__CHILDREN:
                 getChildren().clear();
-                getChildren().addAll((Collection<? extends ViewElement>)newValue);
+                getChildren().addAll((Collection<? extends ViewElement>) newValue);
                 return;
         }
         super.eSet(featureID, newValue);
@@ -146,7 +145,7 @@ public abstract class HasContentImpl extends ViewElementImpl implements HasConte
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -161,7 +160,7 @@ public abstract class HasContentImpl extends ViewElementImpl implements HasConte
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override

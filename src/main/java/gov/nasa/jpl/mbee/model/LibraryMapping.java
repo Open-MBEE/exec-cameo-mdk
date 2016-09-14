@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,8 +28,19 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mbee.actions.MapLibraryAction;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
 import gov.nasa.jpl.mbee.model.ui.LibraryChooserUI;
@@ -41,50 +52,27 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
-import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
-import com.nomagic.uml2.impl.ElementsFactory;
+import java.util.*;
 
 public class LibraryMapping extends Query {
 
-    private Package                        componentPackage;
-    private Package                        charPackage;
-    private Set<NamedElement>              chars;
-    private ElementsFactory                ef;
-    private SessionManager                 sm;
-    private static final String            CHAR                = "Characterization";
-    private static final String            CHARACTERIZES       = "Characterizes";
-    private static final String            COMPONENT           = "Component";
-    private static final String            IMCECOMPONENT       = "mission:Component";
-    private static final String            IMCECHAR            = "analysis:Characterization";
-    private static final String            IMCECHARACTERIZES   = "analysis:characterizes";
-    private static final String            IMCECHARACTERIZABLE = "analysis:CharacterizedElement";
-    private static final String            DEPPREFIX           = "zz_";
-    private boolean                        IMCEPresent         = false;
+    private Package componentPackage;
+    private Package charPackage;
+    private Set<NamedElement> chars;
+    private ElementsFactory ef;
+    private SessionManager sm;
+    private static final String CHAR = "Characterization";
+    private static final String CHARACTERIZES = "Characterizes";
+    private static final String COMPONENT = "Component";
+    private static final String IMCECOMPONENT = "mission:Component";
+    private static final String IMCECHAR = "analysis:Characterization";
+    private static final String IMCECHARACTERIZES = "analysis:characterizes";
+    private static final String IMCECHARACTERIZABLE = "analysis:CharacterizedElement";
+    private static final String DEPPREFIX = "zz_";
+    private boolean IMCEPresent = false;
     private Node<String, LibraryComponent> tree;
 
-    private Set<NamedElement>              usedChars;
+    private Set<NamedElement> usedChars;
 
     public boolean init() {
         chars = new HashSet<NamedElement>();
@@ -95,14 +83,15 @@ public class LibraryMapping extends Query {
         // create a root tree node so we can add multiple component imports
         tree = new Node<String, LibraryComponent>("Library", new LibraryComponent("Library"));
 
-        for (Object e: this.targets) {
+        for (Object e : this.targets) {
             if (e instanceof Package) {
-                for (Element ee: Utils.collectOwnedElements((Package)e, 0)) {
+                for (Element ee : Utils.collectOwnedElements((Package) e, 0)) {
                     if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHAR)
                             || StereotypesHelper.hasStereotypeOrDerived(ee, CHAR)) {
-                        charPackage = (Package)e;
-                        if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHAR))
+                        charPackage = (Package) e;
+                        if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHAR)) {
                             IMCEPresent = true;
+                        }
                         fillChars();
                         break;
                     }
@@ -111,16 +100,17 @@ public class LibraryMapping extends Query {
         }
 
         // fill in the tree after all the characterizations
-        for (Object e: this.targets) {
+        for (Object e : this.targets) {
             if (e instanceof Package) {
-                for (Element ee: Utils.collectOwnedElements((Package)e, 0)) {
+                for (Element ee : Utils.collectOwnedElements((Package) e, 0)) {
                     if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT)
                             || StereotypesHelper.hasStereotypeOrDerived(ee, COMPONENT)
                             || StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHARACTERIZABLE)) {
-                        componentPackage = (Package)e;
+                        componentPackage = (Package) e;
                         if (StereotypesHelper.hasStereotypeOrDerived(ee, IMCECOMPONENT)
-                                || StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHARACTERIZABLE))
+                                || StereotypesHelper.hasStereotypeOrDerived(ee, IMCECHARACTERIZABLE)) {
                             IMCEPresent = true;
+                        }
                         // create tree after IMCEPresent is tagged
                         tree.addChild(fillComponent(componentPackage));
                         break;
@@ -129,16 +119,19 @@ public class LibraryMapping extends Query {
             }
         }
 
-        if (missingInformation())
+        if (missingInformation()) {
             return false;
+        }
 
         tree.sortAllChildren(new Comparator<Node<String, LibraryComponent>>() {
             @Override
             public int compare(Node<String, LibraryComponent> o1, Node<String, LibraryComponent> o2) {
-                if (o1.getData().isPackage() && !o2.getData().isPackage())
+                if (o1.getData().isPackage() && !o2.getData().isPackage()) {
                     return -1;
-                if (o2.getData().isPackage() && !o1.getData().isPackage())
+                }
+                if (o2.getData().isPackage() && !o1.getData().isPackage()) {
                     return 1;
+                }
                 return o1.getData().getName().compareTo(o2.getData().getName());
             }
         });
@@ -148,18 +141,19 @@ public class LibraryMapping extends Query {
     public void dump() {
         GUILog log = Application.getInstance().getGUILog();
         log.log("Characterizations:");
-        for (NamedElement e: chars) {
+        for (NamedElement e : chars) {
             log.log("\t\t" + e.getName());
         }
         log.log("Components:");
-        for (LibraryComponent lc: tree.getAllData()) {
+        for (LibraryComponent lc : tree.getAllData()) {
             if (!lc.isPackage()) {
                 if (lc.getElement() != null) {
                     log.log("\t\t" + lc.getElement().getName());
-                } else {
+                }
+                else {
                     log.log("\t\tnew " + lc.getName());
                 }
-                for (NamedElement e: lc.getCharacterizations()) {
+                for (NamedElement e : lc.getCharacterizations()) {
                     log.log("\t\t\t\t" + e.getName());
                 }
             }
@@ -202,25 +196,29 @@ public class LibraryMapping extends Query {
 
     private void applyInternal() throws Exception {
         GUILog log = Application.getInstance().getGUILog();
-        for (Node<String, LibraryComponent> lc: tree.getAllNodes()) {
-            if (lc.getData().isPackage())
+        for (Node<String, LibraryComponent> lc : tree.getAllNodes()) {
+            if (lc.getData().isPackage()) {
                 continue;
+            }
             NamedElement e = lc.getData().getElement();
             if (e == null) {
                 e = ef.createClassInstance();
-                if (IMCEPresent)
+                if (IMCEPresent) {
                     StereotypesHelper.addStereotypeByString(e, IMCECOMPONENT);
-                else
+                }
+                else {
                     StereotypesHelper.addStereotypeByString(e, COMPONENT);
+                }
                 e.setOwner(lc.getParent().getData().getElement());
 
             }
-            if (!e.getName().equals(lc.getData().getName()))
+            if (!e.getName().equals(lc.getData().getName())) {
                 e.setName(lc.getData().getName());
-            for (NamedElement addedChar: lc.getData().getAdded()) {
+            }
+            for (NamedElement addedChar : lc.getData().getAdded()) {
                 addDependency(addedChar, e);
             }
-            for (NamedElement removedChar: lc.getData().getRemoved()) {
+            for (NamedElement removedChar : lc.getData().getRemoved()) {
                 removeDependency(removedChar, e);
             }
         }
@@ -244,15 +242,16 @@ public class LibraryMapping extends Query {
             applyInternal();
 
             // start the refactoring of both characterizations and properties
-            for (Node<String, LibraryComponent> lc: tree.getAllNodes()) {
-                if (lc.getData().isPackage())
+            for (Node<String, LibraryComponent> lc : tree.getAllNodes()) {
+                if (lc.getData().isPackage()) {
                     continue;
+                }
                 NamedElement e = lc.getData().getElement();
                 Set<NamedElement> characterizations = lc.getData().getCharacterizations();
-                Collection<Classifier> derived = ModelHelper.getDerivedClassifiers((Classifier)e);
+                Collection<Classifier> derived = ModelHelper.getDerivedClassifiers((Classifier) e);
                 if (!derived.isEmpty()) {
                     log.log("Refactoring instances of: " + e.getName());
-                    for (Classifier c: derived) {
+                    for (Classifier c : derived) {
                         refactorCharacterizations(characterizations, c);
                         refactorCharacterizationProperties(characterizations, c);
                     }
@@ -272,7 +271,7 @@ public class LibraryMapping extends Query {
 
     private void refactorCharacterizations(Set<NamedElement> characterizations, Classifier classifier) {
         GUILog log = Application.getInstance().getGUILog();
-        for (Element e: classifier.getOwnedElement()) {
+        for (Element e : classifier.getOwnedElement()) {
             boolean missing = true;
 
             if (!(e instanceof Property || StereotypesHelper.hasStereotypeOrDerived(e, IMCECHAR) || StereotypesHelper
@@ -286,13 +285,14 @@ public class LibraryMapping extends Query {
                 missing = false;
             }
 
-            NamedElement ne = (NamedElement)e;
+            NamedElement ne = (NamedElement) e;
             if (missing) {
                 if (!ne.getName().startsWith(DEPPREFIX)) {
                     log.log("Deprecated unreferenced characterization: " + e.getHumanName());
                     ne.setName(DEPPREFIX + ne.getName());
                 }
-            } else {
+            }
+            else {
                 if (ne.getName().startsWith(DEPPREFIX)) {
                     log.log("Undeprecating re-referenced characterization: " + e.getHumanName());
                     ne.setName(ne.getName().replace(DEPPREFIX, ""));
@@ -302,15 +302,16 @@ public class LibraryMapping extends Query {
     }
 
     private NamedElement hasCharacterization(Set<NamedElement> characterizations, Element e) {
-        for (NamedElement c: characterizations) {
+        for (NamedElement c : characterizations) {
             if (e instanceof Property) {
-                Type type = ((Property)e).getType();
+                Type type = ((Property) e).getType();
                 if (type.getName().equals(c.getName())) {
                     return c;
                 }
-            } else if (e instanceof Classifier) {
-                Classifier ec = (Classifier)e;
-                for (Classifier general: ec.getGeneral()) {
+            }
+            else if (e instanceof Classifier) {
+                Classifier ec = (Classifier) e;
+                for (Classifier general : ec.getGeneral()) {
                     if (general == c) {
                         return c;
                     }
@@ -321,7 +322,7 @@ public class LibraryMapping extends Query {
     }
 
     private void refactorCharacterizationProperties(Set<NamedElement> characterizations, Classifier classifier) {
-        for (Element e: classifier.getOwnedElement()) {
+        for (Element e : classifier.getOwnedElement()) {
             if (StereotypesHelper.hasStereotypeOrDerived(e, IMCECHAR)
                     || StereotypesHelper.hasStereotypeOrDerived(e, CHAR)) {
                 NamedElement ne = hasCharacterization(characterizations, e);
@@ -333,11 +334,11 @@ public class LibraryMapping extends Query {
     }
 
     private void fillChars() {
-        for (Element e: Utils.collectOwnedElements(charPackage, 0)) {
+        for (Element e : Utils.collectOwnedElements(charPackage, 0)) {
             if (e instanceof Classifier
                     && (StereotypesHelper.hasStereotypeOrDerived(e, IMCECHAR) || StereotypesHelper
-                            .hasStereotypeOrDerived(e, CHAR))) {
-                chars.add((NamedElement)e);
+                    .hasStereotypeOrDerived(e, CHAR))) {
+                chars.add((NamedElement) e);
             }
         }
     }
@@ -346,11 +347,11 @@ public class LibraryMapping extends Query {
         Node<String, LibraryComponent> node = new Node<String, LibraryComponent>(cur.getID(),
                 new LibraryComponent(cur.getName(), cur));
         if (cur instanceof Package) {
-            for (Element e: cur.getOwnedElement()) {
+            for (Element e : cur.getOwnedElement()) {
                 if (e instanceof Package || StereotypesHelper.hasStereotypeOrDerived(e, IMCECOMPONENT)
                         || StereotypesHelper.hasStereotypeOrDerived(e, IMCECHARACTERIZABLE)
                         || StereotypesHelper.hasStereotypeOrDerived(e, COMPONENT)) {
-                    node.addChild(fillComponent((NamedElement)e));
+                    node.addChild(fillComponent((NamedElement) e));
                 }
             }
         }
@@ -368,15 +369,16 @@ public class LibraryMapping extends Query {
         if (IMCEPresent) {
             directedRelatedElements = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
                     component, IMCECHARACTERIZES, 2, true, 1);
-        } else {
+        }
+        else {
             directedRelatedElements = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
                     component, CHARACTERIZES, 2, true, 1);
         }
 
-        for (Element e: directedRelatedElements) {
+        for (Element e : directedRelatedElements) {
             if (chars.contains(e)) {
-                com.getCharacterizations().add((NamedElement)e);
-                usedChars.add((NamedElement)e);
+                com.getCharacterizations().add((NamedElement) e);
+                usedChars.add((NamedElement) e);
             }
 
         }
@@ -384,7 +386,7 @@ public class LibraryMapping extends Query {
 
     private void removeDependency(Element from, Element to) throws ReadOnlyElementException {
         ModelElementsManager mem = ModelElementsManager.getInstance();
-        for (DirectedRelationship r: new HashSet<DirectedRelationship>(
+        for (DirectedRelationship r : new HashSet<DirectedRelationship>(
                 from.get_directedRelationshipOfSource())) {
             if (ModelHelper.getSupplierElement(r) == to && r instanceof Dependency) {
                 mem.removeElement(r);
@@ -397,29 +399,32 @@ public class LibraryMapping extends Query {
         d.setOwner(to.getOwner());
         ModelHelper.setSupplierElement(d, to);
         ModelHelper.setClientElement(d, from);
-        if (IMCEPresent)
+        if (IMCEPresent) {
             StereotypesHelper.addStereotypeByString(d, IMCECHARACTERIZES);
-        else
+        }
+        else {
             StereotypesHelper.addStereotypeByString(d, CHARACTERIZES);
+        }
 
     }
 
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         List<DocumentElement> res = new ArrayList<DocumentElement>();
-        if (!init())
+        if (!init()) {
             return res;
+        }
         DBTable table = new DBTable();
         Node<String, LibraryComponent> root = getRoot();
-        List<Element> chars = Utils.sortByName( Utils2.asList( getUsedChars(), Element.class ) );
+        List<Element> chars = Utils.sortByName(Utils2.asList(getUsedChars(), Element.class));
         List<List<DocumentElement>> grid = new ArrayList<List<DocumentElement>>();
         List<List<DocumentElement>> headers = new ArrayList<List<DocumentElement>>();
         addLibraryRows(root, chars, grid, 1);
         table.setBody(grid);
         List<DocumentElement> headerrow = new ArrayList<DocumentElement>();
         headerrow.add(new DBText("Component"));
-        for (Element charr: chars) {
-            headerrow.add(new DBText(((NamedElement)charr).getName()));
+        for (Element charr : chars) {
+            headerrow.add(new DBText(((NamedElement) charr).getName()));
         }
         headers.add(headerrow);
         table.setHeaders(headers);
@@ -430,24 +435,27 @@ public class LibraryMapping extends Query {
     }
 
     private void addLibraryRows(Node<String, LibraryComponent> cur, List<Element> chars,
-            List<List<DocumentElement>> grid, int depth) {
+                                List<List<DocumentElement>> grid, int depth) {
         LibraryComponent curc = cur.getData();
         List<DocumentElement> row = new ArrayList<DocumentElement>();
         row.add(new DBText(DocGenUtils.getIndented(curc.getName(), depth)));
         if (curc.isPackage()) {
-            for (@SuppressWarnings("unused") Element charr: chars) {
+            for (@SuppressWarnings("unused") Element charr : chars) {
                 row.add(new DBText(""));
             }
-        } else {
-            for (Element charr: chars) {
-                if (curc.hasCharacterization((NamedElement)charr))
+        }
+        else {
+            for (Element charr : chars) {
+                if (curc.hasCharacterization((NamedElement) charr)) {
                     row.add(new DBText("X"));
-                else
+                }
+                else {
                     row.add(new DBText(""));
+                }
             }
         }
         grid.add(row);
-        for (Node<String, LibraryComponent> child: cur.getChildrenAsList()) {
+        for (Node<String, LibraryComponent> child : cur.getChildrenAsList()) {
             addLibraryRows(child, chars, grid, depth + 1);
         }
     }

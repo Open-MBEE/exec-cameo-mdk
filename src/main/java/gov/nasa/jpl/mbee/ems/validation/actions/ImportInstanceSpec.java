@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,24 +28,22 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.ems.ReferenceException;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.Map;
-
-import org.json.simple.JSONObject;
-
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 public class ImportInstanceSpec extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -53,14 +51,14 @@ public class ImportInstanceSpec extends RuleViolationAction implements Annotatio
     private InstanceSpecification element;
     private JSONObject result;
     private JSONObject spec;
-    
+
     public ImportInstanceSpec(InstanceSpecification e, JSONObject spec, JSONObject result) {
         super("ImportName", "Accept instance", null, null);
         this.element = e;
         this.result = result;
         this.spec = spec;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -70,33 +68,38 @@ public class ImportInstanceSpec extends RuleViolationAction implements Annotatio
     public void execute(Collection<Annotation> annos) {
         executeMany(annos, "Change instances");
     }
-    
+
     @Override
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
-            Element e = (Element)anno.getTarget();
+            Element e = (Element) anno.getTarget();
             if (!e.isEditable()) {
-                Utils.guilog("[ERROR] " + ((NamedElement)e).getQualifiedName() + " isn't editable");
+                Utils.guilog("[ERROR] " + ((NamedElement) e).getQualifiedName() + " isn't editable");
                 return false;
             }
-            JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setInstanceSpecification((InstanceSpecification)e, (JSONObject)resultOb.get("specialization"));
+                ImportUtility.setInstanceSpecification((InstanceSpecification) e, (JSONObject) resultOb.get("specialization"));
             } catch (ImportException ex) {
                 if (ex instanceof ReferenceException) {
-                    Utils.guilog("[ERROR] " + ((NamedElement)e).getQualifiedName() + " cannot be imported because it'll be missing classifiers.");
-                } else
+                    Utils.guilog("[ERROR] " + ((NamedElement) e).getQualifiedName() + " cannot be imported because it'll be missing classifiers.");
+                }
+                else {
                     Utils.guilog("[ERROR] " + ex.getMessage());
+                }
                 return false;
             }
-        } else {
+        }
+        else {
             try {
                 ImportUtility.setInstanceSpecification(element, spec);
             } catch (ImportException ex) {
                 if (ex instanceof ReferenceException) {
                     Utils.guilog("[ERROR] " + element.getQualifiedName() + " cannot be imported because it'll be missing classifiers.");
-                } else
+                }
+                else {
                     Utils.guilog("[ERROR] " + ex.getMessage());
+                }
                 return false;
             }
         }

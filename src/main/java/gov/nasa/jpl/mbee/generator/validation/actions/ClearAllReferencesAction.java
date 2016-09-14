@@ -1,11 +1,5 @@
 package gov.nasa.jpl.mbee.generator.validation.actions;
 
-import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -14,6 +8,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Expression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
+
+import java.awt.event.ActionEvent;
+import java.util.Collection;
 
 public class ClearAllReferencesAction extends MDAction implements AnnotationAction {
 
@@ -27,7 +26,7 @@ public class ClearAllReferencesAction extends MDAction implements AnnotationActi
         this.viewOrSection = viewOrSection;
         this.view = view;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -39,11 +38,12 @@ public class ClearAllReferencesAction extends MDAction implements AnnotationActi
         for (Annotation a : arg0) {
             Element e = (Element) a.getTarget();
             Expression ex = PresentationElementUtils.getViewOrSectionExpression(e);
-            if (ex == null)
+            if (ex == null) {
                 continue;
+            }
             Constraint c = Utils.getViewConstraint(e);
             if (!ex.isEditable()) {
-                Utils.guilog("[ERROR] " + (c == null ? c.getQualifiedName() : ((NamedElement)e).getQualifiedName()) + " is not editable, skipping.");
+                Utils.guilog("[ERROR] " + (c == null ? c.getQualifiedName() : ((NamedElement) e).getQualifiedName()) + " is not editable, skipping.");
                 continue;
             }
             ex.getOperand().clear();
@@ -56,10 +56,11 @@ public class ClearAllReferencesAction extends MDAction implements AnnotationActi
     public void actionPerformed(ActionEvent e) {
         Expression ex = PresentationElementUtils.getViewOrSectionExpression(viewOrSection);
         Constraint c = Utils.getViewConstraint(viewOrSection);
-        if (ex == null)
+        if (ex == null) {
             return;
+        }
         if (!ex.isEditable()) {
-            Utils.guilog("[ERROR] " + (c == null ? c.getQualifiedName() : ((NamedElement)viewOrSection).getQualifiedName()) + " is not editable.");
+            Utils.guilog("[ERROR] " + (c == null ? c.getQualifiedName() : ((NamedElement) viewOrSection).getQualifiedName()) + " is not editable.");
             return;
         }
         SessionManager.getInstance().createSession("fix duplicate references");

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,29 +28,27 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.viewedit;
 
-import static gov.nasa.jpl.mbee.web.sync.CommentUtil.TIME_FORMAT;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.model.AbstractModelVisitor;
 import gov.nasa.jpl.mbee.model.Document;
 import gov.nasa.jpl.mbee.model.Section;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import static gov.nasa.jpl.mbee.web.sync.CommentUtil.TIME_FORMAT;
 
 /**
  * gets view comments and exports to view editor
- * 
+ *
  * @author dlam
- * 
  */
 @Deprecated
 public class ViewCommentVisitor extends AbstractModelVisitor {
@@ -60,8 +58,8 @@ public class ViewCommentVisitor extends AbstractModelVisitor {
      * [childids], ...} //not supported right now (for comment replies) }
      */
     private Map<String, JSONArray> view2comment;
-    private JSONArray              comments;
-    private String                 user;
+    private JSONArray comments;
+    private String user;
 
     public ViewCommentVisitor() {
         view2comment = new HashMap<String, JSONArray>();
@@ -79,22 +77,24 @@ public class ViewCommentVisitor extends AbstractModelVisitor {
 
     @Override
     public void visit(Document doc) {
-        if (doc.getDgElement() != null)
+        if (doc.getDgElement() != null) {
             handleView(doc.getDgElement());
+        }
         visitChildren(doc);
     }
 
     @Override
     public void visit(Section sec) {
-        if (sec.isView())
+        if (sec.isView()) {
             handleView(sec.getDgElement());
+        }
         visitChildren(sec);
     }
 
     @SuppressWarnings("unchecked")
     private void handleView(Element view) {
         JSONArray commentIds = new JSONArray();
-        for (Comment c: view.get_commentOfAnnotatedElement()) {
+        for (Comment c : view.get_commentOfAnnotatedElement()) {
             if (StereotypesHelper.hasStereotypeOrDerived(c, "DocumentComment")) {
                 addComment(c);
                 commentIds.add(c.getID());
@@ -108,14 +108,16 @@ public class ViewCommentVisitor extends AbstractModelVisitor {
         JSONObject c = new JSONObject();
         c.put("body", Utils.stripHtmlWrapper(comment.getBody()));
         c.put("id", comment.getID());
-        String user = (String)StereotypesHelper.getStereotypePropertyFirst(comment, "DocumentComment",
+        String user = (String) StereotypesHelper.getStereotypePropertyFirst(comment, "DocumentComment",
                 "author");
-        String time = (String)StereotypesHelper.getStereotypePropertyFirst(comment, "DocumentComment",
+        String time = (String) StereotypesHelper.getStereotypePropertyFirst(comment, "DocumentComment",
                 "timestamp");
-        if (user == null || user.equals(""))
+        if (user == null || user.equals("")) {
             user = this.user;
-        if (time == null || time.equals(""))
+        }
+        if (time == null || time.equals("")) {
             time = getCurrentTime();
+        }
         c.put("modified", time);
         c.put("author", user);
         comments.add(c);
@@ -130,7 +132,8 @@ public class ViewCommentVisitor extends AbstractModelVisitor {
         String teamworkUsername = TeamworkUtils.getLoggedUserName();
         if (teamworkUsername != null) {
             username = teamworkUsername;
-        } else {
+        }
+        else {
             username = System.getProperty("user.name", "");
         }
         return username;

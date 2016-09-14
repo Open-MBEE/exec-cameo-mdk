@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
@@ -41,15 +42,13 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
 public class ViewpointConstraint extends Query {
 
     @SuppressWarnings("unused")
-    private Boolean           iterate;
+    private Boolean iterate;
     @SuppressWarnings("unused")
-    private String            expression;
-    private Boolean           report;
+    private String expression;
+    private Boolean report;
     private DocumentValidator dv;
 
     public ViewpointConstraint(DocumentValidator dv) {
@@ -61,23 +60,23 @@ public class ViewpointConstraint extends Query {
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         // construct a temporary validation suite from the global one to
         // generate docbook output for one constraint.
-        ValidationSuite vs = new ValidationSuite(((NamedElement)dgElement).getName());
-        ValidationRule rule = new ValidationRule(((NamedElement)dgElement).getName(), "Viewpoint Constraint",
+        ValidationSuite vs = new ValidationSuite(((NamedElement) dgElement).getName());
+        ValidationRule rule = new ValidationRule(((NamedElement) dgElement).getName(), "Viewpoint Constraint",
                 ViolationSeverity.WARNING);
         vs.addValidationRule(rule);
-        if ( dv != null ) {
+        if (dv != null) {
             ValidationRule r = dv.getViewpointConstraintRule();
             if (r instanceof ConstraintValidationRule) {
-                rule.addViolations(((ConstraintValidationRule)r).getViolations(dgElement));
+                rule.addViolations(((ConstraintValidationRule) r).getViolations(dgElement));
             }
-        // if (expression != null) {
-        // if (iterate) {
-        // for (Element e: targets) {
-        //
-        // }
-        // } else {
-        //
-        // }
+            // if (expression != null) {
+            // if (iterate) {
+            // for (Element e: targets) {
+            //
+            // }
+            // } else {
+            //
+            // }
 
             if (report && !Utils2.isNullOrEmpty(rule.getViolations())) {
                 return vs.getDocBook();
@@ -90,11 +89,11 @@ public class ViewpointConstraint extends Query {
 
     @Override
     public void initialize() {
-        iterate = (Boolean)GeneratorUtils.getObjectProperty(dgElement,
+        iterate = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.viewpointConstraintStereotype, "iterate", true);
-        expression = (String)GeneratorUtils.getObjectProperty(dgElement,
+        expression = (String) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.viewpointConstraintStereotype, "expression", "");
-        report = (Boolean)GeneratorUtils.getObjectProperty(dgElement,
+        report = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.viewpointConstraintStereotype, "validationReport", false);
     }
 

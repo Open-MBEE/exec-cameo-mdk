@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -29,29 +29,21 @@
 package gov.nasa.jpl.mbee.viewedit;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSimpleList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 @Deprecated
 public class DBEditTableVisitor extends DBEditDocwebVisitor {
 
     private JSONObject tablejson;
-    private JSONArray  curRow;
-    private JSONArray  tableelements;
-    private int        rowspan;
-    private int        colspan;
+    private JSONArray curRow;
+    private JSONArray tableelements;
+    private int rowspan;
+    private int colspan;
 
     // private GUILog gl = Application.getInstance().getGUILog();
 
@@ -71,32 +63,36 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
     public void visit(DBTable table) {
         JSONArray body = new JSONArray();
         tablejson.put("body", body);
-        for (List<DocumentElement> row: table.getBody()) {
+        for (List<DocumentElement> row : table.getBody()) {
             curRow = new JSONArray();
             body.add(curRow);
-            for (DocumentElement de: row) {
+            for (DocumentElement de : row) {
                 rowspan = 1;
                 colspan = 1;
-                if (de != null)
+                if (de != null) {
                     de.accept(this);
+                }
             }
         }
         JSONArray headers = new JSONArray();
         tablejson.put("header", headers);
-        for (List<DocumentElement> row: table.getHeaders()) {
+        for (List<DocumentElement> row : table.getHeaders()) {
             curRow = new JSONArray();
             headers.add(curRow);
-            for (DocumentElement de: row) {
+            for (DocumentElement de : row) {
                 rowspan = 1;
                 colspan = 1;
-                if (de != null)
+                if (de != null) {
                     de.accept(this);
+                }
             }
         }
-        if (table.getStyle() == null)
+        if (table.getStyle() == null) {
             tablejson.put("style", "normal");
-        else
+        }
+        else {
             tablejson.put("style", table.getStyle());
+        }
         tablejson.put("title", table.getTitle());
         tablejson.put("type", "Table");
         tablejson.put("sources", tableelements);
@@ -106,7 +102,7 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTableEntry tableentry) { // TODO; check for
-                                                 // informaltable and ignore it
+        // informaltable and ignore it
         if (tableentry.getMorerows() > 0) {
             rowspan = tableentry.getMorerows() + 1;
         }
@@ -121,7 +117,7 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
         }
         if (tableentry.getChildren().size() > 1) {
             DBHTMLVisitor html = new DBHTMLVisitor();
-            for (DocumentElement de: tableentry.getChildren()) {
+            for (DocumentElement de : tableentry.getChildren()) {
                 de.accept(html);
             }
             JSONObject entry = new JSONObject();
@@ -129,9 +125,11 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
             entry.put("text", html.getOut());
             addSpans(entry);
             curRow.add(entry);
-        } else if (!tableentry.getChildren().isEmpty()) {
+        }
+        else if (!tableentry.getChildren().isEmpty()) {
             tableentry.getChildren().get(0).accept(this);
-        } else {
+        }
+        else {
             JSONObject entry = new JSONObject();
             entry.put("source", "text");
             entry.put("text", "");
@@ -172,7 +170,8 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
             this.tableelements.add(para.getFrom().getID());
             entry.put("source", para.getFrom().getID());
             entry.put("useProperty", para.getFromProperty().toString());
-        } else {
+        }
+        else {
             entry.put("source", "text");
             entry.put("text", DocGenUtils.addP(DocGenUtils.fixString(para.getText(), false)));
         }
@@ -189,7 +188,8 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
             this.tableelements.add(text.getFrom().getID());
             entry.put("source", text.getFrom().getID());
             entry.put("useProperty", text.getFromProperty().toString());
-        } else {
+        }
+        else {
             entry.put("source", "text");
             entry.put("text", DocGenUtils.fixString(text.getText(), false));
         }
@@ -211,9 +211,11 @@ public class DBEditTableVisitor extends DBEditDocwebVisitor {
 
     @SuppressWarnings("unchecked")
     private void addSpans(JSONObject entry) {
-        if (rowspan > 0)
+        if (rowspan > 0) {
             entry.put("rowspan", Integer.toString(rowspan));
-        if (colspan > 0)
+        }
+        if (colspan > 0) {
             entry.put("colspan", Integer.toString(colspan));
+        }
     }
 }

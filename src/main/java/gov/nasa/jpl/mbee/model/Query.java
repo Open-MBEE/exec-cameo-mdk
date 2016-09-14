@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,9 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import gov.nasa.jpl.mbee.generator.Generatable;
-import gov.nasa.jpl.mbee.lib.ClassUtils;
-import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 
 import java.lang.reflect.Field;
@@ -39,17 +38,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 /**
  * <p>
  * This class should be extended if writing java extensions, or any of its
  * subclass like Table
  * </p>
- * 
+ *
  * @author dlam
- * 
  */
 public abstract class Query extends DocGenElement implements Generatable {
     /**
@@ -57,8 +52,8 @@ public abstract class Query extends DocGenElement implements Generatable {
      * resulting from collect/filter/sort actions
      */
     protected List<Object> targets;
-    protected List<String>  titles;
-    protected boolean       sortElementsByName = false;
+    protected List<String> titles;
+    protected boolean sortElementsByName = false;
 
     public void setTargets(List<Object> t) {
         targets = t;
@@ -128,34 +123,36 @@ public abstract class Query extends DocGenElement implements Generatable {
     public void accept(IModelVisitor visitor) {
         visitor.visit(this);
     }
-    
-    protected static HashSet<Field> notToStringSet = new HashSet< Field >() {
-            private static final long serialVersionUID = -2943965696220565323L;
-            {
-                try{
-                    //add(Query.class.getField( "sortElementsByName" ));
-                } catch( Exception e ) {
-                    e.printStackTrace();
-                }
+
+    protected static HashSet<Field> notToStringSet = new HashSet<Field>() {
+        private static final long serialVersionUID = -2943965696220565323L;
+
+        {
+            try {
+                //add(Query.class.getField( "sortElementsByName" ));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+        }
     };
+
     protected Set<Field> notToString() {
         return notToStringSet;
     }
-    
+
     @Override
     public String toStringStart() {
         StringBuffer sb = new StringBuffer();
-        sb.append( super.toStringStart() );
-        for ( Field f : getClass().getDeclaredFields() ) {
-            if ( notToString().contains( f ) ) {
+        sb.append(super.toStringStart());
+        for (Field f : getClass().getDeclaredFields()) {
+            if (notToString().contains(f)) {
                 continue;
             }
-            f.setAccessible( true );
+            f.setAccessible(true);
             try {
-                sb.append( "," + f.getName() + "=" + f.get( this ) );
-            } catch ( IllegalArgumentException e ) {
-            } catch ( IllegalAccessException e ) {
+                sb.append("," + f.getName() + "=" + f.get(this));
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {
             }
         }
         return sb.toString();

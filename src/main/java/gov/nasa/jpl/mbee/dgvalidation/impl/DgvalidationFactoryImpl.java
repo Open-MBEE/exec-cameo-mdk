@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,13 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.dgvalidation.impl;
 
-import gov.nasa.jpl.mbee.dgvalidation.DgvalidationFactory;
-import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
-import gov.nasa.jpl.mbee.dgvalidation.Rule;
-import gov.nasa.jpl.mbee.dgvalidation.Severity;
-import gov.nasa.jpl.mbee.dgvalidation.Suite;
-import gov.nasa.jpl.mbee.dgvalidation.Violation;
-
+import gov.nasa.jpl.mbee.dgvalidation.*;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
@@ -45,19 +39,19 @@ import org.eclipse.emf.ecore.plugin.EcorePlugin;
 /**
  * <!-- begin-user-doc --> An implementation of the model <b>Factory</b>. <!--
  * end-user-doc -->
- * 
+ *
  * @generated
  */
 public class DgvalidationFactoryImpl extends EFactoryImpl implements DgvalidationFactory {
     /**
      * Creates the default factory implementation. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @generated
      */
     public static DgvalidationFactory init() {
         try {
-            DgvalidationFactory theDgvalidationFactory = (DgvalidationFactory)EPackage.Registry.INSTANCE
+            DgvalidationFactory theDgvalidationFactory = (DgvalidationFactory) EPackage.Registry.INSTANCE
                     .getEFactory("http://mbee.jpl.nasa.gov/docgen/dgvalidation");
             if (theDgvalidationFactory != null) {
                 return theDgvalidationFactory;
@@ -71,7 +65,7 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
     /**
      * Creates an instance of the factory. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @generated
      */
     public DgvalidationFactoryImpl() {
@@ -80,7 +74,7 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -100,7 +94,7 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -116,7 +110,7 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -132,7 +126,7 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -143,7 +137,7 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -154,7 +148,7 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -165,20 +159,21 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     public Severity createSeverityFromString(EDataType eDataType, String initialValue) {
         Severity result = Severity.get(initialValue);
-        if (result == null)
+        if (result == null) {
             throw new IllegalArgumentException("The value '" + initialValue
                     + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+        }
         return result;
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     public String convertSeverityToString(EDataType eDataType, Object instanceValue) {
@@ -187,19 +182,19 @@ public class DgvalidationFactoryImpl extends EFactoryImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public DgvalidationPackage getDgvalidationPackage() {
-        return (DgvalidationPackage)getEPackage();
+        return (DgvalidationPackage) getEPackage();
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @deprecated
+     *
      * @generated
+     * @deprecated
      */
     @Deprecated
     public static DgvalidationPackage getPackage() {

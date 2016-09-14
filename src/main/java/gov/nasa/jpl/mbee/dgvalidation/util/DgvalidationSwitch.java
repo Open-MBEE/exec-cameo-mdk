@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -32,7 +32,6 @@ import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgvalidation.Rule;
 import gov.nasa.jpl.mbee.dgvalidation.Suite;
 import gov.nasa.jpl.mbee.dgvalidation.Violation;
-
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.util.Switch;
@@ -44,14 +43,14 @@ import org.eclipse.emf.ecore.util.Switch;
  * starting with the actual class of the object and proceeding up the
  * inheritance hierarchy until a non-null result is returned, which is the
  * result of the switch. <!-- end-user-doc -->
- * 
- * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage
+ *
  * @generated
+ * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage
  */
 public class DgvalidationSwitch<T> extends Switch<T> {
     /**
      * The cached model package <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected static DgvalidationPackage modelPackage;
@@ -59,7 +58,7 @@ public class DgvalidationSwitch<T> extends Switch<T> {
     /**
      * Creates an instance of the switch. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @generated
      */
     public DgvalidationSwitch() {
@@ -71,9 +70,9 @@ public class DgvalidationSwitch<T> extends Switch<T> {
     /**
      * Checks whether this is a switch for the given package. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @parameter ePackage the package in question.
+     *
      * @return whether this is a switch for the given package.
+     * @parameter ePackage the package in question.
      * @generated
      */
     @Override
@@ -85,33 +84,36 @@ public class DgvalidationSwitch<T> extends Switch<T> {
      * Calls <code>caseXXX</code> for each class of the model until one returns
      * a non null result; it yields that result. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @return the first non-null result returned by a <code>caseXXX</code>
-     *         call.
+     * call.
      * @generated
      */
     @Override
     protected T doSwitch(int classifierID, EObject theEObject) {
         switch (classifierID) {
             case DgvalidationPackage.RULE: {
-                Rule rule = (Rule)theEObject;
+                Rule rule = (Rule) theEObject;
                 T result = caseRule(rule);
-                if (result == null)
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgvalidationPackage.VIOLATION: {
-                Violation violation = (Violation)theEObject;
+                Violation violation = (Violation) theEObject;
                 T result = caseViolation(violation);
-                if (result == null)
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgvalidationPackage.SUITE: {
-                Suite suite = (Suite)theEObject;
+                Suite suite = (Suite) theEObject;
                 T result = caseSuite(suite);
-                if (result == null)
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             default:
@@ -124,13 +126,12 @@ public class DgvalidationSwitch<T> extends Switch<T> {
      * <em>Rule</em>'. <!-- begin-user-doc --> This implementation returns null;
      * returning a non-null result will terminate the switch. <!-- end-user-doc
      * -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Rule</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Rule</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseRule(Rule object) {
         return null;
@@ -141,13 +142,12 @@ public class DgvalidationSwitch<T> extends Switch<T> {
      * <em>Violation</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Violation</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Violation</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseViolation(Violation object) {
         return null;
@@ -158,13 +158,12 @@ public class DgvalidationSwitch<T> extends Switch<T> {
      * <em>Suite</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Suite</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Suite</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseSuite(Suite object) {
         return null;
@@ -175,13 +174,12 @@ public class DgvalidationSwitch<T> extends Switch<T> {
      * <em>EObject</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch, but this is
      * the last case anyway. <!-- end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>EObject</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject)
+     * <em>EObject</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject)
      */
     @Override
     public T defaultCase(EObject object) {

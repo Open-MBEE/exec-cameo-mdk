@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -34,7 +34,7 @@ import org.eclipse.emf.ecore.EObject;
 /**
  * <!-- begin-user-doc --> A representation of the model object '
  * <em><b>Rule</b></em>'. <!-- end-user-doc -->
- * 
+ * <p>
  * <p>
  * The following features are supported:
  * <ul>
@@ -48,10 +48,10 @@ import org.eclipse.emf.ecore.EObject;
  * Violations</em>}</li>
  * </ul>
  * </p>
- * 
- * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule()
+ *
  * @model
  * @generated
+ * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule()
  */
 public interface Rule extends EObject {
     /**
@@ -62,12 +62,12 @@ public interface Rule extends EObject {
      * should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Name</em>' attribute.
-     * @see #setName(String)
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule_Name()
      * @model
      * @generated
+     * @see #setName(String)
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule_Name()
      */
     String getName();
 
@@ -75,11 +75,10 @@ public interface Rule extends EObject {
      * Sets the value of the '
      * {@link gov.nasa.jpl.mbee.dgvalidation.Rule#getName
      * <em>Name</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Name</em>' attribute.
-     * @see #getName()
+     *
+     * @param value the new value of the '<em>Name</em>' attribute.
      * @generated
+     * @see #getName()
      */
     void setName(String value);
 
@@ -91,12 +90,12 @@ public interface Rule extends EObject {
      * really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Description</em>' attribute.
-     * @see #setDescription(String)
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule_Description()
      * @model
      * @generated
+     * @see #setDescription(String)
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule_Description()
      */
     String getDescription();
 
@@ -105,11 +104,10 @@ public interface Rule extends EObject {
      * {@link gov.nasa.jpl.mbee.dgvalidation.Rule#getDescription
      * <em>Description</em>}' attribute. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Description</em>' attribute.
-     * @see #getDescription()
+     *
+     * @param value the new value of the '<em>Description</em>' attribute.
      * @generated
+     * @see #getDescription()
      */
     void setDescription(String value);
 
@@ -123,13 +121,13 @@ public interface Rule extends EObject {
      * really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Severity</em>' attribute.
+     * @model
+     * @generated
      * @see gov.nasa.jpl.mbee.dgvalidation.Severity
      * @see #setSeverity(Severity)
      * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule_Severity()
-     * @model
-     * @generated
      */
     Severity getSeverity();
 
@@ -138,12 +136,11 @@ public interface Rule extends EObject {
      * {@link gov.nasa.jpl.mbee.dgvalidation.Rule#getSeverity
      * <em>Severity</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc
      * -->
-     * 
-     * @param value
-     *            the new value of the '<em>Severity</em>' attribute.
+     *
+     * @param value the new value of the '<em>Severity</em>' attribute.
+     * @generated
      * @see gov.nasa.jpl.mbee.dgvalidation.Severity
      * @see #getSeverity()
-     * @generated
      */
     void setSeverity(Severity value);
 
@@ -157,12 +154,12 @@ public interface Rule extends EObject {
      * isn't clear, there really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Violations</em>' containment reference
-     *         list.
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule_Violations()
+     * list.
      * @model containment="true"
      * @generated
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getRule_Violations()
      */
     EList<Violation> getViolations();
 

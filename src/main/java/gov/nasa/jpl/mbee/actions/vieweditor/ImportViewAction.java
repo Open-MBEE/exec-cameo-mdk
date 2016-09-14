@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,26 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.vieweditor;
 
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mbee.web.sync.CommentChangeListener;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
-
-import java.awt.event.ActionEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -56,27 +36,39 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.web.sync.CommentChangeListener;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
+import java.awt.event.ActionEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * import changed elements in views
- * 
+ *
  * @author dlam
- * 
  */
 @Deprecated
 public class ImportViewAction extends MDAction {
     private static final long serialVersionUID = 1L;
-    private Element            doc;
+    private Element doc;
     public static final String actionid = "ImportView";
 
     public ImportViewAction(Element e) {
-    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
-    	//
+        //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        //
         super(actionid, "Accept View (Overwrite)", null, null);
         doc = e;
     }
@@ -90,12 +82,13 @@ public class ImportViewAction extends MDAction {
         Boolean recurse = recursive;
         String url = curl;
         GUILog gl = Application.getInstance().getGUILog();
-    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
-    	//
+        //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        //
         ValidationSuite vs = new ValidationSuite("Accept changes");
         ViolationSeverity sev = ViolationSeverity.WARNING;
-        if (willchange)
+        if (willchange) {
             sev = ViolationSeverity.INFO;
+        }
         ValidationRule nameChange = new ValidationRule("Name change", "Element name is changed", sev);
         ValidationRule notLocked = new ValidationRule("Not Editable", "Element is not locked",
                 ViolationSeverity.ERROR);
@@ -107,27 +100,34 @@ public class ImportViewAction extends MDAction {
         vs.addValidationRule(docChange);
         vs.addValidationRule(valueChange);
         try {
-            if (recurse == null)
+            if (recurse == null) {
                 recurse = false;
-            if (url == null)
+            }
+            if (url == null) {
                 url = ViewEditUtils.getUrl();
-            if (url == null)
+            }
+            if (url == null) {
                 return;
+            }
             String geturl = url + "/rest/views/" + e.getID();
-            if (recurse)
+            if (recurse) {
                 geturl += "?recurse=true";
+            }
             GetMethod gm = new GetMethod(geturl);
             // PostMethod pm = new PostMethod(url + "/rest/views/committed");
             try {
-                if (willchange)
+                if (willchange) {
                     gl.log("*** Starting import view ***");
-                else
+                }
+                else {
                     gl.log("*** Starting consistency check ***");
+                }
                 HttpClient client = new HttpClient();
                 ViewEditUtils.setCredentials(client, geturl, gm);
                 int code = client.executeMethod(gm);
-                if (ViewEditUtils.showErrorMessage(code))
+                if (ViewEditUtils.showErrorMessage(code)) {
                     return;
+                }
                 String json = gm.getResponseBodyAsString();
                 // gl.log(json);
                 if (json.equals("[]")) {
@@ -165,36 +165,39 @@ public class ImportViewAction extends MDAction {
         Collection<ValidationSuite> cvs = new ArrayList<ValidationSuite>();
         cvs.add(vs);
         if (willchange)
-        	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
-        	//
+        //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        //
+        {
             Utils.displayValidationWindow(cvs, "Accept/Synchronize View Results");
-        else
+        }
+        else {
             Utils.displayValidationWindow(cvs, "Validate Sync Results");
+        }
     }
 
     @SuppressWarnings("unchecked")
     public static JSONArray change(String json, boolean willchange, ValidationRule nameChange,
-            ValidationRule notLocked, ValidationRule docChange, ValidationRule valueChange) {
+                                   ValidationRule notLocked, ValidationRule docChange, ValidationRule valueChange) {
         JSONArray res = new JSONArray();
-        JSONArray changed = (JSONArray)JSONValue.parse(json);
+        JSONArray changed = (JSONArray) JSONValue.parse(json);
         GUILog gl = Application.getInstance().getGUILog();
         Project p = Application.getInstance().getProject();
         CommentChangeListener.disable(); // if the documentation of element is
-                                         // changed, we don't want the listener
-                                         // to add any stereotypes to the
-                                         // comment representing documentation
+        // changed, we don't want the listener
+        // to add any stereotypes to the
+        // comment representing documentation
         try {
             SessionManager.getInstance().createSession("import view");
 
             int modified = 0;
             int cannot = 0;
             int notfound = 0;
-            for (Object change: changed) {
+            for (Object change : changed) {
                 if (change instanceof JSONObject) {
-                    JSONObject element = (JSONObject)change;
-                    String mdid = (String)element.get("mdid");
-                    String name = (String)element.get("name");
-                    String doc = (String)element.get("documentation");
+                    JSONObject element = (JSONObject) change;
+                    String mdid = (String) element.get("mdid");
+                    String name = (String) element.get("name");
+                    String doc = (String) element.get("documentation");
                     String dochtml = Utils.addHtmlWrapper(doc);
                     BaseElement mdelement = p.getElementByID(mdid);
                     if (mdelement == null) {
@@ -214,77 +217,90 @@ public class ImportViewAction extends MDAction {
                         boolean echanged = false;
                         boolean editable = true;
                         if (mdelement instanceof NamedElement) {
-                            String curName = ((NamedElement)mdelement).getName();
+                            String curName = ((NamedElement) mdelement).getName();
                             if (!curName.equals(name)) {
                                 if (!mdelement.isEditable()) {
-                                    notLocked.addViolation((Element)mdelement,
+                                    notLocked.addViolation((Element) mdelement,
                                             "Name can't be changed - not editable");
                                     editable = false;
-                                } else {
-                                    nameChange.addViolation((Element)mdelement, "Name change to " + name);
-                                    if (willchange)
-                                        ((NamedElement)mdelement).setName(name);
+                                }
+                                else {
+                                    nameChange.addViolation((Element) mdelement, "Name change to " + name);
+                                    if (willchange) {
+                                        ((NamedElement) mdelement).setName(name);
+                                    }
                                     echanged = true;
                                 }
                             }
                         }
                         if (mdelement instanceof Property && element.containsKey("dvalue")) {
-                            if (!UML2ModelUtil.getDefault(((Property)mdelement)).equals(element.get("dvalue"))) {
+                            if (!UML2ModelUtil.getDefault(((Property) mdelement)).equals(element.get("dvalue"))) {
                                 if (!mdelement.isEditable()) {
-                                    notLocked.addViolation((Element)mdelement,
+                                    notLocked.addViolation((Element) mdelement,
                                             "Default value can't be changed - not editable");
                                     editable = false;
-                                } else {
-                                    valueChange.addViolation((Element)mdelement, "Default value change to "
-                                            + (String)element.get("dvalue"));
-                                    if (willchange)
-                                        Utils.setPropertyValue((Property)mdelement,
-                                                (String)element.get("dvalue"));
+                                }
+                                else {
+                                    valueChange.addViolation((Element) mdelement, "Default value change to "
+                                            + element.get("dvalue"));
+                                    if (willchange) {
+                                        Utils.setPropertyValue((Property) mdelement,
+                                                (String) element.get("dvalue"));
+                                    }
                                     echanged = true;
                                 }
                             }
                         }
                         if (mdelement instanceof Slot && element.containsKey("dvalue")) {
-                            if (!Utils.slotValueToString((Slot)mdelement).equals(
+                            if (!Utils.slotValueToString((Slot) mdelement).equals(
                                     element.get("dvalue"))) {
                                 if (!mdelement.isEditable()) {
-                                    notLocked.addViolation((Element)mdelement,
+                                    notLocked.addViolation((Element) mdelement,
                                             "Slot value can't be changed - not editable");
                                     editable = false;
-                                } else {
-                                    valueChange.addViolation((Element)mdelement, "Slot value change to "
-                                            + (String)element.get("dvalue"));
-                                    if (willchange)
-                                        Utils.setSlotValue((Slot)mdelement, (String)element.get("dvalue"));
+                                }
+                                else {
+                                    valueChange.addViolation((Element) mdelement, "Slot value change to "
+                                            + element.get("dvalue"));
+                                    if (willchange) {
+                                        Utils.setSlotValue((Slot) mdelement, element.get("dvalue"));
+                                    }
                                     echanged = true;
                                 }
                             }
                         }
-                        String curdoc = ModelHelper.getComment((Element)mdelement);
-                        if (mdelement instanceof Comment)
-                            curdoc = ((Comment)mdelement).getBody();
+                        String curdoc = ModelHelper.getComment((Element) mdelement);
+                        if (mdelement instanceof Comment) {
+                            curdoc = ((Comment) mdelement).getBody();
+                        }
                         String curdocwithouthtml = Utils.stripHtmlWrapper(curdoc);
                         if (!curdocwithouthtml.equals(doc)) {
                             if (!mdelement.isEditable()) {
-                                notLocked.addViolation((Element)mdelement,
+                                notLocked.addViolation((Element) mdelement,
                                         "Doc or comment body can't be changed - not editalbe");
                                 editable = false;
-                            } else {
-                                if (mdelement instanceof NamedElement)
-                                    docChange.addViolation((Element)mdelement, "Doc change");
-                                else
-                                    docChange.addViolation((Element)mdelement, "Comment body change");
-                                if (dochtml.equals(""))
+                            }
+                            else {
+                                if (mdelement instanceof NamedElement) {
+                                    docChange.addViolation((Element) mdelement, "Doc change");
+                                }
+                                else {
+                                    docChange.addViolation((Element) mdelement, "Comment body change");
+                                }
+                                if (dochtml.equals("")) {
                                     dochtml = " "; // this is to prevent a
-                                                   // documentation getting set
-                                                   // to "", then md will set an
-                                                   // annotated comment to its
-                                                   // documentation
+                                }
+                                // documentation getting set
+                                // to "", then md will set an
+                                // annotated comment to its
+                                // documentation
                                 if (willchange) {
-                                    if (mdelement instanceof Comment)
-                                        ((Comment)mdelement).setBody(dochtml);
-                                    else
-                                        ModelHelper.setComment((Element)mdelement, dochtml);
+                                    if (mdelement instanceof Comment) {
+                                        ((Comment) mdelement).setBody(dochtml);
+                                    }
+                                    else {
+                                        ModelHelper.setComment((Element) mdelement, dochtml);
+                                    }
                                 }
                                 echanged = true;
                             }
@@ -294,15 +310,18 @@ public class ImportViewAction extends MDAction {
                             modified++;
                             res.add(mdelement.getID());
                         }
-                        if (!editable)
+                        if (!editable) {
                             cannot++;
+                        }
                     }
                 }
             }
-            if (willchange)
+            if (willchange) {
                 gl.log("[INFO] Elements modified: " + modified);
-            else
+            }
+            else {
                 gl.log("[INFO] Elements different: " + modified);
+            }
             gl.log("[INFO] Elements different but not editable: " + cannot);
             gl.log("[INFO] Elements not found: " + notfound);
 

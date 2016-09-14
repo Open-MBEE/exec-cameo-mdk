@@ -1,17 +1,15 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.awt.event.ActionEvent;
+import java.util.Collection;
 
 
 public class Downgrade extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -34,9 +32,10 @@ public class Downgrade extends RuleViolationAction implements AnnotationAction, 
     @Override
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
-        JSONObject spec = (JSONObject)web.get("specialization");
-        if (spec != null && spec.containsKey("type"))
+        JSONObject spec = (JSONObject) web.get("specialization");
+        if (spec != null && spec.containsKey("type")) {
             spec.put("type", "View");
+        }
         spec.remove("view2view");
         web.remove("read");
         elements.add(web);
@@ -45,7 +44,7 @@ public class Downgrade extends RuleViolationAction implements AnnotationAction, 
 
     @Override
     public void execute(Collection<Annotation> arg0) {
-        
+
     }
 }
 

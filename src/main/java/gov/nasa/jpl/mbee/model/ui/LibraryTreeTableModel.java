@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,23 +28,21 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model.ui;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.model.LibraryMapping;
 import gov.nasa.jpl.mbee.tree.Node;
+import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
-
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-
 public class LibraryTreeTableModel extends AbstractTreeTableModel {
 
     private final LibraryMapping libraryMapping;
-    private List<NamedElement>   characterizations = new ArrayList<NamedElement>();
+    private List<NamedElement> characterizations = new ArrayList<NamedElement>();
 
     public LibraryTreeTableModel(LibraryMapping libraryMapping) {
         this.libraryMapping = libraryMapping;
@@ -54,7 +52,7 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
     }
 
     private void collectCharacterizations() {
-        for (NamedElement e: libraryMapping.getCharacterizations()) {
+        for (NamedElement e : libraryMapping.getCharacterizations()) {
             characterizations.add(e);
         }
         Collections.sort(characterizations, new Comparator<NamedElement>() {
@@ -67,11 +65,13 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
 
     @Override
     public String getColumnName(int column) {
-        if (column == 0)
+        if (column == 0) {
             return "Name";
-        else
+        }
+        else {
             return "<html>" + characterizations.get(column - 1).getName().replaceAll(" ", "<br/>")
                     + "</html>";
+        }
     }
 
     @Override
@@ -82,24 +82,28 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
     @Override
     public Object getRoot() {
         return root;
-    };
+    }
 
     @Override
     public Object getValueAt(Object node, int column) {
         @SuppressWarnings("unchecked")
-        Node<String, LibraryComponent> libraryNode = (Node<String, LibraryComponent>)node;
-        if (column == 0)
+        Node<String, LibraryComponent> libraryNode = (Node<String, LibraryComponent>) node;
+        if (column == 0) {
             return libraryNode.getData().getName();
-        else if (column > 0 && column <= characterizations.size())
+        }
+        else if (column > 0 && column <= characterizations.size()) {
             return libraryNode.getData().getCharacterizations().contains(characterizations.get(column - 1));
-        else
+        }
+        else {
             return "Unknown";
+        }
     }
 
     @Override
     public Class<?> getColumnClass(int column) {
-        if (column > 0 && column <= characterizations.size())
+        if (column > 0 && column <= characterizations.size()) {
             return Boolean.class;
+        }
 
         return super.getColumnClass(column);
     }
@@ -107,7 +111,7 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
     @Override
     public Object getChild(Object node, int index) {
         @SuppressWarnings("unchecked")
-        Node<String, LibraryComponent> libraryNode = (Node<String, LibraryComponent>)node;
+        Node<String, LibraryComponent> libraryNode = (Node<String, LibraryComponent>) node;
         List<Node<String, LibraryComponent>> childList = libraryNode.getChildrenAsList();
         return (childList != null) ? childList.get(index) : null;
     }
@@ -115,7 +119,7 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
     @Override
     public int getChildCount(Object node) {
         @SuppressWarnings("unchecked")
-        Node<String, LibraryComponent> libraryNode = (Node<String, LibraryComponent>)node;
+        Node<String, LibraryComponent> libraryNode = (Node<String, LibraryComponent>) node;
         List<Node<String, LibraryComponent>> childList = libraryNode.getChildrenAsList();
         return childList != null ? childList.size() : 0;
     }
@@ -123,13 +127,15 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
     @Override
     public int getIndexOfChild(Object parent, Object child) {
         @SuppressWarnings("unchecked")
-        List<Node<String, LibraryComponent>> children = ((Node<String, LibraryComponent>)parent)
+        List<Node<String, LibraryComponent>> children = ((Node<String, LibraryComponent>) parent)
                 .getChildrenAsList();
-        if (children == null)
+        if (children == null) {
             return -1;
+        }
         for (int i = 0; i < children.size(); i++) {
-            if (children.get(i) == child)
+            if (children.get(i) == child) {
                 return i;
+            }
         }
         return -1;
     }
@@ -137,19 +143,21 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
     @SuppressWarnings("unchecked")
     @Override
     public boolean isCellEditable(Object node, int column) {
-        return (!((Node<String, LibraryComponent>)node).getData().isPackage() && column > 0);
+        return (!((Node<String, LibraryComponent>) node).getData().isPackage() && column > 0);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void setValueAt(Object value, Object node, int column) {
-        boolean checked = (Boolean)value;
-        LibraryComponent component = ((Node<String, LibraryComponent>)node).getData();
+        boolean checked = (Boolean) value;
+        LibraryComponent component = ((Node<String, LibraryComponent>) node).getData();
         NamedElement characterization = characterizations.get(column - 1);
-        if (checked)
+        if (checked) {
             component.addCharacterization(characterization);
-        else
+        }
+        else {
             component.removeCharacterization(characterization);
+        }
     }
 
     /**
@@ -158,7 +166,7 @@ public class LibraryTreeTableModel extends AbstractTreeTableModel {
     @SuppressWarnings("unchecked")
     @Override
     public boolean isLeaf(Object node) {
-        Node<String, LibraryComponent> lnode = (Node<String, LibraryComponent>)node;
+        Node<String, LibraryComponent> lnode = (Node<String, LibraryComponent>) node;
         if (lnode.getData().getElement() instanceof Package) {
             return false;
         }

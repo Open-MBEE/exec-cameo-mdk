@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -31,30 +31,29 @@ package gov.nasa.jpl.ocl;
 import gov.nasa.jpl.mbee.lib.CompareUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.MoreToString;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.ocl.ecore.internal.OCLStandardLibraryImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DgOperationInstance implements DgOperation {
-    private String           name;
-    private String           annotationName;
-    private CallOperation    operation;
+    private String name;
+    private String annotationName;
+    private CallOperation operation;
     private List<EParameter> parameters = new ArrayList<EParameter>();
-    private EClassifier      callerType, returnType;
+    private EClassifier callerType, returnType;
 
     public DgOperationInstance() {
     }
 
     public DgOperationInstance(String name, String annotationName, DgEnvironmentFactory envFactory,
-            CallOperation operation, EParameter... parameters) {
+                               CallOperation operation, EParameter... parameters) {
         this.name = name;
         this.annotationName = annotationName;
         this.operation = operation;
-        for (EParameter ep: parameters) {
+        for (EParameter ep : parameters) {
             addParameter(ep);
         }
         // this.parameters.addAll(Arrays.asList( parameters ) );
@@ -62,13 +61,13 @@ public class DgOperationInstance implements DgOperation {
     }
 
     public DgOperationInstance(String name, String annotationName, DgEnvironmentFactory envFactory,
-            EClassifier callerType, EClassifier returnType, CallOperation operation, EParameter[] parameters) {
+                               EClassifier callerType, EClassifier returnType, CallOperation operation, EParameter[] parameters) {
         this.name = name;
         this.annotationName = annotationName;
         this.operation = operation;
         this.callerType = callerType;
         this.returnType = returnType;
-        for (EParameter ep: parameters) {
+        for (EParameter ep : parameters) {
             addParameter(ep);
         }
         addToEnvironment(envFactory);
@@ -81,7 +80,7 @@ public class DgOperationInstance implements DgOperation {
         this.operation = dgi.operation;
         this.callerType = dgi.callerType;
         this.returnType = dgi.returnType;
-        for (EParameter ep: dgi.parameters) {
+        for (EParameter ep : dgi.parameters) {
             addParameter(ep);
         }
         addToEnvironment(envFactory);
@@ -92,29 +91,29 @@ public class DgOperationInstance implements DgOperation {
     }
 
     public static DgOperationInstance addOperation(String name, String annotationName,
-            DgEnvironmentFactory envFactory, CallOperation operation, EParameter... parameters) {
+                                                   DgEnvironmentFactory envFactory, CallOperation operation, EParameter... parameters) {
         return new DgOperationInstance(name, annotationName, envFactory, operation, parameters);
 
     }
 
     public static DgOperationInstance addOperation(String name, String annotationName,
-            DgEnvironmentFactory envFactory, EClassifier callerType, EClassifier returnType,
-            CallOperation operation, EParameter... parameters) {
-        Debug.outln( "addOperation(name=" + name
-                     + ", annotationName"
-                     // + annotationName
-                     + ", envFactory, callerType=" + callerType.getName()
-                     + ", returnType=" + returnType.getName()
-                     + ", operation"// + operation
-                     + ", parameters="
-                     + MoreToString.Helper.toString( parameters ) + ")" );
+                                                   DgEnvironmentFactory envFactory, EClassifier callerType, EClassifier returnType,
+                                                   CallOperation operation, EParameter... parameters) {
+        Debug.outln("addOperation(name=" + name
+                + ", annotationName"
+                // + annotationName
+                + ", envFactory, callerType=" + callerType.getName()
+                + ", returnType=" + returnType.getName()
+                + ", operation"// + operation
+                + ", parameters="
+                + MoreToString.Helper.toString(parameters) + ")");
         return new DgOperationInstance(name, annotationName, envFactory, callerType, returnType, operation,
                 parameters);
     }
 
     /**
      * Add this operation to the environment through the EnvironemntFactory
-     * 
+     *
      * @param envFactory
      * @param callOp
      */
@@ -146,10 +145,7 @@ public class DgOperationInstance implements DgOperation {
 
     @Override
     public boolean checkOperationName(String operationName) {
-        if (name.equals(operationName)) {
-            return true;
-        }
-        return false;
+        return name.equals(operationName);
     }
 
     @Override
@@ -213,11 +209,13 @@ public class DgOperationInstance implements DgOperation {
         StringBuffer sb = new StringBuffer();
         sb.append(getName() + "(");
         boolean first = true;
-        for (EParameter p: parameters) {
-            if (first)
+        for (EParameter p : parameters) {
+            if (first) {
                 first = false;
-            else
+            }
+            else {
                 sb.append(", ");
+            }
             sb.append(p.getName() + " : " + p.getEType());
         }
         sb.append(") : " + this.returnType);

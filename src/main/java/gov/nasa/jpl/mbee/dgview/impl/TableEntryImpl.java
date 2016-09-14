@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -30,7 +30,6 @@ package gov.nasa.jpl.mbee.dgview.impl;
 
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
 import gov.nasa.jpl.mbee.dgview.TableEntry;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
@@ -52,73 +51,73 @@ import org.eclipse.emf.ecore.impl.ENotificationImpl;
  * <em>Nameend</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public class TableEntryImpl extends HasContentImpl implements TableEntry {
     /**
      * The default value of the '{@link #getMorerows() <em>Morerows</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getMorerows()
+     *
      * @generated
      * @ordered
+     * @see #getMorerows()
      */
-    protected static final int    MOREROWS_EDEFAULT = 0;
+    protected static final int MOREROWS_EDEFAULT = 0;
 
     /**
      * The cached value of the '{@link #getMorerows() <em>Morerows</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getMorerows()
+     *
      * @generated
      * @ordered
+     * @see #getMorerows()
      */
-    protected int                 morerows          = MOREROWS_EDEFAULT;
+    protected int morerows = MOREROWS_EDEFAULT;
 
     /**
      * The default value of the '{@link #getNamest() <em>Namest</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getNamest()
+     *
      * @generated
      * @ordered
+     * @see #getNamest()
      */
-    protected static final String NAMEST_EDEFAULT   = null;
+    protected static final String NAMEST_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getNamest() <em>Namest</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getNamest()
+     *
      * @generated
      * @ordered
+     * @see #getNamest()
      */
-    protected String              namest            = NAMEST_EDEFAULT;
+    protected String namest = NAMEST_EDEFAULT;
 
     /**
      * The default value of the '{@link #getNameend() <em>Nameend</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getNameend()
+     *
      * @generated
      * @ordered
+     * @see #getNameend()
      */
-    protected static final String NAMEEND_EDEFAULT  = null;
+    protected static final String NAMEEND_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getNameend() <em>Nameend</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getNameend()
+     *
      * @generated
      * @ordered
+     * @see #getNameend()
      */
-    protected String              nameend           = NAMEEND_EDEFAULT;
+    protected String nameend = NAMEEND_EDEFAULT;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected TableEntryImpl() {
@@ -127,7 +126,7 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -137,7 +136,7 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -147,21 +146,22 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setMorerows(int newMorerows) {
         int oldMorerows = morerows;
         morerows = newMorerows;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.TABLE_ENTRY__MOREROWS,
                     oldMorerows, morerows));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -171,21 +171,22 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setNamest(String newNamest) {
         String oldNamest = namest;
         namest = newNamest;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.TABLE_ENTRY__NAMEST,
                     oldNamest, namest));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -195,21 +196,22 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setNameend(String newNameend) {
         String oldNameend = nameend;
         nameend = newNameend;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.TABLE_ENTRY__NAMEEND,
                     oldNameend, nameend));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -227,20 +229,20 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void eSet(int featureID, Object newValue) {
         switch (featureID) {
             case DgviewPackage.TABLE_ENTRY__MOREROWS:
-                setMorerows((Integer)newValue);
+                setMorerows((Integer) newValue);
                 return;
             case DgviewPackage.TABLE_ENTRY__NAMEST:
-                setNamest((String)newValue);
+                setNamest((String) newValue);
                 return;
             case DgviewPackage.TABLE_ENTRY__NAMEEND:
-                setNameend((String)newValue);
+                setNameend((String) newValue);
                 return;
         }
         super.eSet(featureID, newValue);
@@ -248,7 +250,7 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -269,7 +271,7 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -287,13 +289,14 @@ public class TableEntryImpl extends HasContentImpl implements TableEntry {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public String toString() {
-        if (eIsProxy())
+        if (eIsProxy()) {
             return super.toString();
+        }
 
         StringBuffer result = new StringBuffer(super.toString());
         result.append(" (morerows: ");

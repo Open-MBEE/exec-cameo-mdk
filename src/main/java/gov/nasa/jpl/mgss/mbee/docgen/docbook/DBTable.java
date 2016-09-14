@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -52,21 +52,20 @@ import java.util.List;
  * Ex. if your first header row has a cell that spans two rows, your second
  * header row would have 1 less cell than the first, because one cell is
  * "covered" by the spanning cell in the first row.
- * 
+ *
  * @author dlam
- * 
  */
 public class DBTable extends DocumentElement {
 
     private List<List<DocumentElement>> body;
-    private String                      caption;
-    private String                      style;
+    private String caption;
+    private String style;
     private List<List<DocumentElement>> headers;
-    private List<DBColSpec>             colspecs;
-    private int                         cols;
-    private boolean                     transpose;
-    private boolean 					hideHeaders;
-    private boolean                     showIfEmpty;
+    private List<DBColSpec> colspecs;
+    private int cols;
+    private boolean transpose;
+    private boolean hideHeaders;
+    private boolean showIfEmpty;
 
     public List<List<DocumentElement>> getBody() {
         return body;
@@ -102,7 +101,7 @@ public class DBTable extends DocumentElement {
 
     /**
      * This must be set
-     * 
+     *
      * @param body
      */
     public void setBody(List<List<DocumentElement>> body) {
@@ -115,7 +114,7 @@ public class DBTable extends DocumentElement {
 
     /**
      * This must be set
-     * 
+     *
      * @param headers
      */
     public void setHeaders(List<List<DocumentElement>> headers) {
@@ -128,7 +127,7 @@ public class DBTable extends DocumentElement {
 
     /**
      * this must be set (the cols is the max number of cols in your table)
-     * 
+     *
      * @param cols
      */
     public void setCols(int cols) {
@@ -146,20 +145,20 @@ public class DBTable extends DocumentElement {
     public void setTranspose(boolean transpose) {
         this.transpose = transpose;
     }
-    
+
     public boolean isHideHeaders() {
-    	return hideHeaders;
+        return hideHeaders;
     }
-    
+
     public void setHideHeaders(final boolean hideHeaders) {
-    	this.hideHeaders = hideHeaders;
+        this.hideHeaders = hideHeaders;
     }
 
     @Override
     public void accept(IDBVisitor v) {
         v.visit(this);
     }
-    
+
     /*
      * transpose the table (this is actually rotate 90 degrees counterclockwise
      */
@@ -168,150 +167,156 @@ public class DBTable extends DocumentElement {
         //the new table wouldn't have a header since the new header would be part of the body
         removeAllNulls(); //every cell should be a document element, this is to remove any inconsistent user set nulls
         addNulls(); //go through the current table and add in nulls according to colspans and rowspans 
-                    //so the table is truly m x n, every cell should be either null or a document element
- 
+        //so the table is truly m x n, every cell should be either null or a document element
+
         //do the transpose, if i is index of the col and j is index of the row in the old table, 
         //the new table's rows would be i and cols would be j
         List<List<DocumentElement>> newbody = new ArrayList<List<DocumentElement>>();
         if (headers != null && headers.size() > 0) {
-        for (int i = headers.get(0).size()-1; i >= 0; i--) {
-            List<DocumentElement> newrow = new ArrayList<DocumentElement>();
-            newbody.add(newrow);
-            for (int j = 0; j < headers.size(); j++) {
-                DocumentElement oldcell = headers.get(j).get(i);
-                if (oldcell instanceof DBTableEntry) {
-                    DBTableEntry oldcelll = ((DBTableEntry)oldcell);
-                    String namest = oldcelll.getNamest();
-                    String nameend = oldcelll.getNameend();
-                    int morerows = oldcelll.getMorerows();
-                    oldcelll.setMorerows(0);
-                    oldcelll.setNamest(null);
-                    oldcelll.setNameend(null);
-                    if (namest != null && nameend != null) {
-                        int oldnamest = Integer.parseInt(namest);
-                        int oldnameend = Integer.parseInt(nameend);
-                        int diff = oldnameend - oldnamest;
-                        oldcelll.setMorerows(diff);
+            for (int i = headers.get(0).size() - 1; i >= 0; i--) {
+                List<DocumentElement> newrow = new ArrayList<DocumentElement>();
+                newbody.add(newrow);
+                for (int j = 0; j < headers.size(); j++) {
+                    DocumentElement oldcell = headers.get(j).get(i);
+                    if (oldcell instanceof DBTableEntry) {
+                        DBTableEntry oldcelll = ((DBTableEntry) oldcell);
+                        String namest = oldcelll.getNamest();
+                        String nameend = oldcelll.getNameend();
+                        int morerows = oldcelll.getMorerows();
+                        oldcelll.setMorerows(0);
+                        oldcelll.setNamest(null);
+                        oldcelll.setNameend(null);
+                        if (namest != null && nameend != null) {
+                            int oldnamest = Integer.parseInt(namest);
+                            int oldnameend = Integer.parseInt(nameend);
+                            int diff = oldnameend - oldnamest;
+                            oldcelll.setMorerows(diff);
+                        }
+                        if (morerows > 0) {
+                            String newnamest = Integer.toString(newrow.size() + 1);
+                            String newnameend = Integer.toString(newrow.size() + 1 + morerows);
+                            oldcelll.setNamest(newnamest);
+                            oldcelll.setNameend(newnameend);
+                        }
+                        newrow.add(oldcelll);
                     }
-                    if (morerows > 0) {
-                        String newnamest = Integer.toString(newrow.size()+1);
-                        String newnameend = Integer.toString(newrow.size()+1+morerows);
-                        oldcelll.setNamest(newnamest);
-                        oldcelll.setNameend(newnameend);
+                    else {
+                        newrow.add(oldcell);
                     }
-                    newrow.add(oldcelll);
-                } else {
-                    newrow.add(oldcell);
                 }
             }
-        }
         }
         if (body != null && body.size() > 0) {
-        for (int i = body.get(0).size()-1; i >= 0; i--) {
-            List<DocumentElement> newrow = newbody.get(newbody.size()-i-1);
-            for (int j = 0; j < body.size(); j++) {
-                DocumentElement oldcell = body.get(j).get(i);
-                if (oldcell instanceof DBTableEntry) {
-                    DBTableEntry oldcelll = ((DBTableEntry)oldcell);
-                    String namest = oldcelll.getNamest();
-                    String nameend = oldcelll.getNameend();
-                    int morerows = oldcelll.getMorerows();
-                    oldcelll.setMorerows(0);
-                    oldcelll.setNamest(null);
-                    oldcelll.setNameend(null);
-                    if (namest != null && nameend != null) {
-                        int oldnamest = Integer.parseInt(namest);
-                        int oldnameend = Integer.parseInt(nameend);
-                        int diff = oldnameend - oldnamest;
-                        oldcelll.setMorerows(diff);
+            for (int i = body.get(0).size() - 1; i >= 0; i--) {
+                List<DocumentElement> newrow = newbody.get(newbody.size() - i - 1);
+                for (int j = 0; j < body.size(); j++) {
+                    DocumentElement oldcell = body.get(j).get(i);
+                    if (oldcell instanceof DBTableEntry) {
+                        DBTableEntry oldcelll = ((DBTableEntry) oldcell);
+                        String namest = oldcelll.getNamest();
+                        String nameend = oldcelll.getNameend();
+                        int morerows = oldcelll.getMorerows();
+                        oldcelll.setMorerows(0);
+                        oldcelll.setNamest(null);
+                        oldcelll.setNameend(null);
+                        if (namest != null && nameend != null) {
+                            int oldnamest = Integer.parseInt(namest);
+                            int oldnameend = Integer.parseInt(nameend);
+                            int diff = oldnameend - oldnamest;
+                            oldcelll.setMorerows(diff);
+                        }
+                        if (morerows > 0) {
+                            String newnamest = Integer.toString(newrow.size() + 1);
+                            String newnameend = Integer.toString(newrow.size() + 1 + morerows);
+                            oldcelll.setNamest(newnamest);
+                            oldcelll.setNameend(newnameend);
+                        }
+                        newrow.add(oldcelll);
                     }
-                    if (morerows > 0) {
-                        String newnamest = Integer.toString(newrow.size()+1);
-                        String newnameend = Integer.toString(newrow.size()+1+morerows);
-                        oldcelll.setNamest(newnamest);
-                        oldcelll.setNameend(newnameend);
+                    else {
+                        newrow.add(oldcell);
                     }
-                    newrow.add(oldcelll);
-                } else {
-                    newrow.add(oldcell);
                 }
             }
         }
-        }
         this.body = newbody;
-        this.headers =  null;
+        this.headers = null;
         this.cols = !newbody.isEmpty() ? newbody.get(0).size() : 0;
         List<DBColSpec> newcolspecs = new ArrayList<DBColSpec>();
         for (int i = 1; i <= cols; i++) {
             newcolspecs.add(new DBColSpec(i));
         }
         this.colspecs = newcolspecs;
-        
+
     }
-    
+
     private void removeAllNulls() {
         if (headers != null) {
-        for (List<DocumentElement> row: headers) {
-            while (row.remove(null)) {}
-        }
+            for (List<DocumentElement> row : headers) {
+                while (row.remove(null)) {
+                }
+            }
         }
         if (body != null) {
-        for (List<DocumentElement> row: body) {
-            while (row.remove(null)) {}
-        }
+            for (List<DocumentElement> row : body) {
+                while (row.remove(null)) {
+                }
+            }
         }
     }
-    
+
     private void addNulls() {
         //handle old colspans first for each row
         handleColspan(headers);
         handleColspan(body);
-        
+
         handleRowspan(headers);
         handleRowspan(body);
     }
-    
+
     private void handleColspan(List<List<DocumentElement>> body) {
-        if (body == null)
+        if (body == null) {
             return;
-        for (List<DocumentElement> row: body) {
+        }
+        for (List<DocumentElement> row : body) {
             List<DocumentElement> copy = new ArrayList<DocumentElement>(row);
-            for (int i = copy.size()-1; i >=0; i--) {
+            for (int i = copy.size() - 1; i >= 0; i--) {
                 DocumentElement cell = copy.get(i);
                 if (cell instanceof DBTableEntry) {
-                    String namest = ((DBTableEntry)cell).getNamest();
-                    String nameend = ((DBTableEntry)cell).getNameend();
+                    String namest = ((DBTableEntry) cell).getNamest();
+                    String nameend = ((DBTableEntry) cell).getNameend();
                     if (namest != null && nameend != null) {
                         try {
                             int start = Integer.parseInt(namest);
                             int end = Integer.parseInt(nameend);
-                            int morecols = end-start;
+                            int morecols = end - start;
                             while (morecols > 0) {
                                 row.add(i, null);
                                 morecols--;
                             }
                         } catch (Exception e) {
-                            
+
                         }
                     }
                 }
             }
         }
     }
-    
+
     private void handleRowspan(List<List<DocumentElement>> body) {
-        if (body == null)
+        if (body == null) {
             return;
-      //int j = 0;
+        }
+        //int j = 0;
         //need to handle old rowspans bottom up because of stuff
         int i = 0;
-        for (int j = body.size()-1; j >=0; j--) { //List<DocumentElement> row: headers) {
+        for (int j = body.size() - 1; j >= 0; j--) { //List<DocumentElement> row: headers) {
             List<DocumentElement> row = body.get(j);
-            for (DocumentElement cell: row) {
-                if (cell instanceof DBTableEntry && ((DBTableEntry)cell).getMorerows() > 0) {
-                    int length = ((DBTableEntry)cell).getMorerows();
-                    for (int k = j; k < j+length; k++) {
-                        body.get(k+1).add(i, null);
+            for (DocumentElement cell : row) {
+                if (cell instanceof DBTableEntry && ((DBTableEntry) cell).getMorerows() > 0) {
+                    int length = ((DBTableEntry) cell).getMorerows();
+                    for (int k = j; k < j + length; k++) {
+                        body.get(k + 1).add(i, null);
                     }
                 }
                 i++;
@@ -320,7 +325,7 @@ public class DBTable extends DocumentElement {
             //j++;
         }
     }
-    
+
     @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();

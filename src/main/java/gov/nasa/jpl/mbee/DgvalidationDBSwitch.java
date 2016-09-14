@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.dgvalidation.Rule;
 import gov.nasa.jpl.mbee.dgvalidation.Severity;
 import gov.nasa.jpl.mbee.dgvalidation.Suite;
@@ -38,27 +40,29 @@ import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 public class DgvalidationDBSwitch extends DgvalidationSwitch<Object> {
 
     @Override
     public Object caseRule(Rule object) {
         ViolationSeverity vs = null;
-        if (object.getSeverity() == Severity.DEBUG)
+        if (object.getSeverity() == Severity.DEBUG) {
             vs = ViolationSeverity.DEBUG;
-        else if (object.getSeverity() == Severity.ERROR)
+        }
+        else if (object.getSeverity() == Severity.ERROR) {
             vs = ViolationSeverity.ERROR;
-        else if (object.getSeverity() == Severity.FATAL)
+        }
+        else if (object.getSeverity() == Severity.FATAL) {
             vs = ViolationSeverity.FATAL;
-        else if (object.getSeverity() == Severity.INFO)
+        }
+        else if (object.getSeverity() == Severity.INFO) {
             vs = ViolationSeverity.INFO;
-        else
+        }
+        else {
             vs = ViolationSeverity.WARNING;
+        }
         ValidationRule res = new ValidationRule(object.getName(), object.getDescription(), vs);
-        for (Violation v: object.getViolations()) {
-            res.addViolation((ValidationRuleViolation)this.doSwitch(v));
+        for (Violation v : object.getViolations()) {
+            res.addViolation((ValidationRuleViolation) this.doSwitch(v));
         }
         return res;
     }
@@ -66,7 +70,7 @@ public class DgvalidationDBSwitch extends DgvalidationSwitch<Object> {
     @Override
     public Object caseViolation(Violation object) {
         if (object.getElementId() != null) {
-            ValidationRuleViolation res = new ValidationRuleViolation((Element)Application.getInstance()
+            ValidationRuleViolation res = new ValidationRuleViolation((Element) Application.getInstance()
                     .getProject().getElementByID(object.getElementId()), object.getComment());
             return res;
         }
@@ -76,8 +80,8 @@ public class DgvalidationDBSwitch extends DgvalidationSwitch<Object> {
     @Override
     public Object caseSuite(Suite object) {
         ValidationSuite res = new ValidationSuite(object.getName());
-        for (Rule r: object.getRules()) {
-            res.addValidationRule((ValidationRule)this.doSwitch(r));
+        for (Rule r : object.getRules()) {
+            res.addValidationRule((ValidationRule) this.doSwitch(r));
         }
         res.setOwnSection(object.isOwnSection());
         res.setShowDetail(object.isShowDetail());

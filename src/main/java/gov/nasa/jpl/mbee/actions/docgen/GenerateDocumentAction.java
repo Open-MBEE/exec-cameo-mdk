@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,30 +28,27 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.docgen;
 
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.ui.ProgressStatusRunner;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.generator.DocumentWriter;
 import gov.nasa.jpl.mbee.generator.PostProcessor;
 import gov.nasa.jpl.mbee.model.Document;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javax.swing.JFileChooser;
-
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.ui.ProgressStatusRunner;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 /**
  * generates docgen 3 document
- * 
+ *
  * @author dlam
- * 
  */
 public class GenerateDocumentAction extends MDAction {
 
@@ -66,11 +63,11 @@ public class GenerateDocumentAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-    	GUILog gl = Application.getInstance().getGUILog();
-    	try {
-    		File savefile = fileSelect();
+        GUILog gl = Application.getInstance().getGUILog();
+        try {
+            File savefile = fileSelect();
             if (savefile != null) {
-            	generate(savefile);
+                generate(savefile);
             }
         } catch (Exception ex) {
             StringWriter sw = new StringWriter();
@@ -80,19 +77,20 @@ public class GenerateDocumentAction extends MDAction {
             ex.printStackTrace();
         }
     }
-    
+
     private File fileSelect() {
         JFileChooser choose = new JFileChooser();
         choose.setDialogTitle("Save to output xml...");
         int retval = choose.showSaveDialog(null);
-        if (retval == JFileChooser.APPROVE_OPTION)
-        	return choose.getSelectedFile();
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            return choose.getSelectedFile();
+        }
         return null;
     }
-    
+
     public void generate(File savefile) {
         DocumentValidator dv = new DocumentValidator(doc);
-    	dv.validateDocument();
+        dv.validateDocument();
         if (dv.isFatal()) {
             dv.printErrors();
             return;
@@ -102,14 +100,15 @@ public class GenerateDocumentAction extends MDAction {
         boolean genNewImage = dge.getGenNewImage();
         (new PostProcessor()).process(dge);
         String userName = savefile.getName();
-		String filename = userName;
-		if (userName.length() < 4 || !userName.endsWith(".xml"))
-			filename = userName + ".xml";
-		File dir = savefile.getParentFile();
-		File realfile = new File(dir, filename);
+        String filename = userName;
+        if (userName.length() < 4 || !userName.endsWith(".xml")) {
+            filename = userName + ".xml";
+        }
+        File dir = savefile.getParentFile();
+        File realfile = new File(dir, filename);
         ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage,
                 dir), "Generating DocGen 3 Document...", true, 0);
         dv.printErrors();
     }
-    
+
 }

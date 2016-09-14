@@ -24,7 +24,7 @@ public class ValidateModulesAction extends MMSAction {
             v.showWindow();
         }
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         ProgressStatusRunner.runWithProgressStatus(new ValidationRunner(), "Validating Modules", true, 0);

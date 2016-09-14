@@ -1,32 +1,28 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mbee.ems.ServerException;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
-
-import java.awt.event.ActionEvent;
-
 import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.lib.Utils;
+
+import java.awt.event.ActionEvent;
 
 public class CreateHoldingBinAction extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "Login";
 
-    
+
     public CreateHoldingBinAction() {
         super(actionid, "Create Holding Bin", null, null);
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Project proj = Utils.getProject();
-        String projectId = proj.getPrimaryProject() .getProjectID();
+        String projectId = proj.getPrimaryProject().getProjectID();
         String holdingBinId = "holding_bin_" + projectId;
         Element holdingBin = ExportUtility.getElementFromID(holdingBinId);
         if (holdingBin != null) {

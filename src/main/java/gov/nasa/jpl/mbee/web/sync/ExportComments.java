@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,14 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.web.sync;
 
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.JOptionPane;
-
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -45,15 +37,22 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @SuppressWarnings("serial")
 @Deprecated
 public class ExportComments extends MDAction {
-    private NamedElement      documentView;
+    private NamedElement documentView;
     private CommentRepository repository;
 
     public ExportComments(NamedElement selectedElement) {
-    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-    	//
+        //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+        //
         super("ExportCommentsFromDocWeb", "Commit Comments to DocWeb", null, null);
         this.documentView = selectedElement;
     }
@@ -62,7 +61,7 @@ public class ExportComments extends MDAction {
     public void actionPerformed(ActionEvent ac) {
         ImportComments ic = new ImportComments(documentView, repository);
         ic.actionPerformed(null); // this is a band-aid to force an import
-                                  // before an export because of a bug
+        // before an export because of a bug
         // if ppl don't import comments before exporting those comments can get
         // deleted on docweb
 
@@ -82,7 +81,7 @@ public class ExportComments extends MDAction {
         // Find all local comments for the selected document.
         Map<String, Comment> localComments = CommentUtil.getLocalComments(documentView);
         Map<Integer, Comment> localCommentsByChecksum = new HashMap<Integer, Comment>();
-        for (Comment c: localComments.values()) {
+        for (Comment c : localComments.values()) {
             localCommentsByChecksum.put(CommentUtil.checksum(c, stereotype), c);
             // log.log("Local checksum " + CommentUtil.checksum(c, stereotype) +
             // " " + CommentUtil.truncateBody(c.getBody())); // DEBUG
@@ -97,13 +96,14 @@ public class ExportComments extends MDAction {
             // comments, which have an ID generated automatically on import.
             Map<String, SyncedComment> remoteCommentsWithId = new HashMap<String, SyncedComment>();
             Map<Integer, SyncedComment> remoteCommentsWithoutId = new HashMap<Integer, SyncedComment>();
-            for (SyncedComment c: repository.getComments(documentView)) {
+            for (SyncedComment c : repository.getComments(documentView)) {
                 String id = c.getId();
                 if (id != null && !id.isEmpty()) {
                     remoteCommentsWithId.put(id, c);
                     // log.log("Remote ID: " + id + " " +
                     // CommentUtil.truncateBody(c.getBody())); // DEBUG
-                } else {
+                }
+                else {
                     remoteCommentsWithoutId.put(CommentUtil.checksum(c), c);
                     // log.log("Remote checksum: " + CommentUtil.checksum(c)
                     // +" " + CommentUtil.truncateBody(c.getBody())); // DEBUG
@@ -117,7 +117,7 @@ public class ExportComments extends MDAction {
 
             // Find comments that were added and modified locally.
             // Also check for incoming comments that were deleted.
-            for (Comment local: localComments.values()) {
+            for (Comment local : localComments.values()) {
                 SyncedComment remote = remoteCommentsWithId.get(local.getID());
                 if (remote == null) {
                     // log.log("Local comment not found in remotes by ID: "
@@ -133,21 +133,23 @@ public class ExportComments extends MDAction {
                         // CommentUtil.truncateBody(converted.getBody())); //
                         // DEBUG
                         modified.add(converted);
-                    } else {
+                    }
+                    else {
                         added.add(convert(local, stereotype, SyncedComment.Action.ADD));
                     }
-                } else if (CommentUtil.isLocallyModified(local, stereotype, remote)) {
+                }
+                else if (CommentUtil.isLocallyModified(local, stereotype, remote)) {
                     modified.add(convert(local, stereotype, SyncedComment.Action.MODIFY));
                 }
             }
 
             // Find comments that were deleted locally.
-            for (SyncedComment remote: remoteCommentsWithId.values()) {
+            for (SyncedComment remote : remoteCommentsWithId.values()) {
                 if (!remote.isDeleted() && !localComments.containsKey(remote.getId())) {
                     deleted.add(remote.deletedClone());
                 }
             }
-            for (SyncedComment remote: remoteCommentsWithoutId.values()) {
+            for (SyncedComment remote : remoteCommentsWithoutId.values()) {
                 if (!remote.isDeleted() && !localCommentsByChecksum.containsKey(CommentUtil.checksum(remote))) {
                     deleted.add(remote.deletedClone());
                 }
@@ -156,7 +158,8 @@ public class ExportComments extends MDAction {
             // Submit changes to the repository.
             if (added.isEmpty() && modified.isEmpty() && deleted.isEmpty()) {
                 log.log("Exported comments (no changes)");
-            } else {
+            }
+            else {
                 repository.sendComments(documentView, added, modified, deleted);
                 log.log(String.format("Exported comments (%d added, %d modified, %d deleted)", added.size(),
                         modified.size(), deleted.size()));
@@ -165,10 +168,12 @@ public class ExportComments extends MDAction {
             fail(e.getMessage());
         } finally {
             if (repository != null) // cleanup
+            {
                 try {
                     repository.close();
                 } catch (CommentSyncFailure e) { /* IGNORE */
                 }
+            }
         }
     }
 
@@ -176,7 +181,7 @@ public class ExportComments extends MDAction {
      * Verify that the project is committed to TeamWork (or saved for local
      * projects). Allow user to proceed anyway after a warning, if they promise
      * to be careful.
-     * 
+     *
      * @return true if it is ok to proceed
      */
     private boolean okToProceed() {
@@ -189,7 +194,7 @@ public class ExportComments extends MDAction {
         }
         String dirtyWord = project.isRemote() ? "uncommitted" : "unsaved";
         return JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(Application.getInstance()
-                .getMainFrame(), "Project has " + dirtyWord + " changes.\nDo you want to continue?",
+                        .getMainFrame(), "Project has " + dirtyWord + " changes.\nDo you want to continue?",
                 "Warning", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
     }
 

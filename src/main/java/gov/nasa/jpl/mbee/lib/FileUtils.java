@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,11 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,35 +57,42 @@ public final class FileUtils {
     }
 
     public static File existingFile(String path) {
-        if (path == null)
+        if (path == null) {
             return null;
+        }
         File f = new File(path);
-        if (f.exists())
+        if (f.exists()) {
             return f;
+        }
         return null;
     }
 
     public static File existingFile(URL url) {
-        if (url == null)
+        if (url == null) {
             return null;
+        }
         return existingFile(url.getFile());
     }
 
     public static String existingFolder(String path) {
         File f = existingFile(path);
-        if (f == null)
+        if (f == null) {
             return null;
-        if (f.isDirectory())
+        }
+        if (f.isDirectory()) {
             return f.getPath();
+        }
         return f.getParent();
     }
 
     protected static String existingFolder(URL url) {
         File f = existingFile(url);
-        if (f == null)
+        if (f == null) {
             return null;
-        if (f.isDirectory())
+        }
+        if (f.isDirectory()) {
             return f.getPath();
+        }
         return f.getParent();
     }
 
@@ -121,9 +124,8 @@ public final class FileUtils {
     /**
      * Find a file with the name, {@code fileName}, in the current working
      * directory or some subdirectory.
-     * 
-     * @param fileName
-     *            the name of the file to find
+     *
+     * @param fileName the name of the file to find
      * @return an existing {@code File} named {@code fileName}
      */
     public static File findFile(final String fileName) {
@@ -151,18 +153,18 @@ public final class FileUtils {
                 }
                 int lengthDiff = f.getAbsolutePath().length() - fileName.length();
                 if (lengthDiff >= 0 && f.getAbsolutePath().endsWith(fileName)
-                // uncomment lines below -- untested but it makes this fcn
-                // correct
-                // && ( lengthDiff == 0
-                // || f.getAbsolutePath().charAt( lengthDiff - 1 )
-                // == File.separatorChar )
-                ) {
+                    // uncomment lines below -- untested but it makes this fcn
+                    // correct
+                    // && ( lengthDiff == 0
+                    // || f.getAbsolutePath().charAt( lengthDiff - 1 )
+                    // == File.separatorChar )
+                        ) {
                     files.add(f);
                 }
             }
             long latestModified = 0;
             File latestModifiedFile = null;
-            for (File f: files) {
+            for (File f : files) {
                 long t = f.lastModified();
                 if (t > latestModified) {
                     latestModified = t;
@@ -240,7 +242,7 @@ public final class FileUtils {
             e.printStackTrace();
         }
     }
-    
+
     public static String getFileStringContent(String filename) throws FileNotFoundException {
         String text = new Scanner(new File(filename)).useDelimiter("\\A").next();
         return text;

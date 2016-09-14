@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,24 +28,17 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BulletedList extends Table {
     private boolean orderedList;
@@ -90,18 +83,18 @@ public class BulletedList extends Table {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        Boolean showTargets = (Boolean)GeneratorUtils.getObjectProperty(dgElement,
+        Boolean showTargets = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.bulletedListStereotype, "showTargets", false);
-        Boolean showSPN = (Boolean)GeneratorUtils.getObjectProperty(dgElement,
+        Boolean showSPN = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.bulletedListStereotype, "showStereotypePropertyNames", false);
-        Boolean ordered = (Boolean)GeneratorUtils.getObjectProperty(dgElement,
+        Boolean ordered = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.bulletedListStereotype, "orderedList", false);
         setShowTargets(showTargets);
         setShowStereotypePropertyNames(showSPN);
         setOrderedList(ordered);
-        setIncludeDoc((Boolean)GeneratorUtils.getObjectProperty(dgElement,
+        setIncludeDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.documentationChoosable, "includeDoc", false));
-        setStereotypeProperties((List<Property>)GeneratorUtils
+        setStereotypeProperties((List<Property>) GeneratorUtils
                 .getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable,
                         "stereotypeProperties", new ArrayList<Property>()));
     }
@@ -109,8 +102,9 @@ public class BulletedList extends Table {
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         List<DocumentElement> res = new ArrayList<DocumentElement>();
-        if (ignore)
+        if (ignore) {
             return res;
+        }
         if (targets != null && !targets.isEmpty()) {
             DBList l = new DBList();
             res.add(l);
@@ -118,26 +112,26 @@ public class BulletedList extends Table {
             List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
             if (isShowTargets() || isIncludeDoc()) {
 
-                for (Object o: targets) {
+                for (Object o : targets) {
                     DBListItem li = new DBListItem();
                     l.addElement(li);
-                    if ( !( o instanceof Element ) ) {
-                        li.addElement( new DBText( o ) );
+                    if (!(o instanceof Element)) {
+                        li.addElement(new DBText(o));
                         continue;
                     }
-                    Element e = (Element)o;
+                    Element e = (Element) o;
                     if (isShowTargets() && e instanceof NamedElement) {
-                        li.addElement(new DBParagraph(((NamedElement)e).getName(), (NamedElement)e, From.NAME));
+                        li.addElement(new DBParagraph(((NamedElement) e).getName(), e, From.NAME));
                     }
-                    if (isIncludeDoc() && (e instanceof Element) && (!ModelHelper.getComment((Element)e).equals("") || forViewEditor)) {
-                        li.addElement(new DBParagraph(ModelHelper.getComment((Element)e), (Element)e, From.DOCUMENTATION));
+                    if (isIncludeDoc() && (e instanceof Element) && (!ModelHelper.getComment(e).equals("") || forViewEditor)) {
+                        li.addElement(new DBParagraph(ModelHelper.getComment(e), e, From.DOCUMENTATION));
                     }
                     if (getStereotypeProperties() != null && !getStereotypeProperties().isEmpty()) {
                         if (isShowStereotypePropertyNames()) {
                             DBList l2 = new DBList();
                             l2.setOrdered(isOrderedList());
                             li.addElement(l2);
-                            for (Property p: getStereotypeProperties()) {
+                            for (Property p : getStereotypeProperties()) {
                                 DBListItem li2 = new DBListItem();
                                 l2.addElement(li2);
                                 li2.addElement(new DBParagraph(p.getName(), p, From.NAME));
@@ -146,25 +140,27 @@ public class BulletedList extends Table {
                                 li2.addElement(l3);
                                 addStereotypeProperties(l3, e, p);
                             }
-                        } else {
+                        }
+                        else {
                             DBList l2 = new DBList();
                             l2.setOrdered(isOrderedList());
                             li.addElement(l2);
-                            for (Property p: getStereotypeProperties()) {
+                            for (Property p : getStereotypeProperties()) {
                                 addStereotypeProperties(l2, e, p);
                             }
                         }
                     }
                 }
-            } else {
-                for (Object o: targets) {
-                    if ( !( o instanceof Element ) ) {
+            }
+            else {
+                for (Object o : targets) {
+                    if (!(o instanceof Element)) {
                         continue;
                     }
-                    Element e = (Element)o;
+                    Element e = (Element) o;
                     if (getStereotypeProperties() != null && !getStereotypeProperties().isEmpty()) {
                         if (isShowStereotypePropertyNames()) {
-                            for (Property p: getStereotypeProperties()) {
+                            for (Property p : getStereotypeProperties()) {
                                 DBListItem li2 = new DBListItem();
                                 li2.addElement(new DBParagraph(p.getName(), p, From.NAME));
                                 l.addElement(li2);
@@ -173,8 +169,9 @@ public class BulletedList extends Table {
                                 l3.setOrdered(isOrderedList());
                                 addStereotypeProperties(l3, e, p);
                             }
-                        } else {
-                            for (Property p: getStereotypeProperties()) {
+                        }
+                        else {
+                            for (Property p : getStereotypeProperties()) {
                                 addStereotypeProperties(l, e, p);
                             }
                         }

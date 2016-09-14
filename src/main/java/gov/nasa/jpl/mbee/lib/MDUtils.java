@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,11 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
 
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.browser.BrowserTabTree;
@@ -42,16 +37,20 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * A collection of utility functions for accessing the MagicDraw (MD)
  * application.
- * 
  */
 public class MDUtils {
 
     /**
      * @return true iff MD was started with the DEVELOPER option at the command
-     *         line.
+     * line.
      */
     public static boolean isDeveloperMode() {
         return Boolean.getBoolean("DEVELOPER");
@@ -80,11 +79,14 @@ public class MDUtils {
         // Application.getInstance().getMainFrame().getFocusOwner();
         // System.out.println("focus = " + focus);
         if (b && d) {
-            if (fromDiagram)
+            if (fromDiagram) {
                 coll = getSelectionInDiagram();
-            else
+            }
+            else {
                 coll = getSelectionInContainmentBrowser();
-        } else {
+            }
+        }
+        else {
             // Frame frame =
             // Application.getInstance().getMainFrame().getActiveFrame();
             if (d && fromDiagram) {
@@ -98,26 +100,25 @@ public class MDUtils {
     }
 
     /**
-     * @param complain
-     *            if true, any Throwable will be caught and printed with the
-     *            stack trace to stderr (or the MD message window)
+     * @param complain if true, any Throwable will be caught and printed with the
+     *                 stack trace to stderr (or the MD message window)
      * @return the browser (e.g., containment tree) currently active in the MD
-     *         GUI
+     * GUI
      */
     public static BrowserTabTree getActiveBrowser(boolean complain) {
         try {
             return Application.getInstance().getMainFrame().getBrowser().getActiveTree();
         } catch (Throwable e) {
-            if (complain)
+            if (complain) {
                 e.printStackTrace();
+            }
         }
         return null;
     }
 
     /**
-     * @param complain
-     *            if true, any Throwable will be caught and printed with the
-     *            stack trace to stderr (or the MD message window)
+     * @param complain if true, any Throwable will be caught and printed with the
+     *                 stack trace to stderr (or the MD message window)
      * @return the diagram currently active in the MD GUI
      */
     public static DiagramPresentationElement getActiveDiagram(boolean complain) {
@@ -131,29 +132,32 @@ public class MDUtils {
             }
             return diagram;
         } catch (Throwable e) {
-            if (complain)
+            if (complain) {
                 e.printStackTrace();
+            }
         }
         return null;
     }
 
     /**
      * @return the {@link Element}s selected in the containment tree browser of
-     *         MD's GUI.
+     * MD's GUI.
      */
     public static Collection<Element> getSelectionInContainmentBrowser() {
         Collection<Element> coll = Utils2.getEmptyList();
         BrowserTabTree tree = getActiveBrowser(false);
-        if (tree == null)
+        if (tree == null) {
             return coll;
+        }
         Node[] nodes = tree.getSelectedNodes();
-        if (Utils2.isNullOrEmpty(nodes))
+        if (Utils2.isNullOrEmpty(nodes)) {
             return coll;
+        }
         coll = new ArrayList<Element>();
-        for (Node selectedNode: nodes) {
+        for (Node selectedNode : nodes) {
             Object selected = selectedNode.getUserObject();
             if (selected instanceof Element) {
-                coll.add((Element)selected);
+                coll.add((Element) selected);
             }
         }
         return coll;
@@ -171,10 +175,11 @@ public class MDUtils {
         // Get the elements without their presentation. (REVIEW -- why?)
         ArrayList<Element> selectedElements = new ArrayList<Element>();
         if (selectedList != null) {
-            for (PresentationElement pe: selectedList) {
+            for (PresentationElement pe : selectedList) {
                 Element e = pe.getElement();
-                if (e != null)
+                if (e != null) {
                     selectedElements.add(e);
+                }
             }
         }
         return selectedElements;

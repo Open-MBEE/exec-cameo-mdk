@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -30,7 +30,6 @@ package gov.nasa.jpl.mbee.dgvalidation.impl;
 
 import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgvalidation.Violation;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
@@ -50,53 +49,53 @@ import org.eclipse.emf.ecore.impl.EObjectImpl;
  * <em>Comment</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public class ViolationImpl extends EObjectImpl implements Violation {
     /**
      * The default value of the '{@link #getElementId() <em>Element Id</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getElementId()
+     *
      * @generated
      * @ordered
+     * @see #getElementId()
      */
     protected static final String ELEMENT_ID_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getElementId() <em>Element Id</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getElementId()
+     *
      * @generated
      * @ordered
+     * @see #getElementId()
      */
-    protected String              elementId           = ELEMENT_ID_EDEFAULT;
+    protected String elementId = ELEMENT_ID_EDEFAULT;
 
     /**
      * The default value of the '{@link #getComment() <em>Comment</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getComment()
+     *
      * @generated
      * @ordered
+     * @see #getComment()
      */
-    protected static final String COMMENT_EDEFAULT    = null;
+    protected static final String COMMENT_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getComment() <em>Comment</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getComment()
+     *
      * @generated
      * @ordered
+     * @see #getComment()
      */
-    protected String              comment             = COMMENT_EDEFAULT;
+    protected String comment = COMMENT_EDEFAULT;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected ViolationImpl() {
@@ -105,7 +104,7 @@ public class ViolationImpl extends EObjectImpl implements Violation {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -115,7 +114,7 @@ public class ViolationImpl extends EObjectImpl implements Violation {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -125,21 +124,22 @@ public class ViolationImpl extends EObjectImpl implements Violation {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setElementId(String newElementId) {
         String oldElementId = elementId;
         elementId = newElementId;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgvalidationPackage.VIOLATION__ELEMENT_ID,
                     oldElementId, elementId));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -149,21 +149,22 @@ public class ViolationImpl extends EObjectImpl implements Violation {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setComment(String newComment) {
         String oldComment = comment;
         comment = newComment;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgvalidationPackage.VIOLATION__COMMENT,
                     oldComment, comment));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -179,17 +180,17 @@ public class ViolationImpl extends EObjectImpl implements Violation {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void eSet(int featureID, Object newValue) {
         switch (featureID) {
             case DgvalidationPackage.VIOLATION__ELEMENT_ID:
-                setElementId((String)newValue);
+                setElementId((String) newValue);
                 return;
             case DgvalidationPackage.VIOLATION__COMMENT:
-                setComment((String)newValue);
+                setComment((String) newValue);
                 return;
         }
         super.eSet(featureID, newValue);
@@ -197,7 +198,7 @@ public class ViolationImpl extends EObjectImpl implements Violation {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -215,7 +216,7 @@ public class ViolationImpl extends EObjectImpl implements Violation {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -232,13 +233,14 @@ public class ViolationImpl extends EObjectImpl implements Violation {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public String toString() {
-        if (eIsProxy())
+        if (eIsProxy()) {
             return super.toString();
+        }
 
         StringBuffer result = new StringBuffer(super.toString());
         result.append(" (elementId: ");

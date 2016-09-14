@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -76,37 +76,38 @@ public class Pair<A, B> implements Comparable<Pair<A, B>>, Cloneable {
 
     @Override
     public int compareTo(Pair<A, B> o) {
-        if (this == o)
+        if (this == o) {
             return 0;
-        if (o == null)
+        }
+        if (o == null) {
             return 1;
+        }
         int compare = CompareUtils.compare(first, o.first, true);// , true );
-        if (compare != 0)
+        if (compare != 0) {
             return compare;
+        }
         return CompareUtils.compare(second, o.second, true);// , true );
     }
 
     /**
-     * @param c
-     *            collection of pairs
+     * @param c collection of pairs
      * @return a list of pairs' second items
      */
     public static <A, B> List<B> getSeconds(Collection<Pair<A, B>> c) {
         List<B> seconds = new ArrayList<B>();
-        for (Pair<A, B> p: c) {
+        for (Pair<A, B> p : c) {
             seconds.add(p.second);
         }
         return seconds;
     }
 
     /**
-     * @param c
-     *            collection of pairs
+     * @param c collection of pairs
      * @return a list of pairs' first items
      */
     public static <A, B> List<A> getFirsts(Collection<Pair<A, B>> c) {
         List<A> firsts = new ArrayList<A>();
-        for (Pair<A, B> p: c) {
+        for (Pair<A, B> p : c) {
             firsts.add(p.first);
         }
         return firsts;

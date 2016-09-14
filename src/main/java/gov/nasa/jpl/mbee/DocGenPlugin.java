@@ -53,19 +53,34 @@ import java.util.List;
 import java.util.jar.JarFile;
 
 public class DocGenPlugin extends Plugin {
+    public static final String VERSION = "2.4",
+            MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
+    public static ClassLoader extensionsClassloader = null;
+    public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
     private OclEvaluatorPlugin oclPlugin = null;
     private ValidateConstraintsPlugin vcPlugin = null;
     private DebugExportImportModelPlugin debugExportImportModelPlugin = null;
-    public static ClassLoader extensionsClassloader = null;
-
-    public static final String VERSION = "2.4",
-            MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
-
-    public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
 
     public DocGenPlugin() {
         super();
         Debug.outln("constructed DocGenPlugin!");
+    }
+
+    public static void updateMainToolbarCategory() {
+        if (MAIN_TOOLBAR_ACTIONS_MANAGER == null) {
+            return;
+        }
+        ActionsCategory category = MAIN_TOOLBAR_ACTIONS_MANAGER.getCategory(MAIN_TOOLBAR_CATEGORY_NAME);
+        if (category == null) {
+            return;
+        }
+        List<NMAction> actions = new ArrayList<>(category.getActions());
+        for (NMAction action : actions) {
+            category.removeAction(action);
+        }
+        for (NMAction action : actions) {
+            category.addAction(action);
+        }
     }
 
     @Override
@@ -163,22 +178,5 @@ public class DocGenPlugin extends Plugin {
         }
         extensionsClassloader = new URLClassLoader(extensions.toArray(new URL[]{}),
                 DocGenPlugin.class.getClassLoader());
-    }
-
-    public static void updateMainToolbarCategory() {
-        if (MAIN_TOOLBAR_ACTIONS_MANAGER == null) {
-            return;
-        }
-        ActionsCategory category = MAIN_TOOLBAR_ACTIONS_MANAGER.getCategory(MAIN_TOOLBAR_CATEGORY_NAME);
-        if (category == null) {
-            return;
-        }
-        List<NMAction> actions = new ArrayList<>(category.getActions());
-        for (NMAction action : actions) {
-            category.removeAction(action);
-        }
-        for (NMAction action : actions) {
-            category.addAction(action);
-        }
     }
 }

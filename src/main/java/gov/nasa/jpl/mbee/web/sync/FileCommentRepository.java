@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,24 +28,15 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.web.sync;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+
+import java.io.*;
+import java.util.*;
+
 @Deprecated
 public class FileCommentRepository implements CommentRepository {
     private final String filename;
-    private File         file;
+    private File file;
 
     public FileCommentRepository(String filename) {
         this.filename = filename;
@@ -83,23 +74,25 @@ public class FileCommentRepository implements CommentRepository {
         } catch (IOException e) {
             throw new CommentSyncFailure("Error reading file " + filename + ": " + e.getMessage(), e);
         } finally {
-            if (fileReader != null)
+            if (fileReader != null) {
                 try {
                     fileReader.close();
                 } catch (IOException e) { /* IGNORE */
                 }
-            if (reader != null)
+            }
+            if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e) { /* IGNORE */
                 }
+            }
         }
         return comments;
     }
 
     @Override
     public void sendComments(NamedElement document, List<SyncedComment> newComments,
-            List<SyncedComment> modifiedComments, List<SyncedComment> deletedComments)
+                             List<SyncedComment> modifiedComments, List<SyncedComment> deletedComments)
             throws CommentSyncFailure {
         if (file == null) {
             throw new CommentSyncFailure("Called before successful connect()");
@@ -107,24 +100,24 @@ public class FileCommentRepository implements CommentRepository {
         Map<String, SyncedComment> incoming = new HashMap<String, SyncedComment>();
         Set<Integer> seen = new HashSet<Integer>();
         if (newComments != null) {
-            for (SyncedComment c: newComments) {
+            for (SyncedComment c : newComments) {
                 incoming.put(c.getId(), c);
             }
         }
         if (modifiedComments != null) {
-            for (SyncedComment c: modifiedComments) {
+            for (SyncedComment c : modifiedComments) {
                 incoming.put(c.getId(), c);
                 seen.add(CommentUtil.checksum(c));
             }
         }
         if (deletedComments != null) {
-            for (SyncedComment c: deletedComments) {
+            for (SyncedComment c : deletedComments) {
                 incoming.put(c.getId(), c);
                 seen.add(CommentUtil.checksum(c));
             }
         }
         List<SyncedComment> untouched = new ArrayList<SyncedComment>();
-        for (SyncedComment c: getComments(document)) {
+        for (SyncedComment c : getComments(document)) {
             if (!incoming.containsKey(c.getId()) && !seen.contains(CommentUtil.checksum(c))) {
                 untouched.add(c);
             }
@@ -138,11 +131,12 @@ public class FileCommentRepository implements CommentRepository {
         } catch (IOException e) {
             throw new CommentSyncFailure("Error writing file " + filename + ": " + e.getMessage());
         } finally {
-            if (writer != null)
+            if (writer != null) {
                 try {
                     writer.close();
                 } catch (IOException e) { /* IGNORE */
                 }
+            }
         }
     }
 
@@ -151,7 +145,7 @@ public class FileCommentRepository implements CommentRepository {
         if (comments == null) {
             return;
         }
-        for (SyncedComment c: comments) {
+        for (SyncedComment c : comments) {
             StringBuilder sb = new StringBuilder();
             sb.append(documentId).append('|');
             sb.append(c.getId()).append('|');
@@ -176,7 +170,8 @@ public class FileCommentRepository implements CommentRepository {
         }
         if (fields.length == 6 && "DELETED".equals(fields[5])) {
             return SyncedComment.deleted(fields[1], fields[2], fields[3], fields[4]);
-        } else {
+        }
+        else {
             return SyncedComment.found(fields[1], fields[2], fields[3], fields[4]);
         }
     }

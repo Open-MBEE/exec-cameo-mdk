@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,15 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.web.sync;
 
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.JOptionPane;
-
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -46,15 +37,19 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.*;
+
 @SuppressWarnings("serial")
 @Deprecated
 public class ImportComments extends MDAction {
-    private NamedElement      documentView;
+    private NamedElement documentView;
     private CommentRepository repository;
 
     public ImportComments(NamedElement selectedElement) {
-    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
-    	//
+        //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        //
         super("ImportCommentsFromDocWeb", "Accept Comments from DocWeb", null, null);
         this.documentView = selectedElement;
         setEnabled(selectedElement.isEditable());
@@ -63,8 +58,8 @@ public class ImportComments extends MDAction {
     // this is for export comments action to call so make sure ppl import first
     // than export
     public ImportComments(NamedElement ne, CommentRepository re) {
-    	//JJS--MDEV-567 fix: changed 'Import' to 'Accept'
-    	//
+        //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
+        //
         super("ImportComments", "Accept Comments", null, null);
         documentView = ne;
         repository = re;
@@ -100,11 +95,11 @@ public class ImportComments extends MDAction {
             List<SyncedComment> importedComments = repository.getComments(documentView);
             localComments = CommentUtil.getLocalComments(documentView);
             Set<Integer> localChecksums = new HashSet<Integer>();
-            for (Comment c: localComments.values()) {
+            for (Comment c : localComments.values()) {
                 localChecksums.add(CommentUtil.checksum(c, s));
             }
 
-            for (SyncedComment remote: importedComments) {
+            for (SyncedComment remote : importedComments) {
                 if (remote.isDeleted()) {
                     deleted.add(remote);
                     continue;

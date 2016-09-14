@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -49,7 +49,7 @@ public class DirectedHyperGraphHashSet<VertexType, EdgeType extends DirectedHype
     public boolean addEdge(Set<VertexType> sourceVertices, Set<VertexType> targetVertices) {
         DirectedHyperEdge<VertexType> edge = new DirectedHyperEdgeVector<VertexType>(sourceVertices,
                 targetVertices);
-        return addEdge((EdgeType)edge);
+        return addEdge((EdgeType) edge);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class DirectedHyperGraphHashSet<VertexType, EdgeType extends DirectedHype
     public boolean addEdge(EdgeType edge) {
         boolean added = super.addEdge(edge);
         if (added) {
-            for (VertexType v: edge.getSourceVertices()) {
+            for (VertexType v : edge.getSourceVertices()) {
                 if (Vs2E.get(v) == null) {
                     Vs2E.put(v, new HashSet<EdgeType>());
                 }
@@ -92,7 +92,7 @@ public class DirectedHyperGraphHashSet<VertexType, EdgeType extends DirectedHype
                 }
                 Vs2E.get(v).add(edge);
             }
-            for (VertexType v: edge.getTargetVertices()) {
+            for (VertexType v : edge.getTargetVertices()) {
                 if (Vs2E.get(v) == null) {
                     Vs2E.put(v, new HashSet<EdgeType>());
                 }
@@ -109,11 +109,11 @@ public class DirectedHyperGraphHashSet<VertexType, EdgeType extends DirectedHype
     public boolean removeEdge(EdgeType edge) {
         boolean removed = super.removeEdge(edge);
         if (removed) {
-            for (VertexType v: edge.getSourceVertices()) {
+            for (VertexType v : edge.getSourceVertices()) {
                 assert (Vs2E.get(v) != null);
                 Vs2E.get(v).remove(edge);
             }
-            for (VertexType v: edge.getTargetVertices()) {
+            for (VertexType v : edge.getTargetVertices()) {
                 assert (Vt2E.get(v) != null);
                 Vt2E.get(v).remove(edge);
             }
@@ -124,7 +124,7 @@ public class DirectedHyperGraphHashSet<VertexType, EdgeType extends DirectedHype
     @Override
     public Set<VertexType> findNeighborsOf(VertexType vertex) {
         Set<VertexType> vertices = new HashSet<VertexType>();
-        for (EdgeType e: findEdgesWithSourceVertex(vertex)) {
+        for (EdgeType e : findEdgesWithSourceVertex(vertex)) {
             vertices.addAll(e.getTargetVertices());
         }
         return vertices;
@@ -133,7 +133,7 @@ public class DirectedHyperGraphHashSet<VertexType, EdgeType extends DirectedHype
     @Override
     public Set<VertexType> findChildrenOf(VertexType vertex) {
         Set<VertexType> vertices = new HashSet<VertexType>();
-        for (EdgeType edge: Vs2E.get(vertex)) {
+        for (EdgeType edge : Vs2E.get(vertex)) {
             vertices.addAll(edge.getTargetVertices());
         }
         return vertices;
@@ -151,11 +151,12 @@ public class DirectedHyperGraphHashSet<VertexType, EdgeType extends DirectedHype
             return edges;
         }
         boolean isFirstPass = true;
-        for (VertexType v: vertices) {
+        for (VertexType v : vertices) {
             if (isFirstPass) {
                 edges.addAll(findEdgesWithSourceVertex(v));
                 isFirstPass = false;
-            } else {
+            }
+            else {
                 edges.retainAll(findEdgesWithSourceVertex(v));
             }
             if (edges.size() == 0) {
@@ -177,11 +178,12 @@ public class DirectedHyperGraphHashSet<VertexType, EdgeType extends DirectedHype
             return edges;
         }
         boolean isFirstPass = true;
-        for (VertexType v: vertices) {
+        for (VertexType v : vertices) {
             if (isFirstPass) {
                 edges.addAll(findEdgesWithTargetVertex(v));
                 isFirstPass = false;
-            } else {
+            }
+            else {
                 edges.retainAll(findEdgesWithTargetVertex(v));
             }
             if (edges.size() == 0) {

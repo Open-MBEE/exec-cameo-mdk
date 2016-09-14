@@ -34,7 +34,7 @@ public class PresentationElementUtils {
             viewClassStereotype = Utils.getViewClassStereotype();
     private Property generatedFromView = Utils.getGeneratedFromViewProperty(),
             generatedFromElement = Utils.getGeneratedFromElementProperty();
-    
+
     private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
 
     public Stereotype getPresentsStereotype() {
@@ -51,16 +51,19 @@ public class PresentationElementUtils {
 
     public static Expression getViewOrSectionExpression(Element viewOrSection) {
         if (viewOrSection instanceof InstanceSpecification) {
-            if (((InstanceSpecification)viewOrSection).getSpecification() instanceof Expression)
-                return (Expression)((InstanceSpecification)viewOrSection).getSpecification();
-        } else if (viewOrSection instanceof Class) {
+            if (((InstanceSpecification) viewOrSection).getSpecification() instanceof Expression) {
+                return (Expression) ((InstanceSpecification) viewOrSection).getSpecification();
+            }
+        }
+        else if (viewOrSection instanceof Class) {
             Constraint c = Utils.getViewConstraint(viewOrSection);
-            if (c != null && c.getSpecification() instanceof Expression)
-                return (Expression)c.getSpecification();
+            if (c != null && c.getSpecification() instanceof Expression) {
+                return (Expression) c.getSpecification();
+            }
         }
         return null;
     }
-    
+
     public PresentationElementInfo getCurrentInstances(Element viewOrSection, Element view) {
         List<InstanceSpecification> tables = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> lists = new ArrayList<InstanceSpecification>();
@@ -80,25 +83,26 @@ public class PresentationElementUtils {
         if (e == null) {
             return res;
         }
-        for (ValueSpecification vs: e.getOperand()) {
+        for (ValueSpecification vs : e.getOperand()) {
             if (vs instanceof InstanceValue) {
-                InstanceSpecification is = ((InstanceValue)vs).getInstance();
-                if (is ==  null)
+                InstanceSpecification is = ((InstanceValue) vs).getInstance();
+                if (is == null) {
                     continue;
+                }
                 if (!is.getClassifier().isEmpty()) {
                     List<Classifier> iscs = is.getClassifier();
                     boolean viewinstance = false;
                     if (iscs.contains(paraC) || iscs.contains(tableC) || iscs.contains(listC) ||
                             iscs.contains(imageC) || iscs.contains(sectionC)) {
-                        for (Element el: is.getOwnedElement()) {
-                            if (el instanceof Slot && ((Slot) el).getDefiningFeature() != null && ((Slot) el).getDefiningFeature().getName() != null &&  ((Slot)el).getDefiningFeature().getName().equals("generatedFromView") &&
-                                    !((Slot)el).getValue().isEmpty() && ((Slot)el).getValue().get(0) instanceof ElementValue &&
-                                    ((ElementValue)((Slot)el).getValue().get(0)).getElement() == view) {
+                        for (Element el : is.getOwnedElement()) {
+                            if (el instanceof Slot && ((Slot) el).getDefiningFeature() != null && ((Slot) el).getDefiningFeature().getName() != null && ((Slot) el).getDefiningFeature().getName().equals("generatedFromView") &&
+                                    !((Slot) el).getValue().isEmpty() && ((Slot) el).getValue().get(0) instanceof ElementValue &&
+                                    ((ElementValue) ((Slot) el).getValue().get(0)).getElement() == view) {
                                 viewinstance = true;
                             }
                         }
                         if (!viewinstance) {
-                            for (InstanceValue iv: is.get_instanceValueOfInstance()) {
+                            for (InstanceValue iv : is.get_instanceValueOfInstance()) {
                                 if (iv != vs && iv.getOwner() != null) { //an opaque instance that's referenced from somewhere else
                                     extraRef.add(is);
                                     break;
@@ -108,28 +112,35 @@ public class PresentationElementUtils {
                     }
                     if ((iscs.contains(paraC) || iscs.contains(tparaC)) && isView && is.getSpecification() instanceof LiteralString) {
                         try {
-                            JSONObject ob = (JSONObject)(new JSONParser()).parse(((LiteralString)is.getSpecification()).getValue());
+                            JSONObject ob = (JSONObject) (new JSONParser()).parse(((LiteralString) is.getSpecification()).getValue());
                             if (view.getID().equals(ob.get("source")) && "documentation".equals(ob.get("sourceProperty"))) {
                                 viewinstance = false; //a view doc instance
                                 res.setViewDocHack(is);
                             }
-                        } catch (Exception x) {}
+                        } catch (Exception x) {
+                        }
                     }
                     if (viewinstance) {//instance generated by current view
-                        if (iscs.contains(paraC))
+                        if (iscs.contains(paraC)) {
                             paras.add(is);
-                        else if (iscs.contains(tableC))
+                        }
+                        else if (iscs.contains(tableC)) {
                             tables.add(is);
-                        else if (iscs.contains(listC))
+                        }
+                        else if (iscs.contains(listC)) {
                             lists.add(is);
-                        else if (iscs.contains(imageC))
+                        }
+                        else if (iscs.contains(imageC)) {
                             images.add(is);
-                        else if (iscs.contains(sectionC))
+                        }
+                        else if (iscs.contains(sectionC)) {
                             sections.add(is);
+                        }
                         opaque.add(is);
-                    } else {
+                    }
+                    else {
                         manuals.add(is);
-                        for (InstanceValue iv: is.get_instanceValueOfInstance()) {
+                        for (InstanceValue iv : is.get_instanceValueOfInstance()) {
                             if (iv != vs && iv.getOwner() != null) { //a non opaque instance being referenced from somewhere else
                                 extraManualRef.add(is);
                                 break;
@@ -143,57 +154,58 @@ public class PresentationElementUtils {
         if (isView) {
             Package viewp = findViewInstancePackage(view);
             if (viewp != null) {
-                for (Element el: viewp.getOwnedElement()) {
-                    if (el instanceof InstanceSpecification && ((InstanceSpecification)el).get_instanceValueOfInstance().isEmpty()) {
-                        unused.add((InstanceSpecification)el); //but this might be a manual instance that's referenced by higher project?
+                for (Element el : viewp.getOwnedElement()) {
+                    if (el instanceof InstanceSpecification && ((InstanceSpecification) el).get_instanceValueOfInstance().isEmpty()) {
+                        unused.add((InstanceSpecification) el); //but this might be a manual instance that's referenced by higher project?
                     }
                 }
             }
         }
         return res;
     }
-    
+
     public boolean isSection(InstanceSpecification is) {
-        if (is.getClassifier().contains(sectionC) || is.getClassifier().contains(tsectionC))
-            return true;
-        return false;
+        return is.getClassifier().contains(sectionC) || is.getClassifier().contains(tsectionC);
     }
-    
+
     public boolean isInSomeViewPackage(InstanceSpecification is) {
         Element owner = is.getOwner();
         if (owner instanceof Package) {
-            for (Element e: Utils.collectDirectedRelatedElementsByRelationshipStereotype(owner, presentsStereotype, 2, false, 1)) {
-                if (StereotypesHelper.hasStereotypeOrDerived(e, viewClassStereotype))
+            for (Element e : Utils.collectDirectedRelatedElementsByRelationshipStereotype(owner, presentsStereotype, 2, false, 1)) {
+                if (StereotypesHelper.hasStereotypeOrDerived(e, viewClassStereotype)) {
                     return true;
+                }
             }
         }
         return false;
     }
-    
+
     public Package findViewInstancePackage(Element view) {
         List<Element> results = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, presentsStereotype, 1, false, 1);
         if (!results.isEmpty() && results.get(0) instanceof Package) {
-            return (Package)results.get(0);
+            return (Package) results.get(0);
         }
         return null;
     }
-    
+
     public List<Package> findCorrectViewInstancePackageOwners(Element view) {
-        Type viewt = (Type)view;
+        Type viewt = (Type) view;
         List<Package> parentPack = new ArrayList<Package>();
         if (StereotypesHelper.hasStereotypeOrDerived(view, productStereotype)) {
             Element owner = view.getOwner();
             while (!(owner instanceof Package)) {
                 owner = owner.getOwner();
             }
-            parentPack.add((Package)owner);
-        } else {
-            for (TypedElement t: viewt.get_typedElementOfType()) {
-                if (t instanceof Property && ((Property)t).getAggregation().equals(AggregationKindEnum.COMPOSITE) &&
+            parentPack.add((Package) owner);
+        }
+        else {
+            for (TypedElement t : viewt.get_typedElementOfType()) {
+                if (t instanceof Property && ((Property) t).getAggregation().equals(AggregationKindEnum.COMPOSITE) &&
                         StereotypesHelper.hasStereotypeOrDerived(t.getOwner(), viewClassStereotype)) {
                     Package parent = findViewInstancePackage(t.getOwner());
-                    if (parent != null)
+                    if (parent != null) {
                         parentPack.add(parent);
+                    }
                 }
             }
             if (parentPack.isEmpty()) {
@@ -201,15 +213,15 @@ public class PresentationElementUtils {
                 while (!(owner instanceof Package)) {
                     owner = owner.getOwner();
                 }
-                parentPack.add((Package)owner);
+                parentPack.add((Package) owner);
             }
         }
         return parentPack;
     }
-    
+
     public Package createViewInstancePackage(Element view, Package owner) {
         Package viewPackage = ef.createPackageInstance();
-        viewPackage.setName(((NamedElement)view).getName() + " Instances");
+        viewPackage.setName(((NamedElement) view).getName() + " Instances");
         viewPackage.setOwner(owner);
         Dependency d = ef.createDependencyInstance();
         d.setOwner(viewPackage);
@@ -218,52 +230,62 @@ public class PresentationElementUtils {
         StereotypesHelper.addStereotype(d, presentsStereotype);
         return viewPackage;
     }
-    
+
     public boolean needLockForEdit(PresentationElementInstance pe) {
         InstanceSpecification is = pe.getInstance();
-        if (is == null || (pe.isManual() && !pe.isViewDocHack()))
+        if (is == null || (pe.isManual() && !pe.isViewDocHack())) {
             return false;
-        if (pe.isViewDocHack())
+        }
+        if (pe.isViewDocHack()) {
             return true;
+        }
         ValueSpecification oldvs = is.getSpecification();
         //check classifier
         if (pe.getNewspec() != null && !pe.getNewspec().get("type").equals("Section")) {
-            if (oldvs instanceof LiteralString && ((LiteralString)oldvs).getValue() != null) {
+            if (oldvs instanceof LiteralString && ((LiteralString) oldvs).getValue() != null) {
                 try {
-                    JSONObject oldob = (JSONObject)JSONValue.parse(((LiteralString)oldvs).getValue());
-                    if (oldob == null || !oldob.equals(pe.getNewspec()))
+                    JSONObject oldob = (JSONObject) JSONValue.parse(((LiteralString) oldvs).getValue());
+                    if (oldob == null || !oldob.equals(pe.getNewspec())) {
                         return true;
+                    }
                 } catch (Exception ex) {
                     return true;
                 }
-            } else
+            }
+            else {
                 return true;
-        } else if (pe.getType().equals(PresentationElementEnum.SECTION)) {
-            if (!(is.getSpecification() instanceof Expression))
+            }
+        }
+        else if (pe.getType().equals(PresentationElementEnum.SECTION)) {
+            if (!(is.getSpecification() instanceof Expression)) {
                 return true;
+            }
             List<InstanceSpecification> list = new ArrayList<InstanceSpecification>();
-            for (PresentationElementInstance cpe: pe.getChildren()) {
-                if (cpe.getInstance() == null)
+            for (PresentationElementInstance cpe : pe.getChildren()) {
+                if (cpe.getInstance() == null) {
                     return true;
+                }
                 list.add(cpe.getInstance());
             }
-            List<ValueSpecification> model = ((Expression)is.getSpecification()).getOperand();
-            if (model.size() != list.size())
-                 return true;
+            List<ValueSpecification> model = ((Expression) is.getSpecification()).getOperand();
+            if (model.size() != list.size()) {
+                return true;
+            }
             for (int i = 0; i < model.size(); i++) {
                 ValueSpecification modelvs = model.get(i);
-                if (!(modelvs instanceof InstanceValue) || ((InstanceValue)modelvs).getInstance() != list.get(i)) {
+                if (!(modelvs instanceof InstanceValue) || ((InstanceValue) modelvs).getInstance() != list.get(i)) {
                     return true;
                 }
             }
         }
         return false;
     }
-    
+
     public InstanceSpecification updateOrCreateInstance(PresentationElementInstance pe, Package owner) {
         InstanceSpecification is = pe.getInstance();
-        if (is != null && pe.isManual() && !pe.isViewDocHack())
+        if (is != null && pe.isManual() && !pe.isViewDocHack()) {
             return is;
+        }
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
             Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
@@ -287,7 +309,7 @@ public class PresentationElementUtils {
                 }
             }
         }
-        JSONObject newspec  = pe.getNewspec();
+        JSONObject newspec = pe.getNewspec();
         Classifier classifier = null;
         String name;
         if (pe.isViewDocHack()) {
@@ -295,31 +317,39 @@ public class PresentationElementUtils {
             newspec.put("source", is.getID());
             newspec.put("type", "Paragraph");
             newspec.put("sourceProperty", "documentation");
-            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\">[cf." + ((NamedElement)pe.getView()).getName() +".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
+            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\">[cf." + ((NamedElement) pe.getView()).getName() + ".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
             ModelHelper.setComment(is, transclude);
             name = "View Documentation";
             classifier = tparaC;
-        } else {
-            if (pe.getType() == PresentationElementEnum.PARAGRAPH)
+        }
+        else {
+            if (pe.getType() == PresentationElementEnum.PARAGRAPH) {
                 classifier = paraC;
-            else if (pe.getType() == PresentationElementEnum.TABLE)
+            }
+            else if (pe.getType() == PresentationElementEnum.TABLE) {
                 classifier = tableC;
-            else if (pe.getType() == PresentationElementEnum.LIST)
+            }
+            else if (pe.getType() == PresentationElementEnum.LIST) {
                 classifier = listC;
-            else if (pe.getType() == PresentationElementEnum.IMAGE)
+            }
+            else if (pe.getType() == PresentationElementEnum.IMAGE) {
                 classifier = imageC;
-            else if (pe.getType() == PresentationElementEnum.SECTION)
+            }
+            else if (pe.getType() == PresentationElementEnum.SECTION) {
                 classifier = sectionC;
+            }
             name = pe.getName();
-            if (name == null || name.isEmpty())
+            if (name == null || name.isEmpty()) {
                 name = "<>";
+            }
         }
         if (newspec != null) {
             ValueSpecification string = is.getSpecification();
-            if (!(string instanceof LiteralString))
+            if (!(string instanceof LiteralString)) {
                 string = ef.createLiteralStringInstance();
+            }
             string.setOwner(is);
-            ((LiteralString)string).setValue(newspec.toJSONString());
+            ((LiteralString) string).setValue(newspec.toJSONString());
             is.setSpecification(string);
         }
         is.setName(name);
@@ -327,23 +357,24 @@ public class PresentationElementUtils {
         is.getClassifier().add(classifier);
         if (pe.getType() == PresentationElementEnum.SECTION) { //assume all children pe have instance, caller should walk bottom up
             ValueSpecification expression = is.getSpecification();
-            if (!(expression instanceof Expression))
+            if (!(expression instanceof Expression)) {
                 expression = ef.createExpressionInstance();
+            }
             expression.setOwner(is);
             List<InstanceValue> ivs = new ArrayList<InstanceValue>();
-            for (PresentationElementInstance spe: pe.getChildren()) {
+            for (PresentationElementInstance spe : pe.getChildren()) {
                 InstanceValue iv = ef.createInstanceValueInstance();
                 iv.setInstance(spe.getInstance());
                 ivs.add(iv);
             }
-            ((Expression)expression).getOperand().clear();
-            ((Expression)expression).getOperand().addAll(ivs);
+            ((Expression) expression).getOperand().clear();
+            ((Expression) expression).getOperand().addAll(ivs);
         }
         is.setOwner(owner);
         pe.setInstance(is);
         return is;
     }
-    
+
     //return bfs view order
     public List<Element> getViewProcessOrder(Element start, Map<Element, List<Element>> view2view) {
         List<Element> res = new ArrayList<Element>();
@@ -352,16 +383,18 @@ public class PresentationElementUtils {
         while (!toProcess.isEmpty()) {
             Element next = toProcess.remove();
             res.add(next);
-            if (view2view.containsKey(next))
+            if (view2view.containsKey(next)) {
                 toProcess.addAll(view2view.get(next));
+            }
         }
         return res;
     }
 
     public Constraint getOrCreateViewConstraint(Element view) {
         Constraint c = Utils.getViewConstraint(view);
-        if (c != null)
+        if (c != null) {
             return c;
+        }
         c = ef.createConstraintInstance();
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
         c.setID(view.getID() + "_vc");
@@ -383,7 +416,7 @@ public class PresentationElementUtils {
         expression.getOperand().clear();
         expression.getOperand().addAll(ivs);
     }
-    
+
     public void updateOrCreateConstraintFromPresentationElements(Element view, List<PresentationElementInstance> presentationElementInstances) {
         List<InstanceSpecification> instanceSpecifications = new ArrayList<>(presentationElementInstances.size());
         for (PresentationElementInstance presentationElementInstance : presentationElementInstances) {
@@ -417,15 +450,16 @@ public class PresentationElementUtils {
         }
         return false;
     }*/
-    
+
     public Package getOrCreateUnusedInstancePackage() {
         Package rootPackage = Utils.getRootElement();
-        String viewInstID = Utils.getProject().getPrimaryProject() .getProjectID().replace("PROJECT", "View_Instances");
-        String unusedId = Utils.getProject().getPrimaryProject() .getProjectID().replace("PROJECT", "Unused_View_Instances");
-        Package viewInst = (Package)Application.getInstance().getProject().getElementByID(viewInstID);
-        Package unusedViewInst = (Package)Application.getInstance().getProject().getElementByID(unusedId);
-        if (unusedViewInst != null)
+        String viewInstID = Utils.getProject().getPrimaryProject().getProjectID().replace("PROJECT", "View_Instances");
+        String unusedId = Utils.getProject().getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances");
+        Package viewInst = (Package) Application.getInstance().getProject().getElementByID(viewInstID);
+        Package unusedViewInst = (Package) Application.getInstance().getProject().getElementByID(unusedId);
+        if (unusedViewInst != null) {
             return unusedViewInst;
+        }
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
         if (viewInst == null) {
             viewInst = ef.createPackageInstance();
@@ -438,6 +472,6 @@ public class PresentationElementUtils {
         unusedViewInst.setName("Unused View Instances");
         unusedViewInst.setOwner(viewInst);
         return unusedViewInst;
-        
+
     }
 }

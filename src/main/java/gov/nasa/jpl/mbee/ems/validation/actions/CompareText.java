@@ -1,26 +1,16 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-
-import javax.swing.JDialog;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-
-
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONObject;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.Collection;
 
 public class CompareText extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -29,7 +19,7 @@ public class CompareText extends RuleViolationAction implements AnnotationAction
     private String webDoc;
     private String modelDoc;
     private JSONObject result;
-    
+
     public CompareText(Element e, String web, String model, JSONObject result) {
         super("Compare Text", "Compare Text", null, null);
         this.element = e;
@@ -37,7 +27,7 @@ public class CompareText extends RuleViolationAction implements AnnotationAction
         this.modelDoc = model;
         this.result = result;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return false;
@@ -45,9 +35,9 @@ public class CompareText extends RuleViolationAction implements AnnotationAction
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        
+
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         JTabbedPane webpane = new JTabbedPane();

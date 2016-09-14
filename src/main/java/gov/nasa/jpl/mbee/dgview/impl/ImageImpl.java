@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -30,7 +30,6 @@ package gov.nasa.jpl.mbee.dgview.impl;
 
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
 import gov.nasa.jpl.mbee.dgview.Image;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
@@ -51,93 +50,93 @@ import org.eclipse.emf.ecore.impl.ENotificationImpl;
  * <em>Do Not Show</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public class ImageImpl extends ViewElementImpl implements Image {
     /**
      * The default value of the '{@link #getDiagramId() <em>Diagram Id</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getDiagramId()
+     *
      * @generated
      * @ordered
+     * @see #getDiagramId()
      */
-    protected static final String  DIAGRAM_ID_EDEFAULT  = null;
+    protected static final String DIAGRAM_ID_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getDiagramId() <em>Diagram Id</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getDiagramId()
+     *
      * @generated
      * @ordered
+     * @see #getDiagramId()
      */
-    protected String               diagramId            = DIAGRAM_ID_EDEFAULT;
+    protected String diagramId = DIAGRAM_ID_EDEFAULT;
 
     /**
      * The default value of the '{@link #getCaption() <em>Caption</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getCaption()
+     *
      * @generated
      * @ordered
+     * @see #getCaption()
      */
-    protected static final String  CAPTION_EDEFAULT     = null;
+    protected static final String CAPTION_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getCaption() <em>Caption</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getCaption()
+     *
      * @generated
      * @ordered
+     * @see #getCaption()
      */
-    protected String               caption              = CAPTION_EDEFAULT;
+    protected String caption = CAPTION_EDEFAULT;
 
     /**
      * The default value of the '{@link #isGennew() <em>Gennew</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #isGennew()
+     *
      * @generated
      * @ordered
+     * @see #isGennew()
      */
-    protected static final boolean GENNEW_EDEFAULT      = false;
+    protected static final boolean GENNEW_EDEFAULT = false;
 
     /**
      * The cached value of the '{@link #isGennew() <em>Gennew</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #isGennew()
+     *
      * @generated
      * @ordered
+     * @see #isGennew()
      */
-    protected boolean              gennew               = GENNEW_EDEFAULT;
+    protected boolean gennew = GENNEW_EDEFAULT;
 
     /**
      * The default value of the '{@link #isDoNotShow() <em>Do Not Show</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #isDoNotShow()
+     *
      * @generated
      * @ordered
+     * @see #isDoNotShow()
      */
     protected static final boolean DO_NOT_SHOW_EDEFAULT = false;
 
     /**
      * The cached value of the '{@link #isDoNotShow() <em>Do Not Show</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #isDoNotShow()
+     *
      * @generated
      * @ordered
+     * @see #isDoNotShow()
      */
-    protected boolean              doNotShow            = DO_NOT_SHOW_EDEFAULT;
+    protected boolean doNotShow = DO_NOT_SHOW_EDEFAULT;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected ImageImpl() {
@@ -146,7 +145,7 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -156,7 +155,7 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -166,21 +165,22 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setDiagramId(String newDiagramId) {
         String oldDiagramId = diagramId;
         diagramId = newDiagramId;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.IMAGE__DIAGRAM_ID,
                     oldDiagramId, diagramId));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -190,21 +190,22 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setCaption(String newCaption) {
         String oldCaption = caption;
         caption = newCaption;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.IMAGE__CAPTION, oldCaption,
                     caption));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -214,21 +215,22 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setGennew(boolean newGennew) {
         boolean oldGennew = gennew;
         gennew = newGennew;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.IMAGE__GENNEW, oldGennew,
                     gennew));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -238,21 +240,22 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setDoNotShow(boolean newDoNotShow) {
         boolean oldDoNotShow = doNotShow;
         doNotShow = newDoNotShow;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.IMAGE__DO_NOT_SHOW,
                     oldDoNotShow, doNotShow));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -272,23 +275,23 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void eSet(int featureID, Object newValue) {
         switch (featureID) {
             case DgviewPackage.IMAGE__DIAGRAM_ID:
-                setDiagramId((String)newValue);
+                setDiagramId((String) newValue);
                 return;
             case DgviewPackage.IMAGE__CAPTION:
-                setCaption((String)newValue);
+                setCaption((String) newValue);
                 return;
             case DgviewPackage.IMAGE__GENNEW:
-                setGennew((Boolean)newValue);
+                setGennew((Boolean) newValue);
                 return;
             case DgviewPackage.IMAGE__DO_NOT_SHOW:
-                setDoNotShow((Boolean)newValue);
+                setDoNotShow((Boolean) newValue);
                 return;
         }
         super.eSet(featureID, newValue);
@@ -296,7 +299,7 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -320,7 +323,7 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -341,13 +344,14 @@ public class ImageImpl extends ViewElementImpl implements Image {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public String toString() {
-        if (eIsProxy())
+        if (eIsProxy()) {
             return super.toString();
+        }
 
         StringBuffer result = new StringBuffer(super.toString());
         result.append(" (diagramId: ");

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -29,33 +29,21 @@
 package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.Debug;
-
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import org.eclipse.emf.ecore.EAnnotation;
-import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EClassifier;
-import org.eclipse.emf.ecore.EEnumLiteral;
-import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EOperation;
-import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.EParameter;
-import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.*;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.ocl.Environment;
 import org.eclipse.ocl.EnvironmentFactory;
-import org.eclipse.ocl.ecore.CallOperationAction;
-import org.eclipse.ocl.ecore.Constraint;
-import org.eclipse.ocl.ecore.EcoreEnvironment;
-import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
-import org.eclipse.ocl.ecore.SendSignalAction;
+import org.eclipse.ocl.ecore.*;
 import org.eclipse.ocl.ecore.internal.OCLStandardLibraryImpl;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 public class DgEnvironment extends EcoreEnvironment {
-    Set<String>              operationNames = new HashSet<String>();
-    Set<DgOperationInstance> operations     = new LinkedHashSet<DgOperationInstance>();
+    Set<String> operationNames = new HashSet<String>();
+    Set<DgOperationInstance> operations = new LinkedHashSet<DgOperationInstance>();
 
     // this constructor is used to initialize the root environment
     DgEnvironment(EPackage.Registry registry) {
@@ -91,7 +79,7 @@ public class DgEnvironment extends EcoreEnvironment {
 
     /**
      * Utility for adding custom OCL operations (defined by a DgOperation)
-     * 
+     *
      * @param dgOperation
      */
     public void addDgOperation(DgOperationInstance dgOperation) {
@@ -100,10 +88,11 @@ public class DgEnvironment extends EcoreEnvironment {
             EOperation eoperation = EcoreFactory.eINSTANCE.createEOperation();
             eoperation.setName(dgOperation.getName());
             EClassifier type = dgOperation.getReturnType();
-            if (type == null)
+            if (type == null) {
                 type = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+            }
             eoperation.setEType(type);
-            for (EParameter parm: dgOperation.getParameters()) {
+            for (EParameter parm : dgOperation.getParameters()) {
                 eoperation.getEParameters().add(parm);
             }
             EAnnotation annotation = EcoreFactory.eINSTANCE.createEAnnotation();
@@ -111,8 +100,9 @@ public class DgEnvironment extends EcoreEnvironment {
             eoperation.getEAnnotations().add(annotation);
 
             type = dgOperation.getCallerType();
-            if (type == null)
+            if (type == null) {
                 type = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+            }
             try {
                 if (dgOperation.getCallerType() == null) {
                     Debug.error(false, "Error! Null callerType for DgOperation " + dgOperation

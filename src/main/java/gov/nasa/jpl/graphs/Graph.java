@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -31,33 +31,33 @@ package gov.nasa.jpl.graphs;
 import java.util.Set;
 
 public interface Graph<VertexType, EdgeType extends Edge<VertexType>> {
-    public Set<VertexType> getVertices();
+    Set<VertexType> getVertices();
 
-    public Set<EdgeType> getEdges();
+    Set<EdgeType> getEdges();
 
-    public void clear();
+    void clear();
 
-    public boolean addVertex(VertexType vertex);
+    boolean addVertex(VertexType vertex);
 
-    public boolean addVertices(Set<VertexType> vertices);
+    boolean addVertices(Set<VertexType> vertices);
 
-    public boolean removeVertex(VertexType vertex);
+    boolean removeVertex(VertexType vertex);
 
-    public boolean removeVertices(Set<VertexType> vertices);
+    boolean removeVertices(Set<VertexType> vertices);
 
-    public boolean addEdge(EdgeType edge);
+    boolean addEdge(EdgeType edge);
 
-    public boolean addEdges(Set<EdgeType> edges);
+    boolean addEdges(Set<EdgeType> edges);
 
-    public boolean removeEdge(EdgeType edge);
+    boolean removeEdge(EdgeType edge);
 
-    public boolean removeEdges(Set<EdgeType> edges);
+    boolean removeEdges(Set<EdgeType> edges);
 
-    public Set<EdgeType> findEdgesOf(VertexType vertex);
+    Set<EdgeType> findEdgesOf(VertexType vertex);
 
-    public Set<EdgeType> findEdgesOf(Set<VertexType> vertices);
+    Set<EdgeType> findEdgesOf(Set<VertexType> vertices);
 
-    public Set<VertexType> findNeighborsOf(VertexType vertex);
+    Set<VertexType> findNeighborsOf(VertexType vertex);
 
-    public Set<VertexType> findChildrenOf(VertexType vertex);
+    Set<VertexType> findChildrenOf(VertexType vertex);
 }

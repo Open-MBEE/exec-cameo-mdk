@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -32,9 +32,6 @@ import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgvalidation.Rule;
 import gov.nasa.jpl.mbee.dgvalidation.Severity;
 import gov.nasa.jpl.mbee.dgvalidation.Violation;
-
-import java.util.Collection;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
 import org.eclipse.emf.common.util.EList;
@@ -44,6 +41,8 @@ import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.EObjectImpl;
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
+
+import java.util.Collection;
 
 /**
  * <!-- begin-user-doc --> An implementation of the model object '
@@ -64,83 +63,83 @@ import org.eclipse.emf.ecore.util.InternalEList;
  * <em>Violations</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public class RuleImpl extends EObjectImpl implements Rule {
     /**
      * The default value of the '{@link #getName() <em>Name</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getName()
+     *
      * @generated
      * @ordered
+     * @see #getName()
      */
-    protected static final String   NAME_EDEFAULT        = null;
+    protected static final String NAME_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getName() <em>Name</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getName()
+     *
      * @generated
      * @ordered
+     * @see #getName()
      */
-    protected String                name                 = NAME_EDEFAULT;
+    protected String name = NAME_EDEFAULT;
 
     /**
      * The default value of the '{@link #getDescription() <em>Description</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getDescription()
+     *
      * @generated
      * @ordered
+     * @see #getDescription()
      */
-    protected static final String   DESCRIPTION_EDEFAULT = null;
+    protected static final String DESCRIPTION_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getDescription() <em>Description</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getDescription()
+     *
      * @generated
      * @ordered
+     * @see #getDescription()
      */
-    protected String                description          = DESCRIPTION_EDEFAULT;
+    protected String description = DESCRIPTION_EDEFAULT;
 
     /**
      * The default value of the '{@link #getSeverity() <em>Severity</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getSeverity()
+     *
      * @generated
      * @ordered
+     * @see #getSeverity()
      */
-    protected static final Severity SEVERITY_EDEFAULT    = Severity.DEBUG;
+    protected static final Severity SEVERITY_EDEFAULT = Severity.DEBUG;
 
     /**
      * The cached value of the '{@link #getSeverity() <em>Severity</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getSeverity()
+     *
      * @generated
      * @ordered
+     * @see #getSeverity()
      */
-    protected Severity              severity             = SEVERITY_EDEFAULT;
+    protected Severity severity = SEVERITY_EDEFAULT;
 
     /**
      * The cached value of the '{@link #getViolations() <em>Violations</em>}'
      * containment reference list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getViolations()
+     *
      * @generated
      * @ordered
+     * @see #getViolations()
      */
-    protected EList<Violation>      violations;
+    protected EList<Violation> violations;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected RuleImpl() {
@@ -149,7 +148,7 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -159,7 +158,7 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -169,21 +168,22 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setName(String newName) {
         String oldName = name;
         name = newName;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgvalidationPackage.RULE__NAME, oldName,
                     name));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -193,21 +193,22 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setDescription(String newDescription) {
         String oldDescription = description;
         description = newDescription;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgvalidationPackage.RULE__DESCRIPTION,
                     oldDescription, description));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -217,21 +218,22 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setSeverity(Severity newSeverity) {
         Severity oldSeverity = severity;
         severity = newSeverity == null ? SEVERITY_EDEFAULT : newSeverity;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgvalidationPackage.RULE__SEVERITY,
                     oldSeverity, severity));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -245,21 +247,21 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
         switch (featureID) {
             case DgvalidationPackage.RULE__VIOLATIONS:
-                return ((InternalEList<?>)getViolations()).basicRemove(otherEnd, msgs);
+                return ((InternalEList<?>) getViolations()).basicRemove(otherEnd, msgs);
         }
         return super.eInverseRemove(otherEnd, featureID, msgs);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -279,7 +281,7 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @SuppressWarnings("unchecked")
@@ -287,17 +289,17 @@ public class RuleImpl extends EObjectImpl implements Rule {
     public void eSet(int featureID, Object newValue) {
         switch (featureID) {
             case DgvalidationPackage.RULE__NAME:
-                setName((String)newValue);
+                setName((String) newValue);
                 return;
             case DgvalidationPackage.RULE__DESCRIPTION:
-                setDescription((String)newValue);
+                setDescription((String) newValue);
                 return;
             case DgvalidationPackage.RULE__SEVERITY:
-                setSeverity((Severity)newValue);
+                setSeverity((Severity) newValue);
                 return;
             case DgvalidationPackage.RULE__VIOLATIONS:
                 getViolations().clear();
-                getViolations().addAll((Collection<? extends Violation>)newValue);
+                getViolations().addAll((Collection<? extends Violation>) newValue);
                 return;
         }
         super.eSet(featureID, newValue);
@@ -305,7 +307,7 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -329,7 +331,7 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -350,13 +352,14 @@ public class RuleImpl extends EObjectImpl implements Rule {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public String toString() {
-        if (eIsProxy())
+        if (eIsProxy()) {
             return super.toString();
+        }
 
         StringBuffer result = new StringBuffer(super.toString());
         result.append(" (name: ");

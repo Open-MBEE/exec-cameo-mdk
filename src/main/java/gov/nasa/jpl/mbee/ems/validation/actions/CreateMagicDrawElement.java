@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,20 +28,18 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.util.*;
-
-import org.json.simple.JSONObject;
-
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class CreateMagicDrawElement extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -51,7 +49,7 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
     private Collection<Annotation> annos;
     private boolean multiple = false;
     private boolean multipleSuccess = true;
-    
+
     public CreateMagicDrawElement(JSONObject ob, Map<String, JSONObject> elementsKeyed) {
         super("CreateMagicDrawElement", "Create MagicDraw element", null, null);
         this.ob = ob;
@@ -71,30 +69,28 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
         this.annos = annos;
         executeMany(annos, "Create Elements");
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
         execute("Create Element");
     }
-    
+
     @Override
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
             if (multiple) {
-                if (multipleSuccess)
-                    return true;
-                else
-                    return false;
+                return multipleSuccess;
             }
             multiple = true;
             List<JSONObject> tocreate = new ArrayList<JSONObject>();
-            for (Annotation ann: annos) {
+            for (Annotation ann : annos) {
                 String message = ann.getText();
                 String[] mes = message.split("`");
                 String eid = null;
-                if (mes.length > 2)
+                if (mes.length > 2) {
                     eid = mes[1];
+                }
                 if (eid != null) {
                     JSONObject newe = elementsKeyed.get(eid);
                     if (newe != null) {
@@ -109,9 +105,10 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                 Utils.guilog("[ERROR] Cannot create elements (owner(s) not found)");
                 multipleSuccess = false;
                 return false;
-            } else {
+            }
+            else {
                 ImportUtility.setShouldOutputError(false);
-                for (JSONObject newe: tocreate) {
+                for (JSONObject newe : tocreate) {
                     try {
                         Element newElement = ImportUtility.createElement(newe, false);
                         if (newElement == null) {
@@ -120,11 +117,11 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                             return false;
                         }
                     } catch (ImportException ex) {
-                        
+
                     }
                 }
                 ImportUtility.setShouldOutputError(true);
-                for (JSONObject newe: tocreate) {
+                for (JSONObject newe : tocreate) {
                     try {
                         Element newElement = ImportUtility.createElement(newe, true);
                         if (newElement == null) {
@@ -139,10 +136,11 @@ public class CreateMagicDrawElement extends RuleViolationAction implements Annot
                     }
                 }
             }
-        } else {
+        }
+        else {
             try {
-                Element magicDrawElement = ImportUtility.createElement(ob, false); 
-                magicDrawElement = ImportUtility.createElement(ob, true); 
+                Element magicDrawElement = ImportUtility.createElement(ob, false);
+                magicDrawElement = ImportUtility.createElement(ob, true);
                 if (magicDrawElement == null) {
                     Utils.guilog("[ERROR] Cannot create element (references or owner not found)");
                     return false;

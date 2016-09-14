@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,34 +28,32 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 public class ExportRel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element element;
-    
+
     public ExportRel(Element e) {
-    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-    	//
+        //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+        //
         super("ExportRel", "Commit rel", null, null);
         this.element = e;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -66,11 +64,11 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
     public void execute(Collection<Annotation> annos) {
         JSONArray infos = new JSONArray();
         Set<Element> set = new HashSet<Element>();
-        for (Annotation anno: annos) {
-            Element e = (Element)anno.getTarget();
+        for (Annotation anno : annos) {
+            Element e = (Element) anno.getTarget();
             set.add(e);
             JSONObject info = new JSONObject();
-            ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)e, info);
+            ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship) e, info);
             info.put("sysmlId", e.getID());
             infos.add(info);
         }
@@ -80,11 +78,12 @@ public class ExportRel extends RuleViolationAction implements AnnotationAction, 
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.okToExport(element))
+        if (!ExportUtility.okToExport(element)) {
             return;
+        }
         JSONObject info = new JSONObject();
         JSONArray elements = new JSONArray();
-        ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship)element, info);
+        ExportUtility.fillDirectedRelationshipSpecialization((DirectedRelationship) element, info);
         info.put("sysmlId", element.getID());
         elements.add(info);
         commit(elements, "Relationship");

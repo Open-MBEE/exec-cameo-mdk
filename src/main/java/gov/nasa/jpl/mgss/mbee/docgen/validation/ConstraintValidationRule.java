@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,28 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.constraint.BasicConstraint;
-import gov.nasa.jpl.mbee.constraint.BasicConstraint.Type;
-import gov.nasa.jpl.mbee.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.lib.CompareUtils;
-import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.MdDebug;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.ocl.OclEvaluator;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
@@ -58,39 +36,43 @@ import com.nomagic.magicdraw.validation.SmartListenerConfigurationProvider;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.jmi.smartlistener.SmartListenerConfig;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.constraint.BasicConstraint;
+import gov.nasa.jpl.mbee.constraint.BasicConstraint.Type;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.lib.*;
+import gov.nasa.jpl.ocl.OclEvaluator;
+
+import java.util.*;
 
 /**
  * A constraint in some context of the model, whose violation will be posted in
  * the MD validation results window.
- * 
  */
 public class ConstraintValidationRule extends ValidationRule implements ElementValidationRuleImpl,
         SmartListenerConfigurationProvider {
 
-    protected Element                                                        constraintElement               = null;
+    protected Element constraintElement = null;
     // protected List<Element> context = new ArrayList<Element>();
-    protected Element                                                        context                         = null;
-    protected Constraint                                                     constraint                      = null;
+    protected Element context = null;
+    protected Constraint constraint = null;
 
-    protected Set<BaseElement>                                               elementsWithConstraints         = new LinkedHashSet<BaseElement>();
-    protected Map<BaseElement, Set<gov.nasa.jpl.mbee.constraint.Constraint>> elementToConstraintMap          = new TreeMap<BaseElement, Set<gov.nasa.jpl.mbee.constraint.Constraint>>(
-                                                                                                                     CompareUtils.GenericComparator
-                                                                                                                             .instance());
-    protected Map<gov.nasa.jpl.mbee.constraint.Constraint, Set<BaseElement>> constraintToElementMap          = new TreeMap<gov.nasa.jpl.mbee.constraint.Constraint, Set<BaseElement>>(
-                                                                                                                     CompareUtils.GenericComparator
-                                                                                                                             .instance());
-    protected Map<BaseElement, Set<ValidationRuleViolation>>                 constraintElementToViolationMap = new TreeMap<BaseElement, Set<ValidationRuleViolation>>(
-                                                                                                                     CompareUtils.GenericComparator
-                                                                                                                             .instance());
-    protected Set<Annotation>                                                annotations                     = null;
+    protected Set<BaseElement> elementsWithConstraints = new LinkedHashSet<BaseElement>();
+    protected Map<BaseElement, Set<gov.nasa.jpl.mbee.constraint.Constraint>> elementToConstraintMap = new TreeMap<BaseElement, Set<gov.nasa.jpl.mbee.constraint.Constraint>>(
+            CompareUtils.GenericComparator
+                    .instance());
+    protected Map<gov.nasa.jpl.mbee.constraint.Constraint, Set<BaseElement>> constraintToElementMap = new TreeMap<gov.nasa.jpl.mbee.constraint.Constraint, Set<BaseElement>>(
+            CompareUtils.GenericComparator
+                    .instance());
+    protected Map<BaseElement, Set<ValidationRuleViolation>> constraintElementToViolationMap = new TreeMap<BaseElement, Set<ValidationRuleViolation>>(
+            CompareUtils.GenericComparator
+                    .instance());
+    protected Set<Annotation> annotations = null;
 
-    public BasicConstraint.Type                                              constraintType                  = Type.ANY;
-    public boolean                                                           loggingResults                  = true;
+    public BasicConstraint.Type constraintType = Type.ANY;
+    public boolean loggingResults = true;
 
     public ConstraintValidationRule() {
         super("Constraint", "Model constraint violation", ViolationSeverity.WARNING);
@@ -111,8 +93,9 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 
     @Override
     public ValidationRuleViolation addViolation(ValidationRuleViolation v) {
-        if (v == null)
+        if (v == null) {
             return null;
+        }
         Utils2.addToSet(constraintElementToViolationMap, v.getElement(), v);
         return super.addViolation(v);
     }
@@ -146,8 +129,9 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     @Override
     public void init(Project paramProject, Constraint paramConstraint) {
         Debug.outln("init(Project=" + paramProject + ", Constraint=" + paramConstraint + ")");
-        if (constraintElement == null)
+        if (constraintElement == null) {
             constraintElement = paramConstraint;
+        }
 
         // Ensure user-defined shortcut functions are updated
         OclEvaluator.resetEnvironment();
@@ -170,9 +154,10 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         // for ( String id : ids ) {
         // BaseElement elem = paramProject.getElementByID( id );
 
-        for (Element elemt: paramCollection) {
-            if (elemt == null)
+        for (Element elemt : paramCollection) {
+            if (elemt == null) {
                 continue;
+            }
 
             // Get all constraints on this element since it was specifically
             // selected.
@@ -182,7 +167,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
                 elementsWithConstraints.add(elemt);
             }
             Utils2.addAllToSet(elementToConstraintMap, elemt, constraints);
-            for (gov.nasa.jpl.mbee.constraint.Constraint constr: constraints) {
+            for (gov.nasa.jpl.mbee.constraint.Constraint constr : constraints) {
                 Utils2.addToSet(constraintToElementMap, constr, elemt);
             }
 
@@ -191,21 +176,21 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             if (elemt instanceof Package) {
                 subElems.addAll(Utils.collectOwnedElements(elemt, 0));
             }
-            for (Element elem: subElems) {
+            for (Element elem : subElems) {
 
                 // Make a Constraint if elem is a constraint element and add it
                 // with its constrained elements.
                 if (BasicConstraint.constraintIsType(elem, constraintType)) { // elementIsConstraint(
-                                                                              // elem
-                                                                              // )
-                                                                              // )
-                                                                              // {
+                    // elem
+                    // )
+                    // )
+                    // {
                     List<Object> constrained = BasicConstraint
                             .getConstrainedObjectsFromConstraintElement(elem);
                     gov.nasa.jpl.mbee.constraint.Constraint constr = new BasicConstraint(elem, constrained);
-                    for (Object o: constrained) {
+                    for (Object o : constrained) {
                         if (o instanceof BaseElement) {
-                            BaseElement baseElem = (BaseElement)o;
+                            BaseElement baseElem = (BaseElement) o;
                             elementsWithConstraints.add(baseElem);
                             Utils2.addToSet(constraintToElementMap, constr, baseElem);
                             Utils2.addToSet(elementToConstraintMap, baseElem, constr);
@@ -221,7 +206,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             Collection<BaseElement> elements) {
         Set<gov.nasa.jpl.mbee.constraint.Constraint> constraints = new TreeSet<gov.nasa.jpl.mbee.constraint.Constraint>(
                 CompareUtils.GenericComparator.instance());
-        for (BaseElement elem: elements) {
+        for (BaseElement elem : elements) {
             constraints.addAll(elementToConstraintMap.get(elem));
         }
         return constraints;
@@ -246,16 +231,19 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     }
 
     private static boolean isLanguageOcl(gov.nasa.jpl.mbee.constraint.Constraint constraint) {
-        if (isDocGenConstraint(constraint))
+        if (isDocGenConstraint(constraint)) {
             return true;
-        if (!isUml(constraint))
+        }
+        if (!isUml(constraint)) {
             return false; // complain??
-        ValueSpecification spec = ((Constraint)getConstraintObject(constraint)).getSpecification();
-        if (!(spec instanceof OpaqueExpression))
+        }
+        ValueSpecification spec = ((Constraint) getConstraintObject(constraint)).getSpecification();
+        if (!(spec instanceof OpaqueExpression)) {
             return false;
-        OpaqueExpression expr = (OpaqueExpression)spec;
+        }
+        OpaqueExpression expr = (OpaqueExpression) spec;
         List<String> languages = expr.getLanguage();
-        for (String lang: languages) {
+        for (String lang : languages) {
             if (lang.trim().equalsIgnoreCase("ocl")) {
                 return true;
             }
@@ -274,7 +262,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
      */
     @Override
     public Set<Annotation> run(Project paramProject, Constraint paramConstraint,
-            Collection<? extends Element> paramCollection) {
+                               Collection<? extends Element> paramCollection) {
         Set<Annotation> result = new HashSet<Annotation>();
 
         MdDebug.logForce("*** Starting MDK Validate Constraints: " + constraintType + " ***");
@@ -294,11 +282,11 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         // Set< BaseElement > elements = elementToConstraintMap.keySet();
 
         @SuppressWarnings("unchecked")
-        Collection<gov.nasa.jpl.mbee.constraint.Constraint> constraints = (Collection<gov.nasa.jpl.mbee.constraint.Constraint>)(Utils2
+        Collection<gov.nasa.jpl.mbee.constraint.Constraint> constraints = (Collection<gov.nasa.jpl.mbee.constraint.Constraint>) (Utils2
                 .isNullOrEmpty(elementsWithConstraints) ? (constraintToElementMap == null ? Utils2.newList()
                 : constraintToElementMap.keySet()) : getAffectedConstraints(elementsWithConstraints));
 
-        for (gov.nasa.jpl.mbee.constraint.Constraint constraint: constraints) {
+        for (gov.nasa.jpl.mbee.constraint.Constraint constraint : constraints) {
             try {
                 Boolean satisfied = DocumentValidator.evaluateConstraint(constraint, this,
                         isLanguageOcl(constraint));
@@ -321,7 +309,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             }
         }
         Project project = Utils.getProject();
-        Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        Constraint cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
         result = Utils.getAnnotations(this, project, cons);
         annotations = result;
 
@@ -335,12 +323,15 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         if (satisfied == null) {
             String errorMsg = "";
             OclEvaluator e = OclEvaluator.instance;
-            if (e != null)
+            if (e != null) {
                 errorMsg = e.errorMessage;
+            }
             MdDebug.logForce("  Not OCL parsable: " + constraint + "; " + errorMsg);
-        } else if (satisfied) {
+        }
+        else if (satisfied) {
             MdDebug.logForce("            Passed: " + constraint);
-        } else {
+        }
+        else {
             MdDebug.logForce("            Failed: " + constraint);
         }
     }

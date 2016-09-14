@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,12 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.graphs.algorithms;
 
-import gov.nasa.jpl.graphs.DirectedEdge;
-import gov.nasa.jpl.graphs.DirectedEdgeVector;
-import gov.nasa.jpl.graphs.DirectedGraph;
-import gov.nasa.jpl.graphs.DirectedGraphHashSet;
-import gov.nasa.jpl.graphs.Edge;
-import gov.nasa.jpl.graphs.Graph;
+import gov.nasa.jpl.graphs.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,18 +39,18 @@ import java.util.Set;
  * see: [1] T. H. Cormen, C. E. Leiserson, R. L. Rivest, and C. Stein.
  * Introduction to Algorithms. The MIT Press, Cambridge, Massachusetts, 2nd
  * edition, 2001.
- * 
+ *
  * @author shchung
  */
 
 public class DepthFirstSearch {
     // WHITE = not discovered, GRAY = discovered, and BLACK = finished
-    private static enum Color {
+    private enum Color {
         WHITE, GRAY, BLACK
     }
 
-    private Map<Object, Color>  color; // colors of the vertices
-    private Integer             time;
+    private Map<Object, Color> color; // colors of the vertices
+    private Integer time;
 
     public Map<Object, Integer> d;    // discovery times of the vertices
     public Map<Object, Integer> f;    // finish times of the vertices
@@ -76,124 +71,124 @@ public class DepthFirstSearch {
      * Performs a depth first search for a given graph G. For a reference see
      * [1] pg. 541. Following is the pseudo code from the aforementioned
      * reference.
-     * 
+     * <p>
      * <pre>
      * DFS(G)
      * </pre>
      * <ol>
      * <li>
-     * 
+     * <p>
      * <pre>
      * for each vertex u &isin; V[G]
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * do color[u] &larr; WHITE
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * &pi;[u] &larr; NIL
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * time &larr; 0
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * for each vertex u &isin; V[G]
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * do if color[u] = WHITE
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * then DFS-VISIT(u)
      * </pre>
-     * 
+     * <p>
      * </li>
      * </ol>
-     * 
+     * <p>
      * <pre>
      * DFS - VISIT(u)
      * </pre>
      * <ol>
      * <li>
-     * 
+     * <p>
      * <pre>
      * color[u] &larr; GRAY *WHITE vertex u has just been discovered.
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * time &larr; time + 1
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * d[u] &larr; time
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * for each v &isin; Adj[u] *Explore edge(u,v).
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * do if color[v] = WHITE
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * then &pi;[v] &larr; u
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * DFS - VISIT(v)
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * color[u] &larr; BLACK *BLACKen u;
      * </pre>
-     * 
+     * <p>
      * </li>
      * </ol>
-     * 
+     * <p>
      * Modifications:
      * <ul>
      * <li>"vertices" key was added to enable user defined search ordering at
@@ -201,12 +196,10 @@ public class DepthFirstSearch {
      * <li>Added a hash table that keeps track of the children of the search
      * tree.</li>
      * </ul>
-     * 
-     * @param G
-     *            a graph.
-     * @param roots
-     *            a set of vertices from which depth first search should be
-     *            performed.
+     *
+     * @param G     a graph.
+     * @param roots a set of vertices from which depth first search should be
+     *              performed.
      */
     // DFS(G)
     public <VertexType, EdgeType extends Edge<VertexType>> DirectedGraph<VertexType, DirectedEdge<VertexType>> dfs(
@@ -216,7 +209,7 @@ public class DepthFirstSearch {
         // parents of the vertices
 
         // 1 for each vertex u \in V[G]
-        for (VertexType u: roots) {
+        for (VertexType u : roots) {
             // 2 color[u] <- WHITE
             color.put(u, Color.WHITE);
             // 3 \pi[u] <- NIL
@@ -225,7 +218,7 @@ public class DepthFirstSearch {
         // 4 time <- 0
         time = 0;
         // 5 for each vertex u \in V[G]
-        for (VertexType u: roots) {
+        for (VertexType u : roots) {
             // 6 do if color[u] = WHITE
             if (color.get(u) == Color.WHITE) {
                 // 7 then DFS-VISIT(u)
@@ -239,9 +232,8 @@ public class DepthFirstSearch {
      * Performs a depth first search for a given graph G. For a reference see
      * [1] pg. 541. The depth first search is performed from all vertices of the
      * graph graph.
-     * 
-     * @param G
-     *            a graph.
+     *
+     * @param G a graph.
      */
     public <VertexType, EdgeType extends Edge<VertexType>> DirectedGraph<VertexType, DirectedEdge<VertexType>> dfs(
             Graph<VertexType, EdgeType> G) {
@@ -251,74 +243,73 @@ public class DepthFirstSearch {
     /**
      * Performs a depth first visit for a given graph G as described in [1] pg.
      * 541.
-     * 
+     * <p>
      * <pre>
      * DFS - VISIT(u)
      * </pre>
      * <ol>
      * <li>
-     * 
+     * <p>
      * <pre>
      * color[u] &larr; GRAY *WHITE vertex u has just been discovered.
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * time &larr; time + 1
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * d[u] &larr; time
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * for each v &isin; Adj[u] *Explore edge(u,v).
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * do if color[v] = WHITE
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * then &pi;[v] &larr; u
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * DFS - VISIT(v)
      * </pre>
-     * 
+     * <p>
      * </li>
      * <li>
-     * 
+     * <p>
      * <pre>
      * color[u] &larr; BLACK *BLACKen u;
      * </pre>
-     * 
+     * <p>
      * </li>
      * </ol>
-     * 
-     * @param u
-     *            a vertex to be visited
+     *
+     * @param u a vertex to be visited
      */
     private <VertexType, EdgeType extends Edge<VertexType>> void dfs_visit(Graph<VertexType, EdgeType> G,
-            VertexType u, DirectedGraph<VertexType, DirectedEdge<VertexType>> pi) {
+                                                                           VertexType u, DirectedGraph<VertexType, DirectedEdge<VertexType>> pi) {
         // 1 color[u] <- GRAY -> WHITE vertex u has just been discovered.
         color.put(u, Color.GRAY);
         // 2 time <- time + 1
@@ -329,7 +320,7 @@ public class DepthFirstSearch {
         // guiLog.log("Children(" + u.getName() + "): " + str(map(lambda x:
         // x.getName(), G.getChildren(u))))
         // 4 for each v \in Adj[u] -> Explore edge(u,v).
-        for (VertexType v: G.findChildrenOf(u)) {
+        for (VertexType v : G.findChildrenOf(u)) {
             // 5 do if color[v] = WHITE
             if (color.get(v) == Color.WHITE) {
                 // 6 then \pi[v] <- u

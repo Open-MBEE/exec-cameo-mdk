@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,21 +28,16 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBHasContent;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSection;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
 
 import java.util.List;
 import java.util.Stack;
 
 public class DocBookOutputVisitor extends AbstractModelVisitor {
 
-    private boolean             forViewEditor;
+    private boolean forViewEditor;
     private Stack<DBHasContent> parent;
-    private String              outputDir;
+    private String outputDir;
 
     public DocBookOutputVisitor(boolean forViewEditor) {
         this.forViewEditor = forViewEditor;
@@ -54,21 +49,22 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         this.parent = new Stack<DBHasContent>();
         this.outputDir = outputDir;
     }
-    
+
     public Stack<DBHasContent> getParent() {
-    	return parent;
+        return parent;
     }
 
     public DBBook getBook() {
-        if (!parent.isEmpty() && parent.get(0) instanceof DBBook)
-            return (DBBook)parent.get(0);
+        if (!parent.isEmpty() && parent.get(0) instanceof DBBook) {
+            return (DBBook) parent.get(0);
+        }
         return null;
     }
 
     @Override
     public void visit(Query q) {
         List<DocumentElement> results = q.visit(forViewEditor, outputDir);
-        for (DocumentElement result: results) {
+        for (DocumentElement result : results) {
             result.setDgElement(q);
         }
         parent.peek().addElements(results);
@@ -79,8 +75,9 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         DBBook book = new DBBook();
         book.setDgElement(doc);
         book.setTitle(doc.getTitle());
-        if (doc.getTitle() == null || doc.getTitle().equals(""))
+        if (doc.getTitle() == null || doc.getTitle().equals("")) {
             book.setTitle("Default Title");
+        }
         book.setFrom(doc.getDgElement());
         book.setRemoveBlankPages(doc.getRemoveBlankPages());
         book.setUseDefaulStylesheet(doc.getUseDefaultStylesheet());
@@ -91,8 +88,9 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
 
     @Override
     public void visit(Section section) {
-        if (section.getIgnore())
+        if (section.getIgnore()) {
             return;
+        }
         DBSection sec = new DBSection();
         sec.setDgElement(section);
         sec.setFrom(section.getDgElement());
@@ -101,35 +99,43 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         sec.setView(section.isView());
         sec.isNoSection(section.isNoSection());
         String title = "";
-        if (section.getTitle() != null && !section.getTitle().equals(""))
+        if (section.getTitle() != null && !section.getTitle().equals("")) {
             title = section.getTitle();
-        if (section.getTitlePrefix() != null)
+        }
+        if (section.getTitlePrefix() != null) {
             title = section.getTitlePrefix() + title;
-        if (section.getTitleSuffix() != null)
+        }
+        if (section.getTitleSuffix() != null) {
             title = title + section.getTitleSuffix();
+        }
         sec.setTitle(title);
         sec.setStringIfEmpty(section.getStringIfEmpty());
         sec.setSkipIfEmpty(section.getSkipIfEmpty());
-        if (section.getId() != null)
+        if (section.getId() != null) {
             sec.setId(section.getId());
+        }
 
         parent.push(sec);
         visitChildren(section);
         parent.pop();
 
         if (section.isNoSection()) {
-            for (DocumentElement de: sec.getChildren()) {
-                if (de instanceof DBTable)
+            for (DocumentElement de : sec.getChildren()) {
+                if (de instanceof DBTable) {
                     de.setId(section.getId());
+                }
             }
         }
         if (sec.getChildren().isEmpty() && !forViewEditor) {
-            if (section.getSkipIfEmpty())
+            if (section.getSkipIfEmpty()) {
                 return;
-            if (section.getStringIfEmpty() != null)
+            }
+            if (section.getStringIfEmpty() != null) {
                 sec.addElement(new DBParagraph(section.getStringIfEmpty()));
-            else
+            }
+            else {
                 sec.addElement(new DBParagraph(""));
+            }
         }
         parent.peek().addElement(sec);
     }

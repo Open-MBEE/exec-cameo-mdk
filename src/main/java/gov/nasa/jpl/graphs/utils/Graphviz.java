@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -41,10 +41,10 @@ public class Graphviz {
     public static <VertexType, EdgeType extends DirectedEdge<VertexType>> String directedGraph2DotString(
             DirectedGraph<VertexType, EdgeType> G) {
         String string = new String("digraph G {");
-        for (VertexType v: G.getVertices()) {
+        for (VertexType v : G.getVertices()) {
             string = string.concat("\n\t" + v.toString());
         }
-        for (DirectedEdge<VertexType> e: G.getEdges()) {
+        for (DirectedEdge<VertexType> e : G.getEdges()) {
             string = string.concat("\n\t" + e.toString() + ";");
         }
         string = string.concat("\n}");
@@ -54,10 +54,10 @@ public class Graphviz {
     public static <VertexType, EdgeType extends UndirectedEdge<VertexType>> String undirectedGraph2DotString(
             UndirectedGraph<VertexType, EdgeType> G) {
         String string = new String("graph G {");
-        for (VertexType v: G.getVertices()) {
+        for (VertexType v : G.getVertices()) {
             string = string.concat("\n\t" + v.toString());
         }
-        for (UndirectedEdge<VertexType> e: G.getEdges()) {
+        for (UndirectedEdge<VertexType> e : G.getEdges()) {
             string = string.concat("\n\t" + e.toString() + ";");
         }
         string = string.concat("\n}");

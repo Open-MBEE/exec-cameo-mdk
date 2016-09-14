@@ -1,16 +1,9 @@
 package gov.nasa.jpl.mbee;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.actions.ActionsGroups;
-import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
-import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.actions.*;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
@@ -19,181 +12,182 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.*;
 
-import gov.nasa.jpl.mbee.actions.systemsreasoner.AspectAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CopyAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateInstanceMenuAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateOntoBehaviorBlocks;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.CreateSpecificAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.Instance2BSTAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
-import gov.nasa.jpl.mbee.actions.systemsreasoner.ValidateAction;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SRConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
-	public static final String NAME = "Systems Reasoner";
+    public static final String NAME = "Systems Reasoner";
 
-	private SRAction validateAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
+    private SRAction validateAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
 
-	@Override
-	public int getPriority() {
-		return 0; // medium
-	}
+    @Override
+    public int getPriority() {
+        return 0; // medium
+    }
 
-	@Override
-	public void configure(ActionsManager manager, Tree tree) {
-		final List<Element> elements = new ArrayList<Element>();
-		for (final Node n : tree.getSelectedNodes()) {
-			if (n.getUserObject() instanceof Element) {
-				elements.add((Element) n.getUserObject());
-			}
-		}
-		configure(manager, elements);
-	}
+    @Override
+    public void configure(ActionsManager manager, Tree tree) {
+        final List<Element> elements = new ArrayList<Element>();
+        for (final Node n : tree.getSelectedNodes()) {
+            if (n.getUserObject() instanceof Element) {
+                elements.add((Element) n.getUserObject());
+            }
+        }
+        configure(manager, elements);
+    }
 
-	@Override
-	public void configure(ActionsManager manager, DiagramPresentationElement diagram, PresentationElement[] selected, PresentationElement requestor) {
-		final List<Element> elements = new ArrayList<Element>();
-		for (final PresentationElement pe : selected) {
-			if (pe.getElement() != null) {
-				elements.add(pe.getElement());
-			}
-		}
-		configure(manager, elements);
-	}
+    @Override
+    public void configure(ActionsManager manager, DiagramPresentationElement diagram, PresentationElement[] selected, PresentationElement requestor) {
+        final List<Element> elements = new ArrayList<Element>();
+        for (final PresentationElement pe : selected) {
+            if (pe.getElement() != null) {
+                elements.add(pe.getElement());
+            }
+        }
+        configure(manager, elements);
+    }
 
-	protected void configure(ActionsManager manager, List<Element> elements) {
-		// refresh the actions for every new click (or selection)
-		validateAction = null;
-		ontoBehaviorAction = null;
-		createSpecificAction = null;
-		createInstanceMenuAction = null;
-		instance2BSTAction = null;
-		aspectAction = null;
-		copyAction = null;
+    protected void configure(ActionsManager manager, List<Element> elements) {
+        // refresh the actions for every new click (or selection)
+        validateAction = null;
+        ontoBehaviorAction = null;
+        createSpecificAction = null;
+        createInstanceMenuAction = null;
+        instance2BSTAction = null;
+        aspectAction = null;
+        copyAction = null;
 
-		ActionsCategory category = (ActionsCategory) manager.getActionFor("SRMain");
-		if (category == null) {
-			category = new MDActionsCategory("SRMain", "Systems Reasoner", null, ActionsGroups.APPLICATION_RELATED);
-			category.setNested(true);
-			// manager.addCategory(0, category);
-		}
-		manager.removeCategory(category);
+        ActionsCategory category = (ActionsCategory) manager.getActionFor("SRMain");
+        if (category == null) {
+            category = new MDActionsCategory("SRMain", "Systems Reasoner", null, ActionsGroups.APPLICATION_RELATED);
+            category.setNested(true);
+            // manager.addCategory(0, category);
+        }
+        manager.removeCategory(category);
 
-		if (elements.size() > 1) {
-			category = handleMultipleNodes(category, manager, elements);
-		} else if (elements.size() == 1) {
-			category = handleSingleNode(category, manager, elements.get(0));
-		} else {
-			return;
-		}
+        if (elements.size() > 1) {
+            category = handleMultipleNodes(category, manager, elements);
+        }
+        else if (elements.size() == 1) {
+            category = handleSingleNode(category, manager, elements.get(0));
+        }
+        else {
+            return;
+        }
 
-		if (category == null) {
-			return;
-		}
-		manager.addCategory(0, category);
+        if (category == null) {
+            return;
+        }
+        manager.addCategory(0, category);
 
-		category.addAction(validateAction);
-		if (elements.size() < 2) {
-			if (elements.get(0) instanceof Behavior) {
-				category.addAction(ontoBehaviorAction);
-			}
-		}
-		category.addAction(copyAction);
-		category.addAction(createSpecificAction);
-		category.addAction(createInstanceMenuAction);
-		category.addAction(instance2BSTAction);
-		category.addAction(aspectAction);
-		//category.addAction(new TestAction());
- 	 
-	 	category.getActions().clear();
-  		category.setUseActionForDisable(true);
- 		if (category.isEmpty()) {
-			final MDAction mda = new MDAction(null, null, null, "null");
-			mda.updateState();
-			mda.setEnabled(false);
-			category.addAction(mda);
-		}
-	}
+        category.addAction(validateAction);
+        if (elements.size() < 2) {
+            if (elements.get(0) instanceof Behavior) {
+                category.addAction(ontoBehaviorAction);
+            }
+        }
+        category.addAction(copyAction);
+        category.addAction(createSpecificAction);
+        category.addAction(createInstanceMenuAction);
+        category.addAction(instance2BSTAction);
+        category.addAction(aspectAction);
+        //category.addAction(new TestAction());
 
-	public ActionsCategory handleMultipleNodes(ActionsCategory category, ActionsManager manager, List<Element> elements) {
-		final List<Classifier> classifiers = new ArrayList<Classifier>();
-		final List<InstanceSpecification> instances = new ArrayList<InstanceSpecification>();
-		final List<Element> validatableElements = new ArrayList<Element>();
-		boolean hasUneditable = false;
+        category.getActions().clear();
+        category.setUseActionForDisable(true);
+        if (category.isEmpty()) {
+            final MDAction mda = new MDAction(null, null, null, "null");
+            mda.updateState();
+            mda.setEnabled(false);
+            category.addAction(mda);
+        }
+    }
 
-		for (Element element : elements) {
-			if (element != null) {
-				if (element instanceof Classifier) {
-					classifiers.add((Classifier) element);
-					validatableElements.add(element);
-				} else if (element instanceof InstanceSpecification) {
-					instances.add((InstanceSpecification) element);
-					validatableElements.add(element);
-				}
-				if (!hasUneditable && !element.isEditable()) {
-					hasUneditable = true;
-				}
-			}
-		}
+    public ActionsCategory handleMultipleNodes(ActionsCategory category, ActionsManager manager, List<Element> elements) {
+        final List<Classifier> classifiers = new ArrayList<Classifier>();
+        final List<InstanceSpecification> instances = new ArrayList<InstanceSpecification>();
+        final List<Element> validatableElements = new ArrayList<Element>();
+        boolean hasUneditable = false;
 
-		// if nothing in classes, disable category and return it
-		if (validatableElements.isEmpty()) {
-			// category = disableCategory(category);
-			return null;
-		}
-		// otherwise, add the classes to the ValidateAction action
-		validateAction = new ValidateAction(validatableElements);
-		category.addAction(validateAction);
-		if (!classifiers.isEmpty()) {
-			aspectAction = new AspectAction(classifiers);
-		}
-		if (!instances.isEmpty()) {
-			instance2BSTAction = new Instance2BSTAction(instances);
-		}
+        for (Element element : elements) {
+            if (element != null) {
+                if (element instanceof Classifier) {
+                    classifiers.add((Classifier) element);
+                    validatableElements.add(element);
+                }
+                else if (element instanceof InstanceSpecification) {
+                    instances.add((InstanceSpecification) element);
+                    validatableElements.add(element);
+                }
+                if (!hasUneditable && !element.isEditable()) {
+                    hasUneditable = true;
+                }
+            }
+        }
 
-		return category;
-	}
+        // if nothing in classes, disable category and return it
+        if (validatableElements.isEmpty()) {
+            // category = disableCategory(category);
+            return null;
+        }
+        // otherwise, add the classes to the ValidateAction action
+        validateAction = new ValidateAction(validatableElements);
+        category.addAction(validateAction);
+        if (!classifiers.isEmpty()) {
+            aspectAction = new AspectAction(classifiers);
+        }
+        if (!instances.isEmpty()) {
+            instance2BSTAction = new Instance2BSTAction(instances);
+        }
 
-	public ActionsCategory handleSingleNode(ActionsCategory category, ActionsManager manager, Element element) {
-		if (element == null)
-			return null;
-		if (element instanceof Package) {
-			copyAction = new CopyAction(element);
-		}
-		if (element instanceof Classifier) {
-			final Classifier classifier = (Classifier) element;
-			validateAction = new ValidateAction(classifier);
-			ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
-			createSpecificAction = new CreateSpecificAction(classifier, false);
-			createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
-			aspectAction = new AspectAction(classifier);
-			copyAction = new CopyAction(element);
+        return category;
+    }
 
-			if (classifier instanceof Behavior) {
+    public ActionsCategory handleSingleNode(ActionsCategory category, ActionsManager manager, Element element) {
+        if (element == null) {
+            return null;
+        }
+        if (element instanceof Package) {
+            copyAction = new CopyAction(element);
+        }
+        if (element instanceof Classifier) {
+            final Classifier classifier = (Classifier) element;
+            validateAction = new ValidateAction(classifier);
+            ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
+            createSpecificAction = new CreateSpecificAction(classifier, false);
+            createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
+            aspectAction = new AspectAction(classifier);
+            copyAction = new CopyAction(element);
 
-			}
-		} else if (element instanceof InstanceSpecification) {
-			final InstanceSpecification instance = (InstanceSpecification) element;
-			validateAction = new ValidateAction(instance);
-			ArrayList<InstanceSpecification> insts = new ArrayList();
-			insts.add(instance);
-			instance2BSTAction = new Instance2BSTAction(insts);
-		} else {
-			return null;
-		}
-		return category;
-	}
+            if (classifier instanceof Behavior) {
 
-	public static ActionsCategory disableCategory(ActionsCategory category) {
-		// once all the categories are disabled, the action category will be disabled
-		// this is defined in the configure method: category.setNested(true);
-		for (NMAction s : category.getActions()) {
-			if (s instanceof SRAction) {
-				SRAction sra = (SRAction) s;
-				sra.disable("Not Editable");
-			}
-		}
-		return category;
-	}
+            }
+        }
+        else if (element instanceof InstanceSpecification) {
+            final InstanceSpecification instance = (InstanceSpecification) element;
+            validateAction = new ValidateAction(instance);
+            ArrayList<InstanceSpecification> insts = new ArrayList();
+            insts.add(instance);
+            instance2BSTAction = new Instance2BSTAction(insts);
+        }
+        else {
+            return null;
+        }
+        return category;
+    }
+
+    public static ActionsCategory disableCategory(ActionsCategory category) {
+        // once all the categories are disabled, the action category will be disabled
+        // this is defined in the configure method: category.setNested(true);
+        for (NMAction s : category.getActions()) {
+            if (s instanceof SRAction) {
+                SRAction sra = (SRAction) s;
+                sra.disable("Not Editable");
+            }
+        }
+        return category;
+    }
 }

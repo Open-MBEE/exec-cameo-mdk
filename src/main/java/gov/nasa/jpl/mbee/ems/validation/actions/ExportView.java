@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,11 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.ui.ProgressStatusRunner;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ViewExportRunner;
@@ -44,14 +49,6 @@ import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.net.HttpURLConnection;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
@@ -62,11 +59,13 @@ import org.apache.commons.httpclient.methods.multipart.Part;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.ui.ProgressStatusRunner;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 
 @Deprecated
 public class ExportView extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -77,10 +76,10 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
     private String url;
     private String sendElementsUrl;
     private boolean exportElements;
-    
+
     public ExportView(Element e, boolean recursive, boolean exportElements, String action) {
-    	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-    	//
+        //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+        //
         //super(recursive ? "ExportViewRecursive" : "ExportView", recursive ? "Commit views hierarchically" : "Commit view", null, null);
         super(action, action, null, null);
         this.recurse = recursive;
@@ -89,7 +88,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         url = ExportUtility.getUrlWithWorkspace();
         sendElementsUrl = ExportUtility.getPostElementsUrl();
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -97,50 +96,58 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        if (!ExportUtility.okToExport())
+        if (!ExportUtility.okToExport()) {
             return;
-        if (url == null)
+        }
+        if (url == null) {
             return;
-        if (sendElementsUrl == null)
+        }
+        if (sendElementsUrl == null) {
             return;
+        }
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, annos), "Exporting Views", true, 0);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.okToExport())
+        if (!ExportUtility.okToExport()) {
             return;
-        if (url == null)
+        }
+        if (url == null) {
             return;
-        if (sendElementsUrl == null)
+        }
+        if (sendElementsUrl == null) {
             return;
+        }
         ProgressStatusRunner.runWithProgressStatus(new ViewExportRunner(this, null), "Exporting View", true, 0);
     }
-    
+
     public void performAction() {
-        
+
         if (exportView(view)) {
             this.removeViolationAndUpdateWindow();
             //ExportUtility.sendProjectVersions();
         }
     }
-    
+
     public void performActions(Collection<Annotation> annos) {
         Collection<Annotation> toremove = new ArrayList<Annotation>();
-        
-        for (Annotation anno: annos) {
-            Element e = (Element)anno.getTarget();
+
+        for (Annotation anno : annos) {
+            Element e = (Element) anno.getTarget();
             if (exportView(e)) {
                 toremove.add(anno);
-            } else
+            }
+            else {
                 break;
+            }
         }
         //ExportUtility.sendProjectVersions();
         if (!toremove.isEmpty()) {
             this.removeViolationsAndUpdateWindow(toremove);
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     public boolean exportView(Element view) {
         DocumentValidator dv = new DocumentValidator(view);
@@ -152,17 +159,19 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = null;
         boolean document = false;
-        
-        if (StereotypesHelper.hasStereotypeOrDerived(view, Utils.getProductStereotype()))
+
+        if (StereotypesHelper.hasStereotypeOrDerived(view, Utils.getProductStereotype())) {
             document = true;
+        }
         dge = dg.parseDocument(true, recurse, false);
         (new PostProcessor()).process(dge);
-        
+
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
         dge.accept(visitor);
         DBBook book = visitor.getBook();
-        if (book == null)
+        if (book == null) {
             return false;
+        }
 
         DBAlfrescoVisitor visitor2 = null;
         //if (document)
@@ -181,7 +190,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         }*/
         //Set<Element> set = visitor2.getElementSet();
         JSONObject send = new JSONObject();
-        
+
         if (exportElements) {
             JSONObject elementsjson = visitor2.getElements();
             JSONArray elementsArray = new JSONArray();
@@ -189,10 +198,12 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             send.put("elements", elementsArray);
             send.put("source", "magicdraw");
             send.put("mmsVersion", DocGenPlugin.VERSION);
-            if (url == null)
+            if (url == null) {
                 return false;
-            if (ExportUtility.send(sendElementsUrl, send.toJSONString()/*, null*/, false, false) == null)
+            }
+            if (ExportUtility.send(sendElementsUrl, send.toJSONString()/*, null*/, false, false) == null) {
                 return false;
+            }
         }
         //send elements first, then view info
         JSONObject viewjson = visitor2.getViews();
@@ -224,19 +235,19 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString(), viewsArray.size(), "View", false));
         //if (ExportUtility.send(sendElementsUrl, send.toJSONString(), null, false) == null)
         //    return false;
-        
+
         // Upload images to view editor (JSON keys are specified in
         // DBEditDocwebVisitor
         Utils.guilog("[INFO] Updating Images...");
         Map<String, JSONObject> images = visitor2.getImages();
         boolean isAlfresco = true;
-        for (String key: images.keySet()) {
-            String filename = (String)images.get(key).get("abspath");
-            String cs = (String)images.get(key).get("cs");
-            String extension = (String)images.get(key).get("extension");
+        for (String key : images.keySet()) {
+            String filename = (String) images.get(key).get("abspath");
+            String cs = (String) images.get(key).get("cs");
+            String extension = (String) images.get(key).get("extension");
 
             File imageFile = new File(filename);
-            
+
             String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
             String site = ExportUtility.getSite();
             String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
@@ -258,13 +269,15 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
 
             if (status == HttpURLConnection.HTTP_OK) {
                 Utils.guilog("[INFO] Image file already exists, not uploading");
-            } else {
+            }
+            else {
                 PostMethod post = new PostMethod(posturl);
                 try {
                     if (isAlfresco) {
                         Part[] parts = {new FilePart("content", imageFile)};
                         post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
-                    } else {
+                    }
+                    else {
                         post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile),
                                 imageFile.length()));
                     }
@@ -324,5 +337,5 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
         */
         return true;
     }
-    
+
 }

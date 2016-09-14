@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,20 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.dgview.impl;
 
-import gov.nasa.jpl.mbee.dgview.ColSpec;
-import gov.nasa.jpl.mbee.dgview.DgviewFactory;
-import gov.nasa.jpl.mbee.dgview.DgviewPackage;
-import gov.nasa.jpl.mbee.dgview.FromProperty;
-import gov.nasa.jpl.mbee.dgview.Image;
-import gov.nasa.jpl.mbee.dgview.List;
-import gov.nasa.jpl.mbee.dgview.ListItem;
-import gov.nasa.jpl.mbee.dgview.MDEditableTable;
-import gov.nasa.jpl.mbee.dgview.Paragraph;
-import gov.nasa.jpl.mbee.dgview.Table;
-import gov.nasa.jpl.mbee.dgview.TableEntry;
-import gov.nasa.jpl.mbee.dgview.TableRow;
-import gov.nasa.jpl.mbee.dgview.Text;
-
+import gov.nasa.jpl.mbee.dgview.*;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
@@ -52,19 +39,19 @@ import org.eclipse.emf.ecore.plugin.EcorePlugin;
 /**
  * <!-- begin-user-doc --> An implementation of the model <b>Factory</b>. <!--
  * end-user-doc -->
- * 
+ *
  * @generated
  */
 public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
     /**
      * Creates the default factory implementation. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @generated
      */
     public static DgviewFactory init() {
         try {
-            DgviewFactory theDgviewFactory = (DgviewFactory)EPackage.Registry.INSTANCE
+            DgviewFactory theDgviewFactory = (DgviewFactory) EPackage.Registry.INSTANCE
                     .getEFactory("http://mbee.jpl.nasa.gov/docgen/dgview");
             if (theDgviewFactory != null) {
                 return theDgviewFactory;
@@ -78,7 +65,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
     /**
      * Creates an instance of the factory. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @generated
      */
     public DgviewFactoryImpl() {
@@ -87,7 +74,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -121,7 +108,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -137,7 +124,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -153,7 +140,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -164,7 +151,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -175,7 +162,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -186,7 +173,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -197,7 +184,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -208,7 +195,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -219,7 +206,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -230,7 +217,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -241,7 +228,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -252,7 +239,7 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -263,20 +250,21 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     public FromProperty createFromPropertyFromString(EDataType eDataType, String initialValue) {
         FromProperty result = FromProperty.get(initialValue);
-        if (result == null)
+        if (result == null) {
             throw new IllegalArgumentException("The value '" + initialValue
                     + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+        }
         return result;
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     public String convertFromPropertyToString(EDataType eDataType, Object instanceValue) {
@@ -285,19 +273,19 @@ public class DgviewFactoryImpl extends EFactoryImpl implements DgviewFactory {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public DgviewPackage getDgviewPackage() {
-        return (DgviewPackage)getEPackage();
+        return (DgviewPackage) getEPackage();
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @deprecated
+     *
      * @generated
+     * @deprecated
      */
     @Deprecated
     public static DgviewPackage getPackage() {

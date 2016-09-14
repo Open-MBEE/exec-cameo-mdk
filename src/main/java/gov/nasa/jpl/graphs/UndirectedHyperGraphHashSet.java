@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -70,7 +70,7 @@ public class UndirectedHyperGraphHashSet<VertexType, EdgeType extends Undirected
     public boolean addEdge(EdgeType edge) {
         boolean added = super.addEdge(edge);
         if (added) {
-            for (VertexType v: edge.getVertices()) {
+            for (VertexType v : edge.getVertices()) {
                 if (V2E.get(v) == null) {
                     V2E.put(v, new HashSet<EdgeType>());
                 }
@@ -84,7 +84,7 @@ public class UndirectedHyperGraphHashSet<VertexType, EdgeType extends Undirected
     public boolean removeEdge(EdgeType edge) {
         boolean removed = super.removeEdge(edge);
         if (removed) {
-            for (VertexType v: edge.getVertices()) {
+            for (VertexType v : edge.getVertices()) {
                 assert (V2E.get(v) != null);
                 V2E.get(v).remove(edge);
             }
@@ -104,11 +104,12 @@ public class UndirectedHyperGraphHashSet<VertexType, EdgeType extends Undirected
             return edges;
         }
         boolean isFirstPass = true;
-        for (VertexType v: vertices) {
+        for (VertexType v : vertices) {
             if (isFirstPass) {
                 edges.addAll(V2E.get(v));
                 isFirstPass = false;
-            } else {
+            }
+            else {
                 edges.retainAll(V2E.get(v));
             }
             if (edges.isEmpty()) {
@@ -127,15 +128,16 @@ public class UndirectedHyperGraphHashSet<VertexType, EdgeType extends Undirected
     public String toString() {
         String string = new String();
         boolean isFirst = true;
-        for (VertexType v: getVertices()) {
+        for (VertexType v : getVertices()) {
             if (isFirst) {
                 isFirst = false;
-            } else {
+            }
+            else {
                 string = string.concat(", ");
             }
             string = string.concat(v.toString());
         }
-        for (EdgeType e: getEdges()) {
+        for (EdgeType e : getEdges()) {
             string = string.concat("\n" + e.toString());
         }
         return string;

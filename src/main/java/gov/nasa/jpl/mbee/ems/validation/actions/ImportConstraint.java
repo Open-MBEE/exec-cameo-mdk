@@ -1,21 +1,19 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.ems.ImportException;
 import gov.nasa.jpl.mbee.ems.ImportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.Map;
-
-import org.json.simple.JSONObject;
-
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ImportConstraint extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -23,6 +21,7 @@ public class ImportConstraint extends RuleViolationAction implements AnnotationA
     private Constraint element;
     private JSONObject spec;
     private JSONObject result;
+
     public ImportConstraint(Constraint e, JSONObject spec, JSONObject result) {
         //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
         //
@@ -31,7 +30,7 @@ public class ImportConstraint extends RuleViolationAction implements AnnotationA
         this.spec = spec;
         this.result = result;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -41,23 +40,24 @@ public class ImportConstraint extends RuleViolationAction implements AnnotationA
     public void execute(Collection<Annotation> annos) {
         executeMany(annos, "Change Constraint");
     }
-    
+
     @Override
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
-            Element e = (Element)anno.getTarget();
+            Element e = (Element) anno.getTarget();
             if (!e.isEditable()) {
                 Utils.guilog("[ERROR] " + e.get_representationText() + " isn't editable");
                 return false;
             }
-            JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setConstraintSpecification((Constraint)e, (JSONObject)resultOb.get("specialization"));
+                ImportUtility.setConstraintSpecification((Constraint) e, (JSONObject) resultOb.get("specialization"));
             } catch (ImportException ex) {
                 Utils.guilog("[ERROR] " + ex.getMessage());
                 return false;
             }
-        } else {
+        }
+        else {
             try {
                 ImportUtility.setConstraintSpecification(element, spec);
             } catch (ImportException ex) {
@@ -67,7 +67,7 @@ public class ImportConstraint extends RuleViolationAction implements AnnotationA
         }
         return true;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {

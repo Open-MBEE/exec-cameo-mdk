@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,7 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -56,8 +56,9 @@ public class Debug {
      * it's being called.
      */
     public static void breakpoint() {
-        if (Debug.isOn())
+        if (Debug.isOn()) {
             out("");
+        }
     }
 
     public static void out(String s) {
@@ -110,10 +111,9 @@ public class Debug {
     /**
      * Throws and catches an exception and prints a supplied message and stack
      * trace to stderr if any of the input objects are null.
-     * 
+     *
      * @param msg
-     * @param maybeNullObjects
-     *            variable number of Objects to check if null
+     * @param maybeNullObjects variable number of Objects to check if null
      * @return
      */
     public static boolean errorOnNull(String msg, Object... maybeNullObjects) {
@@ -135,10 +135,9 @@ public class Debug {
     /**
      * Throws and catches an exception if any of the input objects are null. It
      * prints a supplied message and, optionally, a stack trace to stderr.
-     * 
+     *
      * @param msg
-     * @param maybeNullObjects
-     *            variable number of Objects to check if null
+     * @param maybeNullObjects variable number of Objects to check if null
      * @return
      */
     public static boolean errorOnNull(boolean stackTrace, String msg, Object... maybeNullObjects) {
@@ -146,19 +145,21 @@ public class Debug {
     }
 
     public static boolean errorOnNull(boolean forceOutput, boolean stackTrace, String msg,
-            Object... maybeNullObjects) {
+                                      Object... maybeNullObjects) {
         try {
-            if (maybeNullObjects == null)
+            if (maybeNullObjects == null) {
                 throw new Exception();
-            for (Object o: maybeNullObjects) {
+            }
+            for (Object o : maybeNullObjects) {
                 if (o == null) {
                     throw new Exception();
                 }
             }
         } catch (Exception e) {
             boolean wasOn = isOn();
-            if (forceOutput)
+            if (forceOutput) {
                 turnOn();
+            }
             Debug.errln(msg);
             if (stackTrace) {
                 StringWriter sw = new StringWriter();
@@ -170,8 +171,9 @@ public class Debug {
                     // breakpoint();
                 }
             }
-            if (!wasOn)
+            if (!wasOn) {
                 turnOff();
+            }
             return true;
         }
         return false;
@@ -180,7 +182,7 @@ public class Debug {
     /**
      * Writes to stderr and throws and catches an exception printing a stack
      * trace.
-     * 
+     *
      * @param msg
      */
     public static void error(String msg) {
@@ -190,14 +192,14 @@ public class Debug {
     /**
      * Writes to stderr and throws and catches an exception, optionally printing
      * a stack trace.
-     * 
+     *
      * @param msg
      */
     public static void error(boolean stackTrace, String msg) {
-        errorOnNull(stackTrace, msg, (Object[])null);
+        errorOnNull(stackTrace, msg, (Object[]) null);
     }
 
     public static void error(boolean forceOutput, boolean stackTrace, String msg) {
-        errorOnNull(forceOutput, stackTrace, msg, (Object[])null);
+        errorOnNull(forceOutput, stackTrace, msg, (Object[]) null);
     }
 }

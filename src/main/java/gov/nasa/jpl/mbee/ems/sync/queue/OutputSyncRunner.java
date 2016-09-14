@@ -19,14 +19,18 @@ public class OutputSyncRunner implements Runnable {
         }
 
         public void run() {
-            if (r.getMethod().equals("DELETE"))
+            if (r.getMethod().equals("DELETE")) {
                 ExportUtility.delete(r.getUrl(), r.isFeedback());
-            else if (r.getMethod().equals("DELETEALL"))
+            }
+            else if (r.getMethod().equals("DELETEALL")) {
                 ExportUtility.deleteWithBody(r.getUrl(), r.getJson(), r.isFeedback());
-            else if (r.getPm() != null)
+            }
+            else if (r.getPm() != null) {
                 ExportUtility.send(r.getUrl(), r.getPm());
-            else
+            }
+            else {
                 ExportUtility.send(r.getUrl(), r.getJson()/*, null*/, false, r.isSuppressGui(), this.getName()); //POST
+            }
         }
     }
 
@@ -58,8 +62,9 @@ public class OutputSyncRunner implements Runnable {
                         OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
                     }
                 });
-                if (r.getMethod().equals("LOG"))
+                if (r.getMethod().equals("LOG")) {
                     Utils.guilog(r.getJson());
+                }
                 else {
                     SendThread st = new SendThread(r);
                     st.setName("Send#" + id++);

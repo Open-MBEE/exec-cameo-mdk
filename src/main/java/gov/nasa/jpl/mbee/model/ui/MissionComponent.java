@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model.ui;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.HashMap;
@@ -35,20 +37,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-
 public class MissionComponent {
 
-    private String                                     name;
-    private NamedElement                               element;
-    private Set<MissionCharacterization>               chars;
-    private Set<LibraryComponent>                      libs;
+    private String name;
+    private NamedElement element;
+    private Set<MissionCharacterization> chars;
+    private Set<LibraryComponent> libs;
 
-    private Set<LibraryComponent>                      addedLib;
-    private Set<LibraryComponent>                      removedLib;
-    private Set<MissionCharacterization>               addedChar;
-    private Set<MissionCharacterization>               removedChar;
+    private Set<LibraryComponent> addedLib;
+    private Set<LibraryComponent> removedLib;
+    private Set<MissionCharacterization> addedChar;
+    private Set<MissionCharacterization> removedChar;
 
     private Map<NamedElement, MissionCharacterization> removedLibrary2MissionChar;
     private Map<NamedElement, MissionCharacterization> library2missionChar;
@@ -81,9 +80,7 @@ public class MissionComponent {
     }
 
     public boolean isPackage() {
-        if (element != null && element instanceof Package)
-            return true;
-        return false;
+        return element != null && element instanceof Package;
     }
 
     private void init() {
@@ -128,13 +125,13 @@ public class MissionComponent {
         Set<MissionCharacterization> willBeRemoved = new HashSet<MissionCharacterization>();
 
         libs.remove(lc);
-        for (MissionCharacterization mc: new HashSet<MissionCharacterization>(this.chars)) {
+        for (MissionCharacterization mc : new HashSet<MissionCharacterization>(this.chars)) {
             if (!isLibraryCharAllowed(mc.getLibraryCharacterization())) {
                 willBeRemoved.add(mc);
             }
         }
         String list = "";
-        for (MissionCharacterization mc: willBeRemoved) {
+        for (MissionCharacterization mc : willBeRemoved) {
             list += mc.getName() + ",";
         }
         if (!list.equals("")) {
@@ -147,7 +144,7 @@ public class MissionComponent {
         }
         addedLib.remove(lc);
         removedLib.add(lc);
-        for (MissionCharacterization mc: willBeRemoved) {
+        for (MissionCharacterization mc : willBeRemoved) {
             removeCharacterization(mc);
         }
 
@@ -164,7 +161,8 @@ public class MissionComponent {
         if (removedLibrary2MissionChar.containsKey(libraryChar)) {
             mc = removedLibrary2MissionChar.get(libraryChar);
             removedLibrary2MissionChar.remove(libraryChar);
-        } else {
+        }
+        else {
             mc = new MissionCharacterization(name);
             mc.setLibraryCharacterization(libraryChar);
         }
@@ -181,9 +179,7 @@ public class MissionComponent {
     }
 
     public boolean hasLibraryCharacterization(NamedElement e) {
-        if (library2missionChar.containsKey(e))
-            return true;
-        return false;
+        return library2missionChar.containsKey(e);
     }
 
     public MissionCharacterization getMissionCharacterizationFor(NamedElement libraryChar) {
@@ -191,9 +187,10 @@ public class MissionComponent {
     }
 
     public boolean isLibraryCharAllowed(NamedElement libraryChar) {
-        for (LibraryComponent lc: libs) {
-            if (lc.getCharacterizations().contains(libraryChar))
+        for (LibraryComponent lc : libs) {
+            if (lc.getCharacterizations().contains(libraryChar)) {
                 return true;
+            }
         }
         return false;
     }
@@ -219,7 +216,7 @@ public class MissionComponent {
     }
 
     public void updateLibrary2MissionCharMapping() {
-        for (MissionCharacterization mc: chars) {
+        for (MissionCharacterization mc : chars) {
             library2missionChar.put(mc.getLibraryCharacterization(), mc);
         }
     }

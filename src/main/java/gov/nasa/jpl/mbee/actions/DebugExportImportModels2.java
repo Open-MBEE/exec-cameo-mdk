@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,14 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions;
 
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.Configurator;
+import gov.nasa.jpl.mbee.ems.ModelExporter;
+import gov.nasa.jpl.mbee.lib.MDUtils;
+import org.json.simple.JSONObject;
+
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileWriter;
@@ -36,70 +44,62 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.json.simple.JSONObject;
-
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
-import gov.nasa.jpl.mbee.Configurator;
-import gov.nasa.jpl.mbee.ems.ModelExporter;
-import gov.nasa.jpl.mbee.lib.MDUtils;
-
 public class DebugExportImportModels2 extends MDAction {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private Element start;
+    private Element start;
 
-	public static final String actionid = "Debug";
+    public static final String actionid = "Debug";
 
-	public DebugExportImportModels2() {
-		super(actionid, "(Debug Export)", null, null);
-	}
+    public DebugExportImportModels2() {
+        super(actionid, "(Debug Export)", null, null);
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
+    @Override
+    public void actionPerformed(ActionEvent e) {
 
-		Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.isLastContextDiagram());
+        Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.isLastContextDiagram());
 
-		if (selectedElements.toArray()[0] instanceof Element)
-			start = (Element) selectedElements.toArray()[0];
-		int depth = 0;
-		boolean packageOnly = false;
+        if (selectedElements.toArray()[0] instanceof Element) {
+            start = (Element) selectedElements.toArray()[0];
+        }
+        int depth = 0;
+        boolean packageOnly = false;
 
-		ModelExporter me;
-		// GUILog gl = Application.getInstance().getGUILog();
+        ModelExporter me;
+        // GUILog gl = Application.getInstance().getGUILog();
 
-		if (start == Application.getInstance().getProject().getModel()) {
-			me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
-			System.out.println(start);
-		} else {
-			System.out.println(start);
-			Set<Element> root = new HashSet<Element>();
-			root.add(start);
-			me = new ModelExporter(root, depth, packageOnly, Application.getInstance().getProject().getPrimaryProject());
-		}
-		long start1 = System.currentTimeMillis();
-		// JSONObject result = me.getResult();
-		// String json = result.toJSONString();
-		long stop1 = System.currentTimeMillis();
-		JSONObject result1 = me.getEMFResult();
-		String jsonemf = result1.toJSONString();
-		long stop2 = System.currentTimeMillis();
-		// System.out.println(json);
-		System.out.println((stop1 - start1) + " milliseconds pre and EMF: " + (stop2 - stop1));
-		// System.out.println(jsonemf);
+        if (start == Application.getInstance().getProject().getModel()) {
+            me = new ModelExporter(Application.getInstance().getProject(), depth, packageOnly);
+            System.out.println(start);
+        }
+        else {
+            System.out.println(start);
+            Set<Element> root = new HashSet<Element>();
+            root.add(start);
+            me = new ModelExporter(root, depth, packageOnly, Application.getInstance().getProject().getPrimaryProject());
+        }
+        long start1 = System.currentTimeMillis();
+        // JSONObject result = me.getResult();
+        // String json = result.toJSONString();
+        long stop1 = System.currentTimeMillis();
+        JSONObject result1 = me.getEMFResult();
+        String jsonemf = result1.toJSONString();
+        long stop2 = System.currentTimeMillis();
+        // System.out.println(json);
+        System.out.println((stop1 - start1) + " milliseconds pre and EMF: " + (stop2 - stop1));
+        // System.out.println(jsonemf);
 
-		FileWriter fw;
-		try {
-			fw = new FileWriter(new File("/Users/johannes/Documents/projects/SECAE/compareImports/test04.json"));
-			fw.append(jsonemf);
-			fw.flush();
-			fw.close();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+        FileWriter fw;
+        try {
+            fw = new FileWriter(new File("/Users/johannes/Documents/projects/SECAE/compareImports/test04.json"));
+            fw.append(jsonemf);
+            fw.flush();
+            fw.close();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
 
-	}
+    }
 }

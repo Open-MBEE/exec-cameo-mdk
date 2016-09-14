@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -31,15 +31,14 @@ package gov.nasa.jpl.mbee.dgview;
 import org.eclipse.emf.ecore.EObject;
 
 /**
- * @model abstract="true"
  * @author dlam
- * 
+ * @model abstract="true"
  */
 public interface ViewElement extends EObject {
 
     /**
-     * @model
      * @return
+     * @model
      */
     String getId();
 
@@ -47,17 +46,16 @@ public interface ViewElement extends EObject {
      * Sets the value of the '
      * {@link gov.nasa.jpl.mbee.dgview.ViewElement#getId
      * <em>Id</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Id</em>' attribute.
-     * @see #getId()
+     *
+     * @param value the new value of the '<em>Id</em>' attribute.
      * @generated
+     * @see #getId()
      */
     void setId(String value);
 
     /**
-     * @model
      * @return
+     * @model
      */
     String getTitle();
 
@@ -65,17 +63,16 @@ public interface ViewElement extends EObject {
      * Sets the value of the '
      * {@link gov.nasa.jpl.mbee.dgview.ViewElement#getTitle
      * <em>Title</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Title</em>' attribute.
-     * @see #getTitle()
+     *
+     * @param value the new value of the '<em>Title</em>' attribute.
      * @generated
+     * @see #getTitle()
      */
     void setTitle(String value);
 
     /**
-     * @model
      * @return
+     * @model
      */
     String getFromElementId();
 
@@ -84,17 +81,16 @@ public interface ViewElement extends EObject {
      * {@link gov.nasa.jpl.mbee.dgview.ViewElement#getFromElementId
      * <em>From Element Id</em>}' attribute. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>From Element Id</em>' attribute.
-     * @see #getFromElementId()
+     *
+     * @param value the new value of the '<em>From Element Id</em>' attribute.
      * @generated
+     * @see #getFromElementId()
      */
     void setFromElementId(String value);
 
     /**
-     * @model
      * @return
+     * @model
      */
     FromProperty getFromProperty();
 
@@ -103,12 +99,11 @@ public interface ViewElement extends EObject {
      * {@link gov.nasa.jpl.mbee.dgview.ViewElement#getFromProperty
      * <em>From Property</em>}' attribute. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>From Property</em>' attribute.
+     *
+     * @param value the new value of the '<em>From Property</em>' attribute.
+     * @generated
      * @see gov.nasa.jpl.mbee.dgview.FromProperty
      * @see #getFromProperty()
-     * @generated
      */
     void setFromProperty(FromProperty value);
 }

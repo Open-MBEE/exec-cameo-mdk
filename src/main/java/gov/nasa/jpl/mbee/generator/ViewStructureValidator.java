@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,7 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.generator;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.util.ArrayList;
@@ -36,48 +41,41 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
 /**
  * compliment of the InstanceViewpointAction this checks a view hierarchy model
  * against the viewpoints it conforms to
- * 
+ *
  * @author dlam
- * 
  */
 public class ViewStructureValidator {
 
-    private Stereotype    sysmlViewpoint = Utils.getViewpointStereotype();
-    private Stereotype    sysmlConforms = Utils.getSysML14ConformsStereotype();
-    private Stereotype    sysmlView = Utils.getViewStereotype();
-    private GUILog        gl = Application.getInstance().getGUILog();
+    private Stereotype sysmlViewpoint = Utils.getViewpointStereotype();
+    private Stereotype sysmlConforms = Utils.getSysML14ConformsStereotype();
+    private Stereotype sysmlView = Utils.getViewStereotype();
+    private GUILog gl = Application.getInstance().getGUILog();
     private List<Element> missing = new ArrayList<Element>();
 
     public void validate(Element curView) {
         List<Element> childrenViews = getChildrenViews(curView);
         Element curViewpoint = getConforms(curView);
-        if (curViewpoint == null)
+        if (curViewpoint == null) {
             return;
+        }
         List<Element> childrenViewpoints = getChildrenViewpoints(curViewpoint);
         Set<Element> childrenConforms = getChildrenConforms(childrenViews);
-        for (Element vp: childrenViewpoints) {
+        for (Element vp : childrenViewpoints) {
             if (!childrenConforms.contains(vp)) {
                 missing.add(vp);
             }
         }
-        for (Element cv: childrenViews) {
+        for (Element cv : childrenViews) {
             validate(cv);
         }
     }
 
     public void printErrors() {
-        for (Element e: missing) {
-            gl.log("Viewpoint " + ((NamedElement)e).getQualifiedName() + " is missing from view structure.");
+        for (Element e : missing) {
+            gl.log("Viewpoint " + ((NamedElement) e).getQualifiedName() + " is missing from view structure.");
         }
     }
 
@@ -95,14 +93,15 @@ public class ViewStructureValidator {
     private Element getConforms(Element v) {
         List<Element> conforms = Utils.collectDirectedRelatedElementsByRelationshipStereotype(v,
                 sysmlConforms, 1, false, 1);
-        if (conforms.isEmpty())
+        if (conforms.isEmpty()) {
             return null;
+        }
         return conforms.get(0);
     }
 
     private Set<Element> getChildrenConforms(List<Element> views) {
         Set<Element> res = new HashSet<Element>();
-        for (Element e: views) {
+        for (Element e : views) {
             res.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e,
                     sysmlConforms, 1, false, 1));
         }

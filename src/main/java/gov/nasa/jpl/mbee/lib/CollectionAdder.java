@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -34,17 +34,16 @@ import java.util.Collection;
 /**
  * Manages additions to nested collections based on policy of several
  * attributes.
- * 
  */
 public class CollectionAdder {
 
-    public boolean  mustFlatten               = false;
-    public boolean  mayFlatten                = false;
-    public boolean  flattenIfSizeOne          = false;
-    public boolean  flattenToNullIfEmpty      = false;
-    public int      defaultFlattenDepth       = 1;
-    public boolean  nullOk                    = true;
-    public boolean  onlyAddOne                = false;
+    public boolean mustFlatten = false;
+    public boolean mayFlatten = false;
+    public boolean flattenIfSizeOne = false;
+    public boolean flattenToNullIfEmpty = false;
+    public int defaultFlattenDepth = 1;
+    public boolean nullOk = true;
+    public boolean onlyAddOne = false;
     public Class<?> unflattenedCollectionType = ArrayList.class;
 
     /**
@@ -56,8 +55,8 @@ public class CollectionAdder {
      * @param nullOk
      */
     public CollectionAdder(boolean mustFlatten, boolean mayFlatten, boolean flattenIfSizeOne,
-            boolean flattenToNullIfEmpty, int defaultFlattenDepth, boolean nullOk, boolean onlyAddOne,
-            Class<?> unflattenedCollectionType) {
+                           boolean flattenToNullIfEmpty, int defaultFlattenDepth, boolean nullOk, boolean onlyAddOne,
+                           Class<?> unflattenedCollectionType) {
         this.mustFlatten = mustFlatten;
         this.mayFlatten = mayFlatten;
         this.flattenIfSizeOne = flattenIfSizeOne;
@@ -77,11 +76,10 @@ public class CollectionAdder {
 
     /**
      * Fix an existing Collection according to the ListBuilder's properties.
-     * 
-     * @param coll
-     *            the input Collection
+     *
+     * @param coll the input Collection
      * @return the original collection or a new instance of
-     *         unflattenedCollectionType
+     * unflattenedCollectionType
      */
     public Object fix(Collection<?> coll) {
         return fix(coll, defaultFlattenDepth);
@@ -89,24 +87,27 @@ public class CollectionAdder {
 
     /**
      * Fix an existing collection according to the ListBuilder's properties.
-     * 
+     *
      * @param coll
      * @param flattenDepth
      * @return the original collection or a new unflattenedCollectionType
-     *         collection
+     * collection
      */
     @SuppressWarnings("unchecked")
     public Object fix(Collection<?> coll, int flattenDepth) {
-        if (!mustFlatten && (!mayFlatten || flattenDepth <= 0))
+        if (!mustFlatten && (!mayFlatten || flattenDepth <= 0)) {
             return coll;
+        }
         Object result = coll;
         if (coll.isEmpty()) {
             if (mustFlatten || flattenToNullIfEmpty) {
                 result = null;
             }
-        } else if (coll.size() == 1 && flattenIfSizeOne) {
+        }
+        else if (coll.size() == 1 && flattenIfSizeOne) {
             result = coll.iterator().next();
-        } else {
+        }
+        else {
             // flatten!
             // Collection< Object > newList;
             ArrayList<Object> newList = new ArrayList<Object>();
@@ -122,15 +123,17 @@ public class CollectionAdder {
             // ListBuilder adder = new ListBuilder( mustFlatten, mayFlatten,
             // flattenIfSizeOne, flattenToNullIfEmpty, flattenDepth-1, nullOk,
             // onlyAddOne, unflattenedCollectionType );
-            for (Object child: coll) {
+            for (Object child : coll) {
                 boolean added = true;
                 if (child instanceof Collection) {
                     added = add(child, newList, flattenDepth - 1);
-                } else {
+                }
+                else {
                     newList.add(child);
                 }
-                if (onlyAddOne && added)
+                if (onlyAddOne && added) {
                     break;
+                }
             }
         }
         // fixType
@@ -140,13 +143,13 @@ public class CollectionAdder {
                 try {
                     Object o = unflattenedCollectionType.newInstance();
                     if (o instanceof Collection) {
-                        newColl = (Collection<Object>)o;
+                        newColl = (Collection<Object>) o;
                     }
                 } catch (InstantiationException e) {
                 } catch (IllegalAccessException e) {
                 }
                 if (newColl != null) {
-                    newColl.addAll((Collection<? extends Object>)result);
+                    newColl.addAll((Collection<? extends Object>) result);
                     result = newColl;
                 }
             }
@@ -156,12 +159,13 @@ public class CollectionAdder {
 
     public boolean add(Object o, Collection<Object> list, int flattenDepth) {
         if (o == null) {
-            if (nullOk)
+            if (nullOk) {
                 list.add(null);
+            }
             return nullOk;
         }
         if ((o instanceof Collection) && (mustFlatten || (mayFlatten && flattenDepth > 0))) {
-            Collection<?> coll = (Collection<?>)o;
+            Collection<?> coll = (Collection<?>) o;
             if (coll.isEmpty()) {
                 if (mustFlatten || flattenToNullIfEmpty) {
                     add(null, list, flattenDepth - 1);
@@ -171,7 +175,7 @@ public class CollectionAdder {
             }
             if (coll.size() != 1 || !flattenIfSizeOne) {
                 boolean didAdd = false;
-                for (Object child: coll) {
+                for (Object child : coll) {
                     boolean added = add(child, list, flattenDepth - 1);
                     if (added) {
                         if (onlyAddOne) {

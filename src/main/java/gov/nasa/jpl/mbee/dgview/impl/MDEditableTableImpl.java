@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -31,9 +31,6 @@ package gov.nasa.jpl.mbee.dgview.impl;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
 import gov.nasa.jpl.mbee.dgview.MDEditableTable;
 import gov.nasa.jpl.mbee.dgview.TableRow;
-
-import java.util.Collection;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
 import org.eclipse.emf.common.util.EList;
@@ -43,6 +40,8 @@ import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
+
+import java.util.Collection;
 
 /**
  * <!-- begin-user-doc --> An implementation of the model object '
@@ -70,93 +69,93 @@ import org.eclipse.emf.ecore.util.InternalEList;
  * <em>Gui Body</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
     /**
      * The default value of the '{@link #getPrecision() <em>Precision</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getPrecision()
+     *
      * @generated
      * @ordered
+     * @see #getPrecision()
      */
-    protected static final int     PRECISION_EDEFAULT    = 0;
+    protected static final int PRECISION_EDEFAULT = 0;
 
     /**
      * The cached value of the '{@link #getPrecision() <em>Precision</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getPrecision()
+     *
      * @generated
      * @ordered
+     * @see #getPrecision()
      */
-    protected int                  precision             = PRECISION_EDEFAULT;
+    protected int precision = PRECISION_EDEFAULT;
 
     /**
      * The cached value of the '{@link #getGuiHeaders() <em>Gui Headers</em>}'
      * attribute list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getGuiHeaders()
+     *
      * @generated
      * @ordered
+     * @see #getGuiHeaders()
      */
-    protected EList<String>        guiHeaders;
+    protected EList<String> guiHeaders;
 
     /**
      * The cached value of the '{@link #getEditable() <em>Editable</em>}'
      * attribute list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getEditable()
+     *
      * @generated
      * @ordered
+     * @see #getEditable()
      */
-    protected EList<Boolean>       editable;
+    protected EList<Boolean> editable;
 
     /**
      * The cached value of the '{@link #getMergeCols() <em>Merge Cols</em>}'
      * attribute list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getMergeCols()
+     *
      * @generated
      * @ordered
+     * @see #getMergeCols()
      */
-    protected EList<Integer>       mergeCols;
+    protected EList<Integer> mergeCols;
 
     /**
      * The default value of the '{@link #isAddLineNum() <em>Add Line Num</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #isAddLineNum()
+     *
      * @generated
      * @ordered
+     * @see #isAddLineNum()
      */
     protected static final boolean ADD_LINE_NUM_EDEFAULT = false;
 
     /**
      * The cached value of the '{@link #isAddLineNum() <em>Add Line Num</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #isAddLineNum()
+     *
      * @generated
      * @ordered
+     * @see #isAddLineNum()
      */
-    protected boolean              addLineNum            = ADD_LINE_NUM_EDEFAULT;
+    protected boolean addLineNum = ADD_LINE_NUM_EDEFAULT;
 
     /**
      * The cached value of the '{@link #getGuiBody() <em>Gui Body</em>}'
      * containment reference list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getGuiBody()
+     *
      * @generated
      * @ordered
+     * @see #getGuiBody()
      */
-    protected EList<TableRow>      guiBody;
+    protected EList<TableRow> guiBody;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected MDEditableTableImpl() {
@@ -165,7 +164,7 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -175,7 +174,7 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -185,21 +184,22 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setPrecision(int newPrecision) {
         int oldPrecision = precision;
         precision = newPrecision;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.MD_EDITABLE_TABLE__PRECISION,
                     oldPrecision, precision));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -213,7 +213,7 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -227,7 +227,7 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -241,7 +241,7 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -251,21 +251,22 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setAddLineNum(boolean newAddLineNum) {
         boolean oldAddLineNum = addLineNum;
         addLineNum = newAddLineNum;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET,
                     DgviewPackage.MD_EDITABLE_TABLE__ADD_LINE_NUM, oldAddLineNum, addLineNum));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -279,21 +280,21 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
         switch (featureID) {
             case DgviewPackage.MD_EDITABLE_TABLE__GUI_BODY:
-                return ((InternalEList<?>)getGuiBody()).basicRemove(otherEnd, msgs);
+                return ((InternalEList<?>) getGuiBody()).basicRemove(otherEnd, msgs);
         }
         return super.eInverseRemove(otherEnd, featureID, msgs);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -317,7 +318,7 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @SuppressWarnings("unchecked")
@@ -325,26 +326,26 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
     public void eSet(int featureID, Object newValue) {
         switch (featureID) {
             case DgviewPackage.MD_EDITABLE_TABLE__PRECISION:
-                setPrecision((Integer)newValue);
+                setPrecision((Integer) newValue);
                 return;
             case DgviewPackage.MD_EDITABLE_TABLE__GUI_HEADERS:
                 getGuiHeaders().clear();
-                getGuiHeaders().addAll((Collection<? extends String>)newValue);
+                getGuiHeaders().addAll((Collection<? extends String>) newValue);
                 return;
             case DgviewPackage.MD_EDITABLE_TABLE__EDITABLE:
                 getEditable().clear();
-                getEditable().addAll((Collection<? extends Boolean>)newValue);
+                getEditable().addAll((Collection<? extends Boolean>) newValue);
                 return;
             case DgviewPackage.MD_EDITABLE_TABLE__MERGE_COLS:
                 getMergeCols().clear();
-                getMergeCols().addAll((Collection<? extends Integer>)newValue);
+                getMergeCols().addAll((Collection<? extends Integer>) newValue);
                 return;
             case DgviewPackage.MD_EDITABLE_TABLE__ADD_LINE_NUM:
-                setAddLineNum((Boolean)newValue);
+                setAddLineNum((Boolean) newValue);
                 return;
             case DgviewPackage.MD_EDITABLE_TABLE__GUI_BODY:
                 getGuiBody().clear();
-                getGuiBody().addAll((Collection<? extends TableRow>)newValue);
+                getGuiBody().addAll((Collection<? extends TableRow>) newValue);
                 return;
         }
         super.eSet(featureID, newValue);
@@ -352,7 +353,7 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -382,7 +383,7 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -406,13 +407,14 @@ public class MDEditableTableImpl extends TableImpl implements MDEditableTable {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public String toString() {
-        if (eIsProxy())
+        if (eIsProxy()) {
             return super.toString();
+        }
 
         StringBuffer result = new StringBuffer(super.toString());
         result.append(" (precision: ");

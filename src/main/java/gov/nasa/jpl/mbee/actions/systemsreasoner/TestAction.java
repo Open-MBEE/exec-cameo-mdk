@@ -16,17 +16,17 @@ import java.awt.event.ActionEvent;
 
 public class TestAction extends SRAction {
 
-	public static final String actionid = "Test";
+    public static final String actionid = "Test";
 
-	public TestAction() {
+    public TestAction() {
         super(actionid, null);
-	}
+    }
 
-	@Override
+    @Override
     public void actionPerformed(ActionEvent e) {
-		SessionManager.getInstance().createSession(actionid);
-		final InstanceSpecification instance = Application.getInstance().getProject().getElementsFactory().createInstanceSpecificationInstance();
-		//instance.setOwner(Application.getInstance().getProject().getModel());
+        SessionManager.getInstance().createSession(actionid);
+        final InstanceSpecification instance = Application.getInstance().getProject().getElementsFactory().createInstanceSpecificationInstance();
+        //instance.setOwner(Application.getInstance().getProject().getModel());
         Application.getInstance().getGUILog().log(instance.getID());
         JSONArray toSendElements = new JSONArray();
         toSendElements.add(ExportUtility.fillElement(instance, null));
@@ -41,5 +41,5 @@ public class TestAction extends SRAction {
             e1.printStackTrace();
         }
         SessionManager.getInstance().closeSession();
-	}
+    }
 }

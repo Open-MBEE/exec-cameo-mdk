@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,43 +28,41 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ModelExportRunner;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.ui.ProgressStatusRunner;
+import java.awt.event.ActionEvent;
+import java.util.Collection;
 
 public class InitializeProjectModel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private boolean initOnly;
-    
+
     public InitializeProjectModel(boolean initOnly) {
         super("InitializeProjectModel", initOnly ? "Initialize Project" : "Initialize Project and Model", null, null);
         this.initOnly = initOnly;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return false;
     }
 
-    
+
     @Override
     public void execute(Collection<Annotation> annos) {
-        
+
     }
 
     @SuppressWarnings("unchecked")
@@ -84,21 +82,23 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
         }
         url += "/projects";
         String response = ExportUtility.send(url, tosend.toJSONString()/*, null*/, false, false);
-        if (response == null || response.startsWith("<html"))
+        if (response == null || response.startsWith("<html")) {
             return;
+        }
         //ExportUtility.sendProjectVersion(Application.getInstance().getProject().getModel());
         if (!initOnly) {
             url = ExportUtility.getPostElementsUrl();
             if (url == null) {
                 return;
             }
-            String[] buttons = {"Background job on server", "Background job on magicdraw","Abort Export"};
+            String[] buttons = {"Background job on server", "Background job on magicdraw", "Abort Export"};
             //null can returns
             Boolean background = Utils.getUserYesNoAnswerWithButton("Use background export on server? You'll get an email when done.", buttons, true);
-            if (background == null)
+            if (background == null) {
                 return;
+            }
             ProgressStatusRunner.runWithProgressStatus(new ModelExportRunner(Application.getInstance().getProject().getModel(), 0, false, url, background), "Exporting Model", true, 0);
-   
+
         }
     }
 }

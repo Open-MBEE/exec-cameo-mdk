@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,16 +28,11 @@
  ******************************************************************************/
 package gov.nasa.jpl.mgss.mbee.docgen.validation;
 
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSection;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 /**
  * if showSummary is true, will show summary of each rule in the suite, the
@@ -47,17 +42,16 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
  * after summary table the title for the tables are suite name + Summary and
  * suite name + detail if ownSection is true, the 2 tables will be put in its
  * own section, with title suite name results
- * 
+ *
  * @author dlam
- * 
  */
 public class ValidationSuite {
 
-    private boolean              showSummary;
-    private boolean              showDetail;
-    private boolean              ownSection;
+    private boolean showSummary;
+    private boolean showDetail;
+    private boolean ownSection;
     private List<ValidationRule> rules;
-    private String               name;
+    private String name;
 
     public ValidationSuite(String name) {
         this.name = name;
@@ -89,9 +83,10 @@ public class ValidationSuite {
     }
 
     public boolean hasErrors() {
-        for (ValidationRule rule: rules) {
-            if (!rule.getViolations().isEmpty())
+        for (ValidationRule rule : rules) {
+            if (!rule.getViolations().isEmpty()) {
                 return true;
+            }
         }
         return false;
     }
@@ -111,7 +106,7 @@ public class ValidationSuite {
             header.add(new DBText("Violations Count"));
             summary.setHeaders(headers);
             List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-            for (ValidationRule vr: rules) {
+            for (ValidationRule vr : rules) {
                 List<DocumentElement> rule = new ArrayList<DocumentElement>();
                 rule.add(new DBText(vr.getName()));
                 rule.add(new DBParagraph(vr.getDescription()));
@@ -134,14 +129,16 @@ public class ValidationSuite {
             dheader.add(new DBText("Description"));
             detail.setHeaders(dheaders);
             List<List<DocumentElement>> dbody = new ArrayList<List<DocumentElement>>();
-            for (ValidationRule vr: rules) {
-                for (ValidationRuleViolation vrv: vr.getViolations()) {
+            for (ValidationRule vr : rules) {
+                for (ValidationRuleViolation vrv : vr.getViolations()) {
                     List<DocumentElement> rule = new ArrayList<DocumentElement>();
                     rule.add(new DBText(vr.getName()));
-                    if (vrv.getElement() instanceof NamedElement)
-                        rule.add(new DBParagraph(((NamedElement)vrv.getElement()).getQualifiedName()));
-                    else
+                    if (vrv.getElement() instanceof NamedElement) {
+                        rule.add(new DBParagraph(((NamedElement) vrv.getElement()).getQualifiedName()));
+                    }
+                    else {
                         rule.add(new DBText("Unnamed Element"));
+                    }
                     rule.add(new DBParagraph(vrv.getComment()));
                     dbody.add(rule);
                 }

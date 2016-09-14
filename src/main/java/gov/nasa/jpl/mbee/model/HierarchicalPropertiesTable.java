@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.lib.GeneratorUtils;
@@ -36,23 +39,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
 public abstract class HierarchicalPropertiesTable extends Table {
-    protected int              floatingPrecision;
-    protected int              maxDepth;
-    protected List<String>     topIncludeTypeName;
-    protected List<String>     topExcludeTypeName;
+    protected int floatingPrecision;
+    protected int maxDepth;
+    protected List<String> topIncludeTypeName;
+    protected List<String> topExcludeTypeName;
     protected List<Stereotype> topIncludeStereotype;
     protected List<Stereotype> topExcludeStereotype;
-    protected List<String>     topIncludeName;
-    protected List<String>     topExcludeName;
-    protected int              topAssociationType;
-    protected List<String>     topOrder;
-    protected boolean          showType;
-    protected boolean          includeInherited;
+    protected List<String> topIncludeName;
+    protected List<String> topExcludeName;
+    protected int topAssociationType;
+    protected List<String> topOrder;
+    protected boolean showType;
+    protected boolean includeInherited;
 
     public boolean isIncludeInherited() {
         return includeInherited;
@@ -154,37 +153,38 @@ public abstract class HierarchicalPropertiesTable extends Table {
     @Override
     public void initialize() {
         super.initialize();
-        Integer maxDepth = (Integer)GeneratorUtils.getObjectProperty(dgElement,
+        Integer maxDepth = (Integer) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.hierarchicalPropertiesTableStereotype, "maxDepth", 0);
         List<String> topIncludeTypeName = DocGenUtils
-                .getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement,
+                .getElementNames((Collection<NamedElement>) GeneratorUtils.getListProperty(dgElement,
                         DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeTypeName",
                         new ArrayList<Property>()));
         List<String> topExcludeTypeName = DocGenUtils
-                .getElementNames((Collection<NamedElement>)GeneratorUtils.getListProperty(dgElement,
+                .getElementNames((Collection<NamedElement>) GeneratorUtils.getListProperty(dgElement,
                         DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeTypeName",
                         new ArrayList<Property>()));
-        List<Stereotype> topIncludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(dgElement,
+        List<Stereotype> topIncludeStereotype = (List<Stereotype>) GeneratorUtils.getListProperty(dgElement,
                 DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeStereotype",
                 new ArrayList<Stereotype>());
-        List<Stereotype> topExcludeStereotype = (List<Stereotype>)GeneratorUtils.getListProperty(dgElement,
+        List<Stereotype> topExcludeStereotype = (List<Stereotype>) GeneratorUtils.getListProperty(dgElement,
                 DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeStereotype",
                 new ArrayList<Stereotype>());
-        List<String> topIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils
+        List<String> topIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
                 .getListProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype,
                         "topIncludeName", new ArrayList<Property>()));
-        List<String> topExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils
+        List<String> topExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
                 .getListProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype,
                         "topExcludeName", new ArrayList<Property>()));
-        Integer topAssociationType = (Integer)GeneratorUtils.getObjectProperty(dgElement,
+        Integer topAssociationType = (Integer) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.hierarchicalPropertiesTableStereotype, "topAssociationType", 0);
-        List<String> topOrder = DocGenUtils.getElementNames((Collection<NamedElement>)GeneratorUtils
+        List<String> topOrder = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
                 .getListProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topOrder",
                         new ArrayList<Property>()));
-        if (!topIncludeName.isEmpty() && topOrder.isEmpty())
+        if (!topIncludeName.isEmpty() && topOrder.isEmpty()) {
             topOrder = topIncludeName;
+        }
 
-        setFloatingPrecision((Integer)GeneratorUtils.getObjectProperty(dgElement,
+        setFloatingPrecision((Integer) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.precisionChoosable, "floatingPrecision", -1));
         setMaxDepth(maxDepth);
         setTopIncludeTypeName(topIncludeTypeName);
@@ -195,7 +195,7 @@ public abstract class HierarchicalPropertiesTable extends Table {
         setTopExcludeName(topExcludeName);
         setTopAssociationType(topAssociationType);
         setTopOrder(topOrder);
-        setIncludeInherited((Boolean)GeneratorUtils.getObjectProperty(dgElement,
+        setIncludeInherited((Boolean) GeneratorUtils.getObjectProperty(dgElement,
                 DocGen3Profile.inheritedChoosable, "includeInherited", false));
     }
 }

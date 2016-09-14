@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.actions.ems.sync;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.DocGenPlugin;
-import gov.nasa.jpl.mbee.ems.sync.status.ui.SyncStatusFrame;
 import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
@@ -11,6 +10,7 @@ import gov.nasa.jpl.mbee.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.status.ui.SyncStatusFrame;
 import gov.nasa.jpl.mbee.lib.Changelog;
 
 import javax.annotation.CheckForNull;

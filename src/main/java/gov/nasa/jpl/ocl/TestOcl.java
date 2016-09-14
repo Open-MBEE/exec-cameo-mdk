@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,25 +28,24 @@
  ******************************************************************************/
 package gov.nasa.jpl.ocl;
 
-import java.util.List;
-import java.util.Set;
-
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.ocl.ParserException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import java.util.List;
+import java.util.Set;
 
 public class TestOcl {
 
-    protected Project project     = null;
-    protected Model   rootEObject = null;
+    protected Project project = null;
+    protected Model rootEObject = null;
 
     @SuppressWarnings("unchecked")
     public static void testOcl(Project project, EObject rootEObject) {
@@ -69,15 +68,16 @@ public class TestOcl {
 
         if (result != null) {
             if (oclquery.equals("name.regexMatch('DocGen Templating') <> null")) {
-                Assert.assertTrue((Boolean)result);
+                Assert.assertTrue((Boolean) result);
             }
             System.out.println(result.getClass() + ": " + result.toString());
             if (result instanceof Set) {
-                for (Stereotype key: (Set<Stereotype>)result) {
+                for (Stereotype key : (Set<Stereotype>) result) {
                     System.out.println("\t" + key.getHumanName());
                 }
-            } else if (result instanceof List) {
-                for (Property prop: (List<Property>)result) {
+            }
+            else if (result instanceof List) {
+                for (Property prop : (List<Property>) result) {
                     System.out.println("\t" + prop.getHumanName());
                 }
             }

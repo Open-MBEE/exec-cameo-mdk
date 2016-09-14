@@ -776,7 +776,7 @@ public class ExportUtility {
             String id = (String) ((JSONObject) viewinfo).get("id");
             JSONArray children = (JSONArray) ((JSONObject) viewinfo)
                     .get("childrenViews");
-            if (response.containsKey(id) && !((JSONArray) response.get(id)).equals(children)) {
+            if (response.containsKey(id) && !response.get(id).equals(children)) {
                 //something is messed up
                 Utils.log("[WARNING] Document hierarchy from MMS is inconsistent and will interfere with validation, please file a CAE Support jira at https://cae-jira.jpl.nasa.gov/projects/SSCAES/summary with component MD.MDK to request help to resolve.");
             }
@@ -845,10 +845,7 @@ public class ExportUtility {
                 throw new ServerException(json, code); //?
             }
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
-            if (code == 404) {
-                return false;
-            }
-            return true;
+            return code != 404;
         } catch (IOException | IllegalArgumentException ex) {
             //Utils.printException(ex);
             ex.printStackTrace();
@@ -994,10 +991,7 @@ public class ExportUtility {
         if (c.getAnnotatedElement().size() > 1 || c.getAnnotatedElement().isEmpty()) {
             return false;
         }
-        if (c.getAnnotatedElement().iterator().next() == c.getOwner()) {
-            return true;
-        }
-        return false;
+        return c.getAnnotatedElement().iterator().next() == c.getOwner();
     }
 
     public static JSONObject fillValueSpecification(ValueSpecification vs,
@@ -1170,7 +1164,7 @@ public class ExportUtility {
         else if (e instanceof InstanceSpecification) {
             elementInfo.put("type", "InstanceSpecification");
             fillInstanceSpecificationSpecialization((InstanceSpecification) e, elementInfo);
-			/*
+            /*
 			 * ValueSpecification spec = ((InstanceSpecification) e) .getSpecification(); if (spec != null) specialization.put("instanceSpecificationSpecification", spec.getID());
 			 */
         }
@@ -1352,7 +1346,7 @@ public class ExportUtility {
         if (c != null) {
             JSONObject cob = fillConstraintSpecialization(c, null);
             if (cob.containsKey("specification")) {
-                elementInfo.put("contents", (JSONObject) cob.get("specification"));
+                elementInfo.put("contents", cob.get("specification"));
                 elementInfo.put("contains", new JSONArray());
             }
         }
@@ -1524,7 +1518,7 @@ public class ExportUtility {
     public static JSONObject fillConstraintSpecialization(Constraint e, JSONObject elementInfo) {
         if (elementInfo != null) {
             elementInfo.put("type", "Constraint");
-            ValueSpecification vspec = ((Constraint) e).getSpecification();
+            ValueSpecification vspec = e.getSpecification();
             if (vspec != null) {
                 JSONObject cspec = new JSONObject();
                 fillValueSpecification(vspec, cspec);
@@ -1584,7 +1578,7 @@ public class ExportUtility {
             elementInfo = new JSONObject();
         }
         elementInfo.put("type", "Operation");
-        List<Parameter> vsl = ((Operation) e).getOwnedParameter();
+        List<Parameter> vsl = e.getOwnedParameter();
         if (vsl != null && vsl.size() > 0) {
             elementInfo.put("parametersId", makeJsonArrayOfIDs(vsl));
         }
@@ -2067,10 +2061,7 @@ public class ExportUtility {
         {
             return false;
         }
-        if (e instanceof Constraint && isViewConstraint((Constraint) e)) {
-            return false;
-        }
-        return true;
+        return !(e instanceof Constraint && isViewConstraint((Constraint) e));
     }
 
     public static Element getViewFromConstraint(Constraint constraint) {

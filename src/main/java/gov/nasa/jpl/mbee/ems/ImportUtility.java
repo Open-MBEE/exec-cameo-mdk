@@ -223,11 +223,11 @@ public class ImportUtility {
                 }
                 if (elementType.equalsIgnoreCase("Characterizes")) {
                     Stereotype character = Utils.getCharacterizesStereotype();
-                    StereotypesHelper.addStereotype((Dependency) newE, character);
+                    StereotypesHelper.addStereotype(newE, character);
                 }
                 else if (elementType.equalsIgnoreCase("Expose")) {
                     Stereotype expose = Utils.getExposeStereotype();
-                    StereotypesHelper.addStereotype((Dependency) newE, expose);
+                    StereotypesHelper.addStereotype(newE, expose);
                 }
             }
             else if (elementType.equalsIgnoreCase("Generalization") || elementType.equalsIgnoreCase("Conform")) {
@@ -240,7 +240,7 @@ public class ImportUtility {
                 }
                 if (elementType.equalsIgnoreCase("Conform")) {
                     Stereotype conform = Utils.getSysML14ConformsStereotype();
-                    StereotypesHelper.addStereotype((Generalization) newE, conform);
+                    StereotypesHelper.addStereotype(newE, conform);
                 }
             }
             else if (elementType.equalsIgnoreCase("Package")) {
@@ -1037,7 +1037,7 @@ public class ImportUtility {
             i++;
         }
         /*
-		 * for (Property p: todelete) { //this used to be needed to prevent model corruption in 2.1? not needed in 18.0 (2.2)? corruption changes if asso is new or existing try { ModelElementsManager.getInstance().removeElement(p); //TODO
+         * for (Property p: todelete) { //this used to be needed to prevent model corruption in 2.1? not needed in 18.0 (2.2)? corruption changes if asso is new or existing try { ModelElementsManager.getInstance().removeElement(p); //TODO
 		 * propagate to alfresco? } catch (ReadOnlyElementException e) { e.printStackTrace(); } }
 		 */
         if (modelSource == webSource && modelTarget == webTarget) {
@@ -1147,7 +1147,7 @@ public class ImportUtility {
             case LiteralReal:
                 Double value;
                 if (o.get("double") instanceof Long) {
-                    value = Double.parseDouble(((Long) o.get("double")).toString());
+                    value = Double.parseDouble(o.get("double").toString());
                 }
                 else {
                     value = (Double) o.get("double");
@@ -1273,7 +1273,6 @@ public class ImportUtility {
             default:
                 log.error("Bad PropertyValueType: " + valueType);
         }
-        ;
         return newval;
     }
 

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -32,9 +32,6 @@ import gov.nasa.jpl.mbee.dgview.ColSpec;
 import gov.nasa.jpl.mbee.dgview.DgviewPackage;
 import gov.nasa.jpl.mbee.dgview.Table;
 import gov.nasa.jpl.mbee.dgview.TableRow;
-
-import java.util.Collection;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
 import org.eclipse.emf.common.util.EList;
@@ -43,6 +40,8 @@ import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
+
+import java.util.Collection;
 
 /**
  * <!-- begin-user-doc --> An implementation of the model object '
@@ -64,103 +63,103 @@ import org.eclipse.emf.ecore.util.InternalEList;
  * Cols</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public class TableImpl extends ViewElementImpl implements Table {
     /**
      * The cached value of the '{@link #getBody() <em>Body</em>}' containment
      * reference list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getBody()
+     *
      * @generated
      * @ordered
+     * @see #getBody()
      */
-    protected EList<TableRow>     body;
+    protected EList<TableRow> body;
 
     /**
      * The default value of the '{@link #getCaption() <em>Caption</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getCaption()
+     *
      * @generated
      * @ordered
+     * @see #getCaption()
      */
     protected static final String CAPTION_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getCaption() <em>Caption</em>}'
      * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getCaption()
+     *
      * @generated
      * @ordered
+     * @see #getCaption()
      */
-    protected String              caption          = CAPTION_EDEFAULT;
+    protected String caption = CAPTION_EDEFAULT;
 
     /**
      * The default value of the '{@link #getStyle() <em>Style</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getStyle()
+     *
      * @generated
      * @ordered
+     * @see #getStyle()
      */
-    protected static final String STYLE_EDEFAULT   = null;
+    protected static final String STYLE_EDEFAULT = null;
 
     /**
      * The cached value of the '{@link #getStyle() <em>Style</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getStyle()
+     *
      * @generated
      * @ordered
+     * @see #getStyle()
      */
-    protected String              style            = STYLE_EDEFAULT;
+    protected String style = STYLE_EDEFAULT;
 
     /**
      * The cached value of the '{@link #getHeaders() <em>Headers</em>}'
      * containment reference list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getHeaders()
+     *
      * @generated
      * @ordered
+     * @see #getHeaders()
      */
-    protected EList<TableRow>     headers;
+    protected EList<TableRow> headers;
 
     /**
      * The cached value of the '{@link #getColspecs() <em>Colspecs</em>}'
      * containment reference list. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getColspecs()
+     *
      * @generated
      * @ordered
+     * @see #getColspecs()
      */
-    protected EList<ColSpec>      colspecs;
+    protected EList<ColSpec> colspecs;
 
     /**
      * The default value of the '{@link #getCols() <em>Cols</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getCols()
+     *
      * @generated
      * @ordered
+     * @see #getCols()
      */
-    protected static final int    COLS_EDEFAULT    = 0;
+    protected static final int COLS_EDEFAULT = 0;
 
     /**
      * The cached value of the '{@link #getCols() <em>Cols</em>}' attribute.
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @see #getCols()
+     *
      * @generated
      * @ordered
+     * @see #getCols()
      */
-    protected int                 cols             = COLS_EDEFAULT;
+    protected int cols = COLS_EDEFAULT;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected TableImpl() {
@@ -169,7 +168,7 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -179,7 +178,7 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -192,7 +191,7 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -202,21 +201,22 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setCaption(String newCaption) {
         String oldCaption = caption;
         caption = newCaption;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.TABLE__CAPTION, oldCaption,
                     caption));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -226,20 +226,21 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setStyle(String newStyle) {
         String oldStyle = style;
         style = newStyle;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.TABLE__STYLE, oldStyle, style));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -253,7 +254,7 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -267,7 +268,7 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -277,38 +278,39 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public void setCols(int newCols) {
         int oldCols = cols;
         cols = newCols;
-        if (eNotificationRequired())
+        if (eNotificationRequired()) {
             eNotify(new ENotificationImpl(this, Notification.SET, DgviewPackage.TABLE__COLS, oldCols, cols));
+        }
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
         switch (featureID) {
             case DgviewPackage.TABLE__BODY:
-                return ((InternalEList<?>)getBody()).basicRemove(otherEnd, msgs);
+                return ((InternalEList<?>) getBody()).basicRemove(otherEnd, msgs);
             case DgviewPackage.TABLE__HEADERS:
-                return ((InternalEList<?>)getHeaders()).basicRemove(otherEnd, msgs);
+                return ((InternalEList<?>) getHeaders()).basicRemove(otherEnd, msgs);
             case DgviewPackage.TABLE__COLSPECS:
-                return ((InternalEList<?>)getColspecs()).basicRemove(otherEnd, msgs);
+                return ((InternalEList<?>) getColspecs()).basicRemove(otherEnd, msgs);
         }
         return super.eInverseRemove(otherEnd, featureID, msgs);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -332,7 +334,7 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @SuppressWarnings("unchecked")
@@ -341,24 +343,24 @@ public class TableImpl extends ViewElementImpl implements Table {
         switch (featureID) {
             case DgviewPackage.TABLE__BODY:
                 getBody().clear();
-                getBody().addAll((Collection<? extends TableRow>)newValue);
+                getBody().addAll((Collection<? extends TableRow>) newValue);
                 return;
             case DgviewPackage.TABLE__CAPTION:
-                setCaption((String)newValue);
+                setCaption((String) newValue);
                 return;
             case DgviewPackage.TABLE__STYLE:
-                setStyle((String)newValue);
+                setStyle((String) newValue);
                 return;
             case DgviewPackage.TABLE__HEADERS:
                 getHeaders().clear();
-                getHeaders().addAll((Collection<? extends TableRow>)newValue);
+                getHeaders().addAll((Collection<? extends TableRow>) newValue);
                 return;
             case DgviewPackage.TABLE__COLSPECS:
                 getColspecs().clear();
-                getColspecs().addAll((Collection<? extends ColSpec>)newValue);
+                getColspecs().addAll((Collection<? extends ColSpec>) newValue);
                 return;
             case DgviewPackage.TABLE__COLS:
-                setCols((Integer)newValue);
+                setCols((Integer) newValue);
                 return;
         }
         super.eSet(featureID, newValue);
@@ -366,7 +368,7 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -396,7 +398,7 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -420,13 +422,14 @@ public class TableImpl extends ViewElementImpl implements Table {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public String toString() {
-        if (eIsProxy())
+        if (eIsProxy()) {
             return super.toString();
+        }
 
         StringBuffer result = new StringBuffer(super.toString());
         result.append(" (caption: ");

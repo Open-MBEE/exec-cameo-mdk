@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,9 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model.ui;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.model.MissionMapping;
 import gov.nasa.jpl.mbee.tree.Node;
+import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -38,15 +41,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.swing.JButton;
-
-import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
-
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
 public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
 
-    private MissionMapping     mapping;
+    private MissionMapping mapping;
     private List<NamedElement> characterizations = new ArrayList<NamedElement>();
 
     public CharacterizationTreeTableModel(MissionMapping mapping) {
@@ -57,7 +54,7 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
     }
 
     private void collectCharacterizations() {
-        for (NamedElement e: mapping.getLibraryCharacterizations()) {
+        for (NamedElement e : mapping.getLibraryCharacterizations()) {
             characterizations.add(e);
         }
         Collections.sort(characterizations, new Comparator<NamedElement>() {
@@ -71,15 +68,18 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
 
     @Override
     public String getColumnName(int column) {
-        if (column == 0)
+        if (column == 0) {
             return "Name";
-        else if (column == 1)
+        }
+        else if (column == 1) {
             return "Library Components";
+        }
         else if (column > 1 && column <= characterizations.size() + 1) {
             String characterizationName = characterizations.get(column - 2).getName();
 
             return "<html>" + characterizationName.replaceAll(" ", "<br/>") + "</html>";
-        } else {
+        }
+        else {
             return "Unknown";
         }
     }
@@ -110,35 +110,43 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
     @SuppressWarnings("unchecked")
     @Override
     public Object getValueAt(Object node, int column) {
-        Node<String, MissionComponent> missionNode = (Node<String, MissionComponent>)node;
-        if (column == 0)
+        Node<String, MissionComponent> missionNode = (Node<String, MissionComponent>) node;
+        if (column == 0) {
             return missionNode.getData().getName();
+        }
         else if (column == 1) {
             JButton button = new JButton("Edit");
             button.addActionListener(new ButtonAction(missionNode));
             return button;
-        } else if (column > 1 && column <= characterizations.size() + 1) {
+        }
+        else if (column > 1 && column <= characterizations.size() + 1) {
             return missionNode.getData().hasLibraryCharacterization(characterizations.get(column - 2));
-        } else
+        }
+        else {
             return "Unknown";
+        }
     }
 
     @Override
     public Class<?> getColumnClass(int column) {
-        if (column == 0)
+        if (column == 0) {
             return String.class;
-        else if (column == 1)
+        }
+        else if (column == 1) {
             return JButton.class;
-        else if (column <= characterizations.size() + 1)
+        }
+        else if (column <= characterizations.size() + 1) {
             return Boolean.class;
-        else
+        }
+        else {
             return String.class;
+        }
     }
 
     @Override
     public Object getChild(Object node, int index) {
         @SuppressWarnings("unchecked")
-        Node<String, MissionComponent> libraryNode = (Node<String, MissionComponent>)node;
+        Node<String, MissionComponent> libraryNode = (Node<String, MissionComponent>) node;
         List<Node<String, MissionComponent>> childList = libraryNode.getChildrenAsList();
         return (childList != null) ? childList.get(index) : null;
     }
@@ -146,7 +154,7 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
     @Override
     public int getChildCount(Object parent) {
         @SuppressWarnings("unchecked")
-        Node<String, MissionComponent> libraryNode = (Node<String, MissionComponent>)parent;
+        Node<String, MissionComponent> libraryNode = (Node<String, MissionComponent>) parent;
         List<Node<String, MissionComponent>> childList = libraryNode.getChildrenAsList();
         return childList != null ? childList.size() : 0;
     }
@@ -154,11 +162,12 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
     @SuppressWarnings("unchecked")
     @Override
     public int getIndexOfChild(Object parent, Object child) {
-        List<Node<String, MissionComponent>> children = ((Node<String, MissionComponent>)parent)
+        List<Node<String, MissionComponent>> children = ((Node<String, MissionComponent>) parent)
                 .getChildrenAsList();
         for (int i = 0; i < children.size(); i++) {
-            if (children.get(i) == child)
+            if (children.get(i) == child) {
                 return i;
+            }
         }
         return -1;
     }
@@ -166,14 +175,13 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
     @SuppressWarnings("unchecked")
     @Override
     public boolean isCellEditable(Object node, int column) {
-        MissionComponent com = ((Node<String, MissionComponent>)node).getData();
-        if (column == 1)
+        MissionComponent com = ((Node<String, MissionComponent>) node).getData();
+        if (column == 1) {
             return false;
+        }
         if (column > 1) {
             NamedElement libchar = characterizations.get(column - 2);
-            if (com.isPackage() || !com.isLibraryCharAllowed(libchar))
-                return false;
-            return true;
+            return !(com.isPackage() || !com.isLibraryCharAllowed(libchar));
         }
         return true;
         // TODO should also check to see if this component inherits from the
@@ -185,20 +193,22 @@ public class CharacterizationTreeTableModel extends AbstractTreeTableModel {
     @SuppressWarnings("unchecked")
     @Override
     public void setValueAt(Object value, Object node, int column) {
-        Node<String, MissionComponent> missionNode = (Node<String, MissionComponent>)node;
+        Node<String, MissionComponent> missionNode = (Node<String, MissionComponent>) node;
         MissionComponent component = missionNode.getData();
         if (column == 0) {
-            component.setName((String)value);
+            component.setName((String) value);
             return;
         }
         if (column == 1) {
             return;
         }
-        boolean checked = (Boolean)value;
+        boolean checked = (Boolean) value;
         NamedElement libraryCharacterization = characterizations.get(column - 2);
-        if (checked)
+        if (checked) {
             component.createAndAddMissionCharForLibChar(libraryCharacterization);
-        else
+        }
+        else {
             component.removeCharacterizationForLibraryChar(libraryCharacterization);
+        }
     }
 }

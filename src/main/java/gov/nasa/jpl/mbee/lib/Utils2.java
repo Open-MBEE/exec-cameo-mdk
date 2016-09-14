@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -31,23 +31,9 @@ package gov.nasa.jpl.mbee.lib;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Formatter;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 // import org.apache.commons.lang.StringUtils;
 
@@ -58,37 +44,37 @@ public class Utils2 {
 
     // static members
 
-    public static ClassLoader   loader    = null;
+    public static ClassLoader loader = null;
 
     // empty collection constants
     public static final List<?> emptyList = Collections.EMPTY_LIST; // new
-                                                                    // ArrayList(
-                                                                    // 0 );
+    // ArrayList(
+    // 0 );
 
     @SuppressWarnings("unchecked")
     public static <T> List<T> getEmptyList() {
-        return (List<T>)emptyList;
+        return (List<T>) emptyList;
     }
 
     @SuppressWarnings("unchecked")
     public static <T> List<T> getEmptyList(Class<T> cls) {
-        return (List<T>)emptyList;
+        return (List<T>) emptyList;
     }
 
     public static final Set<?> emptySet = Collections.EMPTY_SET; // new
-                                                                 // TreeSet();
+    // TreeSet();
 
     @SuppressWarnings("unchecked")
     public static <T> Set<T> getEmptySet() {
-        return (Set<T>)emptySet;
+        return (Set<T>) emptySet;
     }
 
     public static final Map<?, ?> emptyMap = Collections.EMPTY_MAP; // new
-                                                                    // TreeMap();
+    // TreeMap();
 
     @SuppressWarnings("unchecked")
     public static <T1, T2> Map<T1, T2> getEmptyMap() {
-        return (Map<T1, T2>)emptyMap;
+        return (Map<T1, T2>) emptyMap;
     }
 
     public static String toString(Object[] arr) {
@@ -96,26 +82,31 @@ public class Utils2 {
     }
 
     public static String toString(Object[] arr, boolean square) {
-        if (arr == null)
+        if (arr == null) {
             return "null";
+        }
         StringBuffer sb = new StringBuffer();
         if (square) {
             sb.append("[");
-        } else {
+        }
+        else {
             sb.append("(");
         }
         for (int i = 0; i < arr.length; ++i) {// Object o : arr ) {
-            if (i > 0)
+            if (i > 0) {
                 sb.append(",");
+            }
             if (arr[i] == null) {
                 sb.append("null");
-            } else {
+            }
+            else {
                 sb.append(arr[i].toString());
             }
         }
         if (square) {
             sb.append("]");
-        } else {
+        }
+        else {
             sb.append(")");
         }
 
@@ -124,11 +115,10 @@ public class Utils2 {
 
     /**
      * Translate a string s to an Integer.
-     * 
-     * @param s
-     *            is the string to parse as an Integer
+     *
+     * @param s is the string to parse as an Integer
      * @return the integer translation of string s, or return null if s is not
-     *         an integer.
+     * an integer.
      */
     public static Integer toInteger(String s) {
         Integer i = null;
@@ -142,11 +132,10 @@ public class Utils2 {
 
     /**
      * Translate a string s to an Long.
-     * 
-     * @param s
-     *            is the string to parse as an Long
+     *
+     * @param s is the string to parse as an Long
      * @return the long translation of string s, or return null if s is not a
-     *         long.
+     * long.
      */
     public static Long toLong(String s) {
         Long l = null;
@@ -160,11 +149,10 @@ public class Utils2 {
 
     /**
      * Translate a string s to a Double.
-     * 
-     * @param s
-     *            is the string to parse as a Double
+     *
+     * @param s is the string to parse as a Double
      * @return the double translation of string s, or return null if s is not a
-     *         double/integer.
+     * double/integer.
      */
     public static Double toDouble(String s) {
         Double i = null;
@@ -179,11 +167,9 @@ public class Utils2 {
     /**
      * Generate a string that repeats/replicates a string a specified number of
      * times.
-     * 
-     * @param s
-     *            is the string to repeat.
-     * @param times
-     *            is the number of times to repeat the string.
+     *
+     * @param s     is the string to repeat.
+     * @param times is the number of times to repeat the string.
      * @return a concatenation of times instances of s.
      */
     public static String repeat(String s, int times) {
@@ -206,16 +192,21 @@ public class Utils2 {
     }
 
     public static boolean isNullOrEmpty(Object s) {
-        if (s == null)
+        if (s == null) {
             return true;
-        if (s.getClass().isArray())
-            return isNullOrEmpty((Object[])s);
-        if (s instanceof String)
-            return isNullOrEmpty((String)s);
-        if (s instanceof Collection)
-            return isNullOrEmpty((Collection<?>)s);
-        if (s instanceof Map)
-            return isNullOrEmpty((Map<?, ?>)s);
+        }
+        if (s.getClass().isArray()) {
+            return isNullOrEmpty((Object[]) s);
+        }
+        if (s instanceof String) {
+            return isNullOrEmpty((String) s);
+        }
+        if (s instanceof Collection) {
+            return isNullOrEmpty((Collection<?>) s);
+        }
+        if (s instanceof Map) {
+            return isNullOrEmpty((Map<?, ?>) s);
+        }
         return false;
     }
 
@@ -331,7 +322,7 @@ public class Utils2 {
 
     // generic map<X, map<Y, Collection<Z>>>.add(x, y, z)
     public static <T1, T2, T3> boolean addAll(Map<T1, Map<T2, Collection<T3>>> map, T1 t1, T2 t2,
-            Collection<T3> t3Collection) {
+                                              Collection<T3> t3Collection) {
         if (Debug.errorOnNull("Error! Called Utils.add() with null argument!", map, t1, t2, t3Collection)) {
             return false;
         }
@@ -384,13 +375,10 @@ public class Utils2 {
 
     /**
      * Manages a "seen" set for avoiding infinite recursion.
-     * 
-     * @param o
-     *            is the object visited
-     * @param recursive
-     *            is whether infinite recursion is possible
-     * @param seen
-     *            is the set of objects already visited
+     *
+     * @param o         is the object visited
+     * @param recursive is whether infinite recursion is possible
+     * @param seen      is the set of objects already visited
      * @return whether the object has already been visited
      */
     public static <T> Pair<Boolean, Seen<T>> seen(T o, boolean recursive, Seen<T> seen) {
@@ -407,11 +395,12 @@ public class Utils2 {
         // ++notSeenCt;
         if (seen == null && recursive == true) {
             seen = new SeenHashSet<T>(); // ok to use hash here since we never
-                                         // iterate
+            // iterate
             // over the contents
         }
-        if (seen != null)
+        if (seen != null) {
             seen.add(o);
+        }
         return new Pair<Boolean, Seen<T>>(false, seen);
     }
 
@@ -420,18 +409,15 @@ public class Utils2 {
 
     /**
      * Manages a "seen" set for avoiding infinite recursion.
-     * 
-     * @param o
-     *            is the object visited
-     * @param recursive
-     *            is whether infinite recursion is possible
-     * @param seen
-     *            is the set of objects already visited
+     *
+     * @param o         is the object visited
+     * @param recursive is whether infinite recursion is possible
+     * @param seen      is the set of objects already visited
      * @return whether the object has already been visited
      */
     public static <T> Pair<Boolean, Set<T>> seen(T o, boolean recursive, Set<T> seen) {
         if (seen instanceof Seen) {
-            Pair<Boolean, Seen<T>> p = seen(o, recursive, (Seen<T>)seen);
+            Pair<Boolean, Seen<T>> p = seen(o, recursive, (Seen<T>) seen);
             return new Pair<Boolean, Set<T>>(p);
         }
         if (seen != null && seen.contains(o)) {
@@ -441,25 +427,27 @@ public class Utils2 {
         // ++notSeenCt;
         if (seen == null && recursive == true) {
             seen = new HashSet<T>(); // ok to use hash here since we never
-                                     // iterate
-                                     // over the contents
+            // iterate
+            // over the contents
         }
-        if (seen != null)
+        if (seen != null) {
             seen.add(o);
+        }
         return new Pair<Boolean, Set<T>>(false, seen);
     }
 
     /**
      * Replace the last occurrence of the substring in s with the replacement.
-     * 
+     *
      * @param s
      * @param replacement
      * @return the result of the replacement
      */
     public static String replaceLast(String s, String substring, String replacement) {
         int pos = s.lastIndexOf(substring);
-        if (pos == -1)
+        if (pos == -1) {
             return s;
+        }
         return s.substring(0, pos) + replacement + s.substring(pos + substring.length());
     }
 
@@ -479,7 +467,7 @@ public class Utils2 {
         sb.append(indent + prefix + "\n");
         Class<?> c = o.getClass();
         Method[] methods = c.getMethods();
-        for (Method m: methods) {
+        for (Method m : methods) {
             if (m.getReturnType() == void.class || m.getReturnType() == null
                     || m.getName().startsWith("wait") || m.getName().startsWith("notify")
                     || m.getName().startsWith("remove") || m.getName().startsWith("delete")) {
@@ -497,7 +485,7 @@ public class Utils2 {
     /**
      * @param c
      * @return a c if c is a {@link List} or, otherwise, an ArrayList containing
-     *         the elements of c
+     * the elements of c
      */
     public static <T> List<T> toList(Collection<T> c) {
         return asList(c);
@@ -506,11 +494,12 @@ public class Utils2 {
     /**
      * @param c
      * @return a c if c is a {@link List} or, otherwise, a new ArrayList
-     *         containing the elements of c
+     * containing the elements of c
      */
     public static <T> List<T> asList(Collection<T> c) {
-        if (c instanceof List)
-            return (List<T>)c;
+        if (c instanceof List) {
+            return (List<T>) c;
+        }
         List<T> list = new ArrayList<T>(c);
         return list;
     }
@@ -519,16 +508,17 @@ public class Utils2 {
      * @param c
      * @param cls
      * @return a new {@link List} containing
-     *         the elements of c cast to type V
+     * the elements of c cast to type V
      */
-    public static <V, T> List<V> asList( Collection<T> c, Class<V> cls ) {
-        List<V> list = new ArrayList< V >();
-        for ( T t : c ) {
-            if (t == null || cls == null || cls.isAssignableFrom( t.getClass() ) ) {
+    public static <V, T> List<V> asList(Collection<T> c, Class<V> cls) {
+        List<V> list = new ArrayList<V>();
+        for (T t : c) {
+            if (t == null || cls == null || cls.isAssignableFrom(t.getClass())) {
                 try {
-                    V v = ( cls == null ? (V)t : cls.cast( t ) );
-                    list.add( v );
-                } catch ( ClassCastException e ) {}
+                    V v = (cls == null ? (V) t : cls.cast(t));
+                    list.add(v);
+                } catch (ClassCastException e) {
+                }
             }
         }
         return list;
@@ -537,7 +527,7 @@ public class Utils2 {
     /**
      * @param c
      * @return a c if c is a {@link Set} or, otherwise, a {@link LinkedHashSet}
-     *         containing the elements of c
+     * containing the elements of c
      */
     public static <T> Set<T> toSet(Collection<T> c) {
         return asSet(c);
@@ -546,11 +536,12 @@ public class Utils2 {
     /**
      * @param c
      * @return a c if c is a {@link Set} or, otherwise, a {@link LinkedHashSet}
-     *         containing the elements of c
+     * containing the elements of c
      */
     public static <T> Set<T> asSet(Collection<T> c) {
-        if (c instanceof Set)
-            return (Set<T>)c;
+        if (c instanceof Set) {
+            return (Set<T>) c;
+        }
         LinkedHashSet<T> set = new LinkedHashSet<T>(c);
         return set;
     }
@@ -558,13 +549,14 @@ public class Utils2 {
     /**
      * @param arrays
      * @return the sum of the lengths of the arrays, ignoring arrays that are
-     *         null (but counting null entries)
+     * null (but counting null entries)
      */
     public static int totalSize(Object[]... arrays) {
-        if (arrays == null)
+        if (arrays == null) {
             return 0;
+        }
         int size = 0;
-        for (Object[] array: arrays) {
+        for (Object[] array : arrays) {
             size += (array == null ? 0 : array.length);
         }
         return size;
@@ -573,14 +565,14 @@ public class Utils2 {
     /**
      * @param arrays
      * @return the concatenation of the elements of the arrays into a new array,
-     *         ignoring arrays that are null (but including null entries in each
-     *         of the arrays)
+     * ignoring arrays that are null (but including null entries in each
+     * of the arrays)
      */
     public static Object[] join(Object[]... arrays) {
         int size = totalSize(arrays);
         Object[] result = new Object[size];
         int i = 0;
-        for (Object[] array: arrays) {
+        for (Object[] array : arrays) {
             if (array != null) {
                 for (int j = 0; j < array.length; ++j, ++i) {
                     result[i] = array[j];
@@ -610,11 +602,13 @@ public class Utils2 {
     public static <T> String join(Collection<T> things, String delim) {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
-        for (T t: things) {
-            if (first)
+        for (T t : things) {
+            if (first) {
                 first = false;
-            else
+            }
+            else {
                 sb.append(delim);
+            }
             sb.append(t);
         }
         return sb.toString();
@@ -634,9 +628,10 @@ public class Utils2 {
 
     @SuppressWarnings("unchecked")
     public static <T> T[] scramble(Collection<T> collection) {
-        if (isNullOrEmpty(collection))
-            return (T[])new Object[] {};
-        T[] a = (T[])new Object[collection.size()];
+        if (isNullOrEmpty(collection)) {
+            return (T[]) new Object[]{};
+        }
+        T[] a = (T[]) new Object[collection.size()];
         collection.toArray(a);
         return scramble(a);
     }
@@ -661,40 +656,43 @@ public class Utils2 {
 
     /**
      * A potentially more efficient addAll() for unordered Collections.
-     * 
+     *
      * @param coll1
      * @param coll2
      * @return the longer of the two collections after adding the shorter to the
-     *         longer.
+     * longer.
      */
     @SuppressWarnings("unchecked")
     public static <T, C extends Collection<T>> C addAll(Collection<T> coll1, Collection<T> coll2) {
-        if (coll1 == null)
-            return (C)coll2;
-        if (coll2 == null)
-            return (C)coll1;
+        if (coll1 == null) {
+            return (C) coll2;
+        }
+        if (coll2 == null) {
+            return (C) coll1;
+        }
 
         Collection<T> cSmaller, cBigger;
         if (coll1.size() < coll2.size()) {
             cSmaller = coll1;
             cBigger = coll2;
-        } else {
+        }
+        else {
             cSmaller = coll2;
             cBigger = coll1;
         }
         try {
             cBigger.addAll(cSmaller);
-            return (C)cBigger;
+            return (C) cBigger;
         } catch (UnsupportedOperationException e) {
         }
         try {
             cSmaller.addAll(cBigger);
-            return (C)cSmaller;
+            return (C) cSmaller;
         } catch (UnsupportedOperationException e) {
         }
         ArrayList<T> newList = new ArrayList<T>(cBigger);
         newList.addAll(cSmaller);
-        return (C)newList;
+        return (C) newList;
     }
 
     public static String addTimestampToFilename(String fileName) {
@@ -714,8 +712,9 @@ public class Utils2 {
     }
 
     public static String toStringNoHash(Object o) {
-        if (o == null)
+        if (o == null) {
             return "null";
+        }
         // try {
         // if ( o.getClass().getMethod( "toString", (Class<?>[])null
         // ).getDeclaringClass() == o.getClass() ) {
@@ -733,7 +732,7 @@ public class Utils2 {
      * @param s1
      * @param s2
      * @return the length of the longest common substring which is also a prefix
-     *         of one of the strings.
+     * of one of the strings.
      */
     public static int longestPrefixSubstring(String subcontext, String subc) {
         int numMatch = 0;
@@ -748,7 +747,8 @@ public class Utils2 {
                 // numDontMatch = subcontext.length() - subc.length();
                 // }
             }
-        } else if (subc.contains(subcontext)) {
+        }
+        else if (subc.contains(subcontext)) {
             if (numMatch < subcontext.length()) {
                 // subcontextKey = subcontext;
                 numMatch = subcontext.length();
@@ -767,12 +767,10 @@ public class Utils2 {
      * This implementation appears {@code O(n^2)}. This is slower than a suffix
      * trie implementation, which is {@code O(n+m)}. The code below is copied
      * from wikipedia.
-     * 
+     *
      * @param s1
      * @param s2
      * @return the length of the longest common substring
-     * 
-     * 
      */
     public static int longestCommonSubstr(String s1, String s2) {
         if (s1.isEmpty() || s2.isEmpty()) {
@@ -790,10 +788,12 @@ public class Utils2 {
             for (int j = 0; j < n; ++j) {
                 if (s1.charAt(i) != s2.charAt(j)) {
                     cost = 0;
-                } else {
+                }
+                else {
                     if ((i == 0) || (j == 0)) {
                         cost = 1;
-                    } else {
+                    }
+                    else {
                         cost = p[j - 1] + 1;
                     }
                 }
@@ -826,7 +826,7 @@ public class Utils2 {
 
     /**
      * Creates a new {@link ArrayList} and inserts the arguments, {@code ts}.
-     * 
+     *
      * @param ts
      * @return the new {@link ArrayList}
      */
@@ -856,8 +856,9 @@ public class Utils2 {
     }
 
     public static boolean isNumber(String s) {
-        if (isNullOrEmpty(s))
+        if (isNullOrEmpty(s)) {
             return false;
+        }
         try {
             Double.parseDouble(s);
         } catch (NumberFormatException e) {
@@ -870,7 +871,7 @@ public class Utils2 {
 
     /**
      * Count the number of occurrences of the regular expression in the string.
-     * 
+     *
      * @param regex
      * @param string
      * @return the number of occurrences of regex in string
@@ -891,10 +892,10 @@ public class Utils2 {
     }
 
     public static String getStackTrace(Throwable t) {
-        if ( t == null ) {
+        if (t == null) {
             try {
                 throw new Exception();
-            } catch( Exception e) {
+            } catch (Exception e) {
                 t = e;
             }
         }

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,20 +28,18 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.viewedit;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.export.image.ImageExporter;
+import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBAbstractVisitor;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBImage;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSection;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSimpleList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,27 +50,11 @@ import java.util.Stack;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.export.image.ImageExporter;
-import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
-import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-
 /**
  * visits the Docbook result model and collects view information and elements in
  * views to export to view editor
- * 
+ *
  * @author dlam
- * 
  */
 @Deprecated
 public class DBEditDocwebVisitor extends DBAbstractVisitor {
@@ -86,18 +68,18 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
      */
 
     protected Map<String, JSONObject> elements;
-    private Map<String, JSONObject>   views;
-    private JSONObject                view2view;
-    private JSONArray                 curContains;
-    private Stack<JSONArray>          sibviews;
-    private Map<String, JSONObject>   images;                 // keep track of
-                                                               // all images and
-                                                               // corresponding
-                                                               // metadata
-    protected boolean                 recurse;
-    private GUILog                    gl;
-    protected boolean                 alfresco;
-    private static String             FILE_EXTENSION = ".svg";
+    private Map<String, JSONObject> views;
+    private JSONObject view2view;
+    private JSONArray curContains;
+    private Stack<JSONArray> sibviews;
+    private Map<String, JSONObject> images;                 // keep track of
+    // all images and
+    // corresponding
+    // metadata
+    protected boolean recurse;
+    private GUILog gl;
+    protected boolean alfresco;
+    private static String FILE_EXTENSION = ".svg";
 
     public DBEditDocwebVisitor(boolean recurse, boolean alfresco) {
         elements = new HashMap<String, JSONObject>();
@@ -139,8 +121,8 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
      * Utility to remove all the images
      */
     public void removeImages() {
-        for (String key: images.keySet()) {
-            String filename = (String)images.get(key).get("abspath");
+        for (String key : images.keySet()) {
+            String filename = (String) images.get(key).get("abspath");
             try {
                 File file = new File(filename);
 
@@ -171,10 +153,11 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
             entry.put("type", "Paragraph");
             curContains.add(entry);
         }
-        for (DocumentElement de: book.getChildren()) {
+        for (DocumentElement de : book.getChildren()) {
             de.accept(this);
-            if (!recurse)
+            if (!recurse) {
                 break;
+            }
         }
         sibviews.pop();
     }
@@ -213,7 +196,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
         long cs = 0;
         try {
             RandomAccessFile f = new RandomAccessFile(svgDiagramFile.getAbsolutePath(), "r");
-            byte[] data = new byte[(int)f.length()];
+            byte[] data = new byte[(int) f.length()];
             f.read(data);
             f.close();
             Checksum checksum = new CRC32();
@@ -250,7 +233,8 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
             list.accept(l);
             curContains.add(l.getObject());
 
-        } else {
+        }
+        else {
             DBHTMLVisitor html = new DBHTMLVisitor();
             list.accept(html);
             JSONObject entry = new JSONObject();
@@ -275,7 +259,8 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
             this.addToElements(para.getFrom(), false);
             entry.put("source", para.getFrom().getID());
             entry.put("useProperty", para.getFromProperty().toString());
-        } else {
+        }
+        else {
             entry.put("source", "text");
             entry.put("text", DocGenUtils.addP(DocGenUtils.fixString(para.getText(), false)));
         }
@@ -297,7 +282,8 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
             this.addToElements(text.getFrom(), false);
             entry.put("source", text.getFrom().getID());
             entry.put("useProperty", text.getFromProperty().toString());
-        } else {
+        }
+        else {
             entry.put("source", "text");
             entry.put("text", DocGenUtils.addP(DocGenUtils.fixString(text.getText(), false)));
         }
@@ -317,13 +303,14 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
             sibviews.push(childViews);
             view2view.put(eview.getID(), childViews);
 
-            for (DocumentElement de: section.getChildren()) {
+            for (DocumentElement de : section.getChildren()) {
                 // if (recurse || !(de instanceof DBSection))
                 de.accept(this);
             }
 
             sibviews.pop();
-        } else {
+        }
+        else {
             // addToViews(fake, false)
             // gen fakeid
             // sibviews.peek().add(fakeid);
@@ -358,7 +345,8 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
             DBEditTableVisitor2 v = new DBEditTableVisitor2(this.recurse, elements);
             table.accept(v);
             curContains.add(v.getObject());
-        } else {
+        }
+        else {
             DBEditTableVisitor v = new DBEditTableVisitor(this.recurse, this.elements);
             table.accept(v);
             curContains.add(v.getObject());
@@ -367,7 +355,7 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
 
     @SuppressWarnings("unchecked")
     protected void addToViews(Element e, boolean isNoSection) {
-        gl.log("Processing view: " + ((NamedElement)e).getName());
+        gl.log("Processing view: " + ((NamedElement) e).getName());
         JSONObject view = new JSONObject();
         String id = e.getID();
         view.put("mdid", id);
@@ -385,30 +373,31 @@ public class DBEditDocwebVisitor extends DBAbstractVisitor {
     protected void addToElements(Element e, boolean isview) {
         String id = e.getID();
         JSONObject o = null;
-        if (elements.containsKey(id))
+        if (elements.containsKey(id)) {
             o = elements.get(id);
+        }
         else {
             o = new JSONObject();
             elements.put(id, o);
         }
         if (e instanceof Slot) {
-            String ss = Utils.slotValueToString((Slot)e);
+            String ss = Utils.slotValueToString((Slot) e);
             o.put("type", "Property");
             o.put("dvalue", ss);
         }
         if (e instanceof Property) {
             o.put("type", "Property");
-            o.put("dvalue", UML2ModelUtil.getDefault((Property)e));
+            o.put("dvalue", UML2ModelUtil.getDefault((Property) e));
         }
         if (e instanceof NamedElement) {
-            o.put("name", ((NamedElement)e).getName());
-            o.put("qualifiedName", ((NamedElement)e).getQualifiedName().trim().replaceAll("::", ".")
+            o.put("name", ((NamedElement) e).getName());
+            o.put("qualifiedName", ((NamedElement) e).getQualifiedName().trim().replaceAll("::", ".")
                     .replaceAll("[^A-Za-z0-9_\\-\\. ]", "_"));
         }
         String doc = ModelHelper.getComment(e);
         if (e instanceof Comment) {
             o.put("type", "Comment");
-            doc = Utils.stripHtmlWrapper(((Comment)e).getBody());
+            doc = Utils.stripHtmlWrapper(((Comment) e).getBody());
         }
         o.put("documentation", Utils.stripHtmlWrapper(doc));
         o.put("mdid", id);

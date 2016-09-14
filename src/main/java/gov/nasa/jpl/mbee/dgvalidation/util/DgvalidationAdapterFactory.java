@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -32,7 +32,6 @@ import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
 import gov.nasa.jpl.mbee.dgvalidation.Rule;
 import gov.nasa.jpl.mbee.dgvalidation.Suite;
 import gov.nasa.jpl.mbee.dgvalidation.Violation;
-
 import org.eclipse.emf.common.notify.Adapter;
 import org.eclipse.emf.common.notify.Notifier;
 import org.eclipse.emf.common.notify.impl.AdapterFactoryImpl;
@@ -42,14 +41,14 @@ import org.eclipse.emf.ecore.EObject;
  * <!-- begin-user-doc --> The <b>Adapter Factory</b> for the model. It provides
  * an adapter <code>createXXX</code> method for each class of the model. <!--
  * end-user-doc -->
- * 
- * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage
+ *
  * @generated
+ * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage
  */
 public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
     /**
      * The cached model package. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected static DgvalidationPackage modelPackage;
@@ -57,7 +56,7 @@ public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
     /**
      * Creates an instance of the adapter factory. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @generated
      */
     public DgvalidationAdapterFactory() {
@@ -71,7 +70,7 @@ public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
      * <!-- begin-user-doc --> This implementation returns <code>true</code> if
      * the object is either the model's package or is an instance object of the
      * model. <!-- end-user-doc -->
-     * 
+     *
      * @return whether this factory is applicable for the type of the object.
      * @generated
      */
@@ -81,7 +80,7 @@ public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
             return true;
         }
         if (object instanceof EObject) {
-            return ((EObject)object).eClass().getEPackage() == modelPackage;
+            return ((EObject) object).eClass().getEPackage() == modelPackage;
         }
         return false;
     }
@@ -89,43 +88,42 @@ public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
     /**
      * The switch that delegates to the <code>createXXX</code> methods. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected DgvalidationSwitch<Adapter> modelSwitch = new DgvalidationSwitch<Adapter>() {
-                                                          @Override
-                                                          public Adapter caseRule(Rule object) {
-                                                              return createRuleAdapter();
-                                                          }
+        @Override
+        public Adapter caseRule(Rule object) {
+            return createRuleAdapter();
+        }
 
-                                                          @Override
-                                                          public Adapter caseViolation(Violation object) {
-                                                              return createViolationAdapter();
-                                                          }
+        @Override
+        public Adapter caseViolation(Violation object) {
+            return createViolationAdapter();
+        }
 
-                                                          @Override
-                                                          public Adapter caseSuite(Suite object) {
-                                                              return createSuiteAdapter();
-                                                          }
+        @Override
+        public Adapter caseSuite(Suite object) {
+            return createSuiteAdapter();
+        }
 
-                                                          @Override
-                                                          public Adapter defaultCase(EObject object) {
-                                                              return createEObjectAdapter();
-                                                          }
-                                                      };
+        @Override
+        public Adapter defaultCase(EObject object) {
+            return createEObjectAdapter();
+        }
+    };
 
     /**
      * Creates an adapter for the <code>target</code>. <!-- begin-user-doc -->
      * <!-- end-user-doc -->
-     * 
-     * @param target
-     *            the object to adapt.
+     *
+     * @param target the object to adapt.
      * @return the adapter for the <code>target</code>.
      * @generated
      */
     @Override
     public Adapter createAdapter(Notifier target) {
-        return modelSwitch.doSwitch((EObject)target);
+        return modelSwitch.doSwitch((EObject) target);
     }
 
     /**
@@ -134,10 +132,10 @@ public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
      * <!-- begin-user-doc --> This default implementation returns null so that
      * we can easily ignore cases; it's useful to ignore a case when inheritance
      * will catch all the cases anyway. <!-- end-user-doc -->
-     * 
+     *
      * @return the new adapter.
-     * @see gov.nasa.jpl.mbee.dgvalidation.Rule
      * @generated
+     * @see gov.nasa.jpl.mbee.dgvalidation.Rule
      */
     public Adapter createRuleAdapter() {
         return null;
@@ -150,10 +148,10 @@ public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
      * returns null so that we can easily ignore cases; it's useful to ignore a
      * case when inheritance will catch all the cases anyway. <!-- end-user-doc
      * -->
-     * 
+     *
      * @return the new adapter.
-     * @see gov.nasa.jpl.mbee.dgvalidation.Violation
      * @generated
+     * @see gov.nasa.jpl.mbee.dgvalidation.Violation
      */
     public Adapter createViolationAdapter() {
         return null;
@@ -165,10 +163,10 @@ public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
      * <!-- begin-user-doc --> This default implementation returns null so that
      * we can easily ignore cases; it's useful to ignore a case when inheritance
      * will catch all the cases anyway. <!-- end-user-doc -->
-     * 
+     *
      * @return the new adapter.
-     * @see gov.nasa.jpl.mbee.dgvalidation.Suite
      * @generated
+     * @see gov.nasa.jpl.mbee.dgvalidation.Suite
      */
     public Adapter createSuiteAdapter() {
         return null;
@@ -177,7 +175,7 @@ public class DgvalidationAdapterFactory extends AdapterFactoryImpl {
     /**
      * Creates a new adapter for the default case. <!-- begin-user-doc --> This
      * default implementation returns null. <!-- end-user-doc -->
-     * 
+     *
      * @return the new adapter.
      * @generated
      */

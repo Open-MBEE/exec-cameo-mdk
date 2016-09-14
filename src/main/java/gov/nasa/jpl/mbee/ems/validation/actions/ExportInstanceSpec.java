@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,31 +28,29 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.ExportUtility;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+import java.awt.event.ActionEvent;
+import java.util.Collection;
 
 public class ExportInstanceSpec extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private InstanceSpecification element;
-    
+
     public ExportInstanceSpec(InstanceSpecification e) {
         super("ExportInstanceSpec", "Commit instance", null, null);
         this.element = e;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -62,11 +60,11 @@ public class ExportInstanceSpec extends RuleViolationAction implements Annotatio
     @Override
     public void execute(Collection<Annotation> annos) {
         JSONArray infos = new JSONArray();
-        for (Annotation anno: annos) {
-            Element e = (Element)anno.getTarget();
+        for (Annotation anno : annos) {
+            Element e = (Element) anno.getTarget();
             if (e instanceof InstanceSpecification) {
                 JSONObject ob = ExportUtility.fillId(e, null);
-                ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification)e, ob);
+                ExportUtility.fillInstanceSpecificationSpecialization((InstanceSpecification) e, ob);
                 infos.add(ob);
             }
         }
@@ -82,5 +80,5 @@ public class ExportInstanceSpec extends RuleViolationAction implements Annotatio
         elements.add(ob);
         commit(elements, "Instance Specification");
     }
-    
+
 }

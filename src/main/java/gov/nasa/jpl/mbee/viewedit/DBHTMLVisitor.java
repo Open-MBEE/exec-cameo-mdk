@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -29,18 +29,7 @@
 package gov.nasa.jpl.mbee.viewedit;
 
 import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBAbstractVisitor;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBImage;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSection;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSimpleList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
 
 public class DBHTMLVisitor extends DBAbstractVisitor {
 
@@ -70,15 +59,19 @@ public class DBHTMLVisitor extends DBAbstractVisitor {
 
     @Override
     public void visit(DBList list) {
-        if (list.isOrdered())
+        if (list.isOrdered()) {
             out.append("<ol>");
-        else
+        }
+        else {
             out.append("<ul>");
+        }
         visitChildren(list);
-        if (list.isOrdered())
+        if (list.isOrdered()) {
             out.append("</ol>");
-        else
+        }
+        else {
             out.append("</ul>");
+        }
     }
 
     @Override
@@ -106,7 +99,7 @@ public class DBHTMLVisitor extends DBAbstractVisitor {
     @Override
     public void visit(DBSimpleList simplelist) {
         out.append("<ul>");
-        for (Object o: simplelist.getContent()) {
+        for (Object o : simplelist.getContent()) {
             out.append("<li>");
             out.append(DocGenUtils.addP(DocGenUtils.fixString(o, false)));
             out.append("</li>");

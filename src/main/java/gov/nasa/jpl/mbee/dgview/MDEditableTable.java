@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -33,7 +33,7 @@ import org.eclipse.emf.common.util.EList;
 /**
  * <!-- begin-user-doc --> A representation of the model object '
  * <em><b>MD Editable Table</b></em>'. <!-- end-user-doc -->
- * 
+ * <p>
  * <p>
  * The following features are supported:
  * <ul>
@@ -52,10 +52,10 @@ import org.eclipse.emf.common.util.EList;
  * <em>Gui Body</em>}</li>
  * </ul>
  * </p>
- * 
- * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable()
+ *
  * @model
  * @generated
+ * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable()
  */
 public interface MDEditableTable extends Table {
     /**
@@ -66,12 +66,12 @@ public interface MDEditableTable extends Table {
      * really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Precision</em>' attribute.
-     * @see #setPrecision(int)
-     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_Precision()
      * @model
      * @generated
+     * @see #setPrecision(int)
+     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_Precision()
      */
     int getPrecision();
 
@@ -80,11 +80,10 @@ public interface MDEditableTable extends Table {
      * {@link gov.nasa.jpl.mbee.dgview.MDEditableTable#getPrecision
      * <em>Precision</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc
      * -->
-     * 
-     * @param value
-     *            the new value of the '<em>Precision</em>' attribute.
-     * @see #getPrecision()
+     *
+     * @param value the new value of the '<em>Precision</em>' attribute.
      * @generated
+     * @see #getPrecision()
      */
     void setPrecision(int value);
 
@@ -97,11 +96,11 @@ public interface MDEditableTable extends Table {
      * there really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Gui Headers</em>' attribute list.
-     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_GuiHeaders()
      * @model
      * @generated
+     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_GuiHeaders()
      */
     EList<String> getGuiHeaders();
 
@@ -114,11 +113,11 @@ public interface MDEditableTable extends Table {
      * there really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Editable</em>' attribute list.
-     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_Editable()
      * @model
      * @generated
+     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_Editable()
      */
     EList<Boolean> getEditable();
 
@@ -131,11 +130,11 @@ public interface MDEditableTable extends Table {
      * there really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Merge Cols</em>' attribute list.
-     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_MergeCols()
      * @model
      * @generated
+     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_MergeCols()
      */
     EList<Integer> getMergeCols();
 
@@ -147,12 +146,12 @@ public interface MDEditableTable extends Table {
      * there really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Add Line Num</em>' attribute.
-     * @see #setAddLineNum(boolean)
-     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_AddLineNum()
      * @model
      * @generated
+     * @see #setAddLineNum(boolean)
+     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_AddLineNum()
      */
     boolean isAddLineNum();
 
@@ -161,11 +160,10 @@ public interface MDEditableTable extends Table {
      * {@link gov.nasa.jpl.mbee.dgview.MDEditableTable#isAddLineNum
      * <em>Add Line Num</em>}' attribute. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Add Line Num</em>' attribute.
-     * @see #isAddLineNum()
+     *
+     * @param value the new value of the '<em>Add Line Num</em>' attribute.
      * @generated
+     * @see #isAddLineNum()
      */
     void setAddLineNum(boolean value);
 
@@ -179,11 +177,11 @@ public interface MDEditableTable extends Table {
      * isn't clear, there really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Gui Body</em>' containment reference list.
-     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_GuiBody()
      * @model containment="true"
      * @generated
+     * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#getMDEditableTable_GuiBody()
      */
     EList<TableRow> getGuiBody();
 

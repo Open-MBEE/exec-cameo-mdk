@@ -57,7 +57,8 @@ public class GenerateViewPresentationAction extends MDAction {
                     break;
                 }
                 vss.addAll(vg.getValidations());
-            } else if (StereotypesHelper.hasStereotypeOrDerived(element, elementGroupStereotype)) {
+            }
+            else if (StereotypesHelper.hasStereotypeOrDerived(element, elementGroupStereotype)) {
                 List members = StereotypesHelper.getStereotypePropertyValue(element, elementGroupStereotype, "member", true);
                 for (Object o : members) {
                     if (o instanceof Element) {

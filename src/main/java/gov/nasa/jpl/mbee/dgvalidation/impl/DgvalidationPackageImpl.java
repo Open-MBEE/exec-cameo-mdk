@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,54 +28,44 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.dgvalidation.impl;
 
-import gov.nasa.jpl.mbee.dgvalidation.DgvalidationFactory;
-import gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage;
-import gov.nasa.jpl.mbee.dgvalidation.Rule;
-import gov.nasa.jpl.mbee.dgvalidation.Severity;
-import gov.nasa.jpl.mbee.dgvalidation.Suite;
-import gov.nasa.jpl.mbee.dgvalidation.Violation;
-
-import org.eclipse.emf.ecore.EAttribute;
-import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EEnum;
-import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.EReference;
+import gov.nasa.jpl.mbee.dgvalidation.*;
+import org.eclipse.emf.ecore.*;
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 /**
  * <!-- begin-user-doc --> An implementation of the model <b>Package</b>. <!--
  * end-user-doc -->
- * 
+ *
  * @generated
  */
 public class DgvalidationPackageImpl extends EPackageImpl implements DgvalidationPackage {
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass ruleEClass      = null;
+    private EClass ruleEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     private EClass violationEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass suiteEClass     = null;
+    private EClass suiteEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EEnum  severityEEnum   = null;
+    private EEnum severityEEnum = null;
 
     /**
      * Creates an instance of the model <b>Package</b>, registered with
@@ -86,11 +76,11 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
      * method {@link #init init()}, which also performs initialization of the
      * package, or returns the registered package, if one already exists. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
+     * @generated
      * @see org.eclipse.emf.ecore.EPackage.Registry
      * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#eNS_URI
      * @see #init()
-     * @generated
      */
     private DgvalidationPackageImpl() {
         super(eNS_URI, DgvalidationFactory.eINSTANCE);
@@ -98,7 +88,7 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     private static boolean isInited = false;
@@ -106,24 +96,25 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
     /**
      * Creates, registers, and initializes the <b>Package</b> for this model,
      * and for any others upon which it depends.
-     * 
+     * <p>
      * <p>
      * This method is used to initialize {@link DgvalidationPackage#eINSTANCE}
      * when that field is accessed. Clients should not invoke it directly.
      * Instead, they should simply access that field to obtain the package. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
+     * @generated
      * @see #eNS_URI
      * @see #createPackageContents()
      * @see #initializePackageContents()
-     * @generated
      */
     public static DgvalidationPackage init() {
-        if (isInited)
-            return (DgvalidationPackage)EPackage.Registry.INSTANCE.getEPackage(DgvalidationPackage.eNS_URI);
+        if (isInited) {
+            return (DgvalidationPackage) EPackage.Registry.INSTANCE.getEPackage(DgvalidationPackage.eNS_URI);
+        }
 
         // Obtain or create and register package
-        DgvalidationPackageImpl theDgvalidationPackage = (DgvalidationPackageImpl)(EPackage.Registry.INSTANCE
+        DgvalidationPackageImpl theDgvalidationPackage = (DgvalidationPackageImpl) (EPackage.Registry.INSTANCE
                 .get(eNS_URI) instanceof DgvalidationPackageImpl ? EPackage.Registry.INSTANCE.get(eNS_URI)
                 : new DgvalidationPackageImpl());
 
@@ -145,7 +136,7 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -155,47 +146,47 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getRule_Name() {
-        return (EAttribute)ruleEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) ruleEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getRule_Description() {
-        return (EAttribute)ruleEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) ruleEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getRule_Severity() {
-        return (EAttribute)ruleEClass.getEStructuralFeatures().get(2);
+        return (EAttribute) ruleEClass.getEStructuralFeatures().get(2);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EReference getRule_Violations() {
-        return (EReference)ruleEClass.getEStructuralFeatures().get(3);
+        return (EReference) ruleEClass.getEStructuralFeatures().get(3);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -205,27 +196,27 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getViolation_ElementId() {
-        return (EAttribute)violationEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) violationEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getViolation_Comment() {
-        return (EAttribute)violationEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) violationEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -235,57 +226,57 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getSuite_ShowDetail() {
-        return (EAttribute)suiteEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) suiteEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getSuite_ShowSummary() {
-        return (EAttribute)suiteEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) suiteEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getSuite_OwnSection() {
-        return (EAttribute)suiteEClass.getEStructuralFeatures().get(2);
+        return (EAttribute) suiteEClass.getEStructuralFeatures().get(2);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getSuite_Name() {
-        return (EAttribute)suiteEClass.getEStructuralFeatures().get(3);
+        return (EAttribute) suiteEClass.getEStructuralFeatures().get(3);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EReference getSuite_Rules() {
-        return (EReference)suiteEClass.getEStructuralFeatures().get(4);
+        return (EReference) suiteEClass.getEStructuralFeatures().get(4);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -295,17 +286,17 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public DgvalidationFactory getDgvalidationFactory() {
-        return (DgvalidationFactory)getEFactoryInstance();
+        return (DgvalidationFactory) getEFactoryInstance();
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     private boolean isCreated = false;
@@ -314,12 +305,13 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
      * Creates the meta-model objects for the package. This method is guarded to
      * have no affect on any invocation but its first. <!-- begin-user-doc -->
      * <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     public void createPackageContents() {
-        if (isCreated)
+        if (isCreated) {
             return;
+        }
         isCreated = true;
 
         // Create classes and their features
@@ -346,7 +338,7 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     private boolean isInitialized = false;
@@ -355,12 +347,13 @@ public class DgvalidationPackageImpl extends EPackageImpl implements Dgvalidatio
      * Complete the initialization of the package and its meta-model. This
      * method is guarded to have no affect on any invocation but its first. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     public void initializePackageContents() {
-        if (isInitialized)
+        if (isInitialized) {
             return;
+        }
         isInitialized = true;
 
         // Initialize package

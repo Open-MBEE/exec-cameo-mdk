@@ -1,24 +1,22 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.ems.migrate.FixViewDocumentation;
-import gov.nasa.jpl.mbee.ems.migrate.MigrationKind;
-
 import com.nomagic.actions.ActionsCategory;
+import gov.nasa.jpl.mbee.ems.migrate.MigrationKind;
 
 public class MigrationCategory extends ActionsCategory {
 
-	private static final String actionid = "Migration";
-	
-	public MigrationCategory() {
-	    super(actionid, "Migration", null, null);
-	    this.setNested(true);
-	    this.addAction(new MigrationAction(MigrationKind.CRUSHINATOR21TO22));
+    private static final String actionid = "Migration";
+
+    public MigrationCategory() {
+        super(actionid, "Migration", null, null);
+        this.setNested(true);
+        this.addAction(new MigrationAction(MigrationKind.CRUSHINATOR21TO22));
 //	    this.addAction(new MigrationAction(MigrationKind.VIEW2VIEW));
-	    this.addAction(new MigrationAction(MigrationKind.CRUSHINATOR22TO23));
-		this.addAction(new MigrationAction(MigrationKind.CRUSHINATOR23TO24));
-	    this.addAction(new CreateHoldingBinAction());
-	    //this.addAction(new FixViewDocumentation());
-	    // add more actions here
-	}
+        this.addAction(new MigrationAction(MigrationKind.CRUSHINATOR22TO23));
+        this.addAction(new MigrationAction(MigrationKind.CRUSHINATOR23TO24));
+        this.addAction(new CreateHoldingBinAction());
+        //this.addAction(new FixViewDocumentation());
+        // add more actions here
+    }
 
 }

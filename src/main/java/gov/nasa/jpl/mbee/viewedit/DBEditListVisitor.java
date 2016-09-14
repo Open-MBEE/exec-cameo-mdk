@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,23 +28,18 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.viewedit;
 
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBListItem;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 @Deprecated
 public class DBEditListVisitor extends DBEditDocwebVisitor {
 
     private JSONObject listjson;
-    private JSONArray  listelements;
-    private JSONArray  curitem;
+    private JSONArray listelements;
+    private JSONArray curitem;
 
     public DBEditListVisitor(boolean recurse, Map<String, JSONObject> e) {
         super(recurse, true);
@@ -65,16 +60,19 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
             list.accept(inner);
             curitem.add(inner.getObject());
             listelements.addAll(inner.getListElements());
-        } else {
+        }
+        else {
             listjson.put("type", "List");
-            if (list.isOrdered())
+            if (list.isOrdered()) {
                 listjson.put("ordered", true);
-            else
+            }
+            else {
                 listjson.put("ordered", false);
+            }
             listjson.put("bulleted", true);
             JSONArray l = new JSONArray();
             listjson.put("list", l);
-            for (DocumentElement de: list.getChildren()) {
+            for (DocumentElement de : list.getChildren()) {
                 curitem = new JSONArray();
                 de.accept(this);
                 l.add(curitem);
@@ -85,7 +83,7 @@ public class DBEditListVisitor extends DBEditDocwebVisitor {
 
     @Override
     public void visit(DBListItem listitem) {
-        for (DocumentElement de: listitem.getChildren()) {
+        for (DocumentElement de : listitem.getChildren()) {
             de.accept(this);
         }
     }

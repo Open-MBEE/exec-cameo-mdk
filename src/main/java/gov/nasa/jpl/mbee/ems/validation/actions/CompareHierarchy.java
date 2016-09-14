@@ -1,31 +1,20 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-
-import javax.swing.BoxLayout;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Collection;
 
 public class CompareHierarchy extends RuleViolationAction implements
         AnnotationAction, IRuleViolationAction {
@@ -61,29 +50,35 @@ public class CompareHierarchy extends RuleViolationAction implements
         @Override
         public String toString() {
             Object e = this.getUserObject();
-            if (e instanceof String)
+            if (e instanceof String) {
                 return (String) e;
-            if (!(e instanceof NamedElement))
+            }
+            if (!(e instanceof NamedElement)) {
                 return "";
+            }
             return ((NamedElement) e).getName();
         }
     }
 
     private ViewNode makeNode(String viewid, JSONObject o) {
-        if (o == null || o.isEmpty())
+        if (o == null || o.isEmpty()) {
             return new ViewNode("Doesn't Exist");
+        }
         if (o.containsKey(viewid)) {
             Element e = ExportUtility.getElementFromID(viewid);
             ViewNode vn = null;
-            if (e == null)
+            if (e == null) {
                 vn = new ViewNode(viewid);
-            else
+            }
+            else {
                 vn = new ViewNode(e);
+            }
             JSONArray children = (JSONArray) o.get(viewid);
             for (Object child : children) {
                 ViewNode childNode = makeNode((String) child, o);
-                if (childNode != null)
+                if (childNode != null) {
                     vn.add(childNode);
+                }
             }
             return vn;
         }

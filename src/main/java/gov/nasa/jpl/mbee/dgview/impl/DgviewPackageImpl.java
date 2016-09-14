@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,126 +28,107 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.dgview.impl;
 
-import gov.nasa.jpl.mbee.dgview.ColSpec;
-import gov.nasa.jpl.mbee.dgview.DgviewFactory;
-import gov.nasa.jpl.mbee.dgview.DgviewPackage;
-import gov.nasa.jpl.mbee.dgview.FromProperty;
-import gov.nasa.jpl.mbee.dgview.HasContent;
-import gov.nasa.jpl.mbee.dgview.Image;
-import gov.nasa.jpl.mbee.dgview.List;
-import gov.nasa.jpl.mbee.dgview.ListItem;
-import gov.nasa.jpl.mbee.dgview.MDEditableTable;
-import gov.nasa.jpl.mbee.dgview.Paragraph;
-import gov.nasa.jpl.mbee.dgview.Table;
-import gov.nasa.jpl.mbee.dgview.TableEntry;
-import gov.nasa.jpl.mbee.dgview.TableRow;
-import gov.nasa.jpl.mbee.dgview.Text;
-import gov.nasa.jpl.mbee.dgview.ViewElement;
-
-import org.eclipse.emf.ecore.EAttribute;
-import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EEnum;
-import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.EReference;
+import gov.nasa.jpl.mbee.dgview.*;
+import org.eclipse.emf.ecore.*;
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 /**
  * <!-- begin-user-doc --> An implementation of the model <b>Package</b>. <!--
  * end-user-doc -->
- * 
+ *
  * @generated
  */
 public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass colSpecEClass         = null;
+    private EClass colSpecEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass hasContentEClass      = null;
+    private EClass hasContentEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass imageEClass           = null;
+    private EClass imageEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass listEClass            = null;
+    private EClass listEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass listItemEClass        = null;
+    private EClass listItemEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass paragraphEClass       = null;
+    private EClass paragraphEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass tableEClass           = null;
+    private EClass tableEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass tableEntryEClass      = null;
+    private EClass tableEntryEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass textEClass            = null;
+    private EClass textEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass viewElementEClass     = null;
+    private EClass viewElementEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EClass tableRowEClass        = null;
+    private EClass tableRowEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     private EClass mdEditableTableEClass = null;
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
-    private EEnum  fromPropertyEEnum     = null;
+    private EEnum fromPropertyEEnum = null;
 
     /**
      * Creates an instance of the model <b>Package</b>, registered with
@@ -158,11 +139,11 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
      * method {@link #init init()}, which also performs initialization of the
      * package, or returns the registered package, if one already exists. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
+     * @generated
      * @see org.eclipse.emf.ecore.EPackage.Registry
      * @see gov.nasa.jpl.mbee.dgview.DgviewPackage#eNS_URI
      * @see #init()
-     * @generated
      */
     private DgviewPackageImpl() {
         super(eNS_URI, DgviewFactory.eINSTANCE);
@@ -170,7 +151,7 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     private static boolean isInited = false;
@@ -178,24 +159,25 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
     /**
      * Creates, registers, and initializes the <b>Package</b> for this model,
      * and for any others upon which it depends.
-     * 
+     * <p>
      * <p>
      * This method is used to initialize {@link DgviewPackage#eINSTANCE} when
      * that field is accessed. Clients should not invoke it directly. Instead,
      * they should simply access that field to obtain the package. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
+     * @generated
      * @see #eNS_URI
      * @see #createPackageContents()
      * @see #initializePackageContents()
-     * @generated
      */
     public static DgviewPackage init() {
-        if (isInited)
-            return (DgviewPackage)EPackage.Registry.INSTANCE.getEPackage(DgviewPackage.eNS_URI);
+        if (isInited) {
+            return (DgviewPackage) EPackage.Registry.INSTANCE.getEPackage(DgviewPackage.eNS_URI);
+        }
 
         // Obtain or create and register package
-        DgviewPackageImpl theDgviewPackage = (DgviewPackageImpl)(EPackage.Registry.INSTANCE.get(eNS_URI) instanceof DgviewPackageImpl
+        DgviewPackageImpl theDgviewPackage = (DgviewPackageImpl) (EPackage.Registry.INSTANCE.get(eNS_URI) instanceof DgviewPackageImpl
                 ? EPackage.Registry.INSTANCE.get(eNS_URI) : new DgviewPackageImpl());
 
         isInited = true;
@@ -216,7 +198,7 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -226,37 +208,37 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getColSpec_Colname() {
-        return (EAttribute)colSpecEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) colSpecEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getColSpec_Colwidth() {
-        return (EAttribute)colSpecEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) colSpecEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getColSpec_Colnum() {
-        return (EAttribute)colSpecEClass.getEStructuralFeatures().get(2);
+        return (EAttribute) colSpecEClass.getEStructuralFeatures().get(2);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -266,17 +248,17 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EReference getHasContent_Children() {
-        return (EReference)hasContentEClass.getEStructuralFeatures().get(0);
+        return (EReference) hasContentEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -286,47 +268,47 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getImage_DiagramId() {
-        return (EAttribute)imageEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) imageEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getImage_Caption() {
-        return (EAttribute)imageEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) imageEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getImage_Gennew() {
-        return (EAttribute)imageEClass.getEStructuralFeatures().get(2);
+        return (EAttribute) imageEClass.getEStructuralFeatures().get(2);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getImage_DoNotShow() {
-        return (EAttribute)imageEClass.getEStructuralFeatures().get(3);
+        return (EAttribute) imageEClass.getEStructuralFeatures().get(3);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -336,17 +318,17 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getList_Ordered() {
-        return (EAttribute)listEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) listEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -356,7 +338,7 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -366,17 +348,17 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getParagraph_Text() {
-        return (EAttribute)paragraphEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) paragraphEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -386,67 +368,67 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EReference getTable_Body() {
-        return (EReference)tableEClass.getEStructuralFeatures().get(0);
+        return (EReference) tableEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getTable_Caption() {
-        return (EAttribute)tableEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) tableEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getTable_Style() {
-        return (EAttribute)tableEClass.getEStructuralFeatures().get(2);
+        return (EAttribute) tableEClass.getEStructuralFeatures().get(2);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EReference getTable_Headers() {
-        return (EReference)tableEClass.getEStructuralFeatures().get(3);
+        return (EReference) tableEClass.getEStructuralFeatures().get(3);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EReference getTable_Colspecs() {
-        return (EReference)tableEClass.getEStructuralFeatures().get(4);
+        return (EReference) tableEClass.getEStructuralFeatures().get(4);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getTable_Cols() {
-        return (EAttribute)tableEClass.getEStructuralFeatures().get(5);
+        return (EAttribute) tableEClass.getEStructuralFeatures().get(5);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -456,37 +438,37 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getTableEntry_Morerows() {
-        return (EAttribute)tableEntryEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) tableEntryEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getTableEntry_Namest() {
-        return (EAttribute)tableEntryEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) tableEntryEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getTableEntry_Nameend() {
-        return (EAttribute)tableEntryEClass.getEStructuralFeatures().get(2);
+        return (EAttribute) tableEntryEClass.getEStructuralFeatures().get(2);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -496,17 +478,17 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getText_Text() {
-        return (EAttribute)textEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) textEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -516,47 +498,47 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getViewElement_Id() {
-        return (EAttribute)viewElementEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) viewElementEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getViewElement_Title() {
-        return (EAttribute)viewElementEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) viewElementEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getViewElement_FromElementId() {
-        return (EAttribute)viewElementEClass.getEStructuralFeatures().get(2);
+        return (EAttribute) viewElementEClass.getEStructuralFeatures().get(2);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getViewElement_FromProperty() {
-        return (EAttribute)viewElementEClass.getEStructuralFeatures().get(3);
+        return (EAttribute) viewElementEClass.getEStructuralFeatures().get(3);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -566,7 +548,7 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -576,67 +558,67 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getMDEditableTable_Precision() {
-        return (EAttribute)mdEditableTableEClass.getEStructuralFeatures().get(0);
+        return (EAttribute) mdEditableTableEClass.getEStructuralFeatures().get(0);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getMDEditableTable_GuiHeaders() {
-        return (EAttribute)mdEditableTableEClass.getEStructuralFeatures().get(1);
+        return (EAttribute) mdEditableTableEClass.getEStructuralFeatures().get(1);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getMDEditableTable_Editable() {
-        return (EAttribute)mdEditableTableEClass.getEStructuralFeatures().get(2);
+        return (EAttribute) mdEditableTableEClass.getEStructuralFeatures().get(2);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getMDEditableTable_MergeCols() {
-        return (EAttribute)mdEditableTableEClass.getEStructuralFeatures().get(3);
+        return (EAttribute) mdEditableTableEClass.getEStructuralFeatures().get(3);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EAttribute getMDEditableTable_AddLineNum() {
-        return (EAttribute)mdEditableTableEClass.getEStructuralFeatures().get(4);
+        return (EAttribute) mdEditableTableEClass.getEStructuralFeatures().get(4);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public EReference getMDEditableTable_GuiBody() {
-        return (EReference)mdEditableTableEClass.getEStructuralFeatures().get(5);
+        return (EReference) mdEditableTableEClass.getEStructuralFeatures().get(5);
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
@@ -646,17 +628,17 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     @Override
     public DgviewFactory getDgviewFactory() {
-        return (DgviewFactory)getEFactoryInstance();
+        return (DgviewFactory) getEFactoryInstance();
     }
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     private boolean isCreated = false;
@@ -665,12 +647,13 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
      * Creates the meta-model objects for the package. This method is guarded to
      * have no affect on any invocation but its first. <!-- begin-user-doc -->
      * <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     public void createPackageContents() {
-        if (isCreated)
+        if (isCreated) {
             return;
+        }
         isCreated = true;
 
         // Create classes and their features
@@ -734,7 +717,7 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
 
     /**
      * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     private boolean isInitialized = false;
@@ -743,12 +726,13 @@ public class DgviewPackageImpl extends EPackageImpl implements DgviewPackage {
      * Complete the initialization of the package and its meta-model. This
      * method is guarded to have no affect on any invocation but its first. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     public void initializePackageContents() {
-        if (isInitialized)
+        if (isInitialized) {
             return;
+        }
         isInitialized = true;
 
         // Initialize package

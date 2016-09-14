@@ -1,10 +1,9 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import javax.swing.KeyStroke;
-
+import com.nomagic.magicdraw.actions.MDAction;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
-import com.nomagic.magicdraw.actions.MDAction;
+import javax.swing.*;
 
 public class MMSAction extends MDAction {
 
@@ -14,11 +13,13 @@ public class MMSAction extends MDAction {
     }
 
     @Override
-    public void updateState() {    
-        if (ViewEditUtils.isPasswordSet())
+    public void updateState() {
+        if (ViewEditUtils.isPasswordSet()) {
             setEnabled(true);
-        else
+        }
+        else {
             setEnabled(false);
+        }
     }
 
 

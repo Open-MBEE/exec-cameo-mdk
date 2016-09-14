@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,33 +28,29 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
-import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.model.docmeta.DocumentMeta;
 
 import java.lang.reflect.Field;
-import java.util.List;
-
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 
 public class Document extends Container {
 
     private DocumentMeta metadata;
-    
-    private String       header;
-    private String       footer;
-    private String       subheader;
-    private String       subfooter;
 
-    private String       RemoveBlankPages;
-    private boolean      UseDefaultStylesheet;
+    private String header;
+    private String footer;
+    private String subheader;
+    private String subfooter;
 
-    private boolean      chunkFirstSections;
-    private int          chunkSectionDepth;
-    private int          tocSectionDepth;
+    private String RemoveBlankPages;
+    private boolean UseDefaultStylesheet;
 
-    private boolean      genNewImage;
+    private boolean chunkFirstSections;
+    private int chunkSectionDepth;
+    private int tocSectionDepth;
 
-    private boolean      product;
+    private boolean genNewImage;
+
+    private boolean product;
 
     public boolean isProduct() {
         return product;
@@ -125,13 +121,10 @@ public class Document extends Container {
     }
 
     public Boolean getRemoveBlankPages() {
-        if (RemoveBlankPages == "1")
-            return true;
-        else
-            return false;
+        return RemoveBlankPages == "1";
     }
 
-    
+
     public void setRemoveBlankPages(String s) {
         RemoveBlankPages = s;
     }
@@ -166,19 +159,19 @@ public class Document extends Container {
     public void accept(IModelVisitor v) {
         v.visit(this);
     }
-    
+
     @Override
     public String toStringStart() {
         StringBuffer sb = new StringBuffer();
-        sb.append( super.toStringStart() );
-        for ( Field f : getClass().getFields() ) {
-            if ( f.getDeclaringClass().equals( getClass().getSuperclass() ) ) {
+        sb.append(super.toStringStart());
+        for (Field f : getClass().getFields()) {
+            if (f.getDeclaringClass().equals(getClass().getSuperclass())) {
                 continue;
             }
             try {
-                sb.append( "," + f.getName() + "=" + f.get( this ) );
-            } catch ( IllegalArgumentException e ) {
-            } catch ( IllegalAccessException e ) {
+                sb.append("," + f.getName() + "=" + f.get(this));
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {
             }
         }
 //        sb.append( super.toStringEnd() );

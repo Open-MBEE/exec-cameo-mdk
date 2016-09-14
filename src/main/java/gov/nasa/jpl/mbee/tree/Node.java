@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,12 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.tree;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Node in a "tree" for simplifying presentation as tree structures, although
@@ -41,19 +36,18 @@ import java.util.Set;
  * nodes can represent the same element, a key is used to identify these nodes
  * (key can be null right now), hence the same model element can actually have
  * >1 parents
- * 
- * @author dlam
- * 
+ *
  * @param <K>
  * @param <T>
+ * @author dlam
  */
 public class Node<K, T> {
 
-    private Set<Node<K, T>>        children;
-    private T                      data;
-    private K                      key;
-    private Node<K, T>             parent;
-    private List<Node<K, T>>       list;
+    private Set<Node<K, T>> children;
+    private T data;
+    private K key;
+    private Node<K, T> parent;
+    private List<Node<K, T>> list;
     private Comparator<Node<K, T>> comparator;
 
     public Node(K key, T data) {
@@ -83,8 +77,9 @@ public class Node<K, T> {
         if (!children.contains(child)) {
             children.add(child);
             list.add(child);
-            if (comparator != null)
+            if (comparator != null) {
                 Collections.sort(list, comparator);
+            }
             child.setParent(this);
             child.setComparator(this.comparator);
         }
@@ -120,7 +115,7 @@ public class Node<K, T> {
 
     /**
      * get all children nodes with current node as root, that represents key
-     * 
+     *
      * @param key
      * @return
      */
@@ -130,9 +125,10 @@ public class Node<K, T> {
     }
 
     public Set<Node<K, T>> getNodes(K key, Set<Node<K, T>> result) {
-        if (this.key == key || key.equals(this.key))
+        if (this.key == key || key.equals(this.key)) {
             result.add(this);
-        for (Node<K, T> child: this.children) {
+        }
+        for (Node<K, T> child : this.children) {
             child.getNodes(key, result);
         }
         return result;
@@ -144,7 +140,7 @@ public class Node<K, T> {
 
     /**
      * distance from root of tree (root is 0)
-     * 
+     *
      * @return
      */
     public int getLevel() {
@@ -159,7 +155,7 @@ public class Node<K, T> {
 
     /**
      * get root of tree
-     * 
+     *
      * @return
      */
     public Node<K, T> getRoot() {
@@ -169,8 +165,9 @@ public class Node<K, T> {
             prep = curp;
             curp = curp.getParent();
         }
-        if (prep == null)
+        if (prep == null) {
             return this;
+        }
         return prep;
     }
 
@@ -186,7 +183,7 @@ public class Node<K, T> {
 
     /**
      * get all children data nodes with current node as root
-     * 
+     *
      * @param key
      * @return
      */
@@ -197,7 +194,7 @@ public class Node<K, T> {
 
     public Set<T> getAllData(Set<T> result) {
         result.add(this.data);
-        for (Node<K, T> child: this.children) {
+        for (Node<K, T> child : this.children) {
             child.getAllData(result);
         }
         return result;
@@ -205,7 +202,7 @@ public class Node<K, T> {
 
     /**
      * get all children data nodes with current node as root
-     * 
+     *
      * @param key
      * @return
      */
@@ -216,7 +213,7 @@ public class Node<K, T> {
 
     public Set<Node<K, T>> getAllNodes(Set<Node<K, T>> result) {
         result.add(this);
-        for (Node<K, T> child: this.children) {
+        for (Node<K, T> child : this.children) {
             child.getAllNodes(result);
         }
         return result;
@@ -232,7 +229,7 @@ public class Node<K, T> {
 
     public void sortAllChildren() {
         if (comparator != null) {
-            for (Node<K, T> child: this.children) {
+            for (Node<K, T> child : this.children) {
                 child.setComparator(comparator);
                 child.sortAllChildren();
             }

@@ -1,8 +1,7 @@
 package gov.nasa.jpl.mbee.ems;
 
-import org.json.simple.JSONObject;
-
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import org.json.simple.JSONObject;
 
 public class ReferenceException extends ImportException {
 

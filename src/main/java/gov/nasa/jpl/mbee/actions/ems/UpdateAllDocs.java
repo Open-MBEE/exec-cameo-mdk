@@ -1,48 +1,38 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
-import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
-import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
+import gov.nasa.jpl.mbee.generator.ViewPresentationGenerator;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import org.json.simple.JSONObject;
+
+import java.awt.event.ActionEvent;
+import java.util.*;
 
 public class UpdateAllDocs extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "GenerateAllDocs";
-    
+
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
-    
+
     public UpdateAllDocs() {
         super(actionid, "Generate All Documents", null, null);
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
         Utils.recommendUpdateFromTeamwork();
         updateAction();
     }
-    
+
     public List<ValidationSuite> updateAction() {
         /*DeltaSyncRunner msr = new DeltaSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
@@ -51,17 +41,17 @@ public class UpdateAllDocs extends MMSAction {
             Utils.guilog("[ERROR] Update from MMS was not completed");
             return vss;
         }*/
-        
+
         Set<Element> docs = getProjectDocuments();
         PresentationElementUtils viu = new PresentationElementUtils();
         Map<String, JSONObject> images = new HashMap<String, JSONObject>();
-        for (Element doc: docs) {
+        for (Element doc : docs) {
             /*
             if (!Utils.recommendUpdateFromTeamwork())
                 return vss;
             */
             ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, false, viu, images, null);
-            ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement)doc).getName() + "...", true, 0);
+            ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement) doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.isFailure()) {
                 Utils.guilog("[ERROR] Document generation was not completed");
@@ -82,21 +72,23 @@ public class UpdateAllDocs extends MMSAction {
         vss.addAll(msr2.getValidations());*/
         return vss;
     }
-    
+
     private Set<Element> getProjectDocuments() {
         Stereotype documentView = Utils.getProductStereotype();
         List<Stereotype> products = new ArrayList<Stereotype>();
-        for (Element el: Utils.collectDirectedRelatedElementsByRelationshipJavaClass(documentView, Generalization.class, 2, 0)) {
-            if (el instanceof Stereotype)
-                products.add((Stereotype)el);
+        for (Element el : Utils.collectDirectedRelatedElementsByRelationshipJavaClass(documentView, Generalization.class, 2, 0)) {
+            if (el instanceof Stereotype) {
+                products.add((Stereotype) el);
+            }
         }
         products.add(documentView);
         Set<Element> projDocs = new HashSet<Element>();
-        for (Stereotype product: products) {
-            for (InstanceSpecification is: product.get_instanceSpecificationOfClassifier()) {
+        for (Stereotype product : products) {
+            for (InstanceSpecification is : product.get_instanceSpecificationOfClassifier()) {
                 Element owner = is.getOwner();
-                if (!ProjectUtilities.isElementInAttachedProject(owner) && StereotypesHelper.hasStereotypeOrDerived(owner, documentView) && owner instanceof Class)
+                if (!ProjectUtilities.isElementInAttachedProject(owner) && StereotypesHelper.hasStereotypeOrDerived(owner, documentView) && owner instanceof Class) {
                     projDocs.add(owner);
+                }
             }
         }
         
@@ -113,9 +105,9 @@ public class UpdateAllDocs extends MMSAction {
         }
         return projDocs;
     }
-    
+
     public List<ValidationSuite> getValidations() {
-    	return vss;
+        return vss;
     }
-    
+
 }

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -27,13 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.stylesaver;
-
-import java.awt.event.ActionEvent;
-import java.util.Iterator;
-import java.util.List;
-import java.util.MissingResourceException;
-
-import org.json.simple.JSONObject;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -52,10 +45,16 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
+import org.json.simple.JSONObject;
+
+import java.awt.event.ActionEvent;
+import java.util.Iterator;
+import java.util.List;
+import java.util.MissingResourceException;
 
 /**
  * A class that saves style information corresponding to stereotyped elements.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class Saver extends MDAction {
@@ -63,17 +62,12 @@ public class Saver extends MDAction {
 
     /**
      * Initializes the Saver.
-     * 
-     * @param id
-     *            The ID of the action.
-     * @param value
-     *            The name of the action.
-     * @param elem
-     *            The element to be "saved."
-     * @param mnemonic
-     *            The mnemonic key of the action.
-     * @param group
-     *            The name of the related commands group.
+     *
+     * @param id       The ID of the action.
+     * @param value    The name of the action.
+     * @param elem     The element to be "saved."
+     * @param mnemonic The mnemonic key of the action.
+     * @param group    The name of the related commands group.
      */
     public Saver(String id, String value, int mnemonic, String group) {
         super(id, value, null, null);
@@ -83,16 +77,15 @@ public class Saver extends MDAction {
      * Saves the style of elements on the active diagram by storing relevant
      * style information in a JSON-formatted string to a property named "style"
      * in each respective element.
-     * 
-     * @param e
-     *            The ActionEvent that fired this method.
+     *
+     * @param e The ActionEvent that fired this method.
      */
     @Override
     @SuppressWarnings("unchecked")
     // for JSObject put() method
     public void actionPerformed(ActionEvent e) {
         Project proj = Application.getInstance().getProject(); // get the
-                                                               // project
+        // project
         GUILog gl = Application.getInstance().getGUILog();
 
         DiagramPresentationElement diagram;
@@ -121,7 +114,7 @@ public class Saver extends MDAction {
 
         // get JSON style string from each element and store them into a main
         // store for this diagram
-        for (PresentationElement diagElem: list) {
+        for (PresentationElement diagElem : list) {
             try {
                 styleStr = getStyle(diagElem);
                 mainStore.put(diagElem.getID(), styleStr);
@@ -141,14 +134,11 @@ public class Saver extends MDAction {
 
     /**
      * Makes a block with a property storing the string passed in.
-     * 
-     * @param style
-     *            A JSON-formatted style string to load into the created block's
-     *            property.
-     * @param proj
-     *            The project the diagram is in.
-     * @param diag
-     *            The diagram to save.
+     *
+     * @param style A JSON-formatted style string to load into the created block's
+     *              property.
+     * @param proj  The project the diagram is in.
+     * @param diag  The diagram to save.
      */
     private static void makeBlock(String style, Project proj, DiagramPresentationElement diag) {
         SessionManager.getInstance().createSession("Adding a block");
@@ -191,9 +181,8 @@ public class Saver extends MDAction {
     /**
      * Get a JSON-formatted string representing the style properties of the
      * parameterized Presentation element.
-     * 
-     * @param elem
-     *            The element to get style properties from.
+     *
+     * @param elem The element to get style properties from.
      * @return A JSON-formatted string.
      */
     @SuppressWarnings("unchecked")

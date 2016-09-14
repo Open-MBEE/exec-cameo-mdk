@@ -132,7 +132,7 @@ public class AutomatedViewGeneration extends CommandLine {
     private void loginTeamwork() throws FileNotFoundException, UnsupportedEncodingException, InterruptedException {
         // disable all mdk popup warnings
         MDKHelper.setPopupsDisabled(true);
-        
+
         String message = "[OPERATION] Logging in to Teamwork";
         logMessage(message);
         SessionInfo sessionInfo = null;
@@ -376,7 +376,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private void loadCredentials(String append) throws IOException {
         Properties prop = new Properties();
-        try (InputStream input = new FileInputStream(credentialsLocation);
+        try (InputStream input = new FileInputStream(credentialsLocation)
         ) {
             prop.load(input);
             if (prop.containsKey("app.accounts")) {

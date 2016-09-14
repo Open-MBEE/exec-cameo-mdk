@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,37 +28,28 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.viewedit;
 
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBSimpleList;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.List;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 /**
  * table json exporter that allows multiple elements in cell editing and list
  * editing
- * 
+ *
  * @author dlam
- * 
  */
 @Deprecated
 public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
 
     private JSONObject tablejson;
-    private JSONArray  curRow;
-    private JSONArray  curCell;
-    private JSONArray  tableelements;
-    private int        rowspan;
-    private int        colspan;
+    private JSONArray curRow;
+    private JSONArray curCell;
+    private JSONArray tableelements;
+    private int rowspan;
+    private int colspan;
 
     // private GUILog gl = Application.getInstance().getGUILog();
 
@@ -78,15 +69,16 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
     public void visit(DBTable table) {
         JSONArray body = new JSONArray();
         tablejson.put("body", body);
-        for (List<DocumentElement> row: table.getBody()) {
+        for (List<DocumentElement> row : table.getBody()) {
             curRow = new JSONArray();
             body.add(curRow);
-            for (DocumentElement de: row) {
+            for (DocumentElement de : row) {
                 rowspan = 1;
                 colspan = 1;
                 if (de != null) {
-                    if (de instanceof DBTableEntry)
+                    if (de instanceof DBTableEntry) {
                         de.accept(this);
+                    }
                     else {
                         curCell = new JSONArray();
                         de.accept(this);
@@ -100,15 +92,16 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
         }
         JSONArray headers = new JSONArray();
         tablejson.put("header", headers);
-        for (List<DocumentElement> row: table.getHeaders()) {
+        for (List<DocumentElement> row : table.getHeaders()) {
             curRow = new JSONArray();
             headers.add(curRow);
-            for (DocumentElement de: row) {
+            for (DocumentElement de : row) {
                 rowspan = 1;
                 colspan = 1;
                 if (de != null) {
-                    if (de instanceof DBTableEntry)
+                    if (de instanceof DBTableEntry) {
                         de.accept(this);
+                    }
                     else {
                         curCell = new JSONArray();
                         de.accept(this);
@@ -120,10 +113,12 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
                 }
             }
         }
-        if (table.getStyle() == null)
+        if (table.getStyle() == null) {
             tablejson.put("style", "normal");
-        else
+        }
+        else {
             tablejson.put("style", table.getStyle());
+        }
         tablejson.put("title", table.getTitle());
         tablejson.put("type", "Table");
         tablejson.put("sources", tableelements);
@@ -133,7 +128,7 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTableEntry tableentry) { // TODO; check for
-                                                 // informaltable and ignore it
+        // informaltable and ignore it
         if (tableentry.getMorerows() > 0) {
             rowspan = tableentry.getMorerows() + 1;
         }
@@ -147,7 +142,7 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
             }
         }
         curCell = new JSONArray();
-        for (DocumentElement de: tableentry.getChildren()) {
+        for (DocumentElement de : tableentry.getChildren()) {
             de.accept(this);
         }
         JSONObject entry = new JSONObject();
@@ -203,10 +198,12 @@ public class DBEditTableVisitor2 extends DBEditDocwebVisitor {
 
     @SuppressWarnings("unchecked")
     private void addSpans(JSONObject entry) {
-        if (rowspan > 0)
+        if (rowspan > 0) {
             entry.put("rowspan", Integer.toString(rowspan));
-        if (colspan > 0)
+        }
+        if (colspan > 0) {
             entry.put("colspan", Integer.toString(colspan));
+        }
     }
 
     public JSONArray getTableElements() {

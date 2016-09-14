@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,14 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.viewedit;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.actions.vieweditor.ImportViewAction;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
@@ -41,18 +49,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBBook;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ViolationSeverity;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.HttpURLConnection;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
@@ -64,40 +60,42 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.uml.BaseElement;
-import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 @Deprecated
 public class ViewExporter implements RunnableWithProgress {
 
-    private Document                    dge;
-    private Element                     doc;
-    private boolean                     recurse;
-    private boolean                     force;
-    private String                      url;
-    private DocumentValidator           dv;
-    private ValidationSuite             vs   = new ValidationSuite("Changed Elements");
-    private ValidationRule              vr   = new ValidationRule("Changed Name",
-                                                     "Name of element has been changed on VE",
-                                                     ViolationSeverity.INFO);
-    private ValidationRule              vr2  = new ValidationRule("Changed Doc",
-                                                     "Doc of element has been changed on VE",
-                                                     ViolationSeverity.INFO);
-    private ValidationRule              vr3  = new ValidationRule("Changed Value",
-                                                     "Default Value of element has been changed on VE",
-                                                     ViolationSeverity.INFO);
-    private Collection<ValidationSuite> cvs  = new ArrayList<ValidationSuite>();
-    private GUILog                      gl   = Application.getInstance().getGUILog();
-    private boolean                     alfresco;
-    private String                      user = Utils.getUsername();
+    private Document dge;
+    private Element doc;
+    private boolean recurse;
+    private boolean force;
+    private String url;
+    private DocumentValidator dv;
+    private ValidationSuite vs = new ValidationSuite("Changed Elements");
+    private ValidationRule vr = new ValidationRule("Changed Name",
+            "Name of element has been changed on VE",
+            ViolationSeverity.INFO);
+    private ValidationRule vr2 = new ValidationRule("Changed Doc",
+            "Doc of element has been changed on VE",
+            ViolationSeverity.INFO);
+    private ValidationRule vr3 = new ValidationRule("Changed Value",
+            "Default Value of element has been changed on VE",
+            ViolationSeverity.INFO);
+    private Collection<ValidationSuite> cvs = new ArrayList<ValidationSuite>();
+    private GUILog gl = Application.getInstance().getGUILog();
+    private boolean alfresco;
+    private String user = Utils.getUsername();
 
     public ViewExporter(Document dge, Element doc, boolean recurse, boolean force, String url,
-            DocumentValidator dv) {
+                        DocumentValidator dv) {
         this.dge = dge;
         this.doc = doc;
         this.recurse = recurse;
@@ -127,19 +125,21 @@ public class ViewExporter implements RunnableWithProgress {
         vs.addValidationRule(vr3);
         cvs.add(vs);
         arg0.setIndeterminate(true);
-        if (url == null)
+        if (url == null) {
             return;
+        }
         if (recurse) {
             DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
             Document dge = dg.parseDocument(true, true, false);
             ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
             dge.accept(vhv);
             JSONObject res = vhv.getResult();
-            JSONObject views = (JSONObject)res.get("views");
-            for (Object viewid: views.keySet()) {
-                Element view = (Element)Application.getInstance().getProject().getElementByID((String)viewid);
-                if (!postView(view, false))
+            JSONObject views = (JSONObject) res.get("views");
+            for (Object viewid : views.keySet()) {
+                Element view = (Element) Application.getInstance().getProject().getElementByID((String) viewid);
+                if (!postView(view, false)) {
                     return;
+                }
             }
             String post = res.toJSONString();
             String posturl = url + "/rest/views/" + doc.getID() + "/hierarchy";
@@ -152,15 +152,19 @@ public class ViewExporter implements RunnableWithProgress {
                 // gl.log(post);
                 gl.log("[INFO] Sending View Hierarchy...");
                 int code = client.executeMethod(pm);
-                if (ViewEditUtils.showErrorMessage(code))
+                if (ViewEditUtils.showErrorMessage(code)) {
                     return;
+                }
                 String response = pm.getResponseBodyAsString();
                 if (response.equals("ok"))
-                	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-                	//
+                //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+                //
+                {
                     gl.log("[INFO] Commit Successful.");
-                else
+                }
+                else {
                     gl.log(response);
+                }
             } catch (Exception ex) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
@@ -168,16 +172,18 @@ public class ViewExporter implements RunnableWithProgress {
                 gl.log(sw.toString()); // stack trace as a string
                 ex.printStackTrace();
             } finally {
-                if (pm != null)
+                if (pm != null) {
                     pm.releaseConnection();
+                }
             }
 
-        } else {
+        }
+        else {
             postView(doc, recurse);
         }
         if (vs.hasErrors()) {
-        	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-        	//
+            //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+            //
             Utils.displayValidationWindow(cvs, "View CommitResults (Changed Elements)");
             gl.log("[INFO] See changed element info in validation window.");
         }
@@ -199,15 +205,17 @@ public class ViewExporter implements RunnableWithProgress {
         baseurl += "/rest/views/" + view.getID();
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
                 DocGen3Profile.documentViewStereotype, "Document Profile");
-        if (StereotypesHelper.hasStereotypeOrDerived(view, documentView))
+        if (StereotypesHelper.hasStereotypeOrDerived(view, documentView)) {
             document = true;
+        }
 
         DocBookOutputVisitor visitor = new DocBookOutputVisitor(true);
         dge.accept(visitor);
         DBBook book = visitor.getBook();
-        if (book == null)
+        if (book == null) {
             return false;
-        
+        }
+
         baseurl += "?user=" + user;
 
         DBEditDocwebVisitor v = new DBEditDocwebVisitor(rec, alfresco);
@@ -226,14 +234,18 @@ public class ViewExporter implements RunnableWithProgress {
         if (rec || document || force) {
             baseurl += "&";
             List<String> params = new ArrayList<String>();
-            if (rec)
+            if (rec) {
                 params.add("recurse=true");
-            if (document)
+            }
+            if (document) {
                 params.add("doc=true");
-            if (force)
+            }
+            if (force) {
                 params.add("force=true");
-            if (dge.isProduct())
+            }
+            if (dge.isProduct()) {
                 params.add("product=true");
+            }
             baseurl += Utils.join(params, "&");
         }
 
@@ -245,35 +257,43 @@ public class ViewExporter implements RunnableWithProgress {
             ViewEditUtils.setCredentials(client, baseurl, pm);
             gl.log("[INFO] Sending...");
             int code = client.executeMethod(pm);
-            if (ViewEditUtils.showErrorMessage(code))
+            if (ViewEditUtils.showErrorMessage(code)) {
                 return false;
+            }
             String response = pm.getResponseBodyAsString();
             if (response.equals("ok"))
-            	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-            	//
+            //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+            //
+            {
                 gl.log("[INFO] Commit Successful.");
+            }
             else if (response.startsWith("[")) {
 
-                for (Object o: (JSONArray)JSONValue.parse(response)) {
-                    String mdid = (String)((JSONObject)o).get("mdid");
-                    String type = (String)((JSONObject)o).get("type");
+                for (Object o : (JSONArray) JSONValue.parse(response)) {
+                    String mdid = (String) ((JSONObject) o).get("mdid");
+                    String type = (String) ((JSONObject) o).get("type");
                     BaseElement be = Application.getInstance().getProject().getElementByID(mdid);
                     if (be != null && be instanceof Element) {
-                        if (type.equals("name"))
-                            vr.addViolation((Element)be, "name changed on VE");
-                        else if (type.equals("doc"))
-                            vr.addViolation((Element)be, "doc changed on VE");
-                        else
-                            vr.addViolation((Element)be, "default value changed on VE");
+                        if (type.equals("name")) {
+                            vr.addViolation((Element) be, "name changed on VE");
+                        }
+                        else if (type.equals("doc")) {
+                            vr.addViolation((Element) be, "doc changed on VE");
+                        }
+                        else {
+                            vr.addViolation((Element) be, "default value changed on VE");
+                        }
                     }
                 }
 
-            	//JJS--MDEV-567 fix: changed 'Export' to 'Commit'
-            	//
+                //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
+                //
                 gl.log("[INFO] Commit Successful.");
 
-            } else
+            }
+            else {
                 gl.log(response);
+            }
         } catch (Exception ex) {
             printStackTrace(ex, gl);
         } finally {
@@ -288,15 +308,16 @@ public class ViewExporter implements RunnableWithProgress {
         if (url.indexOf("service") >= 0) {
             isAlfresco = true;
         }
-        for (String key: images.keySet()) {
-            String filename = (String)images.get(key).get("abspath");
-            String cs = (String)images.get(key).get("cs");
-            String extension = (String)images.get(key).get("extension");
+        for (String key : images.keySet()) {
+            String filename = (String) images.get(key).get("abspath");
+            String cs = (String) images.get(key).get("cs");
+            String extension = (String) images.get(key).get("extension");
 
             File imageFile = new File(filename);
             if (isAlfresco) {
                 baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
-            } else {
+            }
+            else {
                 baseurl = url + "/rest/images/" + key + "?cs=" + cs + "&extension=" + extension;
             }
 
@@ -318,13 +339,15 @@ public class ViewExporter implements RunnableWithProgress {
 
             if (status == HttpURLConnection.HTTP_OK) {
                 gl.log("[INFO] Image file already exists, not uploading");
-            } else {
+            }
+            else {
                 PostMethod post = new PostMethod(baseurl);
                 try {
                     if (isAlfresco) {
                         Part[] parts = {new FilePart("content", imageFile)};
                         post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
-                    } else {
+                    }
+                    else {
                         post.setRequestEntity(new InputStreamRequestEntity(new FileInputStream(imageFile),
                                 imageFile.length()));
                     }

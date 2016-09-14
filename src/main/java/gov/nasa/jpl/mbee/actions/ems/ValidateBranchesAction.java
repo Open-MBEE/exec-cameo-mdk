@@ -24,7 +24,7 @@ public class ValidateBranchesAction extends MMSAction {
             v.showWindow();
         }
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         ProgressStatusRunner.runWithProgressStatus(new ValidationRunner(), "Validating Branches", true, 0);

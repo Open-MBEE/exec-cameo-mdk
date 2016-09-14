@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -32,20 +32,13 @@ package gov.nasa.jpl.ocl;
  * Following example from
  * http://help.eclipse.org/indigo/index.jsp?topic=%2Forg.eclipse
  * .ocl.doc%2Fhelp%2FCustomizingtheEnvironment.html
- * 
+ * <p>
  * This allows customization of the EcoreEnvironment, need to be able to
  * register operations with this
  */
 
-import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EClassifier;
-import org.eclipse.emf.ecore.EEnumLiteral;
-import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EOperation;
-import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.*;
 import org.eclipse.emf.ecore.EPackage.Registry;
-import org.eclipse.emf.ecore.EParameter;
-import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.ocl.Environment;
 import org.eclipse.ocl.EvaluationEnvironment;
 import org.eclipse.ocl.ecore.CallOperationAction;
@@ -54,12 +47,12 @@ import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
 import org.eclipse.ocl.ecore.SendSignalAction;
 
 public class DgEnvironmentFactory extends EcoreEnvironmentFactory {
-    private DgEnvironment           env;
+    private DgEnvironment env;
     private DgEvaluationEnvironment evalEnv;
 
     /**
-   * 
-   */
+     *
+     */
     public DgEnvironmentFactory() {
         super();
     }
@@ -89,7 +82,7 @@ public class DgEnvironmentFactory extends EcoreEnvironmentFactory {
 
         // just use the default environment
         if (env == null) {
-            env = new DgEnvironment((DgEnvironment)parent);
+            env = new DgEnvironment((DgEnvironment) parent);
         }
         env.setFactory(this);
         return env;
@@ -113,14 +106,16 @@ public class DgEnvironmentFactory extends EcoreEnvironmentFactory {
     }
 
     public DgEnvironment getDgEnvironment() {
-        if (env == null)
-            env = (DgEnvironment)createEnvironment();
+        if (env == null) {
+            env = (DgEnvironment) createEnvironment();
+        }
         return env;
     }
 
     public DgEvaluationEnvironment getDgEvaluationEnvironment() {
-        if (evalEnv == null)
-            evalEnv = (DgEvaluationEnvironment)createEvaluationEnvironment();
+        if (evalEnv == null) {
+            evalEnv = (DgEvaluationEnvironment) createEvaluationEnvironment();
+        }
         return evalEnv;
     }
 

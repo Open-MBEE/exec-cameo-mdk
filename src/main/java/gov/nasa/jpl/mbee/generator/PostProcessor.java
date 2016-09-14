@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -41,9 +41,8 @@ import java.util.Stack;
  * process document model to set those with option "useSectionNameAsTitle"
  * should probably be redone as a visitor or include in the transformation to DB
  * classes
- * 
+ *
  * @author dlam
- * 
  */
 public class PostProcessor {
 
@@ -60,21 +59,22 @@ public class PostProcessor {
     }
 
     private void processContainer(Container c) {
-        for (DocGenElement de: c.getChildren()) {
+        for (DocGenElement de : c.getChildren()) {
             if (de instanceof Container) {
-                String title = ((Container)de).getTitle();
+                String title = ((Container) de).getTitle();
                 if ((title == null || title.equals("")) && de.getUseContextNameAsTitle()) {
-                    ((Container)de).setTitle(titles.peek());
+                    ((Container) de).setTitle(titles.peek());
                 }
-                titles.push(((Container)de).getTitle());
-                processContainer((Container)de);
+                titles.push(((Container) de).getTitle());
+                processContainer((Container) de);
                 titles.pop();
-            } else if (de instanceof Query) {
-                List<String> title = ((Query)de).getTitles();
+            }
+            else if (de instanceof Query) {
+                List<String> title = ((Query) de).getTitles();
                 if ((title == null || title.isEmpty()) && de.getUseContextNameAsTitle()) {
                     title = new ArrayList<String>();
                     title.add(titles.peek());
-                    ((Query)de).setTitles(title);
+                    ((Query) de).setTitles(title);
                 }
             }
         }

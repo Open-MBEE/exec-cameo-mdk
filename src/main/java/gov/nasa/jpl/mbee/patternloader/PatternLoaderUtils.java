@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,13 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.patternloader;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
@@ -43,19 +36,24 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * A utility class for the Pattern Loader.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class PatternLoaderUtils {
     /**
      * Checks that the requester and its relationships/targets are correctly
      * formatted.
-     * 
-     * @param requester
-     *            the requester to check.
+     *
+     * @param requester the requester to check.
      * @return true if formatting is good, false otherwise.
      */
     public static boolean isGoodElementRequester(PresentationElement requester) {
@@ -70,7 +68,7 @@ public class PatternLoaderUtils {
         // check if it has a single conform relationship
         Collection<DirectedRelationship> relationships = requester.getElement()
                 .get_directedRelationshipOfSource();
-        DirectedRelationship conform = (DirectedRelationship)getNextElement(relationships, "Conform", false);
+        DirectedRelationship conform = (DirectedRelationship) getNextElement(relationships, "Conform", false);
 
         if (conform == null) {
             return false;
@@ -86,7 +84,7 @@ public class PatternLoaderUtils {
 
         // check if the viewpoint has a dependency
         relationships = viewpoint.get_directedRelationshipOfSource();
-        DirectedRelationship dependency = (DirectedRelationship)getNextElement(relationships, "Dependency",
+        DirectedRelationship dependency = (DirectedRelationship) getNextElement(relationships, "Dependency",
                 true);
 
         if (dependency == null) {
@@ -109,48 +107,42 @@ public class PatternLoaderUtils {
         }
 
         int diagramCtr = 0;
-        for (Element elem: patternDiagrams) {
+        for (Element elem : patternDiagrams) {
             if (elem instanceof Diagram) {
                 diagramCtr++;
             }
         }
 
-        if (diagramCtr == 0) {
-            return false;
-        }
+        return diagramCtr != 0;
 
-        return true;
     }
 
     public static boolean isGoodDiagramRequester(PresentationElement requester) {
-        if (requester.getElement() == null) {
-            return false;
-        }
+        return requester.getElement() != null;
 
-        return true;
     }
 
     /**
      * Gets the pattern diagrams stored in symbol's corresponding package
      * holding pattern diagrams.
-     * 
+     *
      * @param requester
      * @return
      */
     public static Collection<DiagramPresentationElement> getPatternDiagrams(PresentationElement requester) {
         Collection<DirectedRelationship> relationships = requester.getElement()
                 .get_directedRelationshipOfSource();
-        DirectedRelationship conform = (DirectedRelationship)getNextElement(relationships, "Conform", false);
+        DirectedRelationship conform = (DirectedRelationship) getNextElement(relationships, "Conform", false);
 
         Collection<Element> targets = conform.getTarget();
         Element viewpoint = getNextElement(targets, "Viewpoint", false);
 
         relationships = viewpoint.get_directedRelationshipOfSource();
-        DirectedRelationship dependency = (DirectedRelationship)getNextElement(relationships, "Dependency",
+        DirectedRelationship dependency = (DirectedRelationship) getNextElement(relationships, "Dependency",
                 true);
 
         targets = dependency.getTarget();
-        Package pkg = (Package)getNextElement(targets, "Package", true);
+        Package pkg = (Package) getNextElement(targets, "Package", true);
 
         Collection<Diagram> ownedElems = pkg.getOwnedDiagram();
         Collection<DiagramPresentationElement> patternDiagrams = new ArrayList<DiagramPresentationElement>();
@@ -166,24 +158,21 @@ public class PatternLoaderUtils {
 
     /**
      * Gets the next element in sequence for the Pattern Loader.
-     * 
-     * @param candidates
-     *            the collection of candidate next elements.
-     * @param comparisonStr
-     *            the identifying string to check against.
-     * @param checkType
-     *            set to true to get the next element by checking by type, set
-     *            to false to get the next element by checking by stereotype
+     *
+     * @param candidates    the collection of candidate next elements.
+     * @param comparisonStr the identifying string to check against.
+     * @param checkType     set to true to get the next element by checking by type, set
+     *                      to false to get the next element by checking by stereotype
      * @return the next element in sequence if found, null otherwise
      */
     private static Element getNextElement(Collection<? extends Element> candidates, String comparisonStr,
-            boolean checkType) {
+                                          boolean checkType) {
         Element nextElement = null;
         boolean found = false;
 
         // get next element by checking type
         if (checkType) {
-            for (Element c: candidates) {
+            for (Element c : candidates) {
                 if (c.getHumanType().equals(comparisonStr)) {
                     if (found == true) {
                         return null;
@@ -197,7 +186,7 @@ public class PatternLoaderUtils {
 
         // get next element by checking stereotype
         if (!checkType) {
-            for (Element c: candidates) {
+            for (Element c : candidates) {
                 if (StereotypesHelper.hasStereotypeOrDerived(c, comparisonStr)) {
                     if (found == true) {
                         return null;
@@ -224,7 +213,7 @@ public class PatternLoaderUtils {
         }
 
         // remove properties we don't want to restore
-        JSONObject parsedElemStyleObj = (JSONObject)parsedElemStyleStr;
+        JSONObject parsedElemStyleObj = (JSONObject) parsedElemStyleStr;
         parsedElemStyleObj.remove("rect_x");
         parsedElemStyleObj.remove("rect_y");
         parsedElemStyleObj.remove("rect_height");

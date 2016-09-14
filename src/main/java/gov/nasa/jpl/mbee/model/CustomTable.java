@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -40,20 +40,16 @@ import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.ocl.OclEvaluator;
+import org.eclipse.ocl.ParserException;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.eclipse.emf.ecore.EObject;
-import org.eclipse.ocl.ParserException;
-
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class CustomTable extends Table {
 
     private List<String> headers;
     private List<String> columns;
-    protected boolean    oclEvaluationVerbose = false;
+    protected boolean oclEvaluationVerbose = false;
 
     public CustomTable() {
         setSortElementsByName(true);
@@ -87,8 +83,7 @@ public class CustomTable extends Table {
     }
 
     /**
-     * @param verboseEvaluation
-     *            the verboseEvaluation to set
+     * @param verboseEvaluation the verboseEvaluation to set
      */
     public void setOclEvaluationVerbose(boolean oclEvaluationVerbose) {
         this.oclEvaluationVerbose = oclEvaluationVerbose;
@@ -121,17 +116,20 @@ public class CustomTable extends Table {
         if (!this.getHeaders().isEmpty()) {
             List<DocumentElement> first = new ArrayList<DocumentElement>();
             hs.add(first);
-            for (String h: this.getHeaders())
+            for (String h : this.getHeaders()) {
                 first.add(new DBText(h));
+            }
             dbTable.setCols(first.size());
-        } else {
+        }
+        else {
             List<DocumentElement> first = new ArrayList<DocumentElement>();
             hs.add(first);
 
             if (Utils2.isNullOrEmpty(this.getColumns())) {
                 Debug.errln("No columns specified for CustomTable! " + this.getColumns());
-            } else {
-                for (String oclExpr: this.getColumns()) {
+            }
+            else {
+                for (String oclExpr : this.getColumns()) {
                     first.add(new DBText(oclExpr));
                 }
             }
@@ -143,8 +141,9 @@ public class CustomTable extends Table {
 
         // get title
         String title = "";
-        if (this.getTitles() != null && this.getTitles().size() > 0)
+        if (this.getTitles() != null && this.getTitles().size() > 0) {
             title = this.getTitles().get(0);
+        }
         title = this.getTitlePrefix() + title + this.getTitleSuffix();
         dbTable.setTitle(title);
 
@@ -158,10 +157,10 @@ public class CustomTable extends Table {
         List<Object> targets = this.isSortElementsByName() ? Utils.sortByName(this.getTargets()) : this
                 .getTargets();
         // construct row for each target
-        for (Object e: targets) {
+        for (Object e : targets) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             // construct cell for each column
-            for (String oclExpr: this.getColumns()) {
+            for (String oclExpr : this.getColumns()) {
                 Object result = null;
                 DocumentValidator dv = CollectFilterParser.getValidator();
                 DocumentValidator.evaluate(oclExpr, e, dv, true);
@@ -181,13 +180,14 @@ public class CustomTable extends Table {
         List<DBColSpec> cslist = new ArrayList<DBColSpec>();
         if (this.getColwidths() != null && !this.getColwidths().isEmpty()) {
             int i = 1;
-            for (String s: this.getColwidths()) {
+            for (String s : this.getColwidths()) {
                 DBColSpec cs = new DBColSpec(i);
                 cs.setColwidth(s);
                 cslist.add(cs);
                 i++;
             }
-        } else {
+        }
+        else {
             DBColSpec cs = new DBColSpec(1);
             cs.setColwidth(".4*");
             cslist.add(cs);
@@ -206,9 +206,9 @@ public class CustomTable extends Table {
     @Override
     public void initialize() {
         super.initialize();
-        setHeaders((List<String>)GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable,
+        setHeaders((List<String>) GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable,
                 "headers", new ArrayList<String>()));
-        setColumns((List<String>)GeneratorUtils.getListProperty(dgElement,
+        setColumns((List<String>) GeneratorUtils.getListProperty(dgElement,
                 DocGen3Profile.customTableStereotype, "columns", new ArrayList<String>()));
     }
 

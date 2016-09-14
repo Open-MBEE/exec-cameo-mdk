@@ -1,22 +1,20 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
-import gov.nasa.jpl.mbee.ems.ImportUtility;
-import gov.nasa.jpl.mbee.ems.ReferenceException;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-import java.util.Map;
-
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mbee.ems.ImportUtility;
+import gov.nasa.jpl.mbee.ems.ReferenceException;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONObject;
+
+import java.awt.event.ActionEvent;
+import java.util.Collection;
+import java.util.Map;
 
 public class ImportAssociation extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -24,6 +22,7 @@ public class ImportAssociation extends RuleViolationAction implements Annotation
     private Association element;
     private JSONObject spec;
     private JSONObject result;
+
     public ImportAssociation(Association e, JSONObject spec, JSONObject result) {
         //JJS--MDEV-567 fix: changed 'Import' to 'Accept'
         //
@@ -32,7 +31,7 @@ public class ImportAssociation extends RuleViolationAction implements Annotation
         this.spec = spec;
         this.result = result;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -42,26 +41,28 @@ public class ImportAssociation extends RuleViolationAction implements Annotation
     public void execute(Collection<Annotation> annos) {
         executeMany(annos, "Change associations");
     }
-    
+
     @Override
     protected boolean doAction(Annotation anno) {
         if (anno != null) {
-            Element e = (Element)anno.getTarget();
+            Element e = (Element) anno.getTarget();
             String name = e.get_representationText();
-            if (e instanceof NamedElement)
-                name = ((NamedElement)e).getQualifiedName();
+            if (e instanceof NamedElement) {
+                name = ((NamedElement) e).getQualifiedName();
+            }
             if (!e.isEditable()) {
                 Utils.guilog("[ERROR] " + name + " isn't editable");
                 return false;
             }
-            JSONObject resultOb = (JSONObject)((Map<String, JSONObject>)result.get("elementsKeyed")).get(e.getID());
+            JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setAssociation((Association)e, (JSONObject)resultOb.get("specialization"));
+                ImportUtility.setAssociation((Association) e, (JSONObject) resultOb.get("specialization"));
             } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] Failed association import because references not found.");
                 return false;
             }
-        } else {
+        }
+        else {
             try {
                 ImportUtility.setAssociation(element, spec);
             } catch (ReferenceException ex) {
@@ -71,7 +72,7 @@ public class ImportAssociation extends RuleViolationAction implements Annotation
         }
         return true;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!element.isEditable()) {

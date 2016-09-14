@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,20 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.dgview.util;
 
-import gov.nasa.jpl.mbee.dgview.ColSpec;
-import gov.nasa.jpl.mbee.dgview.DgviewPackage;
-import gov.nasa.jpl.mbee.dgview.HasContent;
-import gov.nasa.jpl.mbee.dgview.Image;
-import gov.nasa.jpl.mbee.dgview.List;
-import gov.nasa.jpl.mbee.dgview.ListItem;
-import gov.nasa.jpl.mbee.dgview.MDEditableTable;
-import gov.nasa.jpl.mbee.dgview.Paragraph;
-import gov.nasa.jpl.mbee.dgview.Table;
-import gov.nasa.jpl.mbee.dgview.TableEntry;
-import gov.nasa.jpl.mbee.dgview.TableRow;
-import gov.nasa.jpl.mbee.dgview.Text;
-import gov.nasa.jpl.mbee.dgview.ViewElement;
-
+import gov.nasa.jpl.mbee.dgview.*;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.util.Switch;
@@ -53,14 +40,14 @@ import org.eclipse.emf.ecore.util.Switch;
  * starting with the actual class of the object and proceeding up the
  * inheritance hierarchy until a non-null result is returned, which is the
  * result of the switch. <!-- end-user-doc -->
- * 
- * @see gov.nasa.jpl.mbee.dgview.DgviewPackage
+ *
  * @generated
+ * @see gov.nasa.jpl.mbee.dgview.DgviewPackage
  */
 public class DgviewSwitch<T> extends Switch<T> {
     /**
      * The cached model package <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
+     *
      * @generated
      */
     protected static DgviewPackage modelPackage;
@@ -68,7 +55,7 @@ public class DgviewSwitch<T> extends Switch<T> {
     /**
      * Creates an instance of the switch. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @generated
      */
     public DgviewSwitch() {
@@ -80,9 +67,9 @@ public class DgviewSwitch<T> extends Switch<T> {
     /**
      * Checks whether this is a switch for the given package. <!--
      * begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @parameter ePackage the package in question.
+     *
      * @return whether this is a switch for the given package.
+     * @parameter ePackage the package in question.
      * @generated
      */
     @Override
@@ -94,128 +81,156 @@ public class DgviewSwitch<T> extends Switch<T> {
      * Calls <code>caseXXX</code> for each class of the model until one returns
      * a non null result; it yields that result. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
+     *
      * @return the first non-null result returned by a <code>caseXXX</code>
-     *         call.
+     * call.
      * @generated
      */
     @Override
     protected T doSwitch(int classifierID, EObject theEObject) {
         switch (classifierID) {
             case DgviewPackage.COL_SPEC: {
-                ColSpec colSpec = (ColSpec)theEObject;
+                ColSpec colSpec = (ColSpec) theEObject;
                 T result = caseColSpec(colSpec);
-                if (result == null)
+                if (result == null) {
                     result = caseViewElement(colSpec);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.HAS_CONTENT: {
-                HasContent hasContent = (HasContent)theEObject;
+                HasContent hasContent = (HasContent) theEObject;
                 T result = caseHasContent(hasContent);
-                if (result == null)
+                if (result == null) {
                     result = caseViewElement(hasContent);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.IMAGE: {
-                Image image = (Image)theEObject;
+                Image image = (Image) theEObject;
                 T result = caseImage(image);
-                if (result == null)
+                if (result == null) {
                     result = caseViewElement(image);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.LIST: {
-                List list = (List)theEObject;
+                List list = (List) theEObject;
                 T result = caseList(list);
-                if (result == null)
+                if (result == null) {
                     result = caseHasContent(list);
-                if (result == null)
+                }
+                if (result == null) {
                     result = caseViewElement(list);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.LIST_ITEM: {
-                ListItem listItem = (ListItem)theEObject;
+                ListItem listItem = (ListItem) theEObject;
                 T result = caseListItem(listItem);
-                if (result == null)
+                if (result == null) {
                     result = caseHasContent(listItem);
-                if (result == null)
+                }
+                if (result == null) {
                     result = caseViewElement(listItem);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.PARAGRAPH: {
-                Paragraph paragraph = (Paragraph)theEObject;
+                Paragraph paragraph = (Paragraph) theEObject;
                 T result = caseParagraph(paragraph);
-                if (result == null)
+                if (result == null) {
                     result = caseViewElement(paragraph);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.TABLE: {
-                Table table = (Table)theEObject;
+                Table table = (Table) theEObject;
                 T result = caseTable(table);
-                if (result == null)
+                if (result == null) {
                     result = caseViewElement(table);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.TABLE_ENTRY: {
-                TableEntry tableEntry = (TableEntry)theEObject;
+                TableEntry tableEntry = (TableEntry) theEObject;
                 T result = caseTableEntry(tableEntry);
-                if (result == null)
+                if (result == null) {
                     result = caseHasContent(tableEntry);
-                if (result == null)
+                }
+                if (result == null) {
                     result = caseViewElement(tableEntry);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.TEXT: {
-                Text text = (Text)theEObject;
+                Text text = (Text) theEObject;
                 T result = caseText(text);
-                if (result == null)
+                if (result == null) {
                     result = caseViewElement(text);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.VIEW_ELEMENT: {
-                ViewElement viewElement = (ViewElement)theEObject;
+                ViewElement viewElement = (ViewElement) theEObject;
                 T result = caseViewElement(viewElement);
-                if (result == null)
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.TABLE_ROW: {
-                TableRow tableRow = (TableRow)theEObject;
+                TableRow tableRow = (TableRow) theEObject;
                 T result = caseTableRow(tableRow);
-                if (result == null)
+                if (result == null) {
                     result = caseHasContent(tableRow);
-                if (result == null)
+                }
+                if (result == null) {
                     result = caseViewElement(tableRow);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             case DgviewPackage.MD_EDITABLE_TABLE: {
-                MDEditableTable mdEditableTable = (MDEditableTable)theEObject;
+                MDEditableTable mdEditableTable = (MDEditableTable) theEObject;
                 T result = caseMDEditableTable(mdEditableTable);
-                if (result == null)
+                if (result == null) {
                     result = caseTable(mdEditableTable);
-                if (result == null)
+                }
+                if (result == null) {
                     result = caseViewElement(mdEditableTable);
-                if (result == null)
+                }
+                if (result == null) {
                     result = defaultCase(theEObject);
+                }
                 return result;
             }
             default:
@@ -228,13 +243,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>Col Spec</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Col Spec</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Col Spec</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseColSpec(ColSpec object) {
         return null;
@@ -245,13 +259,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>Has Content</em>'. <!-- begin-user-doc --> This implementation
      * returns null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Has Content</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Has Content</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseHasContent(HasContent object) {
         return null;
@@ -262,13 +275,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>Image</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Image</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Image</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseImage(Image object) {
         return null;
@@ -279,13 +291,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>List</em>'. <!-- begin-user-doc --> This implementation returns null;
      * returning a non-null result will terminate the switch. <!-- end-user-doc
      * -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>List</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>List</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseList(List object) {
         return null;
@@ -296,13 +307,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>List Item</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>List Item</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>List Item</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseListItem(ListItem object) {
         return null;
@@ -313,13 +323,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>Paragraph</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Paragraph</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Paragraph</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseParagraph(Paragraph object) {
         return null;
@@ -330,13 +339,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>Table</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Table</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Table</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseTable(Table object) {
         return null;
@@ -347,13 +355,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>Table Entry</em>'. <!-- begin-user-doc --> This implementation
      * returns null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Table Entry</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Table Entry</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseTableEntry(TableEntry object) {
         return null;
@@ -364,13 +371,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>Text</em>'. <!-- begin-user-doc --> This implementation returns null;
      * returning a non-null result will terminate the switch. <!-- end-user-doc
      * -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Text</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Text</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseText(Text object) {
         return null;
@@ -381,13 +387,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>View Element</em>'. <!-- begin-user-doc --> This implementation
      * returns null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>View Element</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>View Element</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseViewElement(ViewElement object) {
         return null;
@@ -398,13 +403,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>Table Row</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>Table Row</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>Table Row</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseTableRow(TableRow object) {
         return null;
@@ -415,13 +419,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>MD Editable Table</em>'. <!-- begin-user-doc --> This implementation
      * returns null; returning a non-null result will terminate the switch. <!--
      * end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>MD Editable Table</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+     * <em>MD Editable Table</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
      */
     public T caseMDEditableTable(MDEditableTable object) {
         return null;
@@ -432,13 +435,12 @@ public class DgviewSwitch<T> extends Switch<T> {
      * <em>EObject</em>'. <!-- begin-user-doc --> This implementation returns
      * null; returning a non-null result will terminate the switch, but this is
      * the last case anyway. <!-- end-user-doc -->
-     * 
-     * @param object
-     *            the target of the switch.
+     *
+     * @param object the target of the switch.
      * @return the result of interpreting the object as an instance of '
-     *         <em>EObject</em>'.
-     * @see #doSwitch(org.eclipse.emf.ecore.EObject)
+     * <em>EObject</em>'.
      * @generated
+     * @see #doSwitch(org.eclipse.emf.ecore.EObject)
      */
     @Override
     public T defaultCase(EObject object) {

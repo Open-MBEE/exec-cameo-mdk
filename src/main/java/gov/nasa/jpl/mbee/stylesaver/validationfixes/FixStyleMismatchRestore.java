@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,17 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.stylesaver.validationfixes;
 
-import gov.nasa.jpl.mbee.stylesaver.RunnableLoaderWithProgress;
-import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
-
-import java.awt.event.ActionEvent;
-import java.util.Collection;
-import java.util.List;
-
-import javax.swing.JOptionPane;
-
-import org.json.simple.JSONObject;
-
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -50,23 +39,30 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import gov.nasa.jpl.mbee.stylesaver.RunnableLoaderWithProgress;
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
+import org.json.simple.JSONObject;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Class for fixing a mismatch between the view style tag and the styling
  * currently on the active diagram. Restores the active diagram with styling
  * from the view style tag.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class FixStyleMismatchRestore extends NMAction implements AnnotationAction {
-    private static final long          serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
     private DiagramPresentationElement diagToFix;
 
     /**
      * Initializes this instance and adds a description to the fix.
-     * 
-     * @param diag
-     *            the diagram to fix.
+     *
+     * @param diag the diagram to fix.
      */
     public FixStyleMismatchRestore(DiagramPresentationElement diag) {
         super("FIX_STYLE_MISMATCH_RESTORE", "Fix Style Mismatch: Load styling from previous save to diagram",
@@ -77,9 +73,8 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
 
     /**
      * Executes the action.
-     * 
-     * @param e
-     *            event caused execution.
+     *
+     * @param e event caused execution.
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -88,9 +83,8 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
 
     /**
      * Executes the action on specified targets.
-     * 
-     * @param annotations
-     *            action targets.
+     *
+     * @param annotations action targets.
      */
     @Override
     public void execute(Collection<Annotation> annotations) {
@@ -104,9 +98,8 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
     /**
      * Checks if possible to execute action together on all specified
      * annotations.
-     * 
-     * @param annotations
-     *            target annotations.
+     *
+     * @param annotations target annotations.
      * @return true if the action can be executed.
      */
     @Override
@@ -153,7 +146,8 @@ public class FixStyleMismatchRestore extends NMAction implements AnnotationActio
                 SessionManager.getInstance().closeSession();
                 JOptionPane
                         .showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-            } else {
+            }
+            else {
                 SessionManager.getInstance().cancelSession();
                 JOptionPane.showMessageDialog(null, "Load cancelled.", "Info",
                         JOptionPane.INFORMATION_MESSAGE);

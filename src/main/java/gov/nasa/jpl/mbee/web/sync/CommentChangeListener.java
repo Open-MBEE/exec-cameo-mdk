@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,18 +28,18 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.web.sync;
 
-import static gov.nasa.jpl.mbee.web.sync.CommentUtil.DOCUMENT_COMMENT;
-import gov.nasa.jpl.mbee.lib.Utils;
-
-import java.beans.PropertyChangeEvent;
-import java.util.Collection;
-
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
+import gov.nasa.jpl.mbee.lib.Utils;
+
+import java.beans.PropertyChangeEvent;
+import java.util.Collection;
+
+import static gov.nasa.jpl.mbee.web.sync.CommentUtil.DOCUMENT_COMMENT;
 
 /**
  * Responds to changes in document comments. Could theoretically be implemented
@@ -72,7 +72,9 @@ public class CommentChangeListener implements TransactionCommitListener {
         return new TransactionCommitHandler(events);
     }
 
-    /** Does nothing. Used when this listener is temporarily disabled. */
+    /**
+     * Does nothing. Used when this listener is temporarily disabled.
+     */
     private class EmptyRunnable implements Runnable {
         @Override
         public void run() {
@@ -92,7 +94,7 @@ public class CommentChangeListener implements TransactionCommitListener {
 
         @Override
         public void run() {
-            for (PropertyChangeEvent e: events) {
+            for (PropertyChangeEvent e : events) {
                 handleChangeEvent(e);
             }
         }
@@ -102,7 +104,7 @@ public class CommentChangeListener implements TransactionCommitListener {
         if (!(event.getSource() instanceof Comment)) {
             return;
         }
-        Comment c = (Comment)event.getSource();
+        Comment c = (Comment) event.getSource();
         String eventPropertyName = event.getPropertyName();
 
         if (PropertyNames.BODY.equals(eventPropertyName)) {
@@ -127,10 +129,11 @@ public class CommentChangeListener implements TransactionCommitListener {
 
     private boolean inDocument(Comment comment) {
         Stereotype sysmlView = Utils.getViewStereotype();
-        if (ModelHelper.getComment(comment.getOwner()).equals(comment.getBody()))
+        if (ModelHelper.getComment(comment.getOwner()).equals(comment.getBody())) {
             return false; // this is to prevent adding stereotype to
-                          // documentation of elements - magicdraw treats
-                          // element documentation as comments too
+        }
+        // documentation of elements - magicdraw treats
+        // element documentation as comments too
         return StereotypesHelper.hasStereotypeOrDerived(comment.getOwner(), sysmlView);
         // DOCUMENT_VIEW.equals(comment.getOwner().getHumanType());
     }

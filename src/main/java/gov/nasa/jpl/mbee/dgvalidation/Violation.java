@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -33,7 +33,7 @@ import org.eclipse.emf.ecore.EObject;
 /**
  * <!-- begin-user-doc --> A representation of the model object '
  * <em><b>Violation</b></em>'. <!-- end-user-doc -->
- * 
+ * <p>
  * <p>
  * The following features are supported:
  * <ul>
@@ -43,10 +43,10 @@ import org.eclipse.emf.ecore.EObject;
  * <em>Comment</em>}</li>
  * </ul>
  * </p>
- * 
- * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getViolation()
+ *
  * @model
  * @generated
+ * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getViolation()
  */
 public interface Violation extends EObject {
     /**
@@ -57,12 +57,12 @@ public interface Violation extends EObject {
      * really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Element Id</em>' attribute.
-     * @see #setElementId(String)
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getViolation_ElementId()
      * @model
      * @generated
+     * @see #setElementId(String)
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getViolation_ElementId()
      */
     String getElementId();
 
@@ -71,11 +71,10 @@ public interface Violation extends EObject {
      * {@link gov.nasa.jpl.mbee.dgvalidation.Violation#getElementId
      * <em>Element Id</em>}' attribute. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Element Id</em>' attribute.
-     * @see #getElementId()
+     *
+     * @param value the new value of the '<em>Element Id</em>' attribute.
      * @generated
+     * @see #getElementId()
      */
     void setElementId(String value);
 
@@ -87,12 +86,12 @@ public interface Violation extends EObject {
      * really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Comment</em>' attribute.
-     * @see #setComment(String)
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getViolation_Comment()
      * @model
      * @generated
+     * @see #setComment(String)
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getViolation_Comment()
      */
     String getComment();
 
@@ -101,11 +100,10 @@ public interface Violation extends EObject {
      * {@link gov.nasa.jpl.mbee.dgvalidation.Violation#getComment
      * <em>Comment</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc
      * -->
-     * 
-     * @param value
-     *            the new value of the '<em>Comment</em>' attribute.
-     * @see #getComment()
+     *
+     * @param value the new value of the '<em>Comment</em>' attribute.
      * @generated
+     * @see #getComment()
      */
     void setComment(String value);
 

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.ems;
 
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
@@ -37,16 +40,12 @@ import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
 
-import com.nomagic.magicdraw.actions.ActionsStateUpdater;
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-
-public class EMSLoginAction extends MDAction {                       
+public class EMSLoginAction extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "Login";
 
     private EMSLogoutAction logout;
-    
+
     public EMSLoginAction() {
         super(actionid, "Login to MMS", null, null);
     }
@@ -58,15 +57,14 @@ public class EMSLoginAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         // passing in "" as the username will trigger the login dialogue popup
-    	loginAction("", "");
-    	ActionsStateUpdater.updateActionsState();
+        loginAction("", "");
+        ActionsStateUpdater.updateActionsState();
     }
-    
-    public boolean loginAction(String username, String password)
-    {
+
+    public boolean loginAction(String username, String password) {
         return loginAction(username, password, true);
     }
-    
+
     public static boolean loginAction(String username, String password, boolean initJms) {
         Project project = Application.getInstance().getProject();
         ViewEditUtils.clearUsernameAndPassword();
@@ -75,8 +73,9 @@ public class EMSLoginAction extends MDAction {
             return false;
         }
         String url = ExportUtility.getUrl(project);
-        if (url == null)
+        if (url == null) {
             return false;
+        }
         String response = null;
         try {
             response = ExportUtility.getTicket(url + "/api/login", username, password, true); //used to be /checklogin

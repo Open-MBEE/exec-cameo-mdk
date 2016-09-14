@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -27,19 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.stylesaver;
-
-import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixNone;
-import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixStyleMismatchRestore;
-import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixStyleMismatchUpdate;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -55,21 +42,24 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixNone;
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixStyleMismatchRestore;
+import gov.nasa.jpl.mbee.stylesaver.validationfixes.FixStyleMismatchUpdate;
+
+import java.util.*;
 
 /**
  * Validation class that provides a run() method for comparing the styles in the
  * view tag to the styles currently on the diagram.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class StyleValidation implements ElementValidationRuleImpl, SmartListenerConfigurationProvider {
     /**
      * First method invoked.
-     * 
-     * @param project
-     *            a project of the constraint.
-     * @param constraint
-     *            constraint which defines validation rules.
+     *
+     * @param project    a project of the constraint.
+     * @param constraint constraint which defines validation rules.
      */
     @Override
     public void init(Project project, Constraint constraint) {
@@ -77,7 +67,7 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
 
     /**
      * Returns a map of classes and smart listener configurations.
-     * 
+     *
      * @return a <code>Map</code> of smart listener configurations.
      */
     @Override
@@ -96,15 +86,12 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
 
     /**
      * Executes the rule.
-     * 
-     * @param project
-     *            project of the constraint.
-     * @param constraint
-     *            constraint that defines validation rules.
-     * @param elements
-     *            collection of elements to validate.
+     *
+     * @param project    project of the constraint.
+     * @param constraint constraint that defines validation rules.
+     * @param elements   collection of elements to validate.
      * @return a set of <code>Annotation</code> objects which specify invalid
-     *         objects.
+     * objects.
      */
     @Override
     public Set<Annotation> run(Project project, Constraint constraint, Collection<? extends Element> elements) {
@@ -123,7 +110,7 @@ public class StyleValidation implements ElementValidationRuleImpl, SmartListener
 
             // iterate over each diagram checking for matched tag styling and
             // actual styling
-            for (DiagramPresentationElement diag: diagCollection) {
+            for (DiagramPresentationElement diag : diagCollection) {
                 if (StyleSaverUtils.isGoodStereotype(diag, workingStereotype)) {
                     // get the style currently in the tag
                     Object tagStyleObj = StereotypesHelper.getStereotypePropertyFirst(diag.getElement(),

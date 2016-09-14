@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,29 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.model;
 
-import gov.nasa.jpl.mbee.DocGen3Profile;
-import gov.nasa.jpl.mbee.generator.CollectFilterParser;
-import gov.nasa.jpl.mbee.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.generator.GenerationContext;
-import gov.nasa.jpl.mbee.lib.*;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTableEntry;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
-import gov.nasa.jpl.ocl.OclEvaluator;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
@@ -61,33 +38,42 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import gov.nasa.jpl.mbee.DocGen3Profile;
+import gov.nasa.jpl.mbee.generator.CollectFilterParser;
+import gov.nasa.jpl.mbee.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.generator.GenerationContext;
+import gov.nasa.jpl.mbee.lib.*;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
+import gov.nasa.jpl.ocl.OclEvaluator;
+
+import java.util.*;
 
 /**
  * This class contains methods for parsing and visiting TableStructures and
  * their contents.
- * 
+ *
  * @author bcompane
- * 
  */
 
 public class TableStructure extends Table {
 
     private abstract class TableColumn {
-        public InitialNode       bnode;
-        public ActivityNode      activityNode;
-        public GenerationContext context    = null;
-        public String            name       = "";
+        public InitialNode bnode;
+        public ActivityNode activityNode;
+        public GenerationContext context = null;
+        public String name = "";
         public boolean editable = true;
 
         public GenerationContext makeContext() {
             ActivityNode n = null;
             if (bnode != null && bnode.getOutgoing().iterator().hasNext()) { // should
-                                                                             // check
-                                                                             // next
-                                                                             // node
-                                                                             // is
-                                                                             // collect/filter
-                                                                             // node
+                // check
+                // next
+                // node
+                // is
+                // collect/filter
+                // node
                 n = bnode.getOutgoing().iterator().next().getTarget();
             }
             Stack<List<Object>> in = new Stack<List<Object>>();
@@ -100,7 +86,7 @@ public class TableStructure extends Table {
     private class TableColumnGroup extends TableColumn {
         public List<TableColumn> childColumns = new ArrayList<TableColumn>();
     }
-    
+
     private class TableAttributeColumn extends TableColumn {
         public Utils.AvailableAttribute attribute;
     }
@@ -110,30 +96,30 @@ public class TableStructure extends Table {
     }
 
     private class TableExpressionColumn extends TableColumn {
-        public String  expression;
+        public String expression;
         public Boolean iterate;
     }
-    
+
     private class TableStructuredColumn extends TableColumn {
-    	//public Generatable generatable;
+        //public Generatable generatable;
     }
 
     //private List<String>                headers      = new ArrayList<String>();
-    private List<TableColumn>           headers = new ArrayList<TableColumn>();
+    private List<TableColumn> headers = new ArrayList<TableColumn>();
     private int headerDepth = 0; //1 based
-    private List<TableColumn>           columns      = new ArrayList<TableColumn>();
+    private List<TableColumn> columns = new ArrayList<TableColumn>();
 
-    private Element                     ts;
+    private Element ts;
 
-    private InitialNode                 bnode;
+    private InitialNode bnode;
 
-    private String                      title;
+    private String title;
 
     private List<List<List<Pair<Reference, Boolean>>>> tableContent = new ArrayList<>();
 
-    private Map<TableColumn, Integer>   columnIndex  = new HashMap<TableStructure.TableColumn, Integer>(); //0 based
+    private Map<TableColumn, Integer> columnIndex = new HashMap<TableStructure.TableColumn, Integer>(); //0 based
 
-    protected DocumentValidator         validator    = null;
+    protected DocumentValidator validator = null;
 
     public TableStructure(DocumentValidator validator) {
         super();
@@ -145,26 +131,31 @@ public class TableStructure extends Table {
         super.initialize();
         if (dgElement instanceof StructuredActivityNode) {
             ts = dgElement;
-        } else if (dgElement instanceof CallBehaviorAction) {
-            ts = ((CallBehaviorAction)dgElement).getBehavior();
-        } else {
+        }
+        else if (dgElement instanceof CallBehaviorAction) {
+            ts = ((CallBehaviorAction) dgElement).getBehavior();
+        }
+        else {
             ts = null;
         }
-        if (ts != null)
+        if (ts != null) {
             bnode = GeneratorUtils.findInitialNode(ts);
-        title = ((NamedElement)dgElement).getName();
+        }
+        title = ((NamedElement) dgElement).getName();
     }
 
     @Override
     public void parse() {
-        if (bnode == null)
+        if (bnode == null) {
             return;
+        }
         parseColumns(bnode, null, 1);
     }
 
     private void parseColumns(ActivityNode inNode, TableColumnGroup parent, int curDepth) {
-        if (inNode == null)
+        if (inNode == null) {
             return;
+        }
         ActivityNode curNode = inNode;
 
         Collection<ActivityEdge> outs = curNode.getOutgoing();
@@ -175,34 +166,40 @@ public class TableStructure extends Table {
                 col = new TableAttributeColumn();
                 Object attr = GeneratorUtils.getObjectProperty(curNode,
                         DocGen3Profile.tableAttributeColumnStereotype, "desiredAttribute", null);
-                ((TableAttributeColumn)col).attribute = (attr instanceof EnumerationLiteral)
-                        ? Utils.AvailableAttribute.valueOf(((EnumerationLiteral)attr).getName()) : null;
-            } else if (GeneratorUtils.hasStereotypeByString(curNode,
+                ((TableAttributeColumn) col).attribute = (attr instanceof EnumerationLiteral)
+                        ? Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName()) : null;
+            }
+            else if (GeneratorUtils.hasStereotypeByString(curNode,
                     DocGen3Profile.tableExpressionColumnStereotype)) {
                 col = new TableExpressionColumn();
-                ((TableExpressionColumn)col).expression = (String)GeneratorUtils.getObjectProperty(curNode,
+                ((TableExpressionColumn) col).expression = (String) GeneratorUtils.getObjectProperty(curNode,
                         DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
-                ((TableExpressionColumn)col).iterate = (Boolean)GeneratorUtils.getObjectProperty(curNode,
+                ((TableExpressionColumn) col).iterate = (Boolean) GeneratorUtils.getObjectProperty(curNode,
                         DocGen3Profile.tableExpressionColumnStereotype, "iterate", true);
-            } else if (GeneratorUtils.hasStereotypeByString(curNode,
+            }
+            else if (GeneratorUtils.hasStereotypeByString(curNode,
                     DocGen3Profile.tablePropertyColumnStereotype)) {
                 col = new TablePropertyColumn();
-                ((TablePropertyColumn)col).property = (Property)GeneratorUtils.getObjectProperty(curNode,
+                ((TablePropertyColumn) col).property = (Property) GeneratorUtils.getObjectProperty(curNode,
                         DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
-            } else if (GeneratorUtils.hasStereotypeByString(curNode, "TableColumnGroup")) {
+            }
+            else if (GeneratorUtils.hasStereotypeByString(curNode, "TableColumnGroup")) {
                 col = new TableColumnGroup();
-            } else if (GeneratorUtils.hasStereotypeByString(curNode, "StructuredQuery") || curNode instanceof CallBehaviorAction) {
-            	 col = new TableStructuredColumn();
-        	 	//((TableStructuredColumn)col).structuredNode = curNode;
-            } else {
+            }
+            else if (GeneratorUtils.hasStereotypeByString(curNode, "StructuredQuery") || curNode instanceof CallBehaviorAction) {
+                col = new TableStructuredColumn();
+                //((TableStructuredColumn)col).structuredNode = curNode;
+            }
+            else {
                 outs = curNode.getOutgoing();
                 continue;
             }
-            col.editable = (Boolean)GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.editableChoosable, "editable", true);
+            col.editable = (Boolean) GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.editableChoosable, "editable", true);
             col.activityNode = curNode;
-            if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction)curNode).getBehavior() != null) {
-                col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction)curNode).getBehavior());
-            } else if (curNode instanceof StructuredActivityNode) {
+            if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction) curNode).getBehavior() != null) {
+                col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction) curNode).getBehavior());
+            }
+            else if (curNode instanceof StructuredActivityNode) {
                 col.bnode = GeneratorUtils.findInitialNode(curNode);
             }
             col.name = curNode.getName();
@@ -210,77 +207,87 @@ public class TableStructure extends Table {
             if (!(col instanceof TableColumnGroup)) {
                 columns.add(col);
                 columnIndex.put(col, columnIndex.size());
-            } else {
-                parseColumns(col.bnode, (TableColumnGroup)col, curDepth+1);
             }
-            if (parent != null)
+            else {
+                parseColumns(col.bnode, (TableColumnGroup) col, curDepth + 1);
+            }
+            if (parent != null) {
                 parent.childColumns.add(col);
-            else
+            }
+            else {
                 headers.add(col);
+            }
             outs = curNode.getOutgoing();
-            if (headerDepth < curDepth)
+            if (headerDepth < curDepth) {
                 headerDepth = curDepth;
+            }
         }
     }
-    
+
     private void buildTableReferences(boolean forViewEditor, String outputDir) {
         Set<Object> warnedError = new HashSet<Object>();
-        for (Object e: targets) {
+        for (Object e : targets) {
             List<List<Pair<Reference, Boolean>>> row = new ArrayList<>();
             List<Object> startElements = new ArrayList<Object>();
             startElements.add(e);
-            for (TableColumn tc: columns) {
+            for (TableColumn tc : columns) {
                 List<Element> resultElements;
                 GenerationContext context = tc.makeContext();
                 if (!(tc instanceof TableStructuredColumn) && context.getCurrentNode() != null) { // should check next
-                                                        // node is
-                                                        // collect/filter node
+                    // node is
+                    // collect/filter node
                     CollectFilterParser.setContext(context);
                     resultElements = CollectFilterParser.startCollectAndFilterSequence(
-                            context.getCurrentNode(), Utils2.asList( startElements, Element.class) );
-                } else {
-                    resultElements = Utils2.asList( startElements, Element.class);
+                            context.getCurrentNode(), Utils2.asList(startElements, Element.class));
+                }
+                else {
+                    resultElements = Utils2.asList(startElements, Element.class);
                 }
                 List<Pair<Reference, Boolean>> cell = new ArrayList<>();
-                if (tc instanceof TableExpressionColumn && !((TableExpressionColumn)tc).iterate) {     
-                    String expr = ((TableExpressionColumn)tc).expression;
+                if (tc instanceof TableExpressionColumn && !((TableExpressionColumn) tc).iterate) {
+                    String expr = ((TableExpressionColumn) tc).expression;
                     if (expr != null) {
                         Object result = DocumentValidator
                                 .evaluate(expr, resultElements, getValidator(), true);
                         OclEvaluator evaluator = OclEvaluator.instance;
                         if (evaluator.isValid() && result != null) {
-                            Debug.outln( "valid result = " + result
-                                         + " for expression " + expr + " on "
-                                         + MoreToString.Helper.toLongString( resultElements ) );
+                            Debug.outln("valid result = " + result
+                                    + " for expression " + expr + " on "
+                                    + MoreToString.Helper.toLongString(resultElements));
                             cell.add(new Pair<>(new Reference(result), tc.editable));
-                        } else {
-                            Debug.outln( "invalid evaluation of expression "
-                                         + expr + " on "
-                                         + MoreToString.Helper.toLongString( resultElements ) );
                         }
-                    } else {
-                        Debug.outln( "attempted to evaluate null expression on "
-                                + MoreToString.Helper.toLongString( resultElements ) );
+                        else {
+                            Debug.outln("invalid evaluation of expression "
+                                    + expr + " on "
+                                    + MoreToString.Helper.toLongString(resultElements));
+                        }
                     }
-                } else {
-                	/*for (final Element ee : resultElements) {
+                    else {
+                        Debug.outln("attempted to evaluate null expression on "
+                                + MoreToString.Helper.toLongString(resultElements));
+                    }
+                }
+                else {
+                    /*for (final Element ee : resultElements) {
                 		Application.getInstance().getGUILog().log(e instanceof NamedElement ? ((NamedElement) ee).getQualifiedName() : ee.getHumanName());
                 	}
                 	Application.getInstance().getGUILog().log(resultElements.toString());*/
-                    for (Element re: resultElements) {
+                    for (Element re : resultElements) {
                         if (tc instanceof TableAttributeColumn) {
-                            Utils.AvailableAttribute at = ((TableAttributeColumn)tc).attribute;
+                            Utils.AvailableAttribute at = ((TableAttributeColumn) tc).attribute;
                             if (at == null) {
                                 continue;
                             }
                             Object attr = Utils.getElementAttribute(re, at); // attr can be string, value spec, or list of value spec
-                            if (attr == null && tc.editable && at == Utils.AvailableAttribute.Value && re instanceof Property)
+                            if (attr == null && tc.editable && at == Utils.AvailableAttribute.Value && re instanceof Property) {
                                 cell.add(new Pair<>(new Reference(re, Utils.getFromAttribute(at), ""), tc.editable));
-                            else if (attr != null) {
-                                cell.add(new Pair<>(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn)tc).attribute), attr), tc.editable));
                             }
-                        } else if (tc instanceof TablePropertyColumn) {
-                            Property prop = ((TablePropertyColumn)tc).property;
+                            else if (attr != null) {
+                                cell.add(new Pair<>(new Reference(re, Utils.getFromAttribute(((TableAttributeColumn) tc).attribute), attr), tc.editable));
+                            }
+                        }
+                        else if (tc instanceof TablePropertyColumn) {
+                            Property prop = ((TablePropertyColumn) tc).property;
                             if (prop == null) {
                                 continue;
                             }
@@ -288,54 +295,59 @@ public class TableStructure extends Table {
                             List<Object> values = Utils.getElementPropertyValues(re, prop, true);
                             if (slotOrProperty != null) {
                                 cell.add(new Pair<>(new Reference(slotOrProperty, From.DVALUE, values), tc.editable));
-                            } else
+                            }
+                            else {
                                 cell.add(new Pair<>(new Reference(values), tc.editable));
-                        } else if (tc instanceof TableExpressionColumn) {
-                            String expr = ((TableExpressionColumn)tc).expression;
+                            }
+                        }
+                        else if (tc instanceof TableExpressionColumn) {
+                            String expr = ((TableExpressionColumn) tc).expression;
                             if (expr == null) {
                                 // cell.add(new Reference(empty));
-                                Debug.outln( "attempted to evaluate null expression on "
-                                        + MoreToString.Helper.toLongString( re ) );
+                                Debug.outln("attempted to evaluate null expression on "
+                                        + MoreToString.Helper.toLongString(re));
                                 continue;
                             }
                             Object result = DocumentValidator.evaluate(expr, re, getValidator(), true);
                             OclEvaluator evaluator = OclEvaluator.instance;
                             if (evaluator.isValid() || result != null) {
-                                Debug.outln( "valid result = " + result
-                                             + " for expression " + expr + " on "
-                                             + MoreToString.Helper.toLongString( re ) );
+                                Debug.outln("valid result = " + result
+                                        + " for expression " + expr + " on "
+                                        + MoreToString.Helper.toLongString(re));
                                 cell.add(new Pair<>(new Reference(result), false));
-                            } else {
-                                Debug.outln( "invalid evaluation of expression "
-                                        + expr + " on "
-                                        + MoreToString.Helper.toLongString( re ) );
-   
                             }
-                        } else if (tc instanceof TableStructuredColumn) {
-                        	final Container con = new Section();
-                        	final DocumentGenerator dg = new DocumentGenerator(tc.activityNode, getValidator(), null);
-                        	if (tc.bnode == null) {
-                        	    if (tc.activityNode != null && !warnedError.contains(tc)) {
-                        	        Utils.guilog("[WARN] Table structure column is missing initial node, skipping: " + tc.activityNode.getQualifiedName());
-                        	        warnedError.add(tc);
-                        	    }
-                        	    break;
-                        	}
-                        	final Element a = tc.bnode.getOwner();
-                        	
-                        	final GenerationContext nestedContext = new GenerationContext(new Stack<List<Object>>(), tc.activityNode, getValidator(), Application.getInstance().getGUILog());
-                        	//Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
-                        	List<Object> newl = new ArrayList<Object>();
-                        	newl.add(re);
-                        	nestedContext.pushTargets(newl);
-                        	//context.pushTargets(new ArrayList<Object>(startElements));
-                        	dg.setContext(nestedContext);
-                        	
-                        	dg.parseActivityOrStructuredNode(a, con);
-                        	//Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
-                        	for (DocGenElement dge: con.getChildren()) {
-                        	    cell.add(new Pair<>(new Reference(dge), tc.editable));
-                        	}
+                            else {
+                                Debug.outln("invalid evaluation of expression "
+                                        + expr + " on "
+                                        + MoreToString.Helper.toLongString(re));
+
+                            }
+                        }
+                        else if (tc instanceof TableStructuredColumn) {
+                            final Container con = new Section();
+                            final DocumentGenerator dg = new DocumentGenerator(tc.activityNode, getValidator(), null);
+                            if (tc.bnode == null) {
+                                if (tc.activityNode != null && !warnedError.contains(tc)) {
+                                    Utils.guilog("[WARN] Table structure column is missing initial node, skipping: " + tc.activityNode.getQualifiedName());
+                                    warnedError.add(tc);
+                                }
+                                break;
+                            }
+                            final Element a = tc.bnode.getOwner();
+
+                            final GenerationContext nestedContext = new GenerationContext(new Stack<List<Object>>(), tc.activityNode, getValidator(), Application.getInstance().getGUILog());
+                            //Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
+                            List<Object> newl = new ArrayList<Object>();
+                            newl.add(re);
+                            nestedContext.pushTargets(newl);
+                            //context.pushTargets(new ArrayList<Object>(startElements));
+                            dg.setContext(nestedContext);
+
+                            dg.parseActivityOrStructuredNode(a, con);
+                            //Application.getInstance().getGUILog().log(re instanceof NamedElement ? ((NamedElement) re).getQualifiedName() : re.getHumanName());
+                            for (DocGenElement dge : con.getChildren()) {
+                                cell.add(new Pair<>(new Reference(dge), tc.editable));
+                            }
                         }
                     }
                 }
@@ -345,7 +357,7 @@ public class TableStructure extends Table {
                 DocumentValidator.evaluateConstraints(tc.activityNode, getCellData(row, tc), context, true,
                         true);
             }
-            Debug.outln( "adding " + row.size() + " cells in row to table." );
+            Debug.outln("adding " + row.size() + " cells in row to table.");
             tableContent.add(row);
         }
     }
@@ -353,8 +365,9 @@ public class TableStructure extends Table {
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         List<DocumentElement> res = new ArrayList<DocumentElement>();
-        if (ignore)
+        if (ignore) {
             return res;
+        }
 
         buildTableReferences(forViewEditor, outputDir);
         DBTable table = new DBTable();
@@ -364,26 +377,27 @@ public class TableStructure extends Table {
         if (headerDepth > 1) {
             List<DBColSpec> colspecs = new ArrayList<DBColSpec>();
             for (int i = 0; i < columns.size(); i++) {
-                DBColSpec cs = new DBColSpec(i+1);
+                DBColSpec cs = new DBColSpec(i + 1);
                 colspecs.add(cs);
             }
             table.setColspecs(colspecs);
         }
         List<List<DocumentElement>> body = new ArrayList<List<DocumentElement>>();
-        for (List<List<Pair<Reference, Boolean>>> row: tableContent) {
+        for (List<List<Pair<Reference, Boolean>>> row : tableContent) {
             List<DocumentElement> tableRow = new ArrayList<DocumentElement>();
-            for (List<Pair<Reference, Boolean>> cell: row) {
+            for (List<Pair<Reference, Boolean>> cell : row) {
                 DBTableEntry entry = new DBTableEntry();
                 for (Pair<Reference, Boolean> pair : cell) {
                     Reference cellPart = pair.getFirst();
                     //Common.addReferenceToDBHasContent(cellPart, entry);
-                	if (cellPart.result instanceof DocGenElement) {
-                		DocBookOutputVisitor nested = new DocBookOutputVisitor(forViewEditor, outputDir);
-                		nested.getParent().push(entry);
-            			((DocGenElement)cellPart.result).accept(nested);
-            		} else {
-            			Common.addReferenceToDBHasContent(cellPart, entry, pair.getSecond());
-            		}
+                    if (cellPart.result instanceof DocGenElement) {
+                        DocBookOutputVisitor nested = new DocBookOutputVisitor(forViewEditor, outputDir);
+                        nested.getParent().push(entry);
+                        ((DocGenElement) cellPart.result).accept(nested);
+                    }
+                    else {
+                        Common.addReferenceToDBHasContent(cellPart, entry, pair.getSecond());
+                    }
                 }
                 tableRow.add(entry);
             }
@@ -442,40 +456,43 @@ public class TableStructure extends Table {
     private List<List<DocumentElement>> makeTableHeaders() {
         List<List<DocumentElement>> result = new ArrayList<List<DocumentElement>>();
         for (int i = 0; i < headerDepth; i++) { //add in rows of the headers
-            result.add(new ArrayList<DocumentElement>()); 
+            result.add(new ArrayList<DocumentElement>());
         }
         int start = 0;
-        for (TableColumn tc: headers) {
-            start = addHeader(tc, result, 1, start+1);
+        for (TableColumn tc : headers) {
+            start = addHeader(tc, result, 1, start + 1);
         }
         return result;
     }
-    
+
     private int addHeader(TableColumn tc, List<List<DocumentElement>> header, int curDepth, int startIndex) {
         if (tc instanceof TableColumnGroup) {
             int start = startIndex;
             DBTableEntry entry = new DBTableEntry();
             entry.addElement(new DBText(tc.name));
             int i = 0;
-            for (TableColumn ctc: ((TableColumnGroup)tc).childColumns) {
-                if (i == 0)
-                    start = addHeader(ctc, header, curDepth+1, start);
-                else
-                    start = addHeader(ctc, header, curDepth+1, start+1);
+            for (TableColumn ctc : ((TableColumnGroup) tc).childColumns) {
+                if (i == 0) {
+                    start = addHeader(ctc, header, curDepth + 1, start);
+                }
+                else {
+                    start = addHeader(ctc, header, curDepth + 1, start + 1);
+                }
                 i++;
             }
             entry.setNamest(Integer.toString(startIndex));
             entry.setNameend(Integer.toString(start));
-            header.get(curDepth-1).add(entry);
+            header.get(curDepth - 1).add(entry);
             return start;
-        } else {
+        }
+        else {
             DBTableEntry entry = new DBTableEntry();
             entry.addElement(new DBText(tc.name));
-            header.get(curDepth-1).add(entry);
+            header.get(curDepth - 1).add(entry);
             if (curDepth < headerDepth) {
-                entry.setMorerows(headerDepth-curDepth);
+                entry.setMorerows(headerDepth - curDepth);
             }
-            return columnIndex.get(tc)+1;
+            return columnIndex.get(tc) + 1;
         }
     }
 }

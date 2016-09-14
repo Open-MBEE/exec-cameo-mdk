@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,34 +28,32 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
 public class ExportName extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private NamedElement element;
-    
+
     public ExportName(NamedElement e) {
         super("ExportName", "Commit name", null, null);
         this.element = e;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return true;
@@ -67,10 +65,10 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         Set<String> duplicatedNames = new HashSet<String>();
         JSONArray infos = new JSONArray();
         Set<Element> set = new HashSet<Element>();
-        for (Annotation anno: annos) {
-            Element e = (Element)anno.getTarget();
+        for (Annotation anno : annos) {
+            Element e = (Element) anno.getTarget();
             if (duplicateName(e)) {
-                String qname = ((NamedElement)e).getQualifiedName();
+                String qname = ((NamedElement) e).getQualifiedName();
                 if (!duplicatedNames.contains(qname)) {
                     Utils.guilog("[WARNING] " + qname + " has the same qualified name as another element.");
                     duplicatedNames.add(qname);
@@ -89,7 +87,7 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
     @Override
     public void actionPerformed(ActionEvent e) {
         if (duplicateName(element)) {
-            Utils.guilog("[WARNING] " + ((NamedElement)element).getQualifiedName() + " has the same qualified name as another element.");
+            Utils.guilog("[WARNING] " + element.getQualifiedName() + " has the same qualified name as another element.");
             //return;
         }
         JSONArray elements = new JSONArray();
@@ -97,13 +95,14 @@ public class ExportName extends RuleViolationAction implements AnnotationAction,
         elements.add(ExportUtility.fillName(element, null));
         commit(elements, "Name");
     }
-    
+
     private boolean duplicateName(Element e) {
         if (e instanceof NamedElement) {
             if (e.getOwner() != null) {
-                for (Element c: e.getOwner().getOwnedElement()) {
-                    if (c instanceof NamedElement && c != e && c.getHumanName().equals(e.getHumanName()) && !((NamedElement)c).getName().equals(""))
+                for (Element c : e.getOwner().getOwnedElement()) {
+                    if (c instanceof NamedElement && c != e && c.getHumanName().equals(e.getHumanName()) && !((NamedElement) c).getName().equals("")) {
                         return true;
+                    }
                 }
             }
         }

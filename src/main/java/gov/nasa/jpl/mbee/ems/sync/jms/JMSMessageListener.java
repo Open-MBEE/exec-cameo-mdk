@@ -19,7 +19,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import javax.jms.*;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class JMSMessageListener implements MessageListener, ExceptionListener {
     private static final Map<String, Changelog.ChangeType> CHANGE_MAPPING = new LinkedHashMap<>(4);

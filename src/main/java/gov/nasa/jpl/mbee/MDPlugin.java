@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,11 +28,19 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
+import com.nomagic.actions.NMAction;
+import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
+import com.nomagic.magicdraw.actions.ConfiguratorWithPriority;
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
+import com.nomagic.magicdraw.plugins.Plugin;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.Configurator.Context;
 import gov.nasa.jpl.mbee.lib.ClassUtils;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.Utils2;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -42,16 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-
-import javax.swing.KeyStroke;
-
-import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
-import com.nomagic.magicdraw.actions.ConfiguratorWithPriority;
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
-import com.nomagic.magicdraw.plugins.Plugin;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 /**
  * An abstract MagicDraw {@link Plugin} that simplifies configuration. To create
@@ -69,10 +67,10 @@ public abstract class MDPlugin extends Plugin {
     // TODO? implements ProjectEventListener { // see DocGenPlugin and
     // ApplicationSyncEventSubscriber
 
-    Configurator                        configForAll                  = new Configurator();
-    ActionsConfiguratorsManager         acm                           = null;
-    protected boolean                   registeringBinaryImplementers = true;
-    protected Class<? extends NMAction> nmActionClass                 = null;
+    Configurator configForAll = new Configurator();
+    ActionsConfiguratorsManager acm = null;
+    protected boolean registeringBinaryImplementers = true;
+    protected Class<? extends NMAction> nmActionClass = null;
 
     // protected
 
@@ -90,7 +88,7 @@ public abstract class MDPlugin extends Plugin {
     /**
      * Redefine to specify menu configurations. For example, the body may look
      * something like this:
-     * 
+     * <p>
      * <pre>
      * {
      *     &#064;code
@@ -99,7 +97,7 @@ public abstract class MDPlugin extends Plugin {
      *     Method copyElementMethod = TestPlugin.ElementUtils.class.getDeclaredMethods()[0];
      *     // Add the Method in MagicDraw's main menu.
      *     addConfiguration(&quot;MainMenu&quot;, &quot;&quot;, &quot;copyElement&quot;, &quot;Element Utils&quot;, copyElementMethod);
-     * 
+     *
      *     // Get the copyPackage() Method more carefully.
      *     copyPackageMethod = ClassUtils.getMethodForArgTypes(TestPlugin.PackageUtils.class, &quot;copyPackage&quot;,
      *             ActionEvent.class, Element.class);
@@ -118,99 +116,94 @@ public abstract class MDPlugin extends Plugin {
      * Add a configuration, a context for the action name to appear in new or
      * existing category where the static action {@link Method} will be invoked.
      * For example,
-     * 
+     * <p>
      * <pre>
      * {@code
      * addConfiguration( "BaseDiagramContext", "Class Diagram", "copyPackage",
      *                   "Package Utils", copyPackageMethod );
      * }
      * </pre>
-     * 
-     * @param context
-     *            the place in the application (diagram, browser, or menu) where
-     *            the action is to be available; this name should match a
-     *            {@link Context} exactly.
-     * @param subcontext
-     *            a more specific context within that named by the
-     *            {@code context} parameter; for example, the type of diagram.
-     * @param actionName
-     *            the label for an item in the menu (available in a window menu
-     *            of the application or a right-click menu according to the
-     *            context) that, when selected, invokes the {@code actionMethod}
-     * @param category
-     *            a higher level menu item label that, when selected, provides a
-     *            drop-down menu with the {@code actionName} item.
-     * @param actionMethod
-     *            a static {@link Method} with ActionEvent and Element parameter
-     *            types that is invoked from a menu in this context.
+     *
+     * @param context      the place in the application (diagram, browser, or menu) where
+     *                     the action is to be available; this name should match a
+     *                     {@link Context} exactly.
+     * @param subcontext   a more specific context within that named by the
+     *                     {@code context} parameter; for example, the type of diagram.
+     * @param actionName   the label for an item in the menu (available in a window menu
+     *                     of the application or a right-click menu according to the
+     *                     context) that, when selected, invokes the {@code actionMethod}
+     * @param category     a higher level menu item label that, when selected, provides a
+     *                     drop-down menu with the {@code actionName} item.
+     * @param actionMethod a static {@link Method} with ActionEvent and Element parameter
+     *                     types that is invoked from a menu in this context.
      * @return
      */
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod) {
+                                     Method actionMethod) {
         return configForAll.addConfiguration(context, subcontext, actionName, category, actionMethod);
     }
 
     public MDAction addConfiguration(Configurator.Context context, String subcontext, String actionName,
-            String category, Method actionMethod) {
+                                     String category, Method actionMethod) {
         return configForAll.addConfiguration(context.toString(), subcontext, actionName, category,
                 actionMethod);
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod, Object objectInvokingMethod) {
+                                     Method actionMethod, Object objectInvokingMethod) {
         return configForAll.addConfiguration(context, subcontext, actionName, category, actionMethod,
                 objectInvokingMethod);
     }
 
     public MDAction addConfiguration(Configurator.Context context, String subcontext, String actionName,
-            String category, Method actionMethod, Object objectInvokingMethod) {
+                                     String category, Method actionMethod, Object objectInvokingMethod) {
         return configForAll.addConfiguration(context.toString(), subcontext, actionName, category,
                 actionMethod, objectInvokingMethod);
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod, Object objectInvokingMethod, String id, KeyStroke k, String group) {
+                                     Method actionMethod, Object objectInvokingMethod, String id, KeyStroke k, String group) {
         return configForAll.addConfiguration(context, subcontext, actionName, category, actionMethod,
                 objectInvokingMethod, id, k, group);
     }
 
     public MDAction addConfiguration(Configurator.Context context, String subcontext, String actionName,
-            String category, Method actionMethod, Object objectInvokingMethod, String id, KeyStroke k,
-            String group) {
+                                     String category, Method actionMethod, Object objectInvokingMethod, String id, KeyStroke k,
+                                     String group) {
         return configForAll.addConfiguration(context.toString(), subcontext, actionName, category,
                 actionMethod, objectInvokingMethod, id, k, group);
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic, String group) {
+                                     Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic, String group) {
         return configForAll.addConfiguration(context, subcontext, actionName, category, actionMethod,
                 objectInvokingMethod, id, mnemonic, group);
     }
 
     public MDAction addConfiguration(Configurator.Context context, String subcontext, String actionName,
-            String category, Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic,
-            String group) {
+                                     String category, Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic,
+                                     String group) {
         return configForAll.addConfiguration(context.toString(), subcontext, actionName, category,
                 actionMethod, objectInvokingMethod, id, mnemonic, group);
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic, KeyStroke k,
-            String group) {
+                                     Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic, KeyStroke k,
+                                     String group) {
         return configForAll.addConfiguration(context, subcontext, actionName, category, actionMethod,
                 objectInvokingMethod, id, mnemonic, k, group);
     }
 
     public MDAction addConfiguration(Configurator.Context context, String subcontext, String actionName,
-            String category, Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic,
-            KeyStroke k, String group) {
+                                     String category, Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic,
+                                     KeyStroke k, String group) {
         return configForAll.addConfiguration(context.toString(), subcontext, actionName, category,
                 actionMethod, objectInvokingMethod, id, mnemonic, k, group);
     }
 
     /**
-   * 
-   */
+     *
+     */
     public MDPlugin() {
         super();
     }
@@ -223,12 +216,13 @@ public abstract class MDPlugin extends Plugin {
     @SuppressWarnings("unchecked")
     public <T extends NMAction> void nmActionMethod(ActionEvent event, Element element) {
         T action = null;
-        Constructor<T> ctor = (Constructor<T>)ClassUtils.getConstructorForArgs(nmActionClass,
-                new Object[] {element});
+        Constructor<T> ctor = (Constructor<T>) ClassUtils.getConstructorForArgs(nmActionClass,
+                new Object[]{element});
         try {
             if (ctor == null || Utils2.isNullOrEmpty(ctor.getParameterTypes())) {
-                action = (T)nmActionClass.newInstance();
-            } else {
+                action = (T) nmActionClass.newInstance();
+            }
+            else {
                 action = ctor.newInstance(element);
             }
         } catch (IllegalArgumentException e) {
@@ -273,18 +267,18 @@ public abstract class MDPlugin extends Plugin {
         Debug.outln("initializing " + getClass().getSimpleName());
 
         initConfigurations(); // Override this called method, not init() unless
-                              // this
-                              // is called as super.init();
+        // this
+        // is called as super.init();
 
         acm = ActionsConfiguratorsManager.getInstance();
 
         Map<String, Map<String, MDAction>> actionCategories = null;
         Map<String, Map<String, Map<String, MDAction>>> subcontexts = null;
 
-        for (Configurator.Context context: Configurator.getContexts()) {
+        for (Configurator.Context context : Configurator.getContexts()) {
             subcontexts = configForAll.getMenus().get(context);
 
-            for (Entry<String, Map<String, Map<String, MDAction>>> e: subcontexts.entrySet()) {
+            for (Entry<String, Map<String, Map<String, MDAction>>> e : subcontexts.entrySet()) {
                 actionCategories = e.getValue();
 
                 // Create a separate configurator object for each configuration
@@ -343,11 +337,14 @@ public abstract class MDPlugin extends Plugin {
             if (pType == null) {
                 Debug.error(false, "null parameter type in Method " + addMethod);
                 arguments.add(null);
-            } else if (pType.equals(String.class)) {
+            }
+            else if (pType.equals(String.class)) {
                 arguments.add(subcontext);
-            } else if (ConfiguratorWithPriority.class.isAssignableFrom(pType) || pType.isInstance(cfgtor)) {
+            }
+            else if (ConfiguratorWithPriority.class.isAssignableFrom(pType) || pType.isInstance(cfgtor)) {
                 arguments.add(cfgtor);
-            } else {
+            }
+            else {
                 Debug.error(true, true, "Error! addConfigurator(" + cfgtor + ", " + context + ", "
                         + subcontext + "): Unexpected " + pType.getSimpleName()
                         + " parameter type in add method, " + addMethod.getName() + "()=" + addMethod
@@ -376,8 +373,7 @@ public abstract class MDPlugin extends Plugin {
     }
 
     /**
-     * @param registeringBinaryImplementers
-     *            the registeringBinaryImplementers to set
+     * @param registeringBinaryImplementers the registeringBinaryImplementers to set
      */
     public void setRegisteringBinaryImplementers(boolean registeringBinaryImplementers) {
         this.registeringBinaryImplementers = registeringBinaryImplementers;

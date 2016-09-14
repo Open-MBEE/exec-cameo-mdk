@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -34,7 +34,7 @@ import org.eclipse.emf.ecore.EObject;
 /**
  * <!-- begin-user-doc --> A representation of the model object '
  * <em><b>Suite</b></em>'. <!-- end-user-doc -->
- * 
+ * <p>
  * <p>
  * The following features are supported:
  * <ul>
@@ -50,10 +50,10 @@ import org.eclipse.emf.ecore.EObject;
  * Rules</em>}</li>
  * </ul>
  * </p>
- * 
- * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite()
+ *
  * @model
  * @generated
+ * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite()
  */
 public interface Suite extends EObject {
     /**
@@ -64,12 +64,12 @@ public interface Suite extends EObject {
      * really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Show Detail</em>' attribute.
-     * @see #setShowDetail(boolean)
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_ShowDetail()
      * @model
      * @generated
+     * @see #setShowDetail(boolean)
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_ShowDetail()
      */
     boolean isShowDetail();
 
@@ -78,11 +78,10 @@ public interface Suite extends EObject {
      * {@link gov.nasa.jpl.mbee.dgvalidation.Suite#isShowDetail
      * <em>Show Detail</em>}' attribute. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Show Detail</em>' attribute.
-     * @see #isShowDetail()
+     *
+     * @param value the new value of the '<em>Show Detail</em>' attribute.
      * @generated
+     * @see #isShowDetail()
      */
     void setShowDetail(boolean value);
 
@@ -94,12 +93,12 @@ public interface Suite extends EObject {
      * there really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Show Summary</em>' attribute.
-     * @see #setShowSummary(boolean)
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_ShowSummary()
      * @model
      * @generated
+     * @see #setShowSummary(boolean)
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_ShowSummary()
      */
     boolean isShowSummary();
 
@@ -108,11 +107,10 @@ public interface Suite extends EObject {
      * {@link gov.nasa.jpl.mbee.dgvalidation.Suite#isShowSummary
      * <em>Show Summary</em>}' attribute. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Show Summary</em>' attribute.
-     * @see #isShowSummary()
+     *
+     * @param value the new value of the '<em>Show Summary</em>' attribute.
      * @generated
+     * @see #isShowSummary()
      */
     void setShowSummary(boolean value);
 
@@ -124,12 +122,12 @@ public interface Suite extends EObject {
      * really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Own Section</em>' attribute.
-     * @see #setOwnSection(boolean)
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_OwnSection()
      * @model
      * @generated
+     * @see #setOwnSection(boolean)
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_OwnSection()
      */
     boolean isOwnSection();
 
@@ -138,11 +136,10 @@ public interface Suite extends EObject {
      * {@link gov.nasa.jpl.mbee.dgvalidation.Suite#isOwnSection
      * <em>Own Section</em>}' attribute. <!-- begin-user-doc --> <!--
      * end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Own Section</em>' attribute.
-     * @see #isOwnSection()
+     *
+     * @param value the new value of the '<em>Own Section</em>' attribute.
      * @generated
+     * @see #isOwnSection()
      */
     void setOwnSection(boolean value);
 
@@ -154,12 +151,12 @@ public interface Suite extends EObject {
      * should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Name</em>' attribute.
-     * @see #setName(String)
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_Name()
      * @model
      * @generated
+     * @see #setName(String)
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_Name()
      */
     String getName();
 
@@ -167,11 +164,10 @@ public interface Suite extends EObject {
      * Sets the value of the '
      * {@link gov.nasa.jpl.mbee.dgvalidation.Suite#getName
      * <em>Name</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param value
-     *            the new value of the '<em>Name</em>' attribute.
-     * @see #getName()
+     *
+     * @param value the new value of the '<em>Name</em>' attribute.
      * @generated
+     * @see #getName()
      */
     void setName(String value);
 
@@ -185,11 +181,11 @@ public interface Suite extends EObject {
      * clear, there really should be more of a description here...
      * </p>
      * <!-- end-user-doc -->
-     * 
+     *
      * @return the value of the '<em>Rules</em>' containment reference list.
-     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_Rules()
      * @model containment="true"
      * @generated
+     * @see gov.nasa.jpl.mbee.dgvalidation.DgvalidationPackage#getSuite_Rules()
      */
     EList<Rule> getRules();
 

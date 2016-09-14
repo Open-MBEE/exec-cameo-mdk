@@ -28,50 +28,48 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONArray;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 
-import org.json.simple.JSONArray;
-
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 public class ExportMetatypes extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
-	private static final long serialVersionUID = 1L;
-	private Element element;
+    private static final long serialVersionUID = 1L;
+    private Element element;
 
-	public ExportMetatypes(Element e) {
-		super("ExportMetatype", "Commit metatypes", null, null);
-		this.element = e;
-	}
+    public ExportMetatypes(Element e) {
+        super("ExportMetatype", "Commit metatypes", null, null);
+        this.element = e;
+    }
 
-	@Override
-	public boolean canExecute(Collection<Annotation> arg0) {
-		return true;
-	}
+    @Override
+    public boolean canExecute(Collection<Annotation> arg0) {
+        return true;
+    }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public void execute(Collection<Annotation> annos) {
-		JSONArray elements = new JSONArray();
-		for (Annotation anno : annos) {
-			Element e = (Element)anno.getTarget();
-			elements.add(ExportUtility.fillMetatype(e, null));
-		}
-		commit(elements, "Metatype");
-	}
+    @SuppressWarnings("unchecked")
+    @Override
+    public void execute(Collection<Annotation> annos) {
+        JSONArray elements = new JSONArray();
+        for (Annotation anno : annos) {
+            Element e = (Element) anno.getTarget();
+            elements.add(ExportUtility.fillMetatype(e, null));
+        }
+        commit(elements, "Metatype");
+    }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		JSONArray elements = new JSONArray();
-		elements.add(ExportUtility.fillMetatype(element, null));
-		commit(elements, "Metatype");
-	}
+    @SuppressWarnings("unchecked")
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        JSONArray elements = new JSONArray();
+        elements.add(ExportUtility.fillMetatype(element, null));
+        commit(elements, "Metatype");
+    }
 }

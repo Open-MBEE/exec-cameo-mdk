@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,20 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.patternloader;
 
-import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
-import gov.nasa.jpl.mbee.stylesaver.ViewLoader;
-
-import java.awt.HeadlessException;
-import java.awt.event.ActionEvent;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.swing.JOptionPane;
-
-import org.json.simple.JSONObject;
-
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -52,28 +38,35 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
+import gov.nasa.jpl.mbee.stylesaver.ViewLoader;
+import org.json.simple.JSONObject;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A class used to load patterns onto the active diagram from other project
  * diagrams.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class PatternLoader extends MDAction {
-    private static final long   serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
     private PresentationElement requester;
 
     /**
      * Initializes the Pattern Loader.
-     * 
-     * @param id
-     *            the ID of the action.
-     * @param value
-     *            the name of the action.
-     * @param mnemonic
-     *            the mnemonic key of the action.
-     * @param group
-     *            the name of the related commands group.
+     *
+     * @param id       the ID of the action.
+     * @param value    the name of the action.
+     * @param mnemonic the mnemonic key of the action.
+     * @param group    the name of the related commands group.
      */
     public PatternLoader(String id, String value, int mnemonic, String group, PresentationElement requester) {
         super(id, value, mnemonic, group);
@@ -83,9 +76,8 @@ public class PatternLoader extends MDAction {
 
     /**
      * Perform a pattern load on menu option mouse click.
-     * 
-     * @param e
-     *            the ActionEvent that fired this method.
+     *
+     * @param e the ActionEvent that fired this method.
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -109,9 +101,8 @@ public class PatternLoader extends MDAction {
 
     /**
      * Allows the user to pick the load or stamp operation.
-     * 
-     * @throws RuntimeException
-     *             if a problem with loading or stamping occurs.
+     *
+     * @throws RuntimeException if a problem with loading or stamping occurs.
      */
     private void delegateOperation() throws RuntimeException {
         Object[] options = {"Load pattern", "Stamp pattern"};
@@ -129,7 +120,8 @@ public class PatternLoader extends MDAction {
         try {
             if ((opt == JOptionPane.YES_OPTION)) {
                 prepAndRun(true);
-            } else if ((opt == JOptionPane.NO_OPTION)) {
+            }
+            else if ((opt == JOptionPane.NO_OPTION)) {
                 prepAndRun(false);
             }
         } catch (RuntimeException e) {
@@ -153,14 +145,15 @@ public class PatternLoader extends MDAction {
             return;
         }
 
-        Diagram requesterDiagramElem = (Diagram)proj.getElementByID(requesterElem.getID());
+        Diagram requesterDiagramElem = (Diagram) proj.getElementByID(requesterElem.getID());
 
         DiagramPresentationElement patternDiagram = getPatternDiagram();
         DiagramPresentationElement targetDiagram = proj.getDiagram(requesterDiagramElem);
 
         if ((patternDiagram == null) || (targetDiagram == null)) {
             throw new RuntimeException();
-        } else {
+        }
+        else {
             patternDiagram.ensureLoaded();
             targetDiagram.ensureLoaded();
         }
@@ -168,7 +161,8 @@ public class PatternLoader extends MDAction {
         try {
             if (runLoad) {
                 runLoadPattern(proj, targetDiagram, patternDiagram);
-            } else {
+            }
+            else {
                 runStampPattern(proj, targetDiagram, patternDiagram);
             }
         } catch (RuntimeException e) {
@@ -179,12 +173,11 @@ public class PatternLoader extends MDAction {
 
     /**
      * Runs the Pattern Loader with a progress bar.
-     * 
-     * @throws RuntimeException
-     *             if a problem with loading is encountered.
+     *
+     * @throws RuntimeException if a problem with loading is encountered.
      */
     private void runLoadPattern(Project proj, DiagramPresentationElement targetDiagram,
-            DiagramPresentationElement patternDiagram) throws RuntimeException {
+                                DiagramPresentationElement patternDiagram) throws RuntimeException {
         List<PresentationElement> targetElements = targetDiagram.getPresentationElements();
 
         RunnablePatternLoaderWithProgress runnable = new RunnablePatternLoaderWithProgress(proj,
@@ -193,7 +186,8 @@ public class PatternLoader extends MDAction {
 
         if (runnable.getSuccess()) {
             JOptionPane.showMessageDialog(null, "Load complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-        } else {
+        }
+        else {
             JOptionPane.showMessageDialog(null, "Error occurred. Load cancelled.", "Info",
                     JOptionPane.INFORMATION_MESSAGE);
             throw new RuntimeException();
@@ -202,12 +196,11 @@ public class PatternLoader extends MDAction {
 
     /**
      * Runs the Pattern Stamper.
-     * 
-     * @throws RuntimeException
-     *             if a problem with loading is encountered.
+     *
+     * @throws RuntimeException if a problem with loading is encountered.
      */
     private void runStampPattern(Project proj, DiagramPresentationElement targetDiagram,
-            DiagramPresentationElement patternDiagram) throws RuntimeException {
+                                 DiagramPresentationElement patternDiagram) throws RuntimeException {
         List<PresentationElement> patternElements = patternDiagram.getPresentationElements();
 
         RunnablePatternStamperWithProgress runnable = new RunnablePatternStamperWithProgress(targetDiagram,
@@ -216,7 +209,8 @@ public class PatternLoader extends MDAction {
 
         if (runnable.getSuccess()) {
             JOptionPane.showMessageDialog(null, "Stamp complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-        } else {
+        }
+        else {
             JOptionPane.showMessageDialog(null, "Error occurred. Stamp cancelled.", "Info",
                     JOptionPane.INFORMATION_MESSAGE);
             throw new RuntimeException();
@@ -226,7 +220,7 @@ public class PatternLoader extends MDAction {
     /**
      * Provides an input dialog for the user to pick a diagram to load a pattern
      * from.
-     * 
+     *
      * @return the user-selected pattern diagram.
      */
     private DiagramPresentationElement getPatternDiagram() {
@@ -249,7 +243,7 @@ public class PatternLoader extends MDAction {
 
         String userInput;
         try {
-            userInput = (String)JOptionPane.showInputDialog(null, "Choose a diagram to get a pattern from:",
+            userInput = (String) JOptionPane.showInputDialog(null, "Choose a diagram to get a pattern from:",
                     null, JOptionPane.DEFAULT_OPTION, null, sortedNames, sortedNames[0]);
         } catch (HeadlessException e) {
             Application.getInstance().getGUILog()
@@ -282,16 +276,14 @@ public class PatternLoader extends MDAction {
     /**
      * Loads the style of elements on the diagram by gathering relevant style
      * information from the JSONObject.
-     * 
-     * @param elemList
-     *            the list of elements to load styles into.
-     * @param pattern
-     *            the pattern to load.
+     *
+     * @param elemList the list of elements to load styles into.
+     * @param pattern  the pattern to load.
      */
     public static void loadPattern(List<PresentationElement> elemList, JSONObject pattern,
-            ProgressStatus progressStatus) {
-        for (PresentationElement elem: elemList) {
-            String elemStyle = (String)pattern.get(elem.getHumanType());
+                                   ProgressStatus progressStatus) {
+        for (PresentationElement elem : elemList) {
+            String elemStyle = (String) pattern.get(elem.getHumanType());
 
             if (elemStyle == null) {
                 // there was no style pattern found for this element, load
@@ -317,11 +309,9 @@ public class PatternLoader extends MDAction {
 
     /**
      * Recursively loads style information of owned elements.
-     * 
-     * @param parent
-     *            the parent element to recurse on.
-     * @param style
-     *            the central style string holding all style properties.
+     *
+     * @param parent the parent element to recurse on.
+     * @param style  the central style string holding all style properties.
      */
     private static void setStyleChildren(PresentationElement parent, JSONObject pattern) {
         List<PresentationElement> children = parent.getPresentationElements();

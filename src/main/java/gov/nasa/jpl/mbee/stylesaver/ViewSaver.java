@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -27,23 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.stylesaver;
-
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.MissingResourceException;
-
-import javax.swing.JOptionPane;
-
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -59,29 +42,32 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.BaseProgressMonitor;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * A class that saves style information of elements on a diagram.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class ViewSaver extends MDAction {
     private static final long serialVersionUID = 1L;
-    private static boolean    suppressOutput;
+    private static boolean suppressOutput;
 
     /**
      * Initializes the ViewSaver.
-     * 
-     * @param id
-     *            the ID of the action.
-     * @param value
-     *            the name of the action.
-     * @param mnemonic
-     *            the mnemonic key of the action.
-     * @param group
-     *            the name of the related commands group.
-     * @param s
-     *            if true, user-interactivity is suppressed.
+     *
+     * @param id       the ID of the action.
+     * @param value    the name of the action.
+     * @param mnemonic the mnemonic key of the action.
+     * @param group    the name of the related commands group.
+     * @param s        if true, user-interactivity is suppressed.
      */
     public ViewSaver(String id, String value, int mnemonic, String group, boolean s) {
         super(id, value, null, null);
@@ -91,9 +77,8 @@ public class ViewSaver extends MDAction {
 
     /**
      * Opens up the active diagram and performs the save operation.
-     * 
-     * @param e
-     *            the ActionEvent that fired this method.
+     *
+     * @param e the ActionEvent that fired this method.
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -127,7 +112,8 @@ public class ViewSaver extends MDAction {
         if (JSONStr != null) {
             SessionManager.getInstance().closeSession();
             JOptionPane.showMessageDialog(null, "Save complete.", "Info", JOptionPane.INFORMATION_MESSAGE);
-        } else {
+        }
+        else {
             SessionManager.getInstance().cancelSession();
             JOptionPane.showMessageDialog(null, "Save cancelled.", "Info", JOptionPane.INFORMATION_MESSAGE);
         }
@@ -135,13 +121,10 @@ public class ViewSaver extends MDAction {
 
     /**
      * Returns relevant style information in a JSON string.
-     * 
-     * @param proj
-     *            the diagram's project.
-     * @param diagram
-     *            the diagram to save.
-     * @param suppress
-     *            set to true to suppress swing dialog boxes.
+     *
+     * @param proj     the diagram's project.
+     * @param diagram  the diagram to save.
+     * @param suppress set to true to suppress swing dialog boxes.
      * @return null on error or the JSON style string for this diagram.
      */
     public static String save(Project proj, DiagramPresentationElement diagram, boolean suppress) {
@@ -155,7 +138,8 @@ public class ViewSaver extends MDAction {
             }
 
             return null;
-        } else {
+        }
+        else {
             diagram.ensureLoaded();
         }
 
@@ -188,7 +172,8 @@ public class ViewSaver extends MDAction {
                 // else, add view stereotype to diagram
                 if ((opt == JOptionPane.NO_OPTION) || (opt == JOptionPane.CLOSED_OPTION)) {
                     return null;
-                } else {
+                }
+                else {
                     StereotypesHelper.addStereotype(diagram.getElement(), workingStereotype);
                 }
             }
@@ -197,7 +182,7 @@ public class ViewSaver extends MDAction {
         // get all the elements in the diagram and store them into a list
         List<PresentationElement> elemList = new ArrayList<PresentationElement>();
         try {
-            for (PresentationElement pe: diagram.getPresentationElements()) {
+            for (PresentationElement pe : diagram.getPresentationElements()) {
                 // TextAreViews are generated dynamically on diagram, so don't
                 // save
                 if (!(pe instanceof TextAreaView)) {
@@ -230,25 +215,25 @@ public class ViewSaver extends MDAction {
 
             if (runnable.getSuccess()) {
                 return runnable.getStyleString();
-            } else {
+            }
+            else {
                 return null;
             }
-        } else {
+        }
+        else {
             return executeSave(elemList, mainStore);
         }
     }
 
     /**
      * Generates the style string for the presentation elements on the diagram.
-     * 
-     * @param elemList
-     *            the list of presentation elements on the diagram.
-     * @param mainStore
-     *            the JSONObject that will be converted into a JSON string.
+     *
+     * @param elemList  the list of presentation elements on the diagram.
+     * @param mainStore the JSONObject that will be converted into a JSON string.
      * @return the style string.
      */
     private static String executeSave(List<PresentationElement> elemList, Map<String, String> mainStore) {
-        for (PresentationElement elem: elemList) {
+        for (PresentationElement elem : elemList) {
             // save the element's style properties
             try {
                 String styleStr = getStyle(elem);
@@ -275,9 +260,8 @@ public class ViewSaver extends MDAction {
     /**
      * Get a JSON string representing the style properties of the parameterized
      * presentation element.
-     * 
-     * @param elem
-     *            the element to get style properties from.
+     *
+     * @param elem the element to get style properties from.
      * @return the element's respective JSON style string.
      */
     @SuppressWarnings("unchecked")
@@ -313,7 +297,7 @@ public class ViewSaver extends MDAction {
 
         // save break points if the element is a PathElement
         if (elem instanceof PathElement) {
-            List<Point> breakPoints = ((PathElement)elem).getAllBreakPoints();
+            List<Point> breakPoints = ((PathElement) elem).getAllBreakPoints();
 
             // add in the break points
             for (int i = 0; i < breakPoints.size(); i++) {
@@ -323,14 +307,14 @@ public class ViewSaver extends MDAction {
             // add in the number of break points
             entry.put("num_break_points", breakPoints.size());
 
-            Point supplierPt = ((PathElement)elem).getSupplierPoint();
-            Point clientPt = ((PathElement)elem).getClientPoint();
+            Point supplierPt = ((PathElement) elem).getSupplierPoint();
+            Point clientPt = ((PathElement) elem).getClientPoint();
 
             // add in the supplier and client points
             entry.put("supplier_point", supplierPt.toString());
             entry.put("client_point", clientPt.toString());
 
-            int lineWidth = ((PathElement)elem).getLineWidth();
+            int lineWidth = ((PathElement) elem).getLineWidth();
 
             entry.put("path_line_width", Integer.toString(lineWidth));
         }
@@ -344,18 +328,16 @@ public class ViewSaver extends MDAction {
     /**
      * Recursively saves style information of owned elements into the JSONObject
      * pointed to by mainStore.
-     * 
-     * @param elem
-     *            the element to get style properties from.
-     * @param mainStore
-     *            the JSONObject to store style information into.
+     *
+     * @param elem      the element to get style properties from.
+     * @param mainStore the JSONObject to store style information into.
      */
     // for JSONObject put() method
     public static void getStyleChildren(PresentationElement parent, Map<String, String> mainStore,
-            ProgressStatus progressStatus) {
+                                        ProgressStatus progressStatus) {
         // get the parent element's children
         List<PresentationElement> children = new ArrayList<PresentationElement>(); // parent.getPresentationElements();
-        for (PresentationElement pe: parent.getPresentationElements()) {
+        for (PresentationElement pe : parent.getPresentationElements()) {
             // TextAreViews are generated dynamically on diagram, so don't save
             if (!(pe instanceof TextAreaView)) {
                 children.add(pe);
@@ -400,14 +382,14 @@ public class ViewSaver extends MDAction {
     }
 
     public static Comparator<PresentationElement> PresentationElementComparator = new Comparator<PresentationElement>() {
-                                                                                    @Override
-                                                                                    public int compare(
-                                                                                            PresentationElement pe1,
-                                                                                            PresentationElement pe2) {
-                                                                                        return pe1
-                                                                                                .getID()
-                                                                                                .compareTo(
-                                                                                                        pe2.getID());
-                                                                                    }
-                                                                                };
+        @Override
+        public int compare(
+                PresentationElement pe1,
+                PresentationElement pe2) {
+            return pe1
+                    .getID()
+                    .compareTo(
+                            pe2.getID());
+        }
+    };
 }

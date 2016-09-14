@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,14 +28,13 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.constraint;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 import java.util.Collection;
 import java.util.Set;
 
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 /**
  * A constraint in the context of a model.
- * 
  */
 public interface Constraint {
     // // public abstract class Constraint {
@@ -49,38 +48,38 @@ public interface Constraint {
     /**
      * @return the constrained elements and any other other constrained objects.
      */
-    public Set<Object> getConstrainedObjects();
+    Set<Object> getConstrainedObjects();
 
-    public Set<Element> getConstrainingElements();
+    Set<Element> getConstrainingElements();
 
     // public void addConstrainedElements( Collection< Element > elements );
     // public void addConstrainedElement( Element element );
-    public void addConstrainedObjects(Collection<Object> objects);
+    void addConstrainedObjects(Collection<Object> objects);
 
-    public void addConstrainedObject(Object object);
+    void addConstrainedObject(Object object);
 
-    public void addConstrainingElements(Collection<Element> elements);
+    void addConstrainingElements(Collection<Element> elements);
 
-    public void addConstrainingElement(Element element);
+    void addConstrainingElement(Element element);
 
-    public Element getViolatedConstraintElement();
+    Element getViolatedConstraintElement();
 
-    public boolean isReported();
+    boolean isReported();
 
     /**
      * @return a text expression of the constraint
      */
-    public String getExpression();
+    String getExpression();
 
     // public void setExpression();
 
-    public Boolean evaluate();
+    Boolean evaluate();
 
     /**
      * @return whether the constraint is properly specified and not
-     *         self-contradictory
+     * self-contradictory
      */
-    public boolean isConsistent();
+    boolean isConsistent();
     // public Boolean isGrounded();
     // public static class Helper {
     // public static Constraint makeConstraint( Element constraint, Object

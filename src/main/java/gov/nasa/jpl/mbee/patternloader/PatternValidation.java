@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -27,24 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.patternloader;
-
-import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchAll;
-import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchSelect;
-import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
-import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -60,21 +42,28 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchAll;
+import gov.nasa.jpl.mbee.patternloader.validationfixes.FixPatternMismatchSelect;
+import gov.nasa.jpl.mbee.stylesaver.StyleSaverUtils;
+import gov.nasa.jpl.mbee.stylesaver.ViewSaver;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import java.util.*;
 
 /**
  * Validation class for comparing the styles in the pattern diagram to the
  * styles currently on the diagram.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class PatternValidation implements ElementValidationRuleImpl, SmartListenerConfigurationProvider {
     /**
      * First method invoked.
-     * 
-     * @param project
-     *            a project of the constraint.
-     * @param constraint
-     *            constraint which defines validation rules.
+     *
+     * @param project    a project of the constraint.
+     * @param constraint constraint which defines validation rules.
      */
     @Override
     public void init(Project project, Constraint constraint) {
@@ -82,7 +71,7 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
 
     /**
      * Returns a map of classes and smart listener configurations.
-     * 
+     *
      * @return a <code>Map</code> of smart listener configurations.
      */
     @Override
@@ -101,15 +90,12 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
 
     /**
      * Executes the rule.
-     * 
-     * @param project
-     *            project of the constraint.
-     * @param constraint
-     *            constraint that defines validation rules.
-     * @param elements
-     *            collection of elements to validate.
+     *
+     * @param project    project of the constraint.
+     * @param constraint constraint that defines validation rules.
+     * @param elements   collection of elements to validate.
      * @return a set of <code>Annotation</code> objects which specify invalid
-     *         objects.
+     * objects.
      */
     @Override
     public Set<Annotation> run(Project project, Constraint constraint, Collection<? extends Element> elements) {
@@ -124,7 +110,7 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
             Collection<DiagramPresentationElement> diagCollection = StyleSaverUtils
                     .findDiagramPresentationElements(elements);
 
-            for (DiagramPresentationElement currDiagram: diagCollection) {
+            for (DiagramPresentationElement currDiagram : diagCollection) {
                 // try to find a good requester on the diagram
                 PresentationElement requester = locateTarget(currDiagram, project);
 
@@ -143,7 +129,7 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
                 JSONObject pattern = ps.getPattern();
 
                 // get the style on the target
-                Diagram requesterDiagramElem = (Diagram)project
+                Diagram requesterDiagramElem = (Diagram) project
                         .getElementByID(requester.getElement().getID());
                 DiagramPresentationElement requesterDiag = project.getDiagram(requesterDiagramElem);
                 String style = ViewSaver.save(project, requesterDiag, true);
@@ -158,20 +144,20 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
                     return null;
                 }
 
-                JSONObject styleObj = (JSONObject)parsedStyle;
+                JSONObject styleObj = (JSONObject) parsedStyle;
 
                 // add types that do not match the pattern style to this
                 // variable
                 HashSet<String> badElemTypes = new HashSet<String>();
 
-                for (PresentationElement elem: requesterDiag.getPresentationElements()) {
+                for (PresentationElement elem : requesterDiag.getPresentationElements()) {
                     // get the style of the element on the diagram
-                    String unparsedElemStyle = (String)styleObj.get(elem.getID());
+                    String unparsedElemStyle = (String) styleObj.get(elem.getID());
                     String elemStyle = PatternLoaderUtils.removeUnnecessaryProperties(unparsedElemStyle);
 
                     // get the style of the element on the pattern
                     String elemType = elem.getHumanType();
-                    String patternStyle = (String)pattern.get(elemType);
+                    String patternStyle = (String) pattern.get(elemType);
 
                     boolean styleMatch = elemStyle.equals(patternStyle);
 
@@ -222,7 +208,7 @@ public class PatternValidation implements ElementValidationRuleImpl, SmartListen
 
         // iterate over each diagram element checking to see if it's a good
         // requester
-        for (PresentationElement requesterCand: diagElems) {
+        for (PresentationElement requesterCand : diagElems) {
             if (PatternLoaderUtils.isGoodElementRequester(requesterCand)) {
                 requester = requesterCand;
             }

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,9 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.actions.docgen;
 
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import gov.nasa.jpl.mbee.DgviewDBSwitch;
 import gov.nasa.jpl.mbee.dgview.MDEditableTable;
 import gov.nasa.jpl.mbee.model.UserScript;
@@ -36,10 +39,6 @@ import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.Map;
-
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 
 public class RunUserEditableTableAction extends MDAction {
 
@@ -50,8 +49,9 @@ public class RunUserEditableTableAction extends MDAction {
         super(null, "Run Editable Script", null, null);
         scripti = us;
         String name = scripti.getStereotypeName();
-        if (name != null)
+        if (name != null) {
             this.setName("Edit " + name + " Table");
+        }
     }
 
     @Override
@@ -59,19 +59,22 @@ public class RunUserEditableTableAction extends MDAction {
         GUILog log = Application.getInstance().getGUILog();
         Map<?, ?> o = scripti.getScriptOutput(null);
         if (o != null && o.containsKey("EditableTable")) {
-            Object l = ((Map<?, ?>)o).get("EditableTable");
+            Object l = o.get("EditableTable");
             if (l instanceof EditableTable) {
-                ((EditableTable)l).showTable();
+                ((EditableTable) l).showTable();
             }
-        } else if (o != null && o.containsKey("editableTable")) {
+        }
+        else if (o != null && o.containsKey("editableTable")) {
             if (o.get("editableTable") instanceof List) {
-                for (Object object: (List<?>)o.get("editableTable")) {
+                for (Object object : (List<?>) o.get("editableTable")) {
                     if (object instanceof MDEditableTable) {
-                        DgviewDBSwitch.convertEditableTable((MDEditableTable)object).showTable();
+                        DgviewDBSwitch.convertEditableTable((MDEditableTable) object).showTable();
                     }
                 }
             }
-        } else
+        }
+        else {
             log.log("script has no editable table output!");
+        }
     }
 }

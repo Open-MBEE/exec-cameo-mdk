@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mgss.mbee.docgen.docbook;
 
+import com.nomagic.task.ProgressStatus;
 import gov.nasa.jpl.mbee.DocGenUtils;
 import gov.nasa.jpl.mbee.model.docmeta.DocumentMeta;
 import gov.nasa.jpl.mbee.model.docmeta.Person;
@@ -35,26 +36,19 @@ import gov.nasa.jpl.mbee.model.docmeta.Revision;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import com.nomagic.task.ProgressStatus;
+import java.util.*;
 
 /**
  * visitor that serializes to docbook xml
- * 
+ *
  * @author dlam
- * 
  */
 public class DBSerializeVisitor extends DBAbstractVisitor {
 
-    private File           dir;
-    private boolean        genImage;
-    private StringBuilder  out;
-    private Set<String>    ids;
+    private File dir;
+    private boolean genImage;
+    private StringBuilder out;
+    private Set<String> ids;
     private ProgressStatus ps;
 
     public DBSerializeVisitor(boolean genNewImages, File dir, ProgressStatus ps) {
@@ -84,13 +78,16 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         String title = null;
         out.append("<info>");
         if (book.getUseDefaultStylesheet() == true) {
-            if (book.getSubtitle() == null || book.getSubtitle().equals(""))
+            if (book.getSubtitle() == null || book.getSubtitle().equals("")) {
                 title = DocGenUtils.fixString(book.getTitle());
-            else
+            }
+            else {
                 title = DocGenUtils.fixString(book.getTitle() + ": " + book.getSubtitle());
+            }
             out.append("<title>" + title + "</title><subtitle>Generated On: " + new Date().toString()
                     + "</subtitle>");
-        } else {
+        }
+        else {
 
             if (meta.getDocumentId() != null && !meta.getDocumentId().equals("")) {
                 out.append("\n<productnumber>" + meta.getDocumentId() + "</productnumber>");
@@ -100,34 +97,41 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             }
             if (meta.getLogoLink() != null && !meta.getLogoLink().equals("") && meta.getLogoAlignment() != null && !meta.getLogoAlignment().equals("")) {
                 String depth = "";
-                if (meta.getLogoSize() != null && !meta.getLogoSize().equals(""))
+                if (meta.getLogoSize() != null && !meta.getLogoSize().equals("")) {
                     depth = "depth=\"" + meta.getLogoSize() + "\"";
+                }
                 String align = "";
-                if (meta.getLogoAlignment().equals("center") || meta.getLogoAlignment().equals("Center"))
+                if (meta.getLogoAlignment().equals("center") || meta.getLogoAlignment().equals("Center")) {
                     align = "center";
-                else if (meta.getLogoAlignment().equals("left") || meta.getLogoAlignment().equals("Left"))
+                }
+                else if (meta.getLogoAlignment().equals("left") || meta.getLogoAlignment().equals("Left")) {
                     align = "left";
-                else if (meta.getLogoAlignment().equals("right") || meta.getLogoAlignment().equals("Right"))
+                }
+                else if (meta.getLogoAlignment().equals("right") || meta.getLogoAlignment().equals("Right")) {
                     align = "right";
+                }
                 out.append("\n<mediaobject><imageobject><imagedata align=\"" + align + "\" fileref=\""
-                            + meta.getLogoLink() + "\" " + depth + "/></imageobject></mediaobject>");
-                
+                        + meta.getLogoLink() + "\" " + depth + "/></imageobject></mediaobject>");
+
             }
             if (meta.getProjectAcronym() != null && !meta.getProjectAcronym().equals("")) {
-                if (meta.getLink() != null && !meta.getLink().equals(""))
+                if (meta.getLink() != null && !meta.getLink().equals("")) {
                     out.append("\n<publisher><publishername>" + meta.getProjectAcronym()
                             + "</publishername><address>" + meta.getLink()
                             + "</address></publisher>");
-                else
+                }
+                else {
                     out.append("\n<publisher><publishername>" + meta.getProjectAcronym()
                             + "</publishername></publisher>");
+                }
             }
             out.append("\n<pubdate>" + new Date().toString() + "</pubdate>");
             if (meta.getProjectTitle() == null || meta.getProjectTitle().equals("")) {
                 out.append("\n<title>" + DocGenUtils.fixString(book.getTitle()) + "</title>");
-            } else {
+            }
+            else {
                 out.append("\n<title>" + meta.getProjectTitle() + "</title><subtitle>"
-                    + DocGenUtils.fixString(book.getTitle()) + "</subtitle>");
+                        + DocGenUtils.fixString(book.getTitle()) + "</subtitle>");
             }
             if (meta.getDocumentAcronym() != null && !meta.getDocumentAcronym().equals("")) {
                 out.append("\n<titleabbrev>" + meta.getDocumentAcronym() + "</titleabbrev>");
@@ -138,60 +142,64 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             if (meta.getInstituteName() != null) {
                 out.append("\n<collab><org>\n<orgname>" + meta.getInstituteName() + "</orgname>");
 
-            } else {
+            }
+            else {
                 out.append("\n<collab><org>\n<orgname>Jet Propulsion Laboratory</orgname>");
             }
 
             if (meta.getInstituteName2() != null) {
                 out.append("\n<orgdiv>" + meta.getInstituteName2() + "</orgdiv>");
 
-            } else {
+            }
+            else {
                 out.append("\n<orgdiv>California Institute of Technology</orgdiv>");
             }
 
             if (meta.getInstituteLogoLink() != null) {
                 out.append("\n<uri>" + meta.getInstituteLogoLink() + "</uri>");
 
-            } else {
+            }
+            else {
                 out.append("\n<uri>http://sec274.jpl.nasa.gov/img/logos/jpl_logo(220x67).gif</uri>");
             }
             if (meta.getInstituteLogoSize() != null) {
                 out.append("\n<address><alt>" + meta.getInstituteLogoSize() + "</alt></address>\n</org></collab>");
 
-            } else {
+            }
+            else {
                 out.append("\n<address><alt>36px</alt></address>\n</org></collab>");
             }
 
-            for (Person p: meta.getAuthors()) {
+            for (Person p : meta.getAuthors()) {
                 out.append("\n<author><personname><firstname>" + p.getFirstname() + "</firstname><surname>"
                         + p.getLastname() + "</surname></personname><affiliation>" + "<jobtitle>" + p.getTitle()
                         + "</jobtitle><org><orgname>" + p.getOrgname() + "</orgname><orgdiv>" + p.getOrgdiv()
                         + "</orgdiv></org></affiliation></author>");
-            
+
             }
-            for (Person p: meta.getApprovers()) {
+            for (Person p : meta.getApprovers()) {
                 out.append("\n<editor><personname><firstname>" + p.getFirstname() + "</firstname><surname>"
                         + p.getLastname() + "</surname></personname><affiliation>" + "<jobtitle>" + p.getTitle()
                         + "</jobtitle><org><orgname>" + p.getOrgname() + "</orgname><orgdiv>" + p.getOrgdiv()
                         + "</orgdiv></org></affiliation></editor>");
-            
+
             }
-            for (Person p: meta.getConcurrances()) {
-                    out.append("\n<othercredit><personname><firstname>" + p.getFirstname() + "</firstname><surname>"
-                            + p.getLastname() + "</surname></personname><affiliation>" + "<jobtitle>" + p.getTitle()
-                            + "</jobtitle><org><orgname>" + p.getOrgname() + "</orgname><orgdiv>" + p.getOrgdiv()
-                            + "</orgdiv></org></affiliation></othercredit>");
-                
+            for (Person p : meta.getConcurrances()) {
+                out.append("\n<othercredit><personname><firstname>" + p.getFirstname() + "</firstname><surname>"
+                        + p.getLastname() + "</surname></personname><affiliation>" + "<jobtitle>" + p.getTitle()
+                        + "</jobtitle><org><orgname>" + p.getOrgname() + "</orgname><orgdiv>" + p.getOrgdiv()
+                        + "</orgdiv></org></affiliation></othercredit>");
+
             }
-            for (Revision rev: meta.getHistory()) {
+            for (Revision rev : meta.getHistory()) {
                 out.append("\n<revhistory><revision><revnumber>" + rev.getRevNumber() + "</revnumber><date>"
-                    + rev.getDate() + "</date><author><personname><firstname>" + rev.getFirstName()
-                    + "</firstname><surname>" + rev.getLastName()
-                    + "</surname></personname></author><revremark>" + rev.getRemark()
-                    + "</revremark></revision></revhistory>");
-                
+                        + rev.getDate() + "</date><author><personname><firstname>" + rev.getFirstName()
+                        + "</firstname><surname>" + rev.getLastName()
+                        + "</surname></personname></author><revremark>" + rev.getRemark()
+                        + "</revremark></revision></revhistory>");
+
             }
-            for (String email: meta.getCollaboratorEmails()) {
+            for (String email : meta.getCollaboratorEmails()) {
                 out.append("\n<address><email>" + email + "</email></address>");
             }
         }
@@ -220,11 +228,13 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                 out.append("<mediaobject><imageobject role=\"fo\">\n");
                 String filename = s.get(0);
                 String scale = s.get(1);
-                if (scale.equals("true"))
+                if (scale.equals("true")) {
                     out.append("<imagedata fileref=\"" + filename
                             + "\" format=\"SVG\" scalefit=\"1\" width=\"100%\"/>\n");
-                else
+                }
+                else {
                     out.append("<imagedata fileref=\"" + filename + "\" format=\"SVG\"/>\n");
+                }
                 out.append("</imageobject><imageobject role=\"html\"><imagedata fileref=\""
                         + filename.replaceAll(".svg", ".png") + "\"/></imageobject>\n");
                 out.append("</mediaobject>\n");
@@ -232,16 +242,19 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             }
         }
         out.append("</info>\n");
-        if (meta.getAcknowledgement() != null && !meta.getAcknowledgement().equals(""))
+        if (meta.getAcknowledgement() != null && !meta.getAcknowledgement().equals("")) {
             out.append("<acknowledgement>"
                     + DocGenUtils.addDocbook(DocGenUtils.fixString(meta.getAcknowledgement()))
                     + "</acknowledgement>\n");
-        for (DocumentElement e: book.getChildren()) {
-            if (e instanceof DBSection && ((DBSection)e).isView())
-                e.accept(this);
         }
-        if (meta.isIndex())
+        for (DocumentElement e : book.getChildren()) {
+            if (e instanceof DBSection && ((DBSection) e).isView()) {
+                e.accept(this);
+            }
+        }
+        if (meta.isIndex()) {
             out.append("<index/>");
+        }
         out.append("</book>");
     }
 
@@ -250,16 +263,19 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         out.append("<colspec ");
         out.append("colname=\"" + colspec.getColname() + "\" ");
         out.append("colnum=\"" + colspec.getColnum() + "\"");
-        if (colspec.getColwidth() != null && !colspec.getColwidth().equals(""))
+        if (colspec.getColwidth() != null && !colspec.getColwidth().equals("")) {
             out.append(" colwidth=\"" + colspec.getColwidth() + "\"/>\n");
-        else
+        }
+        else {
             out.append("/>\n");
+        }
     }
 
     @Override
     public void visit(DBImage image) {
-        if (ps != null && ps.isCancel())
+        if (ps != null && ps.isCancel()) {
             return;
+        }
 
         List<String> s = null;
         File imageDir = new File(dir, "images");
@@ -269,8 +285,9 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (image.isDoNotShow())
+        if (image.isDoNotShow()) {
             return;
+        }
         String id = "";
         if (image.getId() != null && !ids.contains(image.getId())) {
             id = " xml:id=\"" + image.getId() + "\"";
@@ -281,48 +298,57 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         out.append("<mediaobject><imageobject role=\"fo\">\n");
         String filename = s.get(0);
         String scale = s.get(1);
-        if (scale.equals("true"))
+        if (scale.equals("true")) {
             out.append("<imagedata fileref=\"" + filename
                     + "\" format=\"SVG\" scalefit=\"1\" width=\"100%\"/>\n");
-        else
+        }
+        else {
             out.append("<imagedata fileref=\"" + filename + "\" format=\"SVG\"/>\n");
+        }
         out.append("</imageobject><imageobject role=\"html\"><imagedata fileref=\""
                 + filename.replaceAll(".svg", ".png") + "\"/></imageobject>\n");
-        if (image.getCaption() != null && !image.getCaption().equals(""))
+        if (image.getCaption() != null && !image.getCaption().equals("")) {
             out.append("<caption>" + DocGenUtils.addDocbook(DocGenUtils.fixString(image.getCaption()))
                     + "</caption>\n");
+        }
         out.append("</mediaobject></figure>\n");
 
     }
 
     @Override
     public void visit(DBList list) {
-        if (list.getChildren().isEmpty())
+        if (list.getChildren().isEmpty()) {
             return;
-        if (list.isOrdered())
+        }
+        if (list.isOrdered()) {
             out.append("<orderedlist spacing=\"compact\">\n");
-        else
+        }
+        else {
             out.append("<itemizedlist spacing=\"compact\">\n");
-        for (DocumentElement e: list.getChildren()) {
+        }
+        for (DocumentElement e : list.getChildren()) {
             if (!(e instanceof DBListItem)) {
                 out.append("<listitem>\n");
                 e.accept(this);
                 out.append("</listitem>\n");
-            } else {
+            }
+            else {
                 e.accept(this);
             }
         }
-        if (list.isOrdered())
+        if (list.isOrdered()) {
             out.append("</orderedlist>\n");
-        else
+        }
+        else {
             out.append("</itemizedlist>\n");
+        }
 
     }
 
     @Override
     public void visit(DBListItem listitem) {
         out.append("<listitem>\n");
-        for (DocumentElement de: listitem.getChildren()) {
+        for (DocumentElement de : listitem.getChildren()) {
             de.accept(this);
         }
         out.append("</listitem>\n");
@@ -331,34 +357,40 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
 
     @Override
     public void visit(DBParagraph para) {
-        if (para.getText() == null)
+        if (para.getText() == null) {
             out.append("<para></para>\n");
+        }
         else {
             if (para.getText() instanceof Collection) {
-                for (Object p: (Collection)para.getText())
+                for (Object p : (Collection) para.getText()) {
                     out.append(DocGenUtils.addDocbook(DocGenUtils.fixString(p)));
-            } else
+                }
+            }
+            else {
                 out.append(DocGenUtils.addDocbook(DocGenUtils.fixString(para.getText())) + "\n");
+            }
         }
 
     }
 
     @Override
     public void visit(DBText text) {
-        if (text.getText() != null)
+        if (text.getText() != null) {
             out.append(DocGenUtils.fixString(text.getText()));
+        }
     }
 
     @Override
     public void visit(DBSection section) {
         DBSerializeVisitor inside = new DBSerializeVisitor(genImage, dir, ids, ps);
-        for (DocumentElement de: section.getChildren()) {
+        for (DocumentElement de : section.getChildren()) {
             de.accept(inside);
         }
         String inString = inside.getOut();
         if (inString.equals("")) {
-            if (section.isSkipIfEmpty())
+            if (section.isSkipIfEmpty()) {
                 return;
+            }
             inString = "<para>" + section.getStringIfEmpty() + "</para>\n";
         }
         if (!section.isNoSection()) {
@@ -369,30 +401,37 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             }
             if (section.isAppendix()) {
                 out.append("<appendix" + id + ">\n");
-            } else if (section.isChapter()) {
+            }
+            else if (section.isChapter()) {
                 out.append("<chapter" + id + ">\n");
-            } else {
+            }
+            else {
                 out.append("<section" + id + ">\n");
             }
             out.append("<info><title>" + DocGenUtils.fixString(section.getTitle()) + "</title></info>\n");
             out.append(inString);
-            if (section.isAppendix())
+            if (section.isAppendix()) {
                 out.append("</appendix>\n");
-            else if (section.isChapter())
+            }
+            else if (section.isChapter()) {
                 out.append("</chapter>\n");
-            else
+            }
+            else {
                 out.append("</section>\n");
-        } else {
+            }
+        }
+        else {
             out.append(inString);
         }
     }
 
     @Override
     public void visit(DBSimpleList simplelist) {
-        if (simplelist.getContent().isEmpty())
+        if (simplelist.getContent().isEmpty()) {
             return;
+        }
         out.append("<simplelist>\n");
-        for (Object s: simplelist.getContent()) {
+        for (Object s : simplelist.getContent()) {
             out.append("<member>" + DocGenUtils.fixString(s) + "</member>\n");
         }
         out.append("</simplelist>\n");
@@ -400,15 +439,18 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
 
     @Override
     public void visit(DBTable table) {
-        if (table.isTranspose())
+        if (table.isTranspose()) {
             table.transpose();
+        }
         int cols = table.getCols();
-        if (table.getBody() == null || table.getBody().isEmpty())
+        if (table.getBody() == null || table.getBody().isEmpty()) {
             return;
+        }
         if (cols == 0) {
-            for (List<DocumentElement> row: table.getBody()) {
-                if (row.size() > cols)
+            for (List<DocumentElement> row : table.getBody()) {
+                if (row.size() > cols) {
                     cols = row.size();
+                }
             }
         }
         String id = "";
@@ -417,20 +459,23 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             ids.add(table.getId());
         }
         String style = "";
-        if (table.getStyle() != null && !table.getStyle().equals(""))
+        if (table.getStyle() != null && !table.getStyle().equals("")) {
             style = " tabstyle=\"" + table.getStyle() + "\"";
+        }
         out.append("<table frame=\"all\" pgwide=\"1\" role=\"longtable\"" + id + style + ">\n");
         // out.append("<informaltable frame=\"all\" pgwide=\"1\" role=\"longtable\""
         // + id + style + ">\n");
         out.append("<title>" + DocGenUtils.fixString(table.getTitle()) + "</title>\n"); // don't
-                                                                                        // have
-                                                                                        // this
-                                                                                        // for
-                                                                                        // informaltable
+        // have
+        // this
+        // for
+        // informaltable
         out.append("<tgroup cols=\"" + cols + "\" align=\"left\" colsep=\"1\" rowsep=\"1\">\n");
-        if (table.getColspecs() != null)
-            for (DBColSpec colspec: table.getColspecs())
+        if (table.getColspecs() != null) {
+            for (DBColSpec colspec : table.getColspecs()) {
                 colspec.accept(this);
+            }
+        }
         if (table.getHeaders() != null) {
             out.append("<thead>\n");
             getTableRows(table.getHeaders());
@@ -440,21 +485,24 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         getTableRows(table.getBody());
         out.append("</tbody>\n");
         out.append("</tgroup>\n");
-        if (table.getCaption() != null && !table.getCaption().equals(""))
+        if (table.getCaption() != null && !table.getCaption().equals("")) {
             out.append("<caption>" + DocGenUtils.addDocbook(DocGenUtils.fixString(table.getCaption()))
                     + "</caption>\n");
+        }
         out.append("</table>\n");
 
     }
 
     private void getTableRows(List<List<DocumentElement>> grid) {
-        for (List<DocumentElement> row: grid) {
+        for (List<DocumentElement> row : grid) {
             out.append("<row>");
-            for (DocumentElement cell: row) {
-                if (cell instanceof DBTableEntry)
+            for (DocumentElement cell : row) {
+                if (cell instanceof DBTableEntry) {
                     cell.accept(this);
-                else if (cell == null)
+                }
+                else if (cell == null) {
                     continue;
+                }
                 else {
                     out.append("<entry>");
                     cell.accept(this);
@@ -468,15 +516,19 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
     @Override
     public void visit(DBTableEntry tableentry) {
         out.append("<entry");
-        if (tableentry.getMorerows() > 0)
+        if (tableentry.getMorerows() > 0) {
             out.append(" morerows=\"" + tableentry.getMorerows() + "\"");
-        if (tableentry.getNamest() != null && !tableentry.getNamest().equals(""))
+        }
+        if (tableentry.getNamest() != null && !tableentry.getNamest().equals("")) {
             out.append(" namest=\"" + tableentry.getNamest() + "\"");
-        if (tableentry.getNameend() != null && !tableentry.getNameend().equals(""))
+        }
+        if (tableentry.getNameend() != null && !tableentry.getNameend().equals("")) {
             out.append(" nameend=\"" + tableentry.getNameend() + "\"");
+        }
         out.append(">");
-        for (DocumentElement de: tableentry.getChildren())
+        for (DocumentElement de : tableentry.getChildren()) {
             de.accept(this);
+        }
         out.append("</entry>");
 
     }

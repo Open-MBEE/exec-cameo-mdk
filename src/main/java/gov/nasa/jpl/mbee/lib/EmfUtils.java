@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -31,81 +31,80 @@ package gov.nasa.jpl.mbee.lib;
 // import gov.nasa.jpl.ae.event.Expression;
 // import gov.nasa.jpl.ae.magicdrawPlugin.modelQuery.ModelReference;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.TreeSet;
-
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import junit.framework.Assert;
-
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.ENamedElement;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.*;
 
 public final class EmfUtils {
 
     public static String spewIndentCharacters = "-> ";
-    public static String spewObjectPrefix     = "* * * * *";
-    public static String spewObjectSuffix     = spewObjectPrefix;
+    public static String spewObjectPrefix = "* * * * *";
+    public static String spewObjectSuffix = spewObjectPrefix;
 
     public static String toString(Object o) {
-        if (o == null)
+        if (o == null) {
             return "null";
+        }
         if (o instanceof Collection) {
-            Collection<?> c = (Collection<?>)o;
+            Collection<?> c = (Collection<?>) o;
             int count = 0;
             while (c.size() == 1 && c != c.iterator().next() && count++ < 5) {
                 o = c.iterator().next();
                 if (o instanceof Collection) {
-                    c = (Collection<?>)o;
+                    c = (Collection<?>) o;
                 }
             }
             if (c == o && c.size() != 1) {
                 StringBuffer sb = new StringBuffer();
                 sb.append("(");
                 boolean first = true;
-                for (Object oo: c) {
-                    if (first)
+                for (Object oo : c) {
+                    if (first) {
                         first = false;
-                    else
+                    }
+                    else {
                         sb.append(", ");
+                    }
                     sb.append(toString(oo));
                 }
                 sb.append(")");
                 return sb.toString();
             }
-        } else if (o.getClass().isArray()) {
-            Object[] arr = (Object[])o;
-            if (arr.length == 1)
+        }
+        else if (o.getClass().isArray()) {
+            Object[] arr = (Object[]) o;
+            if (arr.length == 1) {
                 return toString(arr[0]);
+            }
             // TODO -- potential infinite loop -- use Utils2.seen()
             return toString(Arrays.asList(arr));
         }
         String result = null;
         String name = getName(o);
-        if (Utils2.isNullOrEmpty(name))
+        if (Utils2.isNullOrEmpty(name)) {
             name = "";
-        else
+        }
+        else {
             name = name + ":";
+        }
         if (o instanceof Element) {
-            Element e = (Element)o;
+            Element e = (Element) o;
             String repText = e.get_representationText();
-            if (Utils2.isNullOrEmpty(repText))
+            if (Utils2.isNullOrEmpty(repText)) {
                 repText = "";
-            else
+            }
+            else {
                 repText = ":" + repText;
+            }
             result = name + // e.getHumanType() + ":" +
                     (Debug.isOn() ? e.getID() : "") + repText;
             result = result.replaceFirst("::", ":");
@@ -115,7 +114,8 @@ public final class EmfUtils {
         }
         if (Utils2.isNullOrEmpty(name)) {
             result = o.toString();
-        } else {
+        }
+        else {
             result = name + getTypeNames(o);
         }
         result = result.trim().replaceAll("^:", "");
@@ -126,10 +126,11 @@ public final class EmfUtils {
     public static String writeNameAndTypeOfEObject(Object o, String indent) {
         StringBuffer sb = new StringBuffer();
         sb.append(indent + spewObjectPrefix + "\n");
-        EObject eo = (EObject)(o instanceof EObject ? o : null);
+        EObject eo = (EObject) (o instanceof EObject ? o : null);
         if (eo != null) {
             sb.append(indent + "EClass: " + eo.eClass() + "\n");
-        } else {
+        }
+        else {
             sb.append(indent + "Class: " + o.getClass().getSimpleName() + "\n");
         }
         sb.append(indent + "name: " + getName(o) + "\n");
@@ -139,24 +140,26 @@ public final class EmfUtils {
     }
 
     public static String spewFields(Object o, int thisLevel, int maxDepth, boolean justNameType,
-            Set<Object> seen) {
+                                    Set<Object> seen) {
         Pair<Boolean, Set<Object>> p = Utils2.seen(o, true, seen);
-        if (p.first)
+        if (p.first) {
             return "";
+        }
         seen = p.second;
 
         StringBuffer sb = new StringBuffer();
         // sb.append( spewFields( o, indent ) );
         Field[] fields = o.getClass().getFields();
         String indent = chain(spewIndentCharacters, thisLevel);
-        for (Field f: fields) {
+        for (Field f : fields) {
             f.setAccessible(true);
             Object r;
             try {
                 r = f.get(o);
                 if (r != null) {
-                    if (ClassUtils.isPrimitive(r))
+                    if (ClassUtils.isPrimitive(r)) {
                         return "";
+                    }
                     sb.append(indent + f.getName() + ":\n");
                     sb.append(spewContents(r, thisLevel + 1, maxDepth, justNameType, seen));
                 }
@@ -170,7 +173,7 @@ public final class EmfUtils {
     public static String spewFields(Object o, String indent) {
         StringBuffer sb = new StringBuffer();
         Field[] fields = o.getClass().getFields();
-        for (Field f: fields) {
+        for (Field f : fields) {
             f.setAccessible(true);
             try {
                 Object v = f.get(o);
@@ -188,7 +191,7 @@ public final class EmfUtils {
         StringBuffer sb = new StringBuffer();
         Class<?> c = o.getClass();
         Method[] methods = c.getMethods();
-        for (Method m: methods) {
+        for (Method m : methods) {
             m.setAccessible(true);
             if (m.getReturnType() == void.class || m.getReturnType() == null
                     || m.getName().startsWith("wait") || m.getName().startsWith("notify")
@@ -218,7 +221,7 @@ public final class EmfUtils {
     /**
      * Create a chain, repeating String s the number of times specified by
      * length.
-     * 
+     *
      * @param s
      * @param length
      * @return the chain
@@ -232,14 +235,16 @@ public final class EmfUtils {
     }
 
     public static String spewContents(Object o, int thisLevel, int maxDepth, boolean justNameType,
-            Set<Object> seen) {
+                                      Set<Object> seen) {
         Pair<Boolean, Set<Object>> p = Utils2.seen(o, true, seen);
-        if (p.first)
+        if (p.first) {
             return "";
+        }
         seen = p.second;
 
-        if (ClassUtils.isPrimitive(o))
+        if (ClassUtils.isPrimitive(o)) {
             return "";
+        }
 
         StringBuffer sb = new StringBuffer();
         String indent = chain(spewIndentCharacters, thisLevel);
@@ -260,7 +265,7 @@ public final class EmfUtils {
             seen.remove(o);
             sb.append(spewFields(o, thisLevel + 1, maxDepth, justNameType, seen));
             if (o instanceof EObject) {
-                Iterator<EObject> iter = ((EObject)o).eContents().iterator();
+                Iterator<EObject> iter = ((EObject) o).eContents().iterator();
                 while (iter.hasNext()) {
                     sb.append(spewContents(iter.next(), thisLevel + 1, maxDepth, justNameType, seen));
                 }
@@ -273,8 +278,9 @@ public final class EmfUtils {
         // Pair< Boolean, Set< Object > > p = Utils2.seen( o, true, seen );
         // if ( p.first ) return "";
         // seen = p.second;
-        if (o == null)
+        if (o == null) {
             return null;
+        }
 
         StringBuffer sb = new StringBuffer();
 
@@ -294,13 +300,14 @@ public final class EmfUtils {
 
     public static String spewContents(Collection<?> objs, int maxDepth, boolean justNameType, Set<Object> seen) {
         Pair<Boolean, Set<Object>> p = Utils2.seen(objs, true, seen);
-        if (p.first)
+        if (p.first) {
             return "";
+        }
         seen = p.second;
 
         StringBuffer sb = new StringBuffer();
         sb.append("\n <<<<< LEVEL = " + maxDepth + " >>>>>\n\n");
-        for (Object o: objs) {
+        for (Object o : objs) {
             sb.append(spewContents(o, maxDepth, justNameType, seen));
         }
         return sb.toString();
@@ -329,20 +336,20 @@ public final class EmfUtils {
      * @return
      */
     public static List<String> getPossibleMethodNames(String specifier) {
-        return getPossibleMethodNames(specifier, new String[] {"e", "eGet", "get", "get_"});
+        return getPossibleMethodNames(specifier, "e", "eGet", "get", "get_");
     }
 
     /**
      * @param specifier
      * @param methodPrefixes
      * @return methods with names that match the specifier or the specifier with
-     *         one of the method prefixes
+     * one of the method prefixes
      */
     public static List<String> getPossibleMethodNames(String specifier, String... methodPrefixes) {
         // get methods with matching names
         List<String> possibleMethodNames = getPossibleFieldNames(specifier);
         String capitalizedSpec = Utils2.capitalize(specifier);
-        for (String prefix: methodPrefixes) {
+        for (String prefix : methodPrefixes) {
             possibleMethodNames.add(prefix + capitalizedSpec);
         }
         return possibleMethodNames;
@@ -352,23 +359,22 @@ public final class EmfUtils {
      * Determines the validity of a return value packaged with a {@link Boolean}
      * in a {@link Pair}.
      * <p>
-     * 
+     * <p>
      * A method may return a success/fail {@link Boolean} with another return
      * value in a pair. For example, a getValue() method may want to return null
      * sometimes as a valid value and at other times as an invalid value.
      * <p>
-     * 
+     * <p>
      * The {@link Boolean} may be null, which this method assumes means that
      * success is "unknown." When unknown, this method gives the benefit of the
      * doubt for non-null return values, so true is returned for Pair(null,
      * nonNullT), and false for Pair(null,null), assuming that an unsuccessful
      * call always has a null return value.
-     * 
-     * @param p
-     *            a return value from another function paired with a success
-     *            flag, Pair(Boolean success, T returnValue).
+     *
+     * @param p a return value from another function paired with a success
+     *          flag, Pair(Boolean success, T returnValue).
      * @return true if the success flag is true or null with a non-null return
-     *         value.
+     * value.
      */
     public static <T> boolean trueOrNotNull(Pair<Boolean, T> p) {
         return (p.first == null && p.second != null) || (p.first != null && p.first);
@@ -380,7 +386,7 @@ public final class EmfUtils {
      * name is a variation of the one specified and return the result of its
      * invocation. Only return values that are instances of the specified
      * {@link Class}.
-     * 
+     *
      * @param o
      * @param specifier
      * @param cls
@@ -388,10 +394,11 @@ public final class EmfUtils {
      * @return
      */
     public static <T> T getMethodResults(Object o, String specifier, Class<T> cls, boolean propagate,
-            boolean strictMatch) {
+                                         boolean strictMatch) {
         List<T> list = getMethodResults(o, cls, propagate, strictMatch, true, specifier);
-        if (!Utils2.isNullOrEmpty(list))
+        if (!Utils2.isNullOrEmpty(list)) {
             return list.get(0);
+        }
         return null;
     }
 
@@ -400,38 +407,40 @@ public final class EmfUtils {
      * (or, if not strict, some close variation). Only return values that are
      * instances of the specified {@link Class}. If cls is null, return all
      * values for matching fields.
-     * 
+     *
      * @param o
      * @param cls
      * @param propagate
      * @param justFirst
      * @param specifiers
      * @return field members of o that have one of the specified names or are
-     *         instances of cls
+     * instances of cls
      */
     public static <T> List<T> getMethodResults(Object o, Class<T> cls, boolean propagate,
-            boolean strictMatch, boolean justFirst, String... specifiers) {
+                                               boolean strictMatch, boolean justFirst, String... specifiers) {
         LinkedHashSet<T> results = new LinkedHashSet<T>();
-        if (o == null || specifiers == null)
+        if (o == null || specifiers == null) {
             return Utils2.getEmptyList();
-        for (String specifier: specifiers) {
+        }
+        for (String specifier : specifiers) {
             List<String> possibleMethodNames = (strictMatch ? Utils2.newList(specifier)
                     : getPossibleMethodNames(specifier));
-            for (String name: possibleMethodNames) {
+            for (String name : possibleMethodNames) {
                 Method[] methods = ClassUtils.getMethodsForName(o.getClass(), name);
                 if (methods != null) {
-                    for (Method method: methods) {
+                    for (Method method : methods) {
                         // TODO -- pass in potential arguments? can they be
                         // deduced?
                         Pair<Boolean, Object> pr = ClassUtils.runMethod(true, o, method);
                         if (trueOrNotNull(pr)) {
                             Pair<Boolean, T> pc = ClassUtils.coerce(pr.second, cls, propagate);// ,
-                                                                                               // true
-                                                                                               // );
+                            // true
+                            // );
                             if (trueOrNotNull(pc)) {
                                 results.add(pc.second);
-                                if (justFirst)
+                                if (justFirst) {
                                     return Utils2.asList(results);
+                                }
                             }
                         }
                     }
@@ -446,32 +455,34 @@ public final class EmfUtils {
      * results of their invocations. Only return values that are instances of
      * the specified {@link Class}. If cls is null, return all values for
      * matching members.
-     * 
+     *
      * @param o
      * @param cls
      * @param propagate
      * @param justFirst
      * @param specifiers
      * @return member values of o that have one of the specified names or are
-     *         instances of cls
+     * instances of cls
      */
     public static <T> List<T> getFieldValues(Object o, Class<T> cls, boolean propagate, boolean strictMatch,
-            boolean justFirst, String... specifiers) {
+                                             boolean justFirst, String... specifiers) {
         LinkedHashSet<T> results = new LinkedHashSet<T>();
-        if (o == null || specifiers == null)
+        if (o == null || specifiers == null) {
             return Utils2.getEmptyList();
-        for (String specifier: specifiers) {
+        }
+        for (String specifier : specifiers) {
             List<String> possibleFieldNames = (strictMatch ? Utils2.newList(specifier)
                     : getPossibleFieldNames(specifier));
-            for (String name: possibleFieldNames) {
+            for (String name : possibleFieldNames) {
                 if (ClassUtils.hasField(o, name)) {
                     Object r = ClassUtils.getField(o, name, true);
                     Pair<Boolean, T> p = // Expression.
-                    ClassUtils.coerce(r, cls, propagate);// , true );
+                            ClassUtils.coerce(r, cls, propagate);// , true );
                     if (trueOrNotNull(p)) {
                         results.add(p.second);
-                        if (justFirst)
+                        if (justFirst) {
                             return Utils2.asList(results);
+                        }
                     }
                 }
             }
@@ -482,13 +493,14 @@ public final class EmfUtils {
     @SuppressWarnings("unchecked")
     public static <T extends Object> List<T> getFieldValues(Object o, boolean includeStatic) {
         List<T> results = new ArrayList<T>();
-        for (Field f: o.getClass().getFields()) {
-            if (!includeStatic && ClassUtils.isStatic(f))
+        for (Field f : o.getClass().getFields()) {
+            if (!includeStatic && ClassUtils.isStatic(f)) {
                 continue;
+            }
             f.setAccessible(true);
             T t = null;
             try {
-                t = (T)f.get(o);
+                t = (T) f.get(o);
             } catch (IllegalArgumentException e) {
             } catch (IllegalAccessException e) {
             }
@@ -499,9 +511,10 @@ public final class EmfUtils {
 
     public static List<String> getFieldNames(Object o, boolean includeStatic) {
         List<String> results = new ArrayList<String>();
-        for (Field f: o.getClass().getFields()) {
-            if (!includeStatic && ClassUtils.isStatic(f))
+        for (Field f : o.getClass().getFields()) {
+            if (!includeStatic && ClassUtils.isStatic(f)) {
                 continue;
+            }
             f.setAccessible(true);
             results.add(f.getName());
         }
@@ -513,7 +526,7 @@ public final class EmfUtils {
      * close variation). Or, if the field does not exist, find a method whose
      * name is a variation of the one specified and return the result of its
      * invocation.
-     * 
+     *
      * @param o
      * @param specifier
      * @param propagate
@@ -521,8 +534,9 @@ public final class EmfUtils {
      */
     public static Object getMemberValue(Object o, String specifier, boolean propagate, boolean strictMatch) {
         List<Object> members = getMemberValues(o, Object.class, propagate, strictMatch, true, specifier);
-        if (Utils2.isNullOrEmpty(members))
+        if (Utils2.isNullOrEmpty(members)) {
             return null;
+        }
         return members.get(0);
     }
 
@@ -532,7 +546,7 @@ public final class EmfUtils {
      * those specified and return the results of their invocations. Only return
      * values that are instances of the specified {@link Class}. If cls is null,
      * return all values for matching members.
-     * 
+     *
      * @param o
      * @param cls
      * @param propagate
@@ -540,64 +554,74 @@ public final class EmfUtils {
      * @param specifiers
      * @param strictMatch
      * @return member values of o that have one of the specified names or are
-     *         instances of cls
+     * instances of cls
      */
     public static <T> List<T> getMemberValues(Object o, Class<T> cls, boolean propagate, boolean strictMatch,
-            boolean justFirst, String... specifiers) {
-        if (o == null || specifiers == null)
+                                              boolean justFirst, String... specifiers) {
+        if (o == null || specifiers == null) {
             return Utils2.getEmptyList();
+        }
         LinkedHashSet<T> results = new LinkedHashSet<T>();
         results.addAll(getFieldValues(o, cls, propagate, true, justFirst, specifiers));
-        if (justFirst && !results.isEmpty())
+        if (justFirst && !results.isEmpty()) {
             return Utils2.asList(results);
+        }
         results.addAll(getFieldValues(o, cls, propagate, true, justFirst, specifiers));
-        if (justFirst && !results.isEmpty())
+        if (justFirst && !results.isEmpty()) {
             return Utils2.asList(results);
+        }
         if (!strictMatch) {
             results.addAll(getMethodResults(o, cls, propagate, false, justFirst, specifiers));
-            if (justFirst && !results.isEmpty())
+            if (justFirst && !results.isEmpty()) {
                 return Utils2.asList(results);
+            }
             results.addAll(getMethodResults(o, cls, propagate, false, justFirst, specifiers));
         }
         return Utils2.asList(results);
     }
 
     public static Collection<Class<?>> getTypes(Object o) {
-        if (o == null)
+        if (o == null) {
             return null;
-        EObject eo = (EObject)(o instanceof EObject ? o : null);
+        }
+        EObject eo = (EObject) (o instanceof EObject ? o : null);
 
         Collection<Class<?>> results = new LinkedHashSet<Class<?>>();
-        if (eo != null)
+        if (eo != null) {
             results.addAll(getTypes(eo, true, true, true, true, null));
+        }
         // results.add( o.getClass() );
         results.addAll(ClassUtils.getAllClasses(o));
         return results;
     }
 
     public static Class<?> getType(Object o) {
-        if (o == null)
+        if (o == null) {
             return null;
-        EObject eo = (EObject)(o instanceof EObject ? o : null);
+        }
+        EObject eo = (EObject) (o instanceof EObject ? o : null);
         Class<?> c = (eo != null ? getType(eo) : o.getClass());
         return c;
     }
 
     public static String getTypeName(Object o) {
-        if (o == null)
+        if (o == null) {
             return null;
+        }
         Class<?> c = getType(o);
-        if (c == null)
+        if (c == null) {
             return null;
+        }
         return c.getSimpleName();
     }
 
     public static Collection<String> getTypeNames(Object o) {
         Collection<Class<?>> types = getTypes(o);
-        if (types == null)
+        if (types == null) {
             return null;
+        }
         Collection<String> results = new TreeSet<String>();
-        for (Class<?> t: types) {
+        for (Class<?> t : types) {
             results.add(t.getSimpleName());
         }
         return results;
@@ -606,23 +630,24 @@ public final class EmfUtils {
     public static String getName(Object o) {
         String name = null;
         // for the fancy EObject
-        EObject eo = (EObject)(o instanceof EObject ? o : null);
+        EObject eo = (EObject) (o instanceof EObject ? o : null);
         if (eo != null) {
             if (o instanceof EClassifier) {
-                name = ((EClassifier)o).getInstanceClassName();
+                name = ((EClassifier) o).getInstanceClassName();
             }
             if (Utils2.isNullOrEmpty(name)) {
                 EStructuralFeature nameFeature = eo.eClass().getEStructuralFeature("name");
                 if (nameFeature != null) {
-                    name = (String)eo.eGet(nameFeature);
+                    name = (String) eo.eGet(nameFeature);
                 }
             }
             if (Utils2.isNullOrEmpty(name)) {
                 if (eo instanceof Element) {
                     if (eo instanceof ENamedElement) {
-                        name = ((ENamedElement)eo).getName();
-                    } else {
-                        name = ((Element)eo).getHumanName();
+                        name = ((ENamedElement) eo).getName();
+                    }
+                    else {
+                        name = ((Element) eo).getHumanName();
                     }
                 }
             }
@@ -630,8 +655,9 @@ public final class EmfUtils {
         if (Utils2.isNullOrEmpty(name)) {
             // for the vanilla object
             Object n = getMemberValue(o, "name", true, false);
-            if (n != null)
+            if (n != null) {
                 name = n.toString();
+            }
         }
         return name;
     }
@@ -641,7 +667,7 @@ public final class EmfUtils {
         if (nameFeature == null) {
             return null;
         }
-        return (String)o.eGet(nameFeature);
+        return (String) o.eGet(nameFeature);
     }
 
     public static void getEObjectsOfType(EObject o, Class<?> type, Set<EObject> set) {
@@ -649,7 +675,8 @@ public final class EmfUtils {
         if (type.isAssignableFrom(o.getClass())) {
             if (set.contains(o)) {
                 return;
-            } else {
+            }
+            else {
                 set.add(o);
             }
         }
@@ -667,7 +694,7 @@ public final class EmfUtils {
     }
 
     public static EObject getFirstContaining(Collection<? extends EObject> c, EObject contained) {
-        for (EObject o: c) {
+        for (EObject o : c) {
             if (contains(o, contained)) {
                 return o;
             }
@@ -676,7 +703,7 @@ public final class EmfUtils {
     }
 
     public static boolean contains(EObject outer, EObject inner) {
-        for (EObject o: getEObjectsOfType(outer, inner.getClass())) {
+        for (EObject o : getEObjectsOfType(outer, inner.getClass())) {
             if (o == inner) {
                 return true;
             }
@@ -689,12 +716,13 @@ public final class EmfUtils {
     }
 
     public static <T extends EObject> T getContainerOfEType(EObject eObj, Class<T> cls, boolean includeSelf) {
-        if (eObj == null)
+        if (eObj == null) {
             return null;
+        }
         if (includeSelf) {
             if (cls.isInstance(eObj)) {
                 @SuppressWarnings("unchecked")
-                T t = (T)eObj;
+                T t = (T) eObj;
                 return t;
             }
         }
@@ -702,19 +730,19 @@ public final class EmfUtils {
     }
 
     /**
-     * @param objects
-     *            a collection of Objects
+     * @param objects a collection of Objects
      * @return a comma separated, parenthesized list of the names of the
-     *         elements in the collection. If they do not have a getName()
-     *         method, then toString() is used.
+     * elements in the collection. If they do not have a getName()
+     * method, then toString() is used.
      */
     public static String toStringNames(Collection<Object> objects) {
         StringBuffer sb = new StringBuffer();
         sb.append("(");
         boolean first = true;
-        for (Object obj: objects) {
-            if (first)
+        for (Object obj : objects) {
+            if (first) {
                 first = false;
+            }
             else {
                 sb.append(", ");
             }
@@ -737,7 +765,7 @@ public final class EmfUtils {
     /**
      * Find the "value" of this object hidden in the contents by looking for
      * structural features that look like synonyms of "value."
-     * 
+     *
      * @param eObj
      * @return
      */
@@ -748,7 +776,7 @@ public final class EmfUtils {
     /**
      * Find the "value" of the object hidden in the contents by looking for
      * structural features that look like synonyms of "value."
-     * 
+     *
      * @param eObj
      * @param cls
      * @param propagate
@@ -756,28 +784,28 @@ public final class EmfUtils {
      * @return
      */
     public static <TT> TT getValue(EObject eObj, Class<TT> cls, boolean propagate, boolean strictMatch,
-            boolean complainIfNotFound) {
+                                   boolean complainIfNotFound) {
         List<TT> list = getEValues(eObj, cls, propagate, strictMatch, true, complainIfNotFound,
-                (Seen<Object>)null);
-        if (!Utils2.isNullOrEmpty(list))
+                null);
+        if (!Utils2.isNullOrEmpty(list)) {
             return list.get(0);
+        }
         return null;
     }
 
     /**
      * @param eObj
      * @param cls
-     * @param propagate
-     *            whether to propagate value dependencies through Expressions.<br>
-     *            TODO -- Expression-specific stuff like this should go back to
-     *            Expression. A version of coerce() can be defined in ClassUtils
-     *            without referencing Parameters and Expressions.
+     * @param propagate   whether to propagate value dependencies through Expressions.<br>
+     *                    TODO -- Expression-specific stuff like this should go back to
+     *                    Expression. A version of coerce() can be defined in ClassUtils
+     *                    without referencing Parameters and Expressions.
      * @param strictMatch
      * @param justFirst
      * @return
      */
     public static <TT> List<TT> getEValues(EObject eObj, Class<TT> cls, boolean propagate,
-            boolean strictMatch, boolean justFirst, boolean complainIfNotFound, Seen<Object> seen) {
+                                           boolean strictMatch, boolean justFirst, boolean complainIfNotFound, Seen<Object> seen) {
         // Check for bad input
         if (eObj == null) {
             if (complainIfNotFound) {
@@ -786,10 +814,11 @@ public final class EmfUtils {
             return Utils2.getEmptyList();
         }
         // return if we've already tried this eObj to avoid infinite recursion
-        Pair<Boolean, Set<Object>> sp = Utils2.seen(eObj, true, (Set<Object>)seen);
-        if (sp.first)
+        Pair<Boolean, Set<Object>> sp = Utils2.seen(eObj, true, (Set<Object>) seen);
+        if (sp.first) {
             return Utils2.getEmptyList();
-        seen = (Seen<Object>)sp.second;
+        }
+        seen = (Seen<Object>) sp.second;
 
         List<TT> results = new ArrayList<TT>();
 
@@ -814,46 +843,49 @@ public final class EmfUtils {
             seenFeatures.addAll(features);
             // get non-null results
             Debug.outln("features=" + features);
-            for (EStructuralFeature f: features) {
+            for (EStructuralFeature f : features) {
                 if (f != null) {
                     Object res = eObj.eGet(f);
                     if (res != null) {
                         p = // Expression.
-                        ClassUtils.coerce(res, cls, propagate);// , true );
+                                ClassUtils.coerce(res, cls, propagate);// , true );
                         if (trueOrNotNull(p)) {
                             results.add(p.second);
-                            if (justFirst)
+                            if (justFirst) {
                                 return results;
+                            }
                         }
                     }
                 }
             }
             // get results for contents
-            for (EObject eo: eObj.eContents()) {
+            for (EObject eo : eObj.eContents()) {
                 // check if contained object's name matches
                 // boolean found = false;
                 String myName = getName(eo);
                 boolean noName = Utils2.isNullOrEmpty(myName);
                 if (!noName && list.contains(myName)) {
                     p = // Expression.
-                    ClassUtils.coerce(eo, cls, propagate);// , true );
+                            ClassUtils.coerce(eo, cls, propagate);// , true );
                     if (trueOrNotNull(p)) {
                         results.add(p.second);
-                        if (justFirst)
+                        if (justFirst) {
                             return results;
+                        }
                         // found = true;
                     }
                 }
                 if (!noName && !strictThisTime) {
                     // non-strict name check
-                    for (String name: list) {
+                    for (String name : list) {
                         if (myName.contains(name)) {
                             p = // Expression.
-                            ClassUtils.coerce(eo, cls, propagate);// , true );
+                                    ClassUtils.coerce(eo, cls, propagate);// , true );
                             if (trueOrNotNull(p)) {
                                 results.add(p.second);
-                                if (justFirst)
+                                if (justFirst) {
                                     return results;
+                                }
                                 // found = true;
                                 break;
                             }
@@ -864,17 +896,20 @@ public final class EmfUtils {
                 // check if contained object has "values"
                 List<TT> resList = getValues(eo, cls, propagate, strictThisTime, justFirst, false, seen);
                 if (!Utils2.isNullOrEmpty(resList)) {
-                    if (justFirst)
+                    if (justFirst) {
                         return resList;
+                    }
                     // Don't combine using Utils2.addAll(), which is unordered!
                     results.addAll(resList);
                 }
             }
             // }
-            if (strictMatch)
+            if (strictMatch) {
                 break;
-            if (!strictThisTime)
+            }
+            if (!strictThisTime) {
                 break;
+            }
             strictThisTime = false;
             // sizeOfLast = features.size(); // skip the ones we have already
             // seen on the next loop
@@ -905,7 +940,7 @@ public final class EmfUtils {
     /**
      * Get a "value" corresponding to the {@link Object} that are instances of
      * the input {@link Class} type.
-     * 
+     *
      * @param obj
      * @param cls
      * @param propagate
@@ -914,10 +949,11 @@ public final class EmfUtils {
      * @return
      */
     public static <TT> TT getValue(Object obj, Class<TT> cls, boolean propagate, boolean strictMatch,
-            boolean complainIfNotFound) {
+                                   boolean complainIfNotFound) {
         List<TT> values = getValues(obj, cls, propagate, strictMatch, true, complainIfNotFound, null);
-        if (Utils2.isNullOrEmpty(values))
+        if (Utils2.isNullOrEmpty(values)) {
             return null;
+        }
         return values.get(0);
     }
 
@@ -932,10 +968,11 @@ public final class EmfUtils {
     // // Assert.assertFalse(true);
     // // return null;
     // }
+
     /**
      * Get "values" corresponding to the {@link Object} that are instances of
      * the input {@link Class} type.
-     * 
+     *
      * @param obj
      * @param cls
      * @param propagate
@@ -945,7 +982,7 @@ public final class EmfUtils {
      * @return
      */
     public static <TT> List<TT> getValues(Object obj, Class<TT> cls, boolean propagate, boolean strictMatch,
-            boolean justFirst, boolean complainIfNotFound, Seen<Object> seen) {
+                                          boolean justFirst, boolean complainIfNotFound, Seen<Object> seen) {
         // Check for bad input
         if (obj == null) {
             if (complainIfNotFound) {
@@ -956,29 +993,32 @@ public final class EmfUtils {
 
         // return if we've already tried this eObj to avoid infinite recursion
         Pair<Boolean, Seen<Object>> sp = Utils2.seen(obj, true, seen);
-        if (sp.first)
+        if (sp.first) {
             return Utils2.getEmptyList();
+        }
         seen = sp.second;
 
         List<TT> results = null;// new called by getMembers() call below. // new
-                                // ArrayList< TT >();
+        // ArrayList< TT >();
         Pair<Boolean, TT> p = null;
 
         // Try for an exact match with a member field or function.
         results = getMemberValues(obj, cls, propagate, true, justFirst, "value");
-        if (!Utils2.isNullOrEmpty(results) && justFirst)
+        if (!Utils2.isNullOrEmpty(results) && justFirst) {
             return results;
+        }
 
         // Try getting value as an EObject.
         EObject eObj = null;
         if (obj instanceof EObject) {
-            eObj = (EObject)obj;
+            eObj = (EObject) obj;
             seen.remove(obj);
             // Try getting strict matching values as an EObject. Will be less
             // strict later.
             List<TT> vList = EmfUtils.getEValues(eObj, cls, propagate, false, justFirst, false, seen);
-            if (justFirst && !vList.isEmpty())
+            if (justFirst && !vList.isEmpty()) {
                 return vList;
+            }
             // Don't combine using Utils2.addAll(), which is unordered!
             results.addAll(vList);
             // for ( Object v : vList ) {
@@ -1003,12 +1043,14 @@ public final class EmfUtils {
         // Return the obj if it is already the *exact* right type.
         if (cls != null && cls.equals(obj.getClass())) {
             p = // Expression.
-            ClassUtils.coerce(obj, cls, propagate);// , true );
+                    ClassUtils.coerce(obj, cls, propagate);// , true );
             if (trueOrNotNull(p)) {
                 results.add(p.second);
-                if (justFirst)
+                if (justFirst) {
                     return results;
-            } else {
+                }
+            }
+            else {
                 Debug.error(true, "Error! Coercion of " + obj + " of type " + obj.getClass().getSimpleName()
                         + " to " + cls.getSimpleName() + " unexpectedly failed!");
             }
@@ -1018,7 +1060,7 @@ public final class EmfUtils {
         String clsName = (cls == null ? "object" : cls.getSimpleName());
         ArrayList<String> wordsForValueList = new ArrayList<String>();
         // String[] wordsForValue = null;
-        String[] wordsForValue = new String[] {clsName + "Value", "literalValue", clsName};
+        String[] wordsForValue = new String[]{clsName + "Value", "literalValue", clsName};
         // if ( eObj != null ) {
         // wordsForValueList.addAll( Arrays.asList( EmfUtils.eWordsForValue ) );
         // wordsForValueList.addAll( Arrays.asList( wordsForValue ) );
@@ -1035,8 +1077,9 @@ public final class EmfUtils {
         // Try for an exact match with a member field or function.
         List<TT> resList = getMemberValues(obj, cls, propagate, strictMatch, justFirst,
                 wordsForValue);
-        if (justFirst && !resList.isEmpty())
+        if (justFirst && !resList.isEmpty()) {
             return resList;
+        }
         // Don't combine using Utils2.addAll(), which is unordered!
         results.addAll(resList);
 
@@ -1076,23 +1119,26 @@ public final class EmfUtils {
         // Try to coerce the input obj to the correct type.
         if (cls != null) {// && Utils2.isNullOrEmpty( results ) ) {
             p = // Expression.
-            ClassUtils.coerce(obj, cls, propagate); // , true );
+                    ClassUtils.coerce(obj, cls, propagate); // , true );
             if (trueOrNotNull(p)) {
                 results.add(p.second);
-                if (justFirst)
+                if (justFirst) {
                     return results;
+                }
             }
         }
 
         // if yet unsuccessful and cls == String.class return toString()
         if (Utils2.isNullOrEmpty(results) && cls != null && cls.equals(String.class)) {
             p = // Expression.
-            ClassUtils.coerce(obj.toString(), cls, propagate); // , true );
+                    ClassUtils.coerce(obj.toString(), cls, propagate); // , true );
             if (trueOrNotNull(p)) {
                 results.add(p.second);
-                if (justFirst)
+                if (justFirst) {
                     return results;
-            } else {
+                }
+            }
+            else {
                 // We should never get here.
                 String msg = "Error! Coercion of " + obj + " of type " + obj.getClass().getSimpleName()
                         + " to " + cls.getSimpleName() + " unexpectedly failed!";
@@ -1105,11 +1151,12 @@ public final class EmfUtils {
         // object itself.
         if ((cls == null || cls.equals(Object.class)) && Utils2.isNullOrEmpty(results)) {
             p = // Expression.
-            ClassUtils.coerce(obj, cls, propagate);// , true );
+                    ClassUtils.coerce(obj, cls, propagate);// , true );
             if (trueOrNotNull(p)) {
                 results.add(p.second);
-                if (justFirst)
+                if (justFirst) {
                     return results;
+                }
             }
         }
 
@@ -1122,38 +1169,43 @@ public final class EmfUtils {
     }
 
     public static EStructuralFeature findStructuralFeatureMatching(EObject eObj, boolean strictMatch,
-            String... possibleNames) {
+                                                                   String... possibleNames) {
         List<EStructuralFeature> res = findStructuralFeaturesMatching(eObj, strictMatch, true, possibleNames);
-        if (!Utils2.isNullOrEmpty(res))
+        if (!Utils2.isNullOrEmpty(res)) {
             return res.get(0);
+        }
         return null;
     }
 
     public static List<EStructuralFeature> findStructuralFeaturesMatching(EObject eObj, boolean strictMatch,
-            boolean justfirst, String... possibleNames) {
+                                                                          boolean justfirst, String... possibleNames) {
         List<EStructuralFeature> features = new ArrayList<EStructuralFeature>();
         ArrayList<String> list = new ArrayList<String>();
-        for (String s: possibleNames) {
-            if (!strictMatch)
+        for (String s : possibleNames) {
+            if (!strictMatch) {
                 s = s.toLowerCase();
+            }
             list.add(s);
         }
         TreeSet<String> names = new TreeSet<String>(list);
-        for (EStructuralFeature f: eObj.eClass().getEStructuralFeatures()) {
+        for (EStructuralFeature f : eObj.eClass().getEStructuralFeatures()) {
             String fName = f.getName();
-            if (!strictMatch)
+            if (!strictMatch) {
                 fName = fName.toLowerCase();
+            }
             if (names.contains(fName)) {
                 features.add(f);
-                if (justfirst)
+                if (justfirst) {
                     return features;
+                }
             }
             if (!strictMatch) {
-                for (String valueWord: names) {
+                for (String valueWord : names) {
                     if (fName.contains(valueWord)) {
                         features.add(f);
-                        if (justfirst)
+                        if (justfirst) {
                             return features;
+                        }
                     }
                 }
             }
@@ -1164,7 +1216,7 @@ public final class EmfUtils {
     /**
      * Try to translate a SysML type name to a Java Class for primitives, but
      * the capitalized Class, like Integer.class instead of int.class.
-     * 
+     *
      * @param sysMLType
      * @return the Java Class rough equivalent to sysMLType
      */
@@ -1172,16 +1224,18 @@ public final class EmfUtils {
         // TODO -- handle BigDecimal, BigInteger, etc.?
         String lower = sysMLType.toLowerCase();
         boolean s = lower.contains("string");
-        if (s && lower.equals("string"))
+        if (s && lower.equals("string")) {
             return String.class;
+        }
         boolean d = lower.contains("double");
         boolean n = lower.equals("number");
         boolean dec = lower.contains("decimal");
         boolean f = lower.contains("float");
         boolean l = lower.contains("long");
         // boolean ll = l && lower.contains( "longlong" );
-        if (l && !f && !d && !dec)
+        if (l && !f && !d && !dec) {
             return Long.class;
+        }
         boolean ii = lower.contains("integer");
         if (!ii && (d || (l && f) || ((n || dec) && (l || !f)))) {
             return Double.class;
@@ -1189,23 +1243,26 @@ public final class EmfUtils {
         if (l || d) {
             Debug.error(false, "Warning! classForSysMLType(" + sysMLType + "): not returning Long or Double!");
         }
-        if (f)
+        if (f) {
             return Float.class;
+        }
         boolean h = lower.contains("short");
         if (h && (lower.equals("short") || lower.startsWith("short int"))) {
             return Short.class;
         }
         boolean i = lower.matches(".*[^a-z]int.*") || lower.startsWith("int");
         if (i || ii) {
-            if (h)
+            if (h) {
                 return Short.class;
+            }
             return Integer.class;
         }
-        if (s)
+        if (s) {
             return String.class;
+        }
         //boolean c = lower.equals("char");
         //Class<?> cls = boolean.class; // REVIEW -- Why c and cls? Is this not
-                                      // complete?
+        // complete?
         return ClassUtils.getClassForName(sysMLType, null, false);
     }
 
@@ -1215,19 +1272,20 @@ public final class EmfUtils {
 
     public static Class<?> getType(EObject eObj, boolean strictMatch) {
         List<Class<?>> list = getTypes(eObj, true, strictMatch, true, true, null);
-        if (!Utils2.isNullOrEmpty(list))
+        if (!Utils2.isNullOrEmpty(list)) {
             return list.get(0);
+        }
         return null;
     }
 
     public static Class<?> asClass(Object obj, Seen<Object> seen) {
         Class<?> cls = null;
         if (obj instanceof EClassifier) {
-            cls = ((EClassifier)obj).getInstanceClass();
+            cls = ((EClassifier) obj).getInstanceClass();
         }
         if (cls == null) {
             cls = // Expression.
-            ClassUtils.evaluate(obj, Class.class, true); // , false );
+                    ClassUtils.evaluate(obj, Class.class, true); // , false );
         }
         if (cls == null) {
             @SuppressWarnings("rawtypes")
@@ -1240,17 +1298,18 @@ public final class EmfUtils {
     }
 
     public static List<Class<?>> getTypes(EObject eObj, boolean propagate, boolean strictMatch,
-            boolean justFirst, boolean complainIfNotFound, Seen<Object> seen) {
+                                          boolean justFirst, boolean complainIfNotFound, Seen<Object> seen) {
         List<Class<?>> results = new ArrayList<Class<?>>();
         List<Object> typeObjects = getTypeObjects(eObj, propagate, strictMatch, justFirst,
                 complainIfNotFound, seen);
-        for (Object typeObj: typeObjects) {
+        for (Object typeObj : typeObjects) {
             if (typeObj != null) {
                 Class<?> cls = asClass(typeObj, seen);
                 if (cls != null) {
                     results.add(cls);
-                    if (justFirst)
+                    if (justFirst) {
                         return results;
+                    }
                 }
             }
         }
@@ -1258,20 +1317,23 @@ public final class EmfUtils {
     }
 
     public static List<Object> getTypeObjects(EObject eObj, boolean propagate, boolean strictMatch,
-            boolean justFirst, boolean complainIfNotFound, Seen<Object> seen) {
-        if (eObj == null)
+                                              boolean justFirst, boolean complainIfNotFound, Seen<Object> seen) {
+        if (eObj == null) {
             return null;
+        }
 
         // return if we've already tried this eObj to avoid infinite recursion
         Pair<Boolean, Seen<Object>> sp = Utils2.seen(eObj, true, seen);
-        if (sp.first)
+        if (sp.first) {
             return Utils2.getEmptyList();
+        }
         seen = sp.second;
 
         ArrayList<Object> results = new ArrayList<Object>();
         results.add(eObj.eClass());
-        if (justFirst)
+        if (justFirst) {
             return results;
+        }
 
         TreeSet<String> wordsForTypeSet = new TreeSet<String>(Arrays.asList(wordsForType));
 
@@ -1291,19 +1353,20 @@ public final class EmfUtils {
             Object res = null;
             // See if the eObj's instantiations of these structural features are
             // Classes.
-            for (EStructuralFeature f: features) {
+            for (EStructuralFeature f : features) {
                 if (f != null) {
                     res = eObj.eGet(f);
                     // Class<?> cls = asClass( res, seen );
                     if (res != null) {
                         results.add(res);
-                        if (justFirst)
+                        if (justFirst) {
                             return results;
+                        }
                     }
                 }
             }
             if (res == null) {
-                for (EObject eo: eObj.eContents()) {
+                for (EObject eo : eObj.eContents()) {
                     // check if contained object's name indicates that it's a
                     // type
                     boolean found = false;
@@ -1313,21 +1376,24 @@ public final class EmfUtils {
                         // Class<?> cls = asClass( eo, seen );
                         if (eo != null) {
                             results.add(eo);
-                            if (justFirst)
+                            if (justFirst) {
                                 return results;
+                            }
                             found = true;
-                        } else {
+                        }
+                        else {
                             // S
                             List<Object> oList = getValues(eo, Object.class, propagate, strictMatch,
                                     justFirst, false, seen);
-                            for (Object o: oList) {
+                            for (Object o : oList) {
                                 // TODO -- REVIEW -- have already seen o from
                                 // getValues()?!!
                                 // cls = asClass( o, seen );
                                 if (o != null) {
                                     results.add(o);
-                                    if (justFirst)
+                                    if (justFirst) {
                                         return results;
+                                    }
                                     found = true;
                                 }
                             }
@@ -1336,14 +1402,15 @@ public final class EmfUtils {
                     }
                     if (myName != null && !strictThisTime) {
                         // non-strict name check
-                        for (String name: wordsForType) {
+                        for (String name : wordsForType) {
                             if (myName.toLowerCase().contains(name.toLowerCase())) {
                                 // Class<?> cls = asClass( eo, seen ); // REVIEW
                                 // seen correct here?
                                 if (eo != null) {
                                     results.add(eo);
-                                    if (justFirst)
+                                    if (justFirst) {
                                         return results;
+                                    }
                                     found = true;
                                     // break;
                                 }
@@ -1351,35 +1418,40 @@ public final class EmfUtils {
                         }
                     }
                     if (!found)
-                        // get type of value
+                    // get type of value
+                    {
                         if (!found && !strictThisTime) {
                             // get types of contents???
                             List<Object> resList = getTypeObjects(eo, propagate, strictMatch, justFirst,
                                     false, seen);
                             if (!Utils2.isNullOrEmpty(resList)) {
-                                if (justFirst)
+                                if (justFirst) {
                                     return resList;
+                                }
                                 results.addAll(resList);
                             }
                         }
+                    }
                 }
             }
-            if (strictMatch)
+            if (strictMatch) {
                 break;
-            if (!strictThisTime)
+            }
+            if (!strictThisTime) {
                 break;
+            }
             // skip the ones we have already seen on the next loop
             sizeOfLast = features.size(); // TODO -- REVIEW Didn't we get rid of
-                                          // lastSize??!
+            // lastSize??!
             strictThisTime = false;
         }
         return results;
     }
 
-    public static String[] wordsForType   = new String[] {"Type", "Class", "Typename", "ClassName",
+    public static String[] wordsForType = new String[]{"Type", "Class", "Typename", "ClassName",
             "DefaultType", "eClass", "Stereotype", "Metaclass"};
 
-    public static String[] eWordsForValue = new String[] {"value", "StringExpression", "OpaqueExpression",
+    public static String[] eWordsForValue = new String[]{"value", "StringExpression", "OpaqueExpression",
             "LiteralBoolean", "LiteralInteger", "LiteralNull", "LiteralSpecification", "LiteralString",
             "LiteralUnlimitedNatural", "ElementValue", "Expression", "InstanceValue", "TimeExpression",
             "TimeInterval", "Duration", "DurationInterval", "Interval",
@@ -1388,13 +1460,13 @@ public final class EmfUtils {
 
             "defaultValue", "specification",
 
-            "literal", "instance"         };
+            "literal", "instance"};
 
-    public static String[] oWordsForValue = new String[] {"value", "literal", "instance",
+    public static String[] oWordsForValue = new String[]{"value", "literal", "instance",
 
-                                          "Expression", "InstanceValue", "body", "result",
+            "Expression", "InstanceValue", "body", "result",
 
-                                          "StringExpression", "OpaqueExpression", "LiteralBoolean",
+            "StringExpression", "OpaqueExpression", "LiteralBoolean",
             "LiteralInteger", "LiteralNull", "LiteralSpecification", "LiteralString",
             "LiteralUnlimitedNatural", "ElementValue",
 
@@ -1413,30 +1485,37 @@ public final class EmfUtils {
     }
 
     public static boolean matches(String s, String pattern) {
-        if (s == pattern)
+        if (s == pattern) {
             return true;
-        if (pattern == null)
+        }
+        if (pattern == null) {
             return false;
-        if (s == null)
+        }
+        if (s == null) {
             return false;
-        if (s.equalsIgnoreCase(pattern))
+        }
+        if (s.equalsIgnoreCase(pattern)) {
             return true;
-        if (s.matches(pattern))
+        }
+        if (s.matches(pattern)) {
             return true;
+        }
         List<String> list = getPossibleFieldNames(s);
         list.remove(0);
-        for (String os: list) {
-            if (os.equalsIgnoreCase(pattern))
+        for (String os : list) {
+            if (os.equalsIgnoreCase(pattern)) {
                 return true;
-            if (os.matches(pattern))
+            }
+            if (os.matches(pattern)) {
                 return true;
+            }
         }
         return false;
     }
 
     /**
      * Determine
-     * 
+     *
      * @param obj
      * @param pattern
      * @return
@@ -1447,7 +1526,7 @@ public final class EmfUtils {
 
     public static boolean matches(Object obj, boolean useName, boolean useType, Object[] patterns) {
 
-        for (Object pattern: patterns) {
+        for (Object pattern : patterns) {
             if (matches(obj, pattern, useName, useType)) {
                 return true;
             }
@@ -1456,12 +1535,15 @@ public final class EmfUtils {
     }
 
     public static boolean matches(Object obj, Object pattern, boolean useName, boolean useType) {
-        if (obj == pattern)
+        if (obj == pattern) {
             return true;
-        if (pattern == null)
+        }
+        if (pattern == null) {
             return false;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
+        }
 
         String oName = null; // obj's name
         String oStr = null; // obj as String
@@ -1471,69 +1553,87 @@ public final class EmfUtils {
         // don't use pType
 
         if (obj.getClass().equals(String.class) && pattern.getClass().equals(String.class)) {
-            boolean m = matches((String)obj, (String)pattern);
-            if (m || !useType)
+            boolean m = matches((String) obj, (String) pattern);
+            if (m || !useType) {
                 return m;
-        } else {
+            }
+        }
+        else {
             pStr = pattern.toString();
             if (useName) {
                 oName = getName(obj);
                 if (Utils2.isNullOrEmpty(oName)) {
-                    if (oName != null && oName.equals(pStr))
+                    if (oName != null && oName.equals(pStr)) {
                         return true;
-                } else {
-                    if (matches(oName, pStr))
+                    }
+                }
+                else {
+                    if (matches(oName, pStr)) {
                         return true;
+                    }
                 }
             }
 
             if (useName) {
                 pName = getName(pattern);
                 if (Utils2.isNullOrEmpty(oName)) {
-                    if (oName != null && oName.equals(pName))
+                    if (oName != null && oName.equals(pName)) {
                         return true;
-                } else {
-                    if (matches(oName, pName))
+                    }
+                }
+                else {
+                    if (matches(oName, pName)) {
                         return true;
+                    }
                 }
             }
 
             oStr = obj.toString();
             if (Utils2.isNullOrEmpty(oStr)) {
-                if (oStr != null && oStr.equals(pStr))
+                if (oStr != null && oStr.equals(pStr)) {
                     return true;
-            } else {
-                if (matches(oStr, pStr))
+                }
+            }
+            else {
+                if (matches(oStr, pStr)) {
                     return true;
-                if (useName && matches(oStr, pName))
+                }
+                if (useName && matches(oStr, pName)) {
                     return true;
+                }
             }
         }
 
         if (useType) {
             oTypes = getTypes(obj);
-            for (Class<?> t: oTypes) {
-                for (String oType: new String[] {t.getSimpleName(), t.getName()}) {
+            for (Class<?> t : oTypes) {
+                for (String oType : new String[]{t.getSimpleName(), t.getName()}) {
                     if (Utils2.isNullOrEmpty(oType)) {
-                        if (oType != null && oType.equals(pStr))
+                        if (oType != null && oType.equals(pStr)) {
                             return true;
-                    } else {
-                        if (matches(oType, pStr))
+                        }
+                    }
+                    else {
+                        if (matches(oType, pStr)) {
                             return true;
-                        if (useName && matches(oType, pName))
+                        }
+                        if (useName && matches(oType, pName)) {
                             return true;
+                        }
                     }
                 }
             }
             if (obj instanceof Element) {
                 Set<Stereotype> set = StereotypesHelper.getAllAssignedStereotypes(Utils2
-                        .newList((Element)obj));
-                for (Stereotype sType: set) {
+                        .newList((Element) obj));
+                for (Stereotype sType : set) {
                     String sName = sType.getName();
-                    if (matches(sName, pStr))
+                    if (matches(sName, pStr)) {
                         return true;
-                    if (useName && matches(sName, pName))
+                    }
+                    if (useName && matches(sName, pName)) {
                         return true;
+                    }
                 }
             }
         }
@@ -1549,15 +1649,15 @@ public final class EmfUtils {
     }
 
     public static List<Object> collectOrFilter(Collection<Object> elements, boolean collect,
-            Object... filters) {
+                                               Object... filters) {
         return collectOrFilter(elements, collect, true, false, true, true, true, filters);
     }
 
     @SuppressWarnings("unchecked")
     public static Object collectOrFilter(CollectionAdder adder, Object obj, boolean collect, boolean onlyOne,
-            boolean useName, boolean useType, boolean useValue, boolean searchJava, Object... filters) {
+                                         boolean useName, boolean useType, boolean useValue, boolean searchJava, Object... filters) {
         if (obj instanceof Collection) {
-            return collectOrFilter(adder, (Collection<Object>)obj, collect, onlyOne, useName, useType,
+            return collectOrFilter(adder, (Collection<Object>) obj, collect, onlyOne, useName, useType,
                     useValue, searchJava, filters);
         }
         if (matches(obj, useName, useType, filters)) {
@@ -1567,7 +1667,7 @@ public final class EmfUtils {
     }
 
     public static List<Object> collectOrFilter(Collection<Object> elements, boolean collect, boolean onlyOne,
-            boolean useName, boolean useType, boolean useValue, boolean searchJava, Object... filters) {
+                                               boolean useName, boolean useType, boolean useValue, boolean searchJava, Object... filters) {
         CollectionAdder adder = new CollectionAdder();
         adder.onlyAddOne = onlyOne;
         return collectOrFilter(adder, elements, collect, onlyOne, useName, useType, useValue, searchJava,
@@ -1576,34 +1676,37 @@ public final class EmfUtils {
 
     @SuppressWarnings("unchecked")
     public static List<Object> collectOrFilter(CollectionAdder adder, Collection<Object> elements,
-            boolean collect, boolean onlyOne, boolean useName, boolean useType, boolean useValue,
-            boolean searchJava, Object... filters) {
+                                               boolean collect, boolean onlyOne, boolean useName, boolean useType, boolean useValue,
+                                               boolean searchJava, Object... filters) {
         ArrayList<Object> resultList = new ArrayList<Object>();
         if (filters == null || filters.length == 0 || (filters.length == 1 && filters[0] == null)) {
             return Utils2.newList(elements.toArray());
         }
-        for (Object elem: elements) {
+        for (Object elem : elements) {
             boolean added = false;
-            for (Object filter: filters) {
+            for (Object filter : filters) {
                 if (matches(elem, filter, useName, useType)) {
                     added = adder.add(elem, resultList);
-                    if (added)
+                    if (added) {
                         break;
+                    }
                 }
             }
-            if (onlyOne && added)
+            if (onlyOne && added) {
                 break;
+            }
             if (collect && elem instanceof Collection) {
                 --adder.defaultFlattenDepth;
-                List<Object> childRes = collectOrFilter(adder, (Collection<Object>)elem, collect, onlyOne,
+                List<Object> childRes = collectOrFilter(adder, (Collection<Object>) elem, collect, onlyOne,
                         useName, useType, useValue, searchJava, filters);
                 // collectOrFilter( (Collection< Object >)elem, collect,
                 // useName, useType, filters );
                 ++adder.defaultFlattenDepth;
                 if (childRes != null) {
                     added = adder.add(childRes, resultList);
-                    if (onlyOne && added)
+                    if (onlyOne && added) {
                         break;
+                    }
                 }
             }
         }

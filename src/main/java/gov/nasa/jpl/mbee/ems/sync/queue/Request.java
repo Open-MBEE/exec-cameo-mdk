@@ -42,8 +42,9 @@ public class Request {
 
     public Request(String url, String json, int wait, String type, Boolean background) {
         this.url = url;
-        if (background != null && background)
+        if (background != null && background) {
             this.url += "?background=true";
+        }
 
         this.json = json;
         this.wait = wait * 1000 + 120000;

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -29,26 +29,20 @@
 package gov.nasa.jpl.ocl;
 
 import gov.nasa.jpl.mbee.lib.Debug;
+import org.eclipse.emf.ecore.*;
+import org.eclipse.ocl.EvaluationEnvironment;
+import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
+import org.eclipse.ocl.ecore.EcoreEvaluationEnvironment;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EClassifier;
-import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EOperation;
-import org.eclipse.emf.ecore.EStructuralFeature;
-import org.eclipse.ocl.EvaluationEnvironment;
-import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
-import org.eclipse.ocl.ecore.EcoreEvaluationEnvironment;
-
 /**
  * Custom class for customizing environment, allows many operations to be added
  * to evaluation context
- * 
+ *
  * @author cinyoung
- * 
  */
 public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
     // keep track of all the added
@@ -73,7 +67,7 @@ public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
     @Override
     public Object callOperation(EOperation operation, int opcode, Object source, Object[] args) {
 
-        for (DgOperation op: dgOperations) {
+        for (DgOperation op : dgOperations) {
             if (operation.getEAnnotation(op.getAnnotationName()) != null) {
                 if (op.getName().equals(operation.getName())
                         && op.getParameters().size() == (args == null ? 0 : args.length)) {
@@ -102,10 +96,11 @@ public class DgEvaluationEnvironment extends EcoreEvaluationEnvironment {
      */
     @Override
     protected Method getJavaMethodFor(EOperation operation, Object receiver) {
-        return getJavaMethodFor( operation, receiver, false );
+        return getJavaMethodFor(operation, receiver, false);
     }
+
     protected Method getJavaMethodFor(EOperation operation, Object receiver, boolean recursing) {
-            
+
         Method result = null;
         try {
             result = super.getJavaMethodFor(operation, receiver);

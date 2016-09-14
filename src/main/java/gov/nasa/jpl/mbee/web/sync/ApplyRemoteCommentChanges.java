@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,15 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.web.sync;
 
-import static gov.nasa.jpl.mbee.web.sync.CommentUtil.AUTHOR;
-import static gov.nasa.jpl.mbee.web.sync.CommentUtil.DOCUMENT_COMMENT;
-import static gov.nasa.jpl.mbee.web.sync.CommentUtil.MODIFIED_TIMESTAMP;
-
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.JOptionPane;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
@@ -46,25 +37,32 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
+
+import javax.swing.*;
+import java.util.List;
+import java.util.Map;
+
+import static gov.nasa.jpl.mbee.web.sync.CommentUtil.*;
+
 @Deprecated
 public class ApplyRemoteCommentChanges extends ChangeTheModel {
 
-    private final Element              owner;
+    private final Element owner;
     private final Map<String, Comment> localComments;
-    private final List<SyncedComment>  added;
-    private final List<SyncedComment>  modified;
-    private final List<SyncedComment>  deleted;
-    private final Stereotype           stereotype;
-    private final ElementsFactory      factory;
-    private final GUILog               log;
+    private final List<SyncedComment> added;
+    private final List<SyncedComment> modified;
+    private final List<SyncedComment> deleted;
+    private final Stereotype stereotype;
+    private final ElementsFactory factory;
+    private final GUILog log;
 
-    private int                        successfulAdds     = 0;
-    private int                        successfulModifies = 0;
-    private int                        successfulDeletes  = 0;
-    private int                        failures           = 0;
+    private int successfulAdds = 0;
+    private int successfulModifies = 0;
+    private int successfulDeletes = 0;
+    private int failures = 0;
 
     public ApplyRemoteCommentChanges(Element owner, Map<String, Comment> localComments,
-            List<SyncedComment> added, List<SyncedComment> modified, List<SyncedComment> deleted) {
+                                     List<SyncedComment> added, List<SyncedComment> modified, List<SyncedComment> deleted) {
         this.owner = owner;
         this.localComments = localComments;
         this.added = added;
@@ -90,13 +88,13 @@ public class ApplyRemoteCommentChanges extends ChangeTheModel {
             fail("Couldn't find " + DOCUMENT_COMMENT + " stereotype");
             return;
         }
-        for (SyncedComment imported: added) {
+        for (SyncedComment imported : added) {
             add(imported);
         }
-        for (SyncedComment imported: modified) {
+        for (SyncedComment imported : modified) {
             modify(imported);
         }
-        for (SyncedComment imported: deleted) {
+        for (SyncedComment imported : deleted) {
             delete(imported);
         }
         if (successfulAdds == 0 && successfulModifies == 0 && successfulDeletes == 0) {
@@ -104,17 +102,20 @@ public class ApplyRemoteCommentChanges extends ChangeTheModel {
                 log("Comment import failed");
                 JOptionPane.showMessageDialog(null, "Could not import changes."
                         + "\nSee messages window for details.");
-            } else {
+            }
+            else {
                 log("No comment changes to import");
             }
-        } else {
+        }
+        else {
             if (failures > 0) {
                 log(String.format("Imported comments (%d added, %d modified, %d deleted)"
-                        + " - %d CHANGES FAILED", successfulAdds, successfulModifies, successfulDeletes,
+                                + " - %d CHANGES FAILED", successfulAdds, successfulModifies, successfulDeletes,
                         failures));
                 JOptionPane.showMessageDialog(null,
                         "Some changes could not be imported.\nSee messages window for details.");
-            } else {
+            }
+            else {
                 log(String.format("Imported comments (%d added, %d modified, %d deleted)", successfulAdds,
                         successfulModifies, successfulDeletes));
             }

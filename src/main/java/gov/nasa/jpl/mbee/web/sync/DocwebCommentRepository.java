@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,9 +28,17 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.web.sync;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.web.HttpsUtils;
 import gov.nasa.jpl.mbee.web.JsonRequestEntity;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -40,19 +48,10 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 @Deprecated
 public class DocwebCommentRepository implements CommentRepository {
     private final String baseUrlString;
-    private final URL    baseUrl;
+    private final URL baseUrl;
 
     public DocwebCommentRepository(String baseUrl) {
         this.baseUrlString = baseUrl;
@@ -87,14 +86,15 @@ public class DocwebCommentRepository implements CommentRepository {
                 throw new CommentSyncFailure("Request failed: " + m.getStatusLine());
             }
             String response = m.getResponseBodyAsString();
-            jsonList = (JSONArray)JSONValue.parse(response);
-            for (Object obj: jsonList) {
+            jsonList = (JSONArray) JSONValue.parse(response);
+            for (Object obj : jsonList) {
                 if (obj instanceof JSONObject) {
-                    SyncedComment c = toComment((JSONObject)obj);
+                    SyncedComment c = toComment((JSONObject) obj);
                     if (c != null) {
                         comments.add(c);
                     }
-                } else {
+                }
+                else {
                     Application.getInstance().getGUILog().showError("obj not JSONObject"); // DEBUG
                     continue;
                 }
@@ -111,7 +111,7 @@ public class DocwebCommentRepository implements CommentRepository {
 
     @Override
     public void sendComments(NamedElement document, List<SyncedComment> newComments,
-            List<SyncedComment> modifiedComments, List<SyncedComment> deletedComments)
+                             List<SyncedComment> modifiedComments, List<SyncedComment> deletedComments)
             throws CommentSyncFailure {
         HttpsUtils.allowSelfSignedCertificates();
 
@@ -153,7 +153,7 @@ public class DocwebCommentRepository implements CommentRepository {
 
     @SuppressWarnings("unchecked")
     private JSONObject makeJsonForExport(List<SyncedComment> newComments,
-            List<SyncedComment> modifiedComments, List<SyncedComment> deletedComments) {
+                                         List<SyncedComment> modifiedComments, List<SyncedComment> deletedComments) {
         JSONObject json = new JSONObject();
         json.put("new", makeJsonArray(newComments));
         json.put("modified", makeJsonArray(modifiedComments));
@@ -164,7 +164,7 @@ public class DocwebCommentRepository implements CommentRepository {
     @SuppressWarnings("unchecked")
     private JSONArray makeJsonArray(List<SyncedComment> comments) {
         JSONArray json = new JSONArray();
-        for (SyncedComment c: comments) {
+        for (SyncedComment c : comments) {
             json.add(makeJson(c));
         }
         return json;
@@ -172,7 +172,7 @@ public class DocwebCommentRepository implements CommentRepository {
 
     /**
      * Convert from a SyncedComment object to JSON.
-     * 
+     *
      * @param comment
      * @return
      */
@@ -189,7 +189,7 @@ public class DocwebCommentRepository implements CommentRepository {
 
     /**
      * Convert from JSON to a SyncedComment object.
-     * 
+     *
      * @param json
      * @return
      */
@@ -197,11 +197,11 @@ public class DocwebCommentRepository implements CommentRepository {
         // Application.getInstance().getGUILog().log("incoming: " + json); //
         // DEBUG
         try {
-            String id = (String)json.get("id");
-            String author = (String)json.get("author");
-            String timestamp = (String)json.get("time");
-            String body = Utils.addHtmlWrapper((String)json.get("body"));
-            Boolean deleted = (Boolean)json.get("deleted");
+            String id = (String) json.get("id");
+            String author = (String) json.get("author");
+            String timestamp = (String) json.get("time");
+            String body = Utils.addHtmlWrapper((String) json.get("body"));
+            Boolean deleted = (Boolean) json.get("deleted");
 
             if (author == null || timestamp == null) {
                 Application.getInstance().getGUILog()
@@ -210,7 +210,8 @@ public class DocwebCommentRepository implements CommentRepository {
             }
             if (deleted != null && deleted.booleanValue()) {
                 return SyncedComment.deleted(id, author, timestamp, body);
-            } else {
+            }
+            else {
                 return SyncedComment.found(id, author, timestamp, body);
             }
         } catch (ClassCastException e) {

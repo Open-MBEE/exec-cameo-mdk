@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,45 +28,10 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee;
 
-import gov.nasa.jpl.mbee.actions.OclQueryAction;
-import gov.nasa.jpl.mbee.lib.ClassUtils;
-import gov.nasa.jpl.mbee.lib.Debug;
-import gov.nasa.jpl.mbee.lib.MoreToString;
-import gov.nasa.jpl.mbee.lib.MostAbstractFirst;
-import gov.nasa.jpl.mbee.lib.Pair;
-import gov.nasa.jpl.mbee.lib.Utils2;
-
-import java.awt.AWTEvent;
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.io.StringWriter;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
-import javax.swing.JPopupMenu;
-import javax.swing.KeyStroke;
-
-import org.junit.Assert;
-
 import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
-import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
-import com.nomagic.magicdraw.actions.BrowserContextAMConfigurator;
-import com.nomagic.magicdraw.actions.BrowserToolbarAMConfigurator;
-import com.nomagic.magicdraw.actions.ConfiguratorWithPriority;
-import com.nomagic.magicdraw.actions.DiagramContextAMConfigurator;
-import com.nomagic.magicdraw.actions.DiagramContextToolbarAMConfigurator;
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.actions.MDActionsCategory;
-import com.nomagic.magicdraw.actions.MenuCreatorFactory;
+import com.nomagic.magicdraw.actions.*;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
 import com.nomagic.magicdraw.uml.DiagramType;
@@ -74,10 +39,19 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mbee.lib.*;
+import org.junit.Assert;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * A general configurator for MagicDraw. Here's how to use it:
- * 
+ * <p>
  * Configurator c = new Configurator(); Method copyElementMethod =
  * ElementUtils.class.getDeclaredMethods()[ 0 ]; c.addConfiguration( "General",
  * "copyElement", "Element Utils", copyElementMethod ); Method copyPackageMethod
@@ -152,18 +126,17 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * }
      */
 
-    public static Context lastContext             = null;
+    public static Context lastContext = null;
     protected static boolean lastContextIsDiagram = false;
     //protected static boolean invokedFromMenu      = false;
 
     /**
      * A Context is a place from which the user accesses menus that are
      * populated by configurators.
-     * 
      */
     // public static enum Context {
     // Browser, BrowserToolbar, Diagram, DiagramToolbar, General;
-    public static enum Context {
+    public enum Context {
         // ContainmentBrowser, ContainmentBrowserToolbar, StructureBrowser,
         // StructureBrowserToolbar, InheritanceBrowser,
         // InheritanceBrowserToolbar, DiagramsBrowser, DiagramsBrowserToolbar,
@@ -208,15 +181,16 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         }
 
         public static Context fromString(String contextString) {
-            for (Context c: contexts) {
-                if (contextString.toLowerCase().equals(c.toString().toLowerCase()))
+            for (Context c : contexts) {
+                if (contextString.toLowerCase().equals(c.toString().toLowerCase())) {
                     return c;
+                }
             }
             return null;
         }
     }
 
-    public static enum DiagramContext {
+    public enum DiagramContext {
         Activity, BlockDefinition, Class, Communication, // UML only
         Component, // UML only
         CompositeStructure, // UML only
@@ -227,6 +201,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         Profile, Requirement, // SysML only
         Sequence, StateMachine, Timing, // UML only
         UseCase;
+
         public Method getAddConfiguratorMethod() {
             return Context.BaseDiagramContext.getAddConfiguratorMethod(toString());
         }
@@ -236,13 +211,13 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
 
     public static class GenericMDAction extends MDAction {
 
-        private static final long serialVersionUID     = 6943254131859224755L;
+        private static final long serialVersionUID = 6943254131859224755L;
 
-        Method                    actionMethod         = null;
-        Object                    objectInvokingAction = null;
+        Method actionMethod = null;
+        Object objectInvokingAction = null;
 
         public GenericMDAction(String id, String name, Integer mnemonic, String group, Method actionMethod,
-                Object objectInvokingMethod) {
+                               Object objectInvokingMethod) {
             super(id, name, mnemonic, group);
             Debug.outln("GenericMDAction( id=" + id + ", name=" + name + ", mnemonic=" + mnemonic
                     + ", group=" + group + ", actionMethod="
@@ -253,7 +228,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         }
 
         public GenericMDAction(String id, String name, KeyStroke keyStroke, String group,
-                Method actionMethod, Object objectInvokingMethod) {
+                               Method actionMethod, Object objectInvokingMethod) {
             super(id, name, keyStroke, group);
             Debug.outln("GenericMDAction( id=" + id + ", name=" + name + ", keyStroke=" + keyStroke
                     + ", group=" + group + ", actionMethod="
@@ -276,19 +251,22 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             // public static void actionPerformed( ActionEvent e, Method
             // actionMethod,
             // Object objectInvokingAction ) {
-            if (actionMethod == null)
+            if (actionMethod == null) {
                 return;
+            }
             ArrayList<Object> args = new ArrayList<Object>();
             if (actionMethod.getParameterTypes() != null && actionMethod.getParameterTypes().length > 0) {
-                for (Class<?> c: actionMethod.getParameterTypes()) {
+                for (Class<?> c : actionMethod.getParameterTypes()) {
                     if (c.equals(ActionEvent.class) || c.equals(AWTEvent.class)
                             || c.equals(EventObject.class)) {
                         args.add(actionEvent);
-                    } else {
+                    }
+                    else {
                         if (c.equals(Element.class)) {
                             // passs null for Element
                             args.add(null);
-                        } else {
+                        }
+                        else {
                             // unrecognized argument
                             Debug.error(true, false, "Warning! Action " + actionMethod.getName()
                                     + " is getting passed null " + c.getSimpleName() + "!");
@@ -296,7 +274,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                     }
                 }
             }
-            lastActionEvent  = actionEvent;
+            lastActionEvent = actionEvent;
             // Pair< Boolean, Object > p =
             ClassUtils.runMethod(false, objectInvokingAction, actionMethod, args.toArray());
         }
@@ -309,8 +287,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     protected static Context[] contexts = getContexts();
 
     public static Context[] getContexts() {
-        if (contexts == null)
-            contexts = new Context[] { // Context.Browser,
+        if (contexts == null) {
+            contexts = new Context[]{ // Context.Browser,
                     // Context.BrowserToolbar,
                     // Context.Diagram,
                     // Context.DiagramToolbar,
@@ -329,6 +307,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                     Context.LockViewBrowserToolbar, Context.MainMenu, Context.MainShortcuts,
                     Context.MainToolbar, Context.SearchBrowserContext, Context.SearchBrowserShortcuts,
                     Context.SearchBrowserToolbar, Context.TargetElementAM};
+        }
         return contexts;
     }
 
@@ -338,38 +317,40 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     protected static DiagramContext[] diagramContexts = getDiagramContexts();
 
     public static DiagramContext[] getDiagramContexts() {
-        if (diagramContexts == null)
-            diagramContexts = new DiagramContext[] {DiagramContext.Activity, DiagramContext.BlockDefinition,
+        if (diagramContexts == null) {
+            diagramContexts = new DiagramContext[]{DiagramContext.Activity, DiagramContext.BlockDefinition,
                     DiagramContext.Class, DiagramContext.Communication, // UML
-                                                                        // only
+                    // only
                     DiagramContext.Component, // UML only
                     DiagramContext.CompositeStructure, // UML only
                     DiagramContext.Deployment, // UML only
                     DiagramContext.InteractionOverview, // UML Only
                     DiagramContext.InternalBlockDefinition, DiagramContext.Object, // UML
-                                                                                   // only
+                    // only
                     DiagramContext.Package, DiagramContext.Parametric, // SysML
-                                                                       // only
+                    // only
                     DiagramContext.Profile, DiagramContext.Requirement, // SysML
-                                                                        // only
+                    // only
                     DiagramContext.Sequence, DiagramContext.StateMachine, DiagramContext.Timing, // UML
-                                                                                                 // only
+                    // only
                     DiagramContext.UseCase};
+        }
         return diagramContexts;
     }
 
     public static Map<Configurator.Context, Class<?>> typeForContext = initTypeForContext();
 
     public static Map<Configurator.Context, Class<?>> getTypeForContext() {
-        if (typeForContext == null)
+        if (typeForContext == null) {
             initTypeForContext();
+        }
         return typeForContext;
     }
 
     public static Map<Configurator.Context, Class<?>> initTypeForContext() {
         // Debug.turnOn();
         typeForContext = new HashMap<Configurator.Context, Class<?>>();
-        for (Context c: getContexts()) {
+        for (Context c : getContexts()) {
             if (c == null) {
                 Debug.error("Error! Null context from getContexts()?!!");
             }
@@ -377,17 +358,18 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             Class<?> cls = Configurator.class;
             Class<?> configCls = Configurator.class;
             Class<?>[] pTypes = null;
-            if (addMethod != null)
+            if (addMethod != null) {
                 pTypes = addMethod.getParameterTypes();
+            }
             if (pTypes != null) {
                 int j;
                 for (j = 0; j < pTypes.length; ++j) {
                     Class<?> pType = pTypes[j];
                     if (pType != null && pType.isAssignableFrom(configCls)) {// configCls.isAssignableFrom(
-                                                                             // pType
-                                                                             // )
-                                                                             // )
-                                                                             // {
+                        // pType
+                        // )
+                        // )
+                        // {
                         cls = addMethod.getParameterTypes()[j];
                         break;
                     }
@@ -395,7 +377,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                 if (j < pTypes.length) {
                     Debug.error(false, "No type for context! " + c);
                 }
-            } else {
+            }
+            else {
                 Debug.error("No add config method found for " + c);
             }
             Debug.outln("typeForContext.put(" + c + ", " + cls.getName() + ")");
@@ -408,14 +391,15 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     public static Map<Class<?>, Set<Configurator.Context>> contextsForType = initContextsForType();
 
     public static Map<Class<?>, Set<Configurator.Context>> getContextsForType() {
-        if (contextsForType == null)
+        if (contextsForType == null) {
             initContextsForType();
+        }
         return contextsForType;
     }
 
     public static Map<Class<?>, Set<Configurator.Context>> initContextsForType() {
         contextsForType = new HashMap<Class<?>, Set<Context>>();
-        for (Entry<Context, Class<?>> e: getTypeForContext().entrySet()) {
+        for (Entry<Context, Class<?>> e : getTypeForContext().entrySet()) {
             Set<Configurator.Context> theContexts = contextsForType.get(e.getValue());
             if (theContexts == null) {
                 theContexts = new HashSet<Configurator.Context>();
@@ -436,16 +420,16 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     Map<Context, Map<String, Map<String, Map<String, MDAction>>>> menus = null;
 
     /**
-     * @param menus
-     *            a map from contexts (General, Browser, Diagram,
-     *            BrowserToolbar, DiagramToolbar) to categories to menu item
-     *            names to actions.
+     * @param menus a map from contexts (General, Browser, Diagram,
+     *              BrowserToolbar, DiagramToolbar) to categories to menu item
+     *              names to actions.
      */
     public Configurator(Map<Context, Map<String, Map<String, Map<String, MDAction>>>> menus) {
         // this();
         this.menus = menus;
-        if (menus == null)
+        if (menus == null) {
             initMenus();
+        }
     }
 
     public Configurator() {
@@ -453,14 +437,15 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     }
 
     public Map<Context, Map<String, Map<String, Map<String, MDAction>>>> getMenus() {
-        if (menus == null)
+        if (menus == null) {
             initMenus();
+        }
         return menus;
     }
 
     public void initMenus() {
         menus = new TreeMap<Context, Map<String, Map<String, Map<String, MDAction>>>>();
-        for (Context c: getContexts()) {
+        for (Context c : getContexts()) {
             menus.put(c, new TreeMap<String, Map<String, Map<String, MDAction>>>());
         }
     }
@@ -485,7 +470,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     /**
      * @param lastContextIsDiagram the lastContextIsDiagram to set
      */
-    public static void setLastContextIsDiagram( boolean lastContextIsDiagram ) {
+    public static void setLastContextIsDiagram(boolean lastContextIsDiagram) {
         Configurator.lastContextIsDiagram = lastContextIsDiagram;
     }
 
@@ -494,21 +479,17 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      */
     public static boolean isInvokedFromMainMenu() {
         // HACK -- FIXME
-        if ( lastActionEvent != null ) {
+        if (lastActionEvent != null) {
             Object source = lastActionEvent.getSource();
-            if ( source instanceof Component ) {
-                source = ( (Component)source ).getParent();
-                if ( source instanceof JPopupMenu ) {
-                    Component invoker = ( (JPopupMenu)source ).getInvoker();
-                    if ( invoker != null ) {
+            if (source instanceof Component) {
+                source = ((Component) source).getParent();
+                if (source instanceof JPopupMenu) {
+                    Component invoker = ((JPopupMenu) source).getInvoker();
+                    if (invoker != null) {
                         String invokerClassName = invoker.getName();
                         invokerClassName = invoker.getClass().getName();
-                        if ( invokerClassName.contains( "MenuCreatorFactory" ) ) {
-                            // if ( invoker instanceof MenuCreatorFactory ) {
-                            return true;
-                        } else {
-                            return false;
-                        }
+                        // if ( invoker instanceof MenuCreatorFactory ) {
+                        return invokerClassName.contains("MenuCreatorFactory");
                     }
                 }
             }
@@ -532,19 +513,21 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                 + ") for DiagramContextToolbarAMConfigurator");
         Debug.errln("configure(manager=" + manager + ", diagram=" + diagram
                 + ") for DiagramContextToolbarAMConfigurator");
-        if (wasOn)
+        if (wasOn) {
             Debug.turnOn();
+        }
         lastContext = Context.DiagramContext;
-        setLastContextIsDiagram( true );
+        setLastContextIsDiagram(true);
         //invokedFromMenu = false;
         if (diagram instanceof DiagramPresentationElement) {
             // Configurator.Context context =
             // getContextForType( DiagramContextToolbarAMConfigurator.class );
             Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class,
-                    ((DiagramPresentationElement)diagram).getDiagramType().getType());
+                    ((DiagramPresentationElement) diagram).getDiagramType().getType());
             lastContext = p.first;
             addDiagramActions(manager, diagram, getMenus().get(p.first).get(p.second));
-        } else {
+        }
+        else {
             Assert.assertTrue(false);
         }
     }
@@ -552,7 +535,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     /**
      * More than one context may may be associated with a configurator type.
      * Just pick the first one found in the menus map.
-     * 
+     *
      * @param cls
      * @return
      */
@@ -563,7 +546,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     /**
      * Get the contexts stored for the class most closely related to the input
      * class.
-     * 
+     *
      * @param cls
      * @return
      */
@@ -572,20 +555,22 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (Utils2.isNullOrEmpty(ctxts)) {
             TreeMap<Class<?>, Set<Context>> map = new TreeMap<Class<?>, Set<Context>>(
                     MostAbstractFirst.instance());
-            for (Entry<Class<?>, Set<Context>> e: getContextsForType().entrySet()) {
+            for (Entry<Class<?>, Set<Context>> e : getContextsForType().entrySet()) {
                 if (cls.isAssignableFrom(e.getKey())) {
                     map.put(e.getKey(), e.getValue());
                 }
             }
-            if (!map.isEmpty())
+            if (!map.isEmpty()) {
                 return map.firstEntry().getValue();
-            for (Entry<Class<?>, Set<Context>> e: getContextsForType().entrySet()) {
+            }
+            for (Entry<Class<?>, Set<Context>> e : getContextsForType().entrySet()) {
                 if (e.getKey().isAssignableFrom(cls)) {
                     map.put(e.getKey(), e.getValue());
                 }
             }
-            if (!map.isEmpty())
+            if (!map.isEmpty()) {
                 return map.firstEntry().getValue();
+            }
         }
         return ctxts;
     }
@@ -594,7 +579,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * More than one context may may be associated with a configurator type.
      * Just pick the first one found in the menus map that has the closest
      * subcontext.
-     * 
+     *
      * @param cls
      * @param subcontext
      * @return
@@ -608,8 +593,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             pcs = new Pair<Configurator.Context, String>(contexts[0], null);
             Debug.outln("getContextForType(" + cls + ", " + subcontext + "): no save contexts returning "
                     + pcs);
-            if (wasOn)
+            if (wasOn) {
                 Debug.turnOn();
+            }
             return pcs;
         }
         Context contextKey[] = {null, null};
@@ -617,7 +603,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         int numDontMatch[] = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE};
         String subcontextKey[] = {null, null};
         // get best matching subcontext
-        for (Context c: ctxts) {
+        for (Context c : ctxts) {
             Pair<Integer, Integer> p = prefixOverlapScore(c.toString(), subcontext);
             boolean betterContext = p.first > numMatch[0]
                     || (p.first == numMatch[0] && p.second < numDontMatch[0]);
@@ -632,7 +618,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             Map<String, Map<String, Map<String, MDAction>>> subcontexts = getMenus().get(c);
             if (!Utils2.isNullOrEmpty(subcontexts)) {
                 if (subcontext != null) {
-                    for (String subc: subcontexts.keySet()) {
+                    for (String subc : subcontexts.keySet()) {
                         Map<String, Map<String, MDAction>> configs = subcontexts.get(subc);
                         if (configs != null && !configs.isEmpty()) {
                             p = prefixOverlapScore(subc, subcontext);
@@ -676,14 +662,16 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (numMatch[0] > numMatch[3] || (numMatch[0] == numMatch[3] && numDontMatch[0] <= numDontMatch[3])) {
             pcs = new Pair<Configurator.Context, String>(contextKey[0], subcontextKey[0]);
             Debug.outln("getContextForType(" + cls + ", " + subcontext + "): got a winner! " + pcs);
-            if (wasOn)
+            if (wasOn) {
                 Debug.turnOn();
+            }
             return pcs;
         }
         pcs = new Pair<Configurator.Context, String>(contextKey[1], subcontextKey[1]);
         Debug.outln("getContextForType(" + cls + ", " + subcontext + "): got a winner! " + pcs);
-        if (wasOn)
+        if (wasOn) {
             Debug.turnOn();
+        }
         return pcs;
     }
 
@@ -705,7 +693,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             // numDontMatch = s1.length() - s2.length();
             // }
             // }
-        } else if (s2.contains(s1)) {
+        }
+        else if (s2.contains(s1)) {
             // if ( numMatch < s1.length() ) {
             // // subcontextKey = s1;
             numMatch = s1.length();
@@ -732,8 +721,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         Debug.turnOff();
         Debug.outln("configure(manager=" + manager + ") for AMConfigurator");
         Debug.errln("configure(manager=" + manager + ") for AMConfigurator");
-        if (wasOn)
+        if (wasOn) {
             Debug.turnOn();
+        }
         Pair<Context, String> p = getContextForType(AMConfigurator.class, manager.getClass().getSimpleName());
         lastContext = p.first;
         //invokedFromMenu = true;
@@ -741,10 +731,11 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (p == null || p.first == null || p.second == null) {
             Debug.errln("Could not addElementActions: getContextForType( AMConfigurator.class, \""
                     + manager.getClass().getSimpleName() + "\") returned " + p);
-        } else {
+        }
+        else {
             addElementActions(manager, null, getMenus().get(p.first).get(p.second));// Context.General
-                                                                                    // )
-                                                                                    // );
+            // )
+            // );
         }
     }
 
@@ -760,8 +751,8 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      */
     @Override
     public void configure(ActionsManager manager, DiagramPresentationElement diagram,
-            PresentationElement[] selected, PresentationElement requestor) {
-        if ( DocGenConfigurator.repainting() ) {
+                          PresentationElement[] selected, PresentationElement requestor) {
+        if (DocGenConfigurator.repainting()) {
             return;
         }
         boolean wasOn = Debug.isOn();
@@ -772,22 +763,25 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         Debug.errln("configure(manager=" + manager + ", diagram=" + diagram + ", selected="
                 + Utils2.toString(selected) + ", requestor=" + requestor
                 + ") for DiagramContextAMConfigurator");
-        if (wasOn)
+        if (wasOn) {
             Debug.turnOn();
+        }
 
         DiagramType dType = diagram.getDiagramType();
         Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class, dType.getType());
         lastContext = p.first;
-        setLastContextIsDiagram( true );
+        setLastContextIsDiagram(true);
         //invokedFromMenu = false;
         if (p == null || p.first == null || p.second == null) {
             Debug.errln("Could not addElementActions: getContextForType( DiagramContextAMConfigurator.class, \""
                     + dType.getType() + "\") returned " + p);
-        } else {
+        }
+        else {
             if (requestor != null) {
                 Element e = requestor.getElement();
                 addElementActions(manager, e, getMenus().get(p.first).get(p.second));
-            } else {
+            }
+            else {
                 addDiagramActions(manager, diagram, getMenus().get(p.first).get(p.second));
             }
         }
@@ -808,8 +802,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                 + ") for BrowserContextAMConfigurator");
         Debug.errln("configure(manager=" + manager + ", browser=" + browser
                 + ") for BrowserContextAMConfigurator");
-        if (wasOn)
+        if (wasOn) {
             Debug.turnOn();
+        }
         Node no = browser.getSelectedNode();
         lastContext = null;
         if (no == null) {
@@ -829,45 +824,50 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         }
         Pair<Context, String> p = getContextForType(BrowserContextAMConfigurator.class, browserType);
         lastContext = p.first;
-        setLastContextIsDiagram( false );
+        setLastContextIsDiagram(false);
         //invokedFromMenu = false;
         if (p == null || p.first == null || p.second == null) {
             Debug.errln("Could not addElementActions: getContextForType( BrowserContextAMConfigurator.class, \""
                     + browser.getName() + "\") returned " + p);
-        } else {
-            addElementActions(manager, (Element)o, getMenus().get(p.first).get(p.second));
+        }
+        else {
+            addElementActions(manager, (Element) o, getMenus().get(p.first).get(p.second));
         }
     }
 
     protected void addDiagramActions(ActionsManager manager, PresentationElement diagram,
-            Map<String, Map<String, MDAction>> actionCategories) {
-        if (diagram == null)
+                                     Map<String, Map<String, MDAction>> actionCategories) {
+        if (diagram == null) {
             return;
+        }
         Element element = diagram.getActualElement();
 
-        if (element == null)
+        if (element == null) {
             return;
+        }
         Element owner = element.getOwner();
-        if (owner == null || !(owner instanceof NamedElement))
+        if (owner == null || !(owner instanceof NamedElement)) {
             return;
+        }
         // Map< String, Map< String, MDAction > > > actionCategories =
         // subcontexts.get(element.)
         addElementActions(manager, owner, actionCategories);
     }
 
     protected void addElementActions(ActionsManager manager, Element e,
-            Map<String, Map<String, MDAction>> actionCategories) {
+                                     Map<String, Map<String, MDAction>> actionCategories) {
         boolean wasOn = Debug.isOn();
         Debug.turnOff();
         Debug.outln("addElementActions( manager=" + manager + ", element=" + e + ", actionCategories="
                 + actionCategories + ")");
         Debug.errln("addElementActions( manager=" + manager + ", element=" + e + ", actionCategories="
                 + actionCategories + ")");
-        if (wasOn)
+        if (wasOn) {
             Debug.turnOn();
-        for (Entry<String, Map<String, MDAction>> category: actionCategories.entrySet()) {
+        }
+        for (Entry<String, Map<String, MDAction>> category : actionCategories.entrySet()) {
             ActionsCategory c = myCategory(manager, category.getKey(), category.getKey());
-            for (Entry<String, MDAction> action: category.getValue().entrySet()) {
+            for (Entry<String, MDAction> action : category.getValue().entrySet()) {
                 c.addAction(action.getValue());
             }
         }
@@ -875,7 +875,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
 
     /**
      * Gets the specified category, creates it if necessary.
-     * 
+     *
      * @param manager
      * @param id
      * @param name
@@ -885,8 +885,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         boolean wasOn = Debug.isOn();
         Debug.turnOff();
         Debug.outln("myCategory( manager=" + manager + ", id=" + id + ", name=" + name + ")");
-        if (wasOn)
+        if (wasOn) {
             Debug.turnOn();
+        }
         ActionsCategory category = manager.getCategory(id); // .getActionFor(id);
         if (category == null) {
             category = new MDActionsCategory(id, name);
@@ -898,35 +899,36 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod) {
+                                     Method actionMethod) {
         return addConfiguration(context, subcontext, actionName, category, actionMethod, null);
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod, Object objectInvokingMethod) {
+                                     Method actionMethod, Object objectInvokingMethod) {
         return addConfiguration(context, subcontext, actionName, category, actionMethod,
-                objectInvokingMethod, "", (KeyStroke)null, null);
+                objectInvokingMethod, "", (KeyStroke) null, null);
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod, Object objectInvokingMethod, String id, KeyStroke k, String group) {
+                                     Method actionMethod, Object objectInvokingMethod, String id, KeyStroke k, String group) {
         return addConfiguration(context, subcontext, actionName, category, actionMethod,
                 objectInvokingMethod, id, null, k, group);
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic, String group) {
+                                     Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic, String group) {
         return addConfiguration(context, subcontext, actionName, category, actionMethod,
                 objectInvokingMethod, id, mnemonic, null, group);
     }
 
     public MDAction addConfiguration(String context, String subcontext, String actionName, String category,
-            Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic, KeyStroke k,
-            String group) {
+                                     Method actionMethod, Object objectInvokingMethod, String id, Integer mnemonic, KeyStroke k,
+                                     String group) {
         MDAction mdAction = makeMDAction(id, actionName, mnemonic, k, group, actionMethod,
                 objectInvokingMethod);
-        if (mdAction == null)
+        if (mdAction == null) {
             return null;
+        }
         Context c = Context.fromString(context);
         if (c == null) {
             Debug.error(true, true, "Error! addConfiguration( context=" + context + ", actionName="
@@ -942,8 +944,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                 + category + ", actionMethod=" + actionMethod + ", objectInvokingMethod="
                 + objectInvokingMethod + ", id=" + id + ", mnemonic=" + mnemonic + ", k=" + k + ", group="
                 + category + " )");
-        if (wasOn)
+        if (wasOn) {
             Debug.turnOn();
+        }
 
         Utils2.put(getMenus().get(c), subcontext, category, Utils2.isNullOrEmpty(id) ? actionName : id,
                 mdAction);
@@ -951,13 +954,15 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
     }
 
     public static MDAction makeMDAction(String id, String name, Integer mnemonic, KeyStroke k, String group,
-            Method actionMethod, Object objectInvokingMethod) {
-        if (actionMethod == null)
+                                        Method actionMethod, Object objectInvokingMethod) {
+        if (actionMethod == null) {
             return null;
+        }
         MDAction mda = null;
         if (mnemonic != null) {
             mda = new GenericMDAction(id, name, mnemonic, group, actionMethod, objectInvokingMethod);
-        } else {
+        }
+        else {
             mda = new GenericMDAction(id, name, k, group, actionMethod, objectInvokingMethod);
         }
         return mda;

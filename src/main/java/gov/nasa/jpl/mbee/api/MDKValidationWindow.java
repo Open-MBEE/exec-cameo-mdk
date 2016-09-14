@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2016>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -29,6 +29,14 @@
 
 package gov.nasa.jpl.mbee.api;
 
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -36,22 +44,10 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.JButton;
-
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
-import gov.nasa.jpl.mbee.ems.validation.actions.*;
-import gov.nasa.jpl.mbee.lib.Utils;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
-
 /**
  * Class to mimic the interaction of a user with the validation results window
- * 
- * @author Aaron Black (ablack)
  *
+ * @author Aaron Black (ablack)
  */
 
 public class MDKValidationWindow {
@@ -81,18 +77,17 @@ public class MDKValidationWindow {
     public static final String[][] VALIDATION_OPTIONS = {
             // intiialization messages do not start with a [MESSAGE] in the validationSuite
             // they use INITIALIZATION here for clarity in output
-            { "INITIALIZATION", "InitializeProjectModel", "" }, { "[EXIST]", "ExportElement", "DeleteMagicDrawElement" }, { "[INSTANCE]", "ExportInstanceSpec", "ImportInstanceSpec" },
-            { "[VIEW CONSTRAINT]", "ExportViewConstraint", "ImportViewConstraint" }, { "[NAME]", "ExportName", "ImportName" }, { "[DOC]", "ExportDoc", "ImportDoc" }, { "[ATTRIBUTE]", "ExportOwnedAttribute", "ImportOwnedAttribute" },
-            { "[OWNER]", "ExportOwner", "FixModelOwner" }, { "[PROP]", "ExportProperty", "ImportProperty" }, { "[FEATURE]", "ExportProperty", "" }, { "[SITE CHAR]", "ExportSite", "" }, { "[REL]", "ExportRel", "ImportRel" },
-            { "[VALUE]", "ExportValue", "ImportValue" }, { "[CONNECTOR]", "ExportConnector", "ImportConnector" }, { "[CONSTRAINT]", "ExportConstraint", "ImportConstraint" }, { "[ASSOC]", "ExportAssociation", "ImportAssociation" },
-            { "[METATYPE]", "ExportMetatypes", "" }, { "[HIERARCHY]", "ExportHierarchy", "ImportHierarchy" }, { "[IMAGE]", "ExportImage", "" }, { "[EXIST ON MMS]", "DeleteAlfrescoElement", "CreateMagicDrawElement" }, { "[CREATED]", "", "" },
-            { "[CREATE FAILED]", "", "" }, { "[UPDATED]", "", "" }, { "[LOCAL FAILED]", "", "" }, { "[DELETED]", "", "" }, { "[DELETE FAILED]", "", "" } };
+            {"INITIALIZATION", "InitializeProjectModel", ""}, {"[EXIST]", "ExportElement", "DeleteMagicDrawElement"}, {"[INSTANCE]", "ExportInstanceSpec", "ImportInstanceSpec"},
+            {"[VIEW CONSTRAINT]", "ExportViewConstraint", "ImportViewConstraint"}, {"[NAME]", "ExportName", "ImportName"}, {"[DOC]", "ExportDoc", "ImportDoc"}, {"[ATTRIBUTE]", "ExportOwnedAttribute", "ImportOwnedAttribute"},
+            {"[OWNER]", "ExportOwner", "FixModelOwner"}, {"[PROP]", "ExportProperty", "ImportProperty"}, {"[FEATURE]", "ExportProperty", ""}, {"[SITE CHAR]", "ExportSite", ""}, {"[REL]", "ExportRel", "ImportRel"},
+            {"[VALUE]", "ExportValue", "ImportValue"}, {"[CONNECTOR]", "ExportConnector", "ImportConnector"}, {"[CONSTRAINT]", "ExportConstraint", "ImportConstraint"}, {"[ASSOC]", "ExportAssociation", "ImportAssociation"},
+            {"[METATYPE]", "ExportMetatypes", ""}, {"[HIERARCHY]", "ExportHierarchy", "ImportHierarchy"}, {"[IMAGE]", "ExportImage", ""}, {"[EXIST ON MMS]", "DeleteAlfrescoElement", "CreateMagicDrawElement"}, {"[CREATED]", "", ""},
+            {"[CREATE FAILED]", "", ""}, {"[UPDATED]", "", ""}, {"[LOCAL FAILED]", "", ""}, {"[DELETED]", "", ""}, {"[DELETE FAILED]", "", ""}};
 
     /**
      * Constructor. This will sort the validation rules results into a format expected by a user who sorted their validation result window based on message (for batch processing)
-     * 
-     * @param vs
-     *            validationSuite returned from a validation action
+     *
+     * @param vs validationSuite returned from a validation action
      */
     public MDKValidationWindow(ValidationSuite vs) {
         this.vss = new ArrayList<ValidationSuite>();
@@ -102,9 +97,8 @@ public class MDKValidationWindow {
 
     /**
      * Constructor. This will sort the validation rules results into a format expected by a user who sorted their validation result window based on message (for batch processing)
-     * 
-     * @param vss
-     *            List of validationSuites returned from a set of validation actions
+     *
+     * @param vss List of validationSuites returned from a set of validation actions
      */
     public MDKValidationWindow(List<ValidationSuite> vss) {
         this.vss = vss;
@@ -124,13 +118,15 @@ public class MDKValidationWindow {
         for (ValidationSuite vs : vss) {
             if (vs != null && vs.hasErrors()) {
                 for (ValidationRule vr : vs.getValidationRules()) {
-                    if (vr.getViolations() == null || vr.getViolations().size() == 0)
+                    if (vr.getViolations() == null || vr.getViolations().size() == 0) {
                         continue;
+                    }
                     for (ValidationRuleViolation vrv : vr.getViolations()) {
                         String s = vrv.getComment();
                         s = s.substring(0, s.indexOf(']') + 1);
-                        if (lookupListIndex(s) != -1)
+                        if (lookupListIndex(s) != -1) {
                             pooledViolations.get(lookupListIndex(s)).add(vrv);
+                        }
                     }
                 }
             }
@@ -139,9 +135,8 @@ public class MDKValidationWindow {
 
     /**
      * Returns the ValidationSuite(s) stored in object
-     * 
+     *
      * @return the ValidationSuite(s) stored in object
-     * 
      */
     public List<ValidationSuite> getValidations() {
         return vss;
@@ -149,21 +144,18 @@ public class MDKValidationWindow {
 
     /**
      * Display method to see sorted violations stored in object of specified type
-     * 
-     * @param type
-     *            Type of violation to list
-     * 
-     * @throws Exception
-     *            Unsupported violation type
-     * 
+     *
+     * @param type Type of violation to list
      * @return Number of violations of specified type
+     * @throws Exception Unsupported violation type
      */
     public int listPooledViolations(String type) throws UnsupportedOperationException {
         type = standardize(type);
         int index;
         index = lookupListIndex(type);
-        if (index == -1)
+        if (index == -1) {
             throw new UnsupportedOperationException(type + " is not a supported violation result.");
+        }
         System.out.println("There are " + pooledViolations.get(index).size() + " ValidationRuleViolatons in the " + type + " pool");
         for (ValidationRuleViolation vrv : pooledViolations.get(index)) {
             System.out.println("  " + (vrv.getElement() != null ? vrv.getElement().getHumanName() : "null") + " : " + vrv.getComment());
@@ -173,7 +165,7 @@ public class MDKValidationWindow {
 
     /**
      * Display method to see sorted violations stored in object of all types
-     * 
+     *
      * @return Number of violations of all types
      */
     public int listPooledViolations() {
@@ -181,7 +173,7 @@ public class MDKValidationWindow {
         for (String[] s : VALIDATION_OPTIONS) {
             try {
                 numViolations += listPooledViolations(s[RULE_VIOLATION_TYPE]);
-            } catch (Exception e) { 
+            } catch (Exception e) {
                 // do nothing, not a user problem if one of the listed types should be updated 
             }
         }
@@ -191,9 +183,8 @@ public class MDKValidationWindow {
     /**
      * Returns the List of ValidationRuleViolations stored in object for the
      * specified type
-     * 
+     *
      * @return
-     * 
      */
     public List<ValidationRuleViolation> getPooledValidations(String type) {
         type = standardize(type);
@@ -202,77 +193,76 @@ public class MDKValidationWindow {
 
     /**
      * Determines which list contains the validation rule of the specified type.
-     * 
-     * @param type
-     *            String of the type to look for. Expected format: '[type]'
+     *
+     * @param type String of the type to look for. Expected format: '[type]'
      * @return index of the list of validation results of the specified type
      */
     private int lookupListIndex(String type) {
         type = standardize(type);
         for (int index = 0; index < VALIDATION_OPTIONS.length; index++) {
-            if (VALIDATION_OPTIONS[index][RULE_VIOLATION_TYPE].equalsIgnoreCase(type))
+            if (VALIDATION_OPTIONS[index][RULE_VIOLATION_TYPE].equalsIgnoreCase(type)) {
                 return index;
+            }
         }
         return -1;
     }
 
     /**
      * Helper function that standardizes any validation rule type, to prevent dumb errors
-     * 
+     *
      * @param s
      * @return
      */
     private String standardize(String s) {
-        if (s.equals("") || s.equals("INITIALIZATION"))
+        if (s.equals("") || s.equals("INITIALIZATION")) {
             return "INITIALIZATION";
+        }
         s = s.toUpperCase();
-        if (s.charAt(0) != '[' && s.charAt(s.length() - 1) != ']')
+        if (s.charAt(0) != '[' && s.charAt(s.length() - 1) != ']') {
             s = "[" + s + "]";
+        }
         return s;
     }
-    
+
     private String getVRVElementID(ValidationRuleViolation vrv) {
         String id = vrv.getComment();
         Element vrve = vrv.getElement();
-        if (id.indexOf('`') > 0){
+        if (id.indexOf('`') > 0) {
             id = id.substring(id.indexOf('`') + 1, id.lastIndexOf('`'));
             return id;
-        } else if (vrve != null) {
+        }
+        else if (vrve != null) {
             return vrve.getID();
         }
         return "";
     }
 
     /************************************************************************
-     * 
+     *
      * Import / Export Methods
-     * 
+     *
      ************************************************************************/
 
     /**
      * Accepts the MMS version into MD for the specified violation type
-     * 
-     * @param violationType
-     *            the type of violation to be accepted
-     * @param commit
-     *            will commit to MMS if true, will accept from MMS is false
-     * @param targets
-     *            limits processing of violations to only those elements that are
-     *            contained in the collection. if null, does not limit processing.
-     *            ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
-     *            exception will be thrown if specified with targetIDs.
-     * @param targetIDs
-     *            limits processing of violations to only those elements whose IDs are
-     *            contained in the collection. if null, does not limit processing.
-     *            ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
-     *            exception will be thrown if specified with targets.
+     *
+     * @param violationType the type of violation to be accepted
+     * @param commit        will commit to MMS if true, will accept from MMS is false
+     * @param targets       limits processing of violations to only those elements that are
+     *                      contained in the collection. if null, does not limit processing.
+     *                      ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
+     *                      exception will be thrown if specified with targetIDs.
+     * @param targetIDs     limits processing of violations to only those elements whose IDs are
+     *                      contained in the collection. if null, does not limit processing.
+     *                      ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
+     *                      exception will be thrown if specified with targets.
      * @throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
      */
     private void processValidationResults(String violationType, Collection<Element> targets, Collection<String> targetIDs, boolean commit) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         if (targets != null && targetIDs != null) {
             throw new IllegalAccessException("Both element target lists specified.");
         }
-        
+
         violationType = standardize(violationType);
         MagicDrawHelper.generalMessage((commit ? "Commit" : "Accept") + "ing " + (targets != null ? "selected " : "") + "instances of " + violationType + " violations.");
 
@@ -283,7 +273,8 @@ public class MDKValidationWindow {
         if (pooledViolations.get(ruleIndex).isEmpty()) {
             MagicDrawHelper.generalMessage("[INFO] There are no instances of " + violationType + " to " + (commit ? "commit" : "accept") + ".");
             return;
-        } else if (className.equals("")) {
+        }
+        else if (className.equals("")) {
             MagicDrawHelper.generalMessage("[INFO] There is no " + (commit ? "commit" : "accept") + " action for instances of " + violationType + " to process.");
             return;
         }
@@ -301,17 +292,19 @@ public class MDKValidationWindow {
 
         // find the index of the relevant action type; throw exception if it's not found
         int actionIndex = 0;
-        while (actionIndex < violationList.get(0).getActions().size() && !(violationList.get(0).getActions().get(actionIndex).getClass().getSimpleName().equals(className)))
+        while (actionIndex < violationList.get(0).getActions().size() && !(violationList.get(0).getActions().get(actionIndex).getClass().getSimpleName().equals(className))) {
             actionIndex++;
-        if (actionIndex >= violationList.get(0).getActions().size() || !(violationList.get(0).getActions().get(actionIndex).getClass().getSimpleName().equals(className)))
+        }
+        if (actionIndex >= violationList.get(0).getActions().size() || !(violationList.get(0).getActions().get(actionIndex).getClass().getSimpleName().equals(className))) {
             throw new ClassNotFoundException("Unable to find " + className + " for violation type " + violationType);
+        }
 
         // project initialization is specialized and might not include a nmaction to run
         if (violationType.equals("INITIALIZATION")) {
             for (ValidationRuleViolation vrv : violationList) {
                 // disable popups, invoke execute on one of the nmactions, re-enable popups
                 Utils.forceDialogReturnFalse();
-                ((InitializeProjectModel) vrv.getActions().get(actionIndex)).actionPerformed(new ActionEvent(new JButton(), 5, ""));
+                vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
             }
         }
 
@@ -323,7 +316,8 @@ public class MDKValidationWindow {
                 if ((targets == null || targets.remove(vrv.getElement())) && (targetIDs == null || targetIDs.remove(getVRVElementID(vrv)))) {
                     if (commit) {
                         vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
-                    } else {
+                    }
+                    else {
                         vrv.getActions().get(actionIndex).actionPerformed(new ActionEvent(new JButton(), 5, ""));
                     }
                 }
@@ -336,7 +330,7 @@ public class MDKValidationWindow {
             // use reflection to get methods for getAnnotaiton and execute from the selected object
             // using full path for Method and Class to avoid confusion with MD objects
             java.lang.reflect.Method getAnnotation = violationList.get(0).getActions().get(actionIndex).getClass().getMethod("getAnnotation");
-            java.lang.reflect.Method execute = violationList.get(0).getActions().get(actionIndex).getClass().getMethod("execute", new java.lang.Class[] { Collection.class });
+            java.lang.reflect.Method execute = violationList.get(0).getActions().get(actionIndex).getClass().getMethod("execute", Collection.class);
 
             // get annotations from the nmaction objects by invoking the getAnnotation method on them
             Collection<Annotation> annos = new LinkedList<Annotation>();
@@ -355,45 +349,45 @@ public class MDKValidationWindow {
     }
 
     /**************************************************************************
-     * 
+     *
      * Helper methods to process all violation types
-     * 
+     *
      **************************************************************************/
 
     /**
      * Process all commits of the MD version to MMS for all violation types for elements in the targets collection
-     * 
-     * @param targets
-     *            Collection of elements whose validations should be processed; if null all will be processed
+     *
+     * @param targets Collection of elements whose validations should be processed; if null all will be processed
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     private Collection<Element> processAllMDChangesToMMS(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults(VALIDATION_OPTIONS[0 + PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, null, true);
-        for (int i = 1 + PRE_OPERATIONS; i < VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS; i++)
+        for (int i = 1 + PRE_OPERATIONS; i < VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS; i++) {
             processValidationResults(VALIDATION_OPTIONS[i][RULE_VIOLATION_TYPE], targets, null, true);
+        }
         processValidationResults(VALIDATION_OPTIONS[VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS][RULE_VIOLATION_TYPE], targets, null, true);
         return targets;
     }
 
     /**
      * Processes all accepts of the MMS version into MD for all violation types for elements in the targets collection
-     * 
-     * @param targets
-     *            Collection of elements whose validations should be processed; if null all will be processed
+     *
+     * @param targets Collection of elements whose validations should be processed; if null all will be processed
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     private Collection<Element> processAllMMSChangesIntoMD(Collection<Element> targets) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         processValidationResults(VALIDATION_OPTIONS[VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS][RULE_VIOLATION_TYPE], targets, null, false);
-        for (int i = 1 + PRE_OPERATIONS; i < VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS; i++)
+        for (int i = 1 + PRE_OPERATIONS; i < VALIDATION_OPTIONS.length - 1 - POST_OPERATIONS; i++) {
             processValidationResults(VALIDATION_OPTIONS[i][RULE_VIOLATION_TYPE], targets, null, false);
+        }
         processValidationResults(VALIDATION_OPTIONS[PRE_OPERATIONS][RULE_VIOLATION_TYPE], targets, null, false);
         return targets;
     }
 
     /**************************************************************************
-     * 
+     *
      * Public methods for validation window processing
-     * 
+     *
      **************************************************************************/
 
     /**
@@ -407,9 +401,8 @@ public class MDKValidationWindow {
 
     /**
      * Accepts the MMS version into MD for the specified violation type
-     * 
-     * @param violationType
-     *            the type of violation to be accepted
+     *
+     * @param violationType the type of violation to be accepted
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void acceptMMSChangesIntoMD(String violationType) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -418,9 +411,8 @@ public class MDKValidationWindow {
 
     /**
      * Accepts the MMS version into MD for the all violation types, if the associated element is in the collection targets
-     * 
-     * @param targets
-     *            the collection of elements whose validations are to be processed
+     *
+     * @param targets the collection of elements whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
@@ -433,11 +425,9 @@ public class MDKValidationWindow {
 
     /**
      * Accepts the MMS version into MD for the specified violation type, if the associated element is in the targets collection
-     * 
-     * @param violationType
-     *            the type of violation to be accepted
-     * @param targets
-     *            the collection of elements whose validations are to be processed
+     *
+     * @param violationType the type of violation to be accepted
+     * @param targets       the collection of elements whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
@@ -450,11 +440,9 @@ public class MDKValidationWindow {
 
     /**
      * Accepts the MMS version into MD for the specified violation type, if the associated element id is in the targetIDs collection
-     * 
-     * @param violationType
-     *            the type of violation to be accepted
-     * @param targets
-     *            the collection of element IDs whose validations are to be processed
+     *
+     * @param violationType the type of violation to be accepted
+     * @param targets       the collection of element IDs whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
@@ -467,7 +455,7 @@ public class MDKValidationWindow {
 
     /**
      * Commits the MD version to MMS for all violation types
-     * 
+     *
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void commitAllMDChangesToMMS() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -476,9 +464,8 @@ public class MDKValidationWindow {
 
     /**
      * Commits the MD version to MMS for the specified violation type
-     * 
-     * @param violationType
-     *            the type of violation to be accepted
+     *
+     * @param violationType the type of violation to be accepted
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void commitMDChangesToMMS(String violationType) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -487,9 +474,8 @@ public class MDKValidationWindow {
 
     /**
      * Commits the MD version to MMS for the all violation types, if the associated element is in the targets collection
-     * 
-     * @param targets
-     *            the collection of elements whose validations are to be processed
+     *
+     * @param targets the collection of elements whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
@@ -502,11 +488,9 @@ public class MDKValidationWindow {
 
     /**
      * Commits the MD version to MMS for the specified violation type, if the associated element is in the targets collection
-     * 
-     * @param violationType
-     *            the type of violation to be accepted
-     * @param targets
-     *            the collection of elements whose validations are to be processed
+     *
+     * @param violationType the type of violation to be accepted
+     * @param targets       the collection of elements whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
@@ -519,11 +503,9 @@ public class MDKValidationWindow {
 
     /**
      * Commits the MD version to MMS for the specified violation type, if the associated element id is in the targetIDs collection
-     * 
-     * @param violationType
-     *            the type of violation to be accepted
-     * @param targets
-     *            the collection of element IDs whose validations are to be processed
+     *
+     * @param violationType the type of violation to be accepted
+     * @param targets       the collection of element IDs whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
@@ -537,7 +519,7 @@ public class MDKValidationWindow {
     /**
      * Creates elements in MagicDraw for any missing MMS elements (accepts their existence from MMS)
      * Equivalent to [EXIST on MMS] -> Create MagicDraw element
-     * 
+     *
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void createAllMMSElementsNotFoundInMD() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -547,7 +529,7 @@ public class MDKValidationWindow {
     /**
      * Creates elements in MagicDraw for missing MMS elements whose ids are in the targetIDs collection (accepts their existence from MMS)
      * Equivalent to [EXIST on MMS] -> Create MagicDraw element
-     * 
+     *
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public Collection<String> createSpecificMMSElementsNotFoundInMD(Collection<String> targetIDs) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -557,11 +539,11 @@ public class MDKValidationWindow {
         return notFound;
     }
 
-    
+
     /**
      * Deletes all elements from MD that were not found in MMS (accepts their non-existence from MMS)
-     * Equivalent to [EXIST] -> Delete MagicDraw element 
-     * 
+     * Equivalent to [EXIST] -> Delete MagicDraw element
+     *
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void deleteAllMDElementsNotFoundOnMMS() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -571,7 +553,7 @@ public class MDKValidationWindow {
     /**
      * Deletes all MMS elements that were not found in MD (commits their non-existence to MMS)
      * Equivalent to [EXIST on MMS] -> Delete MMS element
-     * 
+     *
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void deleteAllMMSElementsNotFoundInMD() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -581,7 +563,7 @@ public class MDKValidationWindow {
     /**
      * Deletes MMS elements that were not found in MD whose ids are in the targetIDs collection (commits their non-existence to MMS)
      * Equivalent to [EXIST on MMS] -> Delete MMS element
-     * 
+     *
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public Collection<String> deleteSpecificMMSElementsNotFoundInMD(Collection<String> targetIDs) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -594,7 +576,7 @@ public class MDKValidationWindow {
     /**
      * Exports all MD elements that were not found in MMS (commits their existence to MMS)
      * Equivalent to [EXIST] -> Commit element
-     * 
+     *
      * @throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException
      */
     public void exportAllMDElementsToMMS() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -602,18 +584,16 @@ public class MDKValidationWindow {
     }
 
     /********************************************************************************
-     * 
+     *
      * Investigation methods
-     * 
+     *
      ********************************************************************************/
 
     /**
      * Searches through the indicated list of pooled violations for elements in the passed collection
-     * 
-     * @param validationType
-     *            Type of validation to search through
-     * @param targets
-     *            Elements to confirm the presence of in the validations
+     *
+     * @param validationType Type of validation to search through
+     * @param targets        Elements to confirm the presence of in the validations
      * @return Returns The subset of the elements that were not found in the specified validation type pool
      */
     public Collection<Element> confirmElementValidationTypeResult(String validationType, Collection<Element> targets) {
@@ -633,9 +613,8 @@ public class MDKValidationWindow {
 
     /**
      * Searches through all pooled violations for elements in the passed collection
-     * 
-     * @param targets
-     *            Elements to confirm the presence of in the validations
+     *
+     * @param targets Elements to confirm the presence of in the validations
      * @return Returns the subset of the elements that were not found in any pool
      */
     public Collection<Element> confirmElementValidationResult(Collection<Element> targets) {
@@ -652,11 +631,9 @@ public class MDKValidationWindow {
 
     /**
      * Searches through the indicated list of pooled violations for the passed element IDs
-     * 
-     * @param validationType
-     *            Type of validation to search through
-     * @param targetIDs
-     *            Collection of strings to confirm the presence of in the validations
+     *
+     * @param validationType Type of validation to search through
+     * @param targetIDs      Collection of strings to confirm the presence of in the validations
      * @return Returns the subset of the element IDss that were not found in the indicated pool
      */
     public Collection<String> confirmElementValidationTypeResultByID(String validationType, Collection<String> targetIDs) {
@@ -676,9 +653,8 @@ public class MDKValidationWindow {
 
     /**
      * Searches through all pooled violations for element IDs in the passed collection
-     * 
-     * @param targetIDs
-     *            Collection of strings to confirm the presence of in the validations
+     *
+     * @param targetIDs Collection of strings to confirm the presence of in the validations
      * @return Returns the subset of the element IDs that were not found in any pool
      */
     public Collection<String> confirmElementValidationResultByID(Collection<String> targetIDs) {
@@ -695,9 +671,9 @@ public class MDKValidationWindow {
 
 
     /********************************************************************************
-     * 
+     *
      * Deprecated methods
-     * 
+     *
      ********************************************************************************/
 
     // @Deprecated

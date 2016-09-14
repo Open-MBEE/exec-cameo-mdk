@@ -1,13 +1,5 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
-import gov.nasa.jpl.mbee.lib.Utils;
-
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -20,15 +12,16 @@ import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.Action;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.Region;
 import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.State;
+import gov.nasa.jpl.mbee.lib.Utils;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class CreateSpecificAction extends SRAction {
 
@@ -73,7 +66,8 @@ public class CreateSpecificAction extends SRAction {
             Namespace container;
             if (isValidationMode) {
                 container = (Namespace) classifier.getOwner();
-            } else {
+            }
+            else {
                 container = (Namespace) dlg.getSelectedElement();
             }
             ArrayList<Element> generals = new ArrayList<>();
@@ -101,20 +95,24 @@ public class CreateSpecificAction extends SRAction {
                     }
                     ((Namespace) specific).getOwnedMember().retainAll(redefElements);
                     Utils.createGeneralization((Classifier) generals.get(i), (Classifier) specific);
-                } else if (specific instanceof RedefinableElement) {
+                }
+                else if (specific instanceof RedefinableElement) {
                     if (specific instanceof Property) {
                         if (generals.get(i) instanceof Property) {
                             ((Property) specific).getRedefinedProperty().add((Property) generals.get(i));
                         }
-                    } else if (specific instanceof State) {
+                    }
+                    else if (specific instanceof State) {
                         if (generals.get(i) instanceof State) {
                             ((State) specific).setRedefinedState((State) generals.get(i));
                         }
-                    } else if (specific instanceof Region) {
+                    }
+                    else if (specific instanceof Region) {
                         if (generals.get(i) instanceof Region) {
                             ((Region) specific).getRedefinedElement().add(((Region) generals.get(i)));
                         }
-                    } else if (specific instanceof Action) {
+                    }
+                    else if (specific instanceof Action) {
                         if (generals.get(i) instanceof Action) {
                             ((Action) specific).getRedefinedElement().add(((Action) generals.get(i)));
                         }
@@ -148,7 +146,8 @@ public class CreateSpecificAction extends SRAction {
                         }
                     }
                 }
-            } else if (feat instanceof Namespace) {
+            }
+            else if (feat instanceof Namespace) {
                 copyList.add(feat);
                 for (NamedElement ne : ((Namespace) feat).getOwnedMember()) {
                     if (ne instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace) {

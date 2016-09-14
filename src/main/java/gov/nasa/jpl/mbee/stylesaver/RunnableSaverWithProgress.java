@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,41 +28,38 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.stylesaver;
 
-import java.util.List;
-import java.util.Map;
-import java.util.MissingResourceException;
-
-import org.json.simple.JSONValue;
-
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import org.json.simple.JSONValue;
+
+import java.util.List;
+import java.util.Map;
+import java.util.MissingResourceException;
 
 /**
  * Nested class contains a run method for the save operation. Updates progress
  * bar dynamically.
- * 
+ *
  * @author Benjamin Inada, JPL/Caltech
  */
 public class RunnableSaverWithProgress implements RunnableWithProgress {
-    private Map<String, String>       mainStore;
+    private Map<String, String> mainStore;
     private List<PresentationElement> elemList;
-    private String                    styleString;
-    private Element                   diagram;
-    private Stereotype                workingStereotype;
-    private boolean                   success;
+    private String styleString;
+    private Element diagram;
+    private Stereotype workingStereotype;
+    private boolean success;
 
     /**
-     * @param mainStore2
-     *            the main style store for this diagram.
-     * @param elemList
-     *            the elements to save.
+     * @param mainStore2 the main style store for this diagram.
+     * @param elemList   the elements to save.
      */
     public RunnableSaverWithProgress(Map<String, String> mainStore2, List<PresentationElement> elemList, Element diagram,
-            Stereotype workingStereotype) {
+                                     Stereotype workingStereotype) {
         this.mainStore = mainStore2;
         this.elemList = elemList;
         this.diagram = diagram;
@@ -71,15 +68,14 @@ public class RunnableSaverWithProgress implements RunnableWithProgress {
 
     /**
      * Runs the save operation.
-     * 
-     * @param progressStatus
-     *            the status of the operation so far.
+     *
+     * @param progressStatus the status of the operation so far.
      */
     @Override
     public void run(ProgressStatus progressStatus) {
         progressStatus.init("Saving styles...", 0, elemList.size() + 1);
 
-        for (PresentationElement elem: elemList) {
+        for (PresentationElement elem : elemList) {
             if (progressStatus.isCancel()) {
                 success = false;
                 return;
@@ -125,7 +121,7 @@ public class RunnableSaverWithProgress implements RunnableWithProgress {
 
     /**
      * Gets the value of the success property.
-     * 
+     *
      * @return the value of the success property.
      */
     public boolean getSuccess() {
@@ -134,7 +130,7 @@ public class RunnableSaverWithProgress implements RunnableWithProgress {
 
     /**
      * Gets the value of the styleString property.
-     * 
+     *
      * @return the value of the styleString property.
      */
     public String getStyleString() {

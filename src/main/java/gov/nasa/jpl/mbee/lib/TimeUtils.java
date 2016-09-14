@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
 
+import org.junit.Assert;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -35,30 +37,28 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.junit.Assert;
-
 public class TimeUtils {
     /**
      * epoch is a timestamp corresponding to TimePoint = 0 as the date/time that
      * the simulation starts. It is an offset of the time since Jan 1, 1970. For
      * example, if epoch == 1341614935000 milliseconds, then a TimePoint or int
      * value of 0 corresponds to Fri, Jul 06, 2012 3:48:55 PM. This number comes
-     * from using the 'date' unix command: 
-     * $ date; date '+%s' 
-     * Fri, Jul 06, 2012 3:48:55 PM 
-     * 1341614935 
+     * from using the 'date' unix command:
+     * $ date; date '+%s'
+     * Fri, Jul 06, 2012 3:48:55 PM
+     * 1341614935
      * The units of time and the epoch are specified by
      * Units units below.
      */
-    protected static Date      epoch               = new Date();
+    protected static Date epoch = new Date();
 
     // private final static Timepoint epochTimepoint = new Timepoint( "", 0,
     // null );
 
-    public static final String timestampFormat     = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    public static final String timestampFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
     public static final String fileTimestampFormat = "yyyy-MM-dd'T'HH.mm.ss.SSSZ";
 
-    public static enum Units {
+    public enum Units {
         days(24 * 3600 * 1e9), hours(3600 * 1e9), minutes(60 * 1e9), seconds(1e9), milliseconds(1e6),
         microseconds(1e3), nanoseconds(1);
 
@@ -106,7 +106,8 @@ public class TimeUtils {
                 }
                 if (unitsString.equals(microseconds.toShortString())) {
                     unit = microseconds;
-                } else {
+                }
+                else {
                     switch (unitsString.charAt(0)) {
                         case 'd':
                             unit = days;
@@ -124,12 +125,14 @@ public class TimeUtils {
                             if (unitsString.length() == 1) {
                                 unit = minutes;
                                 break;
-                            } else {
+                            }
+                            else {
                                 switch (unitsString.charAt(1)) {
                                     case 'i':
                                         if (unitsString.length() <= 2) {
                                             Assert.fail("Parse of units from \"" + unitsString + "\" failed!");
-                                        } else {
+                                        }
+                                        else {
                                             switch (unitsString.charAt(2)) {
                                                 case 'n':
                                                     unit = minutes;
@@ -178,9 +181,9 @@ public class TimeUtils {
         c2.set(Calendar.MINUTE, 0);
         c2.set(Calendar.SECOND, 0);
         c2.set(Calendar.MILLISECOND, 0);
-        long diffMillis = (int)(c1.getTimeInMillis() - c2.getTimeInMillis());
+        long diffMillis = (int) (c1.getTimeInMillis() - c2.getTimeInMillis());
         double f = Units.conversionFactor(units, Units.milliseconds);
-        return (int)(diffMillis / f);
+        return (int) (diffMillis / f);
     }
 
     public double convertTo(double duration, Units fromUnit, Units toUnit) {
@@ -191,15 +194,13 @@ public class TimeUtils {
 
     /**
      * Get a Date corresponding to the input time.
-     * 
-     * @param time
-     *            as a duration since the Unix epoch (Jan 1, 1970)
-     * @param units
-     *            of the time duration
+     *
+     * @param time  as a duration since the Unix epoch (Jan 1, 1970)
+     * @param units of the time duration
      * @return a conversion to Date
      */
     public Date getDate(double time, Units units) {
-        Date d = new Date((long)(Units.conversionFactor(units, Units.milliseconds) * time));
+        Date d = new Date((long) (Units.conversionFactor(units, Units.milliseconds) * time));
         return d;
     }
 
@@ -208,7 +209,7 @@ public class TimeUtils {
      * start (sb) and end (eb) bounds. A null value of the start or end bounds
      * indicates the container is boundless. sb and eb are considered to be
      * contained.
-     * 
+     *
      * @param sb
      * @param eb
      * @param s
@@ -223,40 +224,42 @@ public class TimeUtils {
      * Returns true if the start (s) and end (e) dates are contained within the
      * start (sb) and end (eb) bounds. A null value of the start or end bounds
      * indicates the container is boundless.
-     * 
+     *
      * @param sb
      * @param eb
      * @param s
      * @param e
-     * @param includeStart
-     *            whether sb should be considered contained
-     * @param includeEnd
-     *            whether eb should be considered contained
+     * @param includeStart whether sb should be considered contained
+     * @param includeEnd   whether eb should be considered contained
      * @return whether [sb,eb] contains [s,e].
      */
     public static boolean contains(Date sb, Date eb, Date s, Date e, boolean includeStart, boolean includeEnd) {
         // LogUtil.logger().setLevel( Level.ALL );
-        if (sb == null && eb == null)
+        if (sb == null && eb == null) {
             return true;
+        }
         if (sb == null) {
-            if (e == null)
+            if (e == null) {
                 return false;
+            }
             int compareEnds = e.compareTo(eb);
             return (compareEnds < 0 || (includeEnd && compareEnds == 0));
         }
         if (eb == null) {
-            if (s == null)
+            if (s == null) {
                 return false;
+            }
             int compareStarts = s.compareTo(sb);
             return (compareStarts > 0 || (includeStart && compareStarts == 0));
         }
-        if (s == null || e == null)
+        if (s == null || e == null) {
             return false;
+        }
         int compareEnds = e.compareTo(eb);
         int compareStarts = s.compareTo(sb);
         boolean c = // s.after(sb) && e.before(eb);
-        (compareEnds < 0 || (includeEnd && compareEnds == 0))
-                && (compareStarts > 0 || (includeStart && compareStarts == 0));
+                (compareEnds < 0 || (includeEnd && compareEnds == 0))
+                        && (compareStarts > 0 || (includeStart && compareStarts == 0));
         // LogUtil.debug( "contains(" + sb + ", " + eb + ", " + s + ", " + e +
         // ") = " + c );
         // if ( sb != null && eb != null && s != null && e != null ) {
@@ -278,15 +281,17 @@ public class TimeUtils {
     public static String toTimeString(Date d, String format) {
         if (d != null) {
             return toTimeString(d.getTime(), format);
-        } else {
+        }
+        else {
             Debug.error("Cannot convert null Date");
             return null;
         }
     }
 
     public static String toTimeString(long millis, String format) {
-        if (format == null)
+        if (format == null) {
             return null;
+        }
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("GMT"));
         cal.setTimeInMillis(millis);
@@ -372,7 +377,7 @@ public class TimeUtils {
     public static String toTimestamp(long t, Units units) {
         Calendar cal = Calendar.getInstance();
         double cf = Units.conversionFactor(units, Units.milliseconds);
-        cal.setTimeInMillis((long)(getEpoch().getTime() + t * cf));
+        cal.setTimeInMillis((long) (getEpoch().getTime() + t * cf));
         String timeString = new SimpleDateFormat(timestampFormat).format(cal.getTime());
         return timeString;
     }
@@ -397,15 +402,17 @@ public class TimeUtils {
     public static String toAspenTimeString(Date d, String format) {
         if (d != null) {
             return toAspenTimeString(d.getTime(), format);
-        } else {
+        }
+        else {
             Debug.errln("Cannot convert null Date");
             return null;
         }
     }
 
     public static String toAspenTimeString(long millis, String format) {
-        if (format == null)
+        if (format == null) {
             return null;
+        }
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("GMT"));
         cal.setTimeInMillis(millis);
@@ -444,8 +451,7 @@ public class TimeUtils {
     // }
 
     /**
-     * @param epoch
-     *            the epoch to set
+     * @param epoch the epoch to set
      */
     public synchronized static void setEpoch(Date epoch) {
         TimeUtils.epoch = epoch;

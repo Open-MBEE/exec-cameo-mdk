@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are 
  * permitted provided that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, this list of 
  *    conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, this list 
@@ -15,7 +15,7 @@
  *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
  *    nor the names of its contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
@@ -27,22 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 
 import com.nomagic.magicdraw.automaton.AutomatonPlugin;
 import com.nomagic.magicdraw.core.Application;
@@ -57,17 +41,27 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
+import javax.script.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * runs a userscript in [md install dir]/DocGenUserScripts/...
- * 
+ *
  * @author dlam
- * 
  */
 public class ScriptRunner {
 
     /**
      * runs the script with steroetype tag values as input to scriptInput
-     * 
+     *
      * @param e
      * @param s
      * @return
@@ -99,11 +93,10 @@ public class ScriptRunner {
     /**
      * runs the script with stereotype tag values plus additional inputs to
      * scriptInput
-     * 
+     *
      * @param e
      * @param s
-     * @param addInputs
-     *            additional inputs to add to scriptInput
+     * @param addInputs additional inputs to add to scriptInput
      * @return
      * @throws ScriptException
      */
@@ -118,12 +111,12 @@ public class ScriptRunner {
             queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, "Queries", 1,
                     false, 1);
         }
-        for (NamedElement p: s.getInheritedMember()) {
+        for (NamedElement p : s.getInheritedMember()) {
             if (p instanceof Property) {
-                inputs.put(p.getName(), StereotypesHelper.getStereotypePropertyValue(e, s, (Property)p));
+                inputs.put(p.getName(), StereotypesHelper.getStereotypePropertyValue(e, s, (Property) p));
             }
         }
-        for (Property p: s.getOwnedAttribute()) {
+        for (Property p : s.getOwnedAttribute()) {
             inputs.put(p.getName(), StereotypesHelper.getStereotypePropertyValue(e, s, p));
         }
 
@@ -135,26 +128,30 @@ public class ScriptRunner {
         String sname = s.getName();
         String[] spaces = sname.split("\\.");
         String scriptFile = getUserScriptDirectoryName();
-        for (String namespace: spaces)
+        for (String namespace : spaces) {
             scriptFile += File.separator + namespace;
+        }
 
         String lang = "jython";
         String extension = ".py";
         Object language = StereotypesHelper.getStereotypePropertyFirst(s, "DocGenScript", "language");
         if (language != null && language instanceof EnumerationLiteral) {
-            lang = ((EnumerationLiteral)language).getName();
-            if (lang.equals("groovy"))
+            lang = ((EnumerationLiteral) language).getName();
+            if (lang.equals("groovy")) {
                 extension = ".groovy";
-            else if (lang.equals("qvt"))
+            }
+            else if (lang.equals("qvt")) {
                 extension = ".qvto";
+            }
         }
         scriptFile += extension;
         File script = new File(scriptFile);
         binDirs[1] = new File(script.getParent());
 
         inputs.putAll(addInputs);
-        if (!inputs.containsKey("DocGenTargets"))
+        if (!inputs.containsKey("DocGenTargets")) {
             inputs.put("DocGenTargets", queries);
+        }
         inputs.put("__name__", "__main__");
         return runScript(lang, inputs, script, binDirs);
     }
@@ -162,21 +159,18 @@ public class ScriptRunner {
     /**
      * session will be created if it isn't already, session will surround the
      * script run so user don't have to manage sessions
-     * 
+     *
      * @param language
-     * @param inputs
-     *            A map of key/value pair of script input (it can be anything
-     *            really, as long as the script knows what to do with it. the
-     *            inputs object will be passed to the script as 'scriptInput'
-     * @param script
-     *            File of the script file
-     * @param binDir
-     *            File of the script directory
+     * @param inputs   A map of key/value pair of script input (it can be anything
+     *                 really, as long as the script knows what to do with it. the
+     *                 inputs object will be passed to the script as 'scriptInput'
+     * @param script   File of the script file
+     * @param binDir   File of the script directory
      * @return a var called scriptInput will be accessible in the script, this
-     *         is a map of key value pairs, keys will be based on what the
-     *         script does and what the corresponding stereotype tags in md are,
-     *         to return something from the script, assign a map to scriptOutput
-     *         var in your script
+     * is a map of key value pairs, keys will be based on what the
+     * script does and what the corresponding stereotype tags in md are,
+     * to return something from the script, assign a map to scriptOutput
+     * var in your script
      * @throws ScriptException
      */
     public static Object runScript(String language, Map<String, Object> inputs, File script, File[] binDirs)
@@ -195,7 +189,7 @@ public class ScriptRunner {
 
             URL[] urls = new URL[binDirs.length + 1];
             int count = 0;
-            for (File binDir: binDirs) {
+            for (File binDir : binDirs) {
                 urls[count] = binDir.toURI().toURL();
                 count++;
             }
@@ -207,12 +201,13 @@ public class ScriptRunner {
                     AutomatonPlugin.class.getClassLoader());
 
             Thread.currentThread().setContextClassLoader(automatonClassLoaderWithBinDir);
-            
+
             ScriptEngineManager sem = new ScriptEngineManager();
             ScriptEngine se = sem.getEngineByName(language);
-            if (null == se)
+            if (null == se) {
                 throw new RuntimeException("Scripting language '" + language
                         + "' not found for executing: " + script);
+            }
 
             ScriptContext sc = se.getContext();
             Bindings bindings = se.getBindings(ScriptContext.ENGINE_SCOPE);
@@ -234,7 +229,7 @@ public class ScriptRunner {
             // se.put("scriptEngine", se);
             se.eval(fr, sc);
             output = se.get("scriptOutput");
-            
+
             if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().closeSession();
                 sessionCreated = false;
@@ -249,7 +244,7 @@ public class ScriptRunner {
         } catch (ScriptException e) {
             e.printStackTrace();
             throw e; // if session is managed by some caller, they need to know
-                     // the script failed so they can manage their sessions
+            // the script failed so they can manage their sessions
         } finally {
             Thread.currentThread().setContextClassLoader(localClassLoader);
             if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {

@@ -1,27 +1,25 @@
 package gov.nasa.jpl.mbee.ems.validation.actions;
 
+import com.nomagic.ci.persistence.IProject;
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.ui.ProgressStatusRunner;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ModelExporter;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.RuleViolationAction;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.Set;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
-import com.nomagic.ci.persistence.IProject;
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
-import com.nomagic.ui.ProgressStatusRunner;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ExportLocalModule extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -39,34 +37,37 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             JSONObject ob = ExportUtility.getProjectJsonForProject(module);
             array.add(ob);
             String url = ExportUtility.getUrl(Application.getInstance().getProject());
-            if (url == null)
+            if (url == null) {
                 return;
+            }
             String purl = url + "/workspaces/master/sites/" + siteName + "/projects";
             Utils.guilog("Initializing module");
-            if (ExportUtility.send(purl, tosend.toJSONString()/*, null*/, false, false) == null)
+            if (ExportUtility.send(purl, tosend.toJSONString()/*, null*/, false, false) == null) {
                 return;
-            
+            }
+
             ModelExporter me = new ModelExporter(mounts, 0, false, module);
             JSONObject result = me.getResult();
             String json = result.toJSONString();
             Utils.guilog("Number of Elements: " + me.getNumberOfElements());
-            if (ExportUtility.send(url + "/workspaces/master/sites/" + siteName + "/elements?background=true", json) != null)
-            	Utils.guilog("You'll receive an email when the module has finished loading.");
+            if (ExportUtility.send(url + "/workspaces/master/sites/" + siteName + "/elements?background=true", json) != null) {
+                Utils.guilog("You'll receive an email when the module has finished loading.");
+            }
         }
     }
-    
+
     private static final long serialVersionUID = 1L;
     private IProject module;
     private Set<Element> mounts;
     private String siteName;
-    
+
     public ExportLocalModule(IProject module, Set<Element> mounts, String siteName) {
         super("ExportModule", "Export Module", null, null);
         this.module = module;
         this.mounts = mounts;
         this.siteName = siteName;
     }
-    
+
     @Override
     public boolean canExecute(Collection<Annotation> arg0) {
         return false;
@@ -74,7 +75,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
 
     @Override
     public void execute(Collection<Annotation> annos) {
-        
+
     }
 
     @Override
