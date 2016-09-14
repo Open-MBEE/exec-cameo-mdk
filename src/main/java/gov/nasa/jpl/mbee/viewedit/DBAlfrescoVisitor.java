@@ -465,7 +465,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //specialization element.
         //
         JSONObject view = (JSONObject) views.get(e.getID());
-//        JSONObject specialization = (JSONObject) view.get("specialization");
 
         view.put("displayedElements", viewEs);
         view.put("allowedElements", viewEs);

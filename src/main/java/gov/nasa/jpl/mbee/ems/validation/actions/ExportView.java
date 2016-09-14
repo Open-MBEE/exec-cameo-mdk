@@ -223,7 +223,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 }
             }
             if (doc != null) {
-                JSONObject spec = (JSONObject)doc.get("specialization");
+          *      JSONObject spec = (JSONObject)doc.get("specialization");
                 ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
                 dge.accept(vhv);
                 spec.put("view2view", ExportUtility.formatView2View(vhv.getView2View()));

@@ -53,7 +53,7 @@ public class ElementDetail extends RuleViolationAction implements AnnotationActi
         for (Object o : result.keySet()) {
             String key = (String) o;
             if (key.equals("specialization")) {
-                spec = (JSONObject) result.get("specialization");
+         *       spec = (JSONObject) result.get("specialization");
                 continue;
             }
             if (result.get(key) != null) {

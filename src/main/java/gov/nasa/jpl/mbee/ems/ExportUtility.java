@@ -1851,9 +1851,10 @@ public class ExportUtility {
         if (result.containsKey("elements")) {
             JSONArray elements = (JSONArray) result.get("elements");
             if (!elements.isEmpty() && ((JSONObject) elements.get(0)).containsKey("specialization")) {
-                JSONObject spec = (JSONObject) ((JSONObject) elements.get(0)).get("specialization");
-                if (spec.containsKey("projectVersion") && spec.get("projectVersion") != null) {
-                    return Integer.valueOf(spec.get("projectVersion").toString());
+//                JSONObject spec = (JSONObject) ((JSONObject) elements.get(0)).get("specialization");
+                JSONObject elementJson = (JSONObject) elements.get(0);
+                if (elementJson.containsKey("projectVersion") && elementJson.get("projectVersion") != null) {
+                    return Integer.valueOf(elementJson.get("projectVersion").toString());
                 }
             }
         }

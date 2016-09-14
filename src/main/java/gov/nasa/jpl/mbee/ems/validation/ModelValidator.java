@@ -1262,14 +1262,14 @@ public class ModelValidator {
 
     private ValidationRuleViolation parameterDiff(Parameter e, JSONObject info) {
         Boolean editable = (Boolean) info.get("editable");
-        JSONObject spec = (JSONObject) info.get("specialization");
         JSONObject modelspec = ExportUtility.fillParameterSpecialization(e, null);
-        if (!JSONUtils.compare(spec, modelspec)) {
+        //this is now comparing the full json in info with the reduced spec json in model spec. not sure it needs altering @donbot
+        if (!JSONUtils.compare(info, modelspec)) {
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[Parameter] directions/parameterTypes are different");
             if (editable) {
                 v.addAction(new ExportParameter(e));
             }
-            v.addAction(new ImportParameter(e, spec, result));
+            v.addAction(new ImportParameter(e, info, result));
             return v;
         }
         return null;
