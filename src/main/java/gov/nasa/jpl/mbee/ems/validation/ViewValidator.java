@@ -119,7 +119,8 @@ public class ViewValidator {
             ValidationRuleViolation v = null;
             if (url.contains("master")) {
                 v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
-                v.addAction(new InitializeProjectModel(false));
+                // TODO Change me back to false @donbot
+                v.addAction(new InitializeProjectModel(true));
             }
             else {
                 v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");

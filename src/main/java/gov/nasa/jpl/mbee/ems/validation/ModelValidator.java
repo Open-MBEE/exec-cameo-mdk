@@ -310,7 +310,8 @@ public class ModelValidator {
             ValidationRuleViolation v = null;
             if (url.contains("master")) {
                 v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
-                v.addAction(new InitializeProjectModel(false));
+                // TODO Change me back to false @donbot
+                v.addAction(new InitializeProjectModel(true));
             }
             else {
                 v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
@@ -339,7 +340,8 @@ public class ModelValidator {
             }
         }
         JSONArray elements = new JSONArray();
-        for (Element start : starts) {
+        // TODO REVERT ME @donbot
+        /*for (Element start : starts) {
             String id = start.getID();
             if (start == Application.getInstance().getProject().getModel()) {
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
@@ -395,7 +397,9 @@ public class ModelValidator {
         }
         result = new JSONObject();
         result.put("elements", elements);
-        ResultHolder.lastResults = result;
+        ResultHolder.lastResults = result;*/
+        result = new JSONObject();
+        result.put("elements", new JSONArray());
         return true;
     }
 
