@@ -120,7 +120,7 @@ lazy val plugin = (project in file("."))
       IO.copyDirectory(baseDirectory.value / "lib", zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "lib", true)
       
       val pluginxml = IO.read(baseDirectory.value / "src" / "main" / "resources" / "plugin.xml")
-      val towrite = pluginxml.replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1")).replaceAllLiterally("@release.version.human@", "3.0-SNAPSHOT-" + githash) 
+      val towrite = pluginxml.replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1")).replaceAllLiterally("@release.version.human@", "3.0-SNAPSHOT-" + githash)
       IO.write(zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "plugin.xml", towrite, append=false)
       //IO.copyFile(baseDirectory.value / "src" / "main" / "resources" / "plugin.xml", zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "plugin.xml", true)
       //get env var BUILD_NUMBER, GIT_COMMIT, JOB_NAME, BUILD_ID (date)

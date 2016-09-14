@@ -87,9 +87,10 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     @Override
     public void setDefaultValues() {
         setLogJson(MDUtils.isDeveloperMode());
-        setPersistChangelog(true);
-        setChangeListenerEnabled(true);
-        setCoordinatedSyncEnabled(true);
+        // TODO CHANGE BACK TO TRUE @donbot
+        setPersistChangelog(false);
+        setChangeListenerEnabled(false);
+        setCoordinatedSyncEnabled(false);
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK";
