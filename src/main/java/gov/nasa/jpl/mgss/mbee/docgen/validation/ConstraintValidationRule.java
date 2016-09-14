@@ -45,6 +45,7 @@ import gov.nasa.jpl.mbee.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.lib.*;
 import gov.nasa.jpl.ocl.OclEvaluator;
 
+import java.lang.Class;
 import java.util.*;
 
 /**

@@ -42,6 +42,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.lang.Class;
 import java.util.ArrayList;
 import java.util.List;
 

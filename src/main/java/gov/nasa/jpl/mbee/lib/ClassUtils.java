@@ -1257,7 +1257,7 @@ public class ClassUtils {
      * @return in a Pair whether the invocation was successful and the return
      * value (or null)
      */
-    public static Pair<Boolean, Object> runMethod(boolean suppressErrors, Object o, String methodName,
+    public static Pair<Boolean, Object> runMethodByName(boolean suppressErrors, Object o, String methodName,
                                                   Object... args) {
         Method m = getMethodForArgs(o.getClass(), methodName, args);
         return runMethod(suppressErrors, o, m, args);
@@ -1295,9 +1295,10 @@ public class ClassUtils {
         if (!p.first && isStatic(method) && o != null) {
             List<Object> l = Utils2.newList(o);
             l.addAll(Arrays.asList(args));
-            p = runMethod(true, null, method, l.toArray());
+            Object nullObject = null;
+            p = runMethod(true, nullObject, method, l.toArray());
             if (!p.first && l.size() > 1) {
-                p = runMethod(true, null, method, o);
+                p = runMethod(true, nullObject, method, o);
             }
         }
         if (!suppressErrors && !p.first) {
@@ -1337,7 +1338,7 @@ public class ClassUtils {
      * @throws IllegalAccessException
      * @throws InvocationTargetException
      */
-    public static Pair<Boolean, Object> runMethod(Object o, String methodName, Object... args)
+    public static Pair<Boolean, Object> runMethodByName(Object o, String methodName, Object... args)
             throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         Method m = getMethodForArgs(o.getClass(), methodName, args);
         return runMethod(o, m, args);
