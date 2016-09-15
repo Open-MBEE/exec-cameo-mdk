@@ -48,18 +48,22 @@ import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.api.function.TriFunction;
 import gov.nasa.jpl.mbee.lib.ClassUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
-import java.util.function.BiPredicate;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class EMFExporter implements Function<Element, JSONObject> {
     @Override
@@ -69,156 +73,21 @@ public class EMFExporter implements Function<Element, JSONObject> {
 
     private static JSONObject createElement(Element element) {
         debugUMLPackageLiterals();
-        // showElementMetaModel((NamedElement) element);
 
-        JSONObject elementInfo = new JSONObject();
-        /*if (element.eClass().getEIDAttribute() == null) {
-            return null;
-        }
-        elementInfo.put("sysmlId", getEID(element));
-        elementInfo.put("type", element.eClass().getName());
-        if (UMLPackage.Literals.CONNECTOR.equals(element.eClass())) {
-            fillConnectorSpecialization((Connector) element, elementInfo);
-        }
-        for (EAttribute sf : element.eClass().getEAllAttributes()) {
-            if (sf.isDerived()) {
-                continue;
-            }
-            if (element.eClass().getEIDAttribute().equals(sf)) {
-                continue;
-            }
-
-            Object val = element.eGet(sf);
-            if (val == null) {
-                elementInfo.put(sf.getName(), null);
-            }
-            else if (val instanceof EList) {
-                System.out.println("ELIST : " + val + " : " + val.getClass());
-                elementInfo.put(sf.getName(), val);
-            }
-            else if (val instanceof EObject) {
-                elementInfo.put(sf.getName(), val);
-            }
-            else if (val instanceof Boolean) {
-                elementInfo.put(sf.getName(), val);
-            }
-            else {
-                if (!val.toString().contains("html")) {
-                    String escapedVal = StringEscapeUtils.escapeHtml(val.toString());
-                    elementInfo.put(sf.getName(), escapedVal);
-                }
+        JSONObject jsonObject = new JSONObject();
+        for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
+            TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> function = Arrays.stream(EStructuralFeatureOverride.values())
+                    .filter(override -> override.getPredicate().test(element, eStructuralFeature)).map(EStructuralFeatureOverride::getFunction)
+                    .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
+            jsonObject = function.apply(element, eStructuralFeature, jsonObject);
+            if (jsonObject == null) {
+                return null;
             }
         }
-        ArrayList<EReference> references = new ArrayList<EReference>();
-        EList<EReference> refs = element.eClass().getEAllReferences();
-        references.addAll(refs);
-        EList<EReference> conts = element.eClass().getEAllContainments();
-        references.removeAll(conts);
-
-        for (EReference ref : references) {
-            if (UMLPackage.Literals.ELEMENT__OWNER.equals(ref)) {
-                elementInfo.put(UMLPackage.Literals.ELEMENT__OWNER.getName() + "Id", getEID(element.getOwner()));
-                continue;
-            }
-            if (ref.isDerived() && !UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE.equals(ref) && !UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET.equals(ref)) {
-                continue;
-            }
-
-            Object val = element.eGet(ref);
-            if (val != null) {
-                if (val instanceof EList) {
-                    System.out.println("ELIST : " + val + " : " + val.getClass());
-                    JSONArray array = new JSONArray();
-                    for (Object obs : ((EList) val)) {
-                        if (obs instanceof EObject) {
-                            if (!((EList<?>) val).isEmpty()) {
-                                EObject eObject = (EObject) obs;
-                                if (eObject.eClass().getEIDAttribute() != null && eObject instanceof Element) {
-                                    array.add(getEID((Element) eObject));
-                                }
-                                else {
-                                    System.out.println("Skipped: " + obs);
-                                }
-                            }
-                        }
-                    }
-                    if (!array.isEmpty()) {
-                        if (ref.getName().equals("source")) {
-                            elementInfo.put("sourceId", array.get(0));
-                        }
-                        else if (ref.getName().equals("target")) {
-                            elementInfo.put("targetId", array.get(0));
-                        }
-                        else {
-                            elementInfo.put(ref.getName() + "Ids", array);
-                        }
-                    }
-                }
-                else if (val instanceof EObject) {
-                    if (element.eClass().getEIDAttribute() != null) {
-                        elementInfo.put(ref.getName() + "Id", getEID(element));
-                    }
-                    else {
-                        System.out.println("Skipped: " + val);
-                    }
-                    // }
-                }
-            }
-
-        }
-        for (EReference ref : conts) {
-            // if (!ref.getName().contains("_") & !"ownedDiagram".equals(ref.getName())) {
-            if (!UMLPackage.Literals.NAMESPACE__OWNED_DIAGRAM.equals(ref)) {
-                Object val = element.eGet(ref);
-                if (val != null) {
-                    if (val instanceof EList) {
-                        System.out.println("ELIST : " + val + " : " + val.getClass());
-                        if (!((EList<?>) val).isEmpty()) {
-                            // if ("ownedAttribute".equals(ref.getName())) {
-                            Iterator<?> it = ((EList<?>) val).iterator();
-                            JSONArray childArray = new JSONArray();
-                            JSONArray idArray = new JSONArray();
-
-                            while (it.hasNext()) {
-                                EObject eo = (EObject) it.next();
-                                if (eo instanceof Element) {
-                                    if (eo instanceof ValueSpecification) {
-                                        childArray.add(fillValueSpecification((ValueSpecification) eo));
-                                    }
-                                    else {
-                                        // fillElement((Element) eo);
-                                        idArray.add(((Element) eo).getID());
-                                    }
-                                }
-                            }
-                            elementInfo.put(ref.getName() + "Ids", idArray);
-                            if (!childArray.isEmpty()) {
-                                elementInfo.put(ref.getName(), childArray);
-                            }
-                        }
-                    }
-                    else if (val instanceof EObject) {
-                        if (val instanceof Element) {
-                            if (val instanceof ValueSpecification) {
-                                elementInfo.put(ref.getName(), fillValueSpecification((ValueSpecification) val));
-                            }
-                            else {
-                                // fillElement((Element) val);
-                                elementInfo.put(ref.getName() + "Id", getEID(((Element) val)));
-                            }
-                        }
-
-                    }
-                }
-            }
-        }*/
-
-        for (EReference eReference : element.eClass().getEAllReferences()) {
-            DEFAULT_EREFERENCE_FUNCTION.apply(element, eReference, elementInfo);
-        }
-        elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
-        fillMetatype(element, elementInfo);
-        return elementInfo;
+        jsonObject.put("type", element.eClass().getName());
+        jsonObject.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
+        fillMetatype(element, jsonObject);
+        return jsonObject;
     }
 
     private static String getEID(EObject eObject) {
@@ -242,58 +111,10 @@ public class EMFExporter implements Function<Element, JSONObject> {
         return EcoreUtil.getID(eObject);
     }
 
-    private static JSONObject fillConnectorSpecialization(Connector e, JSONObject elementInfo) {
-        if (elementInfo == null) {
-            elementInfo = new JSONObject();
-        }
-        elementInfo.put("type", "Connector");
-        int i = 0;
-        if (e.getEnd() == null) {
-            return elementInfo;
-        }
-        for (ConnectorEnd end : e.getEnd()) {
-            JSONArray propertyPath = new JSONArray();
-            if (end.getRole() != null) {
-                if (StereotypesHelper.hasStereotype(end, "NestedConnectorEnd")) {
-                    List<Element> ps = StereotypesHelper.getStereotypePropertyValue(end, "NestedConnectorEnd", "propertyPath");
-                    for (Element path : ps) {
-                        if (path instanceof ElementValue) {
-                            propertyPath.add(((ElementValue) path).getElement().getID());
-                        }
-                        else if (path instanceof Property) {
-                            propertyPath.add(path.getID());
-                        }
-                    }
-                }
-                propertyPath.add(end.getRole().getID());
-            }
-            if (i == 0) {
-                // specialization.put("sourceUpper", fillValueSpecification(end.getUpperValue(), null));
-                // specialization.put("sourceLower", fillValueSpecification(end.getLowerValue(), null));
-                elementInfo.put("endAPathIds", propertyPath);
-            }
-            else {
-                // specialization.put("targetUpper", fillValueSpecification(end.getUpperValue(), null));
-                // specialization.put("targetLower", fillValueSpecification(end.getLowerValue(), null));
-                elementInfo.put("endBPathIds", propertyPath);
-            }
-            i++;
-        }
-        Association type = e.getType();
-        elementInfo.put("typeId", (type == null) ? null : type.getID());
-        elementInfo.put("kind", (e.getKind() == null) ? null : e.getKind().toString());
-        return elementInfo;
-    }
-
     private static JSONObject fillMetatype(Element e, JSONObject einfo) {
-        JSONObject info = einfo;
-        if (info == null) {
-            info = new JSONObject();
-            info.put("sysmlId", getEID(e));
-        }
         // info.put("isMetatype", false);
         if (e instanceof Stereotype) {
-            info.put("isMetatype", true);
+            einfo.put("isMetatype", true);
             JSONArray metatypes = new JSONArray();
             for (Class c : ((Stereotype) e).getSuperClass()) {
                 if (c instanceof Stereotype) {
@@ -303,14 +124,14 @@ public class EMFExporter implements Function<Element, JSONObject> {
             for (Class c : StereotypesHelper.getBaseClasses((Stereotype) e)) {
                 metatypes.add(c.getID());
             }
-            info.put("metatypesId", metatypes);
+            einfo.put("metatypesId", metatypes);
         }
         if (e instanceof Class) {
             try {
                 java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class) e);
                 if (c != null) {
-                    info.put("isMetatype", true);
-                    info.put("metatypes", new JSONArray());
+                    einfo.put("isMetatype", true);
+                    einfo.put("metatypes", new JSONArray());
                 }
             } catch (Exception ex) {
             }
@@ -324,8 +145,8 @@ public class EMFExporter implements Function<Element, JSONObject> {
         // if (baseClass != null)
         // applied.add(baseClass.getID());
 
-        info.put("appliedStereotypeIds", applied);
-        return info;
+        einfo.put("appliedStereotypeIds", applied);
+        return einfo;
     }
 
     private static JSONObject fillValueSpecification(ValueSpecification vs) {
@@ -470,6 +291,9 @@ public class EMFExporter implements Function<Element, JSONObject> {
             }
             return jsonArray;
         }
+        else if (object instanceof ValueSpecification) {
+            return fillValueSpecification((ValueSpecification) object);
+        }
         else if (object instanceof EObject) {
             return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)));
         }
@@ -480,22 +304,25 @@ public class EMFExporter implements Function<Element, JSONObject> {
         return null;
     };
 
-    private static final TriFunction<Element, EReference, JSONObject, JSONObject> DEFAULT_EREFERENCE_FUNCTION = (element, eReference, jsonObject) -> {
-        if (eReference.isDerived()) {
+    private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> {
+        if (!eStructuralFeature.isChangeable() || eStructuralFeature.isVolatile() || eStructuralFeature.isTransient() || eStructuralFeature.isUnsettable() || eStructuralFeature.isDerived() || eStructuralFeature.getName().startsWith("_")) {
             return jsonObject;
         }
+        return EMFExporter.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
+    };
 
-        Object value = element.eGet(eReference);
+    private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> {
+        Object value = element.eGet(eStructuralFeature);
         Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value);
         if (value != null && serializedValue == null) {
-            System.out.println("[EMF] Failed to serialize " + eReference + " for " + element + ".");
+            System.out.println("[EMF] Failed to serialize " + eStructuralFeature + " for " + element + ": " + value);
             return jsonObject;
         }
 
-        String key = eReference.getName();
-        if (EObject.class.isAssignableFrom(eReference.getEReferenceType().getInstanceClass())) {
+        String key = eStructuralFeature.getName();
+        if (eStructuralFeature instanceof EReference && EObject.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())) {
             key += "Id";
-            if (eReference.getUpperBound() < 0 || eReference.getUpperBound() > 1) {
+            if (eStructuralFeature.getUpperBound() < 0 || eStructuralFeature.getUpperBound() > 1) {
                 key += "s";
             }
         }
@@ -503,16 +330,73 @@ public class EMFExporter implements Function<Element, JSONObject> {
         return jsonObject;
     };
 
-    public enum EReferenceOverride {
+    private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> jsonObject;
 
+    private enum EStructuralFeatureOverride {
+        ID(
+                (element, eStructuralFeature) -> eStructuralFeature == element.eClass().getEIDAttribute(),
+                (element, eStructuralFeature, jsonObject) -> {
+                    jsonObject.put("sysmlId", getEID(element));
+                    return jsonObject;
+                }
+        ),
+        OWNER(
+                (element, eStructuralFeature) -> UMLPackage.Literals.PACKAGEABLE_ELEMENT__OWNING_PACKAGE == eStructuralFeature,
+                (element, eStructuralFeature, jsonObject) -> UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, UMLPackage.Literals.ELEMENT__OWNER, jsonObject)
+        ),
+        DIRECTED_RELATIONSHIP__SOURCE(
+                (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,
+                UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION
+        ),
+        DIRECTED_RELATIONSHIP__TARGET(
+                (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET == eStructuralFeature,
+                UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION
+        ),
+        NAMESPACE__OWNED_DIAGRAM(
+                (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.NAMESPACE__OWNED_DIAGRAM,
+                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
+        ),
+        CONNECTOR(
+                (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.CONNECTOR__END,
+                (element, eStructuralFeature, jsonObject) -> {
+                    Connector connector = (Connector) element;
+                    // TODO Stop using Strings @donbot
+                    List<List<Object>> propertyPaths = connector.getEnd().stream()
+                            .map(connectorEnd -> StereotypesHelper.hasStereotype(connectorEnd, "NestedConnectorEnd") ? StereotypesHelper.getStereotypePropertyValue(connectorEnd, "NestedConnectorEnd", "propertyPath") : null)
+                            .map(elements -> {
+                                if (elements == null) {
+                                    return new ArrayList<>(1);
+                                }
+                                List<Object> list = new ArrayList<>(elements.size() + 1);
+                                for (Object o : elements) {
+                                    list.add(o instanceof ElementValue ? ((ElementValue) o).getElement() : o);
+                                }
+                                return list;
+                            }).collect(Collectors.toList());
+                    for (int i = 0; i < propertyPaths.size(); i++) {
+                        propertyPaths.get(i).add(connector.getEnd().get(i).getRole());
+                    }
+                    jsonObject.put("pathsOfPropertyIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths));
+
+                    return DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
+                }
+        )
         ;
 
-        private BiPredicate<Element, EReference> predicate;
-        private BiFunction<Element, JSONObject, JSONObject> function;
+        private BiPredicate<Element, EStructuralFeature> predicate;
+        private TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> function;
 
-        EReferenceOverride(BiPredicate<Element, EReference> predicate, BiFunction<Element, JSONObject, JSONObject> function) {
+        EStructuralFeatureOverride(BiPredicate<Element, EStructuralFeature> predicate, TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> function) {
             this.predicate = predicate;
             this.function = function;
+        }
+
+        public BiPredicate<Element, EStructuralFeature> getPredicate() {
+            return predicate;
+        }
+
+        public TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> getFunction() {
+            return function;
         }
     }
 }
