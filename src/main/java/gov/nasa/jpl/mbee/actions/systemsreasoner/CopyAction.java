@@ -20,8 +20,8 @@ public class CopyAction extends SRAction {
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        EMFImporter imp = new EMFImporter(element);
-        imp.createElementsFromJSON();
+        //EMFImporter imp = new EMFImporter(element);
+        //imp.createElementsFromJSON();
 
     }
 

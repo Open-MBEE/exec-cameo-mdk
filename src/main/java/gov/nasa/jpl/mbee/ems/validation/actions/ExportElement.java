@@ -32,6 +32,8 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.DocGenPlugin;
+import gov.nasa.jpl.mbee.api.incubating.json.JsonConverters;
+import gov.nasa.jpl.mbee.ems.EMFExporter;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
@@ -70,7 +72,8 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
         for (Annotation anno : annos) {
             Element e = (Element) anno.getTarget();
             set.add(e);
-            infos.add(ExportUtility.fillElement(e, null));
+            //infos.add(ExportUtility.fillElement(e, null));
+            infos.add(JsonConverters.getToJsonConverter().apply(e));
         }
         if (!ExportUtility.okToExport(set)) {
             return;
@@ -104,7 +107,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
     @Override
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
-        elements.add(ExportUtility.fillElement(element, null));
+        elements.add(JsonConverters.getToJsonConverter().apply(element));
         commit(elements, "Element");
     }
 }

@@ -10,8 +10,8 @@ import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.lib.Changelog;
-import gov.nasa.jpl.mbee.lib.function.BiFunction;
-import gov.nasa.jpl.mbee.lib.function.Function;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import org.json.simple.JSONObject;
 

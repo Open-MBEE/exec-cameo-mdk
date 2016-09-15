@@ -29,7 +29,6 @@
 package gov.nasa.jpl.mbee.ems;
 
 import com.nomagic.ci.persistence.IProject;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -37,6 +36,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.DocGenPlugin;
+import gov.nasa.jpl.mbee.api.incubating.json.JsonConverters;
 import gov.nasa.jpl.mbee.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -47,7 +48,7 @@ import java.util.Set;
 public class ModelExporter {
     // private JSONObject elementHierarchy = new JSONObject();
     private JSONObject elements = new JSONObject();
-    private JSONObject emfelements = new JSONObject();
+    private JSONObject emfElements = new JSONObject();
 
     // private JSONArray roots = new JSONArray();
 
@@ -84,9 +85,7 @@ public class ModelExporter {
         return elements.size();
     }
 
-    @SuppressWarnings("unchecked")
     public JSONObject getResult() {
-
         for (Element e : starts) {
             addToElements(e, 1);
             // roots.add(e.getID());
@@ -97,7 +96,7 @@ public class ModelExporter {
         elementss.addAll(elements.values());
         result.put("elements", elementss);
         result.put("source", "magicdraw");
-        result.put("mmsVersion", "2.3");
+        result.put("mmsVersion", DocGenPlugin.VERSION);
         // result.put("elementHierarchy", elementHierarchy);
         return result;
     }
@@ -122,8 +121,7 @@ public class ModelExporter {
             return false;
         }
 
-        JSONObject elementInfo = new JSONObject();
-        ExportUtility.fillElement(e, elementInfo);
+        JSONObject elementInfo = JsonConverters.getToJsonConverter().apply(e);
         elements.put(e.getID(), elementInfo);
 
         if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e)) {
@@ -142,26 +140,5 @@ public class ModelExporter {
         }
         // elementHierarchy.put(e.getID(), children);
         return true;
-    }
-
-    public JSONObject getEMFResult() {
-        JSONObject result = new JSONObject();
-        JSONArray elementss = new JSONArray();
-        for (Element e : starts) {
-            EMFExporter emfexp = new EMFExporter(e);
-            // JSONObject emfElement = emfexp.createElement(e);
-            JSONObject emfElement = emfexp.createElement(e);
-            if (e.getOwner() == Application.getInstance().getProject().getModel()) {
-                emfElement.put("ownerId", parentPrj.getProjectID());
-            }
-            emfelements.put(e.getID(), emfElement);
-            elementss.addAll(emfexp.getSiblings());
-        }
-
-        elementss.addAll(emfelements.values());
-        result.put("elements", elementss);
-        result.put("source", "magicdraw");
-        result.put("mmsVersion", "2.3");
-        return result;
     }
 }

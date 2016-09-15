@@ -358,7 +358,7 @@ public class Paragraph extends Query {
                         // target-property pair (3) or for each target's
                         // documentation (2)
                         res.addAll(Common.getReferenceAsDocumentElements(r, this));
-//                        res.add( new DBParagraph( r.getResult(),
+//                        res.add( new DBParagraph( r.getLegacyResult(),
 //                                                  r.getElement(), r.getFrom() ) );
                     }
                     else {

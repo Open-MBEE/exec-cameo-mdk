@@ -4,7 +4,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.api.ElementFinder;
-import gov.nasa.jpl.mbee.lib.function.Function;
+import java.util.function.Function;
 
 /**
  * Created by igomes on 8/23/16.

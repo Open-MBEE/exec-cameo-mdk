@@ -30,7 +30,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.ems;
 
-import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -44,257 +44,205 @@ import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
+import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
+import gov.nasa.jpl.mbee.api.function.TriFunction;
+import gov.nasa.jpl.mbee.lib.ClassUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
-import org.eclipse.emf.common.util.EList;
-import org.eclipse.emf.ecore.EAttribute;
+import java.util.function.BiPredicate;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
-import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-public class EMFExporter {
-    private JSONArray siblings;
-    private EAttribute nameAtt;
-
-    public EMFExporter(Element element) {
-        super();
-        siblings = new JSONArray();
-        createdIDs = new ArrayList<String>();
-        for (EStructuralFeature ef : element.eClass().getEAllStructuralFeatures()) {
-            if (ef.getName().equals("ID")) {
-                IDStructuralFeature = ef;
-                break;
-            }
-        }
-        nameAtt = UMLFactory.eINSTANCE.getUMLPackage().getNamedElement_Name();
-
+public class EMFExporter implements Function<Element, JSONObject> {
+    @Override
+    public JSONObject apply(Element element) {
+        return createElement(element);
     }
 
-    public static Logger log = Logger.getLogger(EMFExporter.class);
-    public static Map<String, Integer> mountedVersions;
-    public static boolean baselineNotSet = false;
-    public static Map<String, Map<String, String>> wsIdMapping = new HashMap<String, Map<String, String>>();
-    public static Map<String, Map<String, String>> sites = new HashMap<String, Map<String, String>>();
-    private static EStructuralFeature IDStructuralFeature;
-    private static ArrayList<String> createdIDs;
-
-    @SuppressWarnings("unchecked")
-    public JSONObject createElement(Element element) {
+    private static JSONObject createElement(Element element) {
+        debugUMLPackageLiterals();
         // showElementMetaModel((NamedElement) element);
-        JSONObject elementInfo = new JSONObject();
-        if (element.eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
-            String id = (String) element.eGet(IDStructuralFeature);
-            CREATENODE:
-            {
 
-                if (createdIDs.contains(id)) {
-                    break CREATENODE;
+        JSONObject elementInfo = new JSONObject();
+        /*if (element.eClass().getEIDAttribute() == null) {
+            return null;
+        }
+        elementInfo.put("sysmlId", getEID(element));
+        elementInfo.put("type", element.eClass().getName());
+        if (UMLPackage.Literals.CONNECTOR.equals(element.eClass())) {
+            fillConnectorSpecialization((Connector) element, elementInfo);
+        }
+        for (EAttribute sf : element.eClass().getEAllAttributes()) {
+            if (sf.isDerived()) {
+                continue;
+            }
+            if (element.eClass().getEIDAttribute().equals(sf)) {
+                continue;
+            }
+
+            Object val = element.eGet(sf);
+            if (val == null) {
+                elementInfo.put(sf.getName(), null);
+            }
+            else if (val instanceof EList) {
+                System.out.println("ELIST : " + val + " : " + val.getClass());
+                elementInfo.put(sf.getName(), val);
+            }
+            else if (val instanceof EObject) {
+                elementInfo.put(sf.getName(), val);
+            }
+            else if (val instanceof Boolean) {
+                elementInfo.put(sf.getName(), val);
+            }
+            else {
+                if (!val.toString().contains("html")) {
+                    String escapedVal = StringEscapeUtils.escapeHtml(val.toString());
+                    elementInfo.put(sf.getName(), escapedVal);
                 }
-                else {
-                    createdIDs.add(id);
-                }
-                if (element.eClass().getName().equals("Slot")) {
-                    elementInfo.put("sysmlId", element.getOwner().getID() + "-slot-" + ((Slot) element).getDefiningFeature().getID());
-                }
-                else {
-                    elementInfo.put("sysmlId", id);
-                }
-                elementInfo.put("type", element.eClass().getName());
-                if ("Connector".equals(element.eClass().getName())) {
-                    fillConnectorSpecialization((Connector) element, elementInfo);
-                }
-                for (EAttribute sf : element.eClass().getEAllAttributes()) {
-                    if (!sf.isDerived()) {
-                        if (sf != IDStructuralFeature) {
-                            // if (!sf.getName().contains("_")) {
-                            Object val = element.eGet(sf);
-                            if (val != null) {
-                                if (val instanceof EList) {
-                                    if (!((EList<?>) val).isEmpty()) {
-                                        elementInfo.put(sf.getName(), val);
-                                    }
-                                }
-                                else if (val instanceof EObject) {
-                                    elementInfo.put(sf.getName(), val);
-                                }
-                                else if (val instanceof Boolean) {
-                                    elementInfo.put(sf.getName(), val);
+            }
+        }
+        ArrayList<EReference> references = new ArrayList<EReference>();
+        EList<EReference> refs = element.eClass().getEAllReferences();
+        references.addAll(refs);
+        EList<EReference> conts = element.eClass().getEAllContainments();
+        references.removeAll(conts);
+
+        for (EReference ref : references) {
+            if (UMLPackage.Literals.ELEMENT__OWNER.equals(ref)) {
+                elementInfo.put(UMLPackage.Literals.ELEMENT__OWNER.getName() + "Id", getEID(element.getOwner()));
+                continue;
+            }
+            if (ref.isDerived() && !UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE.equals(ref) && !UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET.equals(ref)) {
+                continue;
+            }
+
+            Object val = element.eGet(ref);
+            if (val != null) {
+                if (val instanceof EList) {
+                    System.out.println("ELIST : " + val + " : " + val.getClass());
+                    JSONArray array = new JSONArray();
+                    for (Object obs : ((EList) val)) {
+                        if (obs instanceof EObject) {
+                            if (!((EList<?>) val).isEmpty()) {
+                                EObject eObject = (EObject) obs;
+                                if (eObject.eClass().getEIDAttribute() != null && eObject instanceof Element) {
+                                    array.add(getEID((Element) eObject));
                                 }
                                 else {
-                                    if (!val.toString().contains("html")) {
-                                        String escapedVal = StringEscapeUtils.escapeHtml(val.toString());
-                                        elementInfo.put(sf.getName(), escapedVal);
-                                    }
+                                    System.out.println("Skipped: " + obs);
                                 }
                             }
-                            // }
+                        }
+                    }
+                    if (!array.isEmpty()) {
+                        if (ref.getName().equals("source")) {
+                            elementInfo.put("sourceId", array.get(0));
+                        }
+                        else if (ref.getName().equals("target")) {
+                            elementInfo.put("targetId", array.get(0));
+                        }
+                        else {
+                            elementInfo.put(ref.getName() + "Ids", array);
                         }
                     }
                 }
+                else if (val instanceof EObject) {
+                    if (element.eClass().getEIDAttribute() != null) {
+                        elementInfo.put(ref.getName() + "Id", getEID(element));
+                    }
+                    else {
+                        System.out.println("Skipped: " + val);
+                    }
+                    // }
+                }
             }
-            ArrayList<EReference> references = new ArrayList<EReference>();
-            EList<EReference> refs = element.eClass().getEAllReferences();
-            references.addAll(refs);
-            EList<EReference> conts = element.eClass().getEAllContainments();
-            references.removeAll(conts);
 
-            for (EReference ref : references) {
-                if (!ref.isDerived() || ref.getName().equals("source") || ref.getName().equals("target")) {
-                    // if (!ref.getName().contains("_")) {
-                    Object val = element.eGet(ref);
-                    if (val != null) {
-                        if (val instanceof EList) {
-                            JSONArray array = new JSONArray();
-                            for (Object obs : ((EList) val)) {
-                                if (obs instanceof EObject) {
-                                    if (!((EList<?>) val).isEmpty()) {
-                                        if (((EObject) obs).eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
-                                            array.add(((EObject) obs).eGet(IDStructuralFeature));
-                                        }
-                                        else {
-                                            System.out.println("Skipped: " + obs);
-                                        }
+        }
+        for (EReference ref : conts) {
+            // if (!ref.getName().contains("_") & !"ownedDiagram".equals(ref.getName())) {
+            if (!UMLPackage.Literals.NAMESPACE__OWNED_DIAGRAM.equals(ref)) {
+                Object val = element.eGet(ref);
+                if (val != null) {
+                    if (val instanceof EList) {
+                        System.out.println("ELIST : " + val + " : " + val.getClass());
+                        if (!((EList<?>) val).isEmpty()) {
+                            // if ("ownedAttribute".equals(ref.getName())) {
+                            Iterator<?> it = ((EList<?>) val).iterator();
+                            JSONArray childArray = new JSONArray();
+                            JSONArray idArray = new JSONArray();
+
+                            while (it.hasNext()) {
+                                EObject eo = (EObject) it.next();
+                                if (eo instanceof Element) {
+                                    if (eo instanceof ValueSpecification) {
+                                        childArray.add(fillValueSpecification((ValueSpecification) eo));
+                                    }
+                                    else {
+                                        // fillElement((Element) eo);
+                                        idArray.add(((Element) eo).getID());
                                     }
                                 }
                             }
-                            if (!array.isEmpty()) {
-                                if (ref.getName().equals("source")) {
-                                    elementInfo.put("sourceId", array.get(0));
-                                }
-                                else if (ref.getName().equals("target")) {
-                                    elementInfo.put("targetId", array.get(0));
-                                }
-                                else {
-                                    elementInfo.put(ref.getName() + "Ids", array);
-                                }
+                            elementInfo.put(ref.getName() + "Ids", idArray);
+                            if (!childArray.isEmpty()) {
+                                elementInfo.put(ref.getName(), childArray);
                             }
                         }
-                        else if (val instanceof EObject) {
-                            if (((EObject) val).eClass().getEAllStructuralFeatures().contains(IDStructuralFeature)) {
-                                elementInfo.put(ref.getName() + "Id", ((EObject) val).eGet(IDStructuralFeature));
+                    }
+                    else if (val instanceof EObject) {
+                        if (val instanceof Element) {
+                            if (val instanceof ValueSpecification) {
+                                elementInfo.put(ref.getName(), fillValueSpecification((ValueSpecification) val));
                             }
                             else {
-                                System.out.println("Skipped: " + val);
-                            }
-                            // }
-                        }
-                    }
-                }
-                else if ("owner".equals(ref.getName())) {
-                    Object val = element.eGet(ref);
-                    elementInfo.put(ref.getName() + "Id", ((EObject) val).eGet(IDStructuralFeature));
-                }
-
-            }
-            for (EReference ref : conts) {
-                // if (!ref.getName().contains("_") & !"ownedDiagram".equals(ref.getName())) {
-                if (!"ownedDiagram".equals(ref.getName())) {
-                    Object val = element.eGet(ref);
-                    if (val != null) {
-                        if (val instanceof EList) {
-                            if (!((EList<?>) val).isEmpty()) {
-                                // if ("ownedAttribute".equals(ref.getName())) {
-                                Iterator<?> it = ((EList<?>) val).iterator();
-                                JSONArray childArray = new JSONArray();
-                                JSONArray idArray = new JSONArray();
-
-                                while (it.hasNext()) {
-                                    EObject eo = (EObject) it.next();
-                                    if (eo instanceof Element) {
-                                        if (eo instanceof ValueSpecification) {
-                                            if (!createdIDs.contains(((Element) eo).getID())) {
-                                                childArray.add(fillValueSpecification((ValueSpecification) eo));
-
-                                                // fillElement((Element) eo);
-                                                // array.add(((Element) eo).getID());
-                                            }
-                                        }
-                                        else {
-                                            if (!createdIDs.contains(((Element) eo).getID())) {
-                                                siblings.add(createElement((Element) eo));
-
-                                                // fillElement((Element) eo);
-                                                idArray.add(((Element) eo).getID());
-                                            }
-                                        }
-                                    }
-                                }
-                                if (!idArray.isEmpty()) {
-                                    elementInfo.put(ref.getName() + "Ids", idArray);
-                                }
-                                if (!childArray.isEmpty()) {
-                                    elementInfo.put(ref.getName(), childArray);
-                                }
+                                // fillElement((Element) val);
+                                elementInfo.put(ref.getName() + "Id", getEID(((Element) val)));
                             }
                         }
-                        else if (val instanceof EObject) {
-                            if (val instanceof Element) {
-                                if (val instanceof ValueSpecification) {
-                                    if (!createdIDs.contains(((Element) val).getID())) {
-                                        elementInfo.put(ref.getName(), fillValueSpecification((ValueSpecification) val));
-                                        // fillElement((Element) eo);
-                                        // array.add(((Element) eo).getID());
-                                    }
-                                }
-                                else {
-                                    if (!createdIDs.contains(((Element) val).getID())) {
-                                        siblings.add(createElement((Element) val));
-                                        // fillElement((Element) val);
-                                        elementInfo.put(ref.getName() + "Id", ((Element) val).getID());
-                                    }
-                                }
-                            }
 
-                        }
                     }
                 }
             }
+        }*/
+
+        for (EReference eReference : element.eClass().getEAllReferences()) {
+            DEFAULT_EREFERENCE_FUNCTION.apply(element, eReference, elementInfo);
         }
         elementInfo.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
         fillMetatype(element, elementInfo);
         return elementInfo;
     }
 
-    /**
-     * Debug helper method. Can be discarded anytime.
-     *
-     * @param element
-     */
-    public void showElementMetaModel(NamedElement element) {
-        for (EAttribute sf : element.eClass().getEAllAttributes()) {
-            System.out.println(element.eGet(nameAtt) + " " + sf.getName() + " " + sf.isDerived() + " " + sf.isChangeable() + " " + sf.isID() + " " + sf.isMany());
-
-        }
-        for (EReference sf : element.eClass().getEAllReferences()) {
-            System.out.println(element.eGet(nameAtt) + " " + sf.getName() + " " + sf.isDerived() + " " + sf.isChangeable() + " " + sf.isContainment() + " " + sf.isContainer() + " " + sf.isMany());
-
-        }
-    }
-
-    public static String getElementID(Element e) {
-        if (e == null) {
+    private static String getEID(EObject eObject) {
+        if (eObject == null) {
             return null;
         }
-        if (e instanceof Slot) {
-            if (e.getOwner() == null || ((Slot) e).getDefiningFeature() == null) {
+        if (eObject instanceof Slot) {
+            Slot slot = (Slot) eObject;
+            if (slot.getOwner() == null || ((Slot) eObject).getDefiningFeature() == null) {
                 return null;
             }
-            return e.getOwner().getID() + "-slot-" + ((Slot) e).getDefiningFeature().getID();
+            return slot.getOwner().getID() + "-slot-" + slot.getDefiningFeature().getID();
         }
-        else if (e instanceof Model && e == Application.getInstance().getProject().getModel()) {
-            return Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        if (eObject instanceof Model) {
+            Model model = (Model) eObject;
+            Project project = Project.getProject(model);
+            if (eObject == project.getModel()) {
+                return project.getPrimaryProject().getProjectID();
+            }
         }
-        return e.getID();
+        return EcoreUtil.getID(eObject);
     }
 
-    @SuppressWarnings("unchecked")
-    public static JSONObject fillConnectorSpecialization(Connector e, JSONObject elementInfo) {
+    private static JSONObject fillConnectorSpecialization(Connector e, JSONObject elementInfo) {
         if (elementInfo == null) {
             elementInfo = new JSONObject();
         }
@@ -337,12 +285,11 @@ public class EMFExporter {
         return elementInfo;
     }
 
-    @SuppressWarnings("unchecked")
-    public static JSONObject fillMetatype(Element e, JSONObject einfo) {
+    private static JSONObject fillMetatype(Element e, JSONObject einfo) {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlId", getElementID(e));
+            info.put("sysmlId", getEID(e));
         }
         // info.put("isMetatype", false);
         if (e instanceof Stereotype) {
@@ -381,12 +328,7 @@ public class EMFExporter {
         return info;
     }
 
-    public JSONArray getSiblings() {
-        return siblings;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static JSONObject fillValueSpecification(ValueSpecification vs) {
+    private static JSONObject fillValueSpecification(ValueSpecification vs) {
         if (vs == null) {
             return null;
         }
@@ -403,7 +345,10 @@ public class EMFExporter {
         else if (vs instanceof ElementValue) {
             elementInfo.put("type", "ElementValue");
             Element elem = ((ElementValue) vs).getElement();
-            elementInfo.put("elementId", ((elem != null) ? getElementID(elem) : null));
+            elementInfo.put("elementId", ((elem != null) ? getEID(elem) : null));
+        }
+        else if (vs instanceof StringExpression) {
+            createStringExpression(vs, elementInfo);
         }
         else if (vs instanceof Expression) {
             elementInfo.put("type", "Expression");
@@ -414,9 +359,6 @@ public class EMFExporter {
             List<String> body = ((OpaqueExpression) vs).getBody();
             elementInfo.put("body", ((body != null) ? makeJsonArray(body) : new JSONArray()));
             elementInfo.put("language", ((((OpaqueExpression) vs).getLanguage() != null) ? makeJsonArray(((OpaqueExpression) vs).getLanguage()) : new JSONArray()));
-        }
-        else if (vs instanceof StringExpression) {
-            createStringExpression(vs, elementInfo);
         }
         else if (vs instanceof TimeExpression) {
             elementInfo.put("type", "TimeExpression");
@@ -456,7 +398,6 @@ public class EMFExporter {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static void fillLiteralSpecification(ValueSpecification vs, JSONObject elementInfo) {
         if (vs instanceof LiteralBoolean) {
             elementInfo.put("type", "LiteralBoolean");
@@ -464,7 +405,7 @@ public class EMFExporter {
         }
         else if (vs instanceof LiteralInteger) {
             elementInfo.put("type", "LiteralInteger");
-            elementInfo.put("value", new Long(((LiteralInteger) vs).getValue()));
+            elementInfo.put("value", (long) ((LiteralInteger) vs).getValue());
         }
         else if (vs instanceof LiteralNull) {
             elementInfo.put("type", "LiteralNull");
@@ -480,12 +421,12 @@ public class EMFExporter {
         }
         else if (vs instanceof LiteralUnlimitedNatural) {
             elementInfo.put("type", "LiteralUnlimitedNatural");
-            elementInfo.put("value", new Long(((LiteralUnlimitedNatural) vs).getValue()));
+            elementInfo.put("value", (long) ((LiteralUnlimitedNatural) vs).getValue());
         }
     }
 
     @SuppressWarnings("unchecked")
-    protected static <T> JSONArray makeJsonArray(Collection<T> collection) {
+    private static <T> JSONArray makeJsonArray(Collection<T> collection) {
         JSONArray arr = new JSONArray();
         for (T t : collection) {
             if (t != null) {
@@ -495,4 +436,83 @@ public class EMFExporter {
         return arr;
     }
 
+    private static void debugUMLPackageLiterals() {
+        for (Field field : UMLPackage.Literals.class.getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                try {
+                    field.setAccessible(true);
+                    Object o = field.get(null);
+                    System.out.println(field.getName() + ": " + o);
+                    if (o instanceof EReference) {
+                        EReference eReference = (EReference) o;
+                        System.out.println(" --- " + eReference.getEReferenceType() + " : " + eReference.getEReferenceType().getInstanceClass());
+                    }
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private static final Function<Object, Object> DEFAULT_SERIALIZATION_FUNCTION = object -> {
+        if (object == null) {
+            return null;
+        }
+        else if (object instanceof Collection) {
+            JSONArray jsonArray = new JSONArray();
+            for (Object o : ((Collection) object)) {
+                Object serializable = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o);
+                if (serializable == null && o != null) {
+                    // failed to serialize; taking the conservative approach and returning entire thing as null
+                    return null;
+                }
+                jsonArray.add(serializable);
+            }
+            return jsonArray;
+        }
+        else if (object instanceof EObject) {
+            return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)));
+        }
+        else if (object instanceof String || ClassUtils.isPrimitive(object)) {
+            return object;
+        }
+        // if we get here we have no idea what to do with this object
+        return null;
+    };
+
+    private static final TriFunction<Element, EReference, JSONObject, JSONObject> DEFAULT_EREFERENCE_FUNCTION = (element, eReference, jsonObject) -> {
+        if (eReference.isDerived()) {
+            return jsonObject;
+        }
+
+        Object value = element.eGet(eReference);
+        Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value);
+        if (value != null && serializedValue == null) {
+            System.out.println("[EMF] Failed to serialize " + eReference + " for " + element + ".");
+            return jsonObject;
+        }
+
+        String key = eReference.getName();
+        if (EObject.class.isAssignableFrom(eReference.getEReferenceType().getInstanceClass())) {
+            key += "Id";
+            if (eReference.getUpperBound() < 0 || eReference.getUpperBound() > 1) {
+                key += "s";
+            }
+        }
+        jsonObject.put(key, serializedValue);
+        return jsonObject;
+    };
+
+    public enum EReferenceOverride {
+
+        ;
+
+        private BiPredicate<Element, EReference> predicate;
+        private BiFunction<Element, JSONObject, JSONObject> function;
+
+        EReferenceOverride(BiPredicate<Element, EReference> predicate, BiFunction<Element, JSONObject, JSONObject> function) {
+            this.predicate = predicate;
+            this.function = function;
+        }
+    }
 }

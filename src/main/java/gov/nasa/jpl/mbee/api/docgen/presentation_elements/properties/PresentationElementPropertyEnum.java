@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.api.docgen.presentation_elements.properties;
 
-import gov.nasa.jpl.mbee.lib.function.Supplier;
+import java.util.function.Supplier;
 
 /**
  * Created by igomes on 8/23/16.
