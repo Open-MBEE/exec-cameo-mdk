@@ -72,7 +72,7 @@ public class EMFExporter implements Function<Element, JSONObject> {
     }
 
     private static JSONObject createElement(Element element) {
-        debugUMLPackageLiterals();
+        //debugUMLPackageLiterals();
 
         JSONObject jsonObject = new JSONObject();
         for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
@@ -305,6 +305,10 @@ public class EMFExporter implements Function<Element, JSONObject> {
     };
 
     private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> {
+        if (element.eClass().getEIDAttribute() == null) {
+            System.out.println("[EMF] EID Attribute missing: " + element);
+            return null;
+        }
         if (!eStructuralFeature.isChangeable() || eStructuralFeature.isVolatile() || eStructuralFeature.isTransient() || eStructuralFeature.isUnsettable() || eStructuralFeature.isDerived() || eStructuralFeature.getName().startsWith("_")) {
             return jsonObject;
         }
