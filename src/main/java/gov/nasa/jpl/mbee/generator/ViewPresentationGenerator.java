@@ -48,6 +48,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationRule uneditableElements = new ValidationRule("Uneditable elements", "uneditable elements", ViolationSeverity.WARNING);
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
+    private ValidationRule viewDoesNotExist = new ValidationRule("exist", "View element does not exist on MMS", ViolationSeverity.ERROR);
 
     private PresentationElementUtils instanceUtils;
 
@@ -82,6 +83,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         suite.addValidationRule(viewInProject);
         suite.addValidationRule(updateFailed);
         suite.addValidationRule(uneditableElements);
+        suite.addValidationRule(viewDoesNotExist);
         vss.add(suite);
     }
 
@@ -430,6 +432,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Set<Element> skippedViews = new HashSet<>();
 
         for (Element view : views) {
+            System.out.println("processing " + view.getID());
             if (ProjectUtilities.isElementInAttachedProject(view)) {
                 ValidationRuleViolation violation = new ValidationRuleViolation(view, "[IN MODULE] This view is in a module and was not processed.");
                 viewInProject.addViolation(violation);
@@ -467,6 +470,32 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (skippedViews.contains(view)) {
                     continue;
                 }
+
+                // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
+                // portion of the JSON required to update the view contents.
+                Object o;
+                JSONObject oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getJson() : null,
+                        oldSpecializationJson = oldViewJson != null && (o = oldViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null,
+                        fullViewJson = ExportUtility.fillElement(view, null),
+                        specializationJson = fullViewJson != null && (o = fullViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null;
+                if (oldSpecializationJson == null || specializationJson == null) {
+                    // elementsJsonArray.add(fullViewJson);
+                    // TODO
+                    ValidationRuleViolation violation = new ValidationRuleViolation(view, "View does not exist on MMS. Generation skipped.", true);  //reported?
+                    viewDoesNotExist.addViolation(violation);
+                    skippedViews.add(view);
+                    continue;
+                }
+                else {
+                    specializationJson.put("displayedElements", view2elements.get(view));
+                    if (ModelValidator.isViewSpecializationDiff(oldSpecializationJson, specializationJson)) {
+                        JSONObject subViewJson = new JSONObject();
+                        subViewJson.put("sysmlid", fullViewJson.get("sysmlid"));
+                        subViewJson.put("specialization", specializationJson);
+                        elementsJsonArray.add(subViewJson);
+                    }
+                }
+
                 for (PresentationElementInstance presentationElementInstance : view2pe.get(view)) {
                     if (presentationElementInstance.getInstance() != null) {
                         instanceToView.add(new Pair<>(presentationElementInstance.getInstance(), view));
@@ -481,25 +510,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 */
 
-                // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
-                // portion of the JSON required to update the view contents.
-                Object o;
-                JSONObject oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getJson() : null,
-                        oldSpecializationJson = oldViewJson != null && (o = oldViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null,
-                        fullViewJson = ExportUtility.fillElement(view, null),
-                        specializationJson = fullViewJson != null && (o = fullViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null;
-                if (oldSpecializationJson == null || specializationJson == null) {
-                    elementsJsonArray.add(fullViewJson);
-                }
-                else {
-                    specializationJson.put("displayedElements", view2elements.get(view));
-                    if (ModelValidator.isViewSpecializationDiff(oldSpecializationJson, specializationJson)) {
-                        JSONObject subViewJson = new JSONObject();
-                        subViewJson.put("sysmlid", fullViewJson.get("sysmlid"));
-                        subViewJson.put("specialization", specializationJson);
-                        elementsJsonArray.add(subViewJson);
-                    }
-                }
             }
 
             while (!instanceToView.isEmpty()) {
@@ -675,6 +685,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Utils.displayValidationWindow(vss, "View Generation Validation");
             }
         }*/
+        if (showValidation) {
+            if (suite.hasErrors()) {
+                Utils.displayValidationWindow(vss, "View Generation Validation");
+            }
+        }
     }
 
     private void handlePes(List<PresentationElementInstance> pes, Package p) {
