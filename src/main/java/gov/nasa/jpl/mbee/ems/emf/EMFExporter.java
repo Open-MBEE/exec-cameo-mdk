@@ -28,26 +28,26 @@
  *
  * @author Johannes Gross
  ******************************************************************************/
-package gov.nasa.jpl.mbee.ems;
+package gov.nasa.jpl.mbee.ems.emf;
 
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
-import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.api.function.TriFunction;
 import gov.nasa.jpl.mbee.lib.ClassUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import org.eclipse.emf.common.util.Enumerator;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
@@ -99,7 +99,7 @@ public class EMFExporter implements Function<Element, JSONObject> {
             if (slot.getOwner() == null || ((Slot) eObject).getDefiningFeature() == null) {
                 return null;
             }
-            return slot.getOwner().getID() + "-slot-" + slot.getDefiningFeature().getID();
+            return getEID(slot.getOwner()) + "-slot-" + getEID(slot.getDefiningFeature());
         }
         if (eObject instanceof Model) {
             Model model = (Model) eObject;
@@ -115,15 +115,8 @@ public class EMFExporter implements Function<Element, JSONObject> {
         // info.put("isMetatype", false);
         if (e instanceof Stereotype) {
             einfo.put("isMetatype", true);
-            JSONArray metatypes = new JSONArray();
-            for (Class c : ((Stereotype) e).getSuperClass()) {
-                if (c instanceof Stereotype) {
-                    metatypes.add(c.getID());
-                }
-            }
-            for (Class c : StereotypesHelper.getBaseClasses((Stereotype) e)) {
-                metatypes.add(c.getID());
-            }
+            JSONArray metatypes = ((Stereotype) e).getSuperClass().stream().filter(c -> c instanceof Stereotype).map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
+            metatypes.addAll(StereotypesHelper.getBaseClasses((Stereotype) e).stream().map(EMFExporter::getEID).collect(Collectors.toList()));
             einfo.put("metatypesId", metatypes);
         }
         if (e instanceof Class) {
@@ -137,14 +130,7 @@ public class EMFExporter implements Function<Element, JSONObject> {
             }
         }
         List<Stereotype> stereotypes = StereotypesHelper.getStereotypes(e);
-        JSONArray applied = new JSONArray();
-        for (Stereotype s : stereotypes) {
-            applied.add(s.getID());
-        }
-        // Class baseClass = StereotypesHelper.getBaseClass(e);
-        // if (baseClass != null)
-        // applied.add(baseClass.getID());
-
+        JSONArray applied = stereotypes.stream().map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
         einfo.put("appliedStereotypeIds", applied);
         return einfo;
     }
@@ -158,7 +144,7 @@ public class EMFExporter implements Function<Element, JSONObject> {
             elementInfo.put("type", "InstanceValue");
             InstanceValue iv = (InstanceValue) vs;
             InstanceSpecification i = iv.getInstance();
-            elementInfo.put("instance", ((i != null) ? i.getID() : null));
+            elementInfo.put("instance", ((i != null) ? getEID(i) : null));
         }
         else if (vs instanceof LiteralSpecification) {
             fillLiteralSpecification(vs, elementInfo);
@@ -189,13 +175,15 @@ public class EMFExporter implements Function<Element, JSONObject> {
         }
         else if (vs instanceof DurationInterval) {
             elementInfo.put("type", "DurationInterval");
-            elementInfo.put("min", null);
-            elementInfo.put("max", null);
+            DurationInterval durationInterval = (DurationInterval) vs;
+            elementInfo.put("min", durationInterval.getMin());
+            elementInfo.put("max", durationInterval.getMax());
         }
         else if (vs instanceof TimeInterval) {
             elementInfo.put("type", "TimeInterval");
-            elementInfo.put("min", null);
-            elementInfo.put("max", null);
+            TimeInterval timeInterval = (TimeInterval) vs;
+            elementInfo.put("min", timeInterval.getMin());
+            elementInfo.put("max", timeInterval.getMax());
         }
         return elementInfo;
     }
@@ -297,6 +285,9 @@ public class EMFExporter implements Function<Element, JSONObject> {
         else if (object instanceof EObject) {
             return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)));
         }
+        else if (object instanceof Enumerator) {
+            return ((Enumerator) object).getLiteral();
+        }
         else if (object instanceof String || ClassUtils.isPrimitive(object)) {
             return object;
         }
@@ -305,12 +296,8 @@ public class EMFExporter implements Function<Element, JSONObject> {
     };
 
     private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> {
-        if (element.eClass().getEIDAttribute() == null) {
-            System.out.println("[EMF] EID Attribute missing: " + element);
-            return null;
-        }
         if (!eStructuralFeature.isChangeable() || eStructuralFeature.isVolatile() || eStructuralFeature.isTransient() || eStructuralFeature.isUnsettable() || eStructuralFeature.isDerived() || eStructuralFeature.getName().startsWith("_")) {
-            return jsonObject;
+            return EMFExporter.EMPTY_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
         }
         return EMFExporter.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
     };
@@ -319,16 +306,13 @@ public class EMFExporter implements Function<Element, JSONObject> {
         Object value = element.eGet(eStructuralFeature);
         Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value);
         if (value != null && serializedValue == null) {
-            System.out.println("[EMF] Failed to serialize " + eStructuralFeature + " for " + element + ": " + value);
+            System.out.println("[EMF] Failed to serialize " + eStructuralFeature + " for " + element + ": " + value + " - " + value.getClass());
             return jsonObject;
         }
 
         String key = eStructuralFeature.getName();
         if (eStructuralFeature instanceof EReference && EObject.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())) {
-            key += "Id";
-            if (eStructuralFeature.getUpperBound() < 0 || eStructuralFeature.getUpperBound() > 1) {
-                key += "s";
-            }
+            key += "Id" + (eStructuralFeature.isMany() ? "s" : "");
         }
         jsonObject.put(key, serializedValue);
         return jsonObject;
@@ -384,8 +368,7 @@ public class EMFExporter implements Function<Element, JSONObject> {
 
                     return DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
                 }
-        )
-        ;
+        );
 
         private BiPredicate<Element, EStructuralFeature> predicate;
         private TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> function;

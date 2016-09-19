@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.actions.systemsreasoner;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.ems.EMFImporter;
 
 import java.awt.event.ActionEvent;
 

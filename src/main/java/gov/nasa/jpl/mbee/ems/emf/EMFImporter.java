@@ -1,6 +1,5 @@
-package gov.nasa.jpl.mbee.ems;
+package gov.nasa.jpl.mbee.ems.emf;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -14,17 +13,13 @@ import org.eclipse.emf.ecore.*;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
-public class EMFImporter implements Function<JSONObject, Element> {
+public class EMFImporter implements BiFunction<JSONObject, Project, Element> {
 
     // TODO Remove me @donbot
     private JSONObject head;
@@ -41,7 +36,7 @@ public class EMFImporter implements Function<JSONObject, Element> {
     private static final EClass LITERAL_SPECIFICATION = UMLFactory.eINSTANCE.getUMLPackage().getLiteralSpecification();
 
     @Override
-    public Element apply(JSONObject jsonObject) {
+    public Element apply(JSONObject jsonObject, Project project) {
         throw new UnsupportedOperationException();
     }
 

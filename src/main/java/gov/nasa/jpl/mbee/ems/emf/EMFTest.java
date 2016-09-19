@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.ems;
+package gov.nasa.jpl.mbee.ems.emf;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
