@@ -37,6 +37,7 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.StringExpression;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.Duration;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInterval;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
@@ -47,7 +48,8 @@ import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.api.function.TriFunction;
 import gov.nasa.jpl.mbee.lib.ClassUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
-import org.eclipse.emf.common.util.Enumerator;
+import gov.nasa.jpl.mbee.lib.function.BiFunction;
+import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
@@ -72,9 +74,13 @@ public class EMFExporter implements Function<Element, JSONObject> {
     }
 
     private static JSONObject createElement(Element element) {
-        //debugUMLPackageLiterals();
-
         JSONObject jsonObject = new JSONObject();
+        for (PreProcessor preProcessor : PreProcessor.values()) {
+            jsonObject = preProcessor.getFunction().apply(element, jsonObject);
+            if (jsonObject == null) {
+                return null;
+            }
+        }
         for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
             TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> function = Arrays.stream(EStructuralFeatureOverride.values())
                     .filter(override -> override.getPredicate().test(element, eStructuralFeature)).map(EStructuralFeatureOverride::getFunction)
@@ -84,9 +90,6 @@ public class EMFExporter implements Function<Element, JSONObject> {
                 return null;
             }
         }
-        jsonObject.put("type", element.eClass().getName());
-        jsonObject.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
-        fillMetatype(element, jsonObject);
         return jsonObject;
     }
 
@@ -263,30 +266,31 @@ public class EMFExporter implements Function<Element, JSONObject> {
         }
     }
 
-    private static final Function<Object, Object> DEFAULT_SERIALIZATION_FUNCTION = object -> {
+    private static final BiFunction<Object, EStructuralFeature, Object> DEFAULT_SERIALIZATION_FUNCTION = (object, eStructuralFeature) -> {
         if (object == null) {
             return null;
         }
         else if (object instanceof Collection) {
             JSONArray jsonArray = new JSONArray();
-            for (Object o : ((Collection) object)) {
-                Object serializable = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o);
-                if (serializable == null && o != null) {
+            for (Object o : ((Collection<?>) object)) {
+                Object serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, eStructuralFeature);
+                if (serialized == null && o != null) {
                     // failed to serialize; taking the conservative approach and returning entire thing as null
                     return null;
                 }
-                jsonArray.add(serializable);
+                jsonArray.add(serialized);
             }
             return jsonArray;
         }
         else if (object instanceof ValueSpecification) {
             return fillValueSpecification((ValueSpecification) object);
         }
-        else if (object instanceof EObject) {
-            return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)));
+        else if (eStructuralFeature instanceof EReference && object instanceof EObject) {
+            return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)), eStructuralFeature);
         }
-        else if (object instanceof Enumerator) {
-            return ((Enumerator) object).getLiteral();
+        else if (eStructuralFeature.getEType() instanceof EDataType) {
+            return EcoreUtil.convertToString((EDataType) eStructuralFeature.getEType(), object);
+            //return ((Enumerator) object).getLiteral();
         }
         else if (object instanceof String || ClassUtils.isPrimitive(object)) {
             return object;
@@ -304,9 +308,9 @@ public class EMFExporter implements Function<Element, JSONObject> {
 
     private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> {
         Object value = element.eGet(eStructuralFeature);
-        Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value);
+        Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value, eStructuralFeature);
         if (value != null && serializedValue == null) {
-            System.out.println("[EMF] Failed to serialize " + eStructuralFeature + " for " + element + ": " + value + " - " + value.getClass());
+            System.err.println("[EMF] Failed to serialize " + eStructuralFeature + " for " + element + ": " + value + " - " + value.getClass());
             return jsonObject;
         }
 
@@ -320,6 +324,45 @@ public class EMFExporter implements Function<Element, JSONObject> {
 
     private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> jsonObject;
 
+    private enum PreProcessor {
+        TYPE(
+                (element, jsonObject) -> {
+                    jsonObject.put("type", element.eClass().getName());
+                    return jsonObject;
+                }
+        ),
+        METATYPE(
+                (element, jsonObject) -> {
+                    fillMetatype(element, jsonObject);
+                    return jsonObject;
+                }
+        ),
+        DOCUMENTATION(
+                (element, jsonObject) -> {
+                    jsonObject.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
+                    return jsonObject;
+                }
+        ),
+        SITE_CHARACTERIZATION(
+                (element, jsonObject) -> {
+                    if (element instanceof Package) {
+                        jsonObject.put("_isSite", Utils.isSiteChar((Package) element));
+                    }
+                    return jsonObject;
+                }
+        );
+
+        private BiFunction<Element, JSONObject, JSONObject> function;
+
+        PreProcessor(BiFunction<Element, JSONObject, JSONObject> function) {
+            this.function = function;
+        }
+
+        public BiFunction<Element, JSONObject, JSONObject> getFunction() {
+            return function;
+        }
+    }
+
     private enum EStructuralFeatureOverride {
         ID(
                 (element, eStructuralFeature) -> eStructuralFeature == element.eClass().getEIDAttribute(),
@@ -329,8 +372,16 @@ public class EMFExporter implements Function<Element, JSONObject> {
                 }
         ),
         OWNER(
-                (element, eStructuralFeature) -> UMLPackage.Literals.PACKAGEABLE_ELEMENT__OWNING_PACKAGE == eStructuralFeature,
+                (element, eStructuralFeature) -> UMLPackage.Literals.ELEMENT__OWNER == eStructuralFeature,
                 (element, eStructuralFeature, jsonObject) -> UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, UMLPackage.Literals.ELEMENT__OWNER, jsonObject)
+        ),
+        OWNING_PACKAGE(
+                (element, eStructuralFeature) -> UMLPackage.Literals.PACKAGEABLE_ELEMENT__OWNING_PACKAGE == eStructuralFeature,
+                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
+        ),
+        OWNING_TEMPLATE_PARAMETER(
+                (element, eStructuralFeature) -> UMLPackage.Literals.PARAMETERABLE_ELEMENT__OWNING_TEMPLATE_PARAMETER == eStructuralFeature,
+                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
         DIRECTED_RELATIONSHIP__SOURCE(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,
@@ -364,7 +415,7 @@ public class EMFExporter implements Function<Element, JSONObject> {
                     for (int i = 0; i < propertyPaths.size(); i++) {
                         propertyPaths.get(i).add(connector.getEnd().get(i).getRole());
                     }
-                    jsonObject.put("pathsOfPropertyIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths));
+                    jsonObject.put("pathsOfPropertyIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths, eStructuralFeature));
 
                     return DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
                 }

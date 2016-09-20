@@ -9,6 +9,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
+import gov.nasa.jpl.mbee.lib.Changelog;
 import org.eclipse.emf.ecore.*;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.json.simple.JSONArray;
@@ -19,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class EMFImporter implements BiFunction<JSONObject, Project, Element> {
+public class EMFImporter implements BiFunction<JSONObject, Project, Changelog.Change<Element>> {
 
     // TODO Remove me @donbot
     private JSONObject head;
@@ -36,7 +37,7 @@ public class EMFImporter implements BiFunction<JSONObject, Project, Element> {
     private static final EClass LITERAL_SPECIFICATION = UMLFactory.eINSTANCE.getUMLPackage().getLiteralSpecification();
 
     @Override
-    public Element apply(JSONObject jsonObject, Project project) {
+    public Changelog.Change<Element> apply(JSONObject jsonObject, Project project) {
         throw new UnsupportedOperationException();
     }
 
