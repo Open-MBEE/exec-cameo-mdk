@@ -223,7 +223,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
                 }
             }
             if (doc != null) {
-                JSONObject spec = (JSONObject)doc.get("specialization");
+          *      JSONObject spec = (JSONObject)doc.get("specialization");
                 ViewHierarchyVisitor vhv = new ViewHierarchyVisitor();
                 dge.accept(vhv);
                 spec.put("view2view", ExportUtility.formatView2View(vhv.getView2View()));
@@ -314,7 +314,7 @@ public class ExportView extends RuleViolationAction implements AnnotationAction,
             //spec.put("noSections", visitor2.getNosections());
             spec.put("type", "Product");
             doc.put("sysmlId", view.getID());
-            doc.put("specialization", spec);
+//            doc.put("specialization", spec);
             documents.add(doc);
             send.put("elements", documents);*/
             //OutputQueue.getInstance().offer(new Request(sendElementsUrl, send.toJSONString()));

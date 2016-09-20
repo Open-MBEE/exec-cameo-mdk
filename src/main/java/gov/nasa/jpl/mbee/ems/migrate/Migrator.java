@@ -16,6 +16,8 @@ import org.json.simple.JSONObject;
 import java.util.HashSet;
 import java.util.Set;
 
+@Deprecated
+//TODO purge? @donbot
 public abstract class Migrator {
 
     private Project project;

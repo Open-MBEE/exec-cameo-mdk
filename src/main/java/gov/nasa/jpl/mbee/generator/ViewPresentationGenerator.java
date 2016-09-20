@@ -42,6 +42,9 @@ import java.util.*;
 /**
  * @author dlam
  */
+
+@Deprecated
+//TODO update stuff in here for @donbot
 public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
@@ -204,11 +207,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(), generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
                 for (Object viewObject : (JSONArray) viewResponse.get("elements")) {
                     // Resolve current instances in the view constraint expression
-                    JSONObject viewJSONObject, viewSpecializationJSONObject, viewContentsJSONObject;
-                    if (viewObject instanceof JSONObject && (viewJSONObject = (JSONObject) viewObject).containsKey("specialization") && viewJSONObject.get("specialization") instanceof JSONObject
-                            && (viewSpecializationJSONObject = (JSONObject) viewJSONObject.get("specialization")).containsKey("contents")
-                            && viewSpecializationJSONObject.get("contents") instanceof JSONObject && (viewContentsJSONObject = (JSONObject) viewSpecializationJSONObject.get("contents")).containsKey("operand")
-                            && viewContentsJSONObject.get("operand") instanceof JSONArray && viewJSONObject.containsKey("sysmlid") && viewJSONObject.get("sysmlid") instanceof String) {
+                    JSONObject viewJSONObject, viewContentsJSONObject;
+                    if (viewObject instanceof JSONObject
+                            && (viewJSONObject = (JSONObject) viewObject).containsKey("contents") 
+                            && viewJSONObject.get("contents") instanceof JSONObject 
+                            && (viewContentsJSONObject = (JSONObject) viewJSONObject.get("contents")).containsKey("operand") 
+                            && viewContentsJSONObject.get("operand") instanceof JSONArray
+                            && (viewJSONObject).containsKey("sysmlId") 
+                            && viewJSONObject.get("sysmlId") instanceof String) {
                         JSONArray viewOperandJSONArray = (JSONArray) viewContentsJSONObject.get("operand");
                         List<String> viewInstanceIDs = new ArrayList<>(viewOperandJSONArray.size());
                         for (Object viewOperandObject : viewOperandJSONArray) {
@@ -271,11 +277,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (response != null && response.containsKey("elements") && response.get("elements") instanceof JSONArray) {
                         for (Object instanceObject : (JSONArray) response.get("elements")) {
                             JSONObject elementJSONObject = null, specializationJSONObject = null, instanceSpecificationJSONObject;
-                            if (instanceObject instanceof JSONObject && (elementJSONObject = (JSONObject) instanceObject).containsKey("specialization")
-                                    && elementJSONObject.get("specialization") instanceof JSONObject
-                                    && (specializationJSONObject = (JSONObject) elementJSONObject.get("specialization")).containsKey("instanceSpecificationSpecification")
-                                    && specializationJSONObject.get("instanceSpecificationSpecification") instanceof JSONObject
-                                    && (instanceSpecificationJSONObject = (JSONObject) specializationJSONObject.get("instanceSpecificationSpecification")).containsKey("operand")
+                            if (instanceObject instanceof JSONObject 
+                                    && (elementJSONObject = (JSONObject) instanceObject).containsKey("instanceSpecificationSpecification")
+                                    && elementJSONObject.get("instanceSpecificationSpecification") instanceof JSONObject
+                                    && (instanceSpecificationJSONObject = (JSONObject) elementJSONObject.get("instanceSpecificationSpecification")).containsKey("operand")
                                     && instanceSpecificationJSONObject.get("operand") instanceof JSONArray) {
                                 JSONArray instanceOperandJSONArray = (JSONArray) instanceSpecificationJSONObject.get("operand");
                                 for (Object instanceOperandObject : instanceOperandJSONArray) {
@@ -483,11 +488,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
                 // portion of the JSON required to update the view contents.
+                // TODO there's a lot of redundancy here, fix in @donbot
                 Object o;
                 JSONObject oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getJson() : null,
-                        oldSpecializationJson = oldViewJson != null && (o = oldViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null,
+                        oldSpecializationJson = oldViewJson != null && (o = oldViewJson) instanceof JSONObject ? (JSONObject) o : null,
                         fullViewJson = ExportUtility.fillElement(view, null),
-                        specializationJson = fullViewJson != null && (o = fullViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null;
+                        specializationJson = fullViewJson != null && (o = fullViewJson) instanceof JSONObject ? (JSONObject) o : null;
                 if (oldSpecializationJson == null || specializationJson == null) {
                     elementsJsonArray.add(fullViewJson);
                 }
@@ -495,8 +501,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     specializationJson.put("displayedElements", view2elements.get(view));
                     if (ModelValidator.isViewSpecializationDiff(oldSpecializationJson, specializationJson)) {
                         JSONObject subViewJson = new JSONObject();
-                        subViewJson.put("sysmlid", fullViewJson.get("sysmlid"));
-                        subViewJson.put("specialization", specializationJson);
+                        subViewJson.put("sysmlId", fullViewJson.get("sysmlId"));
+//                        subViewJson.put("specialization", specializationJson);
                         elementsJsonArray.add(subViewJson);
                     }
                 }
@@ -522,11 +528,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 else {
                     // We only want to compare documentation and specialization to see if we need to update the instance
+                    // TODO remove these "specialization" calls. redundant with new @donbot changes
                     JSONObject subInstanceSpecificationJson = new JSONObject(), oldSubInstanceSpecificationJson = new JSONObject();
                     subInstanceSpecificationJson.put("documentation", instanceSpecificationJson.get("documentation"));
                     oldSubInstanceSpecificationJson.put("documentation", oldInstanceSpecificationJson.get("documentation"));
-                    subInstanceSpecificationJson.put("specialization", instanceSpecificationJson.get("specialization"));
-                    oldSubInstanceSpecificationJson.put("specialization", oldInstanceSpecificationJson.get("specialization"));
+                    subInstanceSpecificationJson.put("specialization", instanceSpecificationJson.get("specialization")); //@donbot
+                    oldSubInstanceSpecificationJson.put("specialization", oldInstanceSpecificationJson.get("specialization")); //@donbot
                     subInstanceSpecificationJson.put("name", instanceSpecificationJson.get("name"));
                     oldSubInstanceSpecificationJson.put("name", oldInstanceSpecificationJson.get("name"));
                     if (!JSONUtils.compare(subInstanceSpecificationJson, oldSubInstanceSpecificationJson)) {
@@ -551,8 +558,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     JSONObject subSlotJson = new JSONObject(), oldSubSlotJson = new JSONObject();
                     subSlotJson.put("owner", slotJson.get("owner"));
                     oldSubSlotJson.put("owner", oldSlotJson.get("owner"));
-                    subSlotJson.put("specialization", slotJson.get("specialization"));
-                    oldSubSlotJson.put("specialization", oldSlotJson.get("specialization"));
+                    // TODO remove these "specialization" calls. redundant with new @donbot changes
+                    subSlotJson.put("specialization", slotJson.get("specialization")); //@donbot
+                    oldSubSlotJson.put("specialization", oldSlotJson.get("specialization")); //@donbot
                     if (!JSONUtils.compare(subSlotJson, oldSubSlotJson)) {
                         elementsJsonArray.add(slotJson);
                     }

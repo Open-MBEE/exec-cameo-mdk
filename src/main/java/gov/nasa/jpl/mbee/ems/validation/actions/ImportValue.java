@@ -83,7 +83,7 @@ public class ImportValue extends RuleViolationAction implements AnnotationAction
                 return false;
             }
             Map<String, JSONObject> map = (Map<String, JSONObject>) result.get("elementsKeyed");
-            JSONArray vals = (JSONArray) ((JSONObject) map.get(e.getID()).get("specialization")).get("value");
+            JSONArray vals = (JSONArray) ((JSONObject) map.get(e.getID())).get("value");
             try {
                 if (e instanceof Property) {
                     ImportUtility.setPropertyDefaultValue((Property) e, vals);

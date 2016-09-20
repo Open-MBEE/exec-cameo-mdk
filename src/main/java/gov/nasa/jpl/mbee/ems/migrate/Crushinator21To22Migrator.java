@@ -20,6 +20,8 @@ import org.json.simple.JSONObject;
  * @author brower
  */
 
+@Deprecated
+//TODO purge? @donbot
 public class Crushinator21To22Migrator extends Migrator {
 
     @SuppressWarnings("unchecked")

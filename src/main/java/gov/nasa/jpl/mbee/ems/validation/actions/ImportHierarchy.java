@@ -380,10 +380,8 @@ public class ImportHierarchy extends RuleViolationAction implements
                                 opposite.setType((Type) view);
                                 JSONObject ptype = new JSONObject();
                                 ptype.put("sysmlId", opposite.getID());
-                                JSONObject spec = new JSONObject();
-                                spec.put("type", "Property");
-                                spec.put("propertyType", view.getID());
-                                ptype.put("specialization", spec);
+                                ptype.put("type", "Property");
+                                ptype.put("propertyType", view.getID());
                                 ptyped.add(opposite);
                             }
                         }

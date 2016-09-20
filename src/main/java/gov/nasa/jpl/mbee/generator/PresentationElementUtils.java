@@ -113,7 +113,8 @@ public class PresentationElementUtils {
                     if ((iscs.contains(paraC) || iscs.contains(tparaC)) && isView && is.getSpecification() instanceof LiteralString) {
                         try {
                             JSONObject ob = (JSONObject) (new JSONParser()).parse(((LiteralString) is.getSpecification()).getValue());
-                            if (view.getID().equals(ob.get("source")) && "documentation".equals(ob.get("sourceProperty"))) {
+                            //TODO sourceProperty json key migration? @donbot
+                            if (view.getID().equals(ob.get("sourceId")) && "documentation".equals(ob.get("sourceProperty"))) {
                                 viewinstance = false; //a view doc instance
                                 res.setViewDocHack(is);
                             }

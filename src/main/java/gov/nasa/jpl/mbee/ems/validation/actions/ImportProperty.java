@@ -49,7 +49,7 @@ public class ImportProperty extends RuleViolationAction implements AnnotationAct
                 return false;
             }
             Map<String, JSONObject> map = (Map<String, JSONObject>) result.get("elementsKeyed");
-            JSONObject ptype = (JSONObject) map.get(e.getID()).get("specialization");
+            JSONObject ptype = (JSONObject) map.get(e.getID());
             if (e instanceof Property && ptype.containsKey("propertyType")) {
                 ImportUtility.setProperty((Property) e, ptype);
             }

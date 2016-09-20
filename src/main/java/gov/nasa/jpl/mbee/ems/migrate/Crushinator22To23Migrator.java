@@ -11,6 +11,8 @@ import org.json.simple.JSONObject;
  * This class migrates a MagicDraw project from EMS 2.2 to EMS 2.3
  */
 
+@Deprecated
+//TODO purge? @donbot
 public class Crushinator22To23Migrator extends Migrator {
 
     @SuppressWarnings("unchecked")

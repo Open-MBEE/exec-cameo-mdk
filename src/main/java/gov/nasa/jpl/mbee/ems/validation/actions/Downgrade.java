@@ -11,7 +11,8 @@ import org.json.simple.JSONObject;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 
-
+@Deprecated 
+//TODO possible removal @donbot
 public class Downgrade extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element element;
@@ -32,11 +33,10 @@ public class Downgrade extends RuleViolationAction implements AnnotationAction, 
     @Override
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
-        JSONObject spec = (JSONObject) web.get("specialization");
-        if (spec != null && spec.containsKey("type")) {
-            spec.put("type", "View");
+        if (web != null && web.containsKey("type")) {
+            web.put("type", "View");
         }
-        spec.remove("view2view");
+        web.remove("view2view");
         web.remove("read");
         elements.add(web);
         commit(elements, "Product Downgrade");
