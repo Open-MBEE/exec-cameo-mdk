@@ -221,8 +221,6 @@ public class EMFImporter2 implements ToJsonFunction {
         boolean test(JSONObject jsonObject, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element);
     }
 
-
-
     private enum EStructuralFeatureOverride {
         ID(
                 (jsonObject, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
@@ -256,7 +254,6 @@ public class EMFImporter2 implements ToJsonFunction {
                         return null;
                     }
                     element.setOwner(owningElement);
-                    System.out.println("Owner: " + element.getOwner().getHumanName() + " : " + element.getOwner().getID());
                     return element;
                 }
         );
