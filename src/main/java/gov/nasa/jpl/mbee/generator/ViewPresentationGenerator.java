@@ -48,7 +48,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationRule uneditableElements = new ValidationRule("Uneditable elements", "uneditable elements", ViolationSeverity.WARNING);
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
-    private ValidationRule viewDoesNotExist = new ValidationRule("exist", "View element does not exist on MMS", ViolationSeverity.ERROR);
+    private ValidationRule viewDoesNotExist = new ValidationRule("viewDoesNotExist", "viewDoesNotExist", ViolationSeverity.ERROR);
 
     private PresentationElementUtils instanceUtils;
 
@@ -186,6 +186,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
 
         // Query existing server-side JSONs for views
+        List<String> viewIDs = new ArrayList<String>();
         if (!viewMap.isEmpty()) {
             // STAGE 2: Downloading existing view instances
             progressStatus.setDescription("Downloading existing view instances");
@@ -205,8 +206,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Queue<String> slotIDs = new LinkedList<>();
                 Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(), generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
                 for (Object viewObject : (JSONArray) viewResponse.get("elements")) {
-                    // Resolve current instances in the view constraint expression
                     JSONObject viewJSONObject, viewSpecializationJSONObject, viewContentsJSONObject;
+                    // store returned ids so we can exclude view generation for elements that aren't on the mms yet
+                    if (viewObject instanceof JSONObject && (viewJSONObject = (JSONObject) viewObject).containsKey("specialization") && viewJSONObject.get("sysmlid") instanceof String) {
+                        viewIDs.add((String) viewJSONObject.get("sysmlid"));
+                    }
+                    // Resolve current instances in the view constraint expression
                     if (viewObject instanceof JSONObject && (viewJSONObject = (JSONObject) viewObject).containsKey("specialization") && viewJSONObject.get("specialization") instanceof JSONObject
                             && (viewSpecializationJSONObject = (JSONObject) viewJSONObject.get("specialization")).containsKey("contents")
                             && viewSpecializationJSONObject.get("contents") instanceof JSONObject && (viewContentsJSONObject = (JSONObject) viewSpecializationJSONObject.get("contents")).containsKey("operand")
@@ -432,12 +437,17 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Set<Element> skippedViews = new HashSet<>();
 
         for (Element view : views) {
-            System.out.println("processing " + view.getID());
             if (ProjectUtilities.isElementInAttachedProject(view)) {
                 ValidationRuleViolation violation = new ValidationRuleViolation(view, "[IN MODULE] This view is in a module and was not processed.");
                 viewInProject.addViolation(violation);
                 skippedViews.add(view);
             }
+            if (!viewIDs.contains(view.getID())) {
+                ValidationRuleViolation violation = new ValidationRuleViolation(view, "View does not exist on MMS. Generation skipped.");
+                viewDoesNotExist.addViolation(violation);
+                skippedViews.add(view);
+            }
+
         }
 
         if (failure) {
@@ -470,6 +480,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (skippedViews.contains(view)) {
                     continue;
                 }
+                
 
                 // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
                 // portion of the JSON required to update the view contents.
@@ -479,12 +490,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         fullViewJson = ExportUtility.fillElement(view, null),
                         specializationJson = fullViewJson != null && (o = fullViewJson.get("specialization")) instanceof JSONObject ? (JSONObject) o : null;
                 if (oldSpecializationJson == null || specializationJson == null) {
-                    // elementsJsonArray.add(fullViewJson);
-                    // TODO
-                    ValidationRuleViolation violation = new ValidationRuleViolation(view, "View does not exist on MMS. Generation skipped.", true);  //reported?
-                    viewDoesNotExist.addViolation(violation);
-                    skippedViews.add(view);
-                    continue;
+                    elementsJsonArray.add(fullViewJson);
                 }
                 else {
                     specializationJson.put("displayedElements", view2elements.get(view));
