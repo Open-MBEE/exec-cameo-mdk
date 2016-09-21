@@ -1,0 +1,271 @@
+/*
+ *
+ */
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '4.4.0'
+        classpath group: 'org.zeroturnaround', name: 'gradle-jrebel-plugin', version: '1.1.3'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'distribution'
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'maven-publish'
+apply plugin: 'rebel'
+
+sourceCompatibility = 1.8
+version = humanVersion
+String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
+
+// In this section you declare where to find the dependencies of your project
+repositories {
+    jcenter()
+    // mavenCentral()
+    maven {
+    	url 'https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local'
+    }
+}
+
+configurations {
+    preCompile
+}
+
+// In this section you declare the dependencies for your production and test code
+dependencies {
+    // Production code requires MagicDraw patches to compile
+    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_0_sp6_lib_patches', version: '1.2', ext: 'zip' 
+    
+    // SLF4J API
+    // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+    // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
+    
+    // SLF4J-Log4j12
+    // compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
+    // compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.21+'
+    
+    // JSoup
+    compile group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
+    // compile group: 'org.jsoup', name: 'jsoup', version: '1.9.1+'
+    
+    // JGraphT 
+    compile group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
+    // compile group: 'org.jgrapht', name: 'jgrapht', version: '1.0.0+'
+    
+    // JSON Simple
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
+    // compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1+'
+    
+    // SwingX-All
+    compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.4'
+    // compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.5+'
+    
+    // OpenCSV
+    compile group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
+    // compile group: 'com.opencsv', name: 'opencsv', version: '3.8+'
+    
+    // ActiveMQ 
+    compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
+    // compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
+    
+    // Other dependencies we're unable to resolve via repositories
+    compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar','plugins/**/*.jar'])
+    compile fileTree(dir: 'lib', include: ['*.jar'])
+    
+	// Test Dependencies
+    testCompile 'junit:junit:4.10'
+}
+
+task extractDependencies {
+    configurations.preCompile.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+        inputs.file artifact.file
+        def zipFile = new java.util.zip.ZipFile(artifact.file)
+        zipFile.entries().each { entry ->
+            if (!entry.isDirectory()) {
+                outputs.file 'build/dependency-cache/extracted/' + entry.getName()
+            }
+        }
+    }
+    doLast {
+        inputs.files.each { archive ->
+            copy {
+                from zipTree(archive)
+                into 'build/dependency-cache/extracted'
+            }
+        }
+        /*fileTree(dir: 'build/dependency-cache/extracted').each { file ->
+            outputs.file file
+        }*/
+    }
+}
+compileJava.dependsOn extractDependencies
+
+class PreDist extends DefaultTask {
+    String version
+    String internalVersion
+    String groupId
+    String descriptor
+
+    @TaskAction
+    public void executeTask() {
+        project.copy {
+            from 'src/main/dist'
+            exclude 'template'
+            from 'src/main/dist/template'
+            into 'build/generated-dist'
+        }
+        project.copy {
+            from project.configurations.compile.resolvedConfiguration.resolvedArtifacts.file
+            into "build/generated-dist/plugins/${groupId}"
+        }
+        project.copy {
+            from project.jar
+            into "build/generated-dist/plugins/${groupId}"
+        }
+
+        String pluginLibraries = ''
+        project.fileTree(dir: "build/generated-dist/plugins/${groupId}", include: '**/*.jar').each { file ->
+            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${groupId}\//, '') + '\"/>' + System.lineSeparator()
+        }
+        project.copy {
+            from "src/main/dist/template/plugins/${groupId}/plugin.xml"
+            filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + pluginLibraries) }
+            filter { String line -> line.replace('${human.version}', version) }
+            filter { String line -> line.replace('${internal.version}', internalVersion) }
+            into "build/generated-dist/plugins/${groupId}"
+        }
+
+        String descriptorFiles = ''
+        project.fileTree(dir: 'build/generated-dist').each { file ->
+            String relativePath = file.absolutePath.replaceAll(/.*build\/generated-dist\//, '');
+            descriptorFiles += '\t\t<file from=\"' + relativePath + '\" to=\"' + relativePath + '\"/>' + System.lineSeparator()
+        }
+        project.copy {
+            from "src/main/dist/template/data/resourcemanager/${descriptor}"
+            filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + descriptorFiles) }
+            filter { String line -> line.replace('${human.version}', version) }
+            filter { String line -> line.replace('${internal.version}', internalVersion) }
+            into 'build/generated-dist/data/resourcemanager'
+        }
+    }
+}
+
+task preDist(type: PreDist, dependsOn: jar) {
+    version = humanVersion
+    internalVersion = buildNumber
+    groupId = 'gov.nasa.jpl.mbee.mdk'
+    descriptor = 'MDR_Plugin_MDK_Expression_75689_descriptor.xml'
+}
+
+distributions {
+    main {
+        contents {
+            exclude 'template'
+            from 'build/generated-dist'
+        }
+    }
+}
+
+assembleDist.dependsOn.remove distTar
+tasks.remove(distTar)
+
+distZip {
+    includeEmptyDirs false
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+    eachFile { file ->
+        file.setPath(path.substring(path.indexOf("/") + 1, path.length()))
+    }
+}
+
+distZip.dependsOn preDist
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+publishing {
+@@@ FIXME
+    // Reference to Gradle publications defined in the build script.
+    // This is how we tell the Artifactory Plugin which artifacts should be
+    // published to Artifactory.
+    publications {
+        mavenJava(MavenPublication) {
+            groupId 'gov.nasa.jpl.mbee.docgen'
+            artifactId 'mdk'
+            version humanVersion
+
+            from components.java
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+            artifact distZip {
+                classifier "plugin"
+            }
+        }
+    }
+}
+
+artifactory {
+    contextUrl = 'https://cae-artifactory.jpl.nasa.gov/artifactory/'
+    publish {
+        repository {
+            repoKey = 'plugins-' + (version.endsWith('SNAPSHOT') ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
+            username = "${artifactory_user}" // The publisher user name
+            password = "${artifactory_password}" // The publisher password
+            maven = true
+        }
+        defaults {
+            publications('mavenJava')
+            publishArtifacts = true
+            // Properties to be attached to the published artifacts.
+            //properties = ['qa.level': 'basic', 'dev.team' : 'core']
+            // Publish generated POM files to Artifactory (true by default)
+            publishPom = true
+        }
+    }
+}
+
+artifactoryPublish.dependsOn distZip
+
+installDist {
+    destinationDir = file('build/install')
+    doLast {
+        copy {
+            from 'build/install'
+            into 'build/dependency-cache/extracted'
+        }
+    }
+}
+
+installDist.dependsOn distZip
+
+task runApp(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+
+    standardOutput = System.out
+    errorOutput = System.err
+
+    main = 'com.nomagic.magicdraw.Main'
+    jvmArgs = ['-Xmx2000M', '-Xss1024K', '-DLOCALCONFIG=true']
+    // arguments to pass to the application
+    args 'DEVELOPER'
+    workingDir = 'build/dependency-cache/extracted'
+
+    ignoreExitValue = true
+}
+
+runApp.dependsOn installDist
+runApp.dependsOn generateRebel
