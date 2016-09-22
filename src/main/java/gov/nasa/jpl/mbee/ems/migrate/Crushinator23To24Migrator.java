@@ -34,6 +34,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * This class migrates a MagicDraw project from EMS 2.3 to EMS 2.4
  */
 
+@Deprecated
+//TODO purge? @donbot
 public class Crushinator23To24Migrator extends Migrator {
     // https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-233
     // https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-277

@@ -56,7 +56,8 @@ public class ImportConnector extends RuleViolationAction implements AnnotationAc
             }
             JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setConnectorEnds((Connector) e, (JSONObject) resultOb.get("specialization"));
+                ImportUtility.setConnectorEnds((Connector) e, (JSONObject) resultOb);
+//                ImportUtility.setConnectorEnds((Connector) e, (JSONObject) resultOb.get("specialization"));
             } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] " + name + " cannot be imported because it would create a model inconsistency due to one or both roles missing.");
                 return false;

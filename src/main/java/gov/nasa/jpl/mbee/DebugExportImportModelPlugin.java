@@ -81,8 +81,8 @@ public class DebugExportImportModelPlugin extends MDPlugin {
         Method method = getNmActionMethod();
 
         String category = "MDK";
-        addConfiguration("MainMenu", "", "Debug Export/Improt1", category, method, this);
-        addConfiguration("ContainmentBrowserContext", "", "(Debug Export/Improt)", category, method,
+        addConfiguration("MainMenu", "", "Debug Export/Import1", category, method, this);
+        addConfiguration("ContainmentBrowserContext", "", "(Debug Export/Import)", category, method,
                 this);
         addConfiguration("BaseDiagramContext", "Class Diagram", "Debug Export/Improt3", category,
                 method, this);

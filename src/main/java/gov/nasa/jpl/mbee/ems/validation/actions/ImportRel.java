@@ -80,10 +80,9 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
                 Utils.guilog("[ERROR] " + name + " isn't editable");
                 return false;
             }
-            JSONObject tmpObj = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
-            JSONObject specialization = (JSONObject) tmpObj.get("specialization");
+            JSONObject elementJson = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setRelationshipEnds((DirectedRelationship) e, specialization);
+                ImportUtility.setRelationshipEnds((DirectedRelationship) e, elementJson);
             } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] " + name + " cannot be imported because it would create a model inconsistency due to one or both ends missing.");
                 return false;
@@ -94,10 +93,9 @@ public class ImportRel extends RuleViolationAction implements AnnotationAction, 
             if (element instanceof NamedElement) {
                 name = ((NamedElement) element).getQualifiedName();
             }
-            JSONObject tmpObj = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(element.getID());
-            JSONObject specialization = (JSONObject) tmpObj.get("specialization");
+            JSONObject elementJson = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(element.getID());
             try {
-                ImportUtility.setRelationshipEnds((DirectedRelationship) element, specialization);
+                ImportUtility.setRelationshipEnds((DirectedRelationship) element, elementJson);
             } catch (ReferenceException ex) {
                 Utils.guilog("[ERROR] " + name + " cannot be imported because it would create a model inconsistency due to one or both roles missing.");
                 return false;

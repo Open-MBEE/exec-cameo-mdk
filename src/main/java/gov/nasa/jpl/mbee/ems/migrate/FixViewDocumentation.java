@@ -46,6 +46,8 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
+//TODO purge? @donbot
 public class FixViewDocumentation extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String actionid = "FixViewDoc";

@@ -52,7 +52,7 @@ public class ImportViewConstraint extends RuleViolationAction implements Annotat
             }
             JSONObject resultOb = ((Map<String, JSONObject>) result.get("elementsKeyed")).get(e.getID());
             try {
-                ImportUtility.setViewConstraint(e, (JSONObject) resultOb.get("specialization"));
+                ImportUtility.setViewConstraint(e, (JSONObject) resultOb);
             } catch (ImportException ex) {
                 Utils.guilog("[ERROR] " + ex.getMessage());
                 return false;

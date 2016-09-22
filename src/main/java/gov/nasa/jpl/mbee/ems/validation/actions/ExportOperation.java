@@ -34,7 +34,7 @@ public class ExportOperation extends RuleViolationAction implements AnnotationAc
         for (Annotation anno : annos) {
             Element e = (Element) anno.getTarget();
             JSONObject elementOb = ExportUtility.fillId(e, null);
-            elementOb.put("specialization", ExportUtility.fillOperationSpecialization((Operation) e, null));
+            ExportUtility.fillOperationSpecialization((Operation) e, elementOb);
             infos.add(elementOb);
         }
         commit(infos, "Operation");
@@ -45,7 +45,7 @@ public class ExportOperation extends RuleViolationAction implements AnnotationAc
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
         JSONObject elementOb = ExportUtility.fillId(element, null);
-        elementOb.put("specialization", ExportUtility.fillOperationSpecialization(element, null));
+        ExportUtility.fillOperationSpecialization(element, elementOb);
         elements.add(elementOb);
         commit(elements, "Operation");
     }

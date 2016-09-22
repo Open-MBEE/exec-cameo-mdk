@@ -26,6 +26,8 @@ import org.json.simple.JSONObject;
 
 import java.util.*;
 
+@Deprecated
+//TODO Migrate use of these methods to EMFImporter.java @donbot
 public class ImportUtility {
     public static Logger log = Logger.getLogger(ImportUtility.class);
     private static boolean shouldOutputError = true;
@@ -115,14 +117,14 @@ public class ImportUtility {
         return createElement(ob, updateRelations, false);
     }
 
-    public static Element createElement(JSONObject ob, boolean updateRelations, boolean ignoreOwner) throws ImportException {
+    public static Element createElement(JSONObject elementJson, boolean updateRelations, boolean ignoreOwner) throws ImportException {
         Project project = Application.getInstance().getProject();
         ElementsFactory ef = project.getElementsFactory();
         ClassClass cll = ef.getClassClass();
         InstanceSpecificationClass isc = ef.getInstanceSpecificationClass();
         project.getCounter().setCanResetIDForObject(true);
         if (!ignoreOwner) {
-            String ownerId = (String) ob.get("owner");
+            String ownerId = (String) elementJson.get("owner");
             if (ownerId == null || ownerId.isEmpty()) {
                 return null;
             }
@@ -133,15 +135,14 @@ public class ImportUtility {
         // For all new elements the should be the following fields
         // should be present: name, owner, and documentation
         //
-        String sysmlID = (String) ob.get("sysmlId");
+        String sysmlID = (String) elementJson.get("sysmlId");
         Element existing = ExportUtility.getElementFromID(sysmlID);
         if (existing != null && !updateRelations) {
             return existing; // maybe jms feedback
         }
-        JSONObject specialization = (JSONObject) ob.get("specialization");
         String elementType = "Element";
-        if (specialization != null) {
-            elementType = (String) specialization.get("type");
+        if (elementJson.containsKey("type")) {
+            elementType = (String) elementJson.get("type");
         }
         Element newE = existing;
         try {
@@ -170,8 +171,8 @@ public class ImportUtility {
                 }
             }
             else if (elementType.equalsIgnoreCase("Property")) {
-                JSONArray vals = (JSONArray) specialization.get("value");
-                Boolean isSlot = (Boolean) specialization.get("isSlot");
+                JSONArray vals = (JSONArray) elementJson.get("value");
+                Boolean isSlot = (Boolean) elementJson.get("isSlot");
                 if (isSlot != null && isSlot) {
                     if (newE == null) {
                         Slot newSlot = ef.createSlotInstance();
@@ -185,15 +186,15 @@ public class ImportUtility {
                                     newSlot.setDefiningFeature((StructuralFeature) definingFeature);
                                 }
                                 else {
-                                    throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                                    throw new ReferenceException(newSlot, elementJson, "slot doesn't have defining feature");
                                 }
                             }
                             else {
-                                throw new ReferenceException(newSlot, ob, "slot doesn't have defining feature");
+                                throw new ReferenceException(newSlot, elementJson, "slot doesn't have defining feature");
                             }
                         }
                     }
-                    if (specialization.containsKey("value")) {
+                    if (elementJson.containsKey("value")) {
                         setSlotValues((Slot) newE, vals);
                     }
                 }
@@ -202,11 +203,11 @@ public class ImportUtility {
                         Property newProperty = ef.createPropertyInstance();
                         newE = newProperty;
                     }
-                    if (specialization.containsKey("value")) {
+                    if (elementJson.containsKey("value")) {
                         setPropertyDefaultValue((Property) newE, vals);
                     }
-                    if (specialization.containsKey("propertyType")) {
-                        setProperty((Property) newE, specialization);
+                    if (elementJson.containsKey("propertyType")) {
+                        setProperty((Property) newE, elementJson);
                     }
                 }
             }
@@ -219,7 +220,7 @@ public class ImportUtility {
                     newE = newDependency;
                 }
                 if (updateRelations) {
-                    setRelationshipEnds((Dependency) newE, specialization);
+                    setRelationshipEnds((Dependency) newE, elementJson);
                 }
                 if (elementType.equalsIgnoreCase("Characterizes")) {
                     Stereotype character = Utils.getCharacterizesStereotype();
@@ -236,7 +237,7 @@ public class ImportUtility {
                     newE = newGeneralization;
                 }
                 if (updateRelations) {
-                    setRelationshipEnds((Generalization) newE, specialization);
+                    setRelationshipEnds((Generalization) newE, elementJson);
                 }
                 if (elementType.equalsIgnoreCase("Conform")) {
                     Stereotype conform = Utils.getSysML14ConformsStereotype();
@@ -254,21 +255,21 @@ public class ImportUtility {
                     Constraint c = ef.createConstraintInstance();
                     newE = c;
                 }
-                setConstraintSpecification((Constraint) newE, specialization);
+                setConstraintSpecification((Constraint) newE, elementJson);
             }
             else if (elementType.equalsIgnoreCase("Parameter")) {
                 if (newE == null) {
                     Parameter p = ef.createParameterInstance();
                     newE = p;
                 }
-                setParameter((Parameter) newE, specialization);
+                setParameter((Parameter) newE, elementJson);
             }
             else if (elementType.equalsIgnoreCase("Operation")) {
                 if (newE == null) {
                     Operation c = ef.createOperationInstance();
                     newE = c;
                 }
-                setOperationSpecification((Operation) newE, specialization);
+                setOperationSpecification((Operation) newE, elementJson);
             }
             else if (elementType.equalsIgnoreCase("Product")) {
                 if (newE == null) {
@@ -289,7 +290,7 @@ public class ImportUtility {
                     newE = ac;
                 }
                 if (updateRelations) {
-                    setAssociation((Association) newE, specialization);
+                    setAssociation((Association) newE, elementJson);
                 }
             }
             else if (elementType.equalsIgnoreCase("Connector")) {
@@ -298,7 +299,7 @@ public class ImportUtility {
                     newE = conn;
                 }
                 if (updateRelations) {
-                    setConnectorEnds((Connector) newE, specialization);
+                    setConnectorEnds((Connector) newE, elementJson);
                 }
             }
             else if (elementType.equalsIgnoreCase("InstanceSpecification")) {
@@ -306,51 +307,50 @@ public class ImportUtility {
                     InstanceSpecification is = ef.createInstanceSpecificationInstance();
                     newE = is;
                 }
-                setInstanceSpecification((InstanceSpecification) newE, specialization);
+                setInstanceSpecification((InstanceSpecification) newE, elementJson);
             }
             else if (newE == null) {
                 Class newElement = ef.createClassInstance();
                 newE = newElement;
             }
-            setName(newE, ob);
-            if (!ignoreOwner && !(newE.getOwner() != null && ob.get("owner") instanceof String &&
-                    ((String) ob.get("owner")).contains("holding_bin")))
+            setName(newE, elementJson);
+            if (!ignoreOwner && !(newE.getOwner() != null && elementJson.get("owner") instanceof String &&
+                    ((String) elementJson.get("owner")).contains("holding_bin")))
             //don't update owner if trying to update existing element's owner to under a holding bin
             {
-                setOwner(newE, ob);
+                setOwner(newE, elementJson);
             }
-            setDocumentation(newE, ob);
-            setOwnedAttribute(newE, ob);
+            setDocumentation(newE, elementJson);
+            setOwnedAttribute(newE, elementJson);
             newE.setID(sysmlID);
         } catch (ImportException ex) {
             if (Utils.modelInconsistency(newE) && updateRelations) {
                 newE.dispose();
                 throw ex;
             }
-            setName(newE, ob);
-            if (!(newE.getOwner() != null && ob.get("owner") instanceof String &&
-                    ((String) ob.get("owner")).contains("holding_bin")))
+            setName(newE, elementJson);
+            if (!(newE.getOwner() != null && elementJson.get("owner") instanceof String &&
+                    ((String) elementJson.get("owner")).contains("holding_bin")))
             //don't update owner if trying to update existing element's owner to under a holding bin
             {
-                setOwner(newE, ob);
+                setOwner(newE, elementJson);
             }
-            setDocumentation(newE, ob);
+            setDocumentation(newE, elementJson);
             newE.setID(sysmlID);
             throw ex;
         }
         return newE;
     }
 
-    public static void setParameter(Parameter param,
-                                    JSONObject specialization) {
-        Object o = specialization.get("direction");
+    public static void setParameter(Parameter param, JSONObject elementJson) {
+        Object o = elementJson.get("direction");
         String direction = null;
         if (o instanceof String) {
             direction = (String) o;
         }
         param.setDirection(ParameterDirectionKindEnum.get(direction));
 
-        o = specialization.get("parameterType");
+        o = elementJson.get("parameterType");
         String ptype = null;
         if (o instanceof String) {
             ptype = (String) o;
@@ -372,62 +372,62 @@ public class ImportUtility {
         }
     }
 
-    public static void updateElement(Element e, JSONObject o) throws ImportException {
-        setName(e, o);
-        setDocumentation(e, o);
-        setOwnedAttribute(e, o);
-        JSONObject spec = (JSONObject) o.get("specialization");
-        if (spec != null) {
+    public static void updateElement(Element e, JSONObject elementJson) throws ImportException {
+        setName(e, elementJson);
+        setDocumentation(e, elementJson);
+        setOwnedAttribute(e, elementJson);
+        
+        if (elementJson != null) {
             try {
-                String type = (String) spec.get("type");
+                String type = (String) elementJson.get("type");
                 if (type != null && type.equals("Property") && e instanceof Property) {
-                    setProperty((Property) e, spec);
-                    if (spec.containsKey("value")) {
-                        setPropertyDefaultValue((Property) e, (JSONArray) spec.get("value"));
+                    setProperty((Property) e, elementJson);
+                    if (elementJson.containsKey("value")) {
+                        setPropertyDefaultValue((Property) e, (JSONArray) elementJson.get("value"));
                     }
                     //                if (spec.containsKey("propertyType"))
                     //                    setProperty((Property)e, spec);
                 }
-                if (type != null && type.equals("Property") && e instanceof Slot && spec.containsKey("value")) {
-                    setSlotValues((Slot) e, (JSONArray) spec.get("value"));
+                if (type != null && type.equals("Property") && e instanceof Slot && elementJson.containsKey("value")) {
+                    setSlotValues((Slot) e, (JSONArray) elementJson.get("value"));
                 }
                 if (type != null && e instanceof DirectedRelationship) {
-                    setRelationshipEnds((DirectedRelationship) e, spec);
+                    setRelationshipEnds((DirectedRelationship) e, elementJson);
                 }
                 if (type != null && e instanceof Constraint && type.equals("Constraint")) {
-                    setConstraintSpecification((Constraint) e, spec);
+                    setConstraintSpecification((Constraint) e, elementJson);
                 }
                 if (type != null && e instanceof Operation && type.equals("Operation")) {
-                    setOperationSpecification((Operation) e, spec);
+                    setOperationSpecification((Operation) e, elementJson);
                 }
                 if (type != null && e instanceof Parameter && type.equals("Parameter")) {
-                    setParameter((Parameter) e, spec);
+                    setParameter((Parameter) e, elementJson);
                 }
                 if (type != null && e instanceof Connector && type.equals("Connector")) {
-                    setConnectorEnds((Connector) e, spec);
+                    setConnectorEnds((Connector) e, elementJson);
                 }
                 if (type != null && e instanceof Association && type.equals("Association")) {
                     try {
-                        setAssociation((Association) e, spec);
+                        setAssociation((Association) e, elementJson);
                     } catch (Exception ex) {
 
                     }
                 }
                 if (type != null && e instanceof InstanceSpecification && type.equals("InstanceSpecification")) {
-                    setInstanceSpecification((InstanceSpecification) e, spec);
+                    setInstanceSpecification((InstanceSpecification) e, elementJson);
                 }
                 // server-side only view instances obsoletes this
                 /*if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
                     setViewConstraint(e, spec);*/
             } catch (ImportException ex) {
-                throw new ImportException(e, o, ex.getMessage());
+                throw new ImportException(e, elementJson, ex.getMessage());
             }
         }
     }
 
     // server-side only view instances obsoletes this
     @Deprecated
-    public static void setViewConstraint(Element e, JSONObject specialization) throws ImportException {
+    public static void setViewConstraint(Element e, JSONObject elementJson) throws ImportException {
         Constraint c = Utils.getViewConstraint(e);
         if (c == null) {
             c = Application.getInstance().getProject().getElementsFactory().createConstraintInstance();
@@ -436,20 +436,20 @@ public class ImportUtility {
             c.setOwner(e);
             c.getConstrainedElement().add(e);
         }
-        if (specialization != null && specialization.containsKey("contents")) {
-            if (specialization.get("contents") == null) {
+        if (elementJson != null && elementJson.containsKey("contents")) {
+            if (elementJson.get("contents") == null) {
                 c.setSpecification(null);
             }
             else {
                 try {
-                    c.setSpecification(createValueSpec((JSONObject) specialization.get("contents"), c.getSpecification()));
+                    c.setSpecification(createValueSpec((JSONObject) elementJson.get("contents"), c.getSpecification()));
                 } catch (ReferenceException ex) {
-                    throw new ImportException(e, specialization, "View constraint: " + ex.getMessage());
+                    throw new ImportException(e, elementJson, "View constraint: " + ex.getMessage());
                 }
             }
         }
-        if (specialization.containsKey("displayedElements")) {
-            JSONArray des = (JSONArray) specialization.get("displayedElements");
+        if (elementJson.containsKey("displayedElements")) {
+            JSONArray des = (JSONArray) elementJson.get("displayedElements");
             if (des != null) {
                 StereotypesHelper.setStereotypePropertyValue(e, Utils.getViewClassStereotype(), "elements", des.toJSONString());
             }
@@ -526,23 +526,23 @@ public class ImportUtility {
         }
     }
 
-    public static void setInstanceSpecification(InstanceSpecification is, JSONObject specialization) throws ImportException {
-        JSONObject spec = (JSONObject) specialization.get("instanceSpecificationSpecification");
+    public static void setInstanceSpecification(InstanceSpecification is, JSONObject elementJson) throws ImportException {
+        JSONObject spec = (JSONObject) elementJson.get("instanceSpecificationSpecification");
         if (spec != null) {
             try {
                 is.setSpecification(createValueSpec(spec, is.getSpecification()));
             } catch (ReferenceException ex) {
-                throw new ImportException(is, specialization, "Specification: " + ex.getMessage(), ex);
+                throw new ImportException(is, elementJson, "Specification: " + ex.getMessage(), ex);
             }
         }
         else {
             is.setSpecification(null);
         }
-        if (specialization.containsKey("classifier")) {
-            JSONArray classifier = (JSONArray) specialization.get("classifier");
+        if (elementJson.containsKey("classifier")) {
+            JSONArray classifier = (JSONArray) elementJson.get("classifierId");
             if (classifier == null || classifier.isEmpty()) {
                 log.info("[IMPORT/SYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
-                throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
+                throw (new ReferenceException(is, elementJson, "Instance Specification has no classifier"));
             }
             List<Classifier> newClassifiers = new ArrayList<Classifier>();
             for (Object id : classifier) {
@@ -555,7 +555,7 @@ public class ImportUtility {
                 }
             }
             if (newClassifiers.isEmpty()) {
-                throw (new ReferenceException(is, specialization, "Instance Specification has no classifier"));
+                throw (new ReferenceException(is, elementJson, "Instance Specification has no classifier"));
             }
             is.getClassifier().clear();
             is.getClassifier().addAll(newClassifiers);
@@ -563,8 +563,8 @@ public class ImportUtility {
     }
 
     public static void setRelationshipEnds(DirectedRelationship dr, JSONObject specialization) throws ReferenceException {
-        String sourceId = (String) specialization.get("source");
-        String targetId = (String) specialization.get("target");
+        String sourceId = (String) specialization.get("sourceId");
+        String targetId = (String) specialization.get("targetId");
         Element source = ExportUtility.getElementFromID(sourceId);
         Element target = ExportUtility.getElementFromID(targetId);
         if (source != null && target != null) {
@@ -586,9 +586,9 @@ public class ImportUtility {
         }
     }
 
-    public static void setProperty(Property p, JSONObject spec) {
+    public static void setProperty(Property p, JSONObject elementJson) {
         // fix the property type here
-        String ptype = (String) spec.get("propertyType");
+        String ptype = (String) elementJson.get("propertyType");
         if (ptype != null) {
             Type t = (Type) ExportUtility.getElementFromID(ptype);
             if (t != null) {
@@ -602,15 +602,15 @@ public class ImportUtility {
 
         // set aggregation here
         AggregationKind aggr = null;
-        if (spec.get("aggregation") != null) {
-            aggr = AggregationKindEnum.getByName(((String) spec.get("aggregation")).toLowerCase());
+        if (elementJson.get("aggregation") != null) {
+            aggr = AggregationKindEnum.getByName(((String) elementJson.get("aggregation")).toLowerCase());
         }
         if (aggr != null) {
             p.setAggregation(aggr);
         }
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
 
-        Long spmin = (Long) spec.get("multiplicityMin");
+        Long spmin = (Long) elementJson.get("multiplicityMin");
         if (spmin != null) {
             try {
                 ValueSpecification pmin = p.getLowerValue();
@@ -627,7 +627,7 @@ public class ImportUtility {
             } catch (NumberFormatException en) {
             }
         }
-        Long spmax = (Long) spec.get("multiplicityMax");
+        Long spmax = (Long) elementJson.get("multiplicityMax");
         if (spmax != null) {
             try {
                 ValueSpecification pmax = p.getUpperValue();
@@ -644,7 +644,7 @@ public class ImportUtility {
             } catch (NumberFormatException en) {
             }
         }
-        JSONArray redefineds = (JSONArray) spec.get("redefines");
+        JSONArray redefineds = (JSONArray) elementJson.get("redefines");
         Collection<Property> redefinedps = p.getRedefinedProperty();
         if (redefineds != null && redefineds.size() != 0) { // for now prevent accidental removal of things in case server doesn't have the right reference
             redefinedps.clear();
@@ -752,21 +752,20 @@ public class ImportUtility {
      * the specification of the Operation.
      *
      * @param operation
-     * @param spec
+     * @param elementJson
      * @throws ImportException
      */
-    public static void setOperationSpecification(Operation operation,
-                                                 JSONObject spec) throws ImportException {
+    public static void setOperationSpecification(Operation operation, JSONObject elementJson) throws ImportException {
         // update parameters from expression
-        Object params = spec.get("parameters");
+        Object params = elementJson.get("parameters");
         JSONArray jarr = (JSONArray) (params instanceof JSONArray ? params : null);
         setOperationParameters(operation, jarr);
 
         // If the expression for the operation is not embedded in the
         // specialization json (spec), set the postconditions to the array in
         // the input json.
-        if (spec.containsKey("postconditions")) {
-            setPostconditions(operation, spec);
+        if (elementJson.containsKey("postconditions")) {
+            setPostconditions(operation, elementJson);
             if (ExportUtility.justPostconditionIds) {
                 return;
             }
@@ -777,13 +776,13 @@ public class ImportUtility {
         Object o = null;
         try {
             // not sure what the agreed-upon key was for the expression
-            o = spec.get("expression");
+            o = elementJson.get("expression");
             sp = (JSONObject) o;
             if (sp == null) {
-                o = spec.get("method");
+                o = elementJson.get("method");
                 sp = (JSONObject) o;
                 if (sp == null) {
-                    o = spec.get("specification");
+                    o = elementJson.get("specification");
                     sp = (JSONObject) o;
                 }
             }
@@ -837,7 +836,7 @@ public class ImportUtility {
 
 
             } catch (ReferenceException ex) {
-                throw new ImportException(operation, spec,
+                throw new ImportException(operation, elementJson,
                         "Operation Specification: "
                                 + ex.getMessage());
             }
@@ -972,9 +971,9 @@ public class ImportUtility {
         return null;
     }
 
-    public static void setConnectorEnds(Connector c, JSONObject spec) throws ReferenceException {
-        JSONArray webSourcePath = (JSONArray) spec.get("sourcePath");
-        JSONArray webTargetPath = (JSONArray) spec.get("targetPath");
+    public static void setConnectorEnds(Connector c, JSONObject elementJson) throws ReferenceException {
+        JSONArray webSourcePath = (JSONArray) elementJson.get("sourcePath");
+        JSONArray webTargetPath = (JSONArray) elementJson.get("targetPath");
         String webSource = null;
         String webTarget = null;
         if (webSourcePath != null && !webSourcePath.isEmpty()) {
@@ -991,7 +990,7 @@ public class ImportUtility {
         }
         else {
             log.info("[IMPORT/SYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
-            throw (new ReferenceException(c, spec, "Connector doesn't have both connectable roles."));
+            throw (new ReferenceException(c, elementJson, "Connector doesn't have both connectable roles."));
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
         if (webSourcePath != null && !webSourcePath.isEmpty()) {
@@ -1002,7 +1001,7 @@ public class ImportUtility {
             List<Property> evs = createPropertyPath((List<String>) webTargetPath);
             StereotypesHelper.setStereotypePropertyValue(c.getEnd().get(1), nestedend, "propertyPath", evs);
         }
-        String type = (String) spec.get("connectorType");
+        String type = (String) elementJson.get("connectorType");
         Element asso = ExportUtility.getElementFromID(type);
         if (asso instanceof Association) {
             c.setType((Association) asso);
@@ -1010,8 +1009,8 @@ public class ImportUtility {
     }
 
     public static void setAssociation(Association a, JSONObject spec) throws ReferenceException {
-        String webSourceId = (String) spec.get("source");
-        String webTargetId = (String) spec.get("target");
+        String webSourceId = (String) spec.get("sourceId");
+        String webTargetId = (String) spec.get("targetId");
         Element webSource = ExportUtility.getElementFromID(webSourceId);
         Element webTarget = ExportUtility.getElementFromID(webTargetId);
         Property modelSource = null;

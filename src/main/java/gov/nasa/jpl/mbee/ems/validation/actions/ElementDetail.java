@@ -34,11 +34,26 @@ public class ElementDetail extends RuleViolationAction implements AnnotationActi
     @Override
     public void actionPerformed(ActionEvent e) {
         String detail = "";
+        
+        JSONObject elementJson = new JSONObject();
+        for (Object o : elementJson.keySet()) {
+            String key = (String) o;
+            if (elementJson.get(key) != null) {
+                detail += key + ": " + elementJson.get(key).toString() + "\n\n";
+            }
+            else {
+                detail += key + ": null\n\n";
+            }
+        }
+        
+        /*
+         * old logic from before @donbot
+         * 
         JSONObject spec = null;
         for (Object o : result.keySet()) {
             String key = (String) o;
             if (key.equals("specialization")) {
-                spec = (JSONObject) result.get("specialization");
+         *       spec = (JSONObject) result.get("specialization");
                 continue;
             }
             if (result.get(key) != null) {
@@ -59,6 +74,8 @@ public class ElementDetail extends RuleViolationAction implements AnnotationActi
                 }
             }
         }
+        */
+        
         JTextArea web = new JTextArea(detail);
         web.setEditable(false);
         web.setLineWrap(true);
