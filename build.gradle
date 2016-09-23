@@ -110,7 +110,7 @@ task extractDependencies {
         }*/
     }
 }
-//compileJava.dependsOn extractDependencies
+compileJava.dependsOn extractDependencies
 
 class PreDist extends DefaultTask {
     String humanVersion
@@ -276,8 +276,8 @@ task runJava(type: JavaExec) {
     args ['DEVELOPER']
 }
 
-//runJava.dependsOn installDist
-//runJava.dependsOn generateRebel
+runJava.dependsOn installDist
+runJava.dependsOn generateRebel
 
 task runScript(type: Exec) {
     workingDir "build/dependency-cache/extracted"
