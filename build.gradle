@@ -45,7 +45,7 @@ dependencies {
     preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.1', ext: 'zip'
     
     // SLF4J API
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+    // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
     // compile groupId: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
     
     // SLF4J-Log4j12
@@ -73,7 +73,7 @@ dependencies {
     // compile group: 'com.opencsv', name: 'opencsv', version: '3.8+'
     
     // ActiveMQ 
-    compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
+    // compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
     // compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
 
     // OCL
