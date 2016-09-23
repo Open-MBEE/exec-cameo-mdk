@@ -283,7 +283,7 @@ task runJava(type: JavaExec) {
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
     jvmArgs = ['-Xmx4000M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-Xss1024K', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     // arguments to pass to the application
-    args 'DEVELOPER', '-consoleLog', '-verbose'
+    args 'DEVELOPER'
 }
 
 runJava.dependsOn installDist
